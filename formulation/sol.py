@@ -1,43 +1,41 @@
 import pandas as pd
 
-# Load CSV file and inspect structure
+# 📌 Leitura do CSV e remoção de colunas irrelevantes
 df = pd.read_csv("ex1.csv", skiprows=[0], header=0)
 
-# Print the first few rows for debugging
-print("Initial DataFrame:\n", df.head())
-
-# Remove empty or unnamed columns
+# 🔍 Remover colunas "Unnamed" (geralmente criadas por erros na leitura)
 df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
 
-# Identify columns related to scheduling (assuming they start after fixed columns)
-fixed_columns = 5  # Adjust this based on the CSV structure
-schedule_columns = df.columns[fixed_columns:]
+# 🔍 Verificar as colunas disponíveis no DataFrame
+print("Colunas detectadas:", df.columns.tolist())
 
-# Ensure schedule columns exist and have valid values
+# 📌 Identificar corretamente as colunas fixas e de escala (ajustar conforme necessário)
+fixed_columns = ["Competencia", "Contrato", "Férias"]
+schedule_columns = [col for col in df.columns if col not in fixed_columns]
+
+# 🔍 Certificar-se de que todas as colunas de escala são strings válidas e sem valores NaN
 df[schedule_columns] = df[schedule_columns].astype(str).fillna("")
 
-# Debugging check
-print("Schedule Columns:", schedule_columns)
-print("DataFrame after processing:\n", df.head())
+# 🔍 Imprimir uma amostra para depuração
+print("Prévia do DataFrame tratado:\n", df.head())
 
-
-# Function to fill missing shifts
+# 📌 Função para preencher os turnos vazios respeitando as regras
 def fill_gaps(df):
     for idx, row in df.iterrows():
         consecutive_days = 0
         last_shift = None
 
         for day in schedule_columns:
-            if pd.isna(row[day]) or row[day] in ["nan", "None", ""]:
+            if row[day] in ["nan", "None", ""]:  # Considerar valores ausentes
                 new_shift = 'M' if last_shift != 'M' else 'T'
 
-                # Enforce max 5 consecutive working days
+                # 🔍 Evitar mais de 5 dias consecutivos de trabalho
                 if consecutive_days < 5:
                     df.at[idx, day] = new_shift
                     consecutive_days += 1
                     last_shift = new_shift
                 else:
-                    df.at[idx, day] = 'F'  # Assign day off
+                    df.at[idx, day] = 'F'  # Dia de folga
                     consecutive_days = 0
             else:
                 last_shift = row[day]
@@ -45,10 +43,9 @@ def fill_gaps(df):
 
     return df
 
-
-# Apply the gap-filling function
+# 📌 Aplicar o preenchimento de escalas
 df = fill_gaps(df)
 
-# Save the processed schedule
+# 📌 Salvar a escala corrigida
 df.to_csv("filled_schedule.csv", index=False)
-print("Minimal schedule generated and saved as 'filled_schedule.csv'")
+print("✅ Escala gerada e salva como 'filled_schedule.csv'")
