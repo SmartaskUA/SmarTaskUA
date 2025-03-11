@@ -1,0 +1,19 @@
+package smartask.api.controller;
+
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/schedules")
+public class SchedulesController {
+
+    @GetMapping("/generate")
+    public ResponseEntity<String> generateNewSchedule(){
+        String response = "SEVEN NATION ARMY GOES BRRRRRRRR";
+        return   ResponseEntity.ok(response);
+    } 
+}
