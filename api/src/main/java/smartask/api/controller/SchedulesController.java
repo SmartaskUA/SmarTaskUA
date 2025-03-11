@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import smartask.api.entity.Schedule;
 import smartask.api.service.SchedulesService;
 
 import java.util.List;
@@ -32,5 +33,11 @@ public class SchedulesController {
     @GetMapping("/read")
     public ResponseEntity<List<String[]>> readex1(){
         return   ResponseEntity.ok(service.readex1());
+    }
+
+
+    @GetMapping("/fetch")
+    public ResponseEntity<List<Schedule>> fetchall(){
+        return   ResponseEntity.ok(service.getAllSchedules());
     }
 }
