@@ -13,6 +13,7 @@ import smartask.api.repositories.SchedulesRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +33,10 @@ public class SchedulesService {
         //ToDo : Should also verify if the request with the same configuratio  was already generated
 
         return !schedulerepository.existsByTitle(title);
+    }
+
+    public Optional<Schedule> getByTitle(String title){
+        return schedulerepository.findByTitle(title);
     }
 
     public List<String[]> readex1() {

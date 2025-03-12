@@ -12,6 +12,7 @@ import smartask.api.models.Schedule;
 import smartask.api.services.SchedulesService;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/schedules")
@@ -29,6 +30,15 @@ public class SchedulesController {
         } else {
             return ResponseEntity.badRequest().body("Failed to start schedule generation for: " + title+" Schedule with the title already exists");
         }
+    }
+
+    @GetMapping("/{title}")
+    public ResponseEntity<Optional<Schedule>> fetchByTitle(@PathVariable String title){
+        if (service.getByTitle(title).isPresent()){
+            return ResponseEntity.ok(service.getByTitle(title));
+        }
+        return ResponseEntity.notFound().build();
+
     }
 
     @GetMapping("/fetch")
