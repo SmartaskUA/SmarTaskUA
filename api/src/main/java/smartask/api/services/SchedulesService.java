@@ -27,6 +27,13 @@ public class SchedulesService {
     @Autowired
     private EmployeesRepository Emprepository;
 
+    public boolean requestScheduleGeneration(String title //ToDO : minimal info necessary to generate a new schedule (discarding for now employees individual restriction,
+                                              ){
+        //ToDo : Should also verify if the request with the same configuratio  was already generated
+
+        return !schedulerepository.existsByTitle(title);
+    }
+
     public List<String[]> readex1() {
         saveSampleSchedule();
         return FShandler.readex1();

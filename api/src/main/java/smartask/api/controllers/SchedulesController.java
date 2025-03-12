@@ -6,10 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import smartask.api.models.Schedule;
 import smartask.api.services.SchedulesService;
@@ -24,10 +21,14 @@ public class SchedulesController {
     @Autowired
     private  SchedulesService service;
 
-    @GetMapping("/generate")
-    public ResponseEntity<String> generateNewSchedule(){
-        String response = "SEVEN NATION ARMY GOES BRRRRRRRR";
-        return   ResponseEntity.ok(response);
+    @GetMapping("/generate/{title}")
+    public ResponseEntity<String> generateNewSchedule(@PathVariable String title) {
+        //ToDo : Should also verify if the request with the same configuratio  was already generated
+        if (service.requestScheduleGeneration(title)) {
+            return ResponseEntity.ok("Schedule generation started for: " + title);
+        } else {
+            return ResponseEntity.badRequest().body("Failed to start schedule generation for: " + title+" Schedule with the title already exists");
+        }
     }
 
     @GetMapping("/fetch")
