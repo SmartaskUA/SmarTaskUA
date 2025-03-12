@@ -1,12 +1,13 @@
 
-package smartask.api.service;
+package smartask.api.services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import smartask.api.dataAccess.FShandler;
-import smartask.api.dataAccess.SchedulesRepository;
-import smartask.api.entity.Schedule;
+
+import smartask.api.models.Schedule;
+import smartask.api.repositories.FShandler;
+import smartask.api.repositories.SchedulesRepository;
 
 import java.util.List;
 import java.util.stream.Collectors;

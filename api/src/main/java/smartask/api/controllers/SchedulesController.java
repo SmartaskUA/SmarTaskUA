@@ -1,4 +1,4 @@
-package smartask.api.controller;
+package smartask.api.controllers;
 
 
 import lombok.AllArgsConstructor;
@@ -10,8 +10,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import smartask.api.entity.Schedule;
-import smartask.api.service.SchedulesService;
+
+import smartask.api.models.Schedule;
+import smartask.api.services.SchedulesService;
 
 import java.util.List;
 

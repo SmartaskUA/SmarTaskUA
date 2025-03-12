@@ -1,4 +1,4 @@
-package smartask.api.entity;
+package smartask.api.models;
 
 import lombok.Getter;
 import lombok.Setter;

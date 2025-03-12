@@ -1,9 +1,10 @@
-package smartask.api.dataAccess;
+package smartask.api.repositories;
 
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
-import smartask.api.entity.Schedule;
+
+import smartask.api.models.Schedule;
 
 import java.util.List;
 
