@@ -2,6 +2,7 @@ package smartask.api.models;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -15,16 +16,18 @@ import java.util.List;
 @Document(collection = "schedules")
 @Getter
 @Setter
+@ToString
 public class Schedule {
     @Id
-    private ObjectId id;
-    private Instant timestamp;
+    private ObjectId id = new ObjectId();
+    private Instant timestamp =  Instant.now();
+    private String title;
     private List<List<String>> data;
 
-    public Schedule(List<List<String>> data) {
-        this.id = new ObjectId();
-        this.timestamp = Instant.now();
+    public Schedule(List<List<String>> data, String title) {
         this.data = data;
+        this.title = title;
+        System.out.println(toString());
     }
 
 }

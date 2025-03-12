@@ -11,4 +11,5 @@ import java.util.List;
 @Repository
 public interface SchedulesRepository
         extends MongoRepository<Schedule, String> {
+    boolean existsByTitle(String sample);
 }

@@ -28,11 +28,11 @@ public class SchedulesService {
     private EmployeesRepository Emprepository;
 
     public List<String[]> readex1() {
-        saveSchedule();
+        saveSampleSchedule();
         return FShandler.readex1();
     }
 
-    private Schedule saveSchedule() {
+    private Schedule saveSampleSchedule() {
         List<String[]> rawData = FShandler.readex1();
         List<List<String>> structuredData = rawData.stream()
                 .map(List::of)
@@ -50,7 +50,9 @@ public class SchedulesService {
         }
         Emprepository.saveAll(employees);
 
-        Schedule schedule = new Schedule(structuredData);
+        Schedule schedule = new Schedule(
+                structuredData,
+                "Sample");
         return schedulerepository.save(schedule);
     }
 
