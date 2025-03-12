@@ -30,13 +30,6 @@ public class SchedulesController {
         return   ResponseEntity.ok(response);
     }
 
-
-    @GetMapping("/read")
-    public ResponseEntity<List<String[]>> readex1(){
-        return   ResponseEntity.ok(service.readex1());
-    }
-
-
     @GetMapping("/fetch")
     public ResponseEntity<List<Schedule>> fetchall(){
         return   ResponseEntity.ok(service.getAllSchedules());
