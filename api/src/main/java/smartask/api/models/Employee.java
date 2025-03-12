@@ -1,23 +1,27 @@
 package smartask.api.models;
 
-import java.util.List;
-
-import org.springframework.data.annotation.Id;
-
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
-import jakarta.persistence.Entity;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import org.bson.types.ObjectId;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity(name = "employee")
+
+@Document(collection = "employees")
+@Getter
+@Setter
+@RequiredArgsConstructor
 public class Employee {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private String name;
-    private List<String> restrictions;
 
-    public Employee(String name, List<String> restrictions) {
+    public Employee(String name) {
         this.name = name;
-        this.restrictions = restrictions;
     }
 }
