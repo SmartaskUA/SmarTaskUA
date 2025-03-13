@@ -1,0 +1,81 @@
+.sidebar {
+  height: 100%;
+  width: 250px;
+  background-color: #e3f2fd;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20%;
+}
+
+.logo-img {
+  height: 80px;
+  margin-right: 10px;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+}
+
+.nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.nav-item {
+  text-decoration: none;
+  font-size: 16px;
+  padding: 10px;
+  background-color: #bbdefb;
+  border-radius: 5px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background 0.3s;
+}
+
+.nav-item:hover {
+  background-color: #90caf9;
+}
+
+.icon {
+  color: #333;
+}
+
+.admin-btn {
+  margin-top: 38rem;
+}
+
+.admin-btn button {
+  width: 100%;
+  padding: 10px;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: background 0.3s;
+  cursor: default;
+}
+
+.admin-btn button:hover {
+  background-color: #1565c0;
+}

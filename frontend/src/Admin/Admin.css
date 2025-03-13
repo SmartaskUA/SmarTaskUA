@@ -1,0 +1,19 @@
+.admin-container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    background: #fff;
+    overflow: hidden;
+    color: black;
+}
+
+.main-content {
+    margin-left: 300px;
+    padding: 20px;
+    flex-grow: 1; 
+}
+
+.heading {
+    font-size: 24px;
+    font-weight: bold;
+}

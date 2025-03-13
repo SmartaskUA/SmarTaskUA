@@ -2,8 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Login from "./login/Login";  
 import Manager from "./Manager/manager";  
-import Admin from "./Admin/admin";
-
+import Admin from "./Admin/Admin";
 
 const App = () => {
   return (
@@ -11,8 +10,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/manager" element={<Manager />} />
-        <Route path="/admin" element={<Admin />} />
-
+        <Route path="/Admin" element={<Admin />} />
       </Routes>
     </Router>
   );
