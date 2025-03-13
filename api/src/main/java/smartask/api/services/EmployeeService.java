@@ -97,4 +97,8 @@ public class EmployeeService {
     public Optional<Employee> findByName(String name){
         return repository.findByName(name);
     }
+
+    public void addEmployee(Employee employee){
+        repository.save(employee);
+    }
 }

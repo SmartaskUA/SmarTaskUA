@@ -28,9 +28,16 @@ public class EmployeesController {
 
     @Operation(summary = "Get all employees")
     @GetMapping("/")
-    public ResponseEntity<List<Employee>> getEmps() {
+    public ResponseEntity<List<Employee>> getEmployees() {
         List<Employee> employees = employeeService.getEmployees();
         return new ResponseEntity<>(employees, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Add a new employee")
+    @PostMapping("/")
+    public ResponseEntity<String> addEmployee(@RequestBody Employee employee) {
+        employeeService.addEmployee(employee);
+        return ResponseEntity.ok("Employee created successfully");
     }
 
     @Operation(
