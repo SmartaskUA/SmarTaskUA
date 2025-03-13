@@ -10,6 +10,7 @@ import smartask.api.models.requests.RestrictionRequest;
 import smartask.api.services.EmployeeService;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -39,6 +40,15 @@ public class EmployeesController {
             return ResponseEntity.ok(service.findByName(name));
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @Operation(
+            summary = "Get all the restriction to an employee by their name",
+            description = "Searches for an employee by their name. If found, fetch all his restrictions"
+    )
+    @GetMapping("/restriction/{name}")
+    public ResponseEntity<Map<String, List<String>>> getRestriction(@PathVariable String name) {
+        return ResponseEntity.ok(service.getEmployeeRestrictions(name));
     }
 
     @Operation(

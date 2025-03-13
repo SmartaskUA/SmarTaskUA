@@ -8,10 +8,7 @@ import org.springframework.stereotype.Service;
 import smartask.api.models.Employee;
 import smartask.api.repositories.EmployeesRepository;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class EmployeeService {
@@ -77,6 +74,18 @@ public class EmployeeService {
         }
     }
 
+    public Map<String, List<String>> getEmployeeRestrictions(String employeeName) {
+        Optional<Employee> optionalEmployee = repository.findByName(employeeName);
+
+        if (!optionalEmployee.isPresent()) {
+            throw new IllegalArgumentException("Employee not found");
+        }
+
+        Employee employee = optionalEmployee.get();
+
+        // Return a copy of the restrictions map to avoid modifications outside this method
+        return employee.getRestrictions() != null ? new HashMap<>(employee.getRestrictions()) : new HashMap<>();
+    }
 
 
 
