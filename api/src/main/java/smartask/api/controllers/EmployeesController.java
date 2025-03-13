@@ -49,7 +49,7 @@ public class EmployeesController {
     public ResponseEntity<String> addRestriction(@RequestBody RestrictionRequest restrictionRequest,
                                                  @PathVariable String name) {
         System.out.println(restrictionRequest+" for "+name);
-        // Process the received restrictionType and date
+        service.addRestrictionToEmployee(name, restrictionRequest.getRestrictionType(), restrictionRequest.getDate());
         return ResponseEntity.ok("Restriction added successfully");
     }
 

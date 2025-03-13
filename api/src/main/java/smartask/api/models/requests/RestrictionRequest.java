@@ -11,4 +11,7 @@ import lombok.*;
 public class RestrictionRequest {
     private String restrictionType;
     private String date;
+
+    public String getRestrictionType(){return  this.restrictionType;}
+    public String getDate(){return  this.date;}
 }
