@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import smartask.api.models.Employee;
 import smartask.api.repositories.EmployeesRepository;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,26 +30,24 @@ public class EmployeeService {
 
         Employee employee = optionalEmployee.get();
 
-        JsonNode restrictions = employee.getRestrictions();
-
-        // Check if restrictions is null or not an ObjectNode
-        if (restrictions == null || !restrictions.isObject()) {
-            // Create a new ObjectNode if the restrictions is null or not an object
-            restrictions = objectMapper.createObjectNode();
+        // Ensure the restrictions map is initialized
+        if (employee.getRestrictions() == null) {
+            employee.setRestrictions(new HashMap<>());
         }
 
-        // Cast restrictions to ObjectNode (since we know it's now an object)
-        ObjectNode restrictionsNode = (ObjectNode) restrictions;
+        // Get or create the list of dates for the restriction type
+        employee.getRestrictions().computeIfAbsent(restrictionType, k -> new ArrayList<>());
 
-        // Add or update the restriction
-        restrictionsNode.put(restrictionType, date);  // Add the new restriction or update the existing one
-
-        // Update the employee's restrictions with the modified JSON
-        employee.setRestrictions(restrictionsNode);
+        // Add the new date if it's not already in the list
+        if (!employee.getRestrictions().get(restrictionType).contains(date)) {
+            employee.getRestrictions().get(restrictionType).add(date);
+        }
 
         // Save the updated employee back to the database
         repository.save(employee);
     }
+
+
 
 
     public List<Employee> getAll(){

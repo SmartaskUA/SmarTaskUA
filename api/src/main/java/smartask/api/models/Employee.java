@@ -1,16 +1,15 @@
 package smartask.api.models;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import smartask.api.utils.JsonNodeDeserializer;
-import smartask.api.utils.JsonNodeSerializer;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Document(collection = "employees")
 @Getter
@@ -21,22 +20,19 @@ public class Employee {
     private ObjectId id;
     private String name;
 
-    // Restrictions as JsonNode, which will be serialized/deserialized as JSON
-    @JsonSerialize(using = JsonNodeSerializer.class)
-    @JsonDeserialize(using = JsonNodeDeserializer.class)
-    private JsonNode restrictions;
+    private Map<String, List<String>> restrictions; // Updated to store multiple dates per restriction type
 
     public Employee(String name) {
-        this.id = new ObjectId();  // Manually assign a new ObjectId
+        this.id = new ObjectId();
         this.name = name;
+        this.restrictions = new HashMap<>(); // Initialize to avoid null pointer issues
     }
 
-    // Setter and Getter methods for restrictions are optional
-    public void setRestrictions(JsonNode restrictions) {
+    public void setRestrictions(Map<String, List<String>> restrictions) {
         this.restrictions = restrictions;
     }
 
-    public JsonNode getRestrictions() {
+    public Map<String, List<String>> getRestrictions() {
         return this.restrictions;
     }
 }
