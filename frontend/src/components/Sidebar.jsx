@@ -1,8 +1,8 @@
 import React from "react";
 import { Home, Plus, User } from "lucide-react"; 
+import { Link } from "react-router-dom";  
 import "./Sidebar.css"; 
 import logo from '../assets/images/Logo.png';
-
 
 const Sidebar = () => {
   return (
@@ -11,12 +11,20 @@ const Sidebar = () => {
         <img src={logo} alt="SmarTask Logo" className="logo-img" />
       </div>
       <nav className="nav-links">
-        <a href="#" className="nav-item"><Home size={20} className="icon" /> Home</a>
-        <a href="#" className="nav-item"><Plus size={20} className="icon" /> Add Algorithm</a>
+        <Link to="/admin" className="nav-item">
+          <Home size={20} className="icon" /> Home
+        </Link>
+        <Link to="/admin/add_algor" className="nav-item"> 
+          <Plus size={20} className="icon" /> Add Algorithm
+        </Link>
       </nav>
 
       <div className="admin-btn">
-        <button><User size={20} className="icon" /> Admin</button>
+        <Link>
+          <button>
+            <User size={20} className="icon" /> Admin
+          </button>
+        </Link>
       </div>
     </div>
   );
