@@ -14,7 +14,7 @@ import java.util.Map;
 @Document(collection = "employees")
 public class Employee {
     @Id
-    private String id;
+    private Long id;
 
     @NotBlank
     private String name;
@@ -23,8 +23,9 @@ public class Employee {
 
     private Map<String, List<String>> restrictions;
 
-    public Employee(String name) {
+    public Employee(String name, Team team) {
         this.name = name;
+        this.team = team;
         this.restrictions = new HashMap<>();
     }
 

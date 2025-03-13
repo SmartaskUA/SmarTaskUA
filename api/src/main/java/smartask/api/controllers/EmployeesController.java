@@ -45,6 +45,13 @@ public class EmployeesController {
         return new ResponseEntity<>(employee, HttpStatus.OK);
     }
 
+    @Operation(summary = "Update an employee")
+    @PutMapping("/{id}")
+    public ResponseEntity<String> updateEmployee(@RequestBody Employee employee, @PathVariable Long id) {
+        employeeService.updateEmployee(id, employee);
+        return ResponseEntity.ok("Employee updated successfully");
+    }
+
     @Operation(summary = "Get all the restriction to an employee by their ID")
     @GetMapping("/restriction/{id}")
     public ResponseEntity<Map<String, List<String>>> getRestriction(@PathVariable Long id) {

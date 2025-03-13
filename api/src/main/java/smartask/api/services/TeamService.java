@@ -34,5 +34,12 @@ public class TeamService {
         }
         return optionalTeam.get();
     }
+
+    public void updateTeam(Long id, Team team){
+        Team teamToUpdate = getTeamById(id);
+        teamToUpdate.setName(team.getName());
+        teamToUpdate.setEmployees(team.getEmployees());
+        teamRepository.save(teamToUpdate);
+    }
     
 }

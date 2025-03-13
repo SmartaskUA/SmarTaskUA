@@ -6,13 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import smartask.api.models.Employee;
-import smartask.api.models.requests.RestrictionRequest;
-import smartask.api.services.EmployeeService;
+import smartask.api.models.Team;
 import smartask.api.services.TeamService;
-
 import java.util.List;
-import java.util.Map;
 
 @Tag(name = "Team", description = "Teams Management")
 @RestController
@@ -23,6 +19,34 @@ public class TeamController {
 
     public TeamController(TeamService teamService) {
         this.teamService = teamService;
+    }
+
+    @Operation(summary = "Get all teams")
+    @GetMapping("/")
+    public ResponseEntity<List<Team>> getTeams() {
+        List<Team> teams = teamService.getTeams();
+        return new ResponseEntity<>(teams, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Get a team by ID")
+    @GetMapping("/{id}")
+    public ResponseEntity<Team> getTeamById(@PathVariable Long id) {
+        Team team = teamService.getTeamById(id);
+        return new ResponseEntity<>(team, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Add a new team")
+    @PostMapping("/")
+    public ResponseEntity<String> addTeam(@RequestBody Team team) {
+        teamService.addTeam(team);
+        return ResponseEntity.ok("Team created successfully");
+    }
+
+    @Operation(summary = "Update a team")
+    @PutMapping("/{id}")
+    public ResponseEntity<String> updateTeam(@RequestBody Team team, @PathVariable Long id) {
+        teamService.updateTeam(id, team);
+        return ResponseEntity.ok("Team updated successfully");
     }
 
     

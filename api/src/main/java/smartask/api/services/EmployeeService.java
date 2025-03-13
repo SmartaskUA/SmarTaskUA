@@ -12,9 +12,11 @@ public class EmployeeService {
     @Autowired
     private EmployeesRepository repository;
 
+    public EmployeeService(EmployeesRepository repository) {
+        this.repository = repository;
+    }
 
-
-    public List<Employee> getEmployees(){
+    public List<Employee> getEmployees() {
         return repository.findAll();
     }
 
@@ -30,6 +32,13 @@ public class EmployeeService {
         return optionalEmployee.get();
     }
 
+    public void updateEmployee(Long id, Employee employee){
+        Employee employeeToUpdate = getEmployeeById(id);
+        employeeToUpdate.setName(employee.getName());
+        employeeToUpdate.setTeam(employee.getTeam());
+        repository.save(employeeToUpdate);
+    }
+
     public void addRestrictionToEmployee(Long id, String restrictionType, String date) {
         Employee employee = getEmployeeById(id);
         if (employee.getRestrictions() == null) {
@@ -39,7 +48,7 @@ public class EmployeeService {
         if (!employee.getRestrictions().get(restrictionType).contains(date)) {
             employee.getRestrictions().get(restrictionType).add(date);
         }
-        repository.save(employee); // needs to be a put
+        updateEmployee(id, employee);
     }
 
     public void removeRestrictionFromEmployee(Long id, String restrictionType, String date) {
@@ -53,7 +62,7 @@ public class EmployeeService {
             if (dates.isEmpty()) {
                 employee.getRestrictions().remove(restrictionType);
             }
-            repository.save(employee);
+            updateEmployee(id, employee);
         }
     }
 
