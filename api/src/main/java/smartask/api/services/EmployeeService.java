@@ -12,9 +12,7 @@ public class EmployeeService {
     @Autowired
     private EmployeesRepository repository;
 
-    public EmployeeService(EmployeeRepository employeeRepository) {
-        this.employeeRepository = employeeRepository;
-    }
+
 
     public List<Employee> getEmployees(){
         return repository.findAll();

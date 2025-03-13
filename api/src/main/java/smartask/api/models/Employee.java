@@ -14,8 +14,7 @@ import java.util.Map;
 @Document(collection = "employees")
 public class Employee {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
     @NotBlank
     private String name;
@@ -24,12 +23,11 @@ public class Employee {
 
     private Map<String, List<String>> restrictions;
 
-    public Employee(String name, Team team) {
+    public Employee(String name) {
         this.name = name;
-        this.team = team;
         this.restrictions = new HashMap<>();
     }
-    
+
     public String getName() {
         return this.name;
     }
@@ -45,7 +43,7 @@ public class Employee {
     public void setTeam(Team team) {
         this.team = team;
     }
-    
+
     public void setRestrictions(Map<String, List<String>> restrictions) {
         this.restrictions = restrictions;
     }
