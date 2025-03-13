@@ -57,7 +57,7 @@ public class EmployeesController {
             summary = "Update new restriction to an employee by their name",
             description = "Searches for an employee by their name. If found, change the value of the restriction, e.g. search for [Joao] and change restriction [Fer] for the date [11/05]"
     )
-    @PutMapping("/restriction")
+    @PutMapping("/restriction/{name}")
     public ResponseEntity<String> updateRestriction(@RequestBody RestrictionRequest restrictionRequest,
                                                     @PathVariable String name) {
         System.out.println(restrictionRequest+" for "+name);
@@ -69,7 +69,7 @@ public class EmployeesController {
             summary = "Delete new restriction to an employee by their name",
             description = "Searches for an employee by their name. If found, delete value of the restriction, e.g. search for [Joao] and  delete the date [11/05] for the restriction [Fer]"
     )
-    @DeleteMapping("/restriction")
+    @DeleteMapping("/restriction/{name}")
     public ResponseEntity<String> deleteRestriction(@RequestBody RestrictionRequest restrictionRequest,
                                                     @PathVariable String name) {
         System.out.println(restrictionRequest+" for "+name);
