@@ -90,7 +90,7 @@ public class EmployeeService {
 
 
 
-    public List<Employee> getAll(){
+    public List<Employee> getEmployees(){
         return repository.findAll();
     }
 

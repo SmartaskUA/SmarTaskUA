@@ -3,6 +3,7 @@ package smartask.api.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import smartask.api.models.Employee;
@@ -13,21 +14,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@Tag(name = "Employee", description = "Employees Management")
 @RestController
-@RequestMapping("employee")
-@Tag(name = "Employee Management", description = "Endpoints for managing employees")
+@RequestMapping("/api/v1/employees")
 public class EmployeesController {
 
     @Autowired
-    private EmployeeService service;
+    private EmployeeService employeeService;
 
-    @Operation(
-            summary = "Get all employees",
-            description = "Retrieves a list of all employees stored in the system."
-    )
-    @GetMapping("/all")
+    public EmployeesController(EmployeeService employeeService) {
+        this.employeeService = employeeService;
+    }
+
+    @Operation(summary = "Get all employees")
+    @GetMapping("/")
     public ResponseEntity<List<Employee>> getEmps() {
-        return ResponseEntity.ok(service.getAll());
+        List<Employee> employees = employeeService.getEmployees();
+        return new ResponseEntity<>(employees, HttpStatus.OK);
     }
 
     @Operation(
@@ -36,8 +39,8 @@ public class EmployeesController {
     )
     @GetMapping("/{name}")
     public ResponseEntity<Optional<Employee>> getEmpByName(@PathVariable String name) {
-        if (service.findByName(name).isPresent()) {
-            return ResponseEntity.ok(service.findByName(name));
+        if (employeeService.findByName(name).isPresent()) {
+            return ResponseEntity.ok(employeeService.findByName(name));
         }
         return ResponseEntity.notFound().build();
     }
@@ -48,7 +51,7 @@ public class EmployeesController {
     )
     @GetMapping("/restriction/{name}")
     public ResponseEntity<Map<String, List<String>>> getRestriction(@PathVariable String name) {
-        return ResponseEntity.ok(service.getEmployeeRestrictions(name));
+        return ResponseEntity.ok(employeeService.getEmployeeRestrictions(name));
     }
 
     @Operation(
@@ -59,7 +62,7 @@ public class EmployeesController {
     public ResponseEntity<String> addRestriction(@RequestBody RestrictionRequest restrictionRequest,
                                                  @PathVariable String name) {
         System.out.println(restrictionRequest+" for "+name);
-        service.addRestrictionToEmployee(name, restrictionRequest.getRestrictionType(), restrictionRequest.getDate());
+        employeeService.addRestrictionToEmployee(name, restrictionRequest.getRestrictionType(), restrictionRequest.getDate());
         return ResponseEntity.ok("Restriction added successfully");
     }
 
@@ -83,7 +86,7 @@ public class EmployeesController {
     public ResponseEntity<String> deleteRestriction(@RequestBody RestrictionRequest restrictionRequest,
                                                     @PathVariable String name) {
         System.out.println(restrictionRequest+" for "+name);
-        service.removeRestrictionFromEmployee(name, restrictionRequest.getRestrictionType(), restrictionRequest.getDate());
+        employeeService.removeRestrictionFromEmployee(name, restrictionRequest.getRestrictionType(), restrictionRequest.getDate());
         return ResponseEntity.ok("Restriction deleted successfully");
     }
 }

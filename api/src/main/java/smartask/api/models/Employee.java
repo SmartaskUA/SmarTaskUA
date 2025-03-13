@@ -1,33 +1,51 @@
 package smartask.api.models;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.validation.constraints.NotBlank;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Document(collection = "employees")
-@Getter
-@Setter
-@RequiredArgsConstructor
 public class Employee {
     @Id
-    private ObjectId id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotBlank
     private String name;
 
-    private Map<String, List<String>> restrictions; // Updated to store multiple dates per restriction type
+    private Team team;
 
-    public Employee(String name) {
-        this.id = new ObjectId();
+    private Map<String, List<String>> restrictions;
+
+    public Employee(String name, Team team) {
         this.name = name;
-        this.restrictions = new HashMap<>(); // Initialize to avoid null pointer issues
+        this.team = team;
+        this.restrictions = new HashMap<>();
+    }
+    
+    public String getName() {
+        return this.name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Team getTeam() {
+        return this.team;
+    }
+
+    public void setTeam(Team team) {
+        this.team = team;
+    }
+    
     public void setRestrictions(Map<String, List<String>> restrictions) {
         this.restrictions = restrictions;
     }
