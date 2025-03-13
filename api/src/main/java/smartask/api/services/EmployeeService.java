@@ -47,6 +47,37 @@ public class EmployeeService {
         repository.save(employee);
     }
 
+    public void removeRestrictionFromEmployee(String employeeName, String restrictionType, String date) {
+        Optional<Employee> optionalEmployee = repository.findByName(employeeName);
+
+        if (!optionalEmployee.isPresent()) {
+            throw new IllegalArgumentException("Employee not found");
+        }
+
+        Employee employee = optionalEmployee.get();
+
+        // Ensure the restrictions map exists
+        if (employee.getRestrictions() == null) {
+            return; // No restrictions to remove
+        }
+
+        // Get the list of dates for the restriction type
+        List<String> dates = employee.getRestrictions().get(restrictionType);
+
+        if (dates != null) {
+            dates.remove(date); // Remove the specified date
+
+            // If the list is empty, remove the restriction type from the map
+            if (dates.isEmpty()) {
+                employee.getRestrictions().remove(restrictionType);
+            }
+
+            // Save the updated employee back to the database
+            repository.save(employee);
+        }
+    }
+
+
 
 
 

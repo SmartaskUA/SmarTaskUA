@@ -73,7 +73,7 @@ public class EmployeesController {
     public ResponseEntity<String> deleteRestriction(@RequestBody RestrictionRequest restrictionRequest,
                                                     @PathVariable String name) {
         System.out.println(restrictionRequest+" for "+name);
-        // Process the received restrictionType and date
+        service.removeRestrictionFromEmployee(name, restrictionRequest.getRestrictionType(), restrictionRequest.getDate());
         return ResponseEntity.ok("Restriction deleted successfully");
     }
 }
