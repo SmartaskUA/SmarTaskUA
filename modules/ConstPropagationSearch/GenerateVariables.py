@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 # Definir os funcionários (IDs genéricos por enquanto)
-n_funcionarios = 50  # Ajuste conforme necessário
+n_funcionarios = 12  # Ajuste conforme necessário
 funcionarios = [f"F{i+1}" for i in range(n_funcionarios)]
 
 # Definir os dias do ano de 2025
@@ -26,7 +26,7 @@ contagem_domingos_feriados = {f: 0 for f in funcionarios}
 sequencia_trabalho = {f: [] for f in funcionarios}  # Lista para rastrear sequência de trabalho
 
 # Exibir algumas variáveis geradas como exemplo
-print("Funcionários:", funcionarios[:5])
-print("Dias do ano:", dias_ano[:5])
+print("Funcionários:", funcionarios)
+print("Dias do ano:", dias_ano)
 print("Turnos:", turnos)
 print("Exemplo de alocação:", list(alocacao_trabalho.items())[:5])
