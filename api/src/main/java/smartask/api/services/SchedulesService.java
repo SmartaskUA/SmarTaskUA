@@ -28,6 +28,9 @@ public class SchedulesService {
     @Autowired
     private EmployeesRepository Emprepository;
 
+    @Autowired
+    private SequenceGeneratorService sequenceGeneratorService;
+
     public boolean requestScheduleGeneration(String title //ToDO : minimal info necessary to generate a new schedule (discarding for now employees individual restriction,
                                               ){
         //ToDo : Should also verify if the request with the same configuratio  was already generated
@@ -44,7 +47,7 @@ public class SchedulesService {
         return FShandler.readex1();
     }
 
-    private Schedule saveSampleSchedule() {
+    private void saveSampleSchedule() {
         List<String[]> rawData = FShandler.readex1();
         List<List<String>> structuredData = rawData.stream()
                 .map(List::of)
@@ -58,17 +61,24 @@ public class SchedulesService {
                 continue;
             }
             String name = row[1];
-            employees.add(new Employee(name));
+            employees.add(new Employee(name, null));
         }
         Emprepository.saveAll(employees);
 
         Schedule schedule = new Schedule(
                 structuredData,
                 "Sample");
-        return schedulerepository.save(schedule);
+        saveSchedule(schedule);
     }
 
     public List<Schedule> getAllSchedules() {
         return schedulerepository.findAll();
+    }
+
+    public void saveSchedule(Schedule schedule) {
+        if (schedule.getId() == null) {
+            schedule.setId(sequenceGeneratorService.generateSequence("employees"));
+        }
+        schedulerepository.save(schedule);
     }
 }

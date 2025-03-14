@@ -1,26 +1,26 @@
 import pandas as pd
 
-# 📌 Leitura do CSV e remoção de colunas irrelevantes
+#  Leitura do CSV e remoção de colunas irrelevantes
 df = pd.read_csv("ex1.csv", header=0, dtype=str)  # Garantir que tudo é tratado como string
 
-# 🔍 Remover colunas "Unnamed" (geralmente criadas por erros na leitura)
+#  Remover colunas "Unnamed" (geralmente criadas por erros na leitura)
 df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
 
-# 🔍 Verificar as colunas disponíveis no DataFrame
+#  Verificar as colunas disponíveis no DataFrame
 print("Colunas detectadas:", df.columns.tolist())
 
-# 📌 Identificar corretamente as colunas fixas e de escala
+#  Identificar corretamente as colunas fixas e de escala
 fixed_columns = ["Competencia", "Contrato", "Férias"]
 schedule_columns = [col for col in df.columns if col not in fixed_columns]
 
-# 🔍 Certificar-se de que todas as colunas de escala são strings válidas e sem valores NaN
+#  Certificar-se de que todas as colunas de escala são strings válidas e sem valores NaN
 df[schedule_columns] = df[schedule_columns].applymap(lambda x: x.strip() if isinstance(x, str) else "")
 
-# 🔍 Imprimir uma amostra para depuração
+#  Imprimir uma amostra para depuração
 print("Prévia do DataFrame tratado:\n", df.head())
 
 
-# 📌 Função para preencher os turnos vazios respeitando regras
+#  Função para preencher os turnos vazios respeitando regras
 def fill_gaps(df):
     for idx, row in df.iterrows():
         consecutive_days = 0
@@ -32,7 +32,7 @@ def fill_gaps(df):
             if not current_value:  # Se o valor estiver vazio
                 new_shift = 'M' if last_shift != 'M' else 'T'
 
-                # 🔍 Evitar mais de 5 dias consecutivos de trabalho
+                #  Evitar mais de 5 dias consecutivos de trabalho
                 if consecutive_days < 5:
                     df.at[idx, day] = new_shift
                     consecutive_days += 1
@@ -47,9 +47,9 @@ def fill_gaps(df):
     return df
 
 
-# 📌 Aplicar o preenchimento de escalas
+#  Aplicar o preenchimento de escalas
 df = fill_gaps(df)
 
-# 📌 Salvar a escala corrigida
+#  Salvar a escala corrigida
 df.to_csv("filled_schedule.csv", index=False)
 print("✅ Escala gerada e salva como 'filled_schedule.csv'")

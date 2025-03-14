@@ -3,87 +3,85 @@ package smartask.api.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import smartask.api.models.Employee;
 import smartask.api.models.requests.RestrictionRequest;
 import smartask.api.services.EmployeeService;
-
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
+@Tag(name = "Employee", description = "Employees Management")
 @RestController
-@RequestMapping("employee")
-@Tag(name = "Employee Management", description = "Endpoints for managing employees")
+@RequestMapping("/api/v1/employees")
 public class EmployeesController {
 
     @Autowired
-    private EmployeeService service;
+    private EmployeeService employeeService;
 
-    @Operation(
-            summary = "Get all employees",
-            description = "Retrieves a list of all employees stored in the system."
-    )
-    @GetMapping("/all")
-    public ResponseEntity<List<Employee>> getEmps() {
-        return ResponseEntity.ok(service.getAll());
+    public EmployeesController(EmployeeService employeeService) {
+        this.employeeService = employeeService;
     }
 
-    @Operation(
-            summary = "Get an employee by name",
-            description = "Searches for an employee by their name. If found, returns employee details; otherwise, returns a 404 Not Found response."
-    )
-    @GetMapping("/{name}")
-    public ResponseEntity<Optional<Employee>> getEmpByName(@PathVariable String name) {
-        if (service.findByName(name).isPresent()) {
-            return ResponseEntity.ok(service.findByName(name));
-        }
-        return ResponseEntity.notFound().build();
+    @Operation(summary = "Get all employees")
+    @GetMapping("/")
+    public ResponseEntity<List<Employee>> getEmployees() {
+        List<Employee> employees = employeeService.getEmployees();
+        return new ResponseEntity<>(employees, HttpStatus.OK);
     }
 
-    @Operation(
-            summary = "Get all the restriction to an employee by their name",
-            description = "Searches for an employee by their name. If found, fetch all his restrictions"
-    )
-    @GetMapping("/restriction/{name}")
-    public ResponseEntity<Map<String, List<String>>> getRestriction(@PathVariable String name) {
-        return ResponseEntity.ok(service.getEmployeeRestrictions(name));
+    @Operation(summary = "Add a new employee")
+    @PostMapping("/")
+    public ResponseEntity<String> addEmployee(@RequestBody Employee employee) {
+        employeeService.addEmployee(employee);
+        return ResponseEntity.ok("Employee created successfully");
     }
 
-    @Operation(
-            summary = "Add new restriction to an employee by their name",
-            description = "Searches for an employee by their name. If found, add new restriction, e.g. search for [Joao] and add restriction [Fer] for the date [11/05]"
-    )
-    @PostMapping("/restriction/{name}")
+    @Operation(summary = "Get an employee by ID")
+    @GetMapping("/{id}")
+    public ResponseEntity<Employee> getEmployeeById(@PathVariable Long id) {
+        Employee employee = employeeService.getEmployeeById(id);
+        return new ResponseEntity<>(employee, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Update an employee")
+    @PutMapping("/{id}")
+    public ResponseEntity<String> updateEmployee(@RequestBody Employee employee, @PathVariable Long id) {
+        employeeService.updateEmployee(id, employee);
+        return ResponseEntity.ok("Employee updated successfully");
+    }
+
+    @Operation(summary = "Get all the restriction to an employee by their ID")
+    @GetMapping("/restriction/{id}")
+    public ResponseEntity<Map<String, List<String>>> getRestriction(@PathVariable Long id) {
+        return ResponseEntity.ok(employeeService.getEmployeeRestrictions(id));
+    }
+
+    @Operation(summary = "Add new restriction to an employee by their ID")
+    @PostMapping("/restriction/{id}")
     public ResponseEntity<String> addRestriction(@RequestBody RestrictionRequest restrictionRequest,
-                                                 @PathVariable String name) {
-        System.out.println(restrictionRequest+" for "+name);
-        service.addRestrictionToEmployee(name, restrictionRequest.getRestrictionType(), restrictionRequest.getDate());
+                                                 @PathVariable Long id) {
+        System.out.println(restrictionRequest+" for "+id);
+        employeeService.addRestrictionToEmployee(id, restrictionRequest.getRestrictionType(), restrictionRequest.getDate());
         return ResponseEntity.ok("Restriction added successfully");
     }
 
-    @Operation(
-            summary = "Update new restriction to an employee by their name",
-            description = "Searches for an employee by their name. If found, change the value of the restriction, e.g. search for [Joao] and change restriction [Fer] for the date [11/05]"
-    )
-    @PutMapping("/restriction/{name}")
+    @Operation(summary = "Update new restriction to an employee by their ID")
+    @PutMapping("/restriction/{id}")
     public ResponseEntity<String> updateRestriction(@RequestBody RestrictionRequest restrictionRequest,
-                                                    @PathVariable String name) {
-        System.out.println(restrictionRequest+" for "+name);
+                                                    @PathVariable Long id) {
+        System.out.println(restrictionRequest+" for "+id);
         // Process the received restrictionType and date
         return ResponseEntity.ok("Restriction update successfully");
     }
 
-    @Operation(
-            summary = "Delete new restriction to an employee by their name",
-            description = "Searches for an employee by their name. If found, delete value of the restriction, e.g. search for [Joao] and  delete the date [11/05] for the restriction [Fer]"
-    )
-    @DeleteMapping("/restriction/{name}")
+    @Operation(summary = "Delete new restriction to an employee by their ID")
+    @DeleteMapping("/restriction/{id}")
     public ResponseEntity<String> deleteRestriction(@RequestBody RestrictionRequest restrictionRequest,
-                                                    @PathVariable String name) {
-        System.out.println(restrictionRequest+" for "+name);
-        service.removeRestrictionFromEmployee(name, restrictionRequest.getRestrictionType(), restrictionRequest.getDate());
+                                                    @PathVariable Long id) {
+        System.out.println(restrictionRequest+" for "+id);
+        employeeService.removeRestrictionFromEmployee(id, restrictionRequest.getRestrictionType(), restrictionRequest.getDate());
         return ResponseEntity.ok("Restriction deleted successfully");
     }
 }

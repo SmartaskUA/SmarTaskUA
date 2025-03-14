@@ -7,27 +7,22 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.validation.constraints.NotBlank;
-
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-@Document(collection = "employees")
-public class Employee {
+@Document(collection = "teams")
+public class Team {
     @Id
     private Long id;
 
     @NotBlank
     private String name;
 
-    private Team team;
+    private List<Employee> employees;
 
-    private Map<String, List<String>> restrictions;
-
-    public Employee(String name, Team team) {
+    public Team(String name) {
         this.name = name;
-        this.team = team;
-        this.restrictions = new HashMap<>();
+        this.employees = new ArrayList<>();
     }
 
     public Long getId() {
@@ -46,19 +41,11 @@ public class Employee {
         this.name = name;
     }
 
-    public Team getTeam() {
-        return this.team;
+    public List<Employee> getEmployees() {
+        return this.employees;
     }
 
-    public void setTeam(Team team) {
-        this.team = team;
-    }
-
-    public void setRestrictions(Map<String, List<String>> restrictions) {
-        this.restrictions = restrictions;
-    }
-
-    public Map<String, List<String>> getRestrictions() {
-        return this.restrictions;
+    public void setEmployees(List<Employee> employees) {
+        this.employees = employees;
     }
 }

@@ -6,9 +6,6 @@ import lombok.ToString;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import org.bson.types.ObjectId;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 import java.util.List;
@@ -19,7 +16,7 @@ import java.util.List;
 @ToString
 public class Schedule {
     @Id
-    private ObjectId id = new ObjectId();
+    private Long id;
     private Instant timestamp =  Instant.now();
     private String title;
     private List<List<String>> data;
@@ -29,5 +26,22 @@ public class Schedule {
         this.title = title;
         System.out.println(toString());
     }
+
+    public Long getId() {
+        return this.id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return this.title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
 
 }
