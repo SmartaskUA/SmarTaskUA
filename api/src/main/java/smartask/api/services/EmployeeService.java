@@ -12,6 +12,9 @@ public class EmployeeService {
     @Autowired
     private EmployeesRepository repository;
 
+    @Autowired
+    private SequenceGeneratorService sequenceGeneratorService;
+
     public EmployeeService(EmployeesRepository repository) {
         this.repository = repository;
     }
@@ -21,7 +24,7 @@ public class EmployeeService {
     }
 
     public void addEmployee(Employee employee){
-        repository.save(employee);
+        saveEmployee(employee);
     }
 
     public Employee getEmployeeById(Long id){
@@ -36,7 +39,7 @@ public class EmployeeService {
         Employee employeeToUpdate = getEmployeeById(id);
         employeeToUpdate.setName(employee.getName());
         employeeToUpdate.setTeam(employee.getTeam());
-        repository.save(employeeToUpdate);
+        saveEmployee(employeeToUpdate);
     }
 
     public void addRestrictionToEmployee(Long id, String restrictionType, String date) {
@@ -69,5 +72,12 @@ public class EmployeeService {
     public Map<String, List<String>> getEmployeeRestrictions(Long id) {
         Employee employee = getEmployeeById(id);
         return employee.getRestrictions() != null ? new HashMap<>(employee.getRestrictions()) : new HashMap<>();
+    }
+
+    public void saveEmployee(Employee employee) {
+        if (employee.getId() == null) {
+            employee.setId(sequenceGeneratorService.generateSequence("employees"));
+        }
+        repository.save(employee);
     }
 }

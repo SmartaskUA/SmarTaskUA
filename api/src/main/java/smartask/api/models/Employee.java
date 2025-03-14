@@ -1,5 +1,6 @@
 package smartask.api.models;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -27,6 +28,14 @@ public class Employee {
         this.name = name;
         this.team = team;
         this.restrictions = new HashMap<>();
+    }
+
+    public Long getId() {
+        return this.id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getName() {

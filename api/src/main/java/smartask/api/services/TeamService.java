@@ -2,9 +2,7 @@ package smartask.api.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import smartask.api.models.Employee;
 import smartask.api.models.Team;
-import smartask.api.repositories.EmployeesRepository;
 import smartask.api.repositories.TeamRepository;
 
 import java.util.List;
@@ -15,6 +13,9 @@ public class TeamService {
     @Autowired
     private TeamRepository teamRepository;
 
+    @Autowired
+    private SequenceGeneratorService sequenceGeneratorService;
+
     public TeamService(TeamRepository teamRepository) {
         this.teamRepository = teamRepository;
     }
@@ -24,7 +25,7 @@ public class TeamService {
     }
 
     public void addTeam(Team team){
-        teamRepository.save(team);
+        saveTeam(team);
     }
 
     public Team getTeamById(Long id){
@@ -39,7 +40,14 @@ public class TeamService {
         Team teamToUpdate = getTeamById(id);
         teamToUpdate.setName(team.getName());
         teamToUpdate.setEmployees(team.getEmployees());
-        teamRepository.save(teamToUpdate);
+        saveTeam(teamToUpdate);
+    }
+
+    public void saveTeam(Team team) {
+        if (team.getId() == null) {
+            team.setId(sequenceGeneratorService.generateSequence("teams"));
+        }
+        teamRepository.save(team);
     }
     
 }
