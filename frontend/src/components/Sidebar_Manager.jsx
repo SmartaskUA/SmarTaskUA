@@ -14,24 +14,24 @@ const Sidebar_Manager = () => {
         <Link to="/manager" className="nav-item">
           <Home size={20} className="icon" /> Home
         </Link>
-        <Link to="" className="nav-item">
+        <Link to="/manager/calender" className="nav-item">
           <CalendarDays size={20} className="icon"/> Calendar
         </Link>
-        <Link to="" className="nav-item">
+        <Link to="/manager/teams" className="nav-item"> 
           <Users size={20} className="icon"/> Teams
         </Link> 
-        <Link to="" className="nav-item">
+        <Link to="/manager/employer" className="nav-item"> 
           <Briefcase size={20} className="icon"/> Employees
         </Link> 
       </nav>
-      
-      <div className="addCalendar-btn">
+
+      {/* <div className="addCalendar-btn">
         <Link>
           <button>
             <SquarePlus size={20} className="icon" /> Calendar
           </button>
         </Link>
-      </div>
+      </div> */}
 
       <div className="manager-btn">
         <Link>

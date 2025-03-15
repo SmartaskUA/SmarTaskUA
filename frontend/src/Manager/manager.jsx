@@ -9,7 +9,7 @@ const home = () => {
         <Sidebar_Manager /> 
       </div>
       <div className="main-content">
-        <h2 className="heading">Hallo List</h2>
+        <h2 className="heading">HOME PAGE</h2>
       </div> 
     </div>
   );
