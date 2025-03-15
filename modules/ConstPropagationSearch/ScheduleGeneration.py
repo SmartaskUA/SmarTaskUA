@@ -8,7 +8,7 @@ class SmarTask:
         self.variables = []
         self.employees = []
         self.work = {}
-        self.domain = ["0", "1", "F"]
+        self.domain = ["0", "1", "F", "L"]
 
     def gerar_variaveis(self):
         """Gera as variáveis do problema sem realizar alocações."""
@@ -23,13 +23,13 @@ class SmarTask:
 
         self.employees = [f"Funcionario_{i}" for i in range(1, self.num_employees + 1)]
 
-        # Inicializando variáveis para restrições por funcionário
         self.counters = {
-            "dias_trabalhados": {f: 0 for f in self.employees},  # Dias totais trabalhados no ano
-            "domingos_feriados_trabalhados": {f: 0 for f in self.employees},  # Domingos e feriados trabalhados
-            "dias_consecutivos": {f: 0 for f in self.employees},  # Dias consecutivos trabalhados
-            "ferias": {f: [] for f in self.employees},  # Lista de dias de férias por funcionário
-            "dias_com_alarme": list(range(1, 366, 7)),  # Exemplo: Alarme a cada 7 dias (ajustável)
+            "dias_trabalhados": {f: 0 for f in self.employees}, 
+            "domingos_feriados_trabalhados": {f: 0 for f in self.employees},
+            "dias_consecutivos": {f: 0 for f in self.employees}, 
+            "ferias": {f: [] for f in self.employees},
+            "dias_ferias_folga": {f: 0 for f in self.employees}, 
+            "dias_com_alarme": list(range(1, 366, 7)), 
         }
 
     def constraint_consecutive_shift(self, x1, x2):
@@ -53,7 +53,7 @@ class SmarTask:
 
     def constraint_max_workdays(self, x):
         e, _, _ = x.split(",")
-        return self.counters["dias_trabalhados"][e] == 223
+        return self.counters["dias_trabalhados"][e] <= 223
     
     def constraint_max_sundays_holidays(self, x):
         e, d, _ = x.split(",")
@@ -75,26 +75,34 @@ class SmarTask:
     
     def vacation_days(self, employee):
         employee = employee.split("_")[1]
-        for i in self.work:
-            e, d, s = i.split(",")
-            if e[1:] == employee and self.work[i] == "F":
-                self.counters["ferias"][employee].append(d)
+        self.counters["ferias"][employee] = [
+            d for var in self.work if self.work[var] == "F" for e, d, _ in var.split(",") if e == employee
+        ]
+        self.counters["dias_ferias_folga"][employee] += len(self.counters["ferias"][employee])
 
     def work_days(self, employee):
         employee = employee.split("_")[1]
-        for i in self.work:
-            e, d, s = i.split(",")
-            if e[1:] == employee and self.work[i] == "1":
-                self.counters["dias_trabalhados"][employee] += 1
+        self.counters["dias_trabalhados"][employee] = len([
+            var for var in self.work if self.work[var] == "1" for e, _, _ in var.split(",") if e == employee
+        ])
 
     def consecutive_days(self, employee):
         employee = employee.split("_")[1]
-        for i in self.work:
-            e, d, s = i.split(",")
-            if e[1:] == employee and self.work[i] == "1":
-                self.counters["dias_consecutivos"][employee] += 1
-            elif e[1:] == employee and self.work[i] == "0":
-                self.counters["dias_consecutivos"][employee] = 0
+        workdays = sorted(
+            [int(d) for var in self.work if self.work[var] == "1"
+            for e, d, _ in var.split(",") if e == employee]
+        )
+        max_streak = 0
+        current_streak = 1
+        for i in range(1, len(workdays)):
+            if workdays[i] == workdays[i - 1] + 1:  # Consecutive days
+                current_streak += 1
+            else:
+                max_streak = max(max_streak, current_streak)
+                current_streak = 1 
+
+        max_streak = max(max_streak, current_streak)
+        self.counters["dias_consecutivos"][employee] = max_streak
 
     
 
