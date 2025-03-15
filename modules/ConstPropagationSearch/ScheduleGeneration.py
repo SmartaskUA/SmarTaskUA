@@ -86,6 +86,12 @@ class SmarTask:
             e, d, s = i.split(",")
             if e[1:] == employee and self.work[i] == "1":
                 self.counters["dias_trabalhados"][employee] += 1
+
+    def consecutive_days(self, employee):
+        employee = employee.split("_")[1]
+        for i in self.work:
+            e, d, s = i.split(",")
+            if e[1:] == employee and self.work[i] == "1":
                 self.counters["dias_consecutivos"][employee] += 1
             elif e[1:] == employee and self.work[i] == "0":
                 self.counters["dias_consecutivos"][employee] = 0
