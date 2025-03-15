@@ -1,7 +1,7 @@
 import React from "react";
 import Sidebar_Manager from "../components/Sidebar_Manager"; 
 
-const Calender = () => {
+const Calendar = () => {
   return (
     <div className="admin-container">
       <Sidebar_Manager />  
@@ -13,4 +13,4 @@ const Calender = () => {
   );
 };
 
-export default Calender;
+export default Calendar;

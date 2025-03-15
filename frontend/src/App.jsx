@@ -4,10 +4,10 @@ import Login from "./login/Login";
 import Manager from "./Manager/manager";  
 import Admin from "./Admin/Admin";
 import Add_Algor from "./Admin/Add_Algor"; 
-import List_Calender from "./Manager/ListCalender";
+import List_Calendar from "./Manager/ListCalendar";
 import Teams from "./Manager/Teams";
 import Employer from "./Manager/Employer";
-import Calender from "./Manager/Calender";
+import Calendar from "./Manager/Calendar";
 
 const App = () => {
   return (
@@ -17,10 +17,10 @@ const App = () => {
         <Route path="/manager" element={<Manager />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/admin/add_algor" element={<Add_Algor />} /> 
-        <Route path="/manager/listcalender" element={<List_Calender />} /> 
+        <Route path="/manager/listcalendar" element={<List_Calendar />} /> 
         <Route path="/manager/teams" element={<Teams />} />
         <Route path="/manager/employer" element={<Employer />} />
-        <Route path="/manager/calender" element={<Calender />} /> 
+        <Route path="/manager/calendar" element={<Calendar />} /> 
       </Routes>
     </Router>
   );
