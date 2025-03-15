@@ -39,17 +39,15 @@ class SmarTask:
         e2, d2, s2 = x2.split(",")
         if e1 != e2:
             return True
-        if d1 == d2:
-            return True
+        if d1 == d2 and s1 == s2:
+            return False
         if abs(int(d1) - int(d2)) != 1:
             return True
-        if d2 > d1:
-            if s1 == "T" and s2 == "M":
-                return False
-        if d1 > d2:
-            if s1 == "M" and s2 == "T":
-                return False
-        return True
+        if d1 > d2 and s1 == "M" and s2 == "T":
+            return True
+        if d1 < d2 and s1 == "T" and s2 == "M":
+            return True
+        return False
 
     def constraint_max_workdays(self, x):
         e, _, _ = x.split(",")
