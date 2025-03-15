@@ -59,6 +59,14 @@
   margin-top: 38rem;
 }
 
+.addCalendar-btn {
+  margin-top: 27rem;
+}
+
+.manager-btn {
+  margin-top: 1rem;
+}
+
 .admin-btn button {
   width: 100%;
   padding: 10px;
@@ -76,6 +84,48 @@
   cursor: default;
 }
 
+.addCalendar-btn button {
+  width: 100%;
+  padding: 10px;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: background 0.3s;
+  cursor: default;
+}
+
+.manager-btn button {
+  width: 100%;
+  padding: 10px;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: background 0.3s;
+  cursor: default;
+}
+
 .admin-btn button:hover {
+  background-color: #1565c0;
+}
+
+.addCalendar-btn button:hover {
+  background-color: #1565c0;
+}
+
+.manager-btn button:hover {
   background-color: #1565c0;
 }
