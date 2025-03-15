@@ -1,11 +1,13 @@
 class SmarTask:
     def __init__(self):
-        self.restrictions = {}
+        self.counters = {}
         self.num_teams = 2
         self.num_employees = 50 
         self.num_days = 365 
         self.shifts = ["M", "T"] 
         self.variables = []
+        self.employees = []
+        self.work = {}
 
     def gerar_variaveis(self):
         """Gera as variáveis do problema sem realizar alocações."""
@@ -16,16 +18,50 @@ class SmarTask:
             for s in self.shifts
         ]
 
+        self.work = { f: 0 for f in self.variables }
+
+        self.employees = [f"Funcionario_{i}" for i in range(1, self.num_employees + 1)]
+
         # Inicializando variáveis para restrições por funcionário
-        # self.restrictions = {
-        #     "dias_trabalhados": {f: 0 for f in self.funcionarios},  # Dias totais trabalhados no ano
-        #     "domingos_feriados_trabalhados": {f: 0 for f in self.funcionarios},  # Domingos e feriados trabalhados
-        #     "dias_consecutivos": {f: 0 for f in self.funcionarios},  # Dias consecutivos trabalhados
-        #     "turno_anterior": {f: None for f in self.funcionarios},  # Último turno do funcionário
-        #     "sequencia_turnos": {f: [] for f in self.funcionarios},  # Sequência de turnos por funcionário
-        #     "ferias": {f: [] for f in self.funcionarios},  # Lista de dias de férias por funcionário
-        #     "dias_com_alarme": list(range(1, 366, 7)),  # Exemplo: Alarme a cada 7 dias (ajustável)
-        # }
+        self.counters = {
+            "dias_trabalhados": {f: 0 for f in self.employees},  # Dias totais trabalhados no ano
+            "domingos_feriados_trabalhados": {f: 0 for f in self.employees},  # Domingos e feriados trabalhados
+            "dias_consecutivos": {f: 0 for f in self.employees},  # Dias consecutivos trabalhados
+            "turno_anterior": {f: None for f in self.employees},  # Último turno do funcionário
+            "sequencia_turnos": {f: [] for f in self.employees},  # Sequência de turnos por funcionário
+            "ferias": {f: [] for f in self.employees},  # Lista de dias de férias por funcionário
+            "dias_com_alarme": list(range(1, 366, 7)),  # Exemplo: Alarme a cada 7 dias (ajustável)
+        }
+
+    def constraint_consecutive_shift(self, x1, x2):
+        x1 = x1[1:]
+        x2 = x2[1:]
+        e1, d1, s1 = x1.split(",")
+        e2, d2, s2 = x2.split(",")
+        if e1 != e2:
+            return True
+        if d1 == d2:
+            return True
+        if abs(int(d1) - int(d2)) != 1:
+            return True
+        if d2 > d1:
+            if s1 == "T" and s2 == "M":
+                return False
+        if d1 > d2:
+            if s1 == "M" and s2 == "T":
+                return False
+        return True
+
+    def constraint_max_workdays(self, x):
+        e, _, _ = x.split(",")
+        return self.counters["dias_trabalhados"][e] <= 223
+    
+    def constraint_max_sundays_holidays(self, x):
+        e, d, _ = x.split(",")
+        if d in self.counters["dias_com_alarme"] or d % 7 == 0:   # This will need alteration, the week may not begin on a Monday
+            return self.counters["domingos_feriados_trabalhados"][e] <= 22
+        return True
+    
 
     def iniciar_solucao(self):
         """Inicializa as variáveis para o problema."""
@@ -37,4 +73,5 @@ class SmarTask:
 smar_task = SmarTask()
 variaveis = smar_task.iniciar_solucao()
 print(variaveis[:20])
+print(len(variaveis))
 
