@@ -10,7 +10,7 @@ class SmarTask:
         self.work = {}
         self.domain = ["0", "1", "F", "L"]
 
-    def gerar_variaveis(self):
+    def generateVariables(self):
         """Gera as variáveis do problema sem realizar alocações."""
         self.variables = [
             f"E{e},{d},{s}"
@@ -21,15 +21,15 @@ class SmarTask:
 
         self.work = { f: 0 for f in self.variables }
 
-        self.employees = [f"Funcionario_{i}" for i in range(1, self.num_employees + 1)]
+        self.employees = [f"Employee_{i}" for i in range(1, self.num_employees + 1)]
 
         self.counters = {
-            "dias_trabalhados": {f: 0 for f in self.employees}, 
-            "domingos_feriados_trabalhados": {f: 0 for f in self.employees},
-            "dias_consecutivos": {f: 0 for f in self.employees}, 
-            "ferias": {f: [] for f in self.employees},
-            "dias_ferias_folga": {f: 0 for f in self.employees}, 
-            "dias_com_alarme": list(range(1, 366, 7)), 
+            "work_days": {f: 0 for f in self.employees}, 
+            "work_holidays_sunday": {f: 0 for f in self.employees},
+            "consecutive_days": {f: 0 for f in self.employees}, 
+            "vacations": {f: [] for f in self.employees},
+            "days_off": {f: 0 for f in self.employees}, 
+            "alarm_days": list(range(1, 366, 7)), 
         }
 
     def constraint_consecutive_shift(self, x1, x2):
@@ -53,36 +53,36 @@ class SmarTask:
 
     def constraint_max_workdays(self, x):
         e, _, _ = x.split(",")
-        return self.counters["dias_trabalhados"][e] <= 223
+        return self.counters["work_days"][e] <= 223
     
     def constraint_max_sundays_holidays(self, x):
         e, d, _ = x.split(",")
-        if d in self.counters["dias_com_alarme"] or d % 7 == 0:   # This will need alteration, the week may not begin on a Monday
-            return self.counters["domingos_feriados_trabalhados"][e] <= 22
+        if d in self.counters["alarm_days"] or d % 7 == 0:   # This will need alteration, the week may not begin on a Monday
+            return self.counters["work_holidays_sunday"][e] <= 22
         return True
     
     def constraint_max_consecutive_days(self, x):
         e, _, _ = x.split(",")
-        return self.counters["dias_consecutivos"][e] <= 5
+        return self.counters["consecutive_days"][e] <= 5
     
     def constraint_vacation_days(self, x):
         e, d, _ = x.split(",")
-        return d not in self.counters["ferias"][e]
+        return d not in self.counters["vacations"][e]
 
     def check_vacation_days(self, employee):
         employee = employee.split("_")[1]
-        return len(self.counters["ferias"][employee]) == 30
+        return len(self.counters["vacations"][employee]) == 30
     
     def vacation_days(self, employee):
         employee = employee.split("_")[1]
-        self.counters["ferias"][employee] = [
+        self.counters["vacations"][employee] = [
             d for var in self.work if self.work[var] == "F" for e, d, _ in var.split(",") if e == employee
         ]
-        self.counters["dias_ferias_folga"][employee] += len(self.counters["ferias"][employee])
+        self.counters["days_off"][employee] += len(self.counters["vacations"][employee])
 
     def work_days(self, employee):
         employee = employee.split("_")[1]
-        self.counters["dias_trabalhados"][employee] = len([
+        self.counters["work_days"][employee] = len([
             var for var in self.work if self.work[var] == "1" for e, _, _ in var.split(",") if e == employee
         ])
 
@@ -102,19 +102,19 @@ class SmarTask:
                 current_streak = 1 
 
         max_streak = max(max_streak, current_streak)
-        self.counters["dias_consecutivos"][employee] = max_streak
+        self.counters["consecutive_days"][employee] = max_streak
 
     
 
-    def iniciar_solucao(self):
+    def initialize_solution(self):
         """Inicializa as variáveis para o problema."""
-        self.gerar_variaveis()
+        self.generateVariables()
         return self.variables
 
 
 # Exemplo de uso
 smar_task = SmarTask()
-variaveis = smar_task.iniciar_solucao()
-print(variaveis[:20])
-print(len(variaveis))
+vars = smar_task.initialize_solution()
+print(vars[:20])
+print(len(vars))
 
