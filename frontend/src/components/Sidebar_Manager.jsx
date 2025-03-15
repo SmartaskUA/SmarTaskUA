@@ -7,9 +7,9 @@ import logo from '../assets/images/Logo.png';
 const Sidebar_Manager = () => {
   return (
     <div className="sidebar">
-      <div className="logo">
+      <Link to="/">
         <img src={logo} alt="SmarTask Logo" className="logo-img" />
-      </div>
+      </Link>
       <nav className="nav-links">
         <Link to="/manager" className="nav-item">
           <Home size={20} className="icon" /> Home

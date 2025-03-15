@@ -7,9 +7,9 @@ import logo from '../assets/images/Logo.png';
 const Sidebar = () => {
   return (
     <div className="sidebar">
-      <div className="logo">
-        <img src={logo} alt="SmarTask Logo" className="logo-img" />
-      </div>
+      <Link to="/">
+          <img src={logo} alt="SmarTask Logo" className="logo-img" />
+      </Link>
       <nav className="nav-links">
         <Link to="/admin" className="nav-item">
           <Home size={20} className="icon" /> Home
