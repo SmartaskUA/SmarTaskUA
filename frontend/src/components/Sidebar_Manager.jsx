@@ -14,7 +14,7 @@ const Sidebar_Manager = () => {
         <Link to="/manager" className="nav-item">
           <Home size={20} className="icon" /> Home
         </Link>
-        <Link to="/manager/calender" className="nav-item">
+        <Link to="/manager/listcalender" className="nav-item">
           <CalendarDays size={20} className="icon"/> Calendar
         </Link>
         <Link to="/manager/teams" className="nav-item"> 

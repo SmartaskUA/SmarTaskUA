@@ -6,7 +6,7 @@ const Calender = () => {
     <div className="admin-container">
       <Sidebar_Manager />  
       <div className="main-content">
-        <h2 className="heading">Calendar</h2>
+        <h2 className="heading">Calendário de Exemplo</h2>
         <p>Seu calendário aparecerá aqui!</p>
       </div> 
     </div>
