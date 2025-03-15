@@ -58,6 +58,10 @@ class CSP:
         self.alocacoes = {f: {} for f in self.funcionarios}  # Inicializa alocações vazias
 
         for dia in self.dias:
+            for funcionario in self.funcionarios:
+                if dia in self.variaveis["ferias"][funcionario]:
+                    self.alocacoes[funcionario][dia] = "Férias"
+
             candidatos = [
                 f for f in self.funcionarios
                 if self.restricao_dias_totais(f)
@@ -84,7 +88,7 @@ class CSP:
                     self.variaveis["turno_anterior"][funcionario] = turno
                     alocados += 1
 
-            # **Correção**: Garante que pelo menos um funcionário esteja alocado no dia
+            # Garantir que pelo menos um funcionário esteja alocado por dia
             if alocados == 0 and self.funcionarios:
                 funcionario_forcado = random.choice(self.funcionarios)
                 self.alocacoes[funcionario_forcado][dia] = random.choice(self.turnos)
@@ -93,7 +97,14 @@ class CSP:
         """Exporta a escala de trabalho para um CSV anual."""
         with open(nome_arquivo, mode='w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow([""] + list(range(1, 366)))
+
+            # Cabeçalho com os dias representados corretamente por meses
+            meses_dias = []
+            for mes in range(1, 13):
+                for dia in range(1, monthrange(2025, mes)[1] + 1):
+                    meses_dias.append(dia)
+
+            writer.writerow([""] + meses_dias)
 
             def calcular_dia_semana(dia):
                 mes, dia_mes = 1, dia
@@ -107,10 +118,7 @@ class CSP:
             for funcionario in self.funcionarios:
                 linha = [funcionario]
                 for dia in self.dias:
-                    if dia in self.variaveis["ferias"][funcionario]:
-                        linha.append("Férias")
-                    else:
-                        linha.append(self.alocacoes.get(funcionario, {}).get(dia, "Folga"))
+                    linha.append(self.alocacoes.get(funcionario, {}).get(dia, "Folga"))
                 writer.writerow(linha)
 
     def executar(self, nome_arquivo="schedule.csv"):
