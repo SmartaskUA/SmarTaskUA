@@ -18,7 +18,6 @@ const Sidebar = () => {
           <Plus size={20} className="icon" /> Add Algorithm
         </Link>
       </nav>
-
       <div className="admin-btn">
         <Link>
           <button>

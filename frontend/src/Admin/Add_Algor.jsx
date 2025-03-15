@@ -1,14 +1,14 @@
-import React from "react";
-import Sidebar from "../components/Sidebar"; 
-
+import React, { useState } from "react";
+import Sidebar from "../components/Sidebar";
+import AlgorithmForm from "../components/admin/AlgorithmForm";
 const Add_Algor = () => {
   return (
     <div className="admin-container">
-      <div> 
-        <Sidebar /> 
-      </div>
+      <Sidebar />
       <div className="main-content">
-        <h2 className="heading">Add Algoritm</h2>
+        <h2 className="heading">Add Algorithm</h2>
+        <hr />
+        <AlgorithmForm />
       </div>
     </div>
   );

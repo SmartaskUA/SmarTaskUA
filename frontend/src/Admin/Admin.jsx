@@ -1,6 +1,7 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import Sidebar from "../components/Sidebar"; 
-import AlgorithmCard from "../components/AlgorithmCard";
+import AlgorithmCard from "../components/admin/AlgorithmCard";
 import "./Admin.css";
 
 const Admin = () => {
@@ -42,7 +43,10 @@ const Admin = () => {
             )}
           </div>
         </div>
-        <button className="algorithm-card add-button">Adicionar Algoritmo</button>
+        <Link to="./Add_Algor" className="algorithm-card add-button">
+          Adicionar Algoritmo
+        </Link>
+
         <div className="algorithm-cards">
           <AlgorithmCard color="purple" textColor="#7a52aa" name="Algorithms 1" />
           <AlgorithmCard color="green" textColor="#4a7c4a" name="Algorithms 2" />
