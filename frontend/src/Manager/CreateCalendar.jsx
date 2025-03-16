@@ -1,16 +1,15 @@
 import React from "react";
 import Sidebar_Manager from "../components/Sidebar_Manager"; 
 
-const Calendar = () => {
+const CreateCalendar = () => {
   return (
     <div className="admin-container">
       <Sidebar_Manager />  
       <div className="main-content">
-        <h2 className="heading">Calendário de Exemplo</h2>
-        <p>Seu calendário aparecerá aqui!</p>
+        <h2 >CreateCalendar</h2>
       </div> 
     </div>
   );
 };
 
-export default Calendar;
+export default CreateCalendar;

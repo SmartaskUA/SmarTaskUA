@@ -8,7 +8,9 @@ const ListCalendar = () => {
       <Sidebar_Manager />  
       <div className="main-content">
         <h2 className="heading">List Calendar</h2>
-        <Link to="/manager/calendar" className="btn">Calendário de Teste</Link>  
+        
+        <Link to="/manager/calendar/schedule1" className="btn">Calendário 1</Link>
+        <Link to="/manager/calendar/schedule2" className="btn">Calendário 2</Link>
       </div> 
     </div>
   );

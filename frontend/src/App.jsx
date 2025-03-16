@@ -7,7 +7,9 @@ import Add_Algor from "./Admin/Add_Algor";
 import List_Calendar from "./Manager/ListCalendar";
 import Teams from "./Manager/Teams";
 import Employer from "./Manager/Employer";
-import Calendar from "./Manager/Calendar";
+import Calendar from "./Manager/Calender";  
+import CreateCalendar from "./Manager/CreateCalendar";
+
 
 const App = () => {
   return (
@@ -20,7 +22,9 @@ const App = () => {
         <Route path="/manager/listcalendar" element={<List_Calendar />} /> 
         <Route path="/manager/teams" element={<Teams />} />
         <Route path="/manager/employer" element={<Employer />} />
-        <Route path="/manager/calendar" element={<Calendar />} /> 
+        <Route path="/manager/calendar/:calendarId" element={<Calendar />} />
+        <Route path="/manager/createCalendar" element={<CreateCalendar />} />
+
       </Routes>
     </Router>
   );
