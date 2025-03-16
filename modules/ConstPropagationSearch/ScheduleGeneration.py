@@ -84,19 +84,17 @@ class SmarTask:
 
     def work_days(self, employee):
         employee = employee.split("_")[1]
-        for var in self.work:
-            print(var)
         self.counters["work_days"][employee] = len([
             var for var in self.work
             if self.work[var] == "1"
-            and len(var.split(",")) == 3  # Ensures correct format
+            and len(var.split(",")) == 3 
             and var.split(",")[0][1:] == employee
         ])
 
         self.counters["work_holidays_sunday"][employee] = len([
             var for var in self.work
             if self.work[var] == "1"
-            and len(var.split(",")) == 3  # Ensures correct format
+            and len(var.split(",")) == 3 
             and var.split(",")[0][1:] == employee
             and (int(var.split(",")[1]) % 7 == 0 or int(var.split(",")[1]) in self.holidays)
         ])
@@ -107,13 +105,13 @@ class SmarTask:
         workdays = sorted([
             int(var.split(",")[1]) for var in self.work
             if self.work[var] == "1"
-            and len(var.split(",")) == 3  # Ensure correct format
+            and len(var.split(",")) == 3 
             and var.split(",")[0][1:] == employee
         ])
         max_streak = 0
         current_streak = 1
         for i in range(1, len(workdays)):
-            if workdays[i] == workdays[i - 1] + 1:  # Consecutive days
+            if workdays[i] == workdays[i - 1] + 1: 
                 current_streak += 1
             else:
                 max_streak = max(max_streak, current_streak)
@@ -136,22 +134,21 @@ class SmarTask:
                     and self.constraint_max_sundays_holidays(var[1:])
                     and self.constraint_max_consecutive_days(var[1:])
                     and self.constraint_vacation_days(var[1:])
-                    and var[1:].split(",")[0] not in assigned  # Avoid assigning the same employee twice in a day
+                    and var[1:].split(",")[0] not in assigned 
                 ]
 
                 if available_variables:
                     selected_var = random.choice(available_variables)
                     print(selected_var)
                     self.work[selected_var] = "1"
-                    assigned.add(selected_var.split(",")[0][1:])  # Track assigned employee
+                    assigned.add(selected_var.split(",")[0][1:]) 
 
-                    # Update counters
                     print(f"Employee_{selected_var.split(',')[0][1:]}")
                     employee = f"Employee_{selected_var.split(',')[0][1:]}"
                     self.work_days(employee)
                     self.consecutive_days(employee)
 
-    def displaySchedule(self, days=10):
+    def displaySchedule(self, days=365):
         """Exibe a programação para os primeiros dias especificados."""
         print("Generated Schedule (First {} Days)".format(days))
         for d in range(1, days + 1):
