@@ -1,14 +1,18 @@
+import random
+
 class SmarTask:
     def __init__(self):
         self.counters = {}
         self.num_teams = 2
         self.num_employees = 50 
-        self.num_days = 365 
+        self.days = list(range(1, 366))
+        self.num_days = len(self.days) 
         self.shifts = ["M", "T"] 
         self.variables = []
         self.employees = []
         self.work = {}
         self.domain = ["0", "1", "F", "L"]
+        self.holidays = {1, 25, 50, 75, 100, 150, 200, 250, 300, 350}
 
     def generateVariables(self):
         """Gera as variáveis do problema sem realizar alocações."""
@@ -27,7 +31,7 @@ class SmarTask:
             "work_days": {f: 0 for f in self.employees}, 
             "work_holidays_sunday": {f: 0 for f in self.employees},
             "consecutive_days": {f: 0 for f in self.employees}, 
-            "vacations": {f: [] for f in self.employees},
+            "vacations": {f: set(random.sample(self.days, 30)) for f in self.employees},
             "days_off": {f: 0 for f in self.employees}, 
             "alarm_days": list(range(1, 366, 7)), 
         }
@@ -51,45 +55,61 @@ class SmarTask:
 
     def constraint_max_workdays(self, x):
         e, _, _ = x.split(",")
-        return self.counters["work_days"][e] <= 223
+        return self.counters["work_days"][f"Employee_{e}"] <= 223
     
     def constraint_max_sundays_holidays(self, x):
         e, d, _ = x.split(",")
-        if d in self.counters["alarm_days"] or d % 7 == 0:   # This will need alteration, the week may not begin on a Monday
-            return self.counters["work_holidays_sunday"][e] <= 22
+        if d in self.counters["alarm_days"] or int(d) % 7 == 0:   # This will need alteration, the week may not begin on a Monday
+            return self.counters["work_holidays_sunday"][f"Employee_{e}"] <= 22
         return True
     
     def constraint_max_consecutive_days(self, x):
         e, _, _ = x.split(",")
-        return self.counters["consecutive_days"][e] <= 5
+        return self.counters["consecutive_days"][f"Employee_{e}"] <= 5
     
     def constraint_vacation_days(self, x):
         e, d, _ = x.split(",")
-        return d not in self.counters["vacations"][e]
+        return d not in self.counters["vacations"][f"Employee_{e}"]
 
-    def check_vacation_days(self, employee):
-        employee = employee.split("_")[1]
-        return len(self.counters["vacations"][employee]) == 30
+    def check_vacation_days(self, x):
+        e, d, _ = x.split(",")
+        return d not in self.counters["vacations"][f"Employee_{e}"]
     
-    def vacation_days(self, employee):
-        employee = employee.split("_")[1]
-        self.counters["vacations"][employee] = [
-            d for var in self.work if self.work[var] == "F" for e, d, _ in var.split(",") if e == employee
-        ]
-        self.counters["days_off"][employee] += len(self.counters["vacations"][employee])
+    # def vacation_days(self, employee):
+    #     employee = employee.split("_")[1]
+    #     self.counters["vacations"][employee] = [
+    #         d for var in self.work if self.work[var] == "F" for e, d, _ in var.split(",") if e == employee
+    #     ]
+    #     self.counters["days_off"][employee] += len(self.counters["vacations"][employee])
 
     def work_days(self, employee):
         employee = employee.split("_")[1]
+        for var in self.work:
+            print(var)
         self.counters["work_days"][employee] = len([
-            var for var in self.work if self.work[var] == "1" for e, _, _ in var.split(",") if e == employee
+            var for var in self.work
+            if self.work[var] == "1"
+            and len(var.split(",")) == 3  # Ensures correct format
+            and var.split(",")[0][1:] == employee
         ])
+
+        self.counters["work_holidays_sunday"][employee] = len([
+            var for var in self.work
+            if self.work[var] == "1"
+            and len(var.split(",")) == 3  # Ensures correct format
+            and var.split(",")[0][1:] == employee
+            and (int(var.split(",")[1]) % 7 == 0 or int(var.split(",")[1]) in self.holidays)
+        ])
+
 
     def consecutive_days(self, employee):
         employee = employee.split("_")[1]
-        workdays = sorted(
-            [int(d) for var in self.work if self.work[var] == "1"
-            for e, d, _ in var.split(",") if e == employee]
-        )
+        workdays = sorted([
+            int(var.split(",")[1]) for var in self.work
+            if self.work[var] == "1"
+            and len(var.split(",")) == 3  # Ensure correct format
+            and var.split(",")[0][1:] == employee
+        ])
         max_streak = 0
         current_streak = 1
         for i in range(1, len(workdays)):
@@ -102,17 +122,48 @@ class SmarTask:
         max_streak = max(max_streak, current_streak)
         self.counters["consecutive_days"][employee] = max_streak
 
-    
-
-    def initialize_solution(self):
-        """Inicializa as variáveis para o problema."""
+    def generateSchedule(self):
+        """Gera o calendário respeitando as restrições."""
         self.generateVariables()
-        return self.variables
+
+        for d in self.days:
+            assigned = set()
+
+            for shift in self.shifts:
+                available_variables = [
+                    var for var in self.variables
+                    if self.constraint_max_workdays(var[1:])
+                    and self.constraint_max_sundays_holidays(var[1:])
+                    and self.constraint_max_consecutive_days(var[1:])
+                    and self.constraint_vacation_days(var[1:])
+                    and var[1:].split(",")[0] not in assigned  # Avoid assigning the same employee twice in a day
+                ]
+
+                if available_variables:
+                    selected_var = random.choice(available_variables)
+                    print(selected_var)
+                    self.work[selected_var] = "1"
+                    assigned.add(selected_var.split(",")[0][1:])  # Track assigned employee
+
+                    # Update counters
+                    print(f"Employee_{selected_var.split(',')[0][1:]}")
+                    employee = f"Employee_{selected_var.split(',')[0][1:]}"
+                    self.work_days(employee)
+                    self.consecutive_days(employee)
+
+    def displaySchedule(self, days=10):
+        """Exibe a programação para os primeiros dias especificados."""
+        print("Generated Schedule (First {} Days)".format(days))
+        for d in range(1, days + 1):
+            print(f"\nDay {d}:")
+            for shift in self.shifts:
+                assigned = [e for e in self.employees if self.work.get(f"E{e.split('_')[1]},{d},{shift}", "0") == "1"]
+                print(f"  {shift} Shift: {', '.join(assigned) if assigned else 'No Assignment'}")
+    
 
 
 # Exemplo de uso
 smar_task = SmarTask()
-vars = smar_task.initialize_solution()
-print(vars[:20])
-print(len(vars))
+smar_task.generateSchedule()
+smar_task.displaySchedule()
 
