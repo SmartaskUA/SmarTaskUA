@@ -207,22 +207,24 @@ class SmarTask:
                 writer.writerow(line)
 
     def verify(self):
-        for employee in self.employees:
-            self.consecutive_days(employee)
-            self.work_days(employee)
-            self.consecutive_days(employee)
-            for day in self.days:
-                for shift in self.shifts:
-                    if not self.constraint_consecutive_shift(f"{employee.split('_')[1]},{day},{shift}", f"{employee.split('_')[1]},{day+1},{shift}"):
-                        print(f"Employee {employee} has consecutive shifts on day {day} ({shift})")
-                    if not self.constraint_max_workdays(f"{employee.split('_')[1]},{day},{shift}"):
-                        print(f"Employee {employee} has more than 223 workdays")
-                    if not self.constraint_max_sundays_holidays(f"{employee.split('_')[1]},{day},{shift}"):
-                        print(f"Employee {employee} has more than 22 sundays/holidays")
-                    if not self.constraint_max_consecutive_days(f"{employee.split('_')[1]},{day},{shift}"):
-                        print(f"Employee {employee} has more than 5 consecutive days")
-                    if not self.constraint_vacation_days(f"{employee.split('_')[1]},{day},{shift}"):
-                        print(f"Employee {employee} has vacation on day {day}")
+        for employee in self.work:
+            print(employee, self.work[employee])
+        # for employee in self.employees:
+        #     self.consecutive_days(employee)
+        #     self.work_days(employee)
+        #     self.consecutive_days(employee)
+        #     for day in self.days:
+        #         for shift in self.shifts:
+        #             if not self.constraint_consecutive_shift(f"{employee.split('_')[1]},{day},{shift}", f"{employee.split('_')[1]},{day+1},{shift}"):
+        #                 print(f"Employee {employee} has consecutive shifts on day {day} ({shift})")
+        #             if not self.constraint_max_workdays(f"{employee.split('_')[1]},{day},{shift}"):
+        #                 print(f"Employee {employee} has more than 223 workdays")
+        #             if not self.constraint_max_sundays_holidays(f"{employee.split('_')[1]},{day},{shift}"):
+        #                 print(f"Employee {employee} has more than 22 sundays/holidays")
+        #             if not self.constraint_max_consecutive_days(f"{employee.split('_')[1]},{day},{shift}"):
+        #                 print(f"Employee {employee} has more than 5 consecutive days")
+        #             if not self.constraint_vacation_days(f"{employee.split('_')[1]},{day},{shift}"):
+        #                 print(f"Employee {employee} has vacation on day {day}")
     
 
 
