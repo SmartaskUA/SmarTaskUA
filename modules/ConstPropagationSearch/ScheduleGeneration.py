@@ -45,15 +45,15 @@ class SmarTask:
         e2, d2, s2 = x2.split(",")
         if e1 != e2:
             return True
-        if d1 == d2 and s1 == s2:
+        if d1 == d2:
             return False
         if abs(int(d1) - int(d2)) != 1:
             return True
         if d1 > d2 and s1 == "M" and s2 == "T":
-            return True
+            return False
         if d1 < d2 and s1 == "T" and s2 == "M":
-            return True
-        return False
+            return False
+        return True
 
     def constraint_max_workdays(self, x):
         e, _, _ = x.split(",")
@@ -148,7 +148,7 @@ class SmarTask:
                 if available_variables:
                     selected_var = random.choice(available_variables)
                     print(selected_var)
-                    self.work[selected_var] = "M" if shift == "M" else "T"
+                    self.work[selected_var] = shift
                     assigned.add(selected_var.split(",")[0][1:]) 
 
                     print(f"Employee_{selected_var.split(',')[0][1:]}")
@@ -186,15 +186,24 @@ class SmarTask:
                     month_day -= monthrange(2025, month)[1]
                     month += 1
                 return day_abbr[weekday(2025, month, month_day)]
-
+            
             writer.writerow([""] + [calculate_weekDay(day) for day in self.days])
 
             for employee in self.employees:
                 line = [employee]
                 for day in self.days:
-                    for shift in self.shifts:
-                        # print(self.work[f"E{employee.split("_")[1]},{day},{shift}"])
-                        line.append(self.work.get(f"E{employee.split("_")[1]},{day},{shift}", "Folga"))
+                    morning_shift = self.work.get(f"E{employee.split('_')[1]},{day},M")
+                    afternoon_shift = self.work.get(f"E{employee.split('_')[1]},{day},T")
+
+                    if morning_shift == "M":
+                        line.append("M")
+                    elif afternoon_shift == "T":
+                        line.append("T")
+                    elif morning_shift == "F" or afternoon_shift == "F":
+                        line.append("F")
+                    else:
+                        line.append("0")
+
                 writer.writerow(line)
     
 
