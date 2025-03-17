@@ -40,28 +40,28 @@ public class EmployeesController {
 
     @Operation(summary = "Get an employee by ID")
     @GetMapping("/{id}")
-    public ResponseEntity<Employee> getEmployeeById(@PathVariable Long id) {
+    public ResponseEntity<Employee> getEmployeeById(@PathVariable String id) {
         Employee employee = employeeService.getEmployeeById(id);
         return new ResponseEntity<>(employee, HttpStatus.OK);
     }
 
     @Operation(summary = "Update an employee")
     @PutMapping("/{id}")
-    public ResponseEntity<String> updateEmployee(@RequestBody Employee employee, @PathVariable Long id) {
+    public ResponseEntity<String> updateEmployee(@RequestBody Employee employee, @PathVariable String id) {
         employeeService.updateEmployee(id, employee);
         return ResponseEntity.ok("Employee updated successfully");
     }
 
     @Operation(summary = "Get all the restriction to an employee by their ID")
     @GetMapping("/restriction/{id}")
-    public ResponseEntity<Map<String, List<String>>> getRestriction(@PathVariable Long id) {
+    public ResponseEntity<Map<String, List<String>>> getRestriction(@PathVariable String id) {
         return ResponseEntity.ok(employeeService.getEmployeeRestrictions(id));
     }
 
     @Operation(summary = "Add new restriction to an employee by their ID")
     @PostMapping("/restriction/{id}")
     public ResponseEntity<String> addRestriction(@RequestBody RestrictionRequest restrictionRequest,
-                                                 @PathVariable Long id) {
+                                                 @PathVariable String id) {
         System.out.println(restrictionRequest+" for "+id);
         employeeService.addRestrictionToEmployee(id, restrictionRequest.getRestrictionType(), restrictionRequest.getDate());
         return ResponseEntity.ok("Restriction added successfully");
@@ -70,7 +70,7 @@ public class EmployeesController {
     @Operation(summary = "Update new restriction to an employee by their ID")
     @PutMapping("/restriction/{id}")
     public ResponseEntity<String> updateRestriction(@RequestBody RestrictionRequest restrictionRequest,
-                                                    @PathVariable Long id) {
+                                                    @PathVariable String id) {
         System.out.println(restrictionRequest+" for "+id);
         // Process the received restrictionType and date
         return ResponseEntity.ok("Restriction update successfully");
@@ -79,7 +79,7 @@ public class EmployeesController {
     @Operation(summary = "Delete new restriction to an employee by their ID")
     @DeleteMapping("/restriction/{id}")
     public ResponseEntity<String> deleteRestriction(@RequestBody RestrictionRequest restrictionRequest,
-                                                    @PathVariable Long id) {
+                                                    @PathVariable String id) {
         System.out.println(restrictionRequest+" for "+id);
         employeeService.removeRestrictionFromEmployee(id, restrictionRequest.getRestrictionType(), restrictionRequest.getDate());
         return ResponseEntity.ok("Restriction deleted successfully");

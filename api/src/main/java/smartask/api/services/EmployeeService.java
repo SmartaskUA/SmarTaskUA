@@ -27,7 +27,7 @@ public class EmployeeService {
         saveEmployee(employee);
     }
 
-    public Employee getEmployeeById(Long id){
+    public Employee getEmployeeById(String id){
         Optional<Employee> optionalEmployee = repository.findById(id);
         if (!optionalEmployee.isPresent()) {
             throw new IllegalArgumentException("Employee not found");
@@ -35,14 +35,14 @@ public class EmployeeService {
         return optionalEmployee.get();
     }
 
-    public void updateEmployee(Long id, Employee employee){
+    public void updateEmployee(String id, Employee employee){
         Employee employeeToUpdate = getEmployeeById(id);
         employeeToUpdate.setName(employee.getName());
         employeeToUpdate.setTeam(employee.getTeam());
         saveEmployee(employeeToUpdate);
     }
 
-    public void addRestrictionToEmployee(Long id, String restrictionType, String date) {
+    public void addRestrictionToEmployee(String id, String restrictionType, String date) {
         Employee employee = getEmployeeById(id);
         if (employee.getRestrictions() == null) {
             employee.setRestrictions(new HashMap<>());
@@ -54,7 +54,7 @@ public class EmployeeService {
         updateEmployee(id, employee);
     }
 
-    public void removeRestrictionFromEmployee(Long id, String restrictionType, String date) {
+    public void removeRestrictionFromEmployee(String id, String restrictionType, String date) {
         Employee employee = getEmployeeById(id);
         if (employee.getRestrictions() == null) {
             return; 
@@ -69,15 +69,12 @@ public class EmployeeService {
         }
     }
 
-    public Map<String, List<String>> getEmployeeRestrictions(Long id) {
+    public Map<String, List<String>> getEmployeeRestrictions(String id) {
         Employee employee = getEmployeeById(id);
         return employee.getRestrictions() != null ? new HashMap<>(employee.getRestrictions()) : new HashMap<>();
     }
 
     public void saveEmployee(Employee employee) {
-        if (employee.getId() == null) {
-            employee.setId(sequenceGeneratorService.generateSequence("employees"));
-        }
-        repository.save(employee);
+        repository.save(employee);  // Save employee with the generated ID
     }
 }
