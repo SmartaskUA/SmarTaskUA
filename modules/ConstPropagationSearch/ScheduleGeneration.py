@@ -1,17 +1,19 @@
+from calendar import day_abbr, monthrange, weekday
+import csv
 import random
 
 class SmarTask:
     def __init__(self):
         self.counters = {}
         self.num_teams = 2
-        self.num_employees = 50 
+        self.num_employees = 10 
         self.days = list(range(1, 366))
         self.num_days = len(self.days) 
         self.shifts = ["M", "T"] 
         self.variables = []
         self.employees = []
         self.work = {}
-        self.domain = ["0", "1", "F", "L"]
+        self.domain = ["0", "M", "T", "F", "L"]
         self.holidays = {1, 25, 50, 75, 100, 150, 200, 250, 300, 350}
 
     def generateVariables(self):
@@ -86,14 +88,14 @@ class SmarTask:
         employee = employee.split("_")[1]
         self.counters["work_days"][employee] = len([
             var for var in self.work
-            if self.work[var] == "1"
+            if self.work[var] == "M" or self.work[var] == "T"
             and len(var.split(",")) == 3 
             and var.split(",")[0][1:] == employee
         ])
 
         self.counters["work_holidays_sunday"][employee] = len([
             var for var in self.work
-            if self.work[var] == "1"
+            if self.work[var] == "M" or self.work[var] == "T"
             and len(var.split(",")) == 3 
             and var.split(",")[0][1:] == employee
             and (int(var.split(",")[1]) % 7 == 0 or int(var.split(",")[1]) in self.holidays)
@@ -104,7 +106,7 @@ class SmarTask:
         employee = employee.split("_")[1]
         workdays = sorted([
             int(var.split(",")[1]) for var in self.work
-            if self.work[var] == "1"
+            if self.work[var] == "M" or self.work[var] == "T"
             and len(var.split(",")) == 3 
             and var.split(",")[0][1:] == employee
         ])
@@ -140,7 +142,7 @@ class SmarTask:
                 if available_variables:
                     selected_var = random.choice(available_variables)
                     print(selected_var)
-                    self.work[selected_var] = "1"
+                    self.work[selected_var] = "M" if shift == "M" else "T"
                     assigned.add(selected_var.split(",")[0][1:]) 
 
                     print(f"Employee_{selected_var.split(',')[0][1:]}")
@@ -148,19 +150,40 @@ class SmarTask:
                     self.work_days(employee)
                     self.consecutive_days(employee)
 
-    def displaySchedule(self, days=365):
-        """Exibe a programação para os primeiros dias especificados."""
-        print("Generated Schedule (First {} Days)".format(days))
-        for d in range(1, days + 1):
-            print(f"\nDay {d}:")
-            for shift in self.shifts:
-                assigned = [e for e in self.employees if self.work.get(f"E{e.split('_')[1]},{d},{shift}", "0") == "1"]
-                print(f"  {shift} Shift: {', '.join(assigned) if assigned else 'No Assignment'}")
+    def export(self, archive_name="schedule_J.csv"):
+        """Exporta a escala de trabalho para um CSV anual."""
+        with open(archive_name, mode='w', newline='') as file:
+            writer = csv.writer(file)
+
+            # Cabeçalho com os dias representados corretamente por monthes
+            month_days = []
+            for month in range(1, 13):
+                for day in range(1, monthrange(2025, month)[1] + 1):
+                    month_days.append(day)
+
+            writer.writerow([""] + month_days)
+
+            def calculate_weekDay(day):
+                month, month_day = 1, day
+                while month_day > monthrange(2025, month)[1]:
+                    month_day -= monthrange(2025, month)[1]
+                    month += 1
+                return day_abbr[weekday(2025, month, month_day)]
+
+            writer.writerow([""] + [calculate_weekDay(day) for day in self.days])
+
+            for employee in self.employees:
+                line = [employee]
+                for day in self.days:
+                    for shift in self.shifts:
+                        # print(self.work[f"E{employee.split("_")[1]},{day},{shift}"])
+                        line.append(self.work.get(f"E{employee.split("_")[1]},{day},{shift}", "Folga"))
+                writer.writerow(line)
     
 
 
 # Exemplo de uso
 smar_task = SmarTask()
 smar_task.generateSchedule()
-smar_task.displaySchedule()
+smar_task.export()
 
