@@ -5,7 +5,7 @@ import Sidebar_Manager from "../components/Sidebar_Manager";
 import CalendarTable from "../components/manager/CalendarTable";
 import CalendarHeader from "../components/manager/CalendarHeader"; 
 import BarChartDropdown from "../components/manager/BarChartDropdown";
-import BarChartDropdownFolgasFerias from "../components/manager/BarChartDropdownFolgasFerias"; // <-- novo import
+import BarChartDropdownFolgasFerias from "../components/manager/BarChartDropdownFolgasFerias"; 
 import "./Calendar.css";
 
 const Calendar = () => {
@@ -65,21 +65,17 @@ const Calendar = () => {
           downloadCSV={downloadCSV}
         />
         
-        {/* Tabela principal do calendário */}
         <CalendarTable 
           data={data} 
           selectedMonth={selectedMonth} 
           daysInMonth={daysInMonth} 
         />
 
-        {/* Dropdown existente para Carga Horária (M + T) */}
         <BarChartDropdown 
           data={data} 
           selectedMonth={selectedMonth} 
           daysInMonth={daysInMonth} 
         />
-
-        {/* Novo dropdown para Folgas + Férias (F + Fe) */}
         <BarChartDropdownFolgasFerias
           data={data}
           selectedMonth={selectedMonth}
