@@ -1,5 +1,5 @@
 import React from "react";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography } from "@mui/material";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
 
 const CalendarTable = ({ data, selectedMonth, daysInMonth }) => {
   const abbreviateValue = (value) => {
@@ -46,7 +46,9 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth }) => {
             <TableRow style={{ backgroundColor: "#007bff", color: "white" }}>
               <TableCell style={{ fontSize: "12px", padding: "6px" }}>Funcionário</TableCell>
               {getDisplayedData()[0]?.slice(1).map((_, index) => (
-                <TableCell key={index} style={{ fontSize: "12px", padding: "6px" }}>Dia {index + 1}</TableCell>
+                <TableCell key={index} style={{ fontSize: "12px", padding: "6px" }}>
+                  Dia {index + 1}
+                </TableCell>
               ))}
             </TableRow>
           </TableHead>
@@ -72,22 +74,62 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth }) => {
         </Table>
       </TableContainer>
 
-      <div style={{ marginTop: "3rem", padding: "2%", backgroundColor: "#f1f1f1", borderRadius: "10px" }}>
-        <Typography variant="body2" style={{ marginBottom: "5px" }}>
-          <strong>Legenda:</strong>
-        </Typography>
-        <Typography variant="body2" style={{ marginBottom: "5px", color: "#a0d8ef" }}>
-          <span style={{ fontWeight: "bold" }}>F</span>: Folga
-        </Typography>
-        <Typography variant="body2" style={{ marginBottom: "5px", color: "#ffcccb" }}>
-          <span style={{ fontWeight: "bold" }}>Fe</span>: Férias
-        </Typography>
-        <Typography variant="body2" style={{ marginBottom: "5px", color: "#d4edda" }}>
-          <span style={{ fontWeight: "bold" }}>M</span>: Manhã
-        </Typography>
-        <Typography variant="body2" style={{ marginBottom: "5px", color: "#f9e79f" }}>
-          <span style={{ fontWeight: "bold" }}>T</span>: Tarde
-        </Typography>
+      <div
+        style={{
+          marginTop: "1rem",
+          padding: "2%",
+          // backgroundColor: "#f1f1f1",
+          borderRadius: "10px",
+          display: "flex",
+          justifyContent: "flex-start",
+          alignItems: "center",
+          gap: "20px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <span style={{ fontWeight: "bold", marginRight: "5px" }}>Folga</span> -{" "}
+          <span
+            style={{
+              display: "inline-block",
+              width: "25px",
+              height: "25px",
+              backgroundColor: "#a0d8ef",
+            }}
+          ></span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <span style={{ fontWeight: "bold", marginRight: "5px" }}>Férias</span> -{" "}
+          <span
+            style={{
+              display: "inline-block",
+              width: "25px",
+              height: "25px",
+              backgroundColor: "#ffcccb",
+            }}
+          ></span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <span style={{ fontWeight: "bold", marginRight: "5px" }}>Manhã</span> -{" "}
+          <span
+            style={{
+              display: "inline-block",
+              width: "25px",
+              height: "25px",
+              backgroundColor: "#d4edda",
+            }}
+          ></span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <span style={{ fontWeight: "bold", marginRight: "5px" }}>Tarde</span> -{" "}
+          <span
+            style={{
+              display: "inline-block",
+              width: "25px",
+              height: "25px",
+              backgroundColor: "#f9e79f",
+            }}
+          ></span>
+        </div>
       </div>
     </div>
   );
