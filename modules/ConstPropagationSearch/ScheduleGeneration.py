@@ -61,7 +61,7 @@ class SmarTask:
     
     def constraint_max_sundays_holidays(self, x):
         e, d, _ = x.split(",")
-        if d in self.counters["alarm_days"] or int(d) % 7 == 0:   # This will need alteration, the week may not begin on a Monday
+        if d in self.holidays or int(d) % 7 == 0:   # This will need alteration, the week may not begin on a Monday
             return self.counters["work_holidays_sunday"][f"Employee_{e}"] <= 22
         return True
     
@@ -122,13 +122,19 @@ class SmarTask:
         max_streak = max(max_streak, current_streak)
         self.counters["consecutive_days"][employee] = max_streak
 
+    def vacation_days(self, employee):
+        vacation_days = self.counters["vacations"][employee]
+        employee = employee.split("_")[1]
+        for i in vacation_days:
+            self.work[f"E{employee},{i},M"] = "F"
+            self.work[f"E{employee},{i},T"] = "F"
+
     def generateSchedule(self):
         """Gera o calendário respeitando as restrições."""
         self.generateVariables()
 
         for d in self.days:
             assigned = set()
-
             for shift in self.shifts:
                 available_variables = [
                     var for var in self.variables
@@ -147,8 +153,19 @@ class SmarTask:
 
                     print(f"Employee_{selected_var.split(',')[0][1:]}")
                     employee = f"Employee_{selected_var.split(',')[0][1:]}"
+                    self.vacation_days(employee)
                     self.work_days(employee)
                     self.consecutive_days(employee)
+
+                if len(assigned) < 2:
+                    fallback_variables = [
+                        var for var in self.variables if var.endswith(f",{d},M") or var.endswith(f",{d},T")
+                    ]
+                    while len(assigned) < 2 and fallback_variables:
+                        selected_var = random.choice(fallback_variables)
+                        if selected_var.split(",")[0][1:] not in assigned: 
+                            self.work[selected_var] = selected_var.split(",")[2]  
+                            assigned.add(selected_var.split(",")[0][1:])
 
     def export(self, archive_name="schedule_J.csv"):
         """Exporta a escala de trabalho para um CSV anual."""
