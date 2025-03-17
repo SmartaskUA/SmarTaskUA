@@ -3,7 +3,7 @@ import random
 from calendar import monthrange, day_abbr, weekday
 
 
-class CSP:
+class GlutonySearch:
     def __init__(self):
         self.funcionarios = []
         self.dias = []
@@ -134,5 +134,5 @@ class CSP:
 
 
 # 🎯 **Executando o algoritmo**
-smar_task = CSP()
+smar_task = GlutonySearch()
 smar_task.executar()
