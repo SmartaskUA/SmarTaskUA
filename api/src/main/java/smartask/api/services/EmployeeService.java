@@ -39,6 +39,7 @@ public class EmployeeService {
         Employee employeeToUpdate = getEmployeeById(id);
         employeeToUpdate.setName(employee.getName());
         employeeToUpdate.setTeam(employee.getTeam());
+        employeeToUpdate.setRestrictions(employee.getRestrictions());
         saveEmployee(employeeToUpdate);
     }
 
@@ -47,12 +48,17 @@ public class EmployeeService {
         if (employee.getRestrictions() == null) {
             employee.setRestrictions(new HashMap<>());
         }
-        // employee.getRestrictions().computeIfAbsent(restrictionType, k -> new ArrayList<>());
+
+        // Garante que a chave sempre tenha uma lista associada
+        employee.getRestrictions().computeIfAbsent(restrictionType, k -> new ArrayList<>());
+
         if (!employee.getRestrictions().get(restrictionType).contains(date)) {
             employee.getRestrictions().get(restrictionType).add(date);
         }
+
         updateEmployee(id, employee);
     }
+
 
     public void removeRestrictionFromEmployee(String id, String restrictionType, String date) {
         Employee employee = getEmployeeById(id);
