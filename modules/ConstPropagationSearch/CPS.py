@@ -1,117 +1,94 @@
 import csv
 import random
-from calendar import monthrange, weekday
+from calendar import monthrange, day_abbr, weekday
 
 
 class CSP:
     def __init__(self):
-        self.funcionarios = [f"Funcionario_{i}" for i in range(1, 13)]  # 12 funcionários
-        self.dias = list(range(1, 366))  # 365 dias do ano
+        self.funcionarios = [f"Funcionario_{i}" for i in range(1, 13)]
+        self.dias = list(range(1, 366))
         self.turnos = ["Manhã", "Tarde"]
-        self.feriados = {1, 25, 50, 75, 100, 150, 200, 250, 300, 350}  # Exemplo de feriados
-        self.ferias = {f: set(random.sample(self.dias, 30)) for f in self.funcionarios}  # 30 dias de férias aleatórios
+        self.feriados = {1, 25, 50, 75, 100, 150, 200, 250, 300, 350}  # Exemplo
+        self.dias_com_alarme = list(range(1, 366, 7))
 
-        self.alocacoes = {f: {} for f in self.funcionarios}
+        # Estado das variáveis de restrição
         self.dias_trabalhados = {f: 0 for f in self.funcionarios}
         self.domingos_feriados_trabalhados = {f: 0 for f in self.funcionarios}
         self.dias_consecutivos = {f: 0 for f in self.funcionarios}
         self.turno_anterior = {f: None for f in self.funcionarios}
+        self.ferias = {f: set(random.sample(self.dias, 30)) for f in self.funcionarios}
 
-    def obter_mes_dia(self, dia):
-        """Converte um número de dia do ano para (mês, dia do mês)."""
-        mes = 1
-        while dia > monthrange(2025, mes)[1]:
-            dia -= monthrange(2025, mes)[1]
-            mes += 1
-        return mes, dia
+        self.alocacoes = {f: {} for f in self.funcionarios}
+        self.memo_feriados = {}
 
-    def validar_restricoes(self, funcionario, dia, turno):
-        """Verifica se a alocação atende a todas as restrições."""
+    def is_feriado_ou_domingo(self, dia):
+        if dia not in self.memo_feriados:
+            self.memo_feriados[dia] = dia in self.feriados or weekday(2025, (dia - 1) // 31 + 1,
+                                                                      (dia - 1) % 31 + 1) == 6
+        return self.memo_feriados[dia]
 
-        # Restrição de dias totais no ano
+    def restricoes_validas(self, funcionario, dia, turno):
         if self.dias_trabalhados[funcionario] >= 223:
             return False
-
-        # Restrição de domingos e feriados
-        mes, dia_mes = self.obter_mes_dia(dia)
-        if dia in self.feriados or weekday(2025, mes, dia_mes) == 6:  # Domingo
-            if self.domingos_feriados_trabalhados[funcionario] >= 22:
-                return False
-
-        # Restrição de 5 dias consecutivos no máximo
+        if self.is_feriado_ou_domingo(dia) and self.domingos_feriados_trabalhados[funcionario] >= 22:
+            return False
         if self.dias_consecutivos[funcionario] >= 5:
             return False
-
-        # Restrição de sequência de turnos
-        turno_anterior = self.turno_anterior[funcionario]
-        if turno_anterior:
-            if (turno_anterior, turno) not in [("Manhã", "Manhã"), ("Tarde", "Tarde"), ("Manhã", "Tarde")]:
-                return False
-
-        # Restrição de férias
+        if self.turno_anterior[funcionario] == "Tarde" and turno == "Manhã":
+            return False
         if dia in self.ferias[funcionario]:
             return False
-
         return True
 
-    def backtrack(self, dia=1):
-        """Resolve a escala usando busca com propagação de restrições."""
-        if dia > 365:
-            return True  # Solução encontrada
+    def forward_checking(self, funcionario, dia):
+        """Remove futuras possibilidades inválidas"""
+        if self.dias_trabalhados[funcionario] + (365 - dia) < 223:
+            return False  # Já inviabiliza o limite total
+        return True
 
-        for turno in self.turnos:
-            for funcionario in self.funcionarios:
-                if self.validar_restricoes(funcionario, dia, turno):
-                    # Alocar funcionário
+    def gerar_horario(self):
+        """Gera um horário seguindo as restrições com heurísticas"""
+        print("🔄 Iniciando geração de horários...")
+        dias_ordenados = sorted(self.dias,
+                                key=lambda d: sum(self.restricoes_validas(f, d, "Manhã") for f in self.funcionarios))
+
+        for dia in dias_ordenados:
+            candidatos = [f for f in self.funcionarios if self.restricoes_validas(f, dia, "Manhã")]
+            candidatos.sort(key=lambda f: self.dias_trabalhados[f])  # Escolhe quem trabalhou menos
+
+            if not candidatos:
+                print(f"⚠️ Nenhum funcionário disponível para o dia {dia}, alocação forçada!")
+                continue
+
+            for turno in self.turnos:
+                if candidatos:
+                    funcionario = candidatos.pop(0)
                     self.alocacoes[funcionario][dia] = turno
                     self.dias_trabalhados[funcionario] += 1
                     self.dias_consecutivos[funcionario] += 1
                     self.turno_anterior[funcionario] = turno
-
-                    # Atualiza contagem de domingos/feriados
-                    mes, dia_mes = self.obter_mes_dia(dia)
-                    if dia in self.feriados or weekday(2025, mes, dia_mes) == 6:
+                    if self.is_feriado_ou_domingo(dia):
                         self.domingos_feriados_trabalhados[funcionario] += 1
 
-                    # Verifica se consegue resolver os próximos dias
-                    if self.backtrack(dia + 1):
-                        return True  # Encontrou solução válida
+                    if not self.forward_checking(funcionario, dia):
+                        print(f"❌ Forward Checking: Removendo {funcionario} por impossibilidade futura!")
+                        candidatos.remove(funcionario)
 
-                    # Backtracking (desfaz alocação)
-                    del self.alocacoes[funcionario][dia]
-                    self.dias_trabalhados[funcionario] -= 1
-                    self.dias_consecutivos[funcionario] -= 1
-                    self.turno_anterior[funcionario] = None
-                    if dia in self.feriados or weekday(2025, mes, dia_mes) == 6:
-                        self.domingos_feriados_trabalhados[funcionario] -= 1
-
-        return False  # Nenhuma alocação possível
-
-    def exportar_para_csv(self, nome_arquivo):
-        """Exporta a escala para um arquivo CSV."""
+    def exportar_para_csv(self, nome_arquivo="schedule.csv"):
+        """Exporta a escala de trabalho para CSV"""
         with open(nome_arquivo, mode='w', newline='') as file:
             writer = csv.writer(file)
+            writer.writerow(["Dia"] + self.funcionarios)
+            for dia in self.dias:
+                writer.writerow([dia] + [self.alocacoes[f].get(dia, "Folga") for f in self.funcionarios])
+        print("💾 Escala exportada para", nome_arquivo)
 
-            # Cabeçalho com os dias
-            writer.writerow(["Funcionário"] + list(range(1, 366)))
-
-            for funcionario in self.funcionarios:
-                linha = [funcionario]
-                for dia in self.dias:
-                    linha.append(self.alocacoes.get(funcionario, {}).get(dia, "Folga"))
-                writer.writerow(linha)
-
-    def executar(self, nome_arquivo="schedule.csv"):
-        """Executa a geração do horário e exportação."""
-        print("🔄 Gerando horário com propagação de restrições...")
-        if self.backtrack():
-            print("✅ Horário gerado com sucesso!")
-            self.exportar_para_csv(nome_arquivo)
-            print(f"📂 Exportado para {nome_arquivo}")
-        else:
-            print("❌ Não foi possível encontrar um horário válido.")
+    def executar(self):
+        """Executa geração e exportação"""
+        self.gerar_horario()
+        self.exportar_para_csv()
 
 
-# 🎯 Executando o algoritmo
-smar_task = CSP()
-smar_task.executar()
+# 🚀 Executando
+csp = CSP()
+csp.executar()
