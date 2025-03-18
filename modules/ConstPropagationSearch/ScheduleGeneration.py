@@ -143,6 +143,10 @@ class SmarTask:
                     and self.constraint_max_consecutive_days(var[1:])
                     and self.constraint_vacation_days(var[1:])
                     and var[1:].split(",")[0] not in assigned 
+                    and not (
+                        shift == "M" and 
+                        self.work.get(f"E{var.split(',')[0][1:]},{d-1},T") == "T" or self.work.get(f"E{var.split(',')[0][1:]},{d-1},M") == "T"
+                    )
                 ]
 
                 if available_variables:
@@ -160,6 +164,10 @@ class SmarTask:
                 if len(assigned) < 2:
                     fallback_variables = [
                         var for var in self.variables if var.endswith(f",{d},M") or var.endswith(f",{d},T")
+                        and not (
+                            shift == "M" and 
+                            self.work.get(f"E{var.split(',')[0][1:]},{d-1},T") == "T" or self.work.get(f"E{var.split(',')[0][1:]},{d-1},M") == "T"
+                        )
                     ]
                     while len(assigned) < 2 and fallback_variables:
                         selected_var = random.choice(fallback_variables)
@@ -209,6 +217,14 @@ class SmarTask:
         for employee in self.work:
             e, d, s = employee.split(",")
             e = e[1:]
+            if s == "M":
+                value = self.work.get(f"E{e},{int(d)-1},T")
+                if value == "T":
+                    print(f"Employee {e} has consecutive shifts on day {d} ({s})")
+            if s == "T":
+                value = self.work.get(f"E{e},{int(d)+1},M")
+                if value == "M":
+                    print(f"Employee {e} has consecutive shifts on day {d} ({s})")
             if not self.constraint_consecutive_shift(employee[1:], f"{e},{int(d)+1},{s}"):
                 print(f"Employee {e} has consecutive shifts on day {d} ({s})")
             if not self.constraint_max_workdays(employee[1:]):
