@@ -52,18 +52,6 @@ public class SchedulesService {
                 .map(List::of)
                 .collect(Collectors.toList());
 
-        // Extract employees from the CSV
-        List<Employee> employees = new ArrayList<>();
-        for (int i = 3; i < rawData.size(); i++) { // Start from index 3 to skip headers
-            String[] row = rawData.get(i);
-            if (row.length < 2 || row[1].isEmpty()) {
-                continue;
-            }
-            String name = row[1];
-            employees.add(new Employee(name, null));
-        }
-        Emprepository.saveAll(employees);
-
         Schedule schedule = new Schedule(
                 structuredData,
                 "Sample");
