@@ -28,8 +28,7 @@ public class SchedulesService {
     @Autowired
     private EmployeesRepository Emprepository;
 
-    @Autowired
-    private SequenceGeneratorService sequenceGeneratorService;
+
 
     public boolean requestScheduleGeneration(String title //ToDO : minimal info necessary to generate a new schedule (discarding for now employees individual restriction,
                                               ){
