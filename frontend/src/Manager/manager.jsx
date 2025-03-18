@@ -1,6 +1,6 @@
 import React from "react";
 import Sidebar_Manager from "../components/Sidebar_Manager"; 
-import "./manager.css"; 
+
 import { Link } from "react-router-dom";
 
 

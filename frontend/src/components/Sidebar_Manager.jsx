@@ -1,7 +1,7 @@
 import React from "react";
 import { Home, SquarePlus, CalendarDays, Users, Briefcase, CircleUserRound } from "lucide-react"; 
 import { Link } from "react-router-dom";  
-import "./Sidebar.css"; 
+import "../styles/Manager.css";
 import logo from '../assets/images/Logo.png';
 
 const Sidebar_Manager = () => {

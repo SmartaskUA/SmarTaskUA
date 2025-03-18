@@ -1,7 +1,7 @@
 import React from "react";
 import { Home, Plus, User } from "lucide-react"; 
 import { Link } from "react-router-dom";  
-import "./Sidebar.css"; 
+import "../styles/Admin.css";
 import logo from '../assets/images/Logo.png';
 
 const Sidebar = () => {

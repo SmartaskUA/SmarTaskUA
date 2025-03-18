@@ -1,0 +1,117 @@
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #007bff; 
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+    margin: 20px;
+}
+  
+.btn:hover {
+    background-color: #0056b3;
+}  
+
+/* criar calendarieo */
+.admin-container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    background: #fff;
+    overflow: hidden;
+    color: black;
+    
+  }
+  
+  .calendar-wrapper {
+    display: flex; 
+    justify-content: space-between;
+    width: 100%;
+    padding: 20px;
+    margin-left: 20%;
+    margin-right: 20%;
+    margin-top: 1.5%;
+  }
+  
+  .calendar-form-container {
+    width: 70%; 
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+  }
+  
+  .form-group label {
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  
+  input, select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 40%;
+  }
+  
+  .duration-container {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .action-buttons {
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  
+  button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .algoritmo-btn {
+    background-color: #4CAF50;
+    color: white;
+  }
+  
+  .save-btn {
+    background-color: #2196F3;
+    color: white;
+  }
+  
+  .test-btn {
+    background-color: #FFC107;
+    color: black;
+  }
+  
+  .remove-btn {
+    background-color: #F44336;
+    color: white;
+  }
+  
+  .algorithm-buttons {
+    display: flex;
+    flex-direction: row; 
+    justify-content: flex-start;
+    gap: 10px;
+    margin-top: 0; 
+    width: 25%; 
+    height: 70px;
+    margin-top: 100px;
+  }
+  
+  .algorithm-buttons button {
+    width: 50%; 
+  }
+  

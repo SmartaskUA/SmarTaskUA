@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Sidebar_Manager from "../components/Sidebar_Manager";
-import "./CreateCalendar.css";
+import "../styles/Manager.css";
 
 const CreateCalendar = () => {
   const [date, setDate] = useState("");

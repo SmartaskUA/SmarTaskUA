@@ -6,7 +6,7 @@ import CalendarTable from "../components/manager/CalendarTable";
 import CalendarHeader from "../components/manager/CalendarHeader"; 
 import BarChartDropdown from "../components/manager/BarChartDropdown";
 import BarChartDropdownFolgasFerias from "../components/manager/BarChartDropdownFolgasFerias"; 
-import "./Calendar.css";
+
 
 const Calendar = () => {
   const [data, setData] = useState([]);
