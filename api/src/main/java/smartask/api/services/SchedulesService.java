@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import smartask.api.models.Employee;
 import smartask.api.models.Schedule;
+import smartask.api.models.requests.ScheduleRequest;
 import smartask.api.repositories.EmployeesRepository;
 import smartask.api.repositories.FShandler;
 import smartask.api.repositories.SchedulesRepository;
@@ -30,11 +31,10 @@ public class SchedulesService {
 
 
 
-    public boolean requestScheduleGeneration(String title //ToDO : minimal info necessary to generate a new schedule (discarding for now employees individual restriction,
-                                              ){
+    public boolean requestScheduleGeneration(ScheduleRequest schedule){
         //ToDo : Should also verify if the request with the same configuratio  was already generated
-
-        return !schedulerepository.existsByTitle(title);
+        System.out.println(schedule);
+        return true;
     }
 
     public Optional<Schedule> getByTitle(String title){

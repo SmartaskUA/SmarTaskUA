@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import smartask.api.models.Schedule;
+import smartask.api.models.requests.ScheduleRequest;
 import smartask.api.services.SchedulesService;
 
 import java.util.List;
@@ -25,20 +26,20 @@ public class SchedulesController {
     /**
      * Initiates the generation of a new schedule based on the given title.
      *
-     * @param title The title of the schedule to generate.
+     * @param  scheduleRequest  should be the body that contains all the minimal info for generating the new  schedule.
      * @return A response indicating whether the schedule generation was started successfully.
      */
     @Operation(
             summary = "Generate a new schedule",
             description = "Starts a new schedule generation process based on the given title. If a schedule with the same title already exists, returns a bad request response."
     )
-    @GetMapping("/generate/{title}")
-    public ResponseEntity<String> generateNewSchedule(@PathVariable String title) {
+    @PostMapping("/generate")
+    public ResponseEntity<String> generateNewSchedule(@RequestBody ScheduleRequest scheduleRequest) {
         // ToDo : Should also verify if the request with the same configuration was already generated
-        if (service.requestScheduleGeneration(title)) {
-            return ResponseEntity.ok("Schedule generation started for: " + title);
+        if (service.requestScheduleGeneration(scheduleRequest)) {
+            return ResponseEntity.ok("Schedule generation started for: " + scheduleRequest);
         } else {
-            return ResponseEntity.badRequest().body("Failed to start schedule generation for: " + title + ". Schedule with the title already exists");
+            return ResponseEntity.badRequest().body("Failed to start schedule generation for: " + scheduleRequest + ". Schedule with the title already exists");
         }
     }
 
