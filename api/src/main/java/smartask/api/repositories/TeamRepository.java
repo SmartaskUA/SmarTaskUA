@@ -8,6 +8,6 @@ import smartask.api.models.Team;
 import java.util.Optional;
 
 @Repository
-public interface TeamRepository extends MongoRepository<Team, Long> {
+public interface TeamRepository extends MongoRepository<Team, String> {
     Optional<Team> findById(Long id);
 }

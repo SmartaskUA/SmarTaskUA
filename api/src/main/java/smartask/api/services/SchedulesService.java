@@ -76,9 +76,6 @@ public class SchedulesService {
     }
 
     public void saveSchedule(Schedule schedule) {
-        if (schedule.getId() == null) {
-            schedule.setId(sequenceGeneratorService.generateSequence("employees"));
-        }
         schedulerepository.save(schedule);
     }
 }

@@ -1,21 +1,18 @@
 package smartask.api.models;
 
-import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.validation.constraints.NotBlank;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Document(collection = "employees")
 public class Employee {
+
     @Id
-    private Long id;
+    private String id; // Custom ID of type Long
 
     @NotBlank
     private String name;
@@ -24,17 +21,18 @@ public class Employee {
 
     private Map<String, List<String>> restrictions;
 
+    // Constructor and getters/setters
     public Employee(String name, Team team) {
         this.name = name;
         this.team = team;
         this.restrictions = new HashMap<>();
     }
 
-    public Long getId() {
+    public String getId() {
         return this.id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

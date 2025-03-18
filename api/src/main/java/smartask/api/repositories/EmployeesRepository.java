@@ -7,6 +7,6 @@ import smartask.api.models.Employee;
 import java.util.Optional;
 
 @Repository
-public interface EmployeesRepository extends MongoRepository<Employee, Long> {
-    Optional<Employee> findById(Long id);
+public interface EmployeesRepository extends MongoRepository<Employee, String> {
+    Optional<Employee> findById(String id);
 }

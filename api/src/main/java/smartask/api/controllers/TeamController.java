@@ -30,7 +30,7 @@ public class TeamController {
 
     @Operation(summary = "Get a team by ID")
     @GetMapping("/{id}")
-    public ResponseEntity<Team> getTeamById(@PathVariable Long id) {
+    public ResponseEntity<Team> getTeamById(@PathVariable String id) {
         Team team = teamService.getTeamById(id);
         return new ResponseEntity<>(team, HttpStatus.OK);
     }
@@ -44,7 +44,7 @@ public class TeamController {
 
     @Operation(summary = "Update a team")
     @PutMapping("/{id}")
-    public ResponseEntity<String> updateTeam(@RequestBody Team team, @PathVariable Long id) {
+    public ResponseEntity<String> updateTeam(@RequestBody Team team, @PathVariable String id) {
         teamService.updateTeam(id, team);
         return ResponseEntity.ok("Team updated successfully");
     }

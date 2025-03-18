@@ -28,7 +28,7 @@ public class TeamService {
         saveTeam(team);
     }
 
-    public Team getTeamById(Long id){
+    public Team getTeamById(String id){
         Optional<Team> optionalTeam = teamRepository.findById(id);
         if (!optionalTeam.isPresent()) {
             throw new IllegalArgumentException("Team not found");
@@ -36,7 +36,7 @@ public class TeamService {
         return optionalTeam.get();
     }
 
-    public void updateTeam(Long id, Team team){
+    public void updateTeam(String id, Team team){
         Team teamToUpdate = getTeamById(id);
         teamToUpdate.setName(team.getName());
         teamToUpdate.setEmployees(team.getEmployees());
@@ -44,9 +44,6 @@ public class TeamService {
     }
 
     public void saveTeam(Team team) {
-        if (team.getId() == null) {
-            team.setId(sequenceGeneratorService.generateSequence("teams"));
-        }
         teamRepository.save(team);
     }
     

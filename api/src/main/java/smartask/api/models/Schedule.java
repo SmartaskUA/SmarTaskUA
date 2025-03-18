@@ -16,7 +16,7 @@ import java.util.List;
 @ToString
 public class Schedule {
     @Id
-    private Long id;
+    private String id;
     private Instant timestamp =  Instant.now();
     private String title;
     private List<List<String>> data;
@@ -27,11 +27,11 @@ public class Schedule {
         System.out.println(toString());
     }
 
-    public Long getId() {
+    public String getId() {
         return this.id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
