@@ -13,8 +13,7 @@ public class TeamService {
     @Autowired
     private TeamRepository teamRepository;
 
-    @Autowired
-    private SequenceGeneratorService sequenceGeneratorService;
+
 
     public TeamService(TeamRepository teamRepository) {
         this.teamRepository = teamRepository;

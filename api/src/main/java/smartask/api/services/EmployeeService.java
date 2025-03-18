@@ -12,8 +12,6 @@ public class EmployeeService {
     @Autowired
     private EmployeesRepository repository;
 
-    @Autowired
-    private SequenceGeneratorService sequenceGeneratorService;
 
     public EmployeeService(EmployeesRepository repository) {
         this.repository = repository;

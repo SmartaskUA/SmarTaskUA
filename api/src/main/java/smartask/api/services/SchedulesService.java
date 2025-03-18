@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import smartask.api.models.Employee;
 import smartask.api.models.Schedule;
+import smartask.api.models.requests.ScheduleRequest;
 import smartask.api.repositories.EmployeesRepository;
 import smartask.api.repositories.FShandler;
 import smartask.api.repositories.SchedulesRepository;
@@ -28,14 +29,12 @@ public class SchedulesService {
     @Autowired
     private EmployeesRepository Emprepository;
 
-    @Autowired
-    private SequenceGeneratorService sequenceGeneratorService;
 
-    public boolean requestScheduleGeneration(String title //ToDO : minimal info necessary to generate a new schedule (discarding for now employees individual restriction,
-                                              ){
+
+    public boolean requestScheduleGeneration(ScheduleRequest schedule){
         //ToDo : Should also verify if the request with the same configuratio  was already generated
-
-        return !schedulerepository.existsByTitle(title);
+        System.out.println(schedule);
+        return true;
     }
 
     public Optional<Schedule> getByTitle(String title){
@@ -53,21 +52,9 @@ public class SchedulesService {
                 .map(List::of)
                 .collect(Collectors.toList());
 
-        // Extract employees from the CSV
-        List<Employee> employees = new ArrayList<>();
-        for (int i = 3; i < rawData.size(); i++) { // Start from index 3 to skip headers
-            String[] row = rawData.get(i);
-            if (row.length < 2 || row[1].isEmpty()) {
-                continue;
-            }
-            String name = row[1];
-            employees.add(new Employee(name, null));
-        }
-        Emprepository.saveAll(employees);
-
         Schedule schedule = new Schedule(
                 structuredData,
-                "Sample");
+                "Sample", "Glutony search");
         saveSchedule(schedule);
     }
 

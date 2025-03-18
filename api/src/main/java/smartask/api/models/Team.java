@@ -13,7 +13,7 @@ import java.util.List;
 @Document(collection = "teams")
 public class Team {
     @Id
-    private Long id;
+    private String id;
 
     @NotBlank
     private String name;
@@ -25,11 +25,11 @@ public class Team {
         this.employees = new ArrayList<>();
     }
 
-    public Long getId() {
+    public String getId() {
         return this.id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
