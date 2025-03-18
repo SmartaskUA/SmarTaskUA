@@ -54,7 +54,7 @@ public class SchedulesService {
 
         Schedule schedule = new Schedule(
                 structuredData,
-                "Sample");
+                "Sample", "Glutony search");
         saveSchedule(schedule);
     }
 

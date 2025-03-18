@@ -19,11 +19,13 @@ public class Schedule {
     private String id;
     private Instant timestamp =  Instant.now();
     private String title;
+    private String algorithm;
     private List<List<String>> data;
 
-    public Schedule(List<List<String>> data, String title) {
+    public Schedule(List<List<String>> data, String title, String algorithm) {
         this.data = data;
         this.title = title;
+        this.algorithm = algorithm;
         System.out.println(toString());
     }
 
