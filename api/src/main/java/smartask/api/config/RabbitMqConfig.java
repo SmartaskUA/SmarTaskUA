@@ -14,7 +14,7 @@ public class RabbitMqConfig {
     @Bean
     public Queue queue() {
         return QueueBuilder.durable("task-queue")
-                .withArgument("x-dead-letter-exchange", "dlx-exchange")  // Send to DLX on rejection
+                .withArgument("x-dead-letter-exchange", "dlx-exchange")
                 .withArgument("x-dead-letter-routing-key", "dlx-routing-key")
                 .build();
     }
@@ -33,6 +33,7 @@ public class RabbitMqConfig {
     public Binding dlqBinding() {
         return BindingBuilder.bind(deadLetterQueue()).to(deadLetterExchange()).with("dlx-routing-key");
     }
+
 
 
     @Bean

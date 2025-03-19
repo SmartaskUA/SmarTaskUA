@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 @Setter
 public class ScheduleRequest
 {
+    private String taskId;  //
+
     private LocalDate init, end; // Should limit to a year
 
     private String algorithm;
@@ -24,4 +26,11 @@ public class ScheduleRequest
 
     private LocalDateTime requestedAt;
 
+    public String getTaskId() {
+        return this.taskId;
+    }
+
+    public void setTaskId(String taskId) {
+        this.taskId  = taskId;
+    }
 }
