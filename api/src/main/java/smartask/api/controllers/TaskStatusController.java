@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import smartask.api.models.TaskStatus;
 import smartask.api.repositories.TaskStatusRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -27,6 +28,12 @@ public class TaskStatusController {
             System.err.println("Task not found in DB: " + taskId);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found");
         }
+    }
+
+    @GetMapping
+    public ResponseEntity<List<TaskStatus>> getAllTasks() {
+        List<TaskStatus> tasks = taskStatusRepository.findAll();
+        return ResponseEntity.ok(tasks);
     }
 }
 

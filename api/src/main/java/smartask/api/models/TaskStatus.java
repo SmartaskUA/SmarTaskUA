@@ -12,7 +12,7 @@ public class TaskStatus {
     private String id; // MongoDB generates this automatically
 
     private String taskId; // Unique ID for the task
-    private String status; // PENDING, IN_PROGRESS, COMPLETED, FAILED
+    private String status = "PENDING"; // PENDING, IN_PROGRESS, COMPLETED, FAILED
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
