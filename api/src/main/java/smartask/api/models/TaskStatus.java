@@ -2,9 +2,10 @@ package smartask.api.models;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import smartask.api.models.requests.ScheduleRequest;
 import java.time.LocalDateTime;
 
-@Document(collection = "task_status") // Change to MongoDB document
+@Document(collection = "task_status")
 public class TaskStatus {
 
     @Id
@@ -15,16 +16,19 @@ public class TaskStatus {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    private ScheduleRequest scheduleRequest; // Store the original request
+
     // Default constructor
     public TaskStatus() {}
 
-    // Constructor including ID (MongoDB will generate if null)
-    public TaskStatus(String taskId, String status, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    // Constructor including the request
+    public TaskStatus(String taskId, String status, LocalDateTime createdAt, LocalDateTime updatedAt, ScheduleRequest scheduleRequest) {
         this.id = taskId; // Use taskId as MongoDB's _id
         this.taskId = taskId;
         this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.scheduleRequest = scheduleRequest;
     }
 
     // Getters & Setters
@@ -42,4 +46,7 @@ public class TaskStatus {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public ScheduleRequest getScheduleRequest() { return scheduleRequest; }
+    public void setScheduleRequest(ScheduleRequest scheduleRequest) { this.scheduleRequest = scheduleRequest; }
 }

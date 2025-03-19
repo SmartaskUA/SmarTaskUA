@@ -1,5 +1,6 @@
 package smartask.api.controllers;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.config.Task;
 import org.springframework.web.bind.annotation.*;
@@ -17,14 +18,15 @@ public class TaskStatusController {
     private TaskStatusRepository taskStatusRepository;
 
     @GetMapping("/{taskId}")
-    public ResponseEntity<TaskStatus> getTaskStatus(@PathVariable String taskId) {
-        Optional<TaskStatus> task = taskStatusRepository.findByTaskId(taskId);
+    public ResponseEntity<?> getTaskStatus(@PathVariable String taskId) {
+        Optional<TaskStatus> taskOpt = taskStatusRepository.findByTaskId(taskId);
 
-        if (task.isPresent()) {
-            return ResponseEntity.ok(task.get());
+        if (taskOpt.isPresent()) {
+            return ResponseEntity.ok(taskOpt.get());
         } else {
             System.err.println("Task not found in DB: " + taskId);
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found");
         }
     }
 }
+
