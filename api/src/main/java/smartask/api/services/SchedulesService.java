@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import smartask.api.event.RabbitMqProducer;
 import smartask.api.models.Employee;
 import smartask.api.models.Schedule;
 import smartask.api.models.requests.ScheduleRequest;
@@ -29,10 +30,13 @@ public class SchedulesService {
     @Autowired
     private EmployeesRepository Emprepository;
 
+    @Autowired
+    private RabbitMqProducer producer;
 
 
     public boolean requestScheduleGeneration(ScheduleRequest schedule){
         //ToDo : Should also verify if the request with the same configuratio  was already generated
+        producer.requestScheduleMessage(schedule);
         System.out.println(schedule);
         return true;
     }
