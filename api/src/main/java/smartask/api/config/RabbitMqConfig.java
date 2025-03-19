@@ -7,9 +7,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMqConfig {
 
-    private static final String QUEUE_NAME = "my-queue";
-    private static final String EXCHANGE_NAME = "my-exchange";
-    private static final String ROUTING_KEY = "my-routing-key";
+    private static final String QUEUE_NAME = "task-queue";
+    private static final String EXCHANGE_NAME = "task-exchange";
+    private static final String ROUTING_KEY = "task-routing-key";
 
     @Bean
     public Queue queue() {

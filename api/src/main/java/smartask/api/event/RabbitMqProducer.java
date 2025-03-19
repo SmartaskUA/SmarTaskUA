@@ -6,8 +6,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class RabbitMqProducer {
 
-    private static final String EXCHANGE_NAME = "my-exchange";
-    private static final String ROUTING_KEY = "my-routing-key";
+    private static final String EXCHANGE_NAME = "task-exchange";
+    private static final String ROUTING_KEY = "task-routing-key";
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
