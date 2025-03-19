@@ -1,246 +1,179 @@
-from calendar import day_abbr, monthrange, weekday
-import csv
 import random
+from calendar import monthrange, day_abbr, weekday
+import csv
 
 class SmarTask:
     def __init__(self):
-        self.counters = {}
-        self.num_teams = 2
-        self.num_employees = 10 
-        self.days = list(range(1, 366))
-        self.num_days = len(self.days) 
-        self.shifts = ["M", "T"] 
-        self.variables = []
-        self.employees = []
-        self.work = {}
-        self.domain = ["0", "M", "T", "F", "L"]
-        self.holidays = {1, 25, 50, 75, 100, 150, 200, 250, 300, 350}
-
-    def generateVariables(self):
-        """Gera as variáveis do problema sem realizar alocações."""
-        self.variables = [
-            f"E{e},{d},{s}"
-            for e in range(1, self.num_employees + 1)
-            for d in range(1, self.num_days + 1)
-            for s in self.shifts
-        ]
-
-        self.work = { f: 0 for f in self.variables }
-
+        self.num_employees = 10
+        self.num_days = 365  # 2025 is not a leap year
+        self.days = list(range(1, self.num_days + 1))
+        self.shifts = ["M", "T"]  # Morning, Afternoon
+        self.domain = ["0", "M", "T", "F"]  # 0: off, M: morning, T: afternoon, F: vacation
+        self.holidays = {1, 25, 50, 75, 100, 150, 200, 250, 300, 350}  # Example holidays
         self.employees = [f"Employee_{i}" for i in range(1, self.num_employees + 1)]
-
+        self.schedule = {}  # Stores assignments: "E{e},{d},{s}" -> shift
         self.counters = {
-            "work_days": {f: 0 for f in self.employees}, 
-            "work_holidays_sunday": {f: 0 for f in self.employees},
-            "consecutive_days": {f: 0 for f in self.employees}, 
-            "vacations": {f: set(random.sample(self.days, 30)) for f in self.employees},
-            "days_off": {f: 0 for f in self.employees}, 
-            "alarm_days": list(range(1, 366, 7)), 
+            "work_days": {emp: 0 for emp in self.employees},
+            "consecutive_days": {emp: 0 for emp in self.employees},
+            "work_holidays_sunday": {emp: 0 for emp in self.employees},
+            "vacations": {emp: set(random.sample(self.days, 30)) for emp in self.employees},
         }
 
-    def constraint_consecutive_shift(self, x1, x2):
-        x1 = x1[1:]
-        x2 = x2[1:]
-        e1, d1, s1 = x1.split(",")
-        e2, d2, s2 = x2.split(",")
-        if e1 != e2:
-            return True
-        if d1 == d2:
+    def initialize_schedule(self):
+        """Initialize the schedule with all variables set to '0' (off)."""
+        for e in range(1, self.num_employees + 1):
+            for d in self.days:
+                for s in self.shifts:
+                    self.schedule[f"E{e},{d},{s}"] = "0"
+                # Pre-assign vacation days
+                if d in self.counters["vacations"][f"Employee_{e}"]:
+                    self.schedule[f"E{e},{d},M"] = "F"
+                    self.schedule[f"E{e},{d},T"] = "F"
+
+    def is_valid_assignment(self, var, shift):
+        """Check if assigning 'shift' to 'var' respects all constraints."""
+        e, d, s = var.split(",")
+        emp = f"Employee_{e[1:]}"
+        d = int(d)
+
+        # Check vacation days
+        if d in self.counters["vacations"][emp]:
             return False
-        if abs(int(d1) - int(d2)) != 1:
-            return True
-        if d1 > d2 and s1 == "M" and s2 == "T":
+
+        # Check max workdays (223 days per year)
+        if self.counters["work_days"][emp] >= 223:
             return False
-        if d1 < d2 and s1 == "T" and s2 == "M":
+
+        # Check max Sundays/holidays (22 per year)
+        is_sunday = (d - 1) % 7 == 6  # Assuming day 1 is Monday
+        if (is_sunday or d in self.holidays) and self.counters["work_holidays_sunday"][emp] >= 22:
             return False
+
+        # Check consecutive days (max 5)
+        if self.counters["consecutive_days"][emp] >= 5:
+            prev_days = [self.schedule.get(f"E{e[1:]},{d_prev},{shift_prev}") in ["M", "T"]
+                         for d_prev in range(max(1, d-5), d) for shift_prev in self.shifts]
+            if all(prev_days[-5:]):  # Last 5 days worked
+                return False
+
+        # Check T->M transition
+        if s == "M" and d > 1 and self.schedule.get(f"E{e[1:]},{d-1},T") == "T":
+            return False
+        if s == "T" and d < self.num_days and self.schedule.get(f"E{e[1:]},{d+1},M") == "M":
+            return False  # Prevent assigning T if next day is M (future check)
+
         return True
 
-    def constraint_max_workdays(self, x):
-        e, _, _ = x.split(",")
-        return self.counters["work_days"][f"Employee_{e}"] <= 223
-    
-    def constraint_max_sundays_holidays(self, x):
-        e, d, _ = x.split(",")
-        if d in self.holidays or int(d) % 7 == 0:   # This will need alteration, the week may not begin on a Monday
-            return self.counters["work_holidays_sunday"][f"Employee_{e}"] <= 22
-        return True
-    
-    def constraint_max_consecutive_days(self, x):
-        e, _, _ = x.split(",")
-        return self.counters["consecutive_days"][f"Employee_{e}"] <= 5
-    
-    def constraint_vacation_days(self, x):
-        e, d, _ = x.split(",")
-        return d not in self.counters["vacations"][f"Employee_{e}"]
+    def update_counters(self, var, shift):
+        """Update counters after assigning a shift."""
+        e, d, s = var.split(",")
+        emp = f"Employee_{e[1:]}"
+        d = int(d)
 
-    def check_vacation_days(self, x):
-        e, d, _ = x.split(",")
-        return d not in self.counters["vacations"][f"Employee_{e}"]
-    
-    # def vacation_days(self, employee):
-    #     employee = employee.split("_")[1]
-    #     self.counters["vacations"][employee] = [
-    #         d for var in self.work if self.work[var] == "F" for e, d, _ in var.split(",") if e == employee
-    #     ]
-    #     self.counters["days_off"][employee] += len(self.counters["vacations"][employee])
+        self.counters["work_days"][emp] += 1
+        if (d - 1) % 7 == 6 or d in self.holidays:  # Sunday or holiday
+            self.counters["work_holidays_sunday"][emp] += 1
 
-    def work_days(self, employee):
-        employee = employee.split("_")[1]
-        self.counters["work_days"][employee] = len([
-            var for var in self.work
-            if self.work[var] == "M" or self.work[var] == "T"
-            and len(var.split(",")) == 3 
-            and var.split(",")[0][1:] == employee
-        ])
-
-        self.counters["work_holidays_sunday"][employee] = len([
-            var for var in self.work
-            if self.work[var] == "M" or self.work[var] == "T"
-            and len(var.split(",")) == 3 
-            and var.split(",")[0][1:] == employee
-            and (int(var.split(",")[1]) % 7 == 0 or int(var.split(",")[1]) in self.holidays)
-        ])
-
-
-    def consecutive_days(self, employee):
-        employee = employee.split("_")[1]
-        workdays = sorted([
-            int(var.split(",")[1]) for var in self.work
-            if self.work[var] == "M" or self.work[var] == "T"
-            and len(var.split(",")) == 3 
-            and var.split(",")[0][1:] == employee
-        ])
-        max_streak = 0
-        current_streak = 1
-        for i in range(1, len(workdays)):
-            if workdays[i] == workdays[i - 1] + 1: 
-                current_streak += 1
+        # Update consecutive days
+        work_days = [d for day in range(max(1, d-5), d+1)
+                     if any(self.schedule.get(f"E{e[1:]},{day},{shift_prev}") in ["M", "T"]
+                            for shift_prev in self.shifts)]
+        max_consecutive = 1
+        current = 1
+        for i in range(1, len(work_days)):
+            if work_days[i] == work_days[i-1] + 1:
+                current += 1
+                max_consecutive = max(max_consecutive, current)
             else:
-                max_streak = max(max_streak, current_streak)
-                current_streak = 1 
+                current = 1
+        self.counters["consecutive_days"][emp] = max_consecutive
 
-        max_streak = max(max_streak, current_streak)
-        self.counters["consecutive_days"][employee] = max_streak
-
-    def vacation_days(self, employee):
-        vacation_days = self.counters["vacations"][employee]
-        employee = employee.split("_")[1]
-        for i in vacation_days:
-            self.work[f"E{employee},{i},M"] = "F"
-            self.work[f"E{employee},{i},T"] = "F"
-
-    def generateSchedule(self):
-        """Gera o calendário respeitando as restrições."""
-        self.generateVariables()
+    def generate_schedule(self):
+        """Generate a schedule ensuring 1 employee per shift per day."""
+        self.initialize_schedule()
 
         for d in self.days:
-            assigned = set()
+            assigned_employees = set()
             for shift in self.shifts:
-                available_variables = [
-                    var for var in self.variables
-                    if self.constraint_max_workdays(var[1:])
-                    and self.constraint_max_sundays_holidays(var[1:])
-                    and self.constraint_max_consecutive_days(var[1:])
-                    and self.constraint_vacation_days(var[1:])
-                    and var[1:].split(",")[0] not in assigned 
-                    and not (
-                        shift == "M" and 
-                        self.work.get(f"E{var.split(',')[0][1:]},{d-1},T") == "T" or self.work.get(f"E{var.split(',')[0][1:]},{d-1},M") == "T"
-                    )
+                # Find valid employees for this shift
+                available_employees = [
+                    f"E{e},{d},{shift}"
+                    for e in range(1, self.num_employees + 1)
+                    if f"Employee_{e}" not in assigned_employees
+                    and self.is_valid_assignment(f"E{e},{d},{shift}", shift)
                 ]
 
-                if available_variables:
-                    selected_var = random.choice(available_variables)
-                    print(selected_var)
-                    self.work[selected_var] = shift
-                    assigned.add(selected_var.split(",")[0][1:]) 
-
-                    print(f"Employee_{selected_var.split(',')[0][1:]}")
-                    employee = f"Employee_{selected_var.split(',')[0][1:]}"
-                    self.vacation_days(employee)
-                    self.work_days(employee)
-                    self.consecutive_days(employee)
-
-                if len(assigned) < 2:
-                    fallback_variables = [
-                        var for var in self.variables if var.endswith(f",{d},M") or var.endswith(f",{d},T")
-                        and not (
-                            shift == "M" and 
-                            self.work.get(f"E{var.split(',')[0][1:]},{d-1},T") == "T" or self.work.get(f"E{var.split(',')[0][1:]},{d-1},M") == "T"
-                        )
+                if not available_employees:
+                    print(f"Warning: No valid employee for day {d}, shift {shift}. Relaxing constraints...")
+                    available_employees = [
+                        f"E{e},{d},{shift}"
+                        for e in range(1, self.num_employees + 1)
+                        if f"Employee_{e}" not in assigned_employees
                     ]
-                    while len(assigned) < 2 and fallback_variables:
-                        selected_var = random.choice(fallback_variables)
-                        if selected_var.split(",")[0][1:] not in assigned: 
-                            self.work[selected_var] = selected_var.split(",")[2]  
-                            assigned.add(selected_var.split(",")[0][1:])
 
-    def export(self, archive_name="schedule_J.csv"):
-        """Exporta a escala de trabalho para um CSV anual."""
-        with open(archive_name, mode='w', newline='') as file:
+                if available_employees:
+                    selected_var = random.choice(available_employees)
+                    self.schedule[selected_var] = shift
+                    assigned_employees.add(f"Employee_{selected_var.split(',')[0][1:]}")
+                    self.update_counters(selected_var, shift)
+                else:
+                    print(f"Error: Could not assign {shift} shift on day {d}. Schedule incomplete.")
+                    return False
+        return True
+
+    def export(self, filename="schedule.csv"):
+        """Export the schedule to a CSV file."""
+        with open(filename, mode='w', newline='') as file:
             writer = csv.writer(file)
+            month_days = [day for month in range(1, 13) for day in range(1, monthrange(2025, month)[1] + 1)]
+            writer.writerow([""] + month_days[:self.num_days])
+            writer.writerow([""] + [day_abbr[(d-1) % 7] for d in self.days])  # Weekdays starting Monday
 
-            month_days = []
-            for month in range(1, 13):
-                for day in range(1, monthrange(2025, month)[1] + 1):
-                    month_days.append(day)
-
-            writer.writerow([""] + month_days)
-
-            def calculate_weekDay(day):
-                month, month_day = 1, day
-                while month_day > monthrange(2025, month)[1]:
-                    month_day -= monthrange(2025, month)[1]
-                    month += 1
-                return day_abbr[weekday(2025, month, month_day)]
-            
-            writer.writerow([""] + [calculate_weekDay(day) for day in self.days])
-
-            for employee in self.employees:
-                line = [employee]
-                for day in self.days:
-                    morning_shift = self.work.get(f"E{employee.split('_')[1]},{day},M")
-                    afternoon_shift = self.work.get(f"E{employee.split('_')[1]},{day},T")
-
-                    if morning_shift == "M":
-                        line.append("M")
-                    elif afternoon_shift == "T":
-                        line.append("T")
-                    elif morning_shift == "F" or afternoon_shift == "F":
-                        line.append("F")
+            for emp in self.employees:
+                e = emp.split("_")[1]
+                row = [emp]
+                for d in self.days:
+                    morning = self.schedule.get(f"E{e},{d},M")
+                    afternoon = self.schedule.get(f"E{e},{d},T")
+                    if morning == "M":
+                        row.append("M")
+                    elif afternoon == "T":
+                        row.append("T")
+                    elif morning == "F" or afternoon == "F":
+                        row.append("F")
                     else:
-                        line.append("0")
-
-                writer.writerow(line)
+                        row.append("0")
+                writer.writerow(row)
 
     def verify(self):
-        for employee in self.work:
-            e, d, s = employee.split(",")
-            e = e[1:]
-            if s == "M":
-                value = self.work.get(f"E{e},{int(d)-1},T")
-                if value == "T":
-                    print(f"Employee {e} has consecutive shifts on day {d} ({s})")
-            if s == "T":
-                value = self.work.get(f"E{e},{int(d)+1},M")
-                if value == "M":
-                    print(f"Employee {e} has consecutive shifts on day {d} ({s})")
-            if not self.constraint_consecutive_shift(employee[1:], f"{e},{int(d)+1},{s}"):
-                print(f"Employee {e} has consecutive shifts on day {d} ({s})")
-            if not self.constraint_max_workdays(employee[1:]):
-                print(f"Employee {e} has more than 223 workdays")
-            if not self.constraint_max_sundays_holidays(employee[1:]):
-                print(f"Employee {e} has more than 22 sundays/holidays")
-            if not self.constraint_max_consecutive_days(employee[1:]):
-                print(f"Employee {e} has more than 5 consecutive days")
-            if not self.constraint_vacation_days(employee[1:]):
-                print(f"Employee {e} has vacation on day {d}")
-            # print(employee, self.work[employee])
-    
+        """Verify the schedule for constraint violations."""
+        violations = []
+        for d in self.days:
+            morning_count = sum(1 for e in range(1, self.num_employees + 1) if self.schedule[f"E{e},{d},M"] == "M")
+            afternoon_count = sum(1 for e in range(1, self.num_employees + 1) if self.schedule[f"E{e},{d},T"] == "T")
+            if morning_count != 1 or afternoon_count != 1:
+                violations.append(f"Day {d}: M={morning_count}, T={afternoon_count} (should be 1 each)")
 
+        for e in range(1, self.num_employees + 1):
+            emp = f"Employee_{e}"
+            if self.counters["work_days"][emp] > 223:
+                violations.append(f"{emp} exceeds 223 workdays: {self.counters['work_days'][emp]}")
+            if self.counters["work_holidays_sunday"][emp] > 22:
+                violations.append(f"{emp} exceeds 22 Sundays/holidays: {self.counters['work_holidays_sunday'][emp]}")
+            if self.counters["consecutive_days"][emp] > 5:
+                violations.append(f"{emp} has >5 consecutive days: {self.counters['consecutive_days'][emp]}")
+            for d in range(1, self.num_days):
+                if self.schedule[f"E{e},{d},T"] == "T" and self.schedule[f"E{e},{d+1},M"] == "M":
+                    violations.append(f"{emp} has T->M transition on day {d}->{d+1}")
 
-# Exemplo de uso
+        return violations if violations else ["Schedule is valid"]
+
+# Usage
 smar_task = SmarTask()
-smar_task.generateSchedule()
-smar_task.export()
-smar_task.verify()
+success = smar_task.generate_schedule()
+if success:
+    smar_task.export()
+    for violation in smar_task.verify():
+        print(violation)
+else:
+    print("Failed to generate a valid schedule.")
