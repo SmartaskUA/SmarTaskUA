@@ -4,14 +4,16 @@ import csv
 
 class SmarTask:
     def __init__(self):
-        self.num_employees = 10
-        self.num_days = 365  # 2025 is not a leap year
+        self.num_employees = 24
+        self.num_days = 365 
         self.days = list(range(1, self.num_days + 1))
-        self.shifts = ["M", "T"]  # Morning, Afternoon
+        self.shifts = ["M", "T"] 
         self.domain = ["0", "M", "T", "F"]  # 0: off, M: morning, T: afternoon, F: vacation
-        self.holidays = {1, 25, 50, 75, 100, 150, 200, 250, 300, 350}  # Example holidays
+        self.holidays = {1, 25, 50, 75, 100, 150, 200, 250, 300, 350}
         self.employees = [f"Employee_{i}" for i in range(1, self.num_employees + 1)]
-        self.schedule = {}  # Stores assignments: "E{e},{d},{s}" -> shift
+        self.schedule = {} 
+        self.min_workers = 2
+        self.ideal_workers = 4
         self.counters = {
             "work_days": {emp: 0 for emp in self.employees},
             "consecutive_days": {emp: 0 for emp in self.employees},
@@ -25,18 +27,16 @@ class SmarTask:
             for d in self.days:
                 for s in self.shifts:
                     self.schedule[f"E{e},{d},{s}"] = "0"
-                # Pre-assign vacation days
                 if d in self.counters["vacations"][f"Employee_{e}"]:
                     self.schedule[f"E{e},{d},M"] = "F"
                     self.schedule[f"E{e},{d},T"] = "F"
 
-    def is_valid_assignment(self, var, shift):
+    def is_valid_assignment(self, var):
         """Check if assigning 'shift' to 'var' respects all constraints."""
         e, d, s = var.split(",")
         emp = f"Employee_{e[1:]}"
         d = int(d)
 
-        # Check vacation days
         if d in self.counters["vacations"][emp]:
             return False
 
@@ -53,18 +53,18 @@ class SmarTask:
         if self.counters["consecutive_days"][emp] >= 5:
             prev_days = [self.schedule.get(f"E{e[1:]},{d_prev},{shift_prev}") in ["M", "T"]
                          for d_prev in range(max(1, d-5), d) for shift_prev in self.shifts]
-            if all(prev_days[-5:]):  # Last 5 days worked
+            if all(prev_days[-5:]): 
                 return False
 
         # Check T->M transition
         if s == "M" and d > 1 and self.schedule.get(f"E{e[1:]},{d-1},T") == "T":
             return False
         if s == "T" and d < self.num_days and self.schedule.get(f"E{e[1:]},{d+1},M") == "M":
-            return False  # Prevent assigning T if next day is M (future check)
+            return False 
 
         return True
 
-    def update_counters(self, var, shift):
+    def update_counters(self, var):
         """Update counters after assigning a shift."""
         e, d, s = var.split(",")
         emp = f"Employee_{e[1:]}"
@@ -89,39 +89,48 @@ class SmarTask:
         self.counters["consecutive_days"][emp] = max_consecutive
 
     def generate_schedule(self):
-        """Generate a schedule ensuring 1 employee per shift per day."""
+        """Generate a schedule aiming for ideal employees per shift, ensuring at least the minimum."""
         self.initialize_schedule()
 
         for d in self.days:
-            assigned_employees = set()
             for shift in self.shifts:
-                # Find valid employees for this shift
+                assigned_employees = set()
+                target = self.ideal_workers
                 available_employees = [
                     f"E{e},{d},{shift}"
                     for e in range(1, self.num_employees + 1)
                     if f"Employee_{e}" not in assigned_employees
-                    and self.is_valid_assignment(f"E{e},{d},{shift}", shift)
+                    and self.is_valid_assignment(f"E{e},{d},{shift}")
                 ]
 
-                if not available_employees:
-                    print(f"Warning: No valid employee for day {d}, shift {shift}. Relaxing constraints...")
-                    available_employees = [
+                for _ in range(min(target, len(available_employees))):
+                    if available_employees:
+                        selected_var = random.choice(available_employees)
+                        self.schedule[selected_var] = shift
+                        assigned_employees.add(f"Employee_{selected_var.split(',')[0][1:]}")
+                        self.update_counters(selected_var)
+                        available_employees.remove(selected_var)
+
+                if len(assigned_employees) < self.min_workers:
+                    print(f"Warning: Day {d}, Shift {shift} - Only {len(assigned_employees)} assigned, below minimum {self.min_workers}. Relaxing constraints...")
+                    fallback_employees = [
                         f"E{e},{d},{shift}"
                         for e in range(1, self.num_employees + 1)
                         if f"Employee_{e}" not in assigned_employees
                     ]
+                    while len(assigned_employees) < self.min_workers and fallback_employees:
+                        selected_var = random.choice(fallback_employees)
+                        self.schedule[selected_var] = shift
+                        assigned_employees.add(f"Employee_{selected_var.split(',')[0][1:]}")
+                        self.update_counters(selected_var)
+                        fallback_employees.remove(selected_var)
 
-                if available_employees:
-                    selected_var = random.choice(available_employees)
-                    self.schedule[selected_var] = shift
-                    assigned_employees.add(f"Employee_{selected_var.split(',')[0][1:]}")
-                    self.update_counters(selected_var, shift)
-                else:
-                    print(f"Error: Could not assign {shift} shift on day {d}. Schedule incomplete.")
+                if len(assigned_employees) < self.min_workers:
+                    print(f"Error: Day {d}, Shift {shift} - Only {len(assigned_employees)} assigned, below minimum {self.min_workers}.")
                     return False
         return True
 
-    def export(self, filename="schedule.csv"):
+    def export(self, filename="schedule_J.csv"):
         """Export the schedule to a CSV file."""
         with open(filename, mode='w', newline='') as file:
             writer = csv.writer(file)
@@ -151,8 +160,14 @@ class SmarTask:
         for d in self.days:
             morning_count = sum(1 for e in range(1, self.num_employees + 1) if self.schedule[f"E{e},{d},M"] == "M")
             afternoon_count = sum(1 for e in range(1, self.num_employees + 1) if self.schedule[f"E{e},{d},T"] == "T")
-            if morning_count != 1 or afternoon_count != 1:
-                violations.append(f"Day {d}: M={morning_count}, T={afternoon_count} (should be 1 each)")
+            if morning_count < self.min_workers:
+                violations.append(f"Day {d}: Morning shift has {morning_count} employees, below minimum {self.min_workers}")
+            if afternoon_count < self.min_workers:
+                violations.append(f"Day {d}: Afternoon shift has {afternoon_count} employees, below minimum {self.min_workers}")
+            if morning_count < self.ideal_workers:
+                violations.append(f"Day {d}: Morning shift has {morning_count} employees, below ideal {self.ideal_workers}")
+            if afternoon_count < self.ideal_workers:
+                violations.append(f"Day {d}: Afternoon shift has {afternoon_count} employees, below ideal {self.ideal_workers}")
 
         for e in range(1, self.num_employees + 1):
             emp = f"Employee_{e}"
@@ -168,7 +183,6 @@ class SmarTask:
 
         return violations if violations else ["Schedule is valid"]
 
-# Usage
 smar_task = SmarTask()
 success = smar_task.generate_schedule()
 if success:
