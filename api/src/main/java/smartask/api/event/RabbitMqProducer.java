@@ -30,14 +30,20 @@ public class RabbitMqProducer {
         try {
             // Generate a unique task ID
             String taskId = UUID.randomUUID().toString();
-            schedule.setTaskId(taskId); // Store Task ID in the request
+            schedule.setTaskId(taskId);
+
+            // Save task status **BEFORE** sending to the queue
+            TaskStatus taskStatus = new TaskStatus(taskId, "PENDING", LocalDateTime.now(), LocalDateTime.now());
+            taskStatusRepository.save(taskStatus);
+
+            // Ensure it was actually saved
+            if (!taskStatusRepository.findByTaskId(taskId).isPresent()) {
+                System.err.println("Error: TaskStatus not saved in MongoDB!");
+                return;
+            }
 
             // Convert request to JSON
             String jsonMessage = objectMapper.writeValueAsString(schedule);
-
-            // Save task status as PENDING
-            TaskStatus taskStatus = new TaskStatus( taskId, "PENDING", LocalDateTime.now(), LocalDateTime.now());
-            taskStatusRepository.save(taskStatus);
 
             // Send message to RabbitMQ
             rabbitTemplate.convertAndSend(EXCHANGE_NAME, ROUTING_KEY, jsonMessage);
@@ -47,6 +53,7 @@ public class RabbitMqProducer {
             System.err.println("Error converting ScheduleRequest to JSON: " + e.getMessage());
         }
     }
+
 
     public void sendMessage(String message) {
         rabbitTemplate.convertAndSend(EXCHANGE_NAME, ROUTING_KEY, message);
