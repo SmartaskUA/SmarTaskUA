@@ -4,7 +4,7 @@ import csv
 
 class SmarTask:
     def __init__(self):
-        self.num_employees = 24
+        self.num_employees = 20
         self.num_days = 365 
         self.days = list(range(1, self.num_days + 1))
         self.shifts = ["M", "T"] 
@@ -112,7 +112,6 @@ class SmarTask:
                         available_employees.remove(selected_var)
 
                 if len(assigned_employees) < self.min_workers:
-                    print(f"Warning: Day {d}, Shift {shift} - Only {len(assigned_employees)} assigned, below minimum {self.min_workers}. Relaxing constraints...")
                     fallback_employees = [
                         f"E{e},{d},{shift}"
                         for e in range(1, self.num_employees + 1)
