@@ -1,4 +1,3 @@
-
 package smartask.api.services;
 
 import lombok.RequiredArgsConstructor;
@@ -6,14 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import smartask.api.event.RabbitMqProducer;
-import smartask.api.models.Employee;
 import smartask.api.models.Schedule;
 import smartask.api.models.requests.ScheduleRequest;
 import smartask.api.repositories.EmployeesRepository;
 import smartask.api.repositories.FShandler;
 import smartask.api.repositories.SchedulesRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -33,15 +30,14 @@ public class SchedulesService {
     @Autowired
     private RabbitMqProducer producer;
 
-
-    public boolean requestScheduleGeneration(ScheduleRequest schedule){
-        //ToDo : Should also verify if the request with the same configuratio  was already generated
+    public boolean requestScheduleGeneration(ScheduleRequest schedule) {
+        // ToDo: Verify if a schedule with the same configuration was already generated
         producer.requestScheduleMessage(schedule);
         System.out.println(schedule);
         return true;
     }
 
-    public Optional<Schedule> getByTitle(String title){
+    public Optional<Schedule> getByTitle(String title) {
         return schedulerepository.findByTitle(title);
     }
 
@@ -68,5 +64,9 @@ public class SchedulesService {
 
     public void saveSchedule(Schedule schedule) {
         schedulerepository.save(schedule);
+    }
+
+    public Optional<Schedule> getScheduleById(String id) {
+        return schedulerepository.findById(id);
     }
 }

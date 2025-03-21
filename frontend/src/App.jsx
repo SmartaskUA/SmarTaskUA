@@ -19,8 +19,6 @@ const App = () => {
       <Router>
         <Routes>
           <Route path="/" element={<Login />} />
-          
-          {/* aqu1 em baxio as rotas estao protegidas */}
           <Route path="/admin" element={<ProtectedRoute role="admin"><Admin /></ProtectedRoute>} />
           <Route path="/admin/add_algor" element={<ProtectedRoute role="admin"><Add_Algor /></ProtectedRoute>} />
           <Route path="/manager" element={<ProtectedRoute role="manager"><Manager /></ProtectedRoute>} />
@@ -29,7 +27,6 @@ const App = () => {
           <Route path="/manager/employer" element={<ProtectedRoute role="manager"><Employer /></ProtectedRoute>} />
           <Route path="/manager/calendar/:calendarId" element={<ProtectedRoute role="manager"><Calendar /></ProtectedRoute>} />
           <Route path="/manager/createCalendar" element={<ProtectedRoute role="manager"><CreateCalendar /></ProtectedRoute>} />
-
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>

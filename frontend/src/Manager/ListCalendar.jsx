@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";  
 import Sidebar_Manager from "../components/Sidebar_Manager"; 
 import BaseUrl from "../components/BaseUrl";  
-import axios from 'axios';  
+import axios from "axios";  
 
 const ListCalendar = () => {
   const [calendars, setCalendars] = useState([]);  
@@ -16,9 +16,8 @@ const ListCalendar = () => {
         console.log("Base URL: ", baseUrl);
 
         const response = await axios.get(`${baseUrl}schedules/fetch`);
-        
         console.log("Resposta da API:", response);
-        
+
         if (response.data) {
           setCalendars(response.data);  
         } else {
