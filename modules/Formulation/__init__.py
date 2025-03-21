@@ -3,6 +3,7 @@ from variaveis import Variaveis
 
 if __name__ == "__main__":
     # Criar variáveis e domínios
+    # A criaçao das variavies devem ser suportadas pelo acesso a base de dados e comunicaçao com message broker para receber a copnfiguraçoa
     variaveis_obj = Variaveis()
     funcionarios = list(range(1, 13))  # 12 funcionários
     dias_no_ano = 365
