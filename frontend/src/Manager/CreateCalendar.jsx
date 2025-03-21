@@ -1,11 +1,33 @@
 import React, { useState } from "react";
+import axios from "axios";
+import baseurl from "../components/BaseUrl"; 
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import "../styles/Manager.css";
 
 const CreateCalendar = () => {
-  const [date, setDate] = useState("");
+  const [dateStart, setDateStart] = useState("");
+  const [dateEnd, setDateEnd] = useState("");
+  const [team, setTeam] = useState("");
   const [durationH, setDurationH] = useState("");
   const [durationM, setDurationM] = useState("");
+
+  const handleSave = async () => {
+    const data = {
+      team,
+      dateStart,
+      dateEnd,
+      duration: `${durationH}h ${durationM}m`,
+    };
+
+    try {
+      const response = await axios.post(`${baseurl}/schedules/generate`, data);
+      alert("Dados enviados com sucesso!");
+      console.log(response.data);
+    } catch (error) {
+      console.error("Erro ao enviar os dados:", error);
+      alert("Erro ao enviar os dados.");
+    }
+  };
 
   return (
     <div className="admin-container">
@@ -16,15 +38,15 @@ const CreateCalendar = () => {
 
           <div className="form-group">
             <label>Team:</label>
-            <input type="text" placeholder="Digite o tema" />
+            <input type="text" value={team} onChange={(e) => setTeam(e.target.value)} placeholder="Digite o tema" />
           </div>
 
           <div className="form-group">
-            <label>Data Inicio:</label>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            <label>Data Início:</label>
+            <input type="date" value={dateStart} onChange={(e) => setDateStart(e.target.value)} />
 
             <label>Data Fim:</label>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            <input type="date" value={dateEnd} onChange={(e) => setDateEnd(e.target.value)} />
           </div>
 
           <div className="duration-container">
@@ -38,15 +60,16 @@ const CreateCalendar = () => {
           </div>
 
           <div className="action-buttons">
-            <button className="save-btn">Gravar</button>
+            <button className="save-btn" onClick={handleSave}>Gravar</button>
             <button className="test-btn">Teste</button>
             <button className="remove-btn">Remover</button>
           </div>
         </div>
+        
         <div className="algorithm-buttons">
           <button className="algoritmo-btn">Algoritmo 1</button>
-          <button className="algoritmo-btn">Algoritmo</button>
-          <button className="algoritmo-btn">Voalgortiltar</button>
+          <button className="algoritmo-btn">Algoritmo 2</button>
+          <button className="algoritmo-btn">Algoritmo 3</button>
         </div>
       </div>
     </div>

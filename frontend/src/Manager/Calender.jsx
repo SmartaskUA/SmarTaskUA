@@ -21,13 +21,12 @@ const Calendar = () => {
   const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
   useEffect(() => {
-    const baseUrl = BaseUrl(); // Retorna 'http://localhost:8081/'
-    // Faz a requisição GET para o endpoint que retorna o JSON do calendário
+    const baseUrl = BaseUrl(); 
     axios.get(`${baseUrl}schedules/fetch/${calendarId}`)
       .then((response) => {
-        // Supomos que o JSON retornado possui a propriedade "data" com a matriz desejada:
         if (response.data) {
           setData(response.data.data);
+          console.log(response.data.data);
         }
       })
       .catch((error) => {
@@ -36,7 +35,6 @@ const Calendar = () => {
   }, [calendarId]);
 
   const downloadCSV = () => {
-    // Converte os dados (que agora vêm do JSON) em CSV
     const csvContent = data.map((row) => row.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
     const link = document.createElement("a");
