@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import BaseUrl from "../components/BaseUrl";
 import axios from "axios";
+import "../styles/Manager.css";
 
 const ListCalendar = () => {
   const [calendars, setCalendars] = useState([]);
@@ -41,9 +42,26 @@ const ListCalendar = () => {
       try {
         const baseUrl = BaseUrl();
         const response = await axios.get(`${baseUrl}schedules/${e.target.value}`);
-        setCalendars(response.data);
+        if (response.data) {
+          setCalendars([response.data]);
+        } else {
+          setCalendars([]);
+        }
       } catch (error) {
         console.error("Erro ao buscar calendário:", error);
+        setCalendars([]);
+      }
+    } else {
+      try {
+        const baseUrl = BaseUrl();
+        const response = await axios.get(`${baseUrl}schedules/fetch`);
+        if (response.data) {
+          setCalendars(response.data);
+        } else {
+          setCalendars([]);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar calendários:", error);
         setCalendars([]);
       }
     }
@@ -85,21 +103,31 @@ const ListCalendar = () => {
             className="search-input"
           />
         </div>
-        {calendars.length > 0 ? (
-          calendars.map((calendar) => (
-            <Link
-              key={calendar.id}
-              to={`/manager/calendar/${calendar.id}`}
-              className="btn"
-            >
-              {calendar.title}
-            </Link>
-          ))
-        ) : (
-          <p>Nenhum calendário encontrado.</p>
-        )}
-      </div>
 
+        <div className="calendar-cards-container">
+          {calendars.length > 0 ? (
+            calendars.map((calendar) => (
+              <div key={calendar.id} className="calendar-card">
+                <div className="calendar-card-header">
+
+                  <span className="status-dot" />
+
+                  <span className="calendar-card-title">
+                    {calendar.title}
+                    {calendar.algorithm ? `, ${calendar.algorithm}` : ""}
+                  </span>
+                </div>
+
+                <Link to={`/manager/calendar/${calendar.id}`} className="open-button">
+                  Open
+                </Link>
+              </div>
+            ))
+          ) : (
+            <p>Nenhum calendário encontrado.</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
