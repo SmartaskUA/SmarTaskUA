@@ -10,6 +10,7 @@ const ListCalendar = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
 
   useEffect(() => {
     const fetchCalendars = async () => {
@@ -37,34 +38,22 @@ const ListCalendar = () => {
   }, []);
 
   const handleSearch = async (e) => {
-    setSearch(e.target.value);
-    if (e.target.value.length > 0) {
-      try {
-        const baseUrl = BaseUrl();
-        const response = await axios.get(`${baseUrl}schedules/${e.target.value}`);
-        if (response.data) {
-          setCalendars([response.data]);
-        } else {
-          setCalendars([]);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar calendário:", error);
-        setCalendars([]);
-      }
+    const query = e.target.value;
+    setSearch(query);
+
+    if (query.length > 0) {
+      const filteredCalendars = calendars.filter(calendar =>
+        calendar.title.toLowerCase().includes(query.toLowerCase())
+      );
+      setSuggestions(filteredCalendars);
     } else {
-      try {
-        const baseUrl = BaseUrl();
-        const response = await axios.get(`${baseUrl}schedules/fetch`);
-        if (response.data) {
-          setCalendars(response.data);
-        } else {
-          setCalendars([]);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar calendários:", error);
-        setCalendars([]);
-      }
+      setSuggestions([]);
     }
+  };
+
+  const handleSuggestionClick = (calendar) => {
+    setSearch(calendar.title);
+    setSuggestions([]);
   };
 
   if (loading) {
@@ -102,6 +91,19 @@ const ListCalendar = () => {
             onChange={handleSearch}
             className="search-input"
           />
+          {suggestions.length > 0 && (
+            <div className="suggestions-dropdown">
+              {suggestions.map((calendar) => (
+                <div
+                  key={calendar.id}
+                  className="suggestion-item"
+                  onClick={() => handleSuggestionClick(calendar)}
+                >
+                  {calendar.title}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="calendar-cards-container">
@@ -109,9 +111,7 @@ const ListCalendar = () => {
             calendars.map((calendar) => (
               <div key={calendar.id} className="calendar-card">
                 <div className="calendar-card-header">
-
                   <span className="status-dot" />
-
                   <span className="calendar-card-title">
                     {calendar.title}
                     {calendar.algorithm ? `, ${calendar.algorithm}` : ""}
