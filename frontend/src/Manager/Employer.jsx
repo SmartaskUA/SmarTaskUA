@@ -9,9 +9,9 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Typography,
   CircularProgress,
+  Box,
 } from "@mui/material";
 
 const Employer = () => {
@@ -37,43 +37,43 @@ const Employer = () => {
     <div className="admin-container" style={{ display: "flex", minHeight: "100vh" }}>
       <Sidebar_Manager />
       <div className="main-content" style={{ flex: 1, padding: "20px" }}>
-        <Typography variant="h5" component="h2" gutterBottom>
-          Lista de Employees
-        </Typography>
+        <Box mb={4}>
+          <Typography variant="h4" component="h2" gutterBottom align="center">
+            Lista de Employees
+          </Typography>
+        </Box>
 
         {loading ? (
-          <CircularProgress />
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+            <CircularProgress size={60} />
+          </Box>
         ) : error ? (
-          <Typography color="error">{error}</Typography>
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+            <Typography variant="h6" color="error" align="center">
+              {error}
+            </Typography>
+          </Box>
         ) : employees.length > 0 ? (
-          <TableContainer component={Paper}>
+          <TableContainer style={{ borderRadius: 8 }}>
             <Table>
-              <TableHead style={{ backgroundColor: "#4f4f4f" }}>
+              <TableHead style={{ backgroundColor: "#1976d2", color: "#fff" }}>
                 <TableRow>
-                  <TableCell style={{ color: "#fff" }}>
-                    <strong>ID</strong>
-                  </TableCell>
-                  <TableCell style={{ color: "#fff" }}>
-                    <strong>Nome</strong>
-                  </TableCell>
-                  <TableCell style={{ color: "#fff" }}>
-                    <strong>Equipe</strong>
-                  </TableCell>
+                  <TableCell style={{ color: "#fff", fontWeight: "bold" }}>ID</TableCell>
+                  <TableCell style={{ color: "#fff", fontWeight: "bold" }}>Nome</TableCell>
+                  <TableCell style={{ color: "#fff", fontWeight: "bold" }}>Equipe</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {employees.map((emp, index) => {
                   const rowStyle = index % 2 === 0
-                    ? { backgroundColor: "#f9f9f9" }
-                    : { backgroundColor: "#fff" };
+                    ? { backgroundColor: "#f2f2f2" }
+                    : { backgroundColor: "#ffffff" };
 
                   return (
                     <TableRow key={emp.id} style={rowStyle}>
                       <TableCell>{emp.id}</TableCell>
                       <TableCell>{emp.name}</TableCell>
-                      <TableCell>
-                        {emp.team ? emp.team.name : "N/A"}
-                      </TableCell>
+                      <TableCell>{emp.team ? emp.team.name : "N/A"}</TableCell>
                     </TableRow>
                   );
                 })}
@@ -81,7 +81,9 @@ const Employer = () => {
             </Table>
           </TableContainer>
         ) : (
-          <Typography>Nenhum employee encontrado.</Typography>
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+            <Typography variant="h6">Nenhum employee encontrado.</Typography>
+          </Box>
         )}
       </div>
     </div>
