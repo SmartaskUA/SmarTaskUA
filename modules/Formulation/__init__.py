@@ -1,5 +1,5 @@
-from Formulation.restricoes import Restricoes
-from Formulation.variaveis import Variaveis
+from .restricoes import Restricoes
+from .variaveis import Variaveis
 
 if __name__ == "__main__":
     # Criar variáveis e domínios

@@ -2,7 +2,7 @@ import time
 import csv
 import logging
 from typing import Dict, List, Optional, Any
-from Formulation.Solver import Solver
+from modules.Formulation.Solver import Solver
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')

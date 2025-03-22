@@ -1,5 +1,5 @@
-from CSPSolver import CSPSolver
-from Formulation import Variaveis, Restricoes
+# from . import CSPSolver
+from ..Formulation import Variaveis, Restricoes
 
 if __name__ == "__main__":
     # Criar variáveis e domínios
