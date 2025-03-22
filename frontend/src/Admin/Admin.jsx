@@ -6,6 +6,11 @@ import "../styles/Admin.css";
 
 const Admin = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [algorithms, setAlgorithms] = useState([
+    { name: "Algorithm 1", color: "purple", description: "Description 1" },
+    { name: "Algorithm 2", color: "green", description: "Description 2" },
+    { name: "Algorithm 3", color: "yellow", description: "Description 3" }
+  ]);
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -14,6 +19,11 @@ const Admin = () => {
   const handleOptionClick = (option) => {
     console.log(`Ordenando por: ${option}`);
     setIsDropdownOpen(false); 
+  };
+
+
+  const handleRemoveAlgorithm = (name) => {
+    setAlgorithms(algorithms.filter(algorithm => algorithm.name !== name));
   };
 
   return (
@@ -43,15 +53,29 @@ const Admin = () => {
             )}
           </div>
         </div>
-        <Link to="./Add_Algor" className="algorithm-card add-button">
+        
+        <Link to="/admin/add_algor" className="algorithm-card add-button">
           Adicionar Algoritmo
         </Link>
 
         <div className="algorithm-cards">
-          <AlgorithmCard color="purple" textColor="#7a52aa" name="Algorithms 1" />
-          <AlgorithmCard color="green" textColor="#4a7c4a" name="Algorithms 2" />
-          <AlgorithmCard color="yellow" textColor="#b38b00" name="Algorithms 3" />
+          {algorithms.map((algorithm, index) => (
+            <div key={index} className="algorithm-card-wrapper">
+              <AlgorithmCard
+                color={algorithm.color}
+                textColor={algorithm.color}
+                name={algorithm.name}
+              />
+              <button
+                className="remove-button"
+                onClick={() => handleRemoveAlgorithm(algorithm.name)}
+              >
+                Remover
+              </button>
+            </div>
+          ))}
         </div>
+
       </div>
     </div>
   );

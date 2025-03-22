@@ -240,6 +240,117 @@
     background-color: #1565c0;
   }
   
-  .manager-btn button:hover {
+  .manager-btn button:hover { 
     background-color: #1565c0;
   }
+
+/* Algoritmo Form  */
+
+.algorithm-form-container {
+  padding: 20px;
+  max-width: 100%;
+  margin-right: 60%;
+}
+
+.color-preview {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.color-box {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+  border-radius: 5px;
+}
+
+.color-label {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.form-input, .color-input, .file-input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.color-input {
+  width: 60px;
+}
+
+.color-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.color-code {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+}
+
+.form-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: #4CAF50;
+  color: white;
+}
+
+.form-button:hover {
+  background-color: #45a049;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.action-button {
+  padding: 12px 25px;
+  font-size: 16px;
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.action-button:hover {
+  background-color: #0056b3;
+}
+
+.cancel-button {
+  background-color: #dc3545;
+}
+
+.cancel-button:hover {
+  background-color: #c82333;
+}
