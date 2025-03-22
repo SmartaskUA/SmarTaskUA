@@ -38,9 +38,7 @@ const Employer = () => {
       <Sidebar_Manager />
       <div className="main-content" style={{ flex: 1, padding: "20px" }}>
         <Box mb={4}>
-          <Typography variant="h4" component="h2" gutterBottom align="center">
-            Lista de Employees
-          </Typography>
+          <h2>Lista de Employees</h2>
         </Box>
 
         {loading ? (
