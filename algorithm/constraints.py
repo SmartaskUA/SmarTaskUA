@@ -1,3 +1,6 @@
+from algorithm.formulation import HOLIDAYS
+
+
 def constraint_TM(v1, x1, v2, x2):
     e1, d1 = v1[1:].split(',')
     e2, d2 = v2[1:].split(',')
@@ -15,3 +18,5 @@ def constraint_TM(v1, x1, v2, x2):
     if d1 < d2 and x1 == "T":
         return x2 != "M"
     return True
+
+def constraint_vacations(v1,x1): return x1 != "F"
