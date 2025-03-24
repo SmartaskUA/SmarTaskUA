@@ -1,209 +1,144 @@
-.btn {
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: #007bff; 
-    color: white;
-    text-align: center;
-    text-decoration: none;
-    border-radius: 5px;
-    font-size: 16px;
-    transition: background-color 0.3s ease;
-    margin: 20px;
-}
-  
-.btn:hover {
-    background-color: #0056b3;
-}  
+/* Manager.css ou um CSS comum que importe nas duas páginas */
 
-
-
-
-
-/* criar calendarieo */
+/* Container geral */
 .admin-container {
-    display: flex;
-    width: 100vw;
-    height: 100vh;
-    background: #fff;
-    overflow: hidden;
-    color: black;
-    
-  }
-  
-  .calendar-wrapper {
-    display: flex; 
-    justify-content: space-between;
-    width: 100%;
-    padding: 20px;
-    margin-left: 20%;
-    margin-right: 20%;
-    margin-top: 1.5%;
-  }
-  
-  .calendar-form-container {
-    width: 70%; 
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 15px;
-  }
-  
-  .form-group label {
-    margin-bottom: 5px;
-    font-weight: bold;
-  }
-  
-  input, select {
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    width: 40%;
-  }
-  
-  .duration-container {
-    display: flex;
-    gap: 10px;
-  }
-  
-  .action-buttons {
-    display: flex;
-    justify-content: flex-start;
-    gap: 10px;
-    margin-top: 20px;
-  }
-  
-  button {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-  }
-  
-  .algoritmo-btn {
-    background-color: #4CAF50;
-    color: white;
-  }
-  
-  .save-btn {
-    background-color: #2196F3;
-    color: white;
-  }
-  
-  .test-btn {
-    background-color: #FFC107;
-    color: black;
-  }
-  
-  .remove-btn {
-    background-color: #F44336;
-    color: white;
-  }
-  
-  .algorithm-buttons {
-    display: flex;
-    flex-direction: row; 
-    justify-content: flex-start;
-    gap: 10px;
-    margin-top: 0; 
-    width: 25%; 
-    height: 70px;
-    margin-top: 100px;
-  }
-  
-  .algorithm-buttons button {
-    width: 50%; 
-  }
-  
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  background: #fff;
+  overflow: hidden;
+  color: black;
+}
 
-  /* Listar calendarieo */
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-  }
-  
-  .search-input {
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
-    width: 250px;
-  }
-  
+/* Conteúdo principal */
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
 
+/* Cabeçalhos */
+.heading {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
 
-/* List Calendar, cartões */
+.section-title {
+  font-size: 20px;
+  margin: 30px 0 10px;
+  font-weight: bold;
+}
+
+/* Cards Row (para a primeira linha de 4 cards, por exemplo) */
+.cards-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+/* Container de cards (ListCalendar ou seções da Home) */
 .calendar-cards-container {
   display: flex;
-  flex-wrap: wrap;       
-  gap: 20px;             
-  margin-top: 20px;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
+/* Card padrão */
 .calendar-card {
-  width: 250px;        
-  min-height: 120px;
+  background-color: #fff;
   border: 1px solid #ddd;
   border-radius: 8px;
-  background-color: #fff;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-
+  width: 220px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   display: flex;
-  flex-direction: column; 
+  flex-direction: column;
   justify-content: space-between;
-  padding: 16px;
 }
 
+/* Cabeçalho do card */
 .calendar-card-header {
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
-.status-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  background-color: #28a745; 
-  border-radius: 50%;
-  margin-right: 8px;
-}
-
+/* Título do card */
 .calendar-card-title {
-  font-weight: 500;
-  font-size: 16px;
-  color: #333;
+  font-weight: 600;
+  margin-left: 8px;
 }
 
-.open-button {
+/* Ponto de status */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
   display: inline-block;
+}
+
+/* Exemplos de cores de status */
+.green {
+  background-color: #28a745; /* ou outra cor */
+}
+.orange {
+  background-color: #fd7e14;
+}
+.red {
+  background-color: #dc3545;
+}
+
+/* Botão "Open" ou "Create" */
+.open-button {
   text-align: center;
-  background-color: #ccc; 
-  color: #fff;            
-  padding: 8px 16px;
-  border-radius: 8px;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 12px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
   text-decoration: none;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
-  margin-top: auto;       
+  display: inline-block;
+  margin-top: auto;
 }
 
-.open-button:hover {
-  background-color: #999;
+/* Variações de cor do botão */
+.btn-blue {
+  background-color: #007bff;
+}
+.btn-green {
+  background-color: #28a745;
+}
+.btn-gray {
+  background-color: #6c757d;
 }
 
-.search-input {
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  margin-left: 20px; 
-  font-size: 14px;
+/* Cartão "New Calendar" (opcional) */
+.new-calendar-card {
+  border: 2px solid #007bff;
 }
 
+/* Cartão rascunho */
+.draft-card {
+  border: 2px solid #fd7e14;
+}
 
+/* Cartão em processo */
+.in-process {
+  border: 2px dashed #fd7e14;
+}
+
+/* Cartão concluído */
+.completed-card {
+  border: 2px solid #28a745;
+}
+
+/* Tempo/rascunho */
+.draft-time {
+  font-size: 12px;
+  color: #777;
+  margin-left: 8px;
+  margin-top: 4px;
+}
