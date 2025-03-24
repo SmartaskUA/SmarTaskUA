@@ -24,15 +24,6 @@ const Sidebar_Manager = () => {
           <Briefcase size={20} className="icon"/> Employees
         </Link> 
       </nav>
-
-      {/* <div className="addCalendar-btn">
-        <Link>
-          <button>
-            <SquarePlus size={20} className="icon" /> Calendar
-          </button>
-        </Link>
-      </div> */}
-
       <div className="manager-btn">
         <Link>
           <button>
