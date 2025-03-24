@@ -4,6 +4,7 @@ import Sidebar_Manager from "../components/Sidebar_Manager";
 import BaseUrl from "../components/BaseUrl";
 import axios from "axios";
 import "../styles/Manager.css";
+import { Autocomplete, TextField, CircularProgress } from "@mui/material";
 
 const ListCalendar = () => {
   const [calendars, setCalendars] = useState([]);
@@ -11,16 +12,13 @@ const ListCalendar = () => {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
   useEffect(() => {
     const fetchCalendars = async () => {
       try {
         const baseUrl = BaseUrl();
-        console.log("Base URL: ", baseUrl);
-
         const response = await axios.get(`${baseUrl}schedules/fetch`);
-        console.log("Resposta da API:", response);
-
         if (response.data) {
           setCalendars(response.data);
         } else {
@@ -37,15 +35,16 @@ const ListCalendar = () => {
     fetchCalendars();
   }, []);
 
-  const handleSearch = async (e) => {
-    const query = e.target.value;
-    setSearch(query);
+  const handleSearch = (event, value) => {
+    setSearch(value);
 
-    if (query.length > 0) {
+    if (value.length > 0) {
+      setIsLoadingSuggestions(true);
       const filteredCalendars = calendars.filter(calendar =>
-        calendar.title.toLowerCase().includes(query.toLowerCase())
+        calendar.title.toLowerCase().includes(value.toLowerCase())
       );
       setSuggestions(filteredCalendars);
+      setIsLoadingSuggestions(false);
     } else {
       setSuggestions([]);
     }
@@ -82,33 +81,42 @@ const ListCalendar = () => {
     <div className="admin-container">
       <Sidebar_Manager />
       <div className="main-content">
-        <div className="header">
-          <h2 className="heading">List Calendar</h2>
-          <input
-            type="text"
-            placeholder="Pesquisar por nome"
-            value={search}
-            onChange={handleSearch}
-            className="search-input"
+        <div className="header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h2 className="heading" style={{ marginRight: "201px" }}>List Calendar</h2>
+          <Autocomplete 
+            style={{ width: "250px", marginRight: "5%" }} 
+            freeSolo
+            options={suggestions.length > 0 ? suggestions : calendars}
+            getOptionLabel={(option) => option.title}
+            inputValue={search}  
+            onInputChange={handleSearch}  
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Pesquisar por nome"
+                variant="outlined"
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: isLoadingSuggestions ? (
+                    <CircularProgress color="inherit" size={20} />
+                  ) : null,
+                }}
+              />
+            )}
+            onChange={(event, newValue) => {
+              handleSuggestionClick(newValue);
+            }}
+            renderOption={(props, option) => (
+              <li {...props} key={option.id}>
+                {option.title}
+              </li>
+            )}
           />
-          {suggestions.length > 0 && (
-            <div className="suggestions-dropdown">
-              {suggestions.map((calendar) => (
-                <div
-                  key={calendar.id}
-                  className="suggestion-item"
-                  onClick={() => handleSuggestionClick(calendar)}
-                >
-                  {calendar.title}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         <div className="calendar-cards-container">
-          {calendars.length > 0 ? (
-            calendars.map((calendar) => (
+          {(suggestions.length > 0 ? suggestions : calendars).length > 0 ? (
+            (suggestions.length > 0 ? suggestions : calendars).map((calendar) => (
               <div key={calendar.id} className="calendar-card">
                 <div className="calendar-card-header">
                   <span className="status-dot" />
@@ -118,7 +126,7 @@ const ListCalendar = () => {
                   </span>
                 </div>
 
-                <Link to={`/manager/calendar/${calendar.id}`} className="open-button">
+                <Link to={`/manager/calendar/${calendar.id}`} className="open-button" style={{  backgroundColor: "#4CAF50",}}>
                   Open
                 </Link>
               </div>
@@ -131,5 +139,6 @@ const ListCalendar = () => {
     </div>
   );
 };
+
 
 export default ListCalendar;
