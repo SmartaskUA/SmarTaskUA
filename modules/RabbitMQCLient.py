@@ -20,7 +20,11 @@ class RabbitMQClient:
         else:
             print("Failed to connect to MongoDB. Exiting...")
             return
+        print("\n------------Employees-----------------------\n")
 
+        self.mongodb_client.fetch_employees()
+        print("\n------------Schedules-----------------------\n")
+        self.mongodb_client.fetch_schedules()
         # Connect to RabbitMQ and set up the channel
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host))
         self.channel = self.connection.channel()
