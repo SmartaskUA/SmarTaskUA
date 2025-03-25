@@ -21,39 +21,72 @@ def constraint_TM(v1, x1, v2, x2):
     return True
 
 
-def constraint_vacations(v1, x1):
+def constraint_vacations(v1, x1, v2, x2):
     """Impedir que um funcionário trabalhe durante suas férias."""
-    return x1 != "F"
+    return x1 != "F"  # As férias são verificadas apenas pelo valor de x1
 
 
-def constraint_work_days(employee, assignment, max_days=223):
+def constraint_work_days(v1, x1, v2, x2):
     """Garantir que o funcionário não trabalhe mais que 223 dias no ano."""
-    work_days = sum(1 for var, val in assignment.items() if var.startswith(f"E{employee}") and val in ["M", "T"])
-    return work_days <= max_days
+    employee = v1.split(',')[0]
+    work_days = sum(1 for day in range(1, 365) if f"{employee},{day}" in v1 and x1 in ["M", "T"])
+    return work_days <= 223
 
 
-def constraint_sundays_holidays(employee, assignment, max_days=22):
+def constraint_sundays_holidays(v1, x1, v2, x2):
     """Garantir que o funcionário não trabalhe mais que 22 domingos e feriados."""
-    sundays_holidays = sum(1 for var, val in assignment.items() if var.startswith(f"E{employee}") and
-                           (int(var.split(',')[1]) in HOLIDAYS or (int(var.split(',')[1]) - 1) % 7 == 0)
-                           and val in ["M", "T"])
-    return sundays_holidays <= max_days
+    employee = v1.split(',')[0]
+    sundays_holidays = sum(
+        1 for day in range(1, 365) if f"{employee},{day}" in v1 and
+        (day in HOLIDAYS or (day - 1) % 7 == 0) and
+        x1 in ["M", "T"]
+    )
+    return sundays_holidays <= 22
 
 
-def constraint_max_consecutive_days(employee, assignment, max_consecutive=5):
+def constraint_max_consecutive_days(v1, x1, v2, x2):
     """Garantir que o funcionário não trabalhe mais que 5 dias consecutivos."""
-    consecutive_days = 0
-    variables = sorted((var for var in assignment if var.startswith(f"E{employee}")), key=lambda x: int(x.split(',')[1]))
+    e1, d1 = v1.split(',')
+    e2, d2 = v2.split(',')
+    d1 = int(d1)
+    d2 = int(d2)
 
-    for var in variables:
-        if assignment[var] in ["M", "T"]:
-            consecutive_days += 1
-            if consecutive_days > max_consecutive:
-                return False
-        else:
-            consecutive_days = 0
+    # Apenas verificar dias consecutivos (d1, d1+1)
+    if e1 != e2 or abs(d1 - d2) != 1:
+        return True
+
+    # Verificar turnos consecutivos de trabalho
+    if x1 in ["M", "T"] and x2 in ["M", "T"]:
+        # Retornar falso se for o 6º dia consecutivo
+        consecutive_days = sum(1 for d in range(d1 - 4, d2 + 1) if f"{e1},{d}" in v1 and x1 in ["M", "T"])
+        return consecutive_days <= 5
+
     return True
 
 
+def create_constraints(employees, days, domain):
+    """Cria o dicionário de restrições parametrizado para ser usado no ConstraintSearch.
 
+    Args:
+        employees (list): Lista de identificadores de funcionários (ex: ["E1", "E2", ..., "E11"]).
+        days (list): Lista de dias para a geração de variáveis (ex: range(1, 365)).
+        domain (list): Lista de possíveis valores do domínio (ex: ["0", "M", "T", "F"]).
+
+    Returns:
+        dict: Dicionário de restrições entre as variáveis.
+    """
+    constraints = {}
+
+    for d in days:
+        for e in employees:
+            # Restrições de sequência inválida T->M e de máximo 5 dias consecutivos
+            constraints[(f"{e},{d}", f"{e},{d + 1}")] = constraint_TM
+            constraints[(f"{e},{d}", f"{e},{d + 1}")] = constraint_max_consecutive_days
+
+            # Restrições individuais (férias, dias de trabalho, domingos e feriados)
+            constraints[(f"{e},{d}", f"{e},{d}")] = constraint_vacations
+            constraints[(f"{e},{d}", f"{e},{d}")] = constraint_work_days
+            constraints[(f"{e},{d}", f"{e},{d}")] = constraint_sundays_holidays
+
+    return constraints
 
