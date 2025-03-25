@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-from pymongo.errors import ConnectionError
+from pymongo.errors import PyMongoError  # Updated import to handle connection errors
 import os
 
 
@@ -25,7 +25,7 @@ class MongoDBClient:
             self.collection = self.db[collection_name]
             print(f"Connected to MongoDB database '{db_name}' and collection '{collection_name}'")
 
-        except ConnectionError as e:
+        except PyMongoError as e:  # Handle any connection-related errors
             print(f"Failed to connect to MongoDB: {e}")
 
     def insert_task_status(self, task_status):

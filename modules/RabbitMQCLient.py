@@ -2,6 +2,7 @@ import pika
 import json
 import uuid
 from datetime import datetime
+from MongoDBClient import MongoDBClient  # Import the MongoDBClient class
 
 class RabbitMQClient:
     def __init__(self, host='localhost', exchange='task-exchange', queue='task-queue', routing_key='task-routing-key'):
@@ -10,7 +11,17 @@ class RabbitMQClient:
         self.queue = queue
         self.routing_key = routing_key
 
-        # Connect to RabbitMQ and set up channel
+        # Connect to MongoDB
+        self.mongodb_client = MongoDBClient()  # Injected MongoDBClient
+
+        # Test the MongoDB connection
+        if self.mongodb_client.db is not None:
+            print("MongoDB connection is active!")
+        else:
+            print("Failed to connect to MongoDB. Exiting...")
+            return
+
+        # Connect to RabbitMQ and set up the channel
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host))
         self.channel = self.connection.channel()
 
