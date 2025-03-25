@@ -54,7 +54,7 @@ const Admin = () => {
           </div>
         </div>
         
-        <Link to="/admin/add_algor">
+        <Link to="/admin/add_algor" className="algorithm-card add-button">
           Adicionar Algoritmo
         </Link>
 
