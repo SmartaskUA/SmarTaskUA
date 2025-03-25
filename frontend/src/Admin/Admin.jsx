@@ -54,7 +54,7 @@ const Admin = () => {
           </div>
         </div>
         
-        <Link to="/admin/add_algor" className="algorithm-card add-button">
+        <Link to="/admin/add_algor">
           Adicionar Algoritmo
         </Link>
 
@@ -67,7 +67,6 @@ const Admin = () => {
                 name={algorithm.name}
               />
               <button
-                className="remove-button"
                 onClick={() => handleRemoveAlgorithm(algorithm.name)}
               >
                 Remover
