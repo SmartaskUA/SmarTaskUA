@@ -3,74 +3,53 @@ import random
 
 class CSP:
     def __init__(self, variables, domains, constraints):
-        """
-        Initialize the CSP.
-        - variables: List of variable names (e.g., ['X1', 'X2', ...])
-        - domains: Dict mapping variables to their possible values (e.g., {'X1': [0, 1], 'X2': [0, 1]})
-        - constraints: List of functions that take (var, assignment) and return True if satisfied
-        """
+        """Initialize the CSP."""
         self.variables = variables
-        self.domains = domains.copy()  # Original domains
+        self.domains = domains.copy()
         self.constraints = constraints
-        self.current_domains = domains.copy()  # Domains reduced during search
+        self.current_domains = domains.copy()
 
     def is_valid_assignment(self, var, value, assignment):
         """Check if assigning 'value' to 'var' satisfies all constraints."""
         temp_assignment = assignment.copy()
         temp_assignment[var] = value
         return all(constraint(var, temp_assignment) for constraint in self.constraints)
+    
+    def propagate(self,domains,var):
+        edges = [ e for e in self.constraints if e[1]==var ]
+        while edges!=[]:
+            (vj,vi) = edges.pop()
+            constraint = self.constraints[vj,vi]
+            newdomain = [ xj for xj in domains[vj] 
+                             if any(constraint(vj,xj,vi,xi) for xi in domains[vi] ) ]
+            if len(newdomain)<len(domains[vj]):
+                domains[vj] = newdomain
+                edges += [ e for e in self.constraints if e[1]==vj ]
 
-    def forward_check(self, var, value, assignment):
-        """Propagate constraints by reducing domains of unassigned variables."""
-        affected_vars = set()
-        temp_assignment = assignment.copy()
-        temp_assignment[var] = value
+    def search(self,domains=None):
+        self.calls += 1 
+        
+        if domains==None:
+            domains = self.domains
 
-        # Identify variables affected by constraints involving 'var'
-        for constraint in self.constraints:
-            for v in self.variables:
-                if v != var and v not in assignment:
-                    if constraint(v, temp_assignment):  # Constraint might involve var and v
-                        affected_vars.add(v)
-
-        # Reduce domains of affected variables
-        new_domains = copy.deepcopy(self.current_domains)
-        for v in affected_vars:
-            new_domains[v] = [val for val in new_domains[v] if self.is_valid_assignment(v, val, temp_assignment)]
-            if not new_domains[v]:  # Domain wipeout
-                return None
-        return new_domains
-
-    def select_unassigned_variable(self, assignment):
-        """Select the unassigned variable with the smallest remaining domain (MRV heuristic)."""
-        unassigned = [v for v in self.variables if v not in assignment]
-        if not unassigned:
+        # se alguma variavel tiver lista de valores vazia, falha
+        if any([lv==[] for lv in domains.values()]):
             return None
-        return min(unassigned, key=lambda v: len(self.current_domains[v]))
 
-    def order_domain_values(self, var, assignment):
-        """Return the current domain values for the variable."""
-        return self.current_domains[var]
-
-    def backtracking_search(self):
-        """Perform iterative backtracking search with forward checking."""
-        stack = []
-        stack.append(({}, self.domains.copy()))  # (assignment, domains)
-
-        while stack:
-            assignment, domains = stack.pop()
-            if len(assignment) == len(self.variables):
-                return assignment
-
-            self.current_domains = domains  # Update current domains for this state
-            var = self.select_unassigned_variable(assignment)
-            for value in self.order_domain_values(var, assignment):
-                if self.is_valid_assignment(var, value, assignment):
-                    new_assignment = assignment.copy()
-                    new_assignment[var] = value
-                    new_domains = self.forward_check(var, value, assignment)
-                    if new_domains is not None:
-                        stack.append((new_assignment, new_domains))
+        # se todas as variaveis exactamente um valor, sucesso
+        if all([len(lv)==1 for lv in list(domains.values())]):
+            return { v:lv[0] for (v,lv) in domains.items() }
+       
+        # continuação da pesquisa
+        for var in domains.keys():
+            if len(domains[var])>1:
+                for val in domains[var]:
+                    newdomains = dict(domains)
+                    newdomains[var] = [val]
+                    self.propagate(newdomains,var)
+                    solution = self.search(newdomains)
+                    if solution != None:
+                        return solution
         return None
 
 def employee_scheduling():
@@ -83,7 +62,7 @@ def employee_scheduling():
     domains = {var: ["F"] if int(var.split('_')[1][1:]) in vacations[var.split('_')[0]] else ["0", "M", "T", "MT"] for var in variables}
 
     constraints = [
-        # No T-to-M transition
+        # No T->M transition
         lambda var, assignment: not any(
             assignment.get(var, "0") in ["M", "MT"] and 
             assignment.get(f"{var.split('_')[0]}_D{d-1}", "0") in ["T", "MT"]
@@ -116,7 +95,7 @@ def employee_scheduling():
     solution = csp.backtracking_search()
     if solution:
         print("Solution found for employee scheduling.")
-        # Add export logic here if needed
+        # export
     else:
         print("No solution found.")
 
