@@ -96,7 +96,7 @@ def employee_scheduling():
     vacations = {emp: set(random.sample(range(1, num_days + 1), 5)) for emp in employees}
 
     variables = [f"E{e}_{d}" for e in range(1, num_employees + 1) for d in range(1, num_days + 1)]
-    domains = {var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]] else ["M", "T", "F", "0"]
+    domains = {var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]] else ["M", "T",  "0"]
                for var in variables}
 
     constraints = [
