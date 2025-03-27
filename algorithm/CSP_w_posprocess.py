@@ -159,10 +159,6 @@ def employee_scheduling():
             all(assignment.get(f"{var.split('_')[0]}_{d - k}", "0") in ["M", "T"] for k in range(5))
             for d in range(5, num_days + 1) if var == f"{var.split('_')[0]}_{d}"
         ),
-        lambda var, assignment: all(
-            sum(1 for d in range(1, num_days + 1) if assignment.get(f"E{e}_{d}", "0") in ["M", "T"]) <= 20
-            for e in range(1, num_employees + 1)
-        ),
         lambda var, assignment: not any(
             assignment.get(var, "0") == "M" and
             assignment.get(f"{var.split('_')[0]}_{int(var.split('_')[1]) + 1}", "0") == "T"
