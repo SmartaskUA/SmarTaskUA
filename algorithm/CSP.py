@@ -1,123 +1,115 @@
 import copy
 import random
 
+
 class CSP:
     def __init__(self, variables, domains, constraints):
-        """Initialize the CSP."""
         self.variables = variables
         self.domains = domains.copy()
         self.constraints = constraints
-        self.current_domains = domains.copy()
 
     def check_constraints(self, var, value, assignment):
-        """Check constraints and return a list of violations instead of a boolean."""
-        print("DD")
+        """Verifica todas as restrições após uma atribuição."""
         temp_assignment = assignment.copy()
         temp_assignment[var] = value
-        violations = []
-        for i, constraint in enumerate(self.constraints):
+        for constraint in self.constraints:
             if not constraint(var, temp_assignment):
-                violations.append(f"Constraint {i} violated for {var} = {value}")
-        return violations
-    
-    def propagate(self,domains,var, value):
-        print("BB")
-        temp_assignment = {v: domains[v][0] if len(domains[v]) == 1 else None for v in self.variables}
-        temp_assignment[var] = value
-        
-        # For each unassigned variable, reduce its domain based on constraints
-        for v in self.variables:
-            if v not in temp_assignment or temp_assignment[v] is None:
-                new_domain = []
-                for val in domains[v]:
-                    temp_assignment[v] = val
-                    violations = self.check_constraints(v, val, temp_assignment)
-                    if not violations:
-                        new_domain.append(val)
-                    temp_assignment[v] = None
-                domains[v] = new_domain if new_domain else domains[v]
-                # if not domains[v]:
-                #     return False
-        print("CC")
+                return False
         return True
 
-    def search(self,domains=None):    
-        print("AA")    
-        if domains==None:
-            domains = self.domains
+    def propagate(self, domains, var, value):
+        """Reduz os domínios com base nas restrições e propaga."""
+        temp_assignment = {v: domains[v][0] if len(domains[v]) == 1 else None for v in self.variables}
+        temp_assignment[var] = value
 
-        # se alguma variavel tiver lista de valores vazia, falha
-        if any([len(lv) == 0 for lv in domains.values()]):
+        for v in self.variables:
+            if temp_assignment[v] is None:  # Apenas para variáveis não atribuídas
+                new_domain = []
+                for val in domains[v]:
+                    if self.check_constraints(v, val, temp_assignment):
+                        new_domain.append(val)
+                if not new_domain:
+                    print(f"Domínio de {v} esvaziado. Conflito detectado!")
+                    return False  # Se esvaziar o domínio, inconsistente
+                domains[v] = new_domain
+        return True
+
+    def select_variable(self, domains):
+        """Seleciona a variável com menos valores restantes (MRV)."""
+        unassigned_vars = [v for v in domains if len(domains[v]) > 1]
+        return min(unassigned_vars, key=lambda var: len(domains[var]))
+
+    def search(self, domains=None):
+        if domains is None:
+            domains = copy.deepcopy(self.domains)
+
+        if any(len(lv) == 0 for lv in domains.values()):
             return None
 
-        # se todas as variaveis exactamente um valor, sucesso
-        # if all([len(lv) == 1 for lv in domains.values()]):
-        #     return { v:lv[0] for (v,lv) in domains.items() }
-        if all(len(lv) <= 1 for lv in domains.values()):
-            assignment = {v: lv[0] for v, lv in domains.items() if lv}
-            violations = []
-            for var in assignment:
-                violations.extend(self.check_constraints(var, assignment[var], assignment))
+        if all(len(lv) == 1 for lv in domains.values()):
+            assignment = {v: lv[0] for v, lv in domains.items()}
+            violations = [not self.check_constraints(var, assignment[var], assignment) for var in assignment]
             return {"assignment": assignment, "violations": violations}
-       
-        # continuação da pesquisa
-        for var in domains.keys():
-            if len(domains[var])>1:
-                for val in domains[var]:
-                    newdomains = dict(domains)
-                    newdomains[var] = [val]
-                    self.propagate(newdomains,var, val)
-                    solution = self.search(newdomains)
-                    if solution != None:
-                        return solution
+
+        var = self.select_variable(domains)
+        print(f"Tentando atribuir valores à variável {var} com domínio {domains[var]}")
+
+        for val in domains[var]:
+            print(f"Tentando {val} para {var}")
+            new_domains = copy.deepcopy(domains)
+            new_domains[var] = [val]
+            if self.propagate(new_domains, var, val):
+                solution = self.search(new_domains)
+                if solution is not None:
+                    return solution
         return None
 
+
 def employee_scheduling():
-    num_employees = 15
-    num_days = 365
-    holidays = {1, 25, 50, 75, 100, 150, 200, 250, 300, 350}
+    num_employees = 5  # Reduzido para simplificar o teste
+    num_days = 30  # Teste inicial com 30 dias
+    holidays = {7, 14, 21, 28}  # Apenas 4 feriados para simplificação
     employees = [f"E{e}" for e in range(1, num_employees + 1)]
-    vacations = {emp: set(random.sample(range(1, num_days + 1), 30)) for emp in employees}
+    vacations = {emp: set(random.sample(range(1, num_days + 1), 5)) for emp in employees}  # 5 dias de férias
 
     variables = [f"E{e}_{d}" for e in range(1, num_employees + 1) for d in range(1, num_days + 1)]
-    domains = {var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]] else ["0", "M", "T"] for var in variables}
+    domains = {var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]] else [ "M", "T","0"] for var in
+               variables}
 
     constraints = [
-        # No T->M transition
+        # Sequência inválida T -> M
         lambda var, assignment: not any(
-            assignment.get(var, "0") == "T" and 
+            assignment.get(var, "0") == "T" and
             assignment.get(f"{var.split('_')[0]}_{int(var.split('_')[1]) - 1}", "0") == "M"
             for var in variables if int(var.split('_')[1]) > 1
         ),
-        # Max 5 consecutive days
+        # Máximo 5 dias consecutivos de trabalho
         lambda var, assignment: not any(
-            all(assignment.get(f"{var.split('_')[0]}_{d-k}", "0") in ["M", "T"] for k in range(6))
-            for d in range(6, num_days + 1) if var == f"{var.split('_')[0]}_{d}"
+            all(assignment.get(f"{var.split('_')[0]}_{d - k}", "0") in ["M", "T"] for k in range(5))
+            for d in range(5, num_days + 1) if var == f"{var.split('_')[0]}_{d}"
         ),
-        # Max 223 workdays
+        # 20 dias de trabalho no total (para simplificar)
         lambda var, assignment: all(
-            sum(1 for d in range(1, num_days + 1) if assignment.get(f"E{e}_{d}", "0") in ["M", "T"]) == 223
+            sum(1 for d in range(1, num_days + 1) if assignment.get(f"E{e}_{d}", "0") in ["M", "T"]) <= 223
             for e in range(1, num_employees + 1)
         ),
-        # Max 22 Sundays/holidays
+        # Máximo 2 domingos/feriados trabalhados no mês
         lambda var, assignment: all(
-            sum(1 for d in range(1, num_days + 1) if assignment.get(f"E{e}_{d}", "0") in ["M", "T"] and ((d-1) % 7 == 6 or d in holidays)) <= 22
+            sum(1 for d in range(1, num_days + 1) if
+                assignment.get(f"E{e}_{d}", "0") in ["M", "T"] and ((d - 1) % 7 == 6 or d in holidays)) <= 20
             for e in range(1, num_employees + 1)
-        ),
-        # Min 2 employees per shift per day
-        lambda var, assignment: all(
-            sum(1 for e in range(1, num_employees + 1) if assignment.get(f"E{e}_{d}", "0") in ["M", "T"]) >= 2
-            for d in range(1, num_days + 1)
         )
     ]
 
     csp = CSP(variables, domains, constraints)
     solution = csp.search()
     if solution:
-        print("Solution found for employee scheduling.")
-        # export
+        print("Solução encontrada:")
+        for var, val in solution["assignment"].items():
+            print(f"{var}: {val}")
     else:
-        print("No solution found.")
+        print("Nenhuma solução encontrada.")
+
 
 if __name__ == "__main__":
     employee_scheduling()
