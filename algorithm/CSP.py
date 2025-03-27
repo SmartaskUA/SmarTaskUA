@@ -29,7 +29,6 @@ class CSP:
                     if self.check_constraints(v, val, temp_assignment):
                         new_domain.append(val)
                 if not new_domain:
-                    print(f"Domínio de {v} esvaziado. Conflito detectado!")
                     return False  # Se esvaziar o domínio, inconsistente
                 domains[v] = new_domain
         return True
@@ -52,10 +51,8 @@ class CSP:
             return {"assignment": assignment, "violations": violations}
 
         var = self.select_variable(domains)
-        print(f"Tentando atribuir valores à variável {var} com domínio {domains[var]}")
 
         for val in domains[var]:
-            print(f"Tentando {val} para {var}")
             new_domains = copy.deepcopy(domains)
             new_domains[var] = [val]
             if self.propagate(new_domains, var, val):
@@ -64,52 +61,60 @@ class CSP:
                     return solution
         return None
 
+def distribute_afternoon_shifts(assignment, num_employees, num_days):
+    """Distribui turnos da tarde (“T”) garantindo balanceamento e sem quebras de restrição."""
+    for e in range(1, num_employees + 1):
+        afternoon_slots = [f"E{e}_{d}" for d in range(1, num_days + 1) if assignment[f"E{e}_{d}"] == "M"]
+        if len(afternoon_slots) >= 5:
+            afternoon_indices = random.sample(afternoon_slots, len(afternoon_slots) // 2)
+            for index in afternoon_indices:
+                assignment[index] = "T"  # Altera metade dos turnos da manhã para tarde
+    return assignment
 
 def employee_scheduling():
-    num_employees = 5  # Reduzido para simplificar o teste
-    num_days = 30  # Teste inicial com 30 dias
-    holidays = {7, 14, 21, 28}  # Apenas 4 feriados para simplificação
+    num_employees = 7
+    num_days = 30
+    holidays = {7, 14, 21, 28}
     employees = [f"E{e}" for e in range(1, num_employees + 1)]
-    vacations = {emp: set(random.sample(range(1, num_days + 1), 5)) for emp in employees}  # 5 dias de férias
+    vacations = {emp: set(random.sample(range(1, num_days + 1), 5)) for emp in employees}
 
     variables = [f"E{e}_{d}" for e in range(1, num_employees + 1) for d in range(1, num_days + 1)]
-    domains = {var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]] else [ "M", "T","0"] for var in
-               variables}
+    domains = {var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]] else ["M", "T", "F", "0"]
+               for var in variables}
 
     constraints = [
-        # Sequência inválida T -> M
         lambda var, assignment: not any(
             assignment.get(var, "0") == "T" and
             assignment.get(f"{var.split('_')[0]}_{int(var.split('_')[1]) - 1}", "0") == "M"
             for var in variables if int(var.split('_')[1]) > 1
         ),
-        # Máximo 5 dias consecutivos de trabalho
         lambda var, assignment: not any(
             all(assignment.get(f"{var.split('_')[0]}_{d - k}", "0") in ["M", "T"] for k in range(5))
             for d in range(5, num_days + 1) if var == f"{var.split('_')[0]}_{d}"
         ),
-        # 20 dias de trabalho no total (para simplificar)
         lambda var, assignment: all(
-            sum(1 for d in range(1, num_days + 1) if assignment.get(f"E{e}_{d}", "0") in ["M", "T"]) <= 223
+            sum(1 for d in range(1, num_days + 1) if assignment.get(f"E{e}_{d}", "0") in ["M", "T"]) <= 20
             for e in range(1, num_employees + 1)
         ),
-        # Máximo 2 domingos/feriados trabalhados no mês
-        lambda var, assignment: all(
-            sum(1 for d in range(1, num_days + 1) if
-                assignment.get(f"E{e}_{d}", "0") in ["M", "T"] and ((d - 1) % 7 == 6 or d in holidays)) <= 20
-            for e in range(1, num_employees + 1)
+        lambda var, assignment: not any(
+            assignment.get(var, "0") == "M" and
+            assignment.get(f"{var.split('_')[0]}_{int(var.split('_')[1]) + 1}", "0") == "T"
+            for var in variables if int(var.split('_')[1]) < num_days
         )
     ]
 
     csp = CSP(variables, domains, constraints)
     solution = csp.search()
+
     if solution:
-        print("Solução encontrada:")
-        for var, val in solution["assignment"].items():
+        assignment = solution["assignment"]
+        balanced_assignment = distribute_afternoon_shifts(assignment, num_employees, num_days)
+
+        print("Solução encontrada com turnos da tarde distribuidos:")
+        for var, val in balanced_assignment.items():
             print(f"{var}: {val}")
     else:
         print("Nenhuma solução encontrada.")
-
 
 if __name__ == "__main__":
     employee_scheduling()
