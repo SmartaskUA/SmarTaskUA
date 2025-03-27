@@ -56,6 +56,16 @@ public class SchedulesService {
                 structuredData,
                 "Sample", "Glutony search");
         saveSchedule(schedule);
+
+        List<String[]> rawData2 = FShandler.readex2();
+        List<List<String>> structuredData2 = rawData.stream()
+                .map(List::of)
+                .collect(Collectors.toList());
+
+        Schedule schedule2 = new Schedule(
+                structuredData2,
+                "Sample2", "Glutony search");
+        saveSchedule(schedule2);
     }
 
     public List<Schedule> getAllSchedules() {
