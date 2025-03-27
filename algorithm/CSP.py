@@ -63,16 +63,30 @@ class CSP:
                     return solution
         return None
 
-def distribute_afternoon_shifts(assignment, num_employees, num_days):
-    """Distribui turnos da tarde (“T”) garantindo balanceamento e sem quebras de restrição."""
-    for e in range(1, num_employees + 1):
-        afternoon_slots = [f"E{e}_{d}" for d in range(1, num_days + 1) if assignment[f"E{e}_{d}"] == "M"]
-        if len(afternoon_slots) >= 5:
-            afternoon_indices = random.sample(afternoon_slots, len(afternoon_slots) // 2)
-            for index in afternoon_indices:
-                assignment[index] = "T"  # Altera metade dos turnos da manhã para tarde
-    return assignment
 
+def distribute_afternoon_shifts(assignment, num_employees, num_days):
+    """Distribui turnos de manhã (M) e tarde (T) para garantir balanceamento sem violar as restrições."""
+    for e in range(1, num_employees + 1):
+        morning_slots = [f"E{e}_{d}" for d in range(1, num_days + 1) if assignment[f"E{e}_{d}"] == "M"]
+        afternoon_slots = [f"E{e}_{d}" for d in range(1, num_days + 1) if assignment[f"E{e}_{d}"] == "T"]
+
+        # Balance morning and afternoon shifts to ensure both M and T are present for each employee
+        total_slots = len(morning_slots) + len(afternoon_slots)
+        max_shifts_per_type = total_slots // 2
+
+        # If the morning slots exceed the max limit, convert some to afternoon
+        if len(morning_slots) > max_shifts_per_type:
+            excess_morning = morning_slots[max_shifts_per_type:]
+            for slot in excess_morning:
+                assignment[slot] = "T"
+
+        # If the afternoon slots exceed the max limit, convert some to morning
+        elif len(afternoon_slots) > max_shifts_per_type:
+            excess_afternoon = afternoon_slots[max_shifts_per_type:]
+            for slot in excess_afternoon:
+                assignment[slot] = "M"
+
+    return assignment
 
 def employee_scheduling():
     num_employees = 7
@@ -103,14 +117,15 @@ def employee_scheduling():
             assignment.get(var, "0") == "M" and
             assignment.get(f"{var.split('_')[0]}_{int(var.split('_')[1]) + 1}", "0") == "T"
             for var in variables if int(var.split('_')[1]) < num_days
-        )
+        ),
+
     ]
 
     csp = CSP(variables, domains, constraints)
     solution = csp.search()
     if solution:
         assignment = solution["assignment"]
-        #assignment = distribute_afternoon_shifts(assignment, num_employees, num_days)
+        assignment = distribute_afternoon_shifts(assignment, num_employees, num_days)
         print("Solução encontrada:")
         for var, val in assignment.items():
             print(f"{var}: {val}")
