@@ -50,7 +50,7 @@ const Calendar = () => {
   return (
     <div className="admin-container" style={{ display: "flex", height: "100vh" }}>
       <Sidebar_Manager />
-      <div className="main-content" style={{ flex: 1, overflowY: "auto", padding: "20px", boxSizing: "border-box" }}>
+      <div className="main-content" style={{ flex: 1, overflowY: "auto", padding: "20px", boxSizing: "border-box", marginRight: "20px" }}>
         <CalendarHeader 
           months={months} 
           selectedMonth={selectedMonth} 
