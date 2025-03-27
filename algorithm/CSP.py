@@ -1,5 +1,7 @@
 import copy
 import random
+import calendar
+import csv
 
 
 class CSP:
@@ -71,6 +73,7 @@ def distribute_afternoon_shifts(assignment, num_employees, num_days):
                 assignment[index] = "T"  # Altera metade dos turnos da manhã para tarde
     return assignment
 
+
 def employee_scheduling():
     num_employees = 7
     num_days = 30
@@ -105,16 +108,43 @@ def employee_scheduling():
 
     csp = CSP(variables, domains, constraints)
     solution = csp.search()
-
     if solution:
         assignment = solution["assignment"]
-        balanced_assignment = distribute_afternoon_shifts(assignment, num_employees, num_days)
-
-        print("Solução encontrada com turnos da tarde distribuidos:")
-        for var, val in balanced_assignment.items():
+        #assignment = distribute_afternoon_shifts(assignment, num_employees, num_days)
+        print("Solução encontrada:")
+        for var, val in assignment.items():
             print(f"{var}: {val}")
+        generate_calendar(assignment, num_employees, num_days)
     else:
         print("Nenhuma solução encontrada.")
+
+
+def generate_calendar(assignment, num_employees, num_days):
+    days_of_week = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+
+    # Gera a primeira linha com os dias do mês
+    print("\nCalendário:")
+    print(" ".join(f"{day:2}" for day in range(1, num_days + 1)))
+
+    # Gera a segunda linha com os dias da semana
+    print(" ".join(f"{days_of_week[(day - 1) % 7]:3}" for day in range(1, num_days + 1)))
+
+    # Criação do arquivo CSV
+    with open("calendario_turnos.csv", "w", newline="") as csvfile:
+        csvwriter = csv.writer(csvfile)
+
+        # Escreve os dias e os dias da semana no CSV
+        csvwriter.writerow([str(day) for day in range(1, num_days + 1)])
+        csvwriter.writerow([days_of_week[(day - 1) % 7] for day in range(1, num_days + 1)])
+
+        # Gera as linhas dos funcionários
+        for e in range(1, num_employees + 1):
+            employee_schedule = [assignment.get(f"E{e}_{d}", "-") for d in range(1, num_days + 1)]
+            print(f"E{e}: " + " ".join(f"{shift:2}" for shift in employee_schedule))
+
+            # Escreve a linha do funcionário no CSV
+            csvwriter.writerow([f"E{e}"] + employee_schedule)
+
 
 if __name__ == "__main__":
     employee_scheduling()
