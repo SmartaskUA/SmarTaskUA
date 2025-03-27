@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import smartask.api.models.Employee;
 import smartask.api.models.requests.RestrictionRequest;
+import smartask.api.models.requests.UpdateEmployee;
 import smartask.api.services.EmployeeService;
 
 import java.util.List;
@@ -47,12 +48,14 @@ public class EmployeesController {
         return new ResponseEntity<>(employee, HttpStatus.OK);
     }
 
-    @Operation(summary = "Update an employee")
+    @Operation(summary = "Update employee's name by their ID")
     @PutMapping("/{id}")
-    public ResponseEntity<String> updateEmployee(@RequestBody Employee employee, @PathVariable String id) {
-        employeeService.updateEmployee(id, employee);
-        return ResponseEntity.ok("Employee updated successfully");
+    public ResponseEntity<String> updateEmployee(@RequestBody UpdateEmployee updateEmployeeRequest,
+                                                 @PathVariable String id) {
+        employeeService.updateEmployeeName(id, updateEmployeeRequest);
+        return ResponseEntity.ok("Employee name updated successfully");
     }
+
 
     @Operation(summary = "Get all the restrictions for an employee by their ID")
     @GetMapping("/restriction/{id}")
