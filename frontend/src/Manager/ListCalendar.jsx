@@ -117,7 +117,7 @@ const ListCalendar = () => {
         <div className="calendar-cards-container">
           {(suggestions.length > 0 ? suggestions : calendars).length > 0 ? (
             (suggestions.length > 0 ? suggestions : calendars).map((calendar) => (
-              <div key={calendar.id} className="calendar-card">
+              <div key={calendar.id} className="calendar-card"  style={{ width: "300px", height: "150px", padding: "20px" }}>
                 <div className="calendar-card-header">
                   <span className="status-dot" />
                   <span className="calendar-card-title">
