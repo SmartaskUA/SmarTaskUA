@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
- import axios from "axios";
+import axios from "axios";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import CalendarTable from "../components/manager/CalendarTable";
 import CalendarHeader from "../components/manager/CalendarHeader"; 
@@ -11,6 +11,8 @@ import BaseUrl from "../components/BaseUrl";
 const Calendar = () => {
   const [data, setData] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(1);
+  const [startDay, setStartDay] = useState(1);
+  const [endDay, setEndDay] = useState(31);
   const { calendarId } = useParams();
 
   const months = [
@@ -54,11 +56,17 @@ const Calendar = () => {
           selectedMonth={selectedMonth} 
           setSelectedMonth={setSelectedMonth} 
           downloadCSV={downloadCSV}
+          startDay={startDay}
+          endDay={endDay}
+          setStartDay={setStartDay}
+          setEndDay={setEndDay}
         />
         <CalendarTable 
           data={data} 
           selectedMonth={selectedMonth} 
           daysInMonth={daysInMonth} 
+          startDay={startDay}
+          endDay={endDay}
         />
         <BarChartDropdown 
           data={data} 

@@ -205,9 +205,8 @@
 }
 
 
-/* Manager.css ou um CSS comum que importe nas duas páginas */
+/* HOME PAGE - CSS */
 
-/* Container geral */
 .admin-container {
   display: flex;
   width: 100vw;
@@ -217,7 +216,6 @@
   color: black;
 }
 
-/* Conteúdo principal */
 .main-content {
   flex: 1;
   overflow-y: auto;
@@ -225,7 +223,6 @@
   box-sizing: border-box;
 }
 
-/* Cabeçalhos */
 .heading {
   font-size: 24px;
   margin-bottom: 20px;
@@ -237,7 +234,6 @@
   font-weight: bold;
 }
 
-/* Cards Row (para a primeira linha de 4 cards, por exemplo) */
 .cards-row {
   display: flex;
   gap: 20px;
@@ -245,14 +241,12 @@
   margin-bottom: 20px;
 }
 
-/* Container de cards (ListCalendar ou seções da Home) */
 .calendar-cards-container {
   display: flex;
   gap: 20px;
   flex-wrap: wrap;
 }
 
-/* Card padrão */
 .calendar-card {
   background-color: #fff;
   border: 1px solid #ddd;
@@ -265,20 +259,17 @@
   justify-content: space-between;
 }
 
-/* Cabeçalho do card */
 .calendar-card-header {
   display: flex;
   align-items: center;
   margin-bottom: 10px;
 }
 
-/* Título do card */
 .calendar-card-title {
   font-weight: 600;
   margin-left: 8px;
 }
 
-/* Ponto de status */
 .status-dot {
   width: 8px;
   height: 8px;
@@ -286,9 +277,8 @@
   display: inline-block;
 }
 
-/* Exemplos de cores de status */
 .green {
-  background-color: #28a745; /* ou outra cor */
+  background-color: #28a745; 
 }
 .orange {
   background-color: #fd7e14;
@@ -297,7 +287,6 @@
   background-color: #dc3545;
 }
 
-/* Botão "Open" ou "Create" */
 .open-button {
   text-align: center;
   border: none;
@@ -311,7 +300,6 @@
   margin-top: auto;
 }
 
-/* Variações de cor do botão */
 .btn-blue {
   background-color: #007bff;
 }
@@ -322,30 +310,27 @@
   background-color: #6c757d;
 }
 
-/* Cartão "New Calendar" (opcional) */
 .new-calendar-card {
   border: 2px solid #007bff;
 }
 
-/* Cartão rascunho */
 .draft-card {
   border: 2px solid #fd7e14;
 }
 
-/* Cartão em processo */
 .in-process {
   border: 2px dashed #fd7e14;
 }
 
-/* Cartão concluído */
 .completed-card {
   border: 2px solid #28a745;
 }
 
-/* Tempo/rascunho */
 .draft-time {
   font-size: 12px;
   color: #777;
   margin-left: 8px;
   margin-top: 4px;
 }
+
+/* HOME PAGE - CSS */
