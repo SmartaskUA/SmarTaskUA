@@ -1,6 +1,7 @@
 import copy
 import random
 import csv
+from itertools import product
 
 class CSP:
     def __init__(self, variables, domains, constraints):
@@ -10,10 +11,15 @@ class CSP:
 
     def is_consistent(self, var, value, assignment):
         assignment[var] = value
-        for constraint in self.constraints:
-            if not constraint(var, assignment):
-                del assignment[var]
-                return False
+        for (v1, v2), constraint_fn in self.constraints.items():
+            if v1 == var and v2 in assignment:
+                if not constraint_fn(value, assignment[v2]):
+                    del assignment[var]
+                    return False
+            elif v2 == var and v1 in assignment:
+                if not constraint_fn(assignment[v1], value):
+                    del assignment[var]
+                    return False
         del assignment[var]
         return True
 
@@ -50,6 +56,7 @@ def employee_scheduling():
     vacations = {emp: set(random.sample(range(1, num_days + 1), 5)) for emp in employees}
 
     variables = [f"E{e}_{d}" for e in range(1, num_employees + 1) for d in range(1, num_days + 1)]
+    print(len(variables))
 
     domains = {
         var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]]
@@ -57,25 +64,14 @@ def employee_scheduling():
         for var in variables
     }
 
-    constraints = [
-        # Relaxando temporariamente esta restrição para encontrar uma solução inicial
-        lambda var, assignment: True,  # Placeholder
+    constraints = {
+        (v1, v2): (lambda x1, x2: x1 == "T" and x2 == "F")
+        for v1 in variables
+        for v2 in variables
+        if v1.split('_')[0] == v2.split('_')[0] and int(v1.split('_')[1]) + 1 == int(v2.split('_')[1])
+    }
 
-        # Evitar 5 dias consecutivos de turnos "M" ou "T" - mantendo essa, pois é crítica
-        lambda var, assignment: not any(
-            all(assignment.get(f"{var.split('_')[0]}_{d - k}", "0") in ["M", "T"] for k in range(5))
-            for d in range(5, num_days + 1) if var == f"{var.split('_')[0]}_{d}"
-        ),
-
-        # Balancear turnos "M" e "T" por funcionário
-        lambda var, assignment: all(
-            abs(
-                sum(1 for d in range(1, num_days + 1) if assignment.get(f"E{e}_{d}", "0") == "M") -
-                sum(1 for d in range(1, num_days + 1) if assignment.get(f"E{e}_{d}", "0") == "T")
-            ) <= 2
-            for e in range(1, num_employees + 1)
-        ),
-    ]
+    handle_ho_constraint(domains, constraints, variables, lambda x: x[0] not in ["F", "0"] and x[1] not in ["F", "0"] and x[2] not in ["F", "0"] and x[3] not in ["F", "0"] and x[4] not in ["F", "0"] and x[5] in ["F", "0"]) 
 
     # Resolver o problema CSP
     csp = CSP(variables, domains, constraints)
@@ -91,7 +87,29 @@ def employee_scheduling():
     else:
         print("Nenhuma solução encontrada.")
 
-
+def handle_ho_constraint(domains,constraints,variables,constraint):
+    A = "".join(variables)
+    ho_domains = [domains[v] for v in variables]
+    A_domain = []
+    for combo in product(*ho_domains):
+        if constraint(combo):
+            A_domain.append(combo)
+    domains[A] = A_domain
+    variables.append(A)
+    for i, v in enumerate(variables):
+        if v == A:
+            continue
+        def make_constraint(index, aux=A, var=v):
+            def binary_constraint(varA, valA, varV, valV):
+                if varA == aux:
+                    return valA[index] == valV
+                if varV == aux:
+                    return valV[index] == valA
+                return True
+            return binary_constraint
+        c_fn = make_constraint(i)
+        constraints[(A,v)] = c_fn
+        constraints[(v,A)] = c_fn
 
 def generate_calendar(assignment, num_employees, num_days):
     days_of_week = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
