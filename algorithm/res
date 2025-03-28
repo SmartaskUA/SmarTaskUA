@@ -1,19 +1,633 @@
+Tentando atribuir valores à variável E1_1 com domínio ['M', 'T', '0']
+Tentando M para E1_1
+Domínio de E2_1 esvaziado. Conflito detectado!
+Tentando T para E1_1
+Domínio de E2_1 esvaziado. Conflito detectado!
+Tentando 0 para E1_1
+Tentando atribuir valores à variável E1_2 com domínio ['M', 'T', '0']
+Tentando M para E1_2
+Tentando atribuir valores à variável E1_4 com domínio ['M', 'T', '0']
+Tentando M para E1_4
+Tentando atribuir valores à variável E1_5 com domínio ['M', 'T', '0']
+Tentando M para E1_5
+Tentando atribuir valores à variável E1_6 com domínio ['M', 'T', '0']
+Tentando M para E1_6
+Tentando atribuir valores à variável E1_7 com domínio ['M', 'T', '0']
+Tentando M para E1_7
+Tentando atribuir valores à variável E1_8 com domínio ['M', 'T', '0']
+Tentando M para E1_8
+Tentando atribuir valores à variável E1_9 com domínio ['M', 'T', '0']
+Tentando M para E1_9
+Tentando atribuir valores à variável E1_10 com domínio ['M', 'T', '0']
+Tentando M para E1_10
+Tentando atribuir valores à variável E1_11 com domínio ['M', 'T', '0']
+Tentando M para E1_11
+Tentando atribuir valores à variável E1_12 com domínio ['M', 'T', '0']
+Tentando M para E1_12
+Tentando atribuir valores à variável E1_13 com domínio ['M', 'T', '0']
+Tentando M para E1_13
+Tentando atribuir valores à variável E1_15 com domínio ['M', 'T', '0']
+Tentando M para E1_15
+Tentando atribuir valores à variável E1_17 com domínio ['M', 'T', '0']
+Tentando M para E1_17
+Tentando atribuir valores à variável E1_18 com domínio ['M', 'T', '0']
+Tentando M para E1_18
+Tentando atribuir valores à variável E1_19 com domínio ['M', 'T', '0']
+Tentando M para E1_19
+Tentando atribuir valores à variável E1_20 com domínio ['M', 'T', '0']
+Tentando M para E1_20
+Tentando atribuir valores à variável E1_21 com domínio ['M', 'T', '0']
+Tentando M para E1_21
+Tentando atribuir valores à variável E1_22 com domínio ['M', 'T', '0']
+Tentando M para E1_22
+Tentando atribuir valores à variável E1_23 com domínio ['M', 'T', '0']
+Tentando M para E1_23
+Tentando atribuir valores à variável E1_24 com domínio ['M', 'T', '0']
+Tentando M para E1_24
+Tentando atribuir valores à variável E1_25 com domínio ['M', 'T', '0']
+Tentando M para E1_25
+Tentando atribuir valores à variável E1_26 com domínio ['M', 'T', '0']
+Tentando M para E1_26
+Tentando atribuir valores à variável E1_28 com domínio ['M', 'T', '0']
+Tentando M para E1_28
+Tentando atribuir valores à variável E1_30 com domínio ['M', 'T', '0']
+Tentando M para E1_30
+Tentando atribuir valores à variável E2_1 com domínio ['M', 'T', '0']
+Tentando M para E2_1
+Tentando atribuir valores à variável E2_2 com domínio ['M', 'T', '0']
+Tentando M para E2_2
+Tentando atribuir valores à variável E2_3 com domínio ['M', 'T', '0']
+Tentando M para E2_3
+Tentando atribuir valores à variável E2_5 com domínio ['M', 'T', '0']
+Tentando M para E2_5
+Tentando atribuir valores à variável E2_6 com domínio ['M', 'T', '0']
+Tentando M para E2_6
+Tentando atribuir valores à variável E2_7 com domínio ['M', 'T', '0']
+Tentando M para E2_7
+Tentando atribuir valores à variável E2_8 com domínio ['M', 'T', '0']
+Tentando M para E2_8
+Tentando atribuir valores à variável E2_10 com domínio ['M', 'T', '0']
+Tentando M para E2_10
+Tentando atribuir valores à variável E2_11 com domínio ['M', 'T', '0']
+Tentando M para E2_11
+Tentando atribuir valores à variável E2_13 com domínio ['M', 'T', '0']
+Tentando M para E2_13
+Tentando atribuir valores à variável E2_14 com domínio ['M', 'T', '0']
+Tentando M para E2_14
+Tentando atribuir valores à variável E2_15 com domínio ['M', 'T', '0']
+Tentando M para E2_15
+Tentando atribuir valores à variável E2_17 com domínio ['M', 'T', '0']
+Tentando M para E2_17
+Tentando atribuir valores à variável E2_18 com domínio ['M', 'T', '0']
+Tentando M para E2_18
+Tentando atribuir valores à variável E2_19 com domínio ['M', 'T', '0']
+Tentando M para E2_19
+Tentando atribuir valores à variável E2_20 com domínio ['M', 'T', '0']
+Tentando M para E2_20
+Tentando atribuir valores à variável E2_21 com domínio ['M', 'T', '0']
+Tentando M para E2_21
+Tentando atribuir valores à variável E2_22 com domínio ['M', 'T', '0']
+Tentando M para E2_22
+Tentando atribuir valores à variável E2_23 com domínio ['M', 'T', '0']
+Tentando M para E2_23
+Tentando atribuir valores à variável E2_24 com domínio ['M', 'T', '0']
+Tentando M para E2_24
+Tentando atribuir valores à variável E2_25 com domínio ['M', 'T', '0']
+Tentando M para E2_25
+Tentando atribuir valores à variável E2_26 com domínio ['M', 'T', '0']
+Tentando M para E2_26
+Tentando atribuir valores à variável E2_28 com domínio ['M', 'T', '0']
+Tentando M para E2_28
+Tentando atribuir valores à variável E2_29 com domínio ['M', 'T', '0']
+Tentando M para E2_29
+Tentando atribuir valores à variável E2_30 com domínio ['M', 'T', '0']
+Tentando M para E2_30
+Tentando atribuir valores à variável E3_1 com domínio ['M', 'T', '0']
+Tentando M para E3_1
+Tentando atribuir valores à variável E3_2 com domínio ['M', 'T', '0']
+Tentando M para E3_2
+Tentando atribuir valores à variável E3_3 com domínio ['M', 'T', '0']
+Tentando M para E3_3
+Tentando atribuir valores à variável E3_4 com domínio ['M', 'T', '0']
+Tentando M para E3_4
+Tentando atribuir valores à variável E3_5 com domínio ['M', 'T', '0']
+Tentando M para E3_5
+Tentando atribuir valores à variável E3_6 com domínio ['M', 'T', '0']
+Tentando M para E3_6
+Tentando atribuir valores à variável E3_7 com domínio ['M', 'T', '0']
+Tentando M para E3_7
+Tentando atribuir valores à variável E3_8 com domínio ['M', 'T', '0']
+Tentando M para E3_8
+Tentando atribuir valores à variável E3_9 com domínio ['M', 'T', '0']
+Tentando M para E3_9
+Tentando atribuir valores à variável E3_11 com domínio ['M', 'T', '0']
+Tentando M para E3_11
+Tentando atribuir valores à variável E3_12 com domínio ['M', 'T', '0']
+Tentando M para E3_12
+Tentando atribuir valores à variável E3_13 com domínio ['M', 'T', '0']
+Tentando M para E3_13
+Tentando atribuir valores à variável E3_14 com domínio ['M', 'T', '0']
+Tentando M para E3_14
+Tentando atribuir valores à variável E3_16 com domínio ['M', 'T', '0']
+Tentando M para E3_16
+Tentando atribuir valores à variável E3_17 com domínio ['M', 'T', '0']
+Tentando M para E3_17
+Tentando atribuir valores à variável E3_18 com domínio ['M', 'T', '0']
+Tentando M para E3_18
+Tentando atribuir valores à variável E3_20 com domínio ['M', 'T', '0']
+Tentando M para E3_20
+Tentando atribuir valores à variável E3_21 com domínio ['M', 'T', '0']
+Tentando M para E3_21
+Tentando atribuir valores à variável E3_22 com domínio ['M', 'T', '0']
+Tentando M para E3_22
+Tentando atribuir valores à variável E3_25 com domínio ['M', 'T', '0']
+Tentando M para E3_25
+Tentando atribuir valores à variável E3_26 com domínio ['M', 'T', '0']
+Tentando M para E3_26
+Tentando atribuir valores à variável E3_27 com domínio ['M', 'T', '0']
+Tentando M para E3_27
+Tentando atribuir valores à variável E3_28 com domínio ['M', 'T', '0']
+Tentando M para E3_28
+Tentando atribuir valores à variável E3_29 com domínio ['M', 'T', '0']
+Tentando M para E3_29
+Tentando atribuir valores à variável E3_30 com domínio ['M', 'T', '0']
+Tentando M para E3_30
+Tentando atribuir valores à variável E4_1 com domínio ['M', 'T', '0']
+Tentando M para E4_1
+Tentando atribuir valores à variável E4_2 com domínio ['M', 'T', '0']
+Tentando M para E4_2
+Tentando atribuir valores à variável E4_3 com domínio ['M', 'T', '0']
+Tentando M para E4_3
+Tentando atribuir valores à variável E4_4 com domínio ['M', 'T', '0']
+Tentando M para E4_4
+Tentando atribuir valores à variável E4_5 com domínio ['M', 'T', '0']
+Tentando M para E4_5
+Tentando atribuir valores à variável E4_6 com domínio ['M', 'T', '0']
+Tentando M para E4_6
+Tentando atribuir valores à variável E4_7 com domínio ['M', 'T', '0']
+Tentando M para E4_7
+Tentando atribuir valores à variável E4_8 com domínio ['M', 'T', '0']
+Tentando M para E4_8
+Tentando atribuir valores à variável E4_10 com domínio ['M', 'T', '0']
+Tentando M para E4_10
+Tentando atribuir valores à variável E4_11 com domínio ['M', 'T', '0']
+Tentando M para E4_11
+Tentando atribuir valores à variável E4_12 com domínio ['M', 'T', '0']
+Tentando M para E4_12
+Tentando atribuir valores à variável E4_13 com domínio ['M', 'T', '0']
+Tentando M para E4_13
+Tentando atribuir valores à variável E4_14 com domínio ['M', 'T', '0']
+Tentando M para E4_14
+Tentando atribuir valores à variável E4_17 com domínio ['M', 'T', '0']
+Tentando M para E4_17
+Tentando atribuir valores à variável E4_18 com domínio ['M', 'T', '0']
+Tentando M para E4_18
+Tentando atribuir valores à variável E4_19 com domínio ['M', 'T', '0']
+Tentando M para E4_19
+Tentando atribuir valores à variável E4_20 com domínio ['M', 'T', '0']
+Tentando M para E4_20
+Tentando atribuir valores à variável E4_21 com domínio ['M', 'T', '0']
+Tentando M para E4_21
+Tentando atribuir valores à variável E4_22 com domínio ['M', 'T', '0']
+Tentando M para E4_22
+Tentando atribuir valores à variável E4_23 com domínio ['M', 'T', '0']
+Tentando M para E4_23
+Tentando atribuir valores à variável E4_24 com domínio ['M', 'T', '0']
+Tentando M para E4_24
+Tentando atribuir valores à variável E4_27 com domínio ['M', 'T', '0']
+Tentando M para E4_27
+Tentando atribuir valores à variável E4_28 com domínio ['M', 'T', '0']
+Tentando M para E4_28
+Tentando atribuir valores à variável E4_29 com domínio ['M', 'T', '0']
+Tentando M para E4_29
+Tentando atribuir valores à variável E4_30 com domínio ['M', 'T', '0']
+Tentando M para E4_30
+Tentando atribuir valores à variável E5_2 com domínio ['M', 'T', '0']
+Tentando M para E5_2
+Tentando atribuir valores à variável E5_3 com domínio ['M', 'T', '0']
+Tentando M para E5_3
+Tentando atribuir valores à variável E5_4 com domínio ['M', 'T', '0']
+Tentando M para E5_4
+Tentando atribuir valores à variável E5_5 com domínio ['M', 'T', '0']
+Tentando M para E5_5
+Tentando atribuir valores à variável E5_6 com domínio ['M', 'T', '0']
+Tentando M para E5_6
+Tentando atribuir valores à variável E5_7 com domínio ['M', 'T', '0']
+Tentando M para E5_7
+Tentando atribuir valores à variável E5_8 com domínio ['M', 'T', '0']
+Tentando M para E5_8
+Tentando atribuir valores à variável E5_9 com domínio ['M', 'T', '0']
+Tentando M para E5_9
+Tentando atribuir valores à variável E5_10 com domínio ['M', 'T', '0']
+Tentando M para E5_10
+Tentando atribuir valores à variável E5_12 com domínio ['M', 'T', '0']
+Tentando M para E5_12
+Tentando atribuir valores à variável E5_13 com domínio ['M', 'T', '0']
+Tentando M para E5_13
+Tentando atribuir valores à variável E5_15 com domínio ['M', 'T', '0']
+Tentando M para E5_15
+Tentando atribuir valores à variável E5_16 com domínio ['M', 'T', '0']
+Tentando M para E5_16
+Tentando atribuir valores à variável E5_17 com domínio ['M', 'T', '0']
+Tentando M para E5_17
+Tentando atribuir valores à variável E5_18 com domínio ['M', 'T', '0']
+Tentando M para E5_18
+Tentando atribuir valores à variável E5_19 com domínio ['M', 'T', '0']
+Tentando M para E5_19
+Tentando atribuir valores à variável E5_20 com domínio ['M', 'T', '0']
+Tentando M para E5_20
+Tentando atribuir valores à variável E5_22 com domínio ['M', 'T', '0']
+Tentando M para E5_22
+Tentando atribuir valores à variável E5_23 com domínio ['M', 'T', '0']
+Tentando M para E5_23
+Tentando atribuir valores à variável E5_24 com domínio ['M', 'T', '0']
+Tentando M para E5_24
+Tentando atribuir valores à variável E5_25 com domínio ['M', 'T', '0']
+Tentando M para E5_25
+Tentando atribuir valores à variável E5_27 com domínio ['M', 'T', '0']
+Tentando M para E5_27
+Tentando atribuir valores à variável E5_28 com domínio ['M', 'T', '0']
+Tentando M para E5_28
+Tentando atribuir valores à variável E5_29 com domínio ['M', 'T', '0']
+Tentando M para E5_29
+Tentando atribuir valores à variável E5_30 com domínio ['M', 'T', '0']
+Tentando M para E5_30
+Tentando atribuir valores à variável E6_1 com domínio ['M', 'T', '0']
+Tentando M para E6_1
+Tentando atribuir valores à variável E6_2 com domínio ['M', 'T', '0']
+Tentando M para E6_2
+Tentando atribuir valores à variável E6_3 com domínio ['M', 'T', '0']
+Tentando M para E6_3
+Tentando atribuir valores à variável E6_4 com domínio ['M', 'T', '0']
+Tentando M para E6_4
+Tentando atribuir valores à variável E6_5 com domínio ['M', 'T', '0']
+Tentando M para E6_5
+Tentando atribuir valores à variável E6_6 com domínio ['M', 'T', '0']
+Tentando M para E6_6
+Tentando atribuir valores à variável E6_9 com domínio ['M', 'T', '0']
+Tentando M para E6_9
+Tentando atribuir valores à variável E6_10 com domínio ['M', 'T', '0']
+Tentando M para E6_10
+Tentando atribuir valores à variável E6_11 com domínio ['M', 'T', '0']
+Tentando M para E6_11
+Tentando atribuir valores à variável E6_13 com domínio ['M', 'T', '0']
+Tentando M para E6_13
+Tentando atribuir valores à variável E6_15 com domínio ['M', 'T', '0']
+Tentando M para E6_15
+Tentando atribuir valores à variável E6_16 com domínio ['M', 'T', '0']
+Tentando M para E6_16
+Tentando atribuir valores à variável E6_17 com domínio ['M', 'T', '0']
+Tentando M para E6_17
+Tentando atribuir valores à variável E6_18 com domínio ['M', 'T', '0']
+Tentando M para E6_18
+Tentando atribuir valores à variável E6_19 com domínio ['M', 'T', '0']
+Tentando M para E6_19
+Tentando atribuir valores à variável E6_20 com domínio ['M', 'T', '0']
+Tentando M para E6_20
+Tentando atribuir valores à variável E6_21 com domínio ['M', 'T', '0']
+Tentando M para E6_21
+Tentando atribuir valores à variável E6_22 com domínio ['M', 'T', '0']
+Tentando M para E6_22
+Tentando atribuir valores à variável E6_24 com domínio ['M', 'T', '0']
+Tentando M para E6_24
+Tentando atribuir valores à variável E6_25 com domínio ['M', 'T', '0']
+Tentando M para E6_25
+Tentando atribuir valores à variável E6_26 com domínio ['M', 'T', '0']
+Tentando M para E6_26
+Tentando atribuir valores à variável E6_27 com domínio ['M', 'T', '0']
+Tentando M para E6_27
+Tentando atribuir valores à variável E6_28 com domínio ['M', 'T', '0']
+Tentando M para E6_28
+Tentando atribuir valores à variável E6_29 com domínio ['M', 'T', '0']
+Tentando M para E6_29
+Tentando atribuir valores à variável E6_30 com domínio ['M', 'T', '0']
+Tentando M para E6_30
+Tentando atribuir valores à variável E7_1 com domínio ['M', 'T', '0']
+Tentando M para E7_1
+Tentando atribuir valores à variável E7_2 com domínio ['M', 'T', '0']
+Tentando M para E7_2
+Tentando atribuir valores à variável E7_3 com domínio ['M', 'T', '0']
+Tentando M para E7_3
+Tentando atribuir valores à variável E7_4 com domínio ['M', 'T', '0']
+Tentando M para E7_4
+Tentando atribuir valores à variável E7_5 com domínio ['M', 'T', '0']
+Tentando M para E7_5
+Tentando atribuir valores à variável E7_6 com domínio ['M', 'T', '0']
+Tentando M para E7_6
+Tentando atribuir valores à variável E7_7 com domínio ['M', 'T', '0']
+Tentando M para E7_7
+Tentando atribuir valores à variável E7_8 com domínio ['M', 'T', '0']
+Tentando M para E7_8
+Tentando atribuir valores à variável E7_9 com domínio ['M', 'T', '0']
+Tentando M para E7_9
+Tentando atribuir valores à variável E7_10 com domínio ['M', 'T', '0']
+Tentando M para E7_10
+Tentando atribuir valores à variável E7_12 com domínio ['M', 'T', '0']
+Tentando M para E7_12
+Tentando atribuir valores à variável E7_13 com domínio ['M', 'T', '0']
+Tentando M para E7_13
+Tentando atribuir valores à variável E7_14 com domínio ['M', 'T', '0']
+Tentando M para E7_14
+Tentando atribuir valores à variável E7_15 com domínio ['M', 'T', '0']
+Tentando M para E7_15
+Tentando atribuir valores à variável E7_17 com domínio ['M', 'T', '0']
+Tentando M para E7_17
+Tentando atribuir valores à variável E7_18 com domínio ['M', 'T', '0']
+Tentando M para E7_18
+Tentando atribuir valores à variável E7_19 com domínio ['M', 'T', '0']
+Tentando M para E7_19
+Tentando atribuir valores à variável E7_20 com domínio ['M', 'T', '0']
+Tentando M para E7_20
+Tentando atribuir valores à variável E7_21 com domínio ['M', 'T', '0']
+Tentando M para E7_21
+Tentando atribuir valores à variável E7_22 com domínio ['M', 'T', '0']
+Tentando M para E7_22
+Tentando atribuir valores à variável E7_25 com domínio ['M', 'T', '0']
+Tentando M para E7_25
+Tentando atribuir valores à variável E7_26 com domínio ['M', 'T', '0']
+Tentando M para E7_26
+Tentando atribuir valores à variável E7_28 com domínio ['M', 'T', '0']
+Tentando M para E7_28
+Tentando atribuir valores à variável E7_29 com domínio ['M', 'T', '0']
+Tentando M para E7_29
+Tentando atribuir valores à variável E7_30 com domínio ['M', 'T', '0']
+Tentando M para E7_30
+Tentando atribuir valores à variável E8_1 com domínio ['M', 'T', '0']
+Tentando M para E8_1
+Tentando atribuir valores à variável E8_2 com domínio ['M', 'T', '0']
+Tentando M para E8_2
+Tentando atribuir valores à variável E8_4 com domínio ['M', 'T', '0']
+Tentando M para E8_4
+Tentando atribuir valores à variável E8_5 com domínio ['M', 'T', '0']
+Tentando M para E8_5
+Tentando atribuir valores à variável E8_6 com domínio ['M', 'T', '0']
+Tentando M para E8_6
+Tentando atribuir valores à variável E8_8 com domínio ['M', 'T', '0']
+Tentando M para E8_8
+Tentando atribuir valores à variável E8_9 com domínio ['M', 'T', '0']
+Tentando M para E8_9
+Tentando atribuir valores à variável E8_10 com domínio ['M', 'T', '0']
+Tentando M para E8_10
+Tentando atribuir valores à variável E8_11 com domínio ['M', 'T', '0']
+Tentando M para E8_11
+Tentando atribuir valores à variável E8_12 com domínio ['M', 'T', '0']
+Tentando M para E8_12
+Tentando atribuir valores à variável E8_13 com domínio ['M', 'T', '0']
+Tentando M para E8_13
+Tentando atribuir valores à variável E8_14 com domínio ['M', 'T', '0']
+Tentando M para E8_14
+Tentando atribuir valores à variável E8_15 com domínio ['M', 'T', '0']
+Tentando M para E8_15
+Tentando atribuir valores à variável E8_16 com domínio ['M', 'T', '0']
+Tentando M para E8_16
+Tentando atribuir valores à variável E8_17 com domínio ['M', 'T', '0']
+Tentando M para E8_17
+Tentando atribuir valores à variável E8_18 com domínio ['M', 'T', '0']
+Tentando M para E8_18
+Tentando atribuir valores à variável E8_20 com domínio ['M', 'T', '0']
+Tentando M para E8_20
+Tentando atribuir valores à variável E8_21 com domínio ['M', 'T', '0']
+Tentando M para E8_21
+Tentando atribuir valores à variável E8_22 com domínio ['M', 'T', '0']
+Tentando M para E8_22
+Tentando atribuir valores à variável E8_23 com domínio ['M', 'T', '0']
+Tentando M para E8_23
+Tentando atribuir valores à variável E8_25 com domínio ['M', 'T', '0']
+Tentando M para E8_25
+Tentando atribuir valores à variável E8_26 com domínio ['M', 'T', '0']
+Tentando M para E8_26
+Tentando atribuir valores à variável E8_27 com domínio ['M', 'T', '0']
+Tentando M para E8_27
+Tentando atribuir valores à variável E8_29 com domínio ['M', 'T', '0']
+Tentando M para E8_29
+Tentando atribuir valores à variável E8_30 com domínio ['M', 'T', '0']
+Tentando M para E8_30
+Tentando atribuir valores à variável E9_1 com domínio ['M', 'T', '0']
+Tentando M para E9_1
+Tentando atribuir valores à variável E9_3 com domínio ['M', 'T', '0']
+Tentando M para E9_3
+Tentando atribuir valores à variável E9_4 com domínio ['M', 'T', '0']
+Tentando M para E9_4
+Tentando atribuir valores à variável E9_5 com domínio ['M', 'T', '0']
+Tentando M para E9_5
+Tentando atribuir valores à variável E9_6 com domínio ['M', 'T', '0']
+Tentando M para E9_6
+Tentando atribuir valores à variável E9_7 com domínio ['M', 'T', '0']
+Tentando M para E9_7
+Tentando atribuir valores à variável E9_8 com domínio ['M', 'T', '0']
+Tentando M para E9_8
+Tentando atribuir valores à variável E9_9 com domínio ['M', 'T', '0']
+Tentando M para E9_9
+Tentando atribuir valores à variável E9_10 com domínio ['M', 'T', '0']
+Tentando M para E9_10
+Tentando atribuir valores à variável E9_11 com domínio ['M', 'T', '0']
+Tentando M para E9_11
+Tentando atribuir valores à variável E9_12 com domínio ['M', 'T', '0']
+Tentando M para E9_12
+Tentando atribuir valores à variável E9_13 com domínio ['M', 'T', '0']
+Tentando M para E9_13
+Tentando atribuir valores à variável E9_14 com domínio ['M', 'T', '0']
+Tentando M para E9_14
+Tentando atribuir valores à variável E9_15 com domínio ['M', 'T', '0']
+Tentando M para E9_15
+Tentando atribuir valores à variável E9_16 com domínio ['M', 'T', '0']
+Tentando M para E9_16
+Tentando atribuir valores à variável E9_17 com domínio ['M', 'T', '0']
+Tentando M para E9_17
+Tentando atribuir valores à variável E9_18 com domínio ['M', 'T', '0']
+Tentando M para E9_18
+Tentando atribuir valores à variável E9_20 com domínio ['M', 'T', '0']
+Tentando M para E9_20
+Tentando atribuir valores à variável E9_21 com domínio ['M', 'T', '0']
+Tentando M para E9_21
+Tentando atribuir valores à variável E9_22 com domínio ['M', 'T', '0']
+Tentando M para E9_22
+Tentando atribuir valores à variável E9_23 com domínio ['M', 'T', '0']
+Tentando M para E9_23
+Tentando atribuir valores à variável E9_26 com domínio ['M', 'T', '0']
+Tentando M para E9_26
+Tentando atribuir valores à variável E9_27 com domínio ['M', 'T', '0']
+Tentando M para E9_27
+Tentando atribuir valores à variável E9_29 com domínio ['M', 'T', '0']
+Tentando M para E9_29
+Tentando atribuir valores à variável E9_30 com domínio ['M', 'T', '0']
+Tentando M para E9_30
+Tentando atribuir valores à variável E10_2 com domínio ['M', 'T', '0']
+Tentando M para E10_2
+Tentando atribuir valores à variável E10_3 com domínio ['M', 'T', '0']
+Tentando M para E10_3
+Tentando atribuir valores à variável E10_4 com domínio ['M', 'T', '0']
+Tentando M para E10_4
+Tentando atribuir valores à variável E10_5 com domínio ['M', 'T', '0']
+Tentando M para E10_5
+Tentando atribuir valores à variável E10_6 com domínio ['M', 'T', '0']
+Tentando M para E10_6
+Tentando atribuir valores à variável E10_7 com domínio ['M', 'T', '0']
+Tentando M para E10_7
+Tentando atribuir valores à variável E10_8 com domínio ['M', 'T', '0']
+Tentando M para E10_8
+Tentando atribuir valores à variável E10_9 com domínio ['M', 'T', '0']
+Tentando M para E10_9
+Tentando atribuir valores à variável E10_10 com domínio ['M', 'T', '0']
+Tentando M para E10_10
+Tentando atribuir valores à variável E10_11 com domínio ['M', 'T', '0']
+Tentando M para E10_11
+Tentando atribuir valores à variável E10_12 com domínio ['M', 'T', '0']
+Tentando M para E10_12
+Tentando atribuir valores à variável E10_13 com domínio ['M', 'T', '0']
+Tentando M para E10_13
+Tentando atribuir valores à variável E10_14 com domínio ['M', 'T', '0']
+Tentando M para E10_14
+Tentando atribuir valores à variável E10_15 com domínio ['M', 'T', '0']
+Tentando M para E10_15
+Tentando atribuir valores à variável E10_17 com domínio ['M', 'T', '0']
+Tentando M para E10_17
+Tentando atribuir valores à variável E10_18 com domínio ['M', 'T', '0']
+Tentando M para E10_18
+Tentando atribuir valores à variável E10_19 com domínio ['M', 'T', '0']
+Tentando M para E10_19
+Tentando atribuir valores à variável E10_20 com domínio ['M', 'T', '0']
+Tentando M para E10_20
+Tentando atribuir valores à variável E10_22 com domínio ['M', 'T', '0']
+Tentando M para E10_22
+Tentando atribuir valores à variável E10_23 com domínio ['M', 'T', '0']
+Tentando M para E10_23
+Tentando atribuir valores à variável E10_24 com domínio ['M', 'T', '0']
+Tentando M para E10_24
+Tentando atribuir valores à variável E10_25 com domínio ['M', 'T', '0']
+Tentando M para E10_25
+Tentando atribuir valores à variável E10_27 com domínio ['M', 'T', '0']
+Tentando M para E10_27
+Tentando atribuir valores à variável E10_28 com domínio ['M', 'T', '0']
+Tentando M para E10_28
+Tentando atribuir valores à variável E10_30 com domínio ['M', 'T', '0']
+Tentando M para E10_30
+Tentando atribuir valores à variável E11_1 com domínio ['M', 'T', '0']
+Tentando M para E11_1
+Tentando atribuir valores à variável E11_2 com domínio ['M', 'T', '0']
+Tentando M para E11_2
+Tentando atribuir valores à variável E11_3 com domínio ['M', 'T', '0']
+Tentando M para E11_3
+Tentando atribuir valores à variável E11_4 com domínio ['M', 'T', '0']
+Tentando M para E11_4
+Tentando atribuir valores à variável E11_5 com domínio ['M', 'T', '0']
+Tentando M para E11_5
+Tentando atribuir valores à variável E11_6 com domínio ['M', 'T', '0']
+Tentando M para E11_6
+Tentando atribuir valores à variável E11_7 com domínio ['M', 'T', '0']
+Tentando M para E11_7
+Tentando atribuir valores à variável E11_9 com domínio ['M', 'T', '0']
+Tentando M para E11_9
+Tentando atribuir valores à variável E11_10 com domínio ['M', 'T', '0']
+Tentando M para E11_10
+Tentando atribuir valores à variável E11_11 com domínio ['M', 'T', '0']
+Tentando M para E11_11
+Tentando atribuir valores à variável E11_12 com domínio ['M', 'T', '0']
+Tentando M para E11_12
+Tentando atribuir valores à variável E11_14 com domínio ['M', 'T', '0']
+Tentando M para E11_14
+Tentando atribuir valores à variável E11_15 com domínio ['M', 'T', '0']
+Tentando M para E11_15
+Tentando atribuir valores à variável E11_16 com domínio ['M', 'T', '0']
+Tentando M para E11_16
+Tentando atribuir valores à variável E11_17 com domínio ['M', 'T', '0']
+Tentando M para E11_17
+Tentando atribuir valores à variável E11_18 com domínio ['M', 'T', '0']
+Tentando M para E11_18
+Tentando atribuir valores à variável E11_19 com domínio ['M', 'T', '0']
+Tentando M para E11_19
+Tentando atribuir valores à variável E11_20 com domínio ['M', 'T', '0']
+Tentando M para E11_20
+Tentando atribuir valores à variável E11_22 com domínio ['M', 'T', '0']
+Tentando M para E11_22
+Tentando atribuir valores à variável E11_23 com domínio ['M', 'T', '0']
+Tentando M para E11_23
+Tentando atribuir valores à variável E11_24 com domínio ['M', 'T', '0']
+Tentando M para E11_24
+Tentando atribuir valores à variável E11_25 com domínio ['M', 'T', '0']
+Tentando M para E11_25
+Tentando atribuir valores à variável E11_26 com domínio ['M', 'T', '0']
+Tentando M para E11_26
+Tentando atribuir valores à variável E11_28 com domínio ['M', 'T', '0']
+Tentando M para E11_28
+Tentando atribuir valores à variável E11_30 com domínio ['M', 'T', '0']
+Tentando M para E11_30
+Tentando atribuir valores à variável E12_1 com domínio ['M', 'T', '0']
+Tentando M para E12_1
+Tentando atribuir valores à variável E12_2 com domínio ['M', 'T', '0']
+Tentando M para E12_2
+Tentando atribuir valores à variável E12_3 com domínio ['M', 'T', '0']
+Tentando M para E12_3
+Tentando atribuir valores à variável E12_4 com domínio ['M', 'T', '0']
+Tentando M para E12_4
+Tentando atribuir valores à variável E12_5 com domínio ['M', 'T', '0']
+Tentando M para E12_5
+Tentando atribuir valores à variável E12_7 com domínio ['M', 'T', '0']
+Tentando M para E12_7
+Tentando atribuir valores à variável E12_8 com domínio ['M', 'T', '0']
+Tentando M para E12_8
+Tentando atribuir valores à variável E12_9 com domínio ['M', 'T', '0']
+Tentando M para E12_9
+Tentando atribuir valores à variável E12_11 com domínio ['M', 'T', '0']
+Tentando M para E12_11
+Tentando atribuir valores à variável E12_12 com domínio ['M', 'T', '0']
+Tentando M para E12_12
+Tentando atribuir valores à variável E12_13 com domínio ['M', 'T', '0']
+Tentando M para E12_13
+Tentando atribuir valores à variável E12_14 com domínio ['M', 'T', '0']
+Tentando M para E12_14
+Tentando atribuir valores à variável E12_15 com domínio ['M', 'T', '0']
+Tentando M para E12_15
+Tentando atribuir valores à variável E12_16 com domínio ['M', 'T', '0']
+Tentando M para E12_16
+Tentando atribuir valores à variável E12_17 com domínio ['M', 'T', '0']
+Tentando M para E12_17
+Tentando atribuir valores à variável E12_18 com domínio ['M', 'T', '0']
+Tentando M para E12_18
+Tentando atribuir valores à variável E12_19 com domínio ['M', 'T', '0']
+Tentando M para E12_19
+Tentando atribuir valores à variável E12_20 com domínio ['M', 'T', '0']
+Tentando M para E12_20
+Tentando atribuir valores à variável E12_21 com domínio ['M', 'T', '0']
+Tentando M para E12_21
+Tentando atribuir valores à variável E12_22 com domínio ['M', 'T', '0']
+Tentando M para E12_22
+Tentando atribuir valores à variável E12_23 com domínio ['M', 'T', '0']
+Tentando M para E12_23
+Tentando atribuir valores à variável E12_24 com domínio ['M', 'T', '0']
+Tentando M para E12_24
+Tentando atribuir valores à variável E12_26 com domínio ['M', 'T', '0']
+Tentando M para E12_26
+Tentando atribuir valores à variável E12_28 com domínio ['M', 'T', '0']
+Tentando M para E12_28
+Tentando atribuir valores à variável E12_30 com domínio ['M', 'T', '0']
+Tentando M para E12_30
 Solução encontrada:
-E1: M M T M 0 T F M T M T 0 M T M T F M T M T F M F T F M T M T
-E2: M M T F M T M T 0 M T F M T M T 0 M T M T 0 M T F F F M T M
-E3: M F M F T M T M 0 T M T M F T M T M 0 T M T M 0 T M F T M F
-E4: M M T M 0 F T M T M 0 T M T F M T M T 0 M F T F M F T M T M
-E5: M M T M F F T M T M 0 T M T F M T M T 0 M F T M T M 0 T M F
-E6: M M T M 0 F T M T M 0 T M F T M T M 0 F T M T F M F T M T M
-E7: M M T M 0 T M T M 0 T M T M F T F M T M T F F F M T M T 0 M
+E1: 0 M F M M M M M M M M M M F M F M M M M M M M M M M F M F M
+E2: M M M F M M M M F M M F M M M F M M M M M M M M M M F M M M
+E3: M M M M M M M M M F M M M M F M M M F M M M F F M M M M M M
+E4: M M M M M M M M F M M M M M F F M M M M M M M M F F M M M M
+E5: F M M M M M M M M M F M M F M M M M M M F M M M M F M M M M
+E6: M M M M M M F F M M M F M F M M M M M M M M F M M M M M M M
+E7: M M M M M M M M M M F M M M M F M M M M M M F F M M F M M M
+E8: M M F M M M F M M M M M M M M M M M F M M M M F M M M F M M
+E9: M F M M M M M M M M M M M M M M M M F M M M M F F M M F M M
+E10: F M M M M M M M M M M M M M M F M M M M F M M M M F M M F M
+E11: M M M M M M M F M M M M F M M M M M M M F M M M M M F M F M
+E12: M M M M M F M M M F M M M M M M M M M M M M M M F M F M F M
 
 Calendário:
  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30
 Seg Ter Qua Qui Sex Sáb Dom Seg Ter Qua Qui Sex Sáb Dom Seg Ter Qua Qui Sex Sáb Dom Seg Ter Qua Qui Sex Sáb Dom Seg Ter
-E1: M  M  T  M  0  T  F  M  T  M  T  0  M  T  M  T  F  M  T  M  T  F  M  F  T  F  M  T  M  T 
-E2: M  M  T  F  M  T  M  T  0  M  T  F  M  T  M  T  0  M  T  M  T  0  M  T  F  F  F  M  T  M 
-E3: M  F  M  F  T  M  T  M  0  T  M  T  M  F  T  M  T  M  0  T  M  T  M  0  T  M  F  T  M  F 
-E4: M  M  T  M  0  F  T  M  T  M  0  T  M  T  F  M  T  M  T  0  M  F  T  F  M  F  T  M  T  M 
-E5: M  M  T  M  F  F  T  M  T  M  0  T  M  T  F  M  T  M  T  0  M  F  T  M  T  M  0  T  M  F 
-E6: M  M  T  M  0  F  T  M  T  M  0  T  M  F  T  M  T  M  0  F  T  M  T  F  M  F  T  M  T  M 
-E7: M  M  T  M  0  T  M  T  M  0  T  M  T  M  F  T  F  M  T  M  T  F  F  F  M  T  M  T  0  M 
+E1: 0  M  F  M  M  M  M  M  M  M  M  M  M  F  M  F  M  M  M  M  M  M  M  M  M  M  F  M  F  M 
+E2: M  M  M  F  M  M  M  M  F  M  M  F  M  M  M  F  M  M  M  M  M  M  M  M  M  M  F  M  M  M 
+E3: M  M  M  M  M  M  M  M  M  F  M  M  M  M  F  M  M  M  F  M  M  M  F  F  M  M  M  M  M  M 
+E4: M  M  M  M  M  M  M  M  F  M  M  M  M  M  F  F  M  M  M  M  M  M  M  M  F  F  M  M  M  M 
+E5: F  M  M  M  M  M  M  M  M  M  F  M  M  F  M  M  M  M  M  M  F  M  M  M  M  F  M  M  M  M 
+E6: M  M  M  M  M  M  F  F  M  M  M  F  M  F  M  M  M  M  M  M  M  M  F  M  M  M  M  M  M  M 
+E7: M  M  M  M  M  M  M  M  M  M  F  M  M  M  M  F  M  M  M  M  M  M  F  F  M  M  F  M  M  M 
+E8: M  M  F  M  M  M  F  M  M  M  M  M  M  M  M  M  M  M  F  M  M  M  M  F  M  M  M  F  M  M 
+E9: M  F  M  M  M  M  M  M  M  M  M  M  M  M  M  M  M  M  F  M  M  M  M  F  F  M  M  F  M  M 
+E10: F  M  M  M  M  M  M  M  M  M  M  M  M  M  M  F  M  M  M  M  F  M  M  M  M  F  M  M  F  M 
+E11: M  M  M  M  M  M  M  F  M  M  M  M  F  M  M  M  M  M  M  M  F  M  M  M  M  M  F  M  F  M 
+E12: M  M  M  M  M  F  M  M  M  F  M  M  M  M  M  M  M  M  M  M  M  M  M  M  F  M  F  M  F  M 

@@ -3,75 +3,119 @@ import random
 import csv
 from itertools import product
 
+from handle_ho_constraint import handle_ho_constraint
+
+
 class CSP:
     def __init__(self, variables, domains, constraints):
         self.variables = variables
-        self.domains = domains
+        self.domains = domains.copy()
         self.constraints = constraints
 
-    def is_consistent(self, var, value, assignment):
-        assignment[var] = value
-        for (v1, v2), constraint_fn in self.constraints.items():
-            if v1 == var and v2 in assignment:
-                if not constraint_fn(value, assignment[v2]):
-                    del assignment[var]
+    def check_constraints(self, var, value, assignment):
+        """Verifica todas as restrições após uma atribuição."""
+        temp_assignment = assignment.copy()
+        temp_assignment[var] = value
+        for (var1, var2), constraint in self.constraints.items():
+            if var == var1 or var == var2:
+                if not constraint(var1, temp_assignment[var1], var2, temp_assignment.get(var2, None)):
                     return False
-            elif v2 == var and v1 in assignment:
-                if not constraint_fn(assignment[v1], value):
-                    del assignment[var]
-                    return False
-        del assignment[var]
         return True
 
-    def select_unassigned_variable(self, assignment):
-        unassigned_vars = [v for v in self.variables if v not in assignment]
-        return min(unassigned_vars, key=lambda var: len([val for val in self.domains[var] if self.is_consistent(var, val, assignment)]))
+    def propagate(self, domains, var, value):
+        """Reduz os domínios com base nas restrições e propaga."""
+        temp_assignment = {v: domains[v][0] if len(domains[v]) == 1 else None for v in self.variables}
+        temp_assignment[var] = value
 
-    def order_domain_values(self, var, assignment):
-        return self.domains[var]
+        for v in self.variables:
+            if temp_assignment[v] is None:  # Apenas para variáveis não atribuídas
+                new_domain = []
+                for val in domains[v]:
+                    if self.check_constraints(v, val, temp_assignment):
+                        new_domain.append(val)
+                if not new_domain:
+                    print(f"Domínio de {v} esvaziado. Conflito detectado!")
+                    return False  # Se esvaziar o domínio, inconsistente
+                domains[v] = new_domain
+        return True
 
-    def backtrack(self, assignment):
-        if len(assignment) == len(self.variables):
-            return assignment
+    def select_variable(self, domains):
+        """Seleciona a variável com menos valores restantes (MRV)."""
+        unassigned_vars = [v for v in domains if len(domains[v]) > 1]
+        return min(unassigned_vars, key=lambda var: len(domains[var]))
 
-        var = self.select_unassigned_variable(assignment)
-        for value in self.order_domain_values(var, assignment):
-            if self.is_consistent(var, value, assignment):
-                assignment[var] = value
-                result = self.backtrack(assignment)
-                if result is not None:
-                    return result
-                del assignment[var]
+    def search(self, domains=None):
+        if domains is None:
+            domains = copy.deepcopy(self.domains)
 
+        if any(len(lv) == 0 for lv in domains.values()):
+            return None
+
+        if all(len(lv) == 1 for lv in domains.values()):
+            assignment = {v: lv[0] for v, lv in domains.items()}
+            violations = [not self.check_constraints(var, assignment[var], assignment) for var in assignment]
+            return {"assignment": assignment, "violations": violations}
+
+        var = self.select_variable(domains)
+        print(f"Tentando atribuir valores à variável {var} com domínio {domains[var]}")
+
+        for val in domains[var]:
+            print(f"Tentando {val} para {var}")
+            new_domains = copy.deepcopy(domains)
+            new_domains[var] = [val]
+            if self.propagate(new_domains, var, val):
+                solution = self.search(new_domains)
+                if solution is not None:
+                    return solution
         return None
 
-    def search(self):
-        return {"assignment": self.backtrack({})}
 
 def employee_scheduling():
-    num_employees = 7
+    num_employees = 12
     num_days = 30
-    holidays = {7, 14, 21, 28}
+    holidays = {7, 14, 21, 28}  # Domingos e feriados
     employees = [f"E{e}" for e in range(1, num_employees + 1)]
     vacations = {emp: set(random.sample(range(1, num_days + 1), 5)) for emp in employees}
 
+    # Definição de variáveis e domínios
     variables = [f"E{e}_{d}" for e in range(1, num_employees + 1) for d in range(1, num_days + 1)]
-    print(len(variables))
-
     domains = {
         var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]]
         else ["M", "T", "0"]
         for var in variables
     }
 
-    constraints = {
-        (v1, v2): (lambda x1, x2: x1 == "T" and x2 == "F")
-        for v1 in variables
-        for v2 in variables
-        if v1.split('_')[0] == v2.split('_')[0] and int(v1.split('_')[1]) + 1 == int(v2.split('_')[1])
-    }
+    constraints = {}
 
-    handle_ho_constraint(domains, constraints, variables, lambda x: x[0] not in ["F", "0"] and x[1] not in ["F", "0"] and x[2] not in ["F", "0"] and x[3] not in ["F", "0"] and x[4] not in ["F", "0"] and x[5] in ["F", "0"]) 
+    # Restrições binárias
+    # 1. Dias de trabalho máximo (223 dias de trabalho máximo no total)
+    constraints[("E1_1", "E2_1")] = lambda e1, v1, e2, v2: sum(
+        [1 for e in range(1, num_employees + 1) if v1 == "M" or v1 == "T"]) <= 223
+
+    # 2. 5 dias de trabalho consecutivo máximo (com folga obrigatória depois de 5 dias)
+    constraints[("E1_1", "E2_1")] = lambda e1, v1, e2, v2: sum(
+        [1 for e in range(1, num_employees + 1) if v1 == "M" or v1 == "T"]) <= 5
+
+    # 3. Sequências válidas de turno: M->M, T->T, M->T
+    for e in range(1, num_employees + 1):
+        for d in range(1, num_days):
+            constraints[(f"E{e}_{d}", f"E{e}_{d + 1}")] = lambda e1, v1, e2, v2: (
+                    (v1 == "M" and v2 == "M") or
+                    (v1 == "T" and v2 == "T") or
+                    (v1 == "M" and v2 == "T")
+            )
+
+    # 4. Sequência inválida T->M
+    for e in range(1, num_employees + 1):
+        for d in range(1, num_days):
+            constraints[(f"E{e}_{d}", f"E{e}_{d + 1}")] = lambda e1, v1, e2, v2: not (v1 == "T" and v2 == "M")
+
+    # 5. Cobrir os alarmes da melhor forma possível (restrição personalizada, adaptada com handle_ho_constraint)
+    # handle_ho_constraint(domains, constraints, ['E1_1', 'E1_2', 'X1'], lambda t: 2 * t[0] == t[1] + 10 * t[2])
+
+    # 6. Férias (30 dias de férias distribuídos entre os funcionários)
+    for e in range(1, num_employees + 1):
+        constraints[(f"E{e}_F", f"E{e}_F")] = lambda e1, v1, e2, v2: v1 == "F"
 
     # Resolver o problema CSP
     csp = CSP(variables, domains, constraints)
@@ -87,29 +131,6 @@ def employee_scheduling():
     else:
         print("Nenhuma solução encontrada.")
 
-def handle_ho_constraint(domains,constraints,variables,constraint):
-    A = "".join(variables)
-    ho_domains = [domains[v] for v in variables]
-    A_domain = []
-    for combo in product(*ho_domains):
-        if constraint(combo):
-            A_domain.append(combo)
-    domains[A] = A_domain
-    variables.append(A)
-    for i, v in enumerate(variables):
-        if v == A:
-            continue
-        def make_constraint(index, aux=A, var=v):
-            def binary_constraint(varA, valA, varV, valV):
-                if varA == aux:
-                    return valA[index] == valV
-                if varV == aux:
-                    return valV[index] == valA
-                return True
-            return binary_constraint
-        c_fn = make_constraint(i)
-        constraints[(A,v)] = c_fn
-        constraints[(v,A)] = c_fn
 
 def generate_calendar(assignment, num_employees, num_days):
     days_of_week = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
