@@ -1,5 +1,5 @@
-import random
 from itertools import product
+
 
 def handle_ho_constraint(domains, constraints, variables, constraint):
     A = "".join(variables)
@@ -13,6 +13,7 @@ def handle_ho_constraint(domains, constraints, variables, constraint):
     for i, v in enumerate(variables):
         if v == A:
             continue
+
         def make_constraint(index, aux=A, var=v):
             def binary_constraint(varA, valA, varV, valV):
                 if varA == aux:
@@ -20,7 +21,9 @@ def handle_ho_constraint(domains, constraints, variables, constraint):
                 if varV == aux:
                     return valV[index] == valA
                 return True
+
             return binary_constraint
+
         c_fn = make_constraint(i)
         constraints[(A, v)] = c_fn
         constraints[(v, A)] = c_fn
