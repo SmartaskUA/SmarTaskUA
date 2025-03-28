@@ -12,7 +12,7 @@ class CSP:
         """Verifica todas as restrições após uma atribuição."""
         temp_assignment = assignment.copy()
         temp_assignment[var] = value
-        for constraint in self.constraints:
+        for constraint in self.constraints.values():  # Correção aqui
             if not constraint(var, temp_assignment):
                 return False
         return True
@@ -72,23 +72,25 @@ def employee_scheduling():
     variables = [f"E{e}_{d}" for e in range(1, num_employees + 1) for d in range(1, num_days + 1)]
     domains = {var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]] else ["M", "T", "F", "0"]
                for var in variables}
-    '''
-     constraints = {
-        (v1, v2): (lambda x1, x2: x1 == "T" and x2 == "F")
+
+    # Mapeamento das restrições binárias entre pares de variáveis no estilo especificado:
+    binary_constraints = {
+        (v1, v2): (lambda x1, x2: not (x1 == "T" and x2 == "M"))  # Impedir sequência inválida Tarde -> Manhã (T->M)
         for v1 in variables
         for v2 in variables
         if v1.split('_')[0] == v2.split('_')[0] and int(v1.split('_')[1]) + 1 == int(v2.split('_')[1])
     }
 
-    handle_ho_constraint(domains, constraints, variables, lambda x: x[0] not in ["F", "0"] and x[1] not in ["F", "0"] and x[2] not in ["F", "0"] and x[3] not in ["F", "0"] and x[4] not in ["F", "0"] and x[5] in ["F", "0"]) 
-    '''
-    constraints = {
-        # Impedir a sequência inválida Tarde -> Manhã (T->M)
-        lambda var, assignment: not any(
-            assignment.get(var, "0") == "T" and
-            assignment.get(f"{var.split('_')[0]}_{int(var.split('_')[1]) - 1}", "0") == "M"
-            for var in variables if int(var.split('_')[1]) > 1
-        ),
+    binary_constraints |= {
+        (v1, v2): (lambda x1, x2: not (x1 in ["M", "T"] and x2 in ["M", "T"]))  # Garantir um turno único por dia
+        for v1 in variables
+        for v2 in variables
+        if v1.split('_')[0] == v2.split('_')[0] and int(v1.split('_')[1]) + 1 == int(v2.split('_')[1])
+    }
+
+
+    # Restrições de ordem superior mantidas:
+    higher_order_constraints = {
         # Garantir no máximo 5 dias consecutivos de trabalho (M ou T)
         lambda var, assignment: not any(
             all(assignment.get(f"{var.split('_')[0]}_{d - k}", "0") in ["M", "T"] for k in range(6))
@@ -104,26 +106,23 @@ def employee_scheduling():
             sum(1 for d in range(1, num_days + 1) if assignment.get(f"E{e}_{d}", "0") in ["M", "T"]) <= 223
             for e in range(1, num_employees + 1)
         ),
-        # Garantir que cada funcionário tenha um único turno por dia
-        lambda var, assignment: not any(
-            assignment.get(var, "0") in ["M", "T"] and
-            assignment.get(f"{var.split('_')[0]}_{int(var.split('_')[1]) + 1}", "0") == "T"
-            for var in variables if int(var.split('_')[1]) < num_days
-        )
     }
+
+    # Unir todas as restrições em um CSP
+    constraints = {**binary_constraints}
+    constraints |= {f"HOC_{i}": constraint for i, constraint in enumerate(higher_order_constraints)}
+
+    # Criar o CSP e buscar solução
     csp = CSP(variables, domains, constraints)
     solution = csp.search()
 
     if solution:
         assignment = solution["assignment"]
-
-        print("Solução encontrada com turnos da tarde distribuidos:")
-        '''for var, val in assignment.items():
-            print(f"{var}: {val}")'''
-
-        generate_calendar(assignment,num_employees,num_days)
+        print("Solução encontrada com turnos da tarde distribuídos:")
+        generate_calendar(assignment, num_employees, num_days)
     else:
         print("Nenhuma solução encontrada.")
+
 
 if __name__ == "__main__":
     employee_scheduling()
