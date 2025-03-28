@@ -63,7 +63,7 @@ class CSP:
 
 
 def employee_scheduling():
-    num_employees = 7
+    num_employees = 12
     num_days = 30
     holidays = {7, 14, 21, 28}
     employees = [f"E{e}" for e in range(1, num_employees + 1)]
