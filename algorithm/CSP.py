@@ -1,11 +1,7 @@
 import copy
 import random
-import csv
-from itertools import product
 
-from handle_ho_constraint import handle_ho_constraint
-
-
+from generate_calendar import generate_calendar
 class CSP:
     def __init__(self, variables, domains, constraints):
         self.variables = variables
@@ -16,10 +12,9 @@ class CSP:
         """Verifica todas as restrições após uma atribuição."""
         temp_assignment = assignment.copy()
         temp_assignment[var] = value
-        for (var1, var2), constraint in self.constraints.items():
-            if var == var1 or var == var2:
-                if not constraint(var1, temp_assignment[var1], var2, temp_assignment.get(var2, None)):
-                    return False
+        for constraint in self.constraints:
+            if not constraint(var, temp_assignment):
+                return False
         return True
 
     def propagate(self, domains, var, value):
@@ -34,7 +29,6 @@ class CSP:
                     if self.check_constraints(v, val, temp_assignment):
                         new_domain.append(val)
                 if not new_domain:
-                    print(f"Domínio de {v} esvaziado. Conflito detectado!")
                     return False  # Se esvaziar o domínio, inconsistente
                 domains[v] = new_domain
         return True
@@ -57,10 +51,8 @@ class CSP:
             return {"assignment": assignment, "violations": violations}
 
         var = self.select_variable(domains)
-        print(f"Tentando atribuir valores à variável {var} com domínio {domains[var]}")
 
         for val in domains[var]:
-            print(f"Tentando {val} para {var}")
             new_domains = copy.deepcopy(domains)
             new_domains[var] = [val]
             if self.propagate(new_domains, var, val):
@@ -69,85 +61,71 @@ class CSP:
                     return solution
         return None
 
+def distribute_afternoon_shifts(assignment, num_employees, num_days):
+    """Distribui turnos da tarde (“T”) garantindo balanceamento e sem quebras de restrição."""
+    for e in range(1, num_employees + 1):
+        afternoon_slots = [f"E{e}_{d}" for d in range(1, num_days + 1) if assignment[f"E{e}_{d}"] == "M"]
+        if len(afternoon_slots) >= 5:
+            afternoon_indices = random.sample(afternoon_slots, len(afternoon_slots) // 2)
+            for index in afternoon_indices:
+                assignment[index] = "T"  # Altera metade dos turnos da manhã para tarde
+    return assignment
 
 def employee_scheduling():
-    num_employees = 12
+    num_employees = 7
     num_days = 30
-    holidays = {7, 14, 21, 28}  # Domingos e feriados
+    holidays = {7, 14, 21, 28}
     employees = [f"E{e}" for e in range(1, num_employees + 1)]
     vacations = {emp: set(random.sample(range(1, num_days + 1), 5)) for emp in employees}
 
-    # Definição de variáveis e domínios
     variables = [f"E{e}_{d}" for e in range(1, num_employees + 1) for d in range(1, num_days + 1)]
-    domains = {
-        var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]]
-        else ["M", "T", "0"]
-        for var in variables
+    domains = {var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]] else ["M", "T", "F", "0"]
+               for var in variables}
+    '''
+     constraints = {
+        (v1, v2): (lambda x1, x2: x1 == "T" and x2 == "F")
+        for v1 in variables
+        for v2 in variables
+        if v1.split('_')[0] == v2.split('_')[0] and int(v1.split('_')[1]) + 1 == int(v2.split('_')[1])
     }
 
-    constraints = {}
+    handle_ho_constraint(domains, constraints, variables, lambda x: x[0] not in ["F", "0"] and x[1] not in ["F", "0"] and x[2] not in ["F", "0"] and x[3] not in ["F", "0"] and x[4] not in ["F", "0"] and x[5] in ["F", "0"]) 
+    '''
+    constraints = [
+        lambda var, assignment: not any(
+            assignment.get(var, "0") == "T" and
+            assignment.get(f"{var.split('_')[0]}_{int(var.split('_')[1]) - 1}", "0") == "M"
+            for var in variables if int(var.split('_')[1]) > 1
+        ),
+        lambda var, assignment: not any(
+            all(assignment.get(f"{var.split('_')[0]}_{d - k}", "0") in ["M", "T"] for k in range(6))
+            for d in range(5, num_days + 1) if var == f"{var.split('_')[0]}_{d}"
+        ),
+        lambda var, assignment: all(
+            sum(1 for d in range(1, num_days + 1) if assignment.get(f"E{e}_{d}", "0") in ["M", "T"]) <= 20
+            for e in range(1, num_employees + 1)
+        ),
+        lambda var, assignment: not any(
+            assignment.get(var, "0") == "M" and
+            assignment.get(f"{var.split('_')[0]}_{int(var.split('_')[1]) + 1}", "0") == "T"
+            for var in variables if int(var.split('_')[1]) < num_days
+        )
+    ]
 
-    # Restrições binárias
-    # 1. Dias de trabalho máximo (223 dias de trabalho máximo no total)
-    constraints[("E1_1", "E2_1")] = lambda e1, v1, e2, v2: sum(
-        [1 for e in range(1, num_employees + 1) if v1 == "M" or v1 == "T"]) <= 223
-
-    # 2. 5 dias de trabalho consecutivo máximo (com folga obrigatória depois de 5 dias)
-    constraints[("E1_1", "E2_1")] = lambda e1, v1, e2, v2: sum(
-        [1 for e in range(1, num_employees + 1) if v1 == "M" or v1 == "T"]) <= 5
-
-    # 3. Sequências válidas de turno: M->M, T->T, M->T
-    for e in range(1, num_employees + 1):
-        for d in range(1, num_days):
-            constraints[(f"E{e}_{d}", f"E{e}_{d + 1}")] = lambda e1, v1, e2, v2: (
-                    (v1 == "M" and v2 == "M") or
-                    (v1 == "T" and v2 == "T") or
-                    (v1 == "M" and v2 == "T")
-            )
-
-    # 4. Sequência inválida T->M
-    for e in range(1, num_employees + 1):
-        for d in range(1, num_days):
-            constraints[(f"E{e}_{d}", f"E{e}_{d + 1}")] = lambda e1, v1, e2, v2: not (v1 == "T" and v2 == "M")
-
-    # 5. Cobrir os alarmes da melhor forma possível (restrição personalizada, adaptada com handle_ho_constraint)
-    # handle_ho_constraint(domains, constraints, ['E1_1', 'E1_2', 'X1'], lambda t: 2 * t[0] == t[1] + 10 * t[2])
-
-    # 6. Férias (30 dias de férias distribuídos entre os funcionários)
-    for e in range(1, num_employees + 1):
-        constraints[(f"E{e}_F", f"E{e}_F")] = lambda e1, v1, e2, v2: v1 == "F"
-
-    # Resolver o problema CSP
     csp = CSP(variables, domains, constraints)
     solution = csp.search()
 
-    if solution and solution["assignment"]:
+    if solution:
         assignment = solution["assignment"]
-        print("Solução encontrada:")
-        for e in range(1, num_employees + 1):
-            schedule = [assignment.get(f"E{e}_{d}", "0") for d in range(1, num_days + 1)]
-            print(f"E{e}: {' '.join(schedule)}")
-        generate_calendar(assignment, num_employees, num_days)
+        #balanced_assignment = distribute_afternoon_shifts(assignment, num_employees, num_days)
+
+        print("Solução encontrada com turnos da tarde distribuidos:")
+        '''for var, val in assignment.items():
+            print(f"{var}: {val}")'''
+
+        generate_calendar(assignment,num_employees,num_days)
     else:
         print("Nenhuma solução encontrada.")
-
-
-def generate_calendar(assignment, num_employees, num_days):
-    days_of_week = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
-
-    print("\nCalendário:")
-    print(" ".join(f"{day:2}" for day in range(1, num_days + 1)))
-    print(" ".join(f"{days_of_week[(day - 1) % 7]:3}" for day in range(1, num_days + 1)))
-
-    with open("calendario_turnos.csv", "w", newline="") as csvfile:
-        csvwriter = csv.writer(csvfile)
-        csvwriter.writerow([str(day) for day in range(1, num_days + 1)])
-        csvwriter.writerow([days_of_week[(day - 1) % 7] for day in range(1, num_days + 1)])
-
-        for e in range(1, num_employees + 1):
-            employee_schedule = [assignment.get(f"E{e}_{d}", "-") for d in range(1, num_days + 1)]
-            print(f"E{e}: " + " ".join(f"{shift:2}" for shift in employee_schedule))
-            csvwriter.writerow([f"E{e}"] + employee_schedule)
 
 if __name__ == "__main__":
     employee_scheduling()
