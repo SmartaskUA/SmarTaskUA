@@ -42,6 +42,7 @@ class CSP:
     def search(self):
         return {"assignment": self.backtrack({})}
 
+
 def employee_scheduling():
     num_employees = 7
     num_days = 30
@@ -58,16 +59,34 @@ def employee_scheduling():
     }
 
     constraints = [
-        # Relaxando temporariamente esta restrição para encontrar uma solução inicial
-        lambda var, assignment: True,  # Placeholder
+        # Evitar sequência "T->M"
+        lambda var, assignment: not any(
+            assignment.get(var, "0") == "T" and
+            assignment.get(f"{var.split('_')[0]}_{int(var.split('_')[1]) - 1}", "0") == "M"
+            for var in variables if int(var.split('_')[1]) > 1
+        ),
 
-        # Evitar 5 dias consecutivos de turnos "M" ou "T" - mantendo essa, pois é crítica
+        # Evitar 5 dias consecutivos de turnos "M" ou "T"
         lambda var, assignment: not any(
             all(assignment.get(f"{var.split('_')[0]}_{d - k}", "0") in ["M", "T"] for k in range(5))
             for d in range(5, num_days + 1) if var == f"{var.split('_')[0]}_{d}"
         ),
 
-        # Balancear turnos "M" e "T" por funcionário
+        # Evitar sequência "T->M" no final
+        lambda var, assignment: not any(
+            assignment.get(var, "0") == "T" and
+            assignment.get(f"{var.split('_')[0]}_{int(var.split('_')[1]) + 1}", "0") == "M"
+            for var in variables if int(var.split('_')[1]) < num_days
+        ),
+
+        # Garantir dois turnos por dia (pelo menos um "M" e um "T")
+        lambda var, assignment: all(
+            any(assignment.get(f"E{e}_{d}", "0") == "M" for e in range(1, num_employees + 1)) and
+            any(assignment.get(f"E{e}_{d}", "0") == "T" for e in range(1, num_employees + 1))
+            for d in range(1, num_days + 1)
+        ),
+
+        # Balancear turnos "M" e "T"
         lambda var, assignment: all(
             abs(
                 sum(1 for d in range(1, num_days + 1) if assignment.get(f"E{e}_{d}", "0") == "M") -
@@ -77,20 +96,22 @@ def employee_scheduling():
         ),
     ]
 
-    # Resolver o problema CSP
+    # Resolver CSP
     csp = CSP(variables, domains, constraints)
     solution = csp.search()
 
-    if solution and solution["assignment"]:
-        assignment = solution["assignment"]
-        print("Solução encontrada:")
-        for e in range(1, num_employees + 1):
-            schedule = [assignment.get(f"E{e}_{d}", "0") for d in range(1, num_days + 1)]
-            print(f"E{e}: {' '.join(schedule)}")
-        generate_calendar(assignment, num_employees, num_days)
+    if solution is None:
+        print("Nenhuma solução encontrada. Verifique as restrições ou o tamanho do domínio.")
     else:
-        print("Nenhuma solução encontrada.")
-
+        if "assignment" in solution and solution["assignment"]:
+            assignment = solution["assignment"]
+            print("Solução encontrada:")
+            for e in range(1, num_employees + 1):
+                schedule = [assignment.get(f"E{e}_{d}", "0") for d in range(1, num_days + 1)]
+                print(f"E{e}: {' '.join(schedule)}")
+            generate_calendar(assignment, num_employees, num_days)
+        else:
+            print("Solução não contém atribuições. Verifique o CSP e seu mecanismo de busca.")
 
 
 def generate_calendar(assignment, num_employees, num_days):
@@ -109,6 +130,7 @@ def generate_calendar(assignment, num_employees, num_days):
             employee_schedule = [assignment.get(f"E{e}_{d}", "-") for d in range(1, num_days + 1)]
             print(f"E{e}: " + " ".join(f"{shift:2}" for shift in employee_schedule))
             csvwriter.writerow([f"E{e}"] + employee_schedule)
+
 
 if __name__ == "__main__":
     employee_scheduling()
