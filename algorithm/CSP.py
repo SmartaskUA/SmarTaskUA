@@ -61,15 +61,6 @@ class CSP:
                     return solution
         return None
 
-def distribute_afternoon_shifts(assignment, num_employees, num_days):
-    """Distribui turnos da tarde (“T”) garantindo balanceamento e sem quebras de restrição."""
-    for e in range(1, num_employees + 1):
-        afternoon_slots = [f"E{e}_{d}" for d in range(1, num_days + 1) if assignment[f"E{e}_{d}"] == "M"]
-        if len(afternoon_slots) >= 5:
-            afternoon_indices = random.sample(afternoon_slots, len(afternoon_slots) // 2)
-            for index in afternoon_indices:
-                assignment[index] = "T"  # Altera metade dos turnos da manhã para tarde
-    return assignment
 
 def employee_scheduling():
     num_employees = 7
@@ -91,33 +82,40 @@ def employee_scheduling():
 
     handle_ho_constraint(domains, constraints, variables, lambda x: x[0] not in ["F", "0"] and x[1] not in ["F", "0"] and x[2] not in ["F", "0"] and x[3] not in ["F", "0"] and x[4] not in ["F", "0"] and x[5] in ["F", "0"]) 
     '''
-    constraints = [
+    constraints = {
+        # Impedir a sequência inválida Tarde -> Manhã (T->M)
         lambda var, assignment: not any(
             assignment.get(var, "0") == "T" and
             assignment.get(f"{var.split('_')[0]}_{int(var.split('_')[1]) - 1}", "0") == "M"
             for var in variables if int(var.split('_')[1]) > 1
         ),
+        # Garantir no máximo 5 dias consecutivos de trabalho (M ou T)
         lambda var, assignment: not any(
             all(assignment.get(f"{var.split('_')[0]}_{d - k}", "0") in ["M", "T"] for k in range(6))
             for d in range(5, num_days + 1) if var == f"{var.split('_')[0]}_{d}"
         ),
+        # Garantir no máximo 22 domingos e feriados trabalhados por funcionário
         lambda var, assignment: all(
-            sum(1 for d in range(1, num_days + 1) if assignment.get(f"E{e}_{d}", "0") in ["M", "T"]) <= 20
+            sum(1 for d in holidays if assignment.get(f"E{e}_{d}", "0") in ["M", "T"]) <= 22
             for e in range(1, num_employees + 1)
         ),
+        # Garantir no máximo 223 dias de trabalho no ano por funcionário
+        lambda var, assignment: all(
+            sum(1 for d in range(1, num_days + 1) if assignment.get(f"E{e}_{d}", "0") in ["M", "T"]) <= 223
+            for e in range(1, num_employees + 1)
+        ),
+        # Garantir que cada funcionário tenha um único turno por dia
         lambda var, assignment: not any(
-            assignment.get(var, "0") == "M" and
+            assignment.get(var, "0") in ["M", "T"] and
             assignment.get(f"{var.split('_')[0]}_{int(var.split('_')[1]) + 1}", "0") == "T"
             for var in variables if int(var.split('_')[1]) < num_days
         )
-    ]
-
+    }
     csp = CSP(variables, domains, constraints)
     solution = csp.search()
 
     if solution:
         assignment = solution["assignment"]
-        #balanced_assignment = distribute_afternoon_shifts(assignment, num_employees, num_days)
 
         print("Solução encontrada com turnos da tarde distribuidos:")
         '''for var, val in assignment.items():
