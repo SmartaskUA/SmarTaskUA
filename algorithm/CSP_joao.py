@@ -74,17 +74,16 @@ def employee_scheduling():
     }
 
     for emp in employees:
-        print("DD")
         emp_vars = [f"{emp}_{d}" for d in range(1, num_days + 1)]
-        handle_ho_constraint (
-            domains,
-            constraints,
-            emp_vars,
-            lambda schedule: all(
-                not all(day in ["M", "T"] for day in schedule[i:i+6])
-                for i in range(len(schedule) - 5)
+        # Apply constraint on sliding window of 6 days
+        for start in range(num_days - 5):
+            window_vars = emp_vars[start:start+6]
+            handle_ho_constraint (
+                domains,
+                constraints,
+                window_vars,
+                lambda schedule: not all(day in ["M", "T"] for day in schedule)
             )
-        )
 
     # Resolver o problema CSP
     csp = CSP(variables, domains, constraints)
@@ -106,11 +105,13 @@ def handle_ho_constraint(domains,constraints,variables,constraint):
     ho_domains = [domains[v] for v in variables]
     A_domain = []
     for combo in product(*ho_domains):
+        print("EE")
         if constraint(combo):
             A_domain.append(combo)
     domains[A] = A_domain
     variables.append(A)
     for i, v in enumerate(variables):
+        print("FF")
         if v == A:
             continue
         def make_constraint(index, aux=A, var=v):
