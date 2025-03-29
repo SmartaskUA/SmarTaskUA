@@ -2,6 +2,7 @@ import copy
 import random
 import csv
 from itertools import product
+import time
 
 class CSP:
     def __init__(self, variables, domains, constraints):
@@ -12,27 +13,45 @@ class CSP:
     def check_constraints(self, var, value, assignment):
         temp_assignment = assignment.copy()
         temp_assignment[var] = value
-        for constraint in self.constraints.values():
-            if not constraint(var, temp_assignment):
-                return False
+        
+        for constraint_key, constraint_func in self.constraints.items():
+            if isinstance(constraint_key, tuple):  # Pairwise constraint
+                v1, v2 = constraint_key
+                if v1 in temp_assignment and v2 in temp_assignment:
+                    val1 = temp_assignment[v1]
+                    val2 = temp_assignment[v2]
+                    if not constraint_func(val1, val2):
+                        print(f"Constraint failed: {v1}={val1}, {v2}={val2} (pairwise)")
+                        return False
+            else:  # Multi-variable constraint
+                if not constraint_func(var, temp_assignment):
+                    print(f"Constraint failed: {constraint_key} for {var}={value}")
+                    return False
         return True
     
     def propagate(self, domains, var, value):
         domains[var] = [value]
-        for other_var in self.variables:
-            if other_var == var or len(domains[other_var]) == 1:
-                continue
-            new_domain = []
-            for val in domains[other_var]:
-                temp_assignment = {v: domains[v][0] if len(domains[v]) == 1 else None 
-                                for v in self.variables}
-                temp_assignment[var] = value
-                temp_assignment[other_var] = val
-                if self.check_constraints(other_var, val, temp_assignment):
-                    new_domain.append(val)
-            if not new_domain:
-                return False
-            domains[other_var] = new_domain
+        queue = [(var, value)]
+        while queue:
+            curr_var, curr_val = queue.pop(0)
+            for other_var in self.variables:
+                if other_var == curr_var or len(domains[other_var]) == 1:
+                    continue
+                new_domain = []
+                for val in domains[other_var]:
+                    temp_assignment = {v: domains[v][0] if len(domains[v]) == 1 else None 
+                                     for v in self.variables}
+                    temp_assignment[curr_var] = curr_val
+                    temp_assignment[other_var] = val
+                    if self.check_constraints(other_var, val, temp_assignment):
+                        new_domain.append(val)
+                if not new_domain:
+                    print(f"Propagation failed: {other_var} domain reduced to empty after {curr_var}={curr_val}")
+                    return False
+                if len(new_domain) < len(domains[other_var]):
+                    domains[other_var] = new_domain
+                    if len(new_domain) == 1:
+                        queue.append((other_var, new_domain[0]))
         return True
     
     def select_variable(self, domains):
@@ -41,32 +60,48 @@ class CSP:
             return None
         return min(unassigned_vars, key=lambda var: (
             len(domains[var]),
-            -sum(1 for c in self.constraints.values() 
-                if var in [k.split('_')[0] for k in self.variables if k in str(c)])
+            -sum(1 for key in self.constraints.keys()
+                if isinstance(key, tuple) and (var == key[0] or var == key[1]))
         ))
 
-    def search(self, domains=None):
+    def search(self, domains=None, timeout=30):
+        start_time = time.time()
         if domains is None:
             domains = copy.deepcopy(self.domains)
-
-        if any(len(lv) == 0 for lv in domains.values()):
+        
+        def timed_search(domains, depth=0):
+            if time.time() - start_time > timeout:
+                print(f"Search timed out after {timeout} seconds.")
+                return None
+            
+            if any(len(lv) == 0 for lv in domains.values()):
+                print(f"Empty domain detected at depth {depth}")
+                return None
+            
+            if all(len(lv) == 1 for lv in domains.values()):
+                assignment = {v: lv[0] for v, lv in domains.items()}
+                violations = [not self.check_constraints(var, assignment[var], assignment) 
+                             for var in assignment]
+                print(f"Solution found at depth {depth} with {sum(violations)} violations")
+                return {"assignment": assignment, "violations": violations}
+            
+            var = self.select_variable(domains)
+            if var is None:
+                return None
+            
+            if depth % 5 == 0:
+                print(f"Depth {depth}: Exploring {var}, domain size {len(domains[var])}")
+            
+            for val in domains[var]:
+                new_domains = copy.deepcopy(domains)
+                new_domains[var] = [val]
+                if self.propagate(new_domains, var, val):
+                    solution = timed_search(new_domains, depth + 1)
+                    if solution is not None:
+                        return solution
             return None
-
-        if all(len(lv) == 1 for lv in domains.values()):
-            assignment = {v: lv[0] for v, lv in domains.items()}
-            violations = [not self.check_constraints(var, assignment[var], assignment) for var in assignment]
-            return {"assignment": assignment, "violations": violations}
-
-        var = self.select_variable(domains)
-
-        for val in domains[var]:
-            new_domains = copy.deepcopy(domains)
-            new_domains[var] = [val]
-            if self.propagate(new_domains, var, val):
-                solution = self.search(new_domains)
-                if solution is not None:
-                    return solution
-        return None
+        
+        return timed_search(domains)
 
 def employee_scheduling():
     num_employees = 12
@@ -76,7 +111,7 @@ def employee_scheduling():
     vacations = {emp: set(random.sample(range(1, num_days + 1), 5)) for emp in employees}
 
     variables = [f"E{e}_{d}" for e in range(1, num_employees + 1) for d in range(1, num_days + 1)]
-    print(len(variables))
+    print(f"Total variables: {len(variables)}")
 
     domains = {
         var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]]
@@ -91,62 +126,37 @@ def employee_scheduling():
         if v1.split('_')[0] == v2.split('_')[0] and int(v1.split('_')[1]) + 1 == int(v2.split('_')[1])
     }
 
+    csp = CSP(variables, domains, constraints)
     for emp in employees:
         emp_vars = [f"{emp}_{d}" for d in range(1, num_days + 1)]
-        # Apply constraint on sliding window of 6 days
         for start in range(num_days - 5):
             window_vars = emp_vars[start:start+6]
-            handle_ho_constraint (
-                domains,
-                constraints,
+            handle_ho_constraint(
+                csp,
                 window_vars,
-                lambda schedule: not all(day in ["M", "T"] for day in schedule)
+                lambda values: not all(v in ["M", "T"] for v in values)
             )
 
-    # Resolver o problema CSP
-    csp = CSP(variables, domains, constraints)
     solution = csp.search()
-
     if solution and solution["assignment"]:
         assignment = solution["assignment"]
-        print("Solução encontrada:")
+        print("Solution found:")
         for e in range(1, num_employees + 1):
             schedule = [assignment.get(f"E{e}_{d}", "0") for d in range(1, num_days + 1)]
             print(f"E{e}: {' '.join(schedule)}")
         generate_calendar(assignment, num_employees, num_days)
     else:
-        print("Nenhuma solução encontrada.")
+        print("No solution found.")
 
-def handle_ho_constraint(domains,constraints,variables,constraint):
-    print("AA")
-    A = "".join(variables)
-    ho_domains = [domains[v] for v in variables]
-    A_domain = []
-    for combo in product(*ho_domains):
-        print("EE")
-        if constraint(combo):
-            A_domain.append(combo)
-    domains[A] = A_domain
-    variables.append(A)
-    for i, v in enumerate(variables):
-        print("FF")
-        if v == A:
-            continue
-        def make_constraint(index, aux=A, var=v):
-            print("KK")
-            def binary_constraint(varA, valA, varV, valV):
-                print("HH")
-                if varA == aux:
-                    return valA[index] == valV
-                if varV == aux:
-                    return valV[index] == valA
-                return True
-            print(binary_constraint)
-            return binary_constraint
-        c_fn = make_constraint(i)
-        print("GG")
-        constraints[(A,v)] = c_fn
-        constraints[(v,A)] = c_fn
+def handle_ho_constraint(csp, variables, constraint_func):
+    def constraint(var, assignment):
+        if not all(v in assignment for v in variables):
+            return True
+        values = [assignment[v] for v in variables]
+        return constraint_func(values)
+    
+    constraint_key = f"multi_{'_'.join(variables)}"
+    csp.constraints[constraint_key] = constraint
 
 def generate_calendar(assignment, num_employees, num_days):
     days_of_week = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
