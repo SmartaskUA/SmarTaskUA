@@ -9,35 +9,41 @@ class CSP:
         self.domains = domains
         self.constraints = constraints
     
-
     def check_constraints(self, var, value, assignment):
-        """Verifica todas as restrições após uma atribuição."""
         temp_assignment = assignment.copy()
         temp_assignment[var] = value
-        for constraint in self.constraints.values():  # Correção aqui
+        for constraint in self.constraints.values():
             if not constraint(var, temp_assignment):
                 return False
         return True
     
     def propagate(self, domains, var, value):
-        """Reduz os domínios com base nas restrições e propaga."""
-        temp_assignment = {v: domains[v][0] if len(domains[v]) == 1 else None for v in self.variables}
-        temp_assignment[var] = value
-
-        for v in self.variables:
-            if temp_assignment[v] is None:  # Apenas para variáveis não atribuídas
-                new_domain = []
-                for val in domains[v]:
-                    if self.check_constraints(v, val, temp_assignment):
-                        new_domain.append(val)
-                if not new_domain:
-                    return False  # Se esvaziar o domínio, inconsistente
-                domains[v] = new_domain
+        domains[var] = [value]
+        for other_var in self.variables:
+            if other_var == var or len(domains[other_var]) == 1:
+                continue
+            new_domain = []
+            for val in domains[other_var]:
+                temp_assignment = {v: domains[v][0] if len(domains[v]) == 1 else None 
+                                for v in self.variables}
+                temp_assignment[var] = value
+                temp_assignment[other_var] = val
+                if self.check_constraints(other_var, val, temp_assignment):
+                    new_domain.append(val)
+            if not new_domain:
+                return False
+            domains[other_var] = new_domain
         return True
     
     def select_variable(self, domains):
         unassigned_vars = [v for v in domains if len(domains[v]) > 1]
-        return min(unassigned_vars, key=lambda var: len(domains[var]))
+        if not unassigned_vars:
+            return None
+        return min(unassigned_vars, key=lambda var: (
+            len(domains[var]),
+            -sum(1 for c in self.constraints.values() 
+                if var in [k.split('_')[0] for k in self.variables if k in str(c)])
+        ))
 
     def search(self, domains=None):
         if domains is None:
@@ -127,14 +133,18 @@ def handle_ho_constraint(domains,constraints,variables,constraint):
         if v == A:
             continue
         def make_constraint(index, aux=A, var=v):
+            print("KK")
             def binary_constraint(varA, valA, varV, valV):
+                print("HH")
                 if varA == aux:
                     return valA[index] == valV
                 if varV == aux:
                     return valV[index] == valA
                 return True
+            print(binary_constraint)
             return binary_constraint
         c_fn = make_constraint(i)
+        print("GG")
         constraints[(A,v)] = c_fn
         constraints[(v,A)] = c_fn
 
