@@ -55,7 +55,7 @@ const CalendarsInProcessSection = () => (
   </>
 );
 
-const ManagerHome = () => {
+const manager = () => {
   return (
     <div className="admin-container">
       <Sidebar_Manager />
@@ -68,4 +68,4 @@ const ManagerHome = () => {
   );
 };
 
-export default ManagerHome;
+export default manager;
