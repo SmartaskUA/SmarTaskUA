@@ -8,47 +8,59 @@ class CSP:
         self.variables = variables
         self.domains = domains
         self.constraints = constraints
+    
 
-    def is_consistent(self, var, value, assignment):
-        assignment[var] = value
-        for (v1, v2), constraint_fn in self.constraints.items():
-            if v1 == var and v2 in assignment:
-                if not constraint_fn(value, assignment[v2]):
-                    del assignment[var]
-                    return False
-            elif v2 == var and v1 in assignment:
-                if not constraint_fn(assignment[v1], value):
-                    del assignment[var]
-                    return False
-        del assignment[var]
+    def check_constraints(self, var, value, assignment):
+        """Verifica todas as restrições após uma atribuição."""
+        temp_assignment = assignment.copy()
+        temp_assignment[var] = value
+        for constraint in self.constraints.values():  # Correção aqui
+            if not constraint(var, temp_assignment):
+                return False
         return True
+    
+    def propagate(self, domains, var, value):
+        """Reduz os domínios com base nas restrições e propaga."""
+        temp_assignment = {v: domains[v][0] if len(domains[v]) == 1 else None for v in self.variables}
+        temp_assignment[var] = value
 
-    def select_unassigned_variable(self, assignment):
-        unassigned_vars = [v for v in self.variables if v not in assignment]
-        return min(unassigned_vars, key=lambda var: len([val for val in self.domains[var] if self.is_consistent(var, val, assignment)]))
+        for v in self.variables:
+            if temp_assignment[v] is None:  # Apenas para variáveis não atribuídas
+                new_domain = []
+                for val in domains[v]:
+                    if self.check_constraints(v, val, temp_assignment):
+                        new_domain.append(val)
+                if not new_domain:
+                    return False  # Se esvaziar o domínio, inconsistente
+                domains[v] = new_domain
+        return True
+    
+    def select_variable(self, domains):
+        unassigned_vars = [v for v in domains if len(domains[v]) > 1]
+        return min(unassigned_vars, key=lambda var: len(domains[var]))
 
-    def order_domain_values(self, var, assignment):
-        return self.domains[var]
+    def search(self, domains=None):
+        if domains is None:
+            domains = copy.deepcopy(self.domains)
 
-    def backtrack(self, assignment):
-        print("BB")
-        if len(assignment) == len(self.variables):
-            return assignment
+        if any(len(lv) == 0 for lv in domains.values()):
+            return None
 
-        var = self.select_unassigned_variable(assignment)
-        for value in self.order_domain_values(var, assignment):
-            if self.is_consistent(var, value, assignment):
-                assignment[var] = value
-                result = self.backtrack(assignment)
-                if result is not None:
-                    return result
-                del assignment[var]
+        if all(len(lv) == 1 for lv in domains.values()):
+            assignment = {v: lv[0] for v, lv in domains.items()}
+            violations = [not self.check_constraints(var, assignment[var], assignment) for var in assignment]
+            return {"assignment": assignment, "violations": violations}
 
+        var = self.select_variable(domains)
+
+        for val in domains[var]:
+            new_domains = copy.deepcopy(domains)
+            new_domains[var] = [val]
+            if self.propagate(new_domains, var, val):
+                solution = self.search(new_domains)
+                if solution is not None:
+                    return solution
         return None
-
-    def search(self):
-        print("CC")
-        return {"assignment": self.backtrack({})}
 
 def employee_scheduling():
     num_employees = 12
@@ -67,7 +79,7 @@ def employee_scheduling():
     }
 
     constraints = {
-        (v1, v2): (lambda x1, x2: x1 == "T" and x2 == "F")
+        (v1, v2): (lambda x1, x2: x1 == "T" and x2 != "M")
         for v1 in variables
         for v2 in variables
         if v1.split('_')[0] == v2.split('_')[0] and int(v1.split('_')[1]) + 1 == int(v2.split('_')[1])
