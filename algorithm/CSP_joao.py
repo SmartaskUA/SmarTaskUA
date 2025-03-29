@@ -31,6 +31,7 @@ class CSP:
         return self.domains[var]
 
     def backtrack(self, assignment):
+        print("BB")
         if len(assignment) == len(self.variables):
             return assignment
 
@@ -46,10 +47,11 @@ class CSP:
         return None
 
     def search(self):
+        print("CC")
         return {"assignment": self.backtrack({})}
 
 def employee_scheduling():
-    num_employees = 7
+    num_employees = 12
     num_days = 30
     holidays = {7, 14, 21, 28}
     employees = [f"E{e}" for e in range(1, num_employees + 1)]
@@ -71,7 +73,18 @@ def employee_scheduling():
         if v1.split('_')[0] == v2.split('_')[0] and int(v1.split('_')[1]) + 1 == int(v2.split('_')[1])
     }
 
-    handle_ho_constraint(domains, constraints, variables, lambda x: x[0] not in ["F", "0"] and x[1] not in ["F", "0"] and x[2] not in ["F", "0"] and x[3] not in ["F", "0"] and x[4] not in ["F", "0"] and x[5] in ["F", "0"]) 
+    for emp in employees:
+        print("DD")
+        emp_vars = [f"{emp}_{d}" for d in range(1, num_days + 1)]
+        handle_ho_constraint (
+            domains,
+            constraints,
+            emp_vars,
+            lambda schedule: all(
+                not all(day in ["M", "T"] for day in schedule[i:i+6])
+                for i in range(len(schedule) - 5)
+            )
+        )
 
     # Resolver o problema CSP
     csp = CSP(variables, domains, constraints)
@@ -88,6 +101,7 @@ def employee_scheduling():
         print("Nenhuma solução encontrada.")
 
 def handle_ho_constraint(domains,constraints,variables,constraint):
+    print("AA")
     A = "".join(variables)
     ho_domains = [domains[v] for v in variables]
     A_domain = []
