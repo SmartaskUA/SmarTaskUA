@@ -7,22 +7,45 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMqConfig {
 
-    private static final String QUEUE_NAME = "task-queue";
-    private static final String EXCHANGE_NAME = "task-exchange";
-    private static final String ROUTING_KEY = "task-routing-key";
+    // Configuração de Tarefas
+    private static final String TASK_QUEUE = "task-queue";
+    private static final String TASK_EXCHANGE = "task-exchange";
+    private static final String TASK_ROUTING_KEY = "task-routing-key";
 
+    // Configuração de Status
+    private static final String STATUS_QUEUE = "status-queue";
+    private static final String STATUS_EXCHANGE = "status-exchange";
+    private static final String STATUS_ROUTING_KEY = "status-routing-key";
+
+    // Configuração para Tarefas
     @Bean
-    public Queue queue() {
-        return QueueBuilder.durable(QUEUE_NAME).build();
+    public Queue taskQueue() {
+        return QueueBuilder.durable(TASK_QUEUE).build();
     }
 
     @Bean
-    public DirectExchange exchange() {
-        return new DirectExchange(EXCHANGE_NAME);
+    public DirectExchange taskExchange() {
+        return new DirectExchange(TASK_EXCHANGE);
     }
 
     @Bean
-    public Binding binding(Queue queue, DirectExchange exchange) {
-        return BindingBuilder.bind(queue).to(exchange).with(ROUTING_KEY);
+    public Binding taskBinding(Queue taskQueue, DirectExchange taskExchange) {
+        return BindingBuilder.bind(taskQueue).to(taskExchange).with(TASK_ROUTING_KEY);
+    }
+
+    // Configuração para Status
+    @Bean
+    public Queue statusQueue() {
+        return QueueBuilder.durable(STATUS_QUEUE).build();
+    }
+
+    @Bean
+    public DirectExchange statusExchange() {
+        return new DirectExchange(STATUS_EXCHANGE);
+    }
+
+    @Bean
+    public Binding statusBinding(Queue statusQueue, DirectExchange statusExchange) {
+        return BindingBuilder.bind(statusQueue).to(statusExchange).with(STATUS_ROUTING_KEY);
     }
 }
