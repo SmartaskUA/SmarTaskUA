@@ -1,9 +1,7 @@
 import copy
 import random
 import csv
-from itertools import product
 import time
-
 
 class CSP:
     def __init__(self, variables, domains, constraints):
@@ -58,7 +56,7 @@ class CSP:
             return None
         return min(unassigned_vars, key=lambda var: len(domains[var]))
 
-    def search(self, domains=None, timeout=30):
+    def search(self, domains=None, timeout=60):
         start_time = time.time()
         if domains is None:
             domains = copy.deepcopy(self.domains)
@@ -93,7 +91,7 @@ class CSP:
 def employee_scheduling():
     num_employees = 12
     num_days = 30
-    holidays = {7, 14, 21, 28}  # Apenas um exemplo, adicionar todos os feriados reais
+    holidays = {7, 14, 21, 28}
     employees = [f"E{e}" for e in range(1, num_employees + 1)]
     vacations = {emp: set(random.sample(range(1, num_days + 1), 5)) for emp in employees}
 
@@ -101,7 +99,7 @@ def employee_scheduling():
 
     domains = {
         var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]]
-        else (["0"] if int(var.split('_')[1]) in holidays else ["M", "T", "0"])
+        else (["0"] if int(var.split('_')[1]) in holidays else random.sample(["M", "T", "0"], 3))
         for var in variables
     }
 
@@ -117,16 +115,20 @@ def employee_scheduling():
         for start in range(num_days - 5):
             window_vars = emp_vars[start:start + 6]
             handle_ho_constraint(csp, window_vars, lambda values: not all(v in ["M", "T"] for v in values))
-        handle_ho_constraint(csp, emp_vars, lambda values: values.count("M") + values.count("T") <= 223)
+        # Realistic total shift limit (e.g., 20 shifts over 30 days per employee)
+        handle_ho_constraint(csp, emp_vars, lambda values: values.count("M") + values.count("T") <= 20)
+        # Ensure at least 5 "T" shifts
+        handle_ho_constraint(csp, emp_vars, lambda values: values.count("T") >= 5)
+        # Holiday shift limit (4 holidays, max 2 shifts)
         handle_ho_constraint(csp, [var for var in emp_vars if int(var.split('_')[1]) in holidays],
-                             lambda values: values.count("M") + values.count("T") <= 22)
+                             lambda values: values.count("M") + values.count("T") <= 2)
 
-    solution = csp.search()
+    solution = csp.search(timeout=60)
     if solution and solution["assignment"]:
         assignment = solution["assignment"]
         generate_calendar(assignment, num_employees, num_days)
     else:
-        print("No solution found.")
+        print("No solution found within timeout or constraints too restrictive.")
 
 
 def handle_ho_constraint(csp, variables, constraint_func):
@@ -148,6 +150,9 @@ def generate_calendar(assignment, num_employees, num_days):
         for e in range(1, num_employees + 1):
             employee_schedule = [assignment.get(f"E{e}_{d}", "-") for d in range(1, num_days + 1)]
             csvwriter.writerow([f"E{e}"] + employee_schedule)
+            t_count = employee_schedule.count("T")
+            m_count = employee_schedule.count("M")
+            print(f"Employee E{e}: {t_count} afternoon shifts (T), {m_count} morning shifts (M)")
 
 
 if __name__ == "__main__":
