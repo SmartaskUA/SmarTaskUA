@@ -13,28 +13,8 @@ public class RabbitMqConfig {
 
     @Bean
     public Queue queue() {
-        return QueueBuilder.durable("task-queue")
-                .withArgument("x-dead-letter-exchange", "dlx-exchange")
-                .withArgument("x-dead-letter-routing-key", "dlx-routing-key")
-                .build();
+        return QueueBuilder.durable(QUEUE_NAME).build();
     }
-
-    @Bean
-    public DirectExchange deadLetterExchange() {
-        return new DirectExchange("dlx-exchange");
-    }
-
-    @Bean
-    public Queue deadLetterQueue() {
-        return new Queue("task-queue-dlx", true);
-    }
-
-    @Bean
-    public Binding dlqBinding() {
-        return BindingBuilder.bind(deadLetterQueue()).to(deadLetterExchange()).with("dlx-routing-key");
-    }
-
-
 
     @Bean
     public DirectExchange exchange() {
