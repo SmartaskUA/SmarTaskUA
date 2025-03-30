@@ -1,8 +1,8 @@
 import copy
 import random
 import csv
-import time
 from itertools import product
+import time
 
 
 class CSP:
@@ -16,13 +16,14 @@ class CSP:
         temp_assignment[var] = value
 
         for constraint_key, constraint_func in self.constraints.items():
-            if isinstance(constraint_key, tuple):  # Restrição binária
+            if isinstance(constraint_key, tuple):
                 v1, v2 = constraint_key
                 if v1 in temp_assignment and v2 in temp_assignment:
-                    val1, val2 = temp_assignment[v1], temp_assignment[v2]
+                    val1 = temp_assignment[v1]
+                    val2 = temp_assignment[v2]
                     if not constraint_func(val1, val2):
                         return False
-            else:  # Restrição de ordem superior
+            else:
                 if not constraint_func(var, temp_assignment):
                     return False
         return True
@@ -53,20 +54,25 @@ class CSP:
 
     def select_variable(self, domains):
         unassigned_vars = [v for v in domains if len(domains[v]) > 1]
-        return min(unassigned_vars, key=lambda var: len(domains[var])) if unassigned_vars else None
+        if not unassigned_vars:
+            return None
+        return min(unassigned_vars, key=lambda var: len(domains[var]))
 
     def search(self, domains=None, timeout=30):
         start_time = time.time()
         if domains is None:
             domains = copy.deepcopy(self.domains)
 
-        def timed_search(domains):
+        def timed_search(domains, depth=0):
             if time.time() - start_time > timeout:
+                return None
+
+            if any(len(lv) == 0 for lv in domains.values()):
                 return None
 
             if all(len(lv) == 1 for lv in domains.values()):
                 assignment = {v: lv[0] for v, lv in domains.items()}
-                return {"assignment": assignment, "violations": []}
+                return {"assignment": assignment}
 
             var = self.select_variable(domains)
             if var is None:
@@ -76,7 +82,7 @@ class CSP:
                 new_domains = copy.deepcopy(domains)
                 new_domains[var] = [val]
                 if self.propagate(new_domains, var, val):
-                    solution = timed_search(new_domains)
+                    solution = timed_search(new_domains, depth + 1)
                     if solution is not None:
                         return solution
             return None
@@ -87,7 +93,7 @@ class CSP:
 def employee_scheduling():
     num_employees = 12
     num_days = 30
-    holidays = {7, 14, 21, 28}
+    holidays = {7, 14, 21, 28}  # Apenas um exemplo, adicionar todos os feriados reais
     employees = [f"E{e}" for e in range(1, num_employees + 1)]
     vacations = {emp: set(random.sample(range(1, num_days + 1), 5)) for emp in employees}
 
@@ -111,6 +117,9 @@ def employee_scheduling():
         for start in range(num_days - 5):
             window_vars = emp_vars[start:start + 6]
             handle_ho_constraint(csp, window_vars, lambda values: not all(v in ["M", "T"] for v in values))
+        handle_ho_constraint(csp, emp_vars, lambda values: values.count("M") + values.count("T") <= 223)
+        handle_ho_constraint(csp, [var for var in emp_vars if int(var.split('_')[1]) in holidays],
+                             lambda values: values.count("M") + values.count("T") <= 22)
 
     solution = csp.search()
     if solution and solution["assignment"]:
@@ -132,15 +141,13 @@ def handle_ho_constraint(csp, variables, constraint_func):
 
 
 def generate_calendar(assignment, num_employees, num_days):
-    days_of_week = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
-    with open("schedule.csv", "w", newline="") as csvfile:
+    with open("calendario_turnos.csv", "w", newline="") as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow([str(day) for day in range(1, num_days + 1)])
-        csvwriter.writerow([days_of_week[(day - 1) % 7] for day in range(1, num_days + 1)])
+
         for e in range(1, num_employees + 1):
             employee_schedule = [assignment.get(f"E{e}_{d}", "-") for d in range(1, num_days + 1)]
             csvwriter.writerow([f"E{e}"] + employee_schedule)
-    print("Calendário gerado com sucesso!")
 
 
 if __name__ == "__main__":
