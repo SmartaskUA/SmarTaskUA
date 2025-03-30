@@ -58,7 +58,7 @@ class CSP:
             return None
         return min(unassigned_vars, key=lambda var: len(domains[var]))
 
-    def search(self, domains=None, timeout=30):
+    def search(self, domains=None, timeout=300):
         start_time = time.time()
         if domains is None:
             domains = copy.deepcopy(self.domains)
@@ -92,16 +92,16 @@ class CSP:
 
 def employee_scheduling():
     num_employees = 12
-    num_days = 30
+    num_days = 90
     holidays = {7, 14, 21, 28}  # Apenas um exemplo, adicionar todos os feriados reais
     employees = [f"E{e}" for e in range(1, num_employees + 1)]
-    vacations = {emp: set(random.sample(range(1, num_days + 1), 5)) for emp in employees}
+    vacations = {emp: set(random.sample(range(1, num_days + 1), 30)) for emp in employees}
 
     variables = [f"{emp}_{d}" for emp in employees for d in range(1, num_days + 1)]
 
     domains = {
         var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]]
-        else (["0"] if int(var.split('_')[1]) in holidays else ["M", "T", "0"])
+        else ["M", "T", "0"]
         for var in variables
     }
 

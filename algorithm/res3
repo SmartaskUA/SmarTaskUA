@@ -44,4 +44,3 @@ Constraint failed: multi_E1_3_E1_4_E1_5_E1_6_E1_7_E1_8 for E1_1=T
 Constraint failed: multi_E1_3_E1_4_E1_5_E1_6_E1_7_E1_8 for E1_1=0
 Propagation failed: E1_1 domain reduced to empty after E1_2=0
 No solution found.
-No solution found.
