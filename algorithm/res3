@@ -1,1 +1,46 @@
 Calendário gerado com sucesso!
+Total variables: 360
+Depth 0: Exploring E1_2, domain size 3
+Constraint failed: multi_E1_1_E1_2_E1_3_E1_4_E1_5_E1_6 for E1_3=M
+Constraint failed: multi_E1_1_E1_2_E1_3_E1_4_E1_5_E1_6 for E1_3=T
+Constraint failed: multi_E1_4_E1_5_E1_6_E1_7_E1_8_E1_9 for E1_3=0
+Propagation failed: E1_3 domain reduced to empty after E1_2=M
+Constraint failed: E1_2=T, E1_3=M (pairwise)
+Constraint failed: multi_E1_1_E1_2_E1_3_E1_4_E1_5_E1_6 for E1_3=T
+Constraint failed: multi_E1_4_E1_5_E1_6_E1_7_E1_8_E1_9 for E1_3=0
+Propagation failed: E1_3 domain reduced to empty after E1_2=T
+Constraint failed: multi_E1_3_E1_4_E1_5_E1_6_E1_7_E1_8 for E1_3=M
+Constraint failed: multi_E1_3_E1_4_E1_5_E1_6_E1_7_E1_8 for E1_3=T
+Constraint failed: multi_E1_4_E1_5_E1_6_E1_7_E1_8_E1_9 for E1_3=0
+Propagation failed: E1_3 domain reduced to empty after E1_2=0
+No solution found.
+Total variables: 360
+Depth 0: Exploring E1_2, domain size 3
+Constraint failed: multi_E1_1_E1_2_E1_3_E1_4_E1_5_E1_6 for E1_1=M
+Constraint failed: E1_1=T, E1_2=M (pairwise)
+Constraint failed: multi_E1_2_E1_3_E1_4_E1_5_E1_6_E1_7 for E1_1=0
+Propagation failed: E1_1 domain reduced to empty after E1_2=M
+Constraint failed: multi_E1_1_E1_2_E1_3_E1_4_E1_5_E1_6 for E1_1=M
+Constraint failed: multi_E1_1_E1_2_E1_3_E1_4_E1_5_E1_6 for E1_1=T
+Constraint failed: multi_E1_2_E1_3_E1_4_E1_5_E1_6_E1_7 for E1_1=0
+Propagation failed: E1_1 domain reduced to empty after E1_2=T
+Constraint failed: multi_E1_3_E1_4_E1_5_E1_6_E1_7_E1_8 for E1_1=M
+Constraint failed: multi_E1_3_E1_4_E1_5_E1_6_E1_7_E1_8 for E1_1=T
+Constraint failed: multi_E1_3_E1_4_E1_5_E1_6_E1_7_E1_8 for E1_1=0
+Propagation failed: E1_1 domain reduced to empty after E1_2=0
+No solution found.
+Total variables: 360
+Depth 0: Exploring E1_2, domain size 3
+Constraint failed: multi_E1_1_E1_2_E1_3_E1_4_E1_5_E1_6 for E1_1=M
+Constraint failed: E1_1=T, E1_2=M (pairwise)
+Constraint failed: multi_E1_2_E1_3_E1_4_E1_5_E1_6_E1_7 for E1_1=0
+Propagation failed: E1_1 domain reduced to empty after E1_2=M
+Constraint failed: multi_E1_1_E1_2_E1_3_E1_4_E1_5_E1_6 for E1_1=M
+Constraint failed: multi_E1_1_E1_2_E1_3_E1_4_E1_5_E1_6 for E1_1=T
+Constraint failed: multi_E1_2_E1_3_E1_4_E1_5_E1_6_E1_7 for E1_1=0
+Propagation failed: E1_1 domain reduced to empty after E1_2=T
+Constraint failed: multi_E1_3_E1_4_E1_5_E1_6_E1_7_E1_8 for E1_1=M
+Constraint failed: multi_E1_3_E1_4_E1_5_E1_6_E1_7_E1_8 for E1_1=T
+Constraint failed: multi_E1_3_E1_4_E1_5_E1_6_E1_7_E1_8 for E1_1=0
+Propagation failed: E1_1 domain reduced to empty after E1_2=0
+No solution found.

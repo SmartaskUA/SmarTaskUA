@@ -133,7 +133,7 @@ def handle_ho_constraint(csp, variables, constraint_func):
 
 def generate_calendar(assignment, num_employees, num_days):
     days_of_week = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
-    with open("calendario_turnos.csv", "w", newline="") as csvfile:
+    with open("schedule.csv", "w", newline="") as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow([str(day) for day in range(1, num_days + 1)])
         csvwriter.writerow([days_of_week[(day - 1) % 7] for day in range(1, num_days + 1)])
