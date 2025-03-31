@@ -110,18 +110,19 @@ def employee_scheduling():
     }
 
     csp = CSP(variables, domains, constraints)
+
     for emp in employees:
         emp_vars = [f"{emp}_{d}" for d in range(1, num_days + 1)]
         for start in range(num_days - 5):
             window_vars = emp_vars[start:start + 6]
             handle_ho_constraint(csp, window_vars, lambda values: not all(v in ["M", "T"] for v in values))
-        # Realistic total shift limit (e.g., 20 shifts over 30 days per employee)
         handle_ho_constraint(csp, emp_vars, lambda values: values.count("M") + values.count("T") <= 20)
-        # Ensure at least 5 "T" shifts
-        handle_ho_constraint(csp, emp_vars, lambda values: values.count("T") >= 5)
-        # Holiday shift limit (4 holidays, max 2 shifts)
         handle_ho_constraint(csp, [var for var in emp_vars if int(var.split('_')[1]) in holidays],
                              lambda values: values.count("M") + values.count("T") <= 2)
+
+    for day in range(1, num_days + 1):
+        day_vars = [f"{emp}_{day}" for emp in employees]
+        handle_ho_constraint(csp, day_vars, lambda values: values.count("M") >= 3 and values.count("T") >= 3)
 
     solution = csp.search(timeout=60)
     if solution and solution["assignment"]:
@@ -150,9 +151,13 @@ def generate_calendar(assignment, num_employees, num_days):
         for e in range(1, num_employees + 1):
             employee_schedule = [assignment.get(f"E{e}_{d}", "-") for d in range(1, num_days + 1)]
             csvwriter.writerow([f"E{e}"] + employee_schedule)
-            t_count = employee_schedule.count("T")
-            m_count = employee_schedule.count("M")
-            print(f"Employee E{e}: {t_count} afternoon shifts (T), {m_count} morning shifts (M)")
+        
+        # Verify per-day staffing
+        for day in range(1, num_days + 1):
+            day_assignments = [assignment.get(f"E{e}_{day}", "-") for e in range(1, num_employees + 1)]
+            m_count = day_assignments.count("M")
+            t_count = day_assignments.count("T")
+            print(f"Day {day}: {m_count} morning shifts (M), {t_count} afternoon shifts (T)")
 
 
 if __name__ == "__main__":
