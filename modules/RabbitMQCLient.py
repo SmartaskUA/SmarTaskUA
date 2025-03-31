@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from MongoDBClient import MongoDBClient
+from algorithm.CSP_joao import employee_scheduling_csp
 
 
 class RabbitMQClient:
@@ -87,17 +88,23 @@ class RabbitMQClient:
                 break
 
     def handle_task_processing(self, task_id):
-        """
-        Processa a tarefa, garantindo atualização de status correta.
-        """
         self.send_task_status(task_id, "IN_PROGRESS")
+        try:
+            print(f"Running CSP scheduling for Task ID: {task_id}")
 
-        # 🔥 Rodar o algoritmo real aqui no futuro
-        time.sleep(10)  # Simula o processamento
+            schedule_data = employee_scheduling_csp()
 
-        print(f"Schedule complete for Task ID: {task_id}")
+            self.mongodb_client.insert_schedule(
+                data=schedule_data,
+                title=f"Schedule for {task_id}",
+                algorithm="CSP Scheduling"
+            )
 
-        self.send_task_status(task_id, "COMPLETED")
+            print(f"Schedule complete for Task ID: {task_id}")
+            self.send_task_status(task_id, "COMPLETED")
+        except Exception as e:
+            print(f"Error during schedule execution: {e}")
+            self.send_task_status(task_id, "FAILED")
 
     def send_task_status(self, task_id, status):
         """Envia uma atualização de status da tarefa."""
