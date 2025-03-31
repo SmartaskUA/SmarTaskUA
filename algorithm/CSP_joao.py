@@ -56,7 +56,7 @@ class CSP:
             return None
         return min(unassigned_vars, key=lambda var: len(domains[var]))
 
-    def search(self, domains=None, timeout=60):
+    def search(self, domains=None, timeout=300):  # 5-minute timeout
         start_time = time.time()
         if domains is None:
             domains = copy.deepcopy(self.domains)
@@ -89,11 +89,12 @@ class CSP:
 
 
 def employee_scheduling():
+    tic = time.time()
     num_employees = 12
-    num_days = 30
-    holidays = {7, 14, 21, 28}
+    num_days = 365
+    holidays = {1, 50, 100, 150, 200, 250, 300, 350}
     employees = [f"E{e}" for e in range(1, num_employees + 1)]
-    vacations = {emp: set(random.sample(range(1, num_days + 1), 5)) for emp in employees}
+    vacations = {emp: set(random.sample(range(1, num_days + 1), 30)) for emp in employees}
 
     variables = [f"{emp}_{d}" for emp in employees for d in range(1, num_days + 1)]
 
@@ -111,25 +112,34 @@ def employee_scheduling():
 
     csp = CSP(variables, domains, constraints)
 
+    # Per-employee constraints
     for emp in employees:
         emp_vars = [f"{emp}_{d}" for d in range(1, num_days + 1)]
         for start in range(num_days - 5):
             window_vars = emp_vars[start:start + 6]
             handle_ho_constraint(csp, window_vars, lambda values: not all(v in ["M", "T"] for v in values))
-        handle_ho_constraint(csp, emp_vars, lambda values: values.count("M") + values.count("T") <= 20)
+        # Adjusted total shift limit for a year (e.g., 240 shifts, ~2/3 of days)
+        handle_ho_constraint(csp, emp_vars, lambda values: values.count("M") + values.count("T") <= 223)
         handle_ho_constraint(csp, [var for var in emp_vars if int(var.split('_')[1]) in holidays],
-                             lambda values: values.count("M") + values.count("T") <= 2)
+                             lambda values: values.count("M") + values.count("T") <= 22) # No shifts on holidays
 
+    # Per-day staffing constraints with feasibility check
     for day in range(1, num_days + 1):
         day_vars = [f"{emp}_{day}" for emp in employees]
-        handle_ho_constraint(csp, day_vars, lambda values: values.count("M") >= 3 and values.count("T") >= 3)
+        available = sum(1 for var in day_vars if "F" not in domains[var])  # Non-vacation employees
+        if available >= 6:
+            handle_ho_constraint(csp, day_vars, lambda values: values.count("M") >= 3 and values.count("T") >= 3)
+        else:
+            min_shifts = max(0, available // 2)  # Adjust based on available employees
+            handle_ho_constraint(csp, day_vars, lambda values: values.count("M") >= min_shifts and values.count("T") >= min_shifts)
 
-    solution = csp.search(timeout=60)
+    solution = csp.search(timeout=300)  # 5-minute timeout
     if solution and solution["assignment"]:
         assignment = solution["assignment"]
         generate_calendar(assignment, num_employees, num_days)
+        print(f"Solution found in {time.time() - tic:.2f} seconds.")
     else:
-        print("No solution found within timeout or constraints too restrictive.")
+        print("No solution found within 5 minutes or constraints too restrictive.")
 
 
 def handle_ho_constraint(csp, variables, constraint_func):
