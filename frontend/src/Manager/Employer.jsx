@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar_Manager from "../components/Sidebar_Manager";
+import SearchBar from "../components/manager/SearchBar"; 
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Typography, CircularProgress, Box, Button, Dialog, DialogTitle,
@@ -8,6 +9,7 @@ import {
   Select, MenuItem, OutlinedInput, Checkbox, ListItemText, IconButton
 } from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete';
+import BaseUrl from "../components/BaseUrl";
 
 const teamOptions = ["A", "B"];
 
@@ -21,19 +23,40 @@ const Employer = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
-  const [removalMode, setRemovalMode] = useState(false); // Adicionando o estado de modo de remoção
+  const [removalMode, setRemovalMode] = useState(false); 
+  const [filteredEmployees, setFilteredEmployees] = useState([]);
 
-  useEffect(() => { fetchEmployees(); }, []);
+  useEffect(() => { 
+    fetchEmployees();
+  }, []);
 
   const fetchEmployees = () => {
     setLoading(true);
-    axios.get("http://localhost:8081/api/v1/employees/")
-      .then((response) => { setEmployees(response.data); setLoading(false); })
-      .catch(() => { setError("Erro ao buscar employees."); setLoading(false); });
+    axios.get(`${BaseUrl}/api/v1/employees/`)
+      .then((response) => {
+        setEmployees(response.data);
+        setFilteredEmployees(response.data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Erro ao buscar employees.");
+        setLoading(false);
+      });
+  };
+
+  const handleSearch = (query) => {
+    if (query) {
+      const filtered = employees.filter(employee =>
+        employee.id.toString().includes(query) 
+      );
+      setFilteredEmployees(filtered);
+    } else {
+      setFilteredEmployees(employees); 
+    }
   };
 
   const handleRemoveEmployee = (id) => {
-    axios.delete(`http://localhost:8081/api/v1/employees/${id}`).then(fetchEmployees)
+    axios.delete(`${BaseUrl}/api/v1/employees/${id}`).then(fetchEmployees)
       .catch((error) => console.error("Erro ao remover employee:", error));
   };
 
@@ -43,13 +66,13 @@ const Employer = () => {
   };
 
   const handleEditEmployee = () => {
-    axios.put(`http://localhost:8081/api/v1/employees/${selectedEmployee.id}`, selectedEmployee)
+    axios.put(`${BaseUrl}/api/v1/employees/${selectedEmployee.id}`, selectedEmployee)
       .then(() => { setOpenEditDialog(false); setSelectedEmployee(null); fetchEmployees(); })
       .catch((error) => console.error("Erro ao editar employee:", error));
   };
 
   const handleAddEmployee = () => {
-    axios.post("http://localhost:8081/api/v1/employees/", newEmployee)
+    axios.post(`${BaseUrl}/api/v1/employees/`, newEmployee) 
       .then(() => { setOpenAddDialog(false); setNewEmployee({ id: "", name: "", team: [] }); fetchEmployees(); })
       .catch((error) => console.error("Erro ao adicionar employee:", error));
   };
@@ -73,7 +96,7 @@ const Employer = () => {
   };
 
   const toggleRemovalMode = () => {
-    setRemovalMode(!removalMode); // Alterna entre o modo de remoção
+    setRemovalMode(!removalMode); 
   };
 
   return (
@@ -89,13 +112,15 @@ const Employer = () => {
             <Button
               variant="contained"
               color="error"
-              onClick={toggleRemovalMode} // Alterna para o modo de remoção
+              onClick={toggleRemovalMode}
               style={{ marginLeft: "10px" }}
             >
               {removalMode ? "Cancelar Remoção" : "Remover Employees"}
             </Button>
           </Box>
         </Box>
+
+        <SearchBar onSearch={handleSearch} />
 
         {loading ? (
           <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -107,7 +132,7 @@ const Employer = () => {
               {error}
             </Typography>
           </Box>
-        ) : employees.length > 0 ? (
+        ) : filteredEmployees.length > 0 ? (
           <>
             <TableContainer style={{ borderRadius: 8 }}>
               <Table>
@@ -121,7 +146,7 @@ const Employer = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {employees.map((emp, index) => {
+                  {filteredEmployees.map((emp, index) => {
                     const rowStyle = index % 2 === 0
                       ? { backgroundColor: "#f2f2f2" }
                       : { backgroundColor: "#ffffff" };
@@ -138,7 +163,7 @@ const Employer = () => {
                         <TableCell>{emp.name}</TableCell>
                         <TableCell>{teamDisplay}</TableCell>
                         <TableCell>
-                          {removalMode && ( // Exibe o ícone de lixeira se estiver no modo de remoção
+                          {removalMode && (
                             <IconButton
                               color="error"
                               onClick={() => handleOpenConfirmDialog(emp)}
@@ -173,8 +198,6 @@ const Employer = () => {
             </Box>
           </Box>
         )}
-
-        {/* Diálogo para Adicionar Employee */}
         <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)}>
           <DialogTitle>Adicionar Employee</DialogTitle>
           <DialogContent>
@@ -220,8 +243,6 @@ const Employer = () => {
             </Button>
           </DialogActions>
         </Dialog>
-
-        {/* Diálogo para Confirmar Remoção */}
         <Dialog open={openConfirmDialog} onClose={handleCancelDelete}>
           <DialogTitle>Confirmar Remoção</DialogTitle>
           <DialogContent>
@@ -236,8 +257,6 @@ const Employer = () => {
             </Button>
           </DialogActions>
         </Dialog>
-
-        {/* Diálogo para Editar Employee */}
         <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)}>
           <DialogTitle>Editar Employee</DialogTitle>
           <DialogContent>
