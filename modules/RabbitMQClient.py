@@ -3,7 +3,8 @@ import json
 import time
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
-from MongoDBClient import MongoDBClient
+from modules.MongoDBClient import MongoDBClient
+from algorithm.CSP_joao import employee_scheduling
 
 
 class RabbitMQClient:
@@ -15,14 +16,8 @@ class RabbitMQClient:
         self.task_queue = task_queue
         self.task_routing_key = task_routing_key
         self.status_routing_key = status_routing_key
-
-        # 🔥 Executor para rodar até 5 tarefas simultâneas
         self.executor = ThreadPoolExecutor(max_workers=5)
-
-        # Inicializa MongoDBClient
         self.mongodb_client = MongoDBClient()
-
-        # Estabelece conexões RabbitMQ
         self.connect_to_rabbitmq()
         self.publisher_connection, self.publisher_channel = self.create_publisher_connection()
 
@@ -60,12 +55,13 @@ class RabbitMQClient:
         def callback(ch, method, properties, body):
             try:
                 message = json.loads(body)
+                print(f"\n Request : {message}")
                 task_id = message.get("taskId", "No Task ID")
+                title  = message.get("title")
 
                 print(f"\n[Received Task] Task ID: {task_id}")
 
-                # 🔥 Executa o processamento da tarefa em paralelo
-                self.executor.submit(self.handle_task_processing, task_id)
+                self.executor.submit(self.handle_task_processing, task_id, title)
 
                 # Confirma o recebimento para liberar a fila
                 ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -86,18 +82,24 @@ class RabbitMQClient:
                 self.close_connection()
                 break
 
-    def handle_task_processing(self, task_id):
-        """
-        Processa a tarefa, garantindo atualização de status correta.
-        """
+    def handle_task_processing(self, task_id, title):
         self.send_task_status(task_id, "IN_PROGRESS")
+        try:
+            print(f"Running CSP scheduling for Task ID: {task_id}")
 
-        # 🔥 Rodar o algoritmo real aqui no futuro
-        time.sleep(10)  # Simula o processamento
+            schedule_data = employee_scheduling()
+            print(f"\nSchedule data : {schedule_data}")
+            self.mongodb_client.insert_schedule(
+                data=schedule_data,
+                title=title,
+                algorithm="CSP Scheduling"
+            )
 
-        print(f"Schedule complete for Task ID: {task_id}")
-
-        self.send_task_status(task_id, "COMPLETED")
+            print(f"Schedule complete for Task ID: {task_id}")
+            self.send_task_status(task_id, "COMPLETED")
+        except Exception as e:
+            print(f"Error during schedule execution: {e}")
+            self.send_task_status(task_id, "FAILED")
 
     def send_task_status(self, task_id, status):
         """Envia uma atualização de status da tarefa."""
