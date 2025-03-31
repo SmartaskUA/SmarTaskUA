@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { Link } from "react-router-dom";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import "../styles/Manager.css";
@@ -45,17 +46,44 @@ const NewCalendarSection = () => (
   </>
 );
 
-const CalendarsInProcessSection = () => (
-  <>
-    <h3 className="section-title">Calendars in Process</h3>
-    <div className="calendar-cards-container" style={{ gap: "30px" }}>
-      <CalendarCard title="Processing 1" status="orange" time="In progress..." className="in-process" />
-      <CalendarCard title="Processing 2" status="orange" time="In progress..." className="in-process" />
-    </div>
-  </>
-);
+const CalendarsInProcessSection = () => {
+  const [processingCalendars, setProcessingCalendars] = useState([]);
 
-const manager = () => {
+  useEffect(() => {
+    axios.get("/tasks")
+      .then((response) => {
+        console.log("Raw response:", response);
+        const data = response.data;
+        console.log("Parsed JSON data:", data);
+        const inProcess = data.filter(task => task.status === "processing");
+        setProcessingCalendars(inProcess);
+      })
+      .catch((error) => console.error("Error fetching tasks:", error));
+  }, []);
+
+  return (
+    <>
+      <h3 className="section-title">Calendars in Process</h3>
+      <div className="calendar-cards-container" style={{ gap: "30px" }}>
+        {processingCalendars.length > 0 ? (
+          processingCalendars.map((calendar) => (
+            <CalendarCard 
+              key={calendar.id} 
+              title={calendar.scheduleRequest.title} 
+              status="orange" 
+              time="In progress..." 
+              className="in-process" 
+            />
+          ))
+        ) : (
+          <p>No calendars in process</p>
+        )}
+      </div>
+    </>
+  );
+};
+
+const Manager = () => {
   return (
     <div className="admin-container">
       <Sidebar_Manager />
@@ -68,4 +96,4 @@ const manager = () => {
   );
 };
 
-export default manager;
+export default Manager;
