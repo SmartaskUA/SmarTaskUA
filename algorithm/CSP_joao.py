@@ -126,7 +126,7 @@ def employee_scheduling():
     solution = csp.search(timeout=60)
     if solution and solution["assignment"]:
         assignment = solution["assignment"]
-        build_schedule_table(assignment, num_employees, num_days)
+        return build_schedule_table(assignment, num_employees, num_days)
     else:
         print("No solution found within timeout or constraints too restrictive.")
 
@@ -151,7 +151,8 @@ def build_schedule_table(assignment, num_employees, num_days):
         for d in range(1, num_days + 1):
             row.append(assignment.get(f"E{e}_{d}", "-"))
         table.append(row)
-
+    #print(table)
+    print(type(table))
     return table
 
 

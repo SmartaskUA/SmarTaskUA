@@ -88,7 +88,7 @@ class RabbitMQClient:
             print(f"Running CSP scheduling for Task ID: {task_id}")
 
             schedule_data = employee_scheduling()
-
+            print(f"\nSchedule data : {schedule_data}")
             self.mongodb_client.insert_schedule(
                 data=schedule_data,
                 title=title,
