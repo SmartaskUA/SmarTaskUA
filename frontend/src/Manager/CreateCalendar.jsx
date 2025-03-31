@@ -13,7 +13,6 @@ import {
   ToggleButton,
   ToggleButtonGroup
 } from "@mui/material";
-import BaseUrl from "../components/BaseUrl";
 
 const CreateCalendar = () => {
   // Estados para os campos do formulário
@@ -32,13 +31,10 @@ const CreateCalendar = () => {
     }
   };
 
-  // POST /schedules/generate: gera um ID aleatório e envia os dados
+  // Função para enviar os dados via POST para /schedules/generate
   const handleSave = async () => {
-    // Gera um ID aleatório com 8 caracteres
-    const randomId = Math.random().toString(36).substring(2, 10);
-    
+    // Monta o objeto com os campos esperados pela API, incluindo requestedAt
     const data = {
-      id: randomId,
       init: dateStart,
       end: dateEnd,
       algorithm: selectedAlgorithm,
@@ -53,6 +49,9 @@ const CreateCalendar = () => {
       console.log("Resposta da API:", response.data);
     } catch (error) {
       console.error("Erro ao enviar os dados:", error);
+      if (error.response && error.response.data && error.response.data.trace) {
+        console.error("Trace:", error.response.data.trace);
+      }
       alert("Erro ao enviar os dados.");
     }
   };

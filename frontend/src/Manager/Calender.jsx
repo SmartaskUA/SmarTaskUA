@@ -20,8 +20,8 @@ const Calendar = () => {
   const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
   useEffect(() => {
-    const baseUrl = BaseUrl();
-    axios.get(`${baseUrl}schedules/fetch/${calendarId}`)
+    const baseUrl = BaseUrl;
+    axios.get(`${baseUrl}/schedules/fetch/${calendarId}`)
       .then((response) => {
         if (response.data) setData(response.data.data);
       })

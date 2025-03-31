@@ -17,8 +17,8 @@ const ListCalendar = () => {
   useEffect(() => {
     const fetchCalendars = async () => {
       try {
-        const baseUrl = BaseUrl();
-        const response = await axios.get(`${baseUrl}schedules/fetch`);
+        const baseUrl = BaseUrl;
+        const response = await axios.get(`${baseUrl}/schedules/fetch`);
         if (response.data) {
           setCalendars(response.data);
         } else {
