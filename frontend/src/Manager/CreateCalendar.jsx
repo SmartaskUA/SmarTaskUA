@@ -13,27 +13,32 @@ import {
   ToggleButton,
   ToggleButtonGroup
 } from "@mui/material";
+import BaseUrl from "../components/BaseUrl";
 
 const CreateCalendar = () => {
-
+  // Estados para os campos do formulário
   const [title, setTitle] = useState("");
   const [dateStart, setDateStart] = useState("");
   const [dateEnd, setDateEnd] = useState("");
-  const [minDuration, setMinDuration] = useState("");
   const [maxDuration, setMaxDuration] = useState("");
-
+  
+  // Estado para o algoritmo selecionado
   const [selectedAlgorithm, setSelectedAlgorithm] = useState("Algoritmo1");
 
+  // Lida com a troca do algoritmo
   const handleAlgorithmChange = (event, newAlgorithm) => {
     if (newAlgorithm !== null) {
       setSelectedAlgorithm(newAlgorithm);
     }
   };
 
-  // POST /schedules/generate
-  const handleSave = async () => {  
-
+  // POST /schedules/generate: gera um ID aleatório e envia os dados
+  const handleSave = async () => {
+    // Gera um ID aleatório com 8 caracteres
+    const randomId = Math.random().toString(36).substring(2, 10);
+    
     const data = {
+      id: randomId,
       init: dateStart,
       end: dateEnd,
       algorithm: selectedAlgorithm,
@@ -55,15 +60,13 @@ const CreateCalendar = () => {
   return (
     <div className="admin-container">
       <Sidebar_Manager />
-
       <Container maxWidth="md" className="calendar-wrapper" sx={{ mt: 4 }}>
         <Paper elevation={3} sx={{ p: 3 }}>
           <Typography variant="h5" gutterBottom>
             Gerar Horário
           </Typography>
-
           <Grid container spacing={2}>
-
+            {/* 1ª Linha: Título, Data Início, Data Fim */}
             <Grid item xs={4}>
               <TextField
                 fullWidth
@@ -93,16 +96,8 @@ const CreateCalendar = () => {
               />
             </Grid>
 
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Tempo Mínimo (minutos)"
-                value={minDuration}
-                onChange={(e) => setMinDuration(e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={6}>
+            {/* 2ª Linha: Tempo Máximo */}
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 type="number"
@@ -112,6 +107,7 @@ const CreateCalendar = () => {
               />
             </Grid>
 
+            {/* 3ª Linha: Selecione o Algoritmo */}
             <Grid item xs={12}>
               <Box display="flex" flexDirection="column">
                 <Typography variant="subtitle1" gutterBottom>
@@ -129,6 +125,7 @@ const CreateCalendar = () => {
               </Box>
             </Grid>
 
+            {/* 4ª Linha: Botão Gerar */}
             <Grid item xs={12}>
               <Box sx={{ display: "flex", gap: 2 }}>
                 <Button variant="contained" color="primary" onClick={handleSave}>
