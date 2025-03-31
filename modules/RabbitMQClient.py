@@ -3,8 +3,8 @@ import json
 import time
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
-from MongoDBClient import MongoDBClient
-from algorithm.CSP_joao import employee_scheduling_csp
+from modules.MongoDBClient import MongoDBClient
+from algorithm.CSP_joao import employee_scheduling
 
 
 class RabbitMQClient:
@@ -16,14 +16,8 @@ class RabbitMQClient:
         self.task_queue = task_queue
         self.task_routing_key = task_routing_key
         self.status_routing_key = status_routing_key
-
-        # 🔥 Executor para rodar até 5 tarefas simultâneas
         self.executor = ThreadPoolExecutor(max_workers=5)
-
-        # Inicializa MongoDBClient
         self.mongodb_client = MongoDBClient()
-
-        # Estabelece conexões RabbitMQ
         self.connect_to_rabbitmq()
         self.publisher_connection, self.publisher_channel = self.create_publisher_connection()
 
@@ -65,7 +59,6 @@ class RabbitMQClient:
 
                 print(f"\n[Received Task] Task ID: {task_id}")
 
-                # 🔥 Executa o processamento da tarefa em paralelo
                 self.executor.submit(self.handle_task_processing, task_id)
 
                 # Confirma o recebimento para liberar a fila
@@ -92,7 +85,7 @@ class RabbitMQClient:
         try:
             print(f"Running CSP scheduling for Task ID: {task_id}")
 
-            schedule_data = employee_scheduling_csp()
+            schedule_data = employee_scheduling()
 
             self.mongodb_client.insert_schedule(
                 data=schedule_data,
