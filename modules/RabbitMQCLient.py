@@ -15,6 +15,8 @@ class RabbitMQClient:
         self.task_queue = task_queue
         self.task_routing_key = task_routing_key
         self.status_routing_key = status_routing_key
+
+        # 🔥 Executor para rodar até 5 tarefas simultâneas
         self.executor = ThreadPoolExecutor(max_workers=5)
 
         # Inicializa MongoDBClient
@@ -25,19 +27,20 @@ class RabbitMQClient:
         self.publisher_connection, self.publisher_channel = self.create_publisher_connection()
 
     def connect_to_rabbitmq(self):
-        """Estabelece conexão com RabbitMQ com reconexão automática."""
         while True:
             try:
                 self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host))
                 self.channel = self.connection.channel()
 
-                # Declara exchanges e filas
                 self.channel.exchange_declare(exchange=self.task_exchange, exchange_type='direct', durable=True)
                 self.channel.queue_declare(queue=self.task_queue, durable=True)
                 self.channel.queue_bind(queue=self.task_queue, exchange=self.task_exchange,
                                         routing_key=self.task_routing_key)
 
                 self.channel.exchange_declare(exchange=self.status_exchange, exchange_type='direct', durable=True)
+
+                # 🛠 Permitir até 5 mensagens processadas ao mesmo tempo
+                self.channel.basic_qos(prefetch_count=5)
 
                 print(f"Connected to RabbitMQ - Task Exchange: {self.task_exchange}, Queue: {self.task_queue}")
                 break
@@ -61,10 +64,10 @@ class RabbitMQClient:
 
                 print(f"\n[Received Task] Task ID: {task_id}")
 
-                # Iniciar o processamento da tarefa de forma assíncrona
+                # 🔥 Executa o processamento da tarefa em paralelo
                 self.executor.submit(self.handle_task_processing, task_id)
 
-                # Confirmar recebimento da mensagem
+                # Confirma o recebimento para liberar a fila
                 ch.basic_ack(delivery_tag=method.delivery_tag)
             except Exception as e:
                 print(f"Error processing message: {e}")
@@ -85,25 +88,19 @@ class RabbitMQClient:
 
     def handle_task_processing(self, task_id):
         """
-        Função centralizada para gerenciar o processamento da tarefa.
-        - Atualiza o status da tarefa no início e no fim.
-        - Garante que apenas RabbitMQClient envia mensagens.
+        Processa a tarefa, garantindo atualização de status correta.
         """
         self.send_task_status(task_id, "IN_PROGRESS")
 
-        # Chama o método que realmente executa o algoritmo
-        self.simulate_schedule_generation(task_id)
+        # 🔥 Rodar o algoritmo real aqui no futuro
+        time.sleep(10)  # Simula o processamento
+
+        print(f"Schedule complete for Task ID: {task_id}")
 
         self.send_task_status(task_id, "COMPLETED")
 
-    def simulate_schedule_generation(self, task_id):
-        """Executa o algoritmo de geração de escala."""
-        print(f"Processing schedule for Task ID: {task_id}")
-        time.sleep(10)  # Simula tempo de processamento
-        print(f"Schedule complete for Task ID: {task_id}")
-
     def send_task_status(self, task_id, status):
-        """Envia atualizações de status da tarefa."""
+        """Envia uma atualização de status da tarefa."""
         try:
             task_status_message = {
                 "taskId": task_id,
