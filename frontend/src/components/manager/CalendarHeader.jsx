@@ -1,19 +1,35 @@
 import React from "react";
 
-const CalendarHeader = ({ months, selectedMonth, setSelectedMonth, downloadCSV }) => {
+const CalendarHeader = ({ months, selectedMonth, setSelectedMonth, downloadCSV, startDay, endDay, setStartDay, setEndDay }) => {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}> 
       <h2 className="heading">Calendário de Trabalho</h2>
-      <div>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
         <select
           onChange={(e) => setSelectedMonth(Number(e.target.value))}
           value={selectedMonth}
-          style={{ marginRight: "10px", padding: "8px", backgroundColor: "#28a745", color: "white", border: "none", borderRadius: "5px", fontSize: "14px" }}
+          style={{ padding: "8px", backgroundColor: "#28a745", color: "white", border: "none", borderRadius: "5px", fontSize: "14px" }}
         >
           {months.map((month, index) => (
             <option key={index + 1} value={index + 1}>{month}</option>
           ))}
         </select>
+          <input 
+            type="number" 
+            value={startDay} 
+            min={1} 
+            max={31} 
+            onChange={(e) => setStartDay(Number(e.target.value))} 
+            style={{ width: "60px", marginLeft: "5px"}}
+          />  
+          <input 
+            type="number" 
+            value={endDay} 
+            min={1} 
+            max={31} 
+            onChange={(e) => setEndDay(Number(e.target.value))} 
+            style={{ width: "60px", marginLeft: "5px", marginRight: "5%"  }}
+          />
         <button 
           onClick={downloadCSV} 
           style={{ padding: "8px 12px", backgroundColor: "#006FD5", color: "white", border: "none", cursor: "pointer", borderRadius: "5px", fontSize: "14px" }}

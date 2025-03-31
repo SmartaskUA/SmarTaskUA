@@ -34,7 +34,13 @@ public class RabbitMqProducer {
 
             // Save task status with the original request
             TaskStatus taskStatus = new TaskStatus(taskId, "PENDING", LocalDateTime.now(), LocalDateTime.now(), schedule);
-            taskStatusRepository.save(taskStatus);
+
+            if (!schedule.getTitle().equals("startconn")) {
+                taskStatusRepository.save(taskStatus);
+            }
+            else{
+                System.out.println("\nSending mock connection to qeueu");
+            }
 
             // Convert request to JSON
             String jsonMessage = objectMapper.writeValueAsString(schedule);

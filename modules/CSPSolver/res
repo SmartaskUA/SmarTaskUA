@@ -1,0 +1,170 @@
+3-22 16:04:33,295 - Tentando atribuir M a X_2_7
+2025-03-22 16:04:33,295 - Atribuição consistente: X_2_7 = M
+2025-03-22 16:04:33,295 - Selecionando variável não atribuída: X_3_1
+2025-03-22 16:04:33,295 - Tentando atribuir M a X_3_1
+2025-03-22 16:04:33,295 - Inconsistência detectada: ['F', 'F', 'M'] falham na restrição sem descrição
+2025-03-22 16:04:33,295 - Revertendo atribuição: X_3_1 = M
+2025-03-22 16:04:33,295 - Tentando atribuir T a X_3_1
+2025-03-22 16:04:33,295 - Inconsistência detectada: ['F', 'F', 'T'] falham na restrição sem descrição
+2025-03-22 16:04:33,295 - Revertendo atribuição: X_3_1 = T
+2025-03-22 16:04:33,295 - Tentando atribuir F a X_3_1
+2025-03-22 16:04:33,295 - Inconsistência detectada: ['F', 'F', 'F'] falham na restrição sem descrição
+2025-03-22 16:04:33,295 - Revertendo atribuição: X_3_1 = F
+2025-03-22 16:04:33,295 - Revertendo atribuição: X_2_7 = M
+2025-03-22 16:04:33,295 - Tentando atribuir T a X_2_7
+2025-03-22 16:04:33,295 - Atribuição consistente: X_2_7 = T
+2025-03-22 16:04:33,295 - Selecionando variável não atribuída: X_3_1
+2025-03-22 16:04:33,295 - Tentando atribuir M a X_3_1
+2025-03-22 16:04:33,295 - Inconsistência detectada: ['F', 'F', 'M'] falham na restrição sem descrição
+2025-03-22 16:04:33,295 - Revertendo atribuição: X_3_1 = M
+2025-03-22 16:04:33,295 - Tentando atribuir T a X_3_1
+2025-03-22 16:04:33,295 - Inconsistência detectada: ['F', 'F', 'T'] falham na restrição sem descrição
+2025-03-22 16:04:33,295 - Revertendo atribuição: X_3_1 = T
+2025-03-22 16:04:33,295 - Tentando atribuir F a X_3_1
+2025-03-22 16:04:33,295 - Inconsistência detectada: ['F', 'F', 'F'] falham na restrição sem descrição
+2025-03-22 16:04:33,295 - Revertendo atribuição: X_3_1 = F
+2025-03-22 16:04:33,295 - Revertendo atribuição: X_2_7 = T
+2025-03-22 16:04:33,295 - Tentando atribuir F a X_2_7
+2025-03-22 16:04:33,295 - Atribuição consistente: X_2_7 = F
+2025-03-22 16:04:33,295 - Selecionando variável não atribuída: X_3_1
+2025-03-22 16:04:33,295 - Tentando atribuir M a X_3_1
+2025-03-22 16:04:33,295 - Inconsistência detectada: ['F', 'F', 'M'] falham na restrição sem descrição
+2025-03-22 16:04:33,295 - Revertendo atribuição: X_3_1 = M
+2025-03-22 16:04:33,295 - Tentando atribuir T a X_3_1
+2025-03-22 16:04:33,295 - Inconsistência detectada: ['F', 'F', 'T'] falham na restrição sem descrição
+2025-03-22 16:04:33,295 - Revertendo atribuição: X_3_1 = T
+2025-03-22 16:04:33,295 - Tentando atribuir F a X_3_1
+2025-03-22 16:04:33,295 - Inconsistência detectada: ['F', 'F', 'F'] falham na restrição sem descrição
+2025-03-22 16:04:33,295 - Revertendo atribuição: X_3_1 = F
+2025-03-22 16:04:33,295 - Revertendo atribuição: X_2_7 = F
+2025-03-22 16:04:33,295 - Revertendo atribuição: X_2_6 = M
+2025-03-22 16:04:33,295 - Tentando atribuir T a X_2_6
+2025-03-22 16:04:33,295 - Atribuição consistente: X_2_6 = T
+2025-03-22 16:04:33,295 - Selecionando variável não atribuída: X_2_7
+2025-03-22 16:04:33,296 - Tentando atribuir M a X_2_7
+2025-03-22 16:04:33,296 - Atribuição consistente: X_2_7 = M
+2025-03-22 16:04:33,296 - Selecionando variável não atribuída: X_3_1
+2025-03-22 16:04:33,296 - Tentando atribuir M a X_3_1
+2025-03-22 16:04:33,296 - Inconsistência detectada: ['F', 'F', 'M'] falham na restrição sem descrição
+2025-03-22 16:04:33,296 - Revertendo atribuição: X_3_1 = M
+2025-03-22 16:04:33,296 - Tentando atribuir T a X_3_1
+2025-03-22 16:04:33,296 - Inconsistência detectada: ['F', 'F', 'T'] falham na restrição sem descrição
+2025-03-22 16:04:33,296 - Revertendo atribuição: X_3_1 = T
+2025-03-22 16:04:33,296 - Tentando atribuir F a X_3_1
+2025-03-22 16:04:33,296 - Inconsistência detectada: ['F', 'F', 'F'] falham na restrição sem descrição
+2025-03-22 16:04:33,296 - Revertendo atribuição: X_3_1 = F
+2025-03-22 16:04:33,296 - Revertendo atribuição: X_2_7 = M
+2025-03-22 16:04:33,296 - Tentando atribuir T a X_2_7
+2025-03-22 16:04:33,296 - Atribuição consistente: X_2_7 = T
+2025-03-22 16:04:33,296 - Selecionando variável não atribuída: X_3_1
+2025-03-22 16:04:33,296 - Tentando atribuir M a X_3_1
+2025-03-22 16:04:33,296 - Inconsistência detectada: ['F', 'F', 'M'] falham na restrição sem descrição
+2025-03-22 16:04:33,296 - Revertendo atribuição: X_3_1 = M
+2025-03-22 16:04:33,296 - Tentando atribuir T a X_3_1
+2025-03-22 16:04:33,296 - Inconsistência detectada: ['F', 'F', 'T'] falham na restrição sem descrição
+2025-03-22 16:04:33,296 - Revertendo atribuição: X_3_1 = T
+2025-03-22 16:04:33,296 - Tentando atribuir F a X_3_1
+2025-03-22 16:04:33,296 - Inconsistência detectada: ['F', 'F', 'F'] falham na restrição sem descrição
+2025-03-22 16:04:33,296 - Revertendo atribuição: X_3_1 = F
+2025-03-22 16:04:33,296 - Revertendo atribuição: X_2_7 = T
+2025-03-22 16:04:33,296 - Tentando atribuir F a X_2_7
+2025-03-22 16:04:33,296 - Atribuição consistente: X_2_7 = F
+2025-03-22 16:04:33,296 - Selecionando variável não atribuída: X_3_1
+2025-03-22 16:04:33,296 - Tentando atribuir M a X_3_1
+2025-03-22 16:04:33,296 - Inconsistência detectada: ['F', 'F', 'M'] falham na restrição sem descrição
+2025-03-22 16:04:33,296 - Revertendo atribuição: X_3_1 = M
+2025-03-22 16:04:33,296 - Tentando atribuir T a X_3_1
+2025-03-22 16:04:33,296 - Inconsistência detectada: ['F', 'F', 'T'] falham na restrição sem descrição
+2025-03-22 16:04:33,296 - Revertendo atribuição: X_3_1 = T
+2025-03-22 16:04:33,296 - Tentando atribuir F a X_3_1
+2025-03-22 16:04:33,296 - Inconsistência detectada: ['F', 'F', 'F'] falham na restrição sem descrição
+2025-03-22 16:04:33,296 - Revertendo atribuição: X_3_1 = F
+2025-03-22 16:04:33,296 - Revertendo atribuição: X_2_7 = F
+2025-03-22 16:04:33,296 - Revertendo atribuição: X_2_6 = T
+2025-03-22 16:04:33,296 - Tentando atribuir F a X_2_6
+2025-03-22 16:04:33,296 - Atribuição consistente: X_2_6 = F
+2025-03-22 16:04:33,296 - Selecionando variável não atribuída: X_2_7
+2025-03-22 16:04:33,296 - Tentando atribuir M a X_2_7
+2025-03-22 16:04:33,296 - Atribuição consistente: X_2_7 = M
+2025-03-22 16:04:33,296 - Selecionando variável não atribuída: X_3_1
+2025-03-22 16:04:33,296 - Tentando atribuir M a X_3_1
+2025-03-22 16:04:33,296 - Inconsistência detectada: ['F', 'F', 'M'] falham na restrição sem descrição
+2025-03-22 16:04:33,296 - Revertendo atribuição: X_3_1 = M
+2025-03-22 16:04:33,296 - Tentando atribuir T a X_3_1
+2025-03-22 16:04:33,296 - Inconsistência detectada: ['F', 'F', 'T'] falham na restrição sem descrição
+2025-03-22 16:04:33,296 - Revertendo atribuição: X_3_1 = T
+2025-03-22 16:04:33,296 - Tentando atribuir F a X_3_1
+2025-03-22 16:04:33,296 - Inconsistência detectada: ['F', 'F', 'F'] falham na restrição sem descrição
+2025-03-22 16:04:33,296 - Revertendo atribuição: X_3_1 = F
+2025-03-22 16:04:33,296 - Revertendo atribuição: X_2_7 = M
+2025-03-22 16:04:33,296 - Tentando atribuir T a X_2_7
+2025-03-22 16:04:33,296 - Atribuição consistente: X_2_7 = T
+2025-03-22 16:04:33,296 - Selecionando variável não atribuída: X_3_1
+2025-03-22 16:04:33,296 - Tentando atribuir M a X_3_1
+2025-03-22 16:04:33,296 - Inconsistência detectada: ['F', 'F', 'M'] falham na restrição sem descrição
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_3_1 = M
+2025-03-22 16:04:33,297 - Tentando atribuir T a X_3_1
+2025-03-22 16:04:33,297 - Inconsistência detectada: ['F', 'F', 'T'] falham na restrição sem descrição
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_3_1 = T
+2025-03-22 16:04:33,297 - Tentando atribuir F a X_3_1
+2025-03-22 16:04:33,297 - Inconsistência detectada: ['F', 'F', 'F'] falham na restrição sem descrição
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_3_1 = F
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_2_7 = T
+2025-03-22 16:04:33,297 - Tentando atribuir F a X_2_7
+2025-03-22 16:04:33,297 - Atribuição consistente: X_2_7 = F
+2025-03-22 16:04:33,297 - Selecionando variável não atribuída: X_3_1
+2025-03-22 16:04:33,297 - Tentando atribuir M a X_3_1
+2025-03-22 16:04:33,297 - Inconsistência detectada: ['F', 'F', 'M'] falham na restrição sem descrição
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_3_1 = M
+2025-03-22 16:04:33,297 - Tentando atribuir T a X_3_1
+2025-03-22 16:04:33,297 - Inconsistência detectada: ['F', 'F', 'T'] falham na restrição sem descrição
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_3_1 = T
+2025-03-22 16:04:33,297 - Tentando atribuir F a X_3_1
+2025-03-22 16:04:33,297 - Inconsistência detectada: ['F', 'F', 'F'] falham na restrição sem descrição
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_3_1 = F
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_2_7 = F
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_2_6 = F
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_2_5 = F
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_2_4 = F
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_2_3 = F
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_2_2 = F
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_2_1 = F
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_1_7 = F
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_1_6 = F
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_1_5 = F
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_1_4 = F
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_1_3 = F
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_1_2 = F
+2025-03-22 16:04:33,297 - Revertendo atribuição: X_1_1 = F
+2025-03-22 16:04:33,297 - Tempo total de execução: 1121.34 segundos
+2025-03-22 16:04:33,297 - Nenhuma solução encontrada.
+Solução CSP encontrada: None
+
+
+
+=======================================================================================================================================
+
+
+25-03-22 16:31:04,464 - Tentando atribuir T a X_3_1
+2025-03-22 16:31:04,464 - Inconsistência detectada: ['F', 'F', 'T'] falham na restrição sem descrição
+2025-03-22 16:31:04,464 - Revertendo atribuição: X_3_1 = T
+2025-03-22 16:31:04,464 - Tentando atribuir F a X_3_1
+2025-03-22 16:31:04,465 - Inconsistência detectada: ['F', 'F', 'F'] falham na restrição sem descrição
+2025-03-22 16:31:04,465 - Revertendo atribuição: X_3_1 = F
+2025-03-22 16:31:04,465 - Revertendo atribuição: X_2_7 = F
+2025-03-22 16:31:04,465 - Revertendo atribuição: X_2_6 = F
+2025-03-22 16:31:04,465 - Revertendo atribuição: X_2_5 = F
+2025-03-22 16:31:04,465 - Revertendo atribuição: X_2_4 = F
+2025-03-22 16:31:04,465 - Revertendo atribuição: X_2_3 = F
+2025-03-22 16:31:04,465 - Revertendo atribuição: X_2_2 = F
+2025-03-22 16:31:04,465 - Revertendo atribuição: X_2_1 = F
+2025-03-22 16:31:04,465 - Revertendo atribuição: X_1_7 = F
+2025-03-22 16:31:04,465 - Revertendo atribuição: X_1_6 = F
+2025-03-22 16:31:04,465 - Revertendo atribuição: X_1_5 = F
+2025-03-22 16:31:04,465 - Revertendo atribuição: X_1_4 = F
+2025-03-22 16:31:04,465 - Revertendo atribuição: X_1_3 = F
+2025-03-22 16:31:04,465 - Revertendo atribuição: X_1_2 = F
+2025-03-22 16:31:04,465 - Revertendo atribuição: X_1_1 = F
+2025-03-22 16:31:04,465 - Tempo total de execução: 1331.68 segundos
+2025-03-22 16:31:04,465 - Nenhuma solução encontrada.
+Solução CSP encontrada: None
