@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Sidebar_Manager from "../components/Sidebar_Manager";
-import BaseUrl from "../components/BaseUrl";
+import baseurl from "../components/BaseUrl";
 import axios from "axios";
 import "../styles/Manager.css";
 import { Autocomplete, TextField, CircularProgress } from "@mui/material";
@@ -10,15 +10,16 @@ const ListCalendar = () => {
   const [calendars, setCalendars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [search, setSearch] = useState("");
+  const [title, setTitle] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCalendars = async () => {
       try {
-        const baseUrl = BaseUrl;
-        const response = await axios.get(`${baseUrl}/schedules/fetch`);
+        const response = await axios.get(`${baseurl}/schedules/fetch`);
         if (response.data) {
           setCalendars(response.data);
         } else {
@@ -31,28 +32,47 @@ const ListCalendar = () => {
         setLoading(false);
       }
     };
-
     fetchCalendars();
   }, []);
 
-  const handleSearch = (event, value) => {
-    setSearch(value);
-
-    if (value.length > 0) {
-      setIsLoadingSuggestions(true);
-      const filteredCalendars = calendars.filter(calendar =>
-        calendar.title.toLowerCase().includes(value.toLowerCase())
+  const handleSearchInputChange = (event, newValue) => {
+    setTitle(newValue);
+    if (newValue.length > 0) {
+      const filtered = calendars.filter((calendar) =>
+        calendar.title.toLowerCase().includes(newValue.toLowerCase())
       );
-      setSuggestions(filteredCalendars);
-      setIsLoadingSuggestions(false);
+      setSuggestions(filtered);
     } else {
       setSuggestions([]);
     }
   };
 
-  const handleSuggestionClick = (calendar) => {
-    setSearch(calendar.title);
-    setSuggestions([]);
+  const handleSearchSubmit = async (event) => {
+    if (event.key === "Enter" && title.trim().length > 0) {
+      event.preventDefault();
+
+      // Verifica se o nome digitado existe exatamente na lista de calendários
+      const calendarMatch = calendars.find(
+        (calendar) => calendar.title.toLowerCase() === title.toLowerCase()
+      );
+
+      if (!calendarMatch) {
+        alert("Calendário não existe.");
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${baseurl}/schedules/${calendarMatch.title}`);
+        if (response.data) {
+          navigate(`/manager/calendar/${response.data.id}`);
+        } else {
+          alert("Calendário não encontrado.");
+        }
+      } catch (error) {
+        console.error("Erro ao buscar o calendário por título:", error);
+        alert("Erro ao buscar o calendário.");
+      }
+    }
   };
 
   if (loading) {
@@ -81,20 +101,35 @@ const ListCalendar = () => {
     <div className="admin-container">
       <Sidebar_Manager />
       <div className="main-content">
-        <div className="header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 className="heading" style={{ marginRight: "201px" }}>List Calendar</h2>
-          <Autocomplete 
-            style={{ width: "250px", marginRight: "5%" }} 
+        <div
+          className="header"
+          style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+        >
+          <h2 className="heading" style={{ marginRight: "201px" }}>
+            List Calendar
+          </h2>
+          <Autocomplete
+            style={{ width: "250px", marginRight: "5%" }}
             freeSolo
             options={suggestions.length > 0 ? suggestions : calendars}
-            getOptionLabel={(option) => option.title}
-            inputValue={search}  
-            onInputChange={handleSearch}  
+            getOptionLabel={(option) =>
+              typeof option === "string" ? option : option.title
+            }
+            inputValue={title}
+            onInputChange={handleSearchInputChange}
+            onChange={(event, newValue) => {
+              if (typeof newValue === "string") {
+                setTitle(newValue);
+              } else if (newValue) {
+                setTitle(newValue.title);
+              }
+            }}
             renderInput={(params) => (
               <TextField
                 {...params}
                 label="Pesquisar por nome"
                 variant="outlined"
+                onKeyDown={handleSearchSubmit}
                 InputProps={{
                   ...params.InputProps,
                   endAdornment: isLoadingSuggestions ? (
@@ -103,12 +138,9 @@ const ListCalendar = () => {
                 }}
               />
             )}
-            onChange={(event, newValue) => {
-              handleSuggestionClick(newValue);
-            }}
             renderOption={(props, option) => (
-              <li {...props} key={option.id}>
-                {option.title}
+              <li {...props} key={typeof option === "string" ? option : option.id}>
+                {typeof option === "string" ? option : option.title}
               </li>
             )}
           />
@@ -117,7 +149,11 @@ const ListCalendar = () => {
         <div className="calendar-cards-container">
           {(suggestions.length > 0 ? suggestions : calendars).length > 0 ? (
             (suggestions.length > 0 ? suggestions : calendars).map((calendar) => (
-              <div key={calendar.id} className="calendar-card"  style={{ width: "300px", height: "150px", padding: "20px" }}>
+              <div
+                key={calendar.id}
+                className="calendar-card"
+                style={{ width: "300px", height: "150px", padding: "20px" }}
+              >
                 <div className="calendar-card-header">
                   <span className="status-dot" />
                   <span className="calendar-card-title">
@@ -125,8 +161,11 @@ const ListCalendar = () => {
                     {calendar.algorithm ? `, ${calendar.algorithm}` : ""}
                   </span>
                 </div>
-
-                <Link to={`/manager/calendar/${calendar.id}`} className="open-button" style={{  backgroundColor: "#4CAF50",}}>
+                <Link
+                  to={`/manager/calendar/${calendar.id}`}
+                  className="open-button"
+                  style={{ backgroundColor: "#4CAF50" }}
+                >
                   Open
                 </Link>
               </div>
@@ -139,6 +178,5 @@ const ListCalendar = () => {
     </div>
   );
 };
-
 
 export default ListCalendar;
