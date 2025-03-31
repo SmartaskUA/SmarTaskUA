@@ -3,6 +3,7 @@ package smartask.api.services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import smartask.api.models.Employee;
+import smartask.api.models.requests.UpdateEmployee;
 import smartask.api.repositories.EmployeesRepository;
 
 import java.util.*;
@@ -40,6 +41,13 @@ public class EmployeeService {
         employeeToUpdate.setRestrictions(employee.getRestrictions());
         saveEmployee(employeeToUpdate);
     }
+
+    public void updateEmployeeName(String id, UpdateEmployee updateEmployeeRequest) {
+        Employee employeeToUpdate = getEmployeeById(id);
+        employeeToUpdate.setName(updateEmployeeRequest.getName());
+        saveEmployee(employeeToUpdate);
+    }
+
 
     public void addRestrictionToEmployee(String id, String restrictionType, String date) {
         Employee employee = getEmployeeById(id);

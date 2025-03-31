@@ -1,5 +1,5 @@
 import React from "react";
-import { Home, SquarePlus, CalendarDays, Users, Briefcase, CircleUserRound } from "lucide-react"; 
+import { Home, CalendarDays, Users, Briefcase, CircleUserRound, Code2 } from "lucide-react"; 
 import { Link } from "react-router-dom";  
 import "../styles/Manager.css";
 import logo from '../assets/images/Logo.png';
@@ -23,16 +23,10 @@ const Sidebar_Manager = () => {
         <Link to="/manager/employer" className="nav-item"> 
           <Briefcase size={20} className="icon"/> Employees
         </Link> 
+        <Link to="/manager/compareCalendar" className="nav-item"> 
+          <Code2 size={20} className="icon"/> Compare Algorithms
+        </Link> 
       </nav>
-
-      {/* <div className="addCalendar-btn">
-        <Link>
-          <button>
-            <SquarePlus size={20} className="icon" /> Calendar
-          </button>
-        </Link>
-      </div> */}
-
       <div className="manager-btn">
         <Link>
           <button>
@@ -40,7 +34,6 @@ const Sidebar_Manager = () => {
           </button>
         </Link>
       </div>
-
     </div>
   );
 };

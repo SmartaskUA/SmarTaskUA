@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/schedules")
 @RequiredArgsConstructor
 @Tag(name = "Schedule Management", description = "Endpoints for managing work schedules")
@@ -26,7 +27,7 @@ public class SchedulesController {
     /**
      * Initiates the generation of a new schedule based on the given title.
      *
-     * @param  scheduleRequest  should be the body that contains all the minimal info for generating the new  schedule.
+     * @param scheduleRequest the minimal info for generating the new schedule.
      * @return A response indicating whether the schedule generation was started successfully.
      */
     @Operation(
@@ -74,4 +75,21 @@ public class SchedulesController {
     public ResponseEntity<List<Schedule>> fetchAll() {
         return ResponseEntity.ok(service.getAllSchedules());
     }
+
+    /**
+     * Retrieves a schedule by its id.
+     *
+     * @param id the id of the schedule.
+     * @return The schedule if found, otherwise 404.
+     */
+    @GetMapping("/fetch/{id}")
+    public ResponseEntity<Schedule> fetchScheduleById(@PathVariable String id) {
+        Optional<Schedule> optionalSchedule = service.getScheduleById(id);
+        if (optionalSchedule.isPresent()) {
+            return ResponseEntity.ok(optionalSchedule.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 }

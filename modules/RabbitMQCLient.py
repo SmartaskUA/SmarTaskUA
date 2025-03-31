@@ -1,99 +1,132 @@
 import pika
 import json
-import uuid
+import time
 from datetime import datetime
-from MongoDBClient import MongoDBClient  # Import the MongoDBClient class
+from concurrent.futures import ThreadPoolExecutor
+from MongoDBClient import MongoDBClient
+
 
 class RabbitMQClient:
-    def __init__(self, host='localhost', exchange='task-exchange', queue='task-queue', routing_key='task-routing-key'):
+    def __init__(self, host='localhost', task_exchange='task-exchange', status_exchange='status-exchange',
+                 task_queue='task-queue', task_routing_key='task-routing-key', status_routing_key='status-routing-key'):
         self.host = host
-        self.exchange = exchange
-        self.queue = queue
-        self.routing_key = routing_key
+        self.task_exchange = task_exchange
+        self.status_exchange = status_exchange
+        self.task_queue = task_queue
+        self.task_routing_key = task_routing_key
+        self.status_routing_key = status_routing_key
 
-        # Connect to MongoDB
-        self.mongodb_client = MongoDBClient()  # Injected MongoDBClient
+        # 🔥 Executor para rodar até 5 tarefas simultâneas
+        self.executor = ThreadPoolExecutor(max_workers=5)
 
-        # Test the MongoDB connection
-        if self.mongodb_client.db is not None:
-            print("MongoDB connection is active!")
-        else:
-            print("Failed to connect to MongoDB. Exiting...")
-            return
-        print("\n------------Employees-----------------------\n")
+        # Inicializa MongoDBClient
+        self.mongodb_client = MongoDBClient()
 
-        self.mongodb_client.fetch_employees()
-        print("\n------------Schedules-----------------------\n")
-        self.mongodb_client.fetch_schedules()
-        # Connect to RabbitMQ and set up the channel
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host))
-        self.channel = self.connection.channel()
+        # Estabelece conexões RabbitMQ
+        self.connect_to_rabbitmq()
+        self.publisher_connection, self.publisher_channel = self.create_publisher_connection()
+
+    def connect_to_rabbitmq(self):
+        while True:
+            try:
+                self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host))
+                self.channel = self.connection.channel()
+
+                self.channel.exchange_declare(exchange=self.task_exchange, exchange_type='direct', durable=True)
+                self.channel.queue_declare(queue=self.task_queue, durable=True)
+                self.channel.queue_bind(queue=self.task_queue, exchange=self.task_exchange,
+                                        routing_key=self.task_routing_key)
+
+                self.channel.exchange_declare(exchange=self.status_exchange, exchange_type='direct', durable=True)
+
+                # 🛠 Permitir até 5 mensagens processadas ao mesmo tempo
+                self.channel.basic_qos(prefetch_count=5)
+
+                print(f"Connected to RabbitMQ - Task Exchange: {self.task_exchange}, Queue: {self.task_queue}")
+                break
+            except pika.exceptions.AMQPConnectionError as e:
+                print(f"RabbitMQ connection failed: {e}. Retrying in 5 seconds...")
+                time.sleep(5)
+
+    def create_publisher_connection(self):
+        """Cria uma conexão e canal separados para envio de mensagens."""
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host))
+        channel = connection.channel()
+        return connection, channel
 
     def consume_messages(self):
-        """Consume messages from the queue and send an IN_PROGRESS status back to the queue."""
-        def callback(ch, method, properties, body):
-            print("\n[Received message]")
+        """Consome mensagens da fila."""
 
-            # Decode the incoming message (expected to be JSON)
+        def callback(ch, method, properties, body):
             try:
                 message = json.loads(body)
-                print(f"Full message: {message}")
-
-                # Extract task and ScheduleRequest information
                 task_id = message.get("taskId", "No Task ID")
-                print(f"Task ID: {task_id}")
 
-                schedule_request = {
-                    "init": message.get("init"),
-                    "end": message.get("end"),
-                    "algorithm": message.get("algorithm"),
-                    "title": message.get("title"),
-                    "maxTime": message.get("maxTime"),
-                    "requestedAt": message.get("requestedAt"),
-                }
-                print(f"ScheduleRequest details: {schedule_request}")
-                # todo : should manage the generation of the request here
+                print(f"\n[Received Task] Task ID: {task_id}")
 
-                # Update task status to IN_PROGRESS and send it back to the queue
-                self.send_task_status(task_id, "IN_PROGRESS")
+                # 🔥 Executa o processamento da tarefa em paralelo
+                self.executor.submit(self.handle_task_processing, task_id)
 
-            except json.JSONDecodeError:
-                print("Failed to decode message as JSON")
+                # Confirma o recebimento para liberar a fila
+                ch.basic_ack(delivery_tag=method.delivery_tag)
+            except Exception as e:
+                print(f"Error processing message: {e}")
+                ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
-        # Start consuming messages
-        print("Waiting for messages. To exit, press CTRL+C.")
-        self.channel.basic_consume(queue=self.queue, on_message_callback=callback, auto_ack=True)
-        self.channel.start_consuming()
+        while True:
+            try:
+                print("Waiting for messages. To exit, press CTRL+C.")
+                self.channel.basic_consume(queue=self.task_queue, on_message_callback=callback, auto_ack=False)
+                self.channel.start_consuming()
+            except (pika.exceptions.StreamLostError, pika.exceptions.AMQPConnectionError) as e:
+                print(f"RabbitMQ error: {e}. Reconnecting...")
+                self.connect_to_rabbitmq()
+            except KeyboardInterrupt:
+                print("Shutting down...")
+                self.close_connection()
+                break
+
+    def handle_task_processing(self, task_id):
+        """
+        Processa a tarefa, garantindo atualização de status correta.
+        """
+        self.send_task_status(task_id, "IN_PROGRESS")
+
+        # 🔥 Rodar o algoritmo real aqui no futuro
+        time.sleep(10)  # Simula o processamento
+
+        print(f"Schedule complete for Task ID: {task_id}")
+
+        self.send_task_status(task_id, "COMPLETED")
 
     def send_task_status(self, task_id, status):
-        """Send the task status (IN_PROGRESS) back to the queue."""
-        task_status_message = {
-            "taskId": task_id,
-            "status": status,
-            "updatedAt": datetime.now().isoformat()  # Add timestamp for when status was updated
-        }
+        """Envia uma atualização de status da tarefa."""
+        try:
+            task_status_message = {
+                "taskId": task_id,
+                "status": status,
+                "updatedAt": datetime.now().isoformat()
+            }
 
-        # Convert the task status to JSON and send to the queue
-        self.channel.basic_publish(
-            exchange=self.exchange,
-            routing_key=self.routing_key,
-            body=json.dumps(task_status_message),
-            properties=pika.BasicProperties(
-                content_type='application/json',
-                delivery_mode=2,  # Make message persistent
-            ),
-        )
-        print(f"Sent task status update: {task_status_message}")
+            self.publisher_channel.basic_publish(
+                exchange=self.status_exchange,
+                routing_key=self.status_routing_key,
+                body=json.dumps(task_status_message),
+                properties=pika.BasicProperties(content_type='application/json', delivery_mode=2)
+            )
+            print(f"Sent task status update: {task_status_message}")
+        except pika.exceptions.AMQPConnectionError as e:
+            print(f"Error sending status: {e}. Reconnecting...")
+            self.publisher_connection, self.publisher_channel = self.create_publisher_connection()
 
     def close_connection(self):
-        """Close the RabbitMQ connection."""
+        """Fecha conexões do RabbitMQ e encerra a thread pool."""
+        self.executor.shutdown(wait=True)
         self.connection.close()
+        self.publisher_connection.close()
+        print("Connections closed.")
 
 
 if __name__ == "__main__":
-    rabbitmq_client = RabbitMQClient()
-    try:
-        rabbitmq_client.consume_messages()
-    except KeyboardInterrupt:
-        print("\nClosing connection...")
-        rabbitmq_client.close_connection()
+    client = RabbitMQClient()
+    client.consume_messages()

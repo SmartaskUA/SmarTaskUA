@@ -8,13 +8,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import smartask.api.models.Employee;
 import smartask.api.models.requests.RestrictionRequest;
+import smartask.api.models.requests.UpdateEmployee;
 import smartask.api.services.EmployeeService;
+
 import java.util.List;
 import java.util.Map;
 
 @Tag(name = "Employee", description = "Employees Management")
 @RestController
 @RequestMapping("/api/v1/employees")
+@CrossOrigin(origins = "http://localhost:5173")
 public class EmployeesController {
 
     @Autowired
@@ -45,14 +48,16 @@ public class EmployeesController {
         return new ResponseEntity<>(employee, HttpStatus.OK);
     }
 
-    @Operation(summary = "Update an employee")
+    @Operation(summary = "Update employee's name by their ID")
     @PutMapping("/{id}")
-    public ResponseEntity<String> updateEmployee(@RequestBody Employee employee, @PathVariable String id) {
-        employeeService.updateEmployee(id, employee);
-        return ResponseEntity.ok("Employee updated successfully");
+    public ResponseEntity<String> updateEmployee(@RequestBody UpdateEmployee updateEmployeeRequest,
+                                                 @PathVariable String id) {
+        employeeService.updateEmployeeName(id, updateEmployeeRequest);
+        return ResponseEntity.ok("Employee name updated successfully");
     }
 
-    @Operation(summary = "Get all the restriction to an employee by their ID")
+
+    @Operation(summary = "Get all the restrictions for an employee by their ID")
     @GetMapping("/restriction/{id}")
     public ResponseEntity<Map<String, List<String>>> getRestriction(@PathVariable String id) {
         return ResponseEntity.ok(employeeService.getEmployeeRestrictions(id));
@@ -62,25 +67,25 @@ public class EmployeesController {
     @PostMapping("/restriction/{id}")
     public ResponseEntity<String> addRestriction(@RequestBody RestrictionRequest restrictionRequest,
                                                  @PathVariable String id) {
-        System.out.println(restrictionRequest+" for "+id);
+        System.out.println(restrictionRequest + " for " + id);
         employeeService.addRestrictionToEmployee(id, restrictionRequest.getRestrictionType(), restrictionRequest.getDate());
         return ResponseEntity.ok("Restriction added successfully");
     }
 
-    @Operation(summary = "Update new restriction to an employee by their ID")
+    @Operation(summary = "Update restriction for an employee by their ID")
     @PutMapping("/restriction/{id}")
     public ResponseEntity<String> updateRestriction(@RequestBody RestrictionRequest restrictionRequest,
                                                     @PathVariable String id) {
-        System.out.println(restrictionRequest+" for "+id);
-        // Process the received restrictionType and date
-        return ResponseEntity.ok("Restriction update successfully");
+        System.out.println(restrictionRequest + " for " + id);
+        // Process the received restrictionType and date (a ser implementado, se necessário)
+        return ResponseEntity.ok("Restriction updated successfully");
     }
 
-    @Operation(summary = "Delete new restriction to an employee by their ID")
+    @Operation(summary = "Delete restriction for an employee by their ID")
     @DeleteMapping("/restriction/{id}")
     public ResponseEntity<String> deleteRestriction(@RequestBody RestrictionRequest restrictionRequest,
                                                     @PathVariable String id) {
-        System.out.println(restrictionRequest+" for "+id);
+        System.out.println(restrictionRequest + " for " + id);
         employeeService.removeRestrictionFromEmployee(id, restrictionRequest.getRestrictionType(), restrictionRequest.getDate());
         return ResponseEntity.ok("Restriction deleted successfully");
     }
