@@ -2,29 +2,12 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-  CircularProgress,
-  Box,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  OutlinedInput,
-  Checkbox,
-  ListItemText
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Typography, CircularProgress, Box, Button, Dialog, DialogTitle,
+  DialogContent, DialogActions, TextField, FormControl, InputLabel,
+  Select, MenuItem, OutlinedInput, Checkbox, ListItemText, IconButton
 } from "@mui/material";
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const teamOptions = ["A", "B"];
 
@@ -32,45 +15,26 @@ const Employer = () => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [openAddDialog, setOpenAddDialog] = useState(false);
-  const [newEmployee, setNewEmployee] = useState({
-    id: "",
-    name: "",
-    team: []
-  });
-
+  const [newEmployee, setNewEmployee] = useState({ id: "", name: "", team: [] });
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState(null);
+  const [removalMode, setRemovalMode] = useState(false); // Adicionando o estado de modo de remoção
 
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
+  useEffect(() => { fetchEmployees(); }, []);
 
   const fetchEmployees = () => {
     setLoading(true);
-    axios
-      .get("http://localhost:8081/api/v1/employees/")
-      .then((response) => {
-        setEmployees(response.data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Erro ao buscar employees:", error);
-        setError("Erro ao buscar employees.");
-        setLoading(false);
-      });
+    axios.get("http://localhost:8081/api/v1/employees/")
+      .then((response) => { setEmployees(response.data); setLoading(false); })
+      .catch(() => { setError("Erro ao buscar employees."); setLoading(false); });
   };
 
   const handleRemoveEmployee = (id) => {
-    axios
-      .delete(`http://localhost:8081/api/v1/employees/${id}`)
-      .then(() => {
-        fetchEmployees();
-      })
-      .catch((error) => {
-        console.error("Erro ao remover employee:", error);
-      });
+    axios.delete(`http://localhost:8081/api/v1/employees/${id}`).then(fetchEmployees)
+      .catch((error) => console.error("Erro ao remover employee:", error));
   };
 
   const handleOpenEditDialog = (employee) => {
@@ -79,37 +43,58 @@ const Employer = () => {
   };
 
   const handleEditEmployee = () => {
-    axios
-      .put(`http://localhost:8081/api/v1/employees/${selectedEmployee.id}`, selectedEmployee)
-      .then(() => {
-        setOpenEditDialog(false);
-        setSelectedEmployee(null);
-        fetchEmployees();
-      })
-      .catch((error) => {
-        console.error("Erro ao editar employee:", error);
-      });
+    axios.put(`http://localhost:8081/api/v1/employees/${selectedEmployee.id}`, selectedEmployee)
+      .then(() => { setOpenEditDialog(false); setSelectedEmployee(null); fetchEmployees(); })
+      .catch((error) => console.error("Erro ao editar employee:", error));
   };
 
   const handleAddEmployee = () => {
-    axios
-      .post("http://localhost:8081/api/v1/employees/", newEmployee)
-      .then(() => {
-        setOpenAddDialog(false);
-        setNewEmployee({ id: "", name: "", team: [] });
-        fetchEmployees();
-      })
-      .catch((error) => {
-        console.error("Erro ao adicionar employee:", error);
-      });
+    axios.post("http://localhost:8081/api/v1/employees/", newEmployee)
+      .then(() => { setOpenAddDialog(false); setNewEmployee({ id: "", name: "", team: [] }); fetchEmployees(); })
+      .catch((error) => console.error("Erro ao adicionar employee:", error));
+  };
+
+  const handleOpenConfirmDialog = (employee) => {
+    setEmployeeToDelete(employee);
+    setOpenConfirmDialog(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (employeeToDelete) {
+      handleRemoveEmployee(employeeToDelete.id);
+    }
+    setOpenConfirmDialog(false);
+    setEmployeeToDelete(null);
+  };
+
+  const handleCancelDelete = () => {
+    setOpenConfirmDialog(false);
+    setEmployeeToDelete(null);
+  };
+
+  const toggleRemovalMode = () => {
+    setRemovalMode(!removalMode); // Alterna entre o modo de remoção
   };
 
   return (
     <div className="admin-container" style={{ display: "flex", minHeight: "100vh" }}>
       <Sidebar_Manager />
       <div className="main-content" style={{ flex: 1, padding: "20px" }}>
-        <Box mb={4}>
-          <h2>Lista de Employees</h2>
+        <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
+          <Typography variant="h4">Lista de Employees</Typography>
+          <Box>
+            <Button variant="contained" color="success" onClick={() => setOpenAddDialog(true)}>
+              Adicionar Employee
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={toggleRemovalMode} // Alterna para o modo de remoção
+              style={{ marginLeft: "10px" }}
+            >
+              {removalMode ? "Cancelar Remoção" : "Remover Employees"}
+            </Button>
+          </Box>
         </Box>
 
         {loading ? (
@@ -141,7 +126,6 @@ const Employer = () => {
                       ? { backgroundColor: "#f2f2f2" }
                       : { backgroundColor: "#ffffff" };
 
-                    // Se emp.team for um array, junta os valores com " e "
                     const teamDisplay = Array.isArray(emp.team)
                       ? emp.team.join(" e ")
                       : emp.team
@@ -154,13 +138,14 @@ const Employer = () => {
                         <TableCell>{emp.name}</TableCell>
                         <TableCell>{teamDisplay}</TableCell>
                         <TableCell>
-                          <Button
-                            variant="contained"
-                            color="error"
-                            onClick={() => handleRemoveEmployee(emp.id)}
-                          >
-                            Remover
-                          </Button>
+                          {removalMode && ( // Exibe o ícone de lixeira se estiver no modo de remoção
+                            <IconButton
+                              color="error"
+                              onClick={() => handleOpenConfirmDialog(emp)}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Button
@@ -177,11 +162,6 @@ const Employer = () => {
                 </TableBody>
               </Table>
             </TableContainer>
-            <Box mt={2}>
-              <Button variant="contained" color="success" onClick={() => setOpenAddDialog(true)}>
-                Adicionar Employee
-              </Button>
-            </Box>
           </>
         ) : (
           <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -237,6 +217,22 @@ const Employer = () => {
             </Button>
             <Button onClick={handleAddEmployee} color="primary">
               Adicionar
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Diálogo para Confirmar Remoção */}
+        <Dialog open={openConfirmDialog} onClose={handleCancelDelete}>
+          <DialogTitle>Confirmar Remoção</DialogTitle>
+          <DialogContent>
+            <Typography>Você tem certeza que deseja remover este funcionário?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCancelDelete} color="secondary">
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmDelete} color="primary">
+              Confirmar
             </Button>
           </DialogActions>
         </Dialog>
