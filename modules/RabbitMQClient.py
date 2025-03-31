@@ -55,11 +55,13 @@ class RabbitMQClient:
         def callback(ch, method, properties, body):
             try:
                 message = json.loads(body)
+                print(f"\n Request : {message}")
                 task_id = message.get("taskId", "No Task ID")
+                title  = message.get("title")
 
                 print(f"\n[Received Task] Task ID: {task_id}")
 
-                self.executor.submit(self.handle_task_processing, task_id)
+                self.executor.submit(self.handle_task_processing, task_id, title)
 
                 # Confirma o recebimento para liberar a fila
                 ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -80,7 +82,7 @@ class RabbitMQClient:
                 self.close_connection()
                 break
 
-    def handle_task_processing(self, task_id):
+    def handle_task_processing(self, task_id, title):
         self.send_task_status(task_id, "IN_PROGRESS")
         try:
             print(f"Running CSP scheduling for Task ID: {task_id}")
@@ -89,7 +91,7 @@ class RabbitMQClient:
 
             self.mongodb_client.insert_schedule(
                 data=schedule_data,
-                title=f"Schedule for {task_id}",
+                title=title,
                 algorithm="CSP Scheduling"
             )
 
