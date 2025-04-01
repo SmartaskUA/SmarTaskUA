@@ -37,6 +37,7 @@ const Employer = () => {
         setEmployees(response.data);
         setFilteredEmployees(response.data);
         setLoading(false);
+        console.log(response.data); 
       })
       .catch(() => {
         setError("Erro ao buscar employees.");
