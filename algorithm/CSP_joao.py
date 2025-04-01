@@ -90,10 +90,10 @@ class CSP:
 
 def employee_scheduling():
     num_employees = 12
-    num_days = 30
+    num_days = 60
     holidays = {7, 14, 21, 28}
     employees = [f"E{e}" for e in range(1, num_employees + 1)]
-    num_of_vacations = 5
+    num_of_vacations = 10
     vacations = {emp: set(random.sample(range(1, num_days + 1), num_of_vacations)) for emp in employees}
 
     variables = [f"{emp}_{d}" for emp in employees for d in range(1, num_days + 1)]
