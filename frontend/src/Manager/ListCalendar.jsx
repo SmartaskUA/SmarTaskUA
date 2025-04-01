@@ -22,6 +22,7 @@ const ListCalendar = () => {
         const response = await axios.get(`${baseurl}/schedules/fetch`);
         if (response.data) {
           setCalendars(response.data);
+          setError(null);
         } else {
           setError("Nenhum dado encontrado.");
         }
@@ -32,8 +33,13 @@ const ListCalendar = () => {
         setLoading(false);
       }
     };
+  
     fetchCalendars();
+    const interval = setInterval(fetchCalendars, 3000);
+  
+    return () => clearInterval(interval); 
   }, []);
+  
 
   const handleSearchInputChange = (event, newValue) => {
     setTitle(newValue);
