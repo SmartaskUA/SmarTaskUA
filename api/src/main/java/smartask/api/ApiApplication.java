@@ -4,14 +4,19 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import smartask.api.event.RabbitMqProducer;
 import smartask.api.models.Employee;
 import smartask.api.models.Team;
+import smartask.api.models.requests.ScheduleRequest;
 import smartask.api.repositories.EmployeesRepository;
 import smartask.api.repositories.SchedulesRepository;
 import smartask.api.repositories.TeamRepository;
 import smartask.api.services.EmployeeService;
 import smartask.api.services.SchedulesService;
 import smartask.api.services.TeamService;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @SpringBootApplication
 public class ApiApplication {
@@ -22,7 +27,7 @@ public class ApiApplication {
 
 	@Bean
 	CommandLineRunner initDatabase(TeamService teamService, EmployeeService employeeService,
-								   SchedulesRepository schedulesRepository, SchedulesService schedulesService) {
+								   SchedulesRepository schedulesRepository, SchedulesService schedulesService, RabbitMqProducer producer) {
 		return args -> {
 			// Check if Team A exists, if not create and save it
 			if (teamService.getTeams().isEmpty() || teamService.getTeams().stream().noneMatch(team -> "A".equals(team.getName()))) {
@@ -54,6 +59,19 @@ public class ApiApplication {
 			} else {
 				System.out.println("Sample schedule already exists.");
 			}
+			/*
+			ScheduleRequest mockRequest = new ScheduleRequest(
+					"string",                               // taskId
+					LocalDate.parse("2025-03-30"),           // init
+					LocalDate.parse("2025-03-30"),           // end
+					"string",                               // algorithm
+					"startconn",                                     // title
+					"string",                               // maxTime
+					LocalDateTime.parse("2025-03-30T15:57:23.796")  // requestedAt
+			);
+			producer.requestScheduleMessage(mockRequest);
+
+			 */
 		};
 	}
 }

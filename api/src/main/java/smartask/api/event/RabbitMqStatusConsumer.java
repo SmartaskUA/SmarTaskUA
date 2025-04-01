@@ -9,7 +9,7 @@ import smartask.api.repositories.TaskStatusRepository;
 import java.util.Optional;
 
 @Component
-public class RabbitMqConsumer {
+public class RabbitMqStatusConsumer {
 
     @Autowired
     private TaskStatusRepository taskStatusRepository;
@@ -17,21 +17,21 @@ public class RabbitMqConsumer {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @RabbitListener(queues = "task-queue")
-    public void receiveMessage(String message) {
+    @RabbitListener(queues = "status-queue")
+    public void receiveStatusUpdate(String message) {
         try {
             // Parse JSON message to retrieve taskId and status update
             TaskStatus receivedStatus = objectMapper.readValue(message, TaskStatus.class);
             String taskId = receivedStatus.getTaskId();
             String newStatus = receivedStatus.getStatus();
 
-            System.out.println("Received update for task: " + taskId + " with status: " + newStatus);
+            System.out.println("Received status update: " + taskId + " -> " + newStatus);
 
             // Update task status in the database
             updateTaskStatus(taskId, newStatus);
 
         } catch (Exception e) {
-            System.err.println("Error processing message: " + e.getMessage());
+            System.err.println("Error processing status message: " + e.getMessage());
         }
     }
 
