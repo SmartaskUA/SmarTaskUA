@@ -63,6 +63,7 @@ class CSP:
 
         def timed_search(domains, depth=0):
             if time.time() - start_time > timeout:
+                print(f"\n Exited at the timeout of {timeout} s")
                 return None
 
             if any(len(lv) == 0 for lv in domains.values()):
@@ -90,10 +91,10 @@ class CSP:
 
 def employee_scheduling():
     num_employees = 12
-    num_days = 60
+    num_days = 150
     holidays = {7, 14, 21, 28}
     employees = [f"E{e}" for e in range(1, num_employees + 1)]
-    num_of_vacations = 10
+    num_of_vacations = 30
     vacations = {emp: set(random.sample(range(1, num_days + 1), num_of_vacations)) for emp in employees}
 
     variables = [f"{emp}_{d}" for emp in employees for d in range(1, num_days + 1)]
@@ -124,7 +125,7 @@ def employee_scheduling():
         handle_ho_constraint(csp, [var for var in emp_vars if int(var.split('_')[1]) in holidays],
                              lambda values: values.count("M") + values.count("T") <= 22)
 
-    solution = csp.search(timeout=300)
+    solution = csp.search(timeout=1800)
     if solution and solution["assignment"]:
         assignment = solution["assignment"]
         generate_calendar(assignment, num_employees, num_days)
