@@ -43,4 +43,195 @@ Constraint failed: multi_E1_3_E1_4_E1_5_E1_6_E1_7_E1_8 for E1_1=M
 Constraint failed: multi_E1_3_E1_4_E1_5_E1_6_E1_7_E1_8 for E1_1=T
 Constraint failed: multi_E1_3_E1_4_E1_5_E1_6_E1_7_E1_8 for E1_1=0
 Propagation failed: E1_1 domain reduced to empty after E1_2=0
-No solution found.
+No solution found.No solution found within timeout or constraints too restrictive.
+No solution found within timeout or constraints too restrictive.
+No solution found within timeout or constraints too restrictive.
+No solution found within timeout or constraints too restrictive.
+360
+360
+No solution found within timeout or constraints too restrictive.
+
+ Num of and variables and domains : 360, 360
+No solution found within timeout or constraints too restrictive.
+
+ Num of and variables and domains : 360, 360
+
+ Num of and variables and domains : 360, 360
+No solution found within timeout or constraints too restrictive.
+
+ Num of and variables and domains : 360, 360
+aqui
+
+ Num of and variables and domains : 360, 360
+No solution found within timeout or constraints too restrictive.
+aqui
+
+ Num of and variables and domains : 360, 360
+No solution found within timeout or constraints too restrictive.
+aqui
+
+ Num of and variables and domains : 360, 360
+No solution found within timeout or constraints too restrictive.
+Day 1: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 2: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 3: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 4: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 5: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 6: 0 morning shifts (M), 0 afternoon shifts (T)
+Day 7: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 8: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 9: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 10: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 11: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 12: 0 morning shifts (M), 0 afternoon shifts (T)
+Day 13: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 14: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 15: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 16: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 17: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 18: 0 morning shifts (M), 0 afternoon shifts (T)
+Day 19: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 20: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 21: 0 morning shifts (M), 0 afternoon shifts (T)
+Day 22: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 23: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 24: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 25: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 26: 1 morning shifts (M), 0 afternoon shifts (T)
+Day 27: 0 morning shifts (M), 0 afternoon shifts (T)
+Day 28: 0 morning shifts (M), 0 afternoon shifts (T)
+Day 29: 0 morning shifts (M), 0 afternoon shifts (T)
+Day 30: 0 morning shifts (M), 0 afternoon shifts (T)
+<class 'list'>
+<class 'list'>
+No solution found within timeout or constraints too restrictive.
+<class 'list'>
+[['Employee', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30'], ['E1', 'F', '0', 'T', 'T', '0', '0', 'F', '0', 'M', 'T', '0', 'M', '0', '0', '0', 'T', 'F', 'M', 'T', 'T', '0', 'M', '0', 'F', '0', 'T', '0', 'F', 'M', '0'], ['E2', 'T', '0', 'T', 'F', 'F', 'F', '0', '0', '0', '0', 'M', 'T', 'T', '0', 'F', 'T', 'T', 'T', '0', 'T', 'F', 'T', '0', 'T', '0', 'T', '0', '0', 'M', '0'], ['E3', 'M', 'T', '0', 'M', 'M', 'T', '0', 'F', '0', 'M', 'F', '0', 'M', '0', '0', '0', 'T', 'T', 'T', '0', 'F', 'F', 'T', 'T', '0', '0', '0', '0', 'F', '0'], ['E4', '0', '0', 'M', 'T', '0', 'T', '0', '0', '0', 'M', 'T', 'F', '0', '0', 'T', 'F', 'M', 'F', 'T', '0', '0', 'M', '0', 'T', 'T', 'F', 'T', '0', 'F', '0'], ['E5', 'T', 'T', 'T', 'F', 'M', 'F', '0', 'M', 'T', 'T', '0', 'T', 'T', '0', 'F', '0', 'T', '0', 'T', 'F', '0', 'M', 'M', 'T', 'T', 'F', '0', '0', '0', '0'], ['E6', 'M', 'T', '0', 'M', '0', 'M', '0', 'M', 'T', '0', 'M', 'M', 'F', '0', 'F', 'T', 'T', '0', 'T', '0', '0', 'M', '0', 'F', '0', 'F', '0', '0', 'F', 'T'], ['E7', '0', 'T', 'F', '0', 'T', '0', '0', 'T', '0', 'T', '0', 'M', 'M', '0', 'T', 'F', '0', 'T', 'F', 'M', '0', '0', 'M', '0', 'M', 'F', 'M', 'F', 'M', '0'], ['E8', 'T', '0', '0', '0', 'F', 'T', '0', 'M', 'T', '0', 'M', 'T', 'F', '0', '0', 'F', 'M', 'M', 'T', 'F', '0', 'T', 'T', '0', 'M', 'T', '0', 'F', 'T', '0'], ['E9', 'T', '0', 'T', 'F', '0', 'M', '0', 'T', 'T', 'T', '0', 'T', '0', '0', 'M', '0', 'F', 'M', 'M', 'M', '0', '0', 'F', 'M', 'M', 'F', '0', '0', 'F', '0'], ['E10', 'M', 'M', 'M', 'T', '0', 'M', '0', '0', '0', 'F', '0', 'T', 'T', '0', 'F', 'F', 'T', 'T', '0', '0', 'F', '0', 'T', '0', '0', 'F', 'M', '0', '0', 'M'], ['E11', 'T', 'F', '0', '0', 'F', 'M', '0', 'T', '0', 'T', 'T', '0', 'T', 'F', '0', '0', '0', 'T', 'F', 'M', '0', 'T', '0', '0', 'T', 'T', 'T', '0', 'T', 'F'], ['E12', 'M', '0', 'F', 'T', 'T', '0', 'F', 'M', '0', '0', 'F', 'M', '0', '0', 'M', 'M', 'T', 'F', '0', '0', '0', '0', 'T', '0', 'F', 'M', 'M', '0', 'T', '0']]
+Employee E1: 10 afternoon shifts (T), 3 morning shifts (M)
+Employee E2: 13 afternoon shifts (T), 1 morning shifts (M)
+Employee E3: 7 afternoon shifts (T), 7 morning shifts (M)
+Employee E4: 8 afternoon shifts (T), 5 morning shifts (M)
+Employee E5: 7 afternoon shifts (T), 5 morning shifts (M)
+Employee E6: 6 afternoon shifts (T), 8 morning shifts (M)
+Employee E7: 7 afternoon shifts (T), 6 morning shifts (M)
+Employee E8: 9 afternoon shifts (T), 4 morning shifts (M)
+Employee E9: 6 afternoon shifts (T), 7 morning shifts (M)
+Employee E10: 7 afternoon shifts (T), 4 morning shifts (M)
+Employee E11: 11 afternoon shifts (T), 3 morning shifts (M)
+Employee E12: 9 afternoon shifts (T), 5 morning shifts (M)
+<class 'list'>
+[['Employee', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30'], ['E1', '0', '0', '0', 'T', '0', 'M', '0', '0', 'M', 'F', 'T', '0', 'F', '0', 'T', '0', 'T', 'T', '0', 'M', '0', 'T', 'T', 'F', 'F', 'T', 'F', '0', 'T', 'T'], ['E2', '0', 'T', '0', 'F', 'T', 'T', 'F', 'T', 'T', '0', 'T', '0', 'T', 'F', 'T', 'F', '0', '0', '0', '0', '0', 'T', 'T', 'T', 'T', '0', 'T', '0', 'F', 'M'], ['E3', 'M', '0', '0', 'T', 'T', 'F', 'F', 'M', 'T', 'T', '0', '0', 'F', '0', 'M', 'T', '0', 'F', 'F', '0', '0', '0', 'M', 'M', '0', 'T', 'T', '0', 'M', 'M'], ['E4', 'T', 'T', 'T', 'T', '0', '0', '0', '0', 'M', '0', 'T', 'F', 'M', 'F', '0', 'M', '0', 'F', 'T', 'T', '0', '0', 'F', '0', 'M', 'T', '0', '0', 'M', 'F'], ['E5', 'M', 'F', 'M', '0', '0', '0', '0', 'F', 'T', 'T', '0', '0', 'F', '0', '0', 'T', '0', 'T', 'T', '0', '0', 'M', 'F', 'M', '0', 'M', 'T', 'F', '0', 'T'], ['E6', 'M', 'T', '0', '0', 'T', 'T', '0', 'T', '0', '0', 'M', 'M', 'M', 'F', '0', '0', 'M', 'T', '0', 'T', '0', 'F', 'F', '0', 'F', 'M', 'M', 'F', '0', 'M'], ['E7', 'T', 'T', '0', 'F', '0', 'M', '0', 'M', '0', 'F', '0', 'T', '0', '0', 'F', '0', 'M', 'M', 'T', '0', 'F', 'M', '0', '0', 'M', 'T', '0', 'F', 'T', 'T'], ['E8', 'T', 'T', 'F', 'M', 'T', '0', '0', 'T', '0', '0', 'M', 'F', 'T', '0', '0', 'M', 'T', 'F', '0', '0', '0', 'M', '0', '0', 'F', 'T', 'T', '0', 'T', 'F'], ['E9', 'M', '0', 'T', 'F', 'M', '0', '0', '0', '0', '0', 'M', 'M', 'T', 'F', 'M', 'M', 'F', 'T', 'F', '0', '0', 'T', 'T', '0', '0', 'F', '0', '0', 'M', 'T'], ['E10', 'T', '0', 'F', 'T', 'F', 'F', '0', 'T', 'T', '0', '0', 'T', '0', '0', 'M', 'T', '0', '0', 'M', '0', '0', '0', 'F', '0', 'F', 'M', 'T', '0', 'M', '0'], ['E11', 'T', '0', '0', 'T', 'T', 'T', 'F', 'M', '0', '0', 'T', 'T', 'T', '0', 'F', 'T', 'F', 'T', '0', '0', '0', 'T', 'T', 'F', 'F', 'M', '0', '0', 'M', '0'], ['E12', '0', 'F', 'M', '0', 'M', 'F', 'F', '0', '0', 'M', '0', 'T', '0', '0', '0', 'T', 'F', 'M', 'T', 'T', '0', 'T', 'T', 'F', 'M', '0', 'T', '0', 'T', 'T']]
+No solution found within timeout or constraints too restrictive.
+No solution found within timeout or constraints too restrictive.
+No solution found within timeout or constraints too restrictive.
+No solution found within timeout or constraints too restrictive.
+No solution found within timeout or constraints too restrictive.
+Employee E1: 1 afternoon shifts (T), 0 morning shifts (M)
+Employee E2: 0 afternoon shifts (T), 0 morning shifts (M)
+Employee E3: 0 afternoon shifts (T), 0 morning shifts (M)
+Employee E4: 0 afternoon shifts (T), 0 morning shifts (M)
+Employee E5: 0 afternoon shifts (T), 0 morning shifts (M)
+Employee E6: 0 afternoon shifts (T), 0 morning shifts (M)
+Employee E7: 0 afternoon shifts (T), 0 morning shifts (M)
+Employee E8: 0 afternoon shifts (T), 0 morning shifts (M)
+Employee E9: 0 afternoon shifts (T), 0 morning shifts (M)
+Employee E10: 0 afternoon shifts (T), 0 morning shifts (M)
+Employee E11: 0 afternoon shifts (T), 0 morning shifts (M)
+Employee E12: 0 afternoon shifts (T), 0 morning shifts (M)
+<class 'list'>
+[['Employee', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30'], ['E1', 'T', '0', 'F', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'F', 'F', '0', '0', '0', 'F', 'F', '0', '0', '0', '0', '0', '0', '0'], ['E2', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'F', '0', '0', '0', '0', '0', '0', '0', 'F', '0', '0', 'F', 'F', '0', '0', 'F', '0', '0', '0'], ['E3', 'F', '0', '0', 'F', '0', '0', '0', '0', '0', '0', '0', 'F', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'F', '0', '0', '0', '0', '0', 'F', '0', '0'], ['E4', '0', '0', '0', '0', '0', '0', 'F', 'F', '0', '0', '0', '0', '0', '0', 'F', '0', '0', '0', 'F', '0', '0', '0', '0', '0', '0', 'F', '0', '0', '0', '0'], ['E5', 'F', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'F', '0', '0', '0', '0', 'F', 'F', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'F', '0'], ['E6', '0', '0', 'F', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'F', 'F', '0', '0', '0', '0', '0', 'F', '0', '0', '0', 'F', '0', '0', '0', '0', '0', '0'], ['E7', '0', '0', '0', '0', '0', '0', 'F', '0', '0', '0', 'F', '0', '0', '0', '0', '0', '0', 'F', '0', '0', '0', 'F', '0', '0', '0', '0', 'F', '0', '0', '0'], ['E8', '0', '0', 'F', '0', '0', '0', '0', '0', '0', 'F', '0', 'F', '0', 'F', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'F', '0', '0', '0', '0', '0', '0'], ['E9', '0', '0', '0', 'F', '0', '0', '0', 'F', '0', '0', '0', '0', '0', '0', 'F', '0', '0', '0', 'F', '0', '0', '0', '0', '0', '0', '0', '0', 'F', '0', '0'], ['E10', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'F', '0', 'F', '0', '0', 'F', '0', '0', '0', '0', '0', '0', '0', 'F', 'F', '0'], ['E11', '0', '0', '0', '0', '0', '0', 'F', '0', '0', '0', 'F', '0', 'F', 'F', '0', '0', '0', 'F', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'], ['E12', '0', '0', '0', 'F', '0', '0', '0', '0', '0', 'F', '0', '0', '0', '0', 'F', '0', 'F', '0', '0', '0', '0', '0', '0', '0', '0', 'F', '0', '0', '0', '0']]
+Employee E1: 5 afternoon shifts (T), 6 morning shifts (M)
+Employee E2: 5 afternoon shifts (T), 6 morning shifts (M)
+Employee E3: 6 afternoon shifts (T), 5 morning shifts (M)
+Employee E4: 7 afternoon shifts (T), 3 morning shifts (M)
+Employee E5: 5 afternoon shifts (T), 3 morning shifts (M)
+Employee E6: 6 afternoon shifts (T), 2 morning shifts (M)
+Employee E7: 5 afternoon shifts (T), 3 morning shifts (M)
+Employee E8: 8 afternoon shifts (T), 4 morning shifts (M)
+Employee E9: 5 afternoon shifts (T), 4 morning shifts (M)
+Employee E10: 7 afternoon shifts (T), 5 morning shifts (M)
+Employee E11: 5 afternoon shifts (T), 6 morning shifts (M)
+Employee E12: 9 afternoon shifts (T), 4 morning shifts (M)
+<class 'list'>
+[['Employee', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30'], ['E1', 'F', 'F', 'M', 'T', 'F', '0', '0', 'T', '0', 'M', '0', 'M', 'T', 'F', 'M', 'F', 'F', 'F', '0', 'F', '0', 'M', '0', 'M', '0', 'T', 'T', '0', 'F', 'F'], ['E2', 'T', '0', 'T', '0', 'F', 'M', '0', 'M', 'F', 'T', '0', '0', '0', '0', 'M', 'F', 'T', 'F', 'F', 'M', '0', '0', 'F', 'F', 'T', 'F', 'F', 'F', 'M', 'M'], ['E3', 'M', '0', '0', '0', '0', 'M', 'F', 'T', 'T', 'T', 'F', '0', 'T', '0', 'F', 'F', 'F', 'F', 'T', 'F', 'F', 'M', '0', '0', '0', 'M', 'T', 'F', 'F', 'M'], ['E4', 'F', '0', 'F', 'T', 'F', 'F', '0', 'M', 'F', 'F', 'F', '0', 'F', '0', 'M', '0', 'T', 'T', 'F', 'M', '0', '0', 'T', 'T', '0', '0', 'F', '0', 'T', 'T'], ['E5', 'F', 'M', 'F', 'T', 'T', '0', '0', 'F', 'F', 'F', 'M', 'T', 'T', '0', '0', 'F', '0', '0', 'M', '0', '0', '0', '0', '0', 'T', '0', 'F', 'F', 'F', 'F'], ['E6', 'T', 'T', '0', 'T', '0', 'F', 'F', 'T', '0', 'T', 'F', '0', 'F', 'F', '0', '0', 'F', '0', '0', 'F', '0', 'T', 'F', 'F', 'M', '0', 'M', '0', '0', 'F'], ['E7', '0', 'F', 'F', '0', '0', 'M', '0', '0', 'F', 'T', 'F', 'F', 'T', '0', 'F', 'F', 'T', '0', 'F', 'M', '0', '0', '0', 'T', 'T', 'F', 'M', '0', 'F', '0'], ['E8', 'M', 'T', '0', 'F', '0', 'F', 'F', 'T', 'F', 'T', '0', 'F', 'T', 'F', 'M', 'T', 'T', 'T', '0', 'M', '0', 'F', 'T', '0', 'M', 'F', '0', 'F', '0', 'F'], ['E9', 'T', 'T', '0', 'F', 'F', '0', '0', 'F', 'F', '0', '0', 'M', 'M', 'F', '0', 'F', 'F', '0', 'M', 'F', '0', 'M', '0', 'F', '0', 'T', 'T', '0', 'T', 'F'], ['E10', 'T', 'F', 'M', 'T', 'F', 'F', 'F', 'F', '0', 'F', 'F', '0', 'M', 'F', '0', 'M', 'T', 'T', '0', 'T', '0', 'F', 'T', 'T', '0', '0', '0', 'F', 'M', 'M'], ['E11', 'M', 'M', '0', 'F', '0', 'T', 'F', 'T', 'F', 'F', 'M', 'F', 'F', '0', 'T', 'F', 'F', 'M', '0', 'M', '0', '0', '0', 'M', 'F', 'F', '0', '0', 'T', 'T'], ['E12', 'T', 'T', '0', 'F', '0', 'F', '0', 'F', 'F', 'M', 'T', 'T', 'F', '0', '0', 'T', 'T', 'F', 'M', '0', '0', 'M', 'T', 'T', 'F', 'F', 'F', 'F', 'M', 'T']]
+No solution found within timeout or constraints too restrictive.
+No solution found within timeout or constraints too restrictive.
+No solution found within timeout or constraints too restrictive.
+No solution found within timeout or constraints too restrictive.
+No solution found within timeout or constraints too restrictive.
+No solution found within timeout or constraints too restrictive.
+No solution found within timeout or constraints too restrictive.
+No solution found within timeout or constraints too restrictive.
+No solution found within timeout or constraints too restrictive.
+No solution found within timeout or constraints too restrictive.
+Employee E1: 7 afternoon shifts (T), 4 morning shifts (M)
+Employee E2: 7 afternoon shifts (T), 3 morning shifts (M)
+Employee E3: 4 afternoon shifts (T), 6 morning shifts (M)
+Employee E4: 3 afternoon shifts (T), 4 morning shifts (M)
+Employee E5: 8 afternoon shifts (T), 6 morning shifts (M)
+Employee E6: 9 afternoon shifts (T), 4 morning shifts (M)
+Employee E7: 7 afternoon shifts (T), 4 morning shifts (M)
+Employee E8: 7 afternoon shifts (T), 6 morning shifts (M)
+Employee E9: 5 afternoon shifts (T), 6 morning shifts (M)
+Employee E10: 4 afternoon shifts (T), 6 morning shifts (M)
+Employee E11: 8 afternoon shifts (T), 8 morning shifts (M)
+Employee E12: 3 afternoon shifts (T), 8 morning shifts (M)
+<class 'list'>
+[['Employee', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30'], ['E1', '0', 'T', '0', 'M', 'F', 'T', '0', 'M', 'M', 'T', '0', '0', '0', 'F', 'M', 'T', '0', 'F', 'F', 'F', '0', 'F', 'F', 'F', 'T', 'F', 'T', '0', 'F', 'T'], ['E2', 'F', 'T', 'F', 'F', '0', 'M', '0', '0', 'T', 'T', 'F', '0', 'T', '0', 'F', 'F', 'F', '0', '0', 'M', '0', 'T', '0', 'F', 'M', 'T', 'F', '0', 'F', 'T'], ['E3', '0', 'F', 'M', 'T', '0', 'T', 'F', 'F', 'M', 'F', 'M', '0', 'F', '0', 'F', 'F', 'T', '0', 'M', 'F', '0', '0', 'F', 'F', 'M', '0', 'M', '0', '0', 'T'], ['E4', 'M', 'F', 'F', 'M', 'F', '0', '0', '0', 'F', 'F', 'F', 'F', 'F', '0', 'M', '0', 'T', '0', 'M', 'T', '0', '0', 'T', '0', '0', 'F', '0', '0', 'F', '0'], ['E5', 'F', 'T', 'T', '0', 'T', 'F', 'F', 'F', 'F', 'F', 'F', '0', '0', '0', 'F', 'M', 'T', 'F', 'M', 'M', '0', 'M', 'T', 'T', 'T', 'T', 'F', '0', 'M', 'M'], ['E6', 'T', 'F', 'M', 'M', 'F', 'M', '0', 'M', 'F', 'T', '0', 'T', 'F', '0', 'F', 'T', 'T', 'T', 'F', '0', 'F', 'T', '0', 'F', '0', 'T', 'T', 'F', '0', 'F'], ['E7', 'T', '0', 'T', 'T', '0', 'T', '0', 'T', 'T', 'F', 'F', '0', '0', '0', '0', 'F', 'F', 'M', 'T', 'F', 'F', '0', 'F', 'M', 'F', 'F', 'F', '0', 'M', 'M'], ['E8', 'T', 'F', 'M', '0', '0', 'F', 'F', '0', 'M', 'M', 'T', 'T', 'F', 'F', 'F', 'F', 'T', 'T', 'F', 'M', 'F', '0', 'M', 'M', '0', '0', 'F', '0', 'T', 'T'], ['E9', 'F', 'F', 'M', '0', 'M', '0', 'F', '0', '0', 'T', 'F', 'M', 'F', 'F', 'F', 'T', '0', 'F', '0', 'T', '0', '0', 'M', 'F', 'M', 'M', 'F', '0', 'T', 'T'], ['E10', '0', 'M', '0', 'F', 'M', '0', '0', 'F', 'M', 'T', 'F', 'F', '0', 'F', 'F', 'T', '0', 'M', 'F', '0', '0', 'T', 'F', 'M', '0', '0', 'T', 'F', 'M', 'F'], ['E11', 'M', 'T', 'F', 'T', 'F', 'F', '0', 'M', 'F', 'M', 'F', 'T', 'T', 'F', 'F', 'M', 'M', 'M', 'T', 'F', '0', 'M', 'T', 'F', 'M', 'T', 'F', '0', 'T', '0'], ['E12', 'M', 'F', '0', 'T', '0', 'F', '0', '0', 'F', 'M', 'F', 'M', '0', '0', 'F', 'M', 'T', 'F', 'M', '0', 'F', 'F', 'M', '0', 'F', 'M', 'M', '0', 'F', 'T']]
+Employee E1: 5 afternoon shifts (T), 6 morning shifts (M)
+Employee E2: 5 afternoon shifts (T), 6 morning shifts (M)
+Employee E3: 3 afternoon shifts (T), 6 morning shifts (M)
+Employee E4: 5 afternoon shifts (T), 3 morning shifts (M)
+Employee E5: 7 afternoon shifts (T), 3 morning shifts (M)
+Employee E6: 7 afternoon shifts (T), 6 morning shifts (M)
+Employee E7: 5 afternoon shifts (T), 6 morning shifts (M)
+Employee E8: 6 afternoon shifts (T), 7 morning shifts (M)
+Employee E9: 6 afternoon shifts (T), 5 morning shifts (M)
+Employee E10: 6 afternoon shifts (T), 3 morning shifts (M)
+Employee E11: 6 afternoon shifts (T), 5 morning shifts (M)
+Employee E12: 7 afternoon shifts (T), 6 morning shifts (M)
+<class 'list'>
+[['Employee', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30'], ['E1', 'T', 'T', 'F', '0', 'F', 'M', 'F', '0', 'M', 'T', 'F', 'M', 'F', 'F', '0', '0', '0', 'F', 'M', 'F', '0', '0', 'T', 'T', '0', 'F', 'M', 'F', 'M', '0'], ['E2', 'F', 'F', '0', 'M', '0', '0', '0', 'M', 'F', 'T', 'F', 'T', 'F', '0', '0', '0', 'T', 'F', 'M', 'F', 'F', 'M', 'M', 'F', 'M', 'T', 'T', '0', '0', 'F'], ['E3', '0', 'F', 'T', 'F', 'M', 'M', '0', 'M', 'F', '0', '0', 'T', '0', '0', '0', 'F', '0', 'M', 'F', 'F', '0', 'T', '0', 'M', 'F', 'F', 'F', '0', 'M', 'F'], ['E4', 'F', 'F', '0', '0', 'T', 'F', '0', 'T', '0', 'F', 'F', 'F', 'F', 'F', 'M', '0', '0', '0', 'T', 'T', '0', 'F', '0', 'M', 'T', '0', 'M', 'F', '0', '0'], ['E5', 'F', '0', 'T', '0', '0', 'T', 'F', 'M', 'F', 'T', '0', 'T', 'F', 'F', 'F', 'F', '0', 'T', 'F', 'T', '0', 'T', '0', 'M', 'M', 'F', '0', '0', 'F', '0'], ['E6', 'T', 'F', 'T', 'F', '0', '0', '0', 'F', 'M', 'T', 'T', '0', 'T', 'F', 'M', '0', 'M', 'M', 'T', 'F', '0', 'M', 'T', 'F', 'M', '0', 'F', 'F', 'F', 'F'], ['E7', 'F', 'F', 'M', '0', 'M', 'F', '0', '0', '0', 'T', '0', '0', '0', 'F', 'F', 'M', 'M', 'M', 'F', 'F', '0', 'T', 'F', 'T', '0', 'T', 'T', 'F', 'F', 'M'], ['E8', 'T', '0', 'M', '0', 'T', 'F', 'F', 'T', 'F', 'T', 'F', 'M', 'M', '0', 'M', '0', 'M', 'T', 'T', 'F', 'F', 'F', 'M', 'M', 'F', '0', '0', '0', 'F', 'F'], ['E9', '0', 'F', 'T', 'F', '0', 'F', '0', 'F', '0', 'M', 'F', 'T', 'F', '0', 'M', 'T', '0', 'M', 'M', 'T', '0', 'M', 'T', 'F', 'F', '0', 'T', '0', 'F', 'F'], ['E10', 'T', 'F', 'F', 'F', '0', '0', '0', 'F', 'T', 'T', 'F', 'F', '0', '0', '0', '0', 'M', 'T', '0', 'M', '0', 'F', 'T', 'F', 'F', '0', 'F', '0', 'M', 'T'], ['E11', 'M', 'F', 'M', 'T', 'F', 'T', 'F', 'M', '0', 'F', 'T', '0', 'M', '0', '0', '0', 'F', 'F', 'F', '0', 'F', '0', 'F', 'T', 'T', '0', 'T', '0', 'M', 'F'], ['E12', '0', 'T', '0', 'F', 'T', 'F', '0', 'M', 'T', 'T', '0', 'F', 'T', 'F', 'M', 'M', 'M', 'T', 'F', 'F', 'F', '0', '0', 'F', 'M', 'M', 'T', 'F', 'F', '0']]
+Employee E1: 9 afternoon shifts (T), 7 morning shifts (M)
+Employee E2: 12 afternoon shifts (T), 4 morning shifts (M)
+Employee E3: 8 afternoon shifts (T), 6 morning shifts (M)
+Employee E4: 8 afternoon shifts (T), 7 morning shifts (M)
+Employee E5: 11 afternoon shifts (T), 5 morning shifts (M)
+Employee E6: 6 afternoon shifts (T), 5 morning shifts (M)
+Employee E7: 11 afternoon shifts (T), 5 morning shifts (M)
+Employee E8: 7 afternoon shifts (T), 6 morning shifts (M)
+Employee E9: 9 afternoon shifts (T), 4 morning shifts (M)
+Employee E10: 6 afternoon shifts (T), 7 morning shifts (M)
+Employee E11: 13 afternoon shifts (T), 2 morning shifts (M)
+Employee E12: 13 afternoon shifts (T), 5 morning shifts (M)
+<class 'list'>
+[['Employee', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30'], ['E1', 'T', 'T', '0', '0', 'T', 'T', 'F', 'M', 'T', '0', '0', 'T', 'T', '0', 'M', 'F', 'M', '0', 'T', '0', 'F', 'M', 'M', 'M', '0', 'M', '0', 'F', 'T', 'F'], ['E2', 'T', 'T', 'F', 'M', 'M', 'T', '0', '0', 'M', 'M', '0', 'T', '0', 'F', 'T', 'F', 'F', 'T', '0', 'T', '0', '0', 'T', 'T', 'T', 'T', '0', '0', 'T', 'F'], ['E3', 'T', 'T', 'F', 'M', '0', 'M', '0', '0', 'M', 'M', '0', '0', '0', 'F', '0', 'F', '0', 'T', '0', 'F', '0', 'T', 'T', 'T', 'T', '0', 'T', 'F', 'M', 'M'], ['E4', '0', 'M', 'M', 'M', 'T', 'F', '0', 'T', '0', '0', 'F', 'T', 'T', '0', 'M', 'T', 'T', 'T', '0', 'M', '0', 'M', 'F', 'F', 'T', '0', '0', '0', 'M', 'F'], ['E5', 'T', '0', 'T', 'T', 'T', '0', '0', 'M', 'M', 'T', 'T', '0', '0', '0', 'F', 'M', 'T', 'F', 'M', 'T', '0', 'M', 'F', 'T', '0', 'T', 'F', '0', 'T', 'F'], ['E6', 'T', 'T', '0', 'T', '0', '0', '0', 'M', 'F', '0', '0', '0', '0', '0', 'M', 'F', 'M', 'F', 'F', '0', '0', 'M', 'T', 'T', 'F', 'T', '0', '0', 'M', '0'], ['E7', 'T', 'T', 'T', 'F', 'T', 'T', '0', '0', '0', 'T', '0', 'M', 'F', '0', '0', 'T', 'T', '0', 'F', 'F', 'F', 'M', 'T', 'T', '0', 'M', 'M', '0', 'M', 'T'], ['E8', 'T', 'T', 'F', 'F', 'T', 'T', '0', '0', '0', 'T', 'F', '0', '0', '0', 'F', '0', '0', 'M', 'T', '0', 'F', 'M', 'T', '0', 'M', '0', 'M', '0', 'M', 'M'], ['E9', 'F', 'T', '0', '0', '0', 'F', '0', 'T', 'T', '0', 'M', '0', 'T', '0', '0', '0', 'T', 'T', 'T', '0', 'F', 'T', 'F', 'T', '0', 'F', 'M', '0', 'M', 'M'], ['E10', '0', 'T', 'T', '0', '0', '0', '0', 'M', 'T', '0', '0', '0', '0', 'F', 'F', '0', 'M', '0', 'M', 'M', 'F', 'M', 'M', 'M', 'T', '0', 'T', 'F', 'F', 'T'], ['E11', 'T', 'T', 'T', 'T', 'F', '0', '0', 'M', '0', 'T', 'T', 'T', 'F', '0', 'T', '0', 'M', 'T', 'T', 'T', '0', '0', 'F', '0', '0', 'T', '0', 'F', 'F', 'T'], ['E12', '0', 'T', 'T', 'T', 'T', 'F', '0', 'M', '0', 'T', 'F', 'M', 'T', '0', 'T', '0', 'M', 'T', 'T', '0', 'F', 'M', '0', 'T', 'F', 'M', 'T', 'F', 'T', 'T']]
+Employee E1: 12 afternoon shifts (T), 4 morning shifts (M)
+Employee E2: 7 afternoon shifts (T), 8 morning shifts (M)
+Employee E3: 8 afternoon shifts (T), 4 morning shifts (M)
+Employee E4: 9 afternoon shifts (T), 6 morning shifts (M)
+Employee E5: 7 afternoon shifts (T), 7 morning shifts (M)
+Employee E6: 5 afternoon shifts (T), 7 morning shifts (M)
+Employee E7: 8 afternoon shifts (T), 6 morning shifts (M)
+Employee E8: 6 afternoon shifts (T), 5 morning shifts (M)
+Employee E9: 8 afternoon shifts (T), 6 morning shifts (M)
+Employee E10: 10 afternoon shifts (T), 2 morning shifts (M)
+Employee E11: 5 afternoon shifts (T), 2 morning shifts (M)
+Employee E12: 7 afternoon shifts (T), 5 morning shifts (M)
+<class 'list'>
+[['Employee', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30'], ['E1', 'T', '0', '0', 'F', 'T', 'T', '0', 'M', 'M', 'T', 'F', 'F', 'F', '0', 'M', 'T', 'T', 'T', 'T', '0', '0', 'F', 'T', 'T', '0', '0', 'M', '0', 'T', 'T'], ['E2', 'M', 'T', '0', 'F', 'T', 'F', '0', 'M', 'T', 'F', '0', '0', 'M', '0', 'M', 'T', '0', 'M', 'M', '0', '0', '0', 'M', 'T', '0', 'M', 'F', 'F', 'T', 'T'], ['E3', 'F', 'T', '0', 'M', 'M', 'T', '0', '0', 'M', 'F', 'T', '0', '0', '0', '0', '0', '0', 'T', '0', 'M', '0', 'F', 'T', 'T', 'F', 'T', 'F', '0', 'T', '0'], ['E4', 'M', '0', '0', 'M', 'M', 'T', '0', '0', '0', 'T', 'T', 'T', 'T', '0', 'M', 'F', 'T', 'T', 'F', '0', '0', 'F', 'T', 'T', '0', 'M', 'F', 'F', 'M', '0'], ['E5', '0', 'T', 'T', '0', 'F', '0', '0', 'M', 'M', 'F', 'M', 'M', 'M', '0', 'M', 'M', '0', 'T', 'F', '0', 'F', 'T', '0', 'T', 'T', '0', 'T', '0', '0', 'F'], ['E6', '0', 'T', '0', '0', 'F', 'F', '0', 'T', '0', 'M', '0', 'T', 'F', '0', 'M', 'M', 'M', 'F', 'T', '0', '0', 'M', '0', '0', 'M', '0', 'T', 'F', 'M', '0'], ['E7', '0', 'M', 'M', 'F', 'M', 'M', '0', '0', 'F', 'T', 'T', 'T', 'T', '0', 'T', '0', '0', 'T', 'T', 'F', '0', 'T', '0', 'M', 'F', '0', '0', '0', 'F', 'M'], ['E8', 'F', '0', 'M', '0', 'T', 'F', '0', 'M', '0', 'T', 'T', '0', 'M', '0', '0', 'F', 'T', '0', '0', '0', 'F', '0', 'F', 'T', 'T', '0', 'M', '0', 'M', '0'], ['E9', 'M', 'T', 'T', 'T', 'F', 'T', '0', 'M', 'M', 'F', '0', 'F', 'F', '0', 'M', '0', '0', 'T', '0', 'T', '0', '0', 'M', 'T', '0', 'M', '0', '0', 'F', 'T'], ['E10', 'T', 'T', 'T', '0', 'T', 'T', '0', 'F', 'M', '0', 'T', '0', 'F', 'F', '0', '0', '0', 'T', 'T', '0', '0', 'T', 'T', '0', '0', 'F', '0', '0', 'M', 'F'], ['E11', 'T', '0', 'M', '0', 'F', 'M', '0', '0', '0', '0', '0', '0', 'F', '0', 'T', 'T', '0', '0', '0', 'F', '0', '0', 'T', 'T', 'F', '0', '0', '0', '0', 'F'], ['E12', '0', 'M', 'T', '0', 'M', 'F', '0', 'M', 'T', '0', 'M', 'T', 'T', 'F', '0', 'F', '0', '0', 'F', '0', '0', 'T', '0', 'M', '0', 'T', 'T', '0', '0', 'F']]
+No solution found within timeout or constraints too restrictive.
+Employee E1: 4 afternoon shifts (T), 8 morning shifts (M)
+Employee E2: 3 afternoon shifts (T), 10 morning shifts (M)
+Employee E3: 8 afternoon shifts (T), 8 morning shifts (M)
+Employee E4: 9 afternoon shifts (T), 8 morning shifts (M)
+Employee E5: 3 afternoon shifts (T), 12 morning shifts (M)
+Employee E6: 11 afternoon shifts (T), 6 morning shifts (M)
+Employee E7: 5 afternoon shifts (T), 5 morning shifts (M)
+Employee E8: 10 afternoon shifts (T), 4 morning shifts (M)
+Employee E9: 9 afternoon shifts (T), 9 morning shifts (M)
+Employee E10: 10 afternoon shifts (T), 4 morning shifts (M)
+Employee E11: 7 afternoon shifts (T), 5 morning shifts (M)
+Employee E12: 9 afternoon shifts (T), 5 morning shifts (M)
+<class 'list'>
+[['Employee', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30'], ['E1', 'M', '0', 'M', 'M', 'T', 'T', '0', 'M', 'F', 'F', 'M', 'F', 'F', '0', 'F', '0', '0', 'M', 'M', '0', '0', '0', 'T', '0', '0', 'T', '0', '0', 'M', '0'], ['E2', 'M', '0', 'F', 'M', 'F', 'F', '0', 'M', '0', '0', '0', 'M', 'F', '0', 'M', 'M', 'T', 'T', 'T', '0', '0', 'F', 'M', 'M', 'M', 'M', '0', '0', '0', '0'], ['E3', 'M', 'M', 'T', 'T', 'T', '0', 'F', '0', 'M', 'F', '0', 'M', 'M', '0', '0', 'M', 'M', 'M', 'F', 'T', '0', 'F', 'F', '0', 'T', '0', 'T', '0', 'T', 'T'], ['E4', 'T', 'F', 'M', 'T', 'T', 'F', 'F', 'T', 'T', '0', 'M', 'M', '0', '0', 'M', 'T', '0', 'M', 'F', 'M', '0', 'T', 'T', '0', '0', 'F', 'T', '0', 'M', 'M'], ['E5', 'T', '0', '0', 'M', 'M', 'M', '0', 'M', '0', 'M', 'M', 'M', 'T', '0', 'M', 'M', 'F', 'M', '0', 'M', '0', 'T', 'F', 'F', '0', '0', 'M', '0', 'F', 'F'], ['E6', 'M', 'M', 'T', 'T', 'F', '0', '0', 'T', 'T', 'T', 'T', 'F', 'F', '0', 'M', 'F', 'M', '0', 'T', 'T', '0', 'M', 'M', 'T', '0', 'T', '0', 'F', 'T', '0'], ['E7', 'F', '0', 'T', 'F', 'M', '0', '0', 'F', 'M', 'M', '0', 'F', 'M', '0', '0', '0', '0', '0', '0', 'F', '0', 'M', 'T', 'T', 'T', '0', '0', '0', 'T', '0'], ['E8', '0', 'F', 'T', 'F', '0', 'T', '0', '0', 'M', 'T', '0', 'T', '0', 'F', 'M', 'T', '0', 'T', 'T', 'T', 'F', '0', 'M', 'M', 'T', '0', 'F', '0', 'T', '0'], ['E9', 'T', 'F', 'T', 'T', 'T', 'T', '0', '0', 'M', 'M', 'M', '0', 'M', '0', 'T', 'F', 'M', 'M', 'M', 'F', '0', 'T', 'F', 'M', 'T', 'T', '0', '0', 'M', 'F'], ['E10', 'T', 'T', '0', 'T', 'T', 'T', '0', '0', 'T', 'T', '0', '0', 'T', '0', 'M', 'M', 'M', '0', 'F', 'M', '0', '0', 'F', 'T', 'F', 'T', '0', 'F', 'F', '0'], ['E11', 'F', 'M', 'T', '0', 'F', '0', '0', 'T', '0', '0', 'M', '0', 'T', '0', 'M', 'F', '0', 'F', 'T', 'T', '0', 'F', 'T', '0', 'M', '0', 'T', '0', '0', 'M'], ['E12', '0', 'T', '0', 'F', 'T', '0', '0', 'F', 'T', 'F', '0', 'T', 'T', '0', 'M', 'M', 'T', '0', 'M', 'M', '0', '0', 'T', '0', 'M', 'T', 'T', 'F', '0', 'F']]
