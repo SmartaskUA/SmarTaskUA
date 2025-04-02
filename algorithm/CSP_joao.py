@@ -10,9 +10,11 @@ class CSP:
         self.constraints = constraints
 
     def check_constraints(self, var, value, assignment):
+        print("CCC")
         temp_assignment = assignment.copy()
         temp_assignment[var] = value
         for constraint_key, constraint_func in self.constraints.items():
+            print(f"Checking constraint {constraint_key} for variable {var} with value {value}")
             if isinstance(constraint_key, tuple):
                 v1, v2 = constraint_key
                 if v1 in temp_assignment and v2 in temp_assignment:
@@ -26,6 +28,7 @@ class CSP:
         return True
 
     def propagate(self, domains, var, value):
+        print("BBB")
         domains[var] = [value]
         queue = [(var, value)]
         while queue:
@@ -55,33 +58,13 @@ class CSP:
             return None
         return min(unassigned_vars, key=lambda var: len(domains[var]))
 
-    def is_solution_valid(self, assignment):
-        for var in self.variables:
-            for constraint_key, constraint_func in self.constraints.items():
-                if isinstance(constraint_key, tuple):
-                    v1, v2 = constraint_key
-                    if v1 in assignment and v2 in assignment:
-                        if not constraint_func(assignment[v1], assignment[v2]):
-                            print(f"Pairwise constraint failed: {v1}={assignment[v1]}, {v2}={assignment[v2]}")
-                            return False
-                else:
-                    values = [assignment.get(v, None) for v in constraint_key.split('_')[1:]]  # Extract variables from key
-                    if None not in values:
-                        if not constraint_func(var, assignment):
-                            emp = var.split('_')[0]
-                            m_count = values.count("M")
-                            t_count = values.count("T")
-                            total = m_count + t_count
-                            print(f"Constraint failed for {emp}: M={m_count}, T={t_count}, Total={total}")
-                            return False
-        return True
-
     def search(self, domains=None, timeout=60):
         start_time = time.time()
         if domains is None:
             domains = copy.deepcopy(self.domains)
 
         def timed_search(domains, depth=0):
+            print("AAA")
             if time.time() - start_time > timeout:
                 print(f"\n Exited at the timeout of {timeout} s")
                 return None
@@ -89,15 +72,15 @@ class CSP:
                 return None
             if all(len(lv) == 1 for lv in domains.values()):
                 assignment = {v: lv[0] for v, lv in domains.items()}
-                if self.is_solution_valid(assignment):  # Final validation
-                    return {"assignment": assignment}
-                return None
+                return {"assignment": assignment}
             var = self.select_variable(domains)
             if var is None:
                 return None
             for val in domains[var]:
                 new_domains = copy.deepcopy(domains)
                 new_domains[var] = [val]
+                if not new_domains:
+                    print(f"Domain wipeout for {var} due to {var} = {val}")
                 if self.propagate(new_domains, var, val):
                     solution = timed_search(new_domains, depth + 1)
                     if solution is not None:
@@ -108,6 +91,7 @@ class CSP:
 
 def employee_scheduling():
     tic = time.time()
+    random.seed(42)
     num_employees = 12
     num_days = 30
     holidays = {7, 14, 21, 28}
@@ -116,6 +100,8 @@ def employee_scheduling():
     vacations = {emp: set(random.sample(range(1, num_days + 1), num_of_vacations)) for emp in employees}
 
     variables = [f"{emp}_{d}" for emp in employees for d in range(1, num_days + 1)]
+
+    # Only vacations restrict to "F"; holidays are treated as regular days
     domains = {
         var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]]
         else ["M", "T", "0"]
