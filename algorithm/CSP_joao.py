@@ -12,7 +12,6 @@ class CSP:
     def check_constraints(self, var, value, assignment):
         temp_assignment = assignment.copy()
         temp_assignment[var] = value
-
         for constraint_key, constraint_func in self.constraints.items():
             if isinstance(constraint_key, tuple):
                 v1, v2 = constraint_key
@@ -65,18 +64,14 @@ class CSP:
             if time.time() - start_time > timeout:
                 print(f"\n Exited at the timeout of {timeout} s")
                 return None
-
             if any(len(lv) == 0 for lv in domains.values()):
                 return None
-
             if all(len(lv) == 1 for lv in domains.values()):
                 assignment = {v: lv[0] for v, lv in domains.items()}
                 return {"assignment": assignment}
-
             var = self.select_variable(domains)
             if var is None:
                 return None
-
             for val in domains[var]:
                 new_domains = copy.deepcopy(domains)
                 new_domains[var] = [val]
@@ -87,7 +82,6 @@ class CSP:
             return None
 
         return timed_search(domains)
-
 
 def employee_scheduling():
     tic = time.time()
@@ -100,9 +94,10 @@ def employee_scheduling():
 
     variables = [f"{emp}_{d}" for emp in employees for d in range(1, num_days + 1)]
 
+    # Only vacations restrict to "F"; holidays are treated as regular days
     domains = {
         var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]]
-        else (["0"] if int(var.split('_')[1]) in holidays else random.sample(["M", "T", "0"], 3))
+        else ["M", "T", "0"]
         for var in variables
     }
 
@@ -118,17 +113,14 @@ def employee_scheduling():
         for start in range(num_days - 5):
             window_vars = emp_vars[start:start + 6]
             handle_ho_constraint(csp, window_vars, lambda values: not all(v in ["M", "T"] for v in values))
-        ## Adjusted total shift limit for a year (e.g., 240 shifts, ~2/3 of days)
         handle_ho_constraint(csp, emp_vars, lambda values: values.count("M") + values.count("T") <= 20)
-        # Ensure at least 5 "T" shifts
         handle_ho_constraint(csp, emp_vars, lambda values: values.count("T") >= 3)
-        # Holiday shift limit (4 holidays, max 2 shifts)
         handle_ho_constraint(csp, [var for var in emp_vars if int(var.split('_')[1]) in holidays],
                              lambda values: values.count("M") + values.count("T") <= 2)
 
     for day in range(1, num_days + 1):
         day_vars = [f"{emp}_{day}" for emp in employees]
-        handle_ho_constraint(csp, day_vars, lambda values: values.count("M") < 1 and values.count("T") < 1)
+        handle_ho_constraint(csp, day_vars, lambda values: values.count("M") >= 1 and values.count("T") >= 1)
 
     solution = csp.search(timeout=1800)
     if solution and solution["assignment"]:
@@ -140,14 +132,12 @@ def employee_scheduling():
     else:
         print("No solution found within timeout or constraints too restrictive.")
 
-
 def handle_ho_constraint(csp, variables, constraint_func):
     def constraint(var, assignment):
         values = [assignment.get(v, None) for v in variables]
         if None in values:
             return True
         return constraint_func(values)
-
     constraint_key = f"multi_{'_'.join(variables)}"
     csp.constraints[constraint_key] = constraint
 
@@ -155,27 +145,24 @@ def build_schedule_table(assignment, num_employees, num_days):
     table = []
     header = ["Employee"] + [str(day) for day in range(1, num_days + 1)]
     table.append(header)
-
     for e in range(1, num_employees + 1):
         row = [f"E{e}"]
         for d in range(1, num_days + 1):
             row.append(assignment.get(f"E{e}_{d}", "-"))
         table.append(row)
-    #print(table)
     print(type(table))
     return table
+
 def generate_calendar(assignment, num_employees, num_days):
     with open("calendario_turnos.csv", "w", newline="") as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow([str(day) for day in range(1, num_days + 1)])
-
         for e in range(1, num_employees + 1):
             employee_schedule = [assignment.get(f"E{e}_{d}", "-") for d in range(1, num_days + 1)]
             csvwriter.writerow([f"E{e}"] + employee_schedule)
             t_count = employee_schedule.count("T")
             m_count = employee_schedule.count("M")
             print(f"Employee E{e}: {t_count} afternoon shifts (T), {m_count} morning shifts (M)")
-
 
 if __name__ == "__main__":
     employee_scheduling()
