@@ -90,11 +90,12 @@ class CSP:
 
 
 def employee_scheduling():
+    tic = time.time()
     num_employees = 12
-    num_days = 150
+    num_days = 30
     holidays = {7, 14, 21, 28}
     employees = [f"E{e}" for e in range(1, num_employees + 1)]
-    num_of_vacations = 30
+    num_of_vacations = 4
     vacations = {emp: set(random.sample(range(1, num_days + 1), num_of_vacations)) for emp in employees}
 
     variables = [f"{emp}_{d}" for emp in employees for d in range(1, num_days + 1)]
@@ -118,19 +119,24 @@ def employee_scheduling():
             window_vars = emp_vars[start:start + 6]
             handle_ho_constraint(csp, window_vars, lambda values: not all(v in ["M", "T"] for v in values))
         ## Adjusted total shift limit for a year (e.g., 240 shifts, ~2/3 of days)
-        handle_ho_constraint(csp, emp_vars, lambda values: values.count("M") + values.count("T") <= 223)
+        handle_ho_constraint(csp, emp_vars, lambda values: values.count("M") + values.count("T") <= 20)
         # Ensure at least 5 "T" shifts
         handle_ho_constraint(csp, emp_vars, lambda values: values.count("T") >= 3)
         # Holiday shift limit (4 holidays, max 2 shifts)
         handle_ho_constraint(csp, [var for var in emp_vars if int(var.split('_')[1]) in holidays],
-                             lambda values: values.count("M") + values.count("T") <= 22)
+                             lambda values: values.count("M") + values.count("T") <= 2)
+
+    for day in range(1, num_days + 1):
+        day_vars = [f"{emp}_{day}" for emp in employees]
+        handle_ho_constraint(csp, day_vars, lambda values: values.count("M") < 1 and values.count("T") < 1)
 
     solution = csp.search(timeout=1800)
     if solution and solution["assignment"]:
         assignment = solution["assignment"]
         generate_calendar(assignment, num_employees, num_days)
         print(build_schedule_table(assignment, num_employees, num_days))
-
+        toc = time.time()
+        print(f"Execution time: {toc - tic:.2f} seconds")
     else:
         print("No solution found within timeout or constraints too restrictive.")
 
