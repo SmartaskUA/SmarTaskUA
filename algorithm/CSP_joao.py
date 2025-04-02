@@ -126,9 +126,9 @@ def employee_scheduling():
     if solution and solution["assignment"]:
         assignment = solution["assignment"]
         generate_calendar(assignment, num_employees, num_days)
-        print(build_schedule_table(assignment, num_employees, num_days))
         toc = time.time()
         print(f"Execution time: {toc - tic:.2f} seconds")
+        return build_schedule_table(assignment, num_employees, num_days)
     else:
         print("No solution found within timeout or constraints too restrictive.")
 
