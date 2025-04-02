@@ -10,11 +10,9 @@ class CSP:
         self.constraints = constraints
 
     def check_constraints(self, var, value, assignment):
-        print("CCC")
         temp_assignment = assignment.copy()
         temp_assignment[var] = value
         for constraint_key, constraint_func in self.constraints.items():
-            print(f"Checking constraint {constraint_key} for variable {var} with value {value}")
             if isinstance(constraint_key, tuple):
                 v1, v2 = constraint_key
                 if v1 in temp_assignment and v2 in temp_assignment:
@@ -28,7 +26,6 @@ class CSP:
         return True
 
     def propagate(self, domains, var, value):
-        print("BBB")
         domains[var] = [value]
         queue = [(var, value)]
         while queue:
@@ -64,7 +61,6 @@ class CSP:
             domains = copy.deepcopy(self.domains)
 
         def timed_search(domains, depth=0):
-            print("AAA")
             if time.time() - start_time > timeout:
                 print(f"\n Exited at the timeout of {timeout} s")
                 return None
@@ -79,8 +75,6 @@ class CSP:
             for val in domains[var]:
                 new_domains = copy.deepcopy(domains)
                 new_domains[var] = [val]
-                if not new_domains:
-                    print(f"Domain wipeout for {var} due to {var} = {val}")
                 if self.propagate(new_domains, var, val):
                     solution = timed_search(new_domains, depth + 1)
                     if solution is not None:
@@ -91,7 +85,6 @@ class CSP:
 
 def employee_scheduling():
     tic = time.time()
-    random.seed(42)
     num_employees = 12
     num_days = 30
     holidays = {7, 14, 21, 28}
