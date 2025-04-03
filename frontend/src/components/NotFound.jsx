@@ -10,8 +10,8 @@ const NotFound = () => {
       <Sidebar_Manager />
       <div className="notfound-main-content"> 
         <img src={erro404} alt="Erro 404" className="not-found-image" />
-        <h1>Oops! Página não encontrada</h1>
-        <Link to="/" className="back-home">Voltar para o início</Link>
+        <h1>Oops! Page not found</h1>
+        <Link to="/" className="back-home">Back to top</Link>
       </div>
     </div>
   );

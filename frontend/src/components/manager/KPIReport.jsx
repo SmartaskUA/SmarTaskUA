@@ -38,9 +38,9 @@ const KPIReport = ({
       <Accordion>
         <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" id="panel1a-header">
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Indicadores de Desempenho (KPIs)
+            Performance Indicators (KPIs)
           </Typography>
-          {/* Cor Indicadora */}
+          {/* Indicator Color */}
           <Box sx={{ marginLeft: 2, fontSize: "2rem", color: getStatusColor() }}>
             •
           </Box>
@@ -48,55 +48,55 @@ const KPIReport = ({
 
         <AccordionDetails>
           <Typography variant="body2" color="textSecondary" paragraph>
-            Esses indicadores ajudam a monitorar possíveis conflitos, sobrecargas e períodos de férias na escala de trabalho.
+            These indicators help to monitor possible conflicts, overloads, and vacation periods in the work schedule.
           </Typography>
 
-          {/* Verificação de Conflitos de Agenda */}
+          {/* Checking for Schedule Conflicts */}
           <Typography variant="h6" color="primary">
-            Verificação de Conflitos de Agenda
+            Checking for Schedule Conflicts
           </Typography>
           <Typography color={scheduleConflicts.length > 0 ? "error" : "success.main"}>
-            {scheduleConflicts.length > 0 ? "Conflito encontrado" : "Nenhum conflito encontrado."}
+            {scheduleConflicts.length > 0 ? "Conflict found" : "No conflict found."}
           </Typography>
 
-          {/* Verificação de Sobrecarga de Trabalho */}
+          {/* Work Overload Check */}
           <Typography variant="h6" color="primary" sx={{ marginTop: 2 }}>
-            Verificação de Sobrecarga de Trabalho
+            Work Overload Check
           </Typography>
           <Typography color={workloadConflicts.length > 0 ? "error" : "success.main"}>
-            {workloadConflicts.length > 0 ? "Sobrecarregado encontrado" : "Nenhuma sobrecarga de trabalho detectada."}
+            {workloadConflicts.length > 0 ? "Overload found" : "No work overload detected."}
           </Typography>
 
-          {/* Funcionários com Menos de 22 Dias de Trabalho no Mês */}
+          {/* Employees with Less than 22 Workdays in the Month */}
           <Typography variant="h6" color="primary" sx={{ marginTop: 2 }}>
-            Funcionários com Menos de 22 Dias de Trabalho no Mês
+            Employees with Less than 22 Days of Work in the Month
           </Typography>
           <Typography color={underworkedEmployees.length > 0 ? "error" : "success.main"}>
-            {underworkedEmployees.length > 0 ? "Funcionários com menos de 22 dias de trabalho" : "Todos os funcionários trabalharam pelo menos 22 dias."}
+            {underworkedEmployees.length > 0 ? "Employees with less than 22 workdays" : "All employees worked at least 22 days."}
           </Typography>
 
-          {/* Verificação de 30 Dias de Férias por Ano */}
+          {/* Checking for 30 Days of Vacation per Year */}
           <Typography variant="h6" color="primary" sx={{ marginTop: 2 }}>
-            Verificação de 30 Dias de Férias por Ano
+            Checking for 30 Days of Vacation per Year
           </Typography>
           <Typography color={vacationIssues.length > 0 ? "error" : "success.main"}>
-            {vacationIssues.length > 0 ? "Problemas com as férias" : "Férias registradas corretamente."}
+            {vacationIssues.length > 0 ? "Vacation issues found" : "Vacation days correctly recorded."}
           </Typography>
 
-          {/* Verificação de Máximo de 22 Dias de Trabalho no Ano */}
+          {/* Checking for Maximum 22 Workdays per Year */}
           <Typography variant="h6" color="primary" sx={{ marginTop: 2 }}>
-            Máximo de 22 Dias de Trabalho no Ano
+            Maximum of 22 Workdays per Year
           </Typography>
           <Typography color={maxWorkdays.length > 0 ? "error" : "success.main"}>
-            {maxWorkdays.length > 0 ? "Conflitos encontrados no limite de dias de trabalho" : "Limite de 22 dias por mês respeitado."}
+            {maxWorkdays.length > 0 ? "Issues found with the workday limit" : "22 workdays per month respected."}
           </Typography>
 
-          {/* Verificação de Máximo de 5 Dias de Trabalho Consecutivos */}
+          {/* Checking for Maximum 5 Consecutive Workdays */}
           <Typography variant="h6" color="primary" sx={{ marginTop: 2 }}>
-            Máximo de 5 Dias de Trabalho Consecutivos
+            Maximum of 5 Consecutive Workdays
           </Typography>
           <Typography color={maxConsecutiveWorkdays.length > 0 ? "error" : "success.main"}>
-            {maxConsecutiveWorkdays.length > 0 ? "Conflito de dias consecutivos de trabalho encontrado" : "Limite de 5 dias consecutivos respeitado."}
+            {maxConsecutiveWorkdays.length > 0 ? "Consecutive workday conflict found" : "Limit of 5 consecutive workdays respected."}
           </Typography>
         </AccordionDetails>
       </Accordion>
