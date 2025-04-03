@@ -14,23 +14,23 @@ import {
 } from "@mui/material";
 
 const CreateCalendar = () => {
-  // Estados para os campos do formulário
+  // States for the form fields
   const [title, setTitle] = useState("");
   const [dateStart, setDateStart] = useState("");
   const [dateEnd, setDateEnd] = useState("");
   const [maxDuration, setMaxDuration] = useState("");
 
-  // Estado para o algoritmo selecionado
-  const [selectedAlgorithm, setSelectedAlgorithm] = useState("Algoritmo1");
+  // State for the selected algorithm
+  const [selectedAlgorithm, setSelectedAlgorithm] = useState("Algorithm1");
 
-  // Lida com a troca do algoritmo
+  // Handles the change of the selected algorithm
   const handleAlgorithmChange = (event, newAlgorithm) => {
     if (newAlgorithm !== null) {
       setSelectedAlgorithm(newAlgorithm);
     }
   };
 
-  // Função para salvar os dados
+  // Function to save the data
   const handleSave = async () => {
     const data = {
       init: dateStart,
@@ -43,29 +43,24 @@ const CreateCalendar = () => {
 
     try {
       const response = await axios.post(`${baseurl}/schedules/generate`, data);
-      alert("Dados enviados com sucesso!");
-      console.log("Resposta da API:", response.data);
+      alert("Data sent successfully!");
+      console.log("API Response:", response.data);
     } catch (error) {
-      console.error("Erro ao enviar os dados:", error);
+      console.error("Error sending data:", error);
       if (error.response && error.response.data && error.response.data.trace) {
         console.error("Trace:", error.response.data.trace);
       }
-      alert("Erro ao enviar os dados.");
+      alert("Error sending data.");
     }
   };
 
-  // Função para limpar os campos
+  // Function to clear the fields
   const handleClear = () => {
     setTitle("");
     setDateStart("");
     setDateEnd("");
     setMaxDuration("");
-    setSelectedAlgorithm("Algoritmo1");
-  };
-
-  // Função para gerar uma foto (simples print da tela)
-  const handleGeneratePhoto = () => {
-    alert("Função de gerar foto ainda não implementada! 😃");
+    setSelectedAlgorithm("Algorithm1");
   };
 
   return (
@@ -81,19 +76,19 @@ const CreateCalendar = () => {
           marginRight: "20px",
         }}
       >
-        <h1>Gerar Horário</h1>
+        <h1>Generate Schedule</h1>
 
-        {/* Grid dividindo a tela em duas colunas */}
+        {/* Grid layout dividing the screen into two columns */}
         <Grid container spacing={10}>
-          {/* Coluna da esquerda - Formulário */}
+          {/* Left column - Form */}
           <Grid item xs={12} md={6}>
             <Paper style={{ padding: "20px" }}>
               <Typography variant="h6" gutterBottom>
-                Informações do Horário
+                Schedule Information
               </Typography>
               <TextField
                 fullWidth
-                label="Título"
+                label="Title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 margin="normal"
@@ -101,7 +96,7 @@ const CreateCalendar = () => {
               <TextField
                 fullWidth
                 type="date"
-                label="Data Início"
+                label="Start Date"
                 value={dateStart}
                 onChange={(e) => setDateStart(e.target.value)}
                 InputLabelProps={{ shrink: true }}
@@ -110,7 +105,7 @@ const CreateCalendar = () => {
               <TextField
                 fullWidth
                 type="date"
-                label="Data Fim"
+                label="End Date"
                 value={dateEnd}
                 onChange={(e) => setDateEnd(e.target.value)}
                 InputLabelProps={{ shrink: true }}
@@ -119,7 +114,7 @@ const CreateCalendar = () => {
               <TextField
                 fullWidth
                 type="number"
-                label="Tempo Máximo (minutos)"
+                label="Max Duration (minutes)"
                 value={maxDuration}
                 onChange={(e) => setMaxDuration(e.target.value)}
                 margin="normal"
@@ -127,10 +122,11 @@ const CreateCalendar = () => {
             </Paper>
           </Grid>
 
+          {/* Right column - Algorithm selection */}
           <Grid item xs={12} md={6}>
             <Paper style={{ padding: "20px" }}>
               <Typography variant="h6" gutterBottom>
-                Escolha o Algoritmo
+                Choose the Algorithm
               </Typography>
               <Box display="flex" justifyContent="center">
                 <ToggleButtonGroup
@@ -139,25 +135,25 @@ const CreateCalendar = () => {
                   exclusive
                   onChange={handleAlgorithmChange}
                 >
-                  <ToggleButton value="Algoritmo1">ALGORITMO 1</ToggleButton>
-                  <ToggleButton value="Algoritmo2">ALGORITMO 2</ToggleButton>
-                  <ToggleButton value="Algoritmo3">ALGORITMO 3</ToggleButton>
+                  <ToggleButton value="Algorithm1">ALGORITHM 1</ToggleButton>
+                  <ToggleButton value="Algorithm2">ALGORITHM 2</ToggleButton>
+                  <ToggleButton value="Algorithm3">ALGORITHM 3</ToggleButton>
                 </ToggleButtonGroup>
               </Box>
-
-              
             </Paper>
           </Grid>
         </Grid>
+
+        {/* Buttons to save and clear the form */}
         <Grid container spacing={2} style={{ marginTop: "20px" }}>
-        <Box sx={{ display: "flex", justifyContent: "center", marginTop: 3, gap: 2 }}>
-                <Button variant="contained" color="primary" onClick={handleSave}>
-                  Gerar
-                </Button>
-                <Button variant="contained" color="secondary" onClick={handleGeneratePhoto}>
-                  Limpar Tudo
-                </Button>
-              </Box>
+          <Box sx={{ display: "flex", justifyContent: "center", marginTop: 3, gap: 2 }}>
+            <Button variant="contained" color="primary" onClick={handleSave}>
+              Generate
+            </Button>
+            <Button variant="contained" color="secondary" onClick={handleClear}>
+              Clear All
+            </Button>
+          </Box>
         </Grid>
       </div>
     </div>

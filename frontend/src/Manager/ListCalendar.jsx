@@ -24,22 +24,22 @@ const ListCalendar = () => {
           setCalendars(response.data);
           setError(null);
         } else {
-          setError("Nenhum dado encontrado.");
+          setError("No data found.");
         }
       } catch (error) {
-        setError("Erro ao buscar calendários. Tente novamente.");
-        console.error("Erro ao buscar calendários:", error);
+        setError("Error fetching calendars. Please try again.");
+        console.error("Error fetching calendars:", error);
       } finally {
         setLoading(false);
       }
     };
-  
+
     fetchCalendars();
     const interval = setInterval(fetchCalendars, 3000);
-  
-    return () => clearInterval(interval); 
+
+    return () => clearInterval(interval);
   }, []);
-  
+
 
   const handleSearchInputChange = (event, newValue) => {
     setTitle(newValue);
@@ -57,13 +57,13 @@ const ListCalendar = () => {
     if (event.key === "Enter" && title.trim().length > 0) {
       event.preventDefault();
 
-      // Verifica se o nome digitado existe exatamente na lista de calendários
+      // Check if the entered title exists exactly in the list of calendars
       const calendarMatch = calendars.find(
         (calendar) => calendar.title.toLowerCase() === title.toLowerCase()
       );
 
       if (!calendarMatch) {
-        alert("Calendário não existe.");
+        alert("Calendar does not exist.");
         return;
       }
 
@@ -72,11 +72,11 @@ const ListCalendar = () => {
         if (response.data) {
           navigate(`/manager/calendar/${response.data.id}`);
         } else {
-          alert("Calendário não encontrado.");
+          alert("Calendar not found.");
         }
       } catch (error) {
-        console.error("Erro ao buscar o calendário por título:", error);
-        alert("Erro ao buscar o calendário.");
+        console.error("Error fetching the calendar by title:", error);
+        alert("Error fetching the calendar.");
       }
     }
   };
@@ -86,7 +86,7 @@ const ListCalendar = () => {
       <div className="admin-container">
         <Sidebar_Manager />
         <div className="main-content">
-          <h2 className="heading">Carregando...</h2>
+          <h2 className="heading">Loading...</h2>
         </div>
       </div>
     );
@@ -133,7 +133,7 @@ const ListCalendar = () => {
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Pesquisar por nome"
+                label="Search by name"
                 variant="outlined"
                 onKeyDown={handleSearchSubmit}
                 InputProps={{
@@ -177,7 +177,7 @@ const ListCalendar = () => {
               </div>
             ))
           ) : (
-            <p>Nenhum calendário encontrado.</p>
+            <p>No calendar found.</p>
           )}
         </div>
       </div>

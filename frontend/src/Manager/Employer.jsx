@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar_Manager from "../components/Sidebar_Manager";
-import SearchBar from "../components/manager/SearchBar"; 
+import SearchBar from "../components/manager/SearchBar";
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Typography, CircularProgress, Box, Button, Dialog, DialogTitle,
@@ -23,10 +23,10 @@ const Employer = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
-  const [removalMode, setRemovalMode] = useState(false); 
+  const [removalMode, setRemovalMode] = useState(false);
   const [filteredEmployees, setFilteredEmployees] = useState([]);
 
-  useEffect(() => { 
+  useEffect(() => {
     fetchEmployees();
   }, []);
 
@@ -37,7 +37,7 @@ const Employer = () => {
         setEmployees(response.data);
         setFilteredEmployees(response.data);
         setLoading(false);
-        console.log(response.data); 
+        console.log(response.data);
       })
       .catch(() => {
         setError("Erro ao buscar employees.");
@@ -48,11 +48,11 @@ const Employer = () => {
   const handleSearch = (query) => {
     if (query) {
       const filtered = employees.filter(employee =>
-        employee.id.toString().includes(query) 
+        employee.id.toString().includes(query)
       );
       setFilteredEmployees(filtered);
     } else {
-      setFilteredEmployees(employees); 
+      setFilteredEmployees(employees);
     }
   };
 
@@ -73,7 +73,7 @@ const Employer = () => {
   };
 
   const handleAddEmployee = () => {
-    axios.post(`${BaseUrl}/api/v1/employees/`, newEmployee) 
+    axios.post(`${BaseUrl}/api/v1/employees/`, newEmployee)
       .then(() => { setOpenAddDialog(false); setNewEmployee({ id: "", name: "", team: [] }); fetchEmployees(); })
       .catch((error) => console.error("Erro ao adicionar employee:", error));
   };
@@ -97,7 +97,7 @@ const Employer = () => {
   };
 
   const toggleRemovalMode = () => {
-    setRemovalMode(!removalMode); 
+    setRemovalMode(!removalMode);
   };
 
   return (
@@ -105,10 +105,10 @@ const Employer = () => {
       <Sidebar_Manager />
       <div className="main-content" style={{ flex: 1, padding: "20px" }}>
         <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h4">Lista de Employees</Typography>
+          <Typography variant="h4">List of Employees</Typography>
           <Box>
             <Button variant="contained" color="success" onClick={() => setOpenAddDialog(true)}>
-              Adicionar Employee
+              Add Employee
             </Button>
             <Button
               variant="contained"
@@ -155,8 +155,8 @@ const Employer = () => {
                     const teamDisplay = Array.isArray(emp.team)
                       ? emp.team.join(" e ")
                       : emp.team
-                      ? emp.team.name
-                      : "N/A";
+                        ? emp.team.name
+                        : "N/A";
 
                     return (
                       <TableRow key={emp.id} style={rowStyle}>
@@ -179,7 +179,7 @@ const Employer = () => {
                             color="primary"
                             onClick={() => handleOpenEditDialog(emp)}
                           >
-                            Editar
+                            Edit
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -194,13 +194,13 @@ const Employer = () => {
             <Typography variant="h6">Nenhum employee encontrado.</Typography>
             <Box mt={2}>
               <Button variant="contained" color="success" onClick={() => setOpenAddDialog(true)}>
-                Adicionar Employee
+                Add Employee
               </Button>
             </Box>
           </Box>
         )}
         <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)}>
-          <DialogTitle>Adicionar Employee</DialogTitle>
+          <DialogTitle>Add Employee</DialogTitle>
           <DialogContent>
             <TextField
               margin="dense"
@@ -237,10 +237,10 @@ const Employer = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setOpenAddDialog(false)} color="secondary">
-              Cancelar
+              Cancel
             </Button>
             <Button onClick={handleAddEmployee} color="primary">
-              Adicionar
+              To add
             </Button>
           </DialogActions>
         </Dialog>
@@ -251,15 +251,15 @@ const Employer = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCancelDelete} color="secondary">
-              Cancelar
+              Cancel
             </Button>
             <Button onClick={handleConfirmDelete} color="primary">
-              Confirmar
+              Confirm
             </Button>
           </DialogActions>
         </Dialog>
         <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)}>
-          <DialogTitle>Editar Employee</DialogTitle>
+          <DialogTitle>Edit Employee</DialogTitle>
           <DialogContent>
             {selectedEmployee && (
               <>
@@ -288,8 +288,8 @@ const Employer = () => {
                       Array.isArray(selectedEmployee.team)
                         ? selectedEmployee.team
                         : selectedEmployee.team
-                        ? [selectedEmployee.team.name]
-                        : []
+                          ? [selectedEmployee.team.name]
+                          : []
                     }
                     onChange={(e) =>
                       setSelectedEmployee({ ...selectedEmployee, team: e.target.value })
@@ -316,10 +316,10 @@ const Employer = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setOpenEditDialog(false)} color="secondary">
-              Cancelar
+              Cancel
             </Button>
             <Button onClick={handleEditEmployee} color="primary">
-              Salvar
+              Save
             </Button>
           </DialogActions>
         </Dialog>
