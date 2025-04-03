@@ -10,19 +10,20 @@ import {
   Box,
   ToggleButton,
   ToggleButtonGroup,
-  Paper,
-  Input
+  Paper
 } from "@mui/material";
 
 const CreateCalendar = () => {
+  // Estados para os campos do formulário
   const [title, setTitle] = useState("");
   const [dateStart, setDateStart] = useState("");
   const [dateEnd, setDateEnd] = useState("");
   const [maxDuration, setMaxDuration] = useState("");
-  const [file, setFile] = useState(null);
-  const [fileName, setFileName] = useState("Nenhum arquivo selecionado");
+
+  // Estado para o algoritmo selecionado
   const [selectedAlgorithm, setSelectedAlgorithm] = useState("Algoritmo1");
 
+  // Lida com a troca do algoritmo
   const handleAlgorithmChange = (event, newAlgorithm) => {
     if (newAlgorithm !== null) {
       setSelectedAlgorithm(newAlgorithm);
@@ -31,45 +32,40 @@ const CreateCalendar = () => {
 
   // Função para salvar os dados
   const handleSave = async () => {
-    const formData = new FormData();
-    formData.append("init", dateStart);
-    formData.append("end", dateEnd);
-    formData.append("algorithm", selectedAlgorithm);
-    formData.append("title", title);
-    formData.append("maxTime", maxDuration);
-    formData.append("requestedAt", new Date().toISOString());
-    
-    if (file) {
-      formData.append("file", file);
-    }
+    const data = {
+      init: dateStart,
+      end: dateEnd,
+      algorithm: selectedAlgorithm,
+      title: title,
+      maxTime: maxDuration,
+      requestedAt: new Date().toISOString(),
+    };
 
     try {
-      const response = await axios.post(`${baseurl}/schedules/generate`, formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
+      const response = await axios.post(`${baseurl}/schedules/generate`, data);
       alert("Dados enviados com sucesso!");
       console.log("Resposta da API:", response.data);
     } catch (error) {
       console.error("Erro ao enviar os dados:", error);
+      if (error.response && error.response.data && error.response.data.trace) {
+        console.error("Trace:", error.response.data.trace);
+      }
       alert("Erro ao enviar os dados.");
     }
   };
+
+  // Função para limpar os campos
   const handleClear = () => {
     setTitle("");
     setDateStart("");
     setDateEnd("");
     setMaxDuration("");
     setSelectedAlgorithm("Algoritmo1");
-    setFile(null);
-    setFileName("Nenhum arquivo selecionado");
   };
 
-  const handleFileChange = (event) => {
-    const selectedFile = event.target.files[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      setFileName(selectedFile.name);
-    }
+  // Função para gerar uma foto (simples print da tela)
+  const handleGeneratePhoto = () => {
+    alert("Função de gerar foto ainda não implementada! 😃");
   };
 
   return (
@@ -86,7 +82,10 @@ const CreateCalendar = () => {
         }}
       >
         <h1>Gerar Horário</h1>
+
+        {/* Grid dividindo a tela em duas colunas */}
         <Grid container spacing={10}>
+          {/* Coluna da esquerda - Formulário */}
           <Grid item xs={12} md={6}>
             <Paper style={{ padding: "20px" }}>
               <Typography variant="h6" gutterBottom>
@@ -146,31 +145,19 @@ const CreateCalendar = () => {
                 </ToggleButtonGroup>
               </Box>
 
-              <Box sx={{ marginTop: 3 }}>
-                <Typography variant="subtitle1">Selecionar Arquivo:</Typography>
-                <Input
-                  type="file"
-                  onChange={handleFileChange}
-                  fullWidth
-                  sx={{ marginTop: 1 }}
-                />
-                <Typography variant="body2" sx={{ marginTop: 1, fontStyle: "italic" }}>
-                  {fileName}
-                </Typography>
-              </Box>
+              
             </Paper>
           </Grid>
         </Grid>
-
         <Grid container spacing={2} style={{ marginTop: "20px" }}>
-          <Box sx={{ display: "flex", justifyContent: "center", marginTop: 3, gap: 2 }}>
-            <Button variant="contained" color="primary" onClick={handleSave}>
-              Gerar
-            </Button>
-            <Button variant="contained" color="secondary" onClick={handleClear}>
-              Limpar Tudo
-            </Button>
-          </Box>
+        <Box sx={{ display: "flex", justifyContent: "center", marginTop: 3, gap: 2 }}>
+                <Button variant="contained" color="primary" onClick={handleSave}>
+                  Gerar
+                </Button>
+                <Button variant="contained" color="secondary" onClick={handleGeneratePhoto}>
+                  Limpar Tudo
+                </Button>
+              </Box>
         </Grid>
       </div>
     </div>
