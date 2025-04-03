@@ -3,78 +3,102 @@ import axios from "axios";
 import baseurl from "../components/BaseUrl";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import {
-  Container,
-  Paper,
   Typography,
   Grid,
   TextField,
   Button,
   Box,
   ToggleButton,
-  ToggleButtonGroup
+  ToggleButtonGroup,
+  Paper,
+  Input
 } from "@mui/material";
 
 const CreateCalendar = () => {
-  // Estados para os campos do formulário
   const [title, setTitle] = useState("");
   const [dateStart, setDateStart] = useState("");
   const [dateEnd, setDateEnd] = useState("");
   const [maxDuration, setMaxDuration] = useState("");
-  
-  // Estado para o algoritmo selecionado
+  const [file, setFile] = useState(null);
+  const [fileName, setFileName] = useState("Nenhum arquivo selecionado");
   const [selectedAlgorithm, setSelectedAlgorithm] = useState("Algoritmo1");
 
-  // Lida com a troca do algoritmo
   const handleAlgorithmChange = (event, newAlgorithm) => {
     if (newAlgorithm !== null) {
       setSelectedAlgorithm(newAlgorithm);
     }
   };
 
-  // Função para enviar os dados via POST para /schedules/generate
+  // Função para salvar os dados
   const handleSave = async () => {
-    // Monta o objeto com os campos esperados pela API, incluindo requestedAt
-    const data = {
-      init: dateStart,
-      end: dateEnd,
-      algorithm: selectedAlgorithm,
-      title: title,
-      maxTime: maxDuration,
-      requestedAt: new Date().toISOString()
-    };
+    const formData = new FormData();
+    formData.append("init", dateStart);
+    formData.append("end", dateEnd);
+    formData.append("algorithm", selectedAlgorithm);
+    formData.append("title", title);
+    formData.append("maxTime", maxDuration);
+    formData.append("requestedAt", new Date().toISOString());
+    
+    if (file) {
+      formData.append("file", file);
+    }
 
     try {
-      const response = await axios.post(`${baseurl}/schedules/generate`, data);
+      const response = await axios.post(`${baseurl}/schedules/generate`, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
       alert("Dados enviados com sucesso!");
       console.log("Resposta da API:", response.data);
     } catch (error) {
       console.error("Erro ao enviar os dados:", error);
-      if (error.response && error.response.data && error.response.data.trace) {
-        console.error("Trace:", error.response.data.trace);
-      }
       alert("Erro ao enviar os dados.");
+    }
+  };
+  const handleClear = () => {
+    setTitle("");
+    setDateStart("");
+    setDateEnd("");
+    setMaxDuration("");
+    setSelectedAlgorithm("Algoritmo1");
+    setFile(null);
+    setFileName("Nenhum arquivo selecionado");
+  };
+
+  const handleFileChange = (event) => {
+    const selectedFile = event.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setFileName(selectedFile.name);
     }
   };
 
   return (
     <div className="admin-container">
       <Sidebar_Manager />
-      <Container maxWidth="md" className="calendar-wrapper" sx={{ mt: 4 }}>
-        <Paper elevation={3} sx={{ p: 3 }}>
-          <Typography variant="h5" gutterBottom>
-            Gerar Horário
-          </Typography>
-          <Grid container spacing={2}>
-            {/* 1ª Linha: Título, Data Início, Data Fim */}
-            <Grid item xs={4}>
+      <div
+        className="main-content"
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          padding: "20px",
+          boxSizing: "border-box",
+          marginRight: "20px",
+        }}
+      >
+        <h1>Gerar Horário</h1>
+        <Grid container spacing={10}>
+          <Grid item xs={12} md={6}>
+            <Paper style={{ padding: "20px" }}>
+              <Typography variant="h6" gutterBottom>
+                Informações do Horário
+              </Typography>
               <TextField
                 fullWidth
                 label="Título"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                margin="normal"
               />
-            </Grid>
-            <Grid item xs={4}>
               <TextField
                 fullWidth
                 type="date"
@@ -82,9 +106,8 @@ const CreateCalendar = () => {
                 value={dateStart}
                 onChange={(e) => setDateStart(e.target.value)}
                 InputLabelProps={{ shrink: true }}
+                margin="normal"
               />
-            </Grid>
-            <Grid item xs={4}>
               <TextField
                 fullWidth
                 type="date"
@@ -92,26 +115,25 @@ const CreateCalendar = () => {
                 value={dateEnd}
                 onChange={(e) => setDateEnd(e.target.value)}
                 InputLabelProps={{ shrink: true }}
+                margin="normal"
               />
-            </Grid>
-
-            {/* 2ª Linha: Tempo Máximo */}
-            <Grid item xs={12}>
               <TextField
                 fullWidth
                 type="number"
                 label="Tempo Máximo (minutos)"
                 value={maxDuration}
                 onChange={(e) => setMaxDuration(e.target.value)}
+                margin="normal"
               />
-            </Grid>
+            </Paper>
+          </Grid>
 
-            {/* 3ª Linha: Selecione o Algoritmo */}
-            <Grid item xs={12}>
-              <Box display="flex" flexDirection="column">
-                <Typography variant="subtitle1" gutterBottom>
-                  Selecione o Algoritmo:
-                </Typography>
+          <Grid item xs={12} md={6}>
+            <Paper style={{ padding: "20px" }}>
+              <Typography variant="h6" gutterBottom>
+                Escolha o Algoritmo
+              </Typography>
+              <Box display="flex" justifyContent="center">
                 <ToggleButtonGroup
                   color="primary"
                   value={selectedAlgorithm}
@@ -120,21 +142,37 @@ const CreateCalendar = () => {
                 >
                   <ToggleButton value="Algoritmo1">ALGORITMO 1</ToggleButton>
                   <ToggleButton value="Algoritmo2">ALGORITMO 2</ToggleButton>
+                  <ToggleButton value="Algoritmo3">ALGORITMO 3</ToggleButton>
                 </ToggleButtonGroup>
               </Box>
-            </Grid>
 
-            {/* 4ª Linha: Botão Gerar */}
-            <Grid item xs={12}>
-              <Box sx={{ display: "flex", gap: 2 }}>
-                <Button variant="contained" color="primary" onClick={handleSave}>
-                  Gerar
-                </Button>
+              <Box sx={{ marginTop: 3 }}>
+                <Typography variant="subtitle1">Selecionar Arquivo:</Typography>
+                <Input
+                  type="file"
+                  onChange={handleFileChange}
+                  fullWidth
+                  sx={{ marginTop: 1 }}
+                />
+                <Typography variant="body2" sx={{ marginTop: 1, fontStyle: "italic" }}>
+                  {fileName}
+                </Typography>
               </Box>
-            </Grid>
+            </Paper>
           </Grid>
-        </Paper>
-      </Container>
+        </Grid>
+
+        <Grid container spacing={2} style={{ marginTop: "20px" }}>
+          <Box sx={{ display: "flex", justifyContent: "center", marginTop: 3, gap: 2 }}>
+            <Button variant="contained" color="primary" onClick={handleSave}>
+              Gerar
+            </Button>
+            <Button variant="contained" color="secondary" onClick={handleClear}>
+              Limpar Tudo
+            </Button>
+          </Box>
+        </Grid>
+      </div>
     </div>
   );
 };
