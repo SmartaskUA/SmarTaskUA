@@ -116,13 +116,12 @@ def employee_scheduling():
             window_vars = emp_vars[start:start + 6]
             handle_ho_constraint(csp, window_vars, lambda values: not all(v in ["M", "T"] for v in values))
         handle_ho_constraint(csp, emp_vars, lambda values: values.count("M") + values.count("T") <= 20)
-        handle_ho_constraint(csp, emp_vars, lambda values: values.count("T") >= 3)
         handle_ho_constraint(csp, [var for var in emp_vars if int(var.split('_')[1]) in holidays],
                              lambda values: values.count("M") + values.count("T") <= 2)
 
     for day in range(1, num_days + 1):
         day_vars = [f"{emp}_{day}" for emp in employees]
-        handle_ho_constraint(csp, day_vars, lambda values: values.count("M") >= 1 and values.count("T") >= 1)
+        handle_ho_constraint(csp, day_vars, lambda values: values.count("M") >= 3 and values.count("T") >= 3)
 
     solution = csp.search(timeout=1800)
     if solution and solution["assignment"]:
