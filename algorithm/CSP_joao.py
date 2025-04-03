@@ -72,7 +72,9 @@ class CSP:
             var = self.select_variable(domains)
             if var is None:
                 return None
-            for val in domains[var]:
+            values = domains[var].copy()
+            random.shuffle(values)  # Randomize value order
+            for val in values:
                 new_domains = copy.deepcopy(domains)
                 new_domains[var] = [val]
                 if self.propagate(new_domains, var, val):
