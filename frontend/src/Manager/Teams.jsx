@@ -7,26 +7,30 @@ const Teams = () => {
 
   useEffect(() => {
 
-    // usar axios e melhor o frontend/
     const fetchTeams = async () => {
       try {
-        const response = await fetch('http://localhost:8081/api/v1/teams/', {
-          method: 'GET',
+        const response = await fetch(`${BaseUrl}/api/v1/teams/`, {
+          method: "GET",
           headers: {
-            'Accept': '*/*',
+            "Content-Type": "application/json",
+            Accept: "application/json",
           },
         });
-        
         const data = await response.json();
-        setTeams(data);
-      } catch (error) {
-        console.error('Error fetching teams:', error);
+        if (response.ok) {
+          setTeams(data);
+        } else {
+          console.error("Error fetching teams:", data);
+        }
       }
-    };
-
+      catch (error) {
+        console.error("Error fetching teams:", error);
+      }
+    }
     fetchTeams();
-  }, []);
-
+  }
+  , []);
+        
   return (
     <div className="admin-container">
       <Sidebar_Manager />  
