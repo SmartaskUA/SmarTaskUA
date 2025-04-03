@@ -3,33 +3,30 @@ import axios from "axios";
 import { Link } from "react-router-dom";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import "../styles/Manager.css";
+import BaseUrl from "../components/BaseUrl";
 
-const CalendarCard = ({ title, status, time, link, buttonLabel, className }) => (
+const CalendarCard = ({ title, status, time, link, buttonLabel, className, onClick }) => (
   <div className={`calendar-card ${className}`} style={{ width: "300px", height: "160px", padding: "20px" }}>
     <div className="calendar-card-header">
-      <span className={`status-dot ${status}`} />
+      <span className={`status-dot ${status?.toLowerCase() || 'unknown'}`} />
       <span className="calendar-card-title" style={{ fontSize: "18px" }}>{title}</span>
     </div>
     {time && <span className="draft-time" style={{ fontSize: "14px" }}>{time}</span>}
     {link && (
-      <Link to={link} className={`open-button btn-${status}`} style={{ fontSize: "16px", padding: "10px 20px" }}>
+      <Link to={link} className={`open-button btn-${status?.toLowerCase() || 'default'}`} style={{ fontSize: "16px", padding: "10px 20px" }} onClick={onClick}>
         {buttonLabel}
       </Link>
     )}
   </div>
 );
 
-const LastSeenCard = ({ title, link }) => (
-  <CalendarCard title={title} status="green" link={link} buttonLabel="Open" className="completed-card" />
-);
-
 const LastSeenSection = () => (
   <>
     <h3 className="section-title">Last Seen</h3>
     <div className="calendar-cards-container" style={{ gap: "30px" }}>
-      <LastSeenCard title="January, Algorithm X" link="/manager/calendar/abc123" />
-      <LastSeenCard title="September, Algorithm Z" link="/manager/calendar/xyz456" />
-      <LastSeenCard title="Another Calendar" link="/manager/calendar/def789" />
+      <CalendarCard title="January, Algorithm X" status="green" link="/manager/calendar/abc123" buttonLabel="Open" className="completed-card" />
+      <CalendarCard title="September, Algorithm Z" status="green" link="/manager/calendar/xyz456" buttonLabel="Open" className="completed-card" />
+      <CalendarCard title="Another Calendar" status="green" link="/manager/calendar/def789" buttonLabel="Open" className="completed-card" />
     </div>
   </>
 );
@@ -48,31 +45,50 @@ const NewCalendarSection = () => (
 
 const CalendarsInProcessSection = () => {
   const [processingCalendars, setProcessingCalendars] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    axios.get("/tasks")
-      .then((response) => {
-        console.log("Raw response:", response);
-        const data = response.data;
-        console.log("Parsed JSON data:", data);
-        const inProcess = data.filter(task => task.status === "processing");
+    const fetchCalendars = async () => {
+      try {
+        const response = await axios.get(`${BaseUrl}/tasks`, {
+          headers: { "Accept": "application/json" },
+        });
+
+        const data = Array.isArray(response.data) ? response.data : Object.values(response.data);
+        const inProcess = data.filter(task => task.status && task.status.toLowerCase() === "in_progress");
         setProcessingCalendars(inProcess);
-      })
-      .catch((error) => console.error("Error fetching tasks:", error));
+        setErrorMessage("");
+      } catch (error) {
+        setErrorMessage("Failed to load calendars. Please check the API connection.");
+      }
+    };
+
+    fetchCalendars();
+    const interval = setInterval(fetchCalendars, 3000);
+    return () => clearInterval(interval);
   }, []);
+
+  const handleCalendarClick = (calendarId) => {
+    setProcessingCalendars(prevCalendars => prevCalendars.filter(calendar => calendar.id !== calendarId));
+  };
 
   return (
     <>
       <h3 className="section-title">Calendars in Process</h3>
       <div className="calendar-cards-container" style={{ gap: "30px" }}>
-        {processingCalendars.length > 0 ? (
+        {errorMessage ? (
+          <p style={{ color: "red" }}>{errorMessage}</p>
+        ) : processingCalendars.length > 0 ? (
           processingCalendars.map((calendar) => (
             <CalendarCard 
               key={calendar.id} 
-              title={calendar.scheduleRequest.title} 
+              title={calendar.scheduleRequest?.title || "Unknown"} 
               status="orange" 
               time="In progress..." 
               className="in-process" 
+              link={`/manager/calendar/${calendar.id}`} 
+              buttonLabel="View Details"
+              onClick={() => handleCalendarClick(calendar.id)}
             />
           ))
         ) : (
