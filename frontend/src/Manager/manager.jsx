@@ -4,18 +4,29 @@ import { Link } from "react-router-dom";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import "../styles/Manager.css";
 import BaseUrl from "../components/BaseUrl";
+import { CircularProgress } from "@mui/material"; 
 
-const CalendarCard = ({ title, status, time, link, buttonLabel, className, onClick }) => (
-  <div className={`calendar-card ${className}`} style={{ width: "300px", height: "160px", padding: "20px" }}>
+const CalendarCard = ({ title, status, time, link, buttonLabel, className, onClick, showLoader }) => (
+  <div className={`calendar-card ${className}`} style={{ width: "300px", height: "160px", padding: "20px", position: "relative" }}>
     <div className="calendar-card-header">
       <span className={`status-dot ${status?.toLowerCase() || 'unknown'}`} />
       <span className="calendar-card-title" style={{ fontSize: "18px" }}>{title}</span>
     </div>
     {time && <span className="draft-time" style={{ fontSize: "14px" }}>{time}</span>}
-    {link && (
+    {link && buttonLabel && (
       <Link to={link} className={`open-button btn-${status?.toLowerCase() || 'default'}`} style={{ fontSize: "16px", padding: "10px 20px" }} onClick={onClick}>
         {buttonLabel}
       </Link>
+    )}
+    {showLoader && (
+      <div style={{
+        position: "absolute",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)"
+      }}>
+        <CircularProgress color="warning" />
+      </div>
     )}
   </div>
 );
@@ -53,13 +64,17 @@ const CalendarsInProcessSection = () => {
         const response = await axios.get(`${BaseUrl}/tasks`, {
           headers: { "Accept": "application/json" },
         });
-
-        const data = Array.isArray(response.data) ? response.data : Object.values(response.data);
-        const inProcess = data.filter(task => task.status && task.status.toLowerCase() === "in_progress");
-        setProcessingCalendars(inProcess);
+        const rawData = response.data;
+        let data = Array.isArray(rawData) ? rawData : Object.values(rawData);
+        const filtered = data.filter(task => {
+          const status = task.status ? task.status.toLowerCase() : "";
+          return status === "in_progress" || status === "done";
+        });
+        setProcessingCalendars(filtered);
         setErrorMessage("");
       } catch (error) {
         setErrorMessage("Failed to load calendars. Please check the API connection.");
+        console.error("Error fetching tasks:", error);
       }
     };
 
@@ -68,10 +83,6 @@ const CalendarsInProcessSection = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleCalendarClick = (calendarId) => {
-    setProcessingCalendars(prevCalendars => prevCalendars.filter(calendar => calendar.id !== calendarId));
-  };
-
   return (
     <>
       <h3 className="section-title">Calendars in Process</h3>
@@ -79,18 +90,36 @@ const CalendarsInProcessSection = () => {
         {errorMessage ? (
           <p style={{ color: "red" }}>{errorMessage}</p>
         ) : processingCalendars.length > 0 ? (
-          processingCalendars.map((calendar) => (
-            <CalendarCard 
-              key={calendar.id} 
-              title={calendar.scheduleRequest?.title || "Unknown"} 
-              status="orange" 
-              time="In progress..." 
-              className="in-process" 
-              link={`/manager/calendar/${calendar.id}`} 
-              buttonLabel="View Details"
-              onClick={() => handleCalendarClick(calendar.id)}
-            />
-          ))
+          processingCalendars.map((calendar) => {
+            const status = calendar.status ? calendar.status.toLowerCase() : "";
+            if (status === "in_progress") {
+              return (
+                <CalendarCard 
+                  key={calendar.id} 
+                  title={calendar.scheduleRequest?.title || "Unknown"} 
+                  status="orange" 
+                  time="In progress..." 
+                  className="in-process"
+                  showLoader={true}
+                />
+              );
+            } else if (status === "done") {
+              return (
+                <CalendarCard 
+                  key={calendar.id} 
+                  title={calendar.scheduleRequest?.title || "Unknown"} 
+                  status="green" 
+                  time="Done" 
+                  link={`/manager/calendar/${calendar.taskId}`} 
+                  buttonLabel="Open"
+                  className="done" 
+                  showLoader={false}
+                />
+              );
+            } else {
+              return null;
+            }
+          })
         ) : (
           <p>No calendars in process</p>
         )}
