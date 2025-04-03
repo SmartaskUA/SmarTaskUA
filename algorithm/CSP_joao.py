@@ -2,6 +2,7 @@ import copy
 import random
 import csv
 import time
+import string
 
 class CSP:
     def __init__(self, variables, domains, constraints):
@@ -89,39 +90,67 @@ def employee_scheduling():
     tic = time.time()
     num_employees = 12
     num_days = 30
+    num_teams = 2
+    teams = [f"{list(string.ascii_uppercase)[t]}" for t in range(num_teams)]
+    employee_teams = {
+        f"E{e}": list(set([random.choice(teams) for _ in range(random.randint(1, num_teams))]))
+        for e in range(1, num_employees + 1)
+    }  
     holidays = {7, 14, 21, 28}
     employees = [f"E{e}" for e in range(1, num_employees + 1)]
     num_of_vacations = 4
     vacations = {emp: set(random.sample(range(1, num_days + 1), num_of_vacations)) for emp in employees}
-
     variables = [f"{emp}_{d}" for emp in employees for d in range(1, num_days + 1)]
 
-    # Only vacations restrict to "F"; holidays are treated as regular days
+    def define_domain(emp):
+        if len(employee_teams[emp]) == 1:
+            return ["M", "T", "0"]
+        else:
+            domain = []
+            for team in employee_teams[emp]:
+                domain.extend([f"M_{team}", f"T_{team}"])
+            domain.append("0")
+            return domain
+
     domains = {
         var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]]
-        else ["M", "T", "0"]
+        else define_domain(var.split('_')[0])
         for var in variables
     }
 
     constraints = {
-        (v1, v2): (lambda x1, x2: not (x1 == "T" and x2 == "M"))
+        (v1, v2): (lambda x1, x2: not ((x1 == "T" or (("_" in x1) and x1.split("_")[0] == "T"))
+                                         and (x2 == "M" or (("_" in x2) and x2.split("_")[0] == "M"))))
         for v1 in variables for v2 in variables
         if v1.split('_')[0] == v2.split('_')[0] and int(v1.split('_')[1]) + 1 == int(v2.split('_')[1])
     }
 
     csp = CSP(variables, domains, constraints)
+
     for emp in employees:
         emp_vars = [f"{emp}_{d}" for d in range(1, num_days + 1)]
         for start in range(num_days - 5):
             window_vars = emp_vars[start:start + 6]
-            handle_ho_constraint(csp, window_vars, lambda values: not all(v in ["M", "T"] for v in values))
-        handle_ho_constraint(csp, emp_vars, lambda values: values.count("M") + values.count("T") <= 20)
-        handle_ho_constraint(csp, [var for var in emp_vars if int(var.split('_')[1]) in holidays],
-                             lambda values: values.count("M") + values.count("T") <= 2)
+            handle_ho_constraint(csp, window_vars,
+                lambda values: not all((v == "M" or (("_" in v) and v.startswith("M_")) or
+                                        v == "T" or (("_" in v) and v.startswith("T_")))
+                                       for v in values))
+        handle_ho_constraint(csp, emp_vars,
+            lambda values: sum(1 for v in values if (v == "M" or (("_" in v) and v.startswith("M_")) or
+                                                     v == "T" or (("_" in v) and v.startswith("T_")))
+                               ) <= 20)
+        holiday_vars = [var for var in emp_vars if int(var.split('_')[1]) in holidays]
+        handle_ho_constraint(csp, holiday_vars,
+            lambda values: sum(1 for v in values if (v == "M" or (("_" in v) and v.startswith("M_")) or
+                                                     v == "T" or (("_" in v) and v.startswith("T_")))
+                               ) <= 2)
 
     for day in range(1, num_days + 1):
         day_vars = [f"{emp}_{day}" for emp in employees]
-        handle_ho_constraint(csp, day_vars, lambda values: values.count("M") >= 3 and values.count("T") >= 3)
+        handle_ho_constraint(csp, day_vars,
+            lambda values: (sum(1 for v in values if (v == "M" or (("_" in v) and v.startswith("M_"))) ) >= 2) and
+                           (sum(1 for v in values if (v == "T" or (("_" in v) and v.startswith("T_"))) ) >= 2)
+        )
 
     solution = csp.search(timeout=1800)
     if solution and solution["assignment"]:
@@ -161,8 +190,8 @@ def generate_calendar(assignment, num_employees, num_days):
         for e in range(1, num_employees + 1):
             employee_schedule = [assignment.get(f"E{e}_{d}", "-") for d in range(1, num_days + 1)]
             csvwriter.writerow([f"E{e}"] + employee_schedule)
-            t_count = employee_schedule.count("T")
-            m_count = employee_schedule.count("M")
+            t_count = sum(1 for v in employee_schedule if (v == "T" or (("_" in v) and v.startswith("T_"))))
+            m_count = sum(1 for v in employee_schedule if (v == "M" or (("_" in v) and v.startswith("M_"))))
             print(f"Employee E{e}: {t_count} afternoon shifts (T), {m_count} morning shifts (M)")
 
 if __name__ == "__main__":
