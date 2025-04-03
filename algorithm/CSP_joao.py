@@ -30,41 +30,17 @@ class CSP:
         queue = [(var, value)]
         while queue:
             curr_var, curr_val = queue.pop(0)
-            emp = curr_var.split("_")[0]
-            day = int(curr_var.split("_")[1])
-
-            # Count assigned workdays for the employee
-            emp_vars = [v for v in domains if v.startswith(emp)]
-            assigned_workdays = sum(1 for v in emp_vars if len(domains[v]) == 1 and domains[v][0] in ["M", "T"])
-            remaining_days = sum(1 for v in emp_vars if len(domains[v]) > 1)
-            assigned_t = sum(1 for v in emp_vars if len(domains[v]) == 1 and domains[v][0] == "T")
-
-            # Enforce max 20 workdays
-            if assigned_workdays >= 20:
-                for v in emp_vars:
-                    if len(domains[v]) > 1:
-                        domains[v] = ["0"]  # Force remaining days to "0"
-                        queue.append((v, "0"))
-
-            # Enforce min 3 "T" shifts
-            if curr_val == "0" and assigned_t < 3 and remaining_days + assigned_t < 3:
-                return False  # Not enough days left to satisfy min "T"
-
-            # Check day constraints
-            day_vars = [v for v in domains if v.endswith(f"_{day}")]
-            assigned_m = sum(1 for v in day_vars if len(domains[v]) == 1 and domains[v][0] == "M")
-            assigned_t = sum(1 for v in day_vars if len(domains[v]) == 1 and domains[v][0] == "T")
-            unassigned = sum(1 for v in day_vars if len(domains[v]) > 1)
-
-            if (assigned_m == 0 and not any("M" in domains[v] for v in day_vars if len(domains[v]) > 1)) or \
-               (assigned_t == 0 and not any("T" in domains[v] for v in day_vars if len(domains[v]) > 1)):
-                return False  # Can't satisfy min 1 "M" and 1 "T"
-
-            # Propagate to other variables if domain reduced
-            for other_var in domains:
+            for other_var in self.variables:
                 if other_var == curr_var or len(domains[other_var]) == 1:
                     continue
-                new_domain = [val for val in domains[other_var] if self.check_constraints(other_var, val, {curr_var: curr_val})]
+                new_domain = []
+                for val in domains[other_var]:
+                    temp_assignment = {v: domains[v][0] if len(domains[v]) == 1 else None
+                                       for v in self.variables}
+                    temp_assignment[curr_var] = curr_val
+                    temp_assignment[other_var] = val
+                    if self.check_constraints(other_var, val, temp_assignment):
+                        new_domain.append(val)
                 if not new_domain:
                     return False
                 if len(new_domain) < len(domains[other_var]):
@@ -77,19 +53,16 @@ class CSP:
         unassigned_vars = [v for v in domains if len(domains[v]) > 1]
         if not unassigned_vars:
             return None
-        return min(unassigned_vars, key=lambda var: (
-            len(domains[var]),
-            -sum(1 for v in domains if v.startswith(var.split("_")[0]) and len(domains[v]) == 1 and domains[v][0] in ["M", "T"])
-        ))
+        return min(unassigned_vars, key=lambda var: len(domains[var]))
 
-    def search(self, domains=None, timeout=180):
+    def search(self, domains=None, timeout=60):
         start_time = time.time()
         if domains is None:
             domains = copy.deepcopy(self.domains)
 
         def timed_search(domains, depth=0):
             if time.time() - start_time > timeout:
-                print(f"\nExited at the timeout of {timeout} s")
+                print(f"\n Exited at the timeout of {timeout} s")
                 return None
             if any(len(lv) == 0 for lv in domains.values()):
                 return None
@@ -120,6 +93,8 @@ def employee_scheduling():
     vacations = {emp: set(random.sample(range(1, num_days + 1), num_of_vacations)) for emp in employees}
 
     variables = [f"{emp}_{d}" for emp in employees for d in range(1, num_days + 1)]
+
+    # Only vacations restrict to "F"; holidays are treated as regular days
     domains = {
         var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]]
         else ["M", "T", "0"]
@@ -147,7 +122,7 @@ def employee_scheduling():
         day_vars = [f"{emp}_{day}" for emp in employees]
         handle_ho_constraint(csp, day_vars, lambda values: values.count("M") >= 1 and values.count("T") >= 1)
 
-    solution = csp.search(timeout=150)
+    solution = csp.search(timeout=1800)
     if solution and solution["assignment"]:
         assignment = solution["assignment"]
         generate_calendar(assignment, num_employees, num_days)
@@ -159,8 +134,10 @@ def employee_scheduling():
 
 def handle_ho_constraint(csp, variables, constraint_func):
     def constraint(var, assignment):
-        assigned_values = [assignment.get(v, "-") for v in variables if v in assignment]
-        return constraint_func(assigned_values)
+        values = [assignment.get(v, None) for v in variables]
+        if None in values:
+            return True
+        return constraint_func(values)
     constraint_key = f"multi_{'_'.join(variables)}"
     csp.constraints[constraint_key] = constraint
 
@@ -173,6 +150,7 @@ def build_schedule_table(assignment, num_employees, num_days):
         for d in range(1, num_days + 1):
             row.append(assignment.get(f"E{e}_{d}", "-"))
         table.append(row)
+    print(type(table))
     return table
 
 def generate_calendar(assignment, num_employees, num_days):
