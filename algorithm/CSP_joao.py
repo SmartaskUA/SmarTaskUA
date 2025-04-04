@@ -16,7 +16,7 @@ class CSP:
         for constraint_key, constraint_func in self.constraints.items():
             if isinstance(constraint_key, tuple):
                 v1, v2 = constraint_key
-                if v1 in temp_assignment and v2 in temp_assignment:
+                if temp_assignment.get(v1) is not None and temp_assignment.get(v2) is not None:
                     val1 = temp_assignment[v1]
                     val2 = temp_assignment[v2]
                     if not constraint_func(val1, val2):
@@ -131,26 +131,18 @@ def employee_scheduling():
         emp_vars = [f"{emp}_{d}" for d in range(1, num_days + 1)]
         for start in range(num_days - 5):
             window_vars = emp_vars[start:start + 6]
-            handle_ho_constraint(csp, window_vars,
-                lambda values: not all((v == "M" or (("_" in v) and v.startswith("M_")) or
-                                        v == "T" or (("_" in v) and v.startswith("T_")))
-                                       for v in values))
-        handle_ho_constraint(csp, emp_vars,
-            lambda values: sum(1 for v in values if (v == "M" or (("_" in v) and v.startswith("M_")) or
-                                                     v == "T" or (("_" in v) and v.startswith("T_")))
-                               ) <= 20)
+            handle_ho_constraint(csp, window_vars, lambda values: not all((v == "M" or (("_" in v) and v.startswith("M_")) or
+                                        v == "T" or (("_" in v) and v.startswith("T_"))) for v in values))
+        handle_ho_constraint(csp, emp_vars, lambda values: sum(1 for v in values if (v == "M" or (("_" in v) and v.startswith("M_")) or
+                                                     v == "T" or (("_" in v) and v.startswith("T_")))) <= 20)
         holiday_vars = [var for var in emp_vars if int(var.split('_')[1]) in holidays]
-        handle_ho_constraint(csp, holiday_vars,
-            lambda values: sum(1 for v in values if (v == "M" or (("_" in v) and v.startswith("M_")) or
-                                                     v == "T" or (("_" in v) and v.startswith("T_")))
-                               ) <= 2)
+        handle_ho_constraint(csp, holiday_vars, lambda values: sum(1 for v in values if (v == "M" or (("_" in v) and v.startswith("M_")) or
+                                                     v == "T" or (("_" in v) and v.startswith("T_")))) <= 2)
 
     for day in range(1, num_days + 1):
         day_vars = [f"{emp}_{day}" for emp in employees]
-        handle_ho_constraint(csp, day_vars,
-            lambda values: (sum(1 for v in values if (v == "M" or (("_" in v) and v.startswith("M_"))) ) >= 2) and
-                           (sum(1 for v in values if (v == "T" or (("_" in v) and v.startswith("T_"))) ) >= 2)
-        )
+        handle_ho_constraint(csp, day_vars, lambda values: (sum(1 for v in values if (v == "M" or (("_" in v) and v.startswith("M_"))) ) >= 2) and
+                           (sum(1 for v in values if (v == "T" or (("_" in v) and v.startswith("T_"))) ) >= 2))
 
     solution = csp.search(timeout=1800)
     if solution and solution["assignment"]:
@@ -193,6 +185,11 @@ def generate_calendar(assignment, num_employees, num_days):
             t_count = sum(1 for v in employee_schedule if (v == "T" or (("_" in v) and v.startswith("T_"))))
             m_count = sum(1 for v in employee_schedule if (v == "M" or (("_" in v) and v.startswith("M_"))))
             print(f"Employee E{e}: {t_count} afternoon shifts (T), {m_count} morning shifts (M)")
+        for d in range(1, num_days + 1):
+            day_schedule = [assignment.get(f"E{e}_{d}", "-") for e in range(1, num_employees + 1)]
+            t_count = sum(1 for v in day_schedule if (v == "T" or (("_" in v) and v.startswith("T_"))))
+            m_count = sum(1 for v in day_schedule if (v == "M" or (("_" in v) and v.startswith("M_"))))
+            print(f"Day {d}: {t_count} afternoon shifts (T), {m_count} morning shifts (M)")
 
 if __name__ == "__main__":
     employee_scheduling()
