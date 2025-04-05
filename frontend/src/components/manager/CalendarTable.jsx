@@ -1,36 +1,33 @@
 import React from "react";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+} from "@mui/material";
 import LegendBox from "./LegendBox";
 
 const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay }) => {
+
   const abbreviateValue = (value) => {
-    switch (value.toLowerCase()) {
-      case "folga":
-        return "F";
-      case "férias":
-        return "Fe";
-      case "manhã":
-        return "M";
-      case "tarde":
-        return "T";
-      default:
-        return value;
-    }
+    const normalized = value.toUpperCase();
+    if (normalized === "0") return "F"; 
+    if (normalized === "F") return "Fe"; 
+    if (["T", "TA", "TB"].includes(normalized)) return "T"; 
+    if (["M", "MA", "MB"].includes(normalized)) return "M"; 
+    return value;
   };
 
   const getCellStyle = (value) => {
-    switch (value.toLowerCase()) {
-      case "folga":
-        return { backgroundColor: "#a0d8ef", color: "#000" };
-      case "férias":
-        return { backgroundColor: "#ffcccb", color: "#000" };
-      case "manhã":
-        return { backgroundColor: "#d4edda", color: "#000" };
-      case "tarde":
-        return { backgroundColor: "#f9e79f", color: "#000" };
-      default:
-        return {};
-    }
+    const normalized = value.toUpperCase();
+    if (normalized === "0") return { backgroundColor: "#a0d8ef", color: "#000" }; 
+    if (normalized === "F") return { backgroundColor: "#ffcccb", color: "#000" }; 
+    if (["T", "TA", "TB"].includes(normalized)) return { backgroundColor: "#f9e79f", color: "#000" };
+    if (["M", "MA", "MB"].includes(normalized)) return { backgroundColor: "#d4edda", color: "#000" }; 
+    return {};
   };
 
   const getDisplayedData = () => {
@@ -43,7 +40,7 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay }) =
   return (
     <div>
       <TableContainer component={Paper} style={{ marginTop: "15px", maxWidth: "100%" }}>
-        <Table sx={{ minWidth: 450 }} aria-label="simple table">
+        <Table sx={{ minWidth: 450 }} aria-label="calendar table">
           <TableHead>
             <TableRow style={{ backgroundColor: "#007bff", color: "white" }}>
               <TableCell style={{ fontSize: "12px", padding: "6px" }}>Funcionário</TableCell>
@@ -75,6 +72,7 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay }) =
           </TableBody>
         </Table>
       </TableContainer>
+
       <LegendBox
         style={{
           marginTop: "1rem",
