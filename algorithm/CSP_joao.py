@@ -17,14 +17,22 @@ class CSP:
         temp_assignment[var] = value
         for constraint_key, constraint_func in self.constraints.items():
             if isinstance(constraint_key, tuple):
-                v1, v2 = constraint_key
-                if temp_assignment.get(v1) is not None and temp_assignment.get(v2) is not None:
-                    val1 = temp_assignment[v1]
-                    val2 = temp_assignment[v2]
-                    if not constraint_func(val1, val2):
+                if len(constraint_key) == 2:  # Binary constraint
+                    v1, v2 = constraint_key
+                    if v1 in temp_assignment and v2 in temp_assignment:
+                        val1 = temp_assignment[v1]
+                        val2 = temp_assignment[v2]
+                        if not constraint_func(val1, val2):
+                            print(f"Constraint failed for {v1}={val1}, {v2}={val2}")
+                            return False
+                else:  # Higher-order constraint
+                    values = [temp_assignment.get(v) for v in constraint_key]
+                    if None not in values and not constraint_func(values):
+                        print(f"Higher-order constraint failed for {constraint_key}")
                         return False
             else:
                 if not constraint_func(var, temp_assignment):
+                    print(f"Single constraint failed for {var}={value}")
                     return False
         return True
 
@@ -38,18 +46,14 @@ class CSP:
                     continue
                 new_domain = []
                 for val in domains[other_var]:
-                    temp_assignment = {v: domains[v][0] if len(domains[v]) == 1 else None
-                                       for v in self.variables}
-                    temp_assignment[curr_var] = curr_val
-                    temp_assignment[other_var] = val
-                    if self.check_constraints(other_var, val, temp_assignment):
+                    if self.check_constraints(other_var, val, {curr_var: curr_val, other_var: val}):
                         new_domain.append(val)
                 if not new_domain:
+                    print(f"Domain wiped out for {other_var} when assigning {curr_var} = {curr_val}")
                     return False
-                if len(new_domain) < len(domains[other_var]):
-                    domains[other_var] = new_domain
-                    if len(new_domain) == 1:
-                        queue.append((other_var, new_domain[0]))
+                domains[other_var] = new_domain
+                if len(new_domain) == 1:
+                    queue.append((other_var, new_domain[0]))
         return True
 
     def select_variable(self, domains):
@@ -65,7 +69,7 @@ class CSP:
 
         def timed_search(domains, depth=0):
             if time.time() - start_time > timeout:
-                print(f"\n Exited at the timeout of {timeout} s")
+                print(f"\nExited at the timeout of {timeout} s")
                 return None
             if any(len(lv) == 0 for lv in domains.values()):
                 return None
@@ -75,6 +79,7 @@ class CSP:
             var = self.select_variable(domains)
             if var is None:
                 return None
+            print(f"Depth {depth}: Selecting {var} with domain {domains[var]}")
             values = domains[var].copy()
             random.shuffle(values)  # Randomize value order
             for val in values:
@@ -93,79 +98,66 @@ def employee_scheduling():
     num_employees = 12
     num_days = 30
     num_teams = 2
-    teams = [f"{list(string.ascii_uppercase)[t]}" for t in range(num_teams)]
+    teams = ["A", "B"]
     employee_teams = {
-        "E1": ["A"],
-        "E2": ["A"],
-        "E3": ["A"],
-        "E4": ["A"],
-        "E5": ["A", "B"],
-        "E6": ["A", "B"],
-        "E7": ["A"],
-        "E8": ["A"],
-        "E9": ["A"],
-        "E10": ["B"],
-        "E11": ["A", "B"],
-        "E12": ["B"],
-    }  
+        "E1": ["A"], "E2": ["A"], "E3": ["A"], "E4": ["A"],
+        "E5": ["A", "B"], "E6": ["A", "B"], "E7": ["A"], "E8": ["A"],
+        "E9": ["A"], "E10": ["B"], "E11": ["A", "B"], "E12": ["B"]
+    }
     holidays = {7, 14, 21, 28}
     employees = [f"E{e}" for e in range(1, num_employees + 1)]
     num_of_vacations = 4
+
     if os.path.exists("vacations.json"):
         with open("vacations.json", "r") as f:
             vacations = json.load(f)
             vacations = {emp: set(days) for emp, days in vacations.items()}
     else:
-        vacations = {
-            emp: set(random.sample(range(1, num_days + 1), num_of_vacations))
-            for emp in employees
-        }
+        vacations = {emp: set(random.sample(range(1, num_days + 1), num_of_vacations)) for emp in employees}
         with open("vacations.json", "w") as f:
             json.dump({emp: list(days) for emp, days in vacations.items()}, f, indent=2)
+
     variables = [f"{emp}_{d}" for emp in employees for d in range(1, num_days + 1)]
 
     def define_domain(emp):
-        domain = []
-        for team in employee_teams[emp]:
-            domain.extend([f"M_{team}", f"T_{team}"])
-        domain.append("0")
-        return domain
+        return [f"M_{t}" for t in employee_teams[emp]] + [f"T_{t}" for t in employee_teams[emp]] + ["0"]
 
     domains = {
-        var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]]
-        else define_domain(var.split('_')[0])
+        var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]] else define_domain(var.split('_')[0])
         for var in variables
     }
 
     constraints = {
-        (v1, v2): (lambda x1, x2: not ((x1 == "T" or (("_" in x1) and x1.split("_")[0] == "T"))
-                                         and (x2 == "M" or (("_" in x2) and x2.split("_")[0] == "M"))))
+        (v1, v2): (lambda x1, x2: not (x1.startswith("T_") and x2.startswith("M_")))
         for v1 in variables for v2 in variables
         if v1.split('_')[0] == v2.split('_')[0] and int(v1.split('_')[1]) + 1 == int(v2.split('_')[1])
     }
 
     csp = CSP(variables, domains, constraints)
 
+    # Add higher-order constraints
     for emp in employees:
         emp_vars = [f"{emp}_{d}" for d in range(1, num_days + 1)]
         for start in range(num_days - 5):
             window_vars = emp_vars[start:start + 6]
-            handle_ho_constraint(csp, window_vars, lambda values: not all((v == "M" or (("_" in v) and v.startswith("M_")) or
-                                        v == "T" or (("_" in v) and v.startswith("T_"))) for v in values))
-        handle_ho_constraint(csp, emp_vars, lambda values: sum(1 for v in values if (v == "M" or (("_" in v) and v.startswith("M_")) or
-                                                     v == "T" or (("_" in v) and v.startswith("T_")))) <= 20)
+            handle_ho_constraint(csp, window_vars, 
+                lambda values: not all(v in ["M_A", "M_B", "T_A", "T_B"] for v in values))
+        handle_ho_constraint(csp, emp_vars, 
+            lambda values: sum(1 for v in values if v in ["M_A", "M_B", "T_A", "T_B"]) <= 20)
         holiday_vars = [var for var in emp_vars if int(var.split('_')[1]) in holidays]
-        handle_ho_constraint(csp, holiday_vars, lambda values: sum(1 for v in values if (v == "M" or (("_" in v) and v.startswith("M_")) or
-                                                     v == "T" or (("_" in v) and v.startswith("T_")))) <= 2)
+        handle_ho_constraint(csp, holiday_vars, 
+            lambda values: sum(1 for v in values if v in ["M_A", "M_B", "T_A", "T_B"]) <= 2)
 
     for day in range(1, num_days + 1):
         day_vars = [f"{emp}_{day}" for emp in employees]
-        handle_ho_constraint(csp, day_vars, lambda values, teams=teams: all(
-            sum(1 for v in values if v == f"M_{team}") >= 2 for team in teams) and all(
-                sum(1 for v in values if v == f"T_{team}") >= 2 for team in teams))
+        handle_ho_constraint(csp, day_vars, 
+            lambda values: sum(1 for v in values if v == "M_A") >= 2 and 
+                           sum(1 for v in values if v == "T_A") >= 2 and 
+                           sum(1 for v in values if v == "M_B") >= 1 and 
+                           sum(1 for v in values if v == "T_B") >= 1)
 
-    solution = csp.search(timeout=18000)
-    if solution and solution["assignment"]:
+    solution = csp.search(timeout=600)
+    if solution and "assignment" in solution:
         assignment = solution["assignment"]
         generate_calendar(assignment, num_employees, num_days)
         toc = time.time()
@@ -173,15 +165,12 @@ def employee_scheduling():
         return build_schedule_table(assignment, num_employees, num_days)
     else:
         print("No solution found within timeout or constraints too restrictive.")
+        return None
 
 def handle_ho_constraint(csp, variables, constraint_func):
-    def constraint(var, assignment):
-        values = [assignment.get(v, None) for v in variables]
-        if None in values:
-            return True
+    def constraint(values):
         return constraint_func(values)
-    constraint_key = f"multi_{'_'.join(variables)}"
-    csp.constraints[constraint_key] = constraint
+    csp.constraints[tuple(variables)] = constraint
 
 def build_schedule_table(assignment, num_employees, num_days):
     table = []
@@ -198,12 +187,12 @@ def build_schedule_table(assignment, num_employees, num_days):
 def generate_calendar(assignment, num_employees, num_days):
     with open("calendario_turnos.csv", "w", newline="") as csvfile:
         csvwriter = csv.writer(csvfile)
-        csvwriter.writerow([str(day) for day in range(1, num_days + 1)])
+        csvwriter.writerow(["Employee"] + [str(day) for day in range(1, num_days + 1)])
         for e in range(1, num_employees + 1):
             employee_schedule = [assignment.get(f"E{e}_{d}", "-") for d in range(1, num_days + 1)]
             csvwriter.writerow([f"E{e}"] + employee_schedule)
-            t_count = sum(1 for v in employee_schedule if (v == "T" or (("_" in v) and v.startswith("T_"))))
-            m_count = sum(1 for v in employee_schedule if (v == "M" or (("_" in v) and v.startswith("M_"))))
+            t_count = sum(1 for v in employee_schedule if v.startswith("T_"))
+            m_count = sum(1 for v in employee_schedule if v.startswith("M_"))
             print(f"Employee E{e}: {t_count} afternoon shifts (T), {m_count} morning shifts (M)")
 
 if __name__ == "__main__":
