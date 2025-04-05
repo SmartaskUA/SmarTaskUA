@@ -3,6 +3,8 @@ import random
 import csv
 import time
 import string
+import os
+import json
 
 class CSP:
     def __init__(self, variables, domains, constraints):
@@ -93,13 +95,33 @@ def employee_scheduling():
     num_teams = 2
     teams = [f"{list(string.ascii_uppercase)[t]}" for t in range(num_teams)]
     employee_teams = {
-        f"E{e}": list(set([random.choice(teams) for _ in range(random.randint(1, num_teams))]))
-        for e in range(1, num_employees + 1)
+        "E1": ["A"],
+        "E2": ["A"],
+        "E3": ["A"],
+        "E4": ["A"],
+        "E5": ["A", "B"],
+        "E6": ["A", "B"],
+        "E7": ["A"],
+        "E8": ["A"],
+        "E9": ["A"],
+        "E10": ["B"],
+        "E11": ["A", "B"],
+        "E12": ["B"],
     }  
     holidays = {7, 14, 21, 28}
     employees = [f"E{e}" for e in range(1, num_employees + 1)]
     num_of_vacations = 4
-    vacations = {emp: set(random.sample(range(1, num_days + 1), num_of_vacations)) for emp in employees}
+    if os.path.exists("vacations.json"):
+        with open("vacations.json", "r") as f:
+            vacations = json.load(f)
+            vacations = {emp: set(days) for emp, days in vacations.items()}
+    else:
+        vacations = {
+            emp: set(random.sample(range(1, num_days + 1), num_of_vacations))
+            for emp in employees
+        }
+        with open("vacations.json", "w") as f:
+            json.dump({emp: list(days) for emp, days in vacations.items()}, f, indent=2)
     variables = [f"{emp}_{d}" for emp in employees for d in range(1, num_days + 1)]
 
     def define_domain(emp):
