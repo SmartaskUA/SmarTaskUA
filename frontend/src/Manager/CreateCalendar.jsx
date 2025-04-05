@@ -10,20 +10,22 @@ import {
   Box,
   ToggleButton,
   ToggleButtonGroup,
-  Paper
+  Paper,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 
 const CreateCalendar = () => {
-  // States for the form fields
   const [title, setTitle] = useState("");
   const [dateStart, setDateStart] = useState("");
   const [dateEnd, setDateEnd] = useState("");
   const [maxDuration, setMaxDuration] = useState("");
 
-  // State for the selected algorithm
   const [selectedAlgorithm, setSelectedAlgorithm] = useState("Algorithm1");
 
-  // Handles the change of the selected algorithm
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [errorOpen, setErrorOpen] = useState(false);
+
   const handleAlgorithmChange = (event, newAlgorithm) => {
     if (newAlgorithm !== null) {
       setSelectedAlgorithm(newAlgorithm);
@@ -43,14 +45,14 @@ const CreateCalendar = () => {
 
     try {
       const response = await axios.post(`${baseurl}/schedules/generate`, data);
-      alert("Data sent successfully!");
       console.log("API Response:", response.data);
+      setSuccessOpen(true); 
     } catch (error) {
       console.error("Error sending data:", error);
-      if (error.response && error.response.data && error.response.data.trace) {
+      if (error.response?.data?.trace) {
         console.error("Trace:", error.response.data.trace);
       }
-      alert("Error sending data.");
+      setErrorOpen(true); 
     }
   };
 
@@ -66,7 +68,7 @@ const CreateCalendar = () => {
   return (
     <div className="admin-container">
       <Sidebar_Manager />
-      <div
+      <div  
         className="main-content"
         style={{
           flex: 1,
@@ -76,11 +78,11 @@ const CreateCalendar = () => {
           marginRight: "20px",
         }}
       >
-        <h1>Generate Schedule</h1>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "2%" }}>
+          <h1>Generate Schedule</h1>
+        </div>
 
-        {/* Grid layout dividing the screen into two columns */}
         <Grid container spacing={10}>
-          {/* Left column - Form */}
           <Grid item xs={12} md={6}>
             <Paper style={{ padding: "20px" }}>
               <Typography variant="h6" gutterBottom>
@@ -121,8 +123,6 @@ const CreateCalendar = () => {
               />
             </Paper>
           </Grid>
-
-          {/* Right column - Algorithm selection */}
           <Grid item xs={12} md={6}>
             <Paper style={{ padding: "20px" }}>
               <Typography variant="h6" gutterBottom>
@@ -144,7 +144,6 @@ const CreateCalendar = () => {
           </Grid>
         </Grid>
 
-        {/* Buttons to save and clear the form */}
         <Grid container spacing={2} style={{ marginTop: "20px" }}>
           <Box sx={{ display: "flex", justifyContent: "center", marginTop: 3, gap: 2 }}>
             <Button variant="contained" color="primary" onClick={handleSave}>
@@ -155,6 +154,27 @@ const CreateCalendar = () => {
             </Button>
           </Box>
         </Grid>
+        <Snackbar
+          open={successOpen}
+          autoHideDuration={3000}
+          onClose={() => setSuccessOpen(false)}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        >
+          <Alert onClose={() => setSuccessOpen(false)} severity="success" sx={{ width: "100%" }}>
+            Calendar created successfully!
+          </Alert>
+        </Snackbar>
+
+        <Snackbar
+          open={errorOpen}
+          autoHideDuration={3000}
+          onClose={() => setErrorOpen(false)}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        >
+          <Alert onClose={() => setErrorOpen(false)} severity="error" sx={{ width: "100%" }}>
+            Failed to create calendar. Try again.
+          </Alert>
+        </Snackbar>
       </div>
     </div>
   );

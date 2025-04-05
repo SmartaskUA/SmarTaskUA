@@ -50,13 +50,18 @@ const Calendar = () => {
   const checkScheduleConflicts = () => checkConflicts((shifts) => shifts.has("T") && shifts.has("M"));
   const checkWorkloadConflicts = () => Object.keys(groupByEmployee()).filter(employee => groupByEmployee()[employee].size > 5);
   const checkUnderworkedEmployees = () => Object.keys(groupByEmployee()).filter(employee => groupByEmployee()[employee].size < 22);
+
   const checkVacationDays = () => {
     const employeeVacations = data.reduce((acc, { employee, shift }) => {
-      if (shift === "Fe") acc[employee] = (acc[employee] || 0) + 1;
+      if (shift === "Fe") {
+        acc[employee] = (acc[employee] || 0) + 1;
+      }
       return acc;
     }, {});
+
     return Object.keys(employeeVacations).filter(employee => employeeVacations[employee] !== 30);
   };
+
 
   // Função para verificar os dias de trabalho consecutivos
   const checkMaxConsecutiveWorkdays = () => {
@@ -76,7 +81,6 @@ const Calendar = () => {
   // Função para verificar os funcionários com mais de 22 dias de trabalho no mês
   const checkMaxWorkdays = () => Object.keys(groupByEmployee()).filter(employee => groupByEmployee()[employee].size > 22);
 
-  // Função para baixar o CSV
   const downloadCSV = () => {
     const csvContent = data.map(row => row.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });

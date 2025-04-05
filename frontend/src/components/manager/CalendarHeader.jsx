@@ -26,7 +26,7 @@ const CalendarHeader = ({ months, selectedMonth, setSelectedMonth, downloadCSV, 
             type="number" 
             value={endDay} 
             min={1} 
-            max={31} 
+            max={365} 
             onChange={(e) => setEndDay(Number(e.target.value))} 
             style={{ width: "60px", marginLeft: "5px", marginRight: "5%"  }}
           />
