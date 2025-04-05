@@ -3,7 +3,7 @@ import React from "react";
 const CalendarHeader = ({ months, selectedMonth, setSelectedMonth, downloadCSV, startDay, endDay, setStartDay, setEndDay }) => {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}> 
-      <h2 className="heading">Calendário de Trabalho</h2>
+      <h2 className="heading">Work Calendar</h2>
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
         <select
           onChange={(e) => setSelectedMonth(Number(e.target.value))}
