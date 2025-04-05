@@ -161,7 +161,8 @@ def employee_scheduling():
         assignment = solution["assignment"]
         generate_calendar(assignment, num_employees, num_days)
         toc = time.time()
-        print(f"Execution time: {toc - tic:.2f} seconds")
+        print(f"Execution time: {toc - tic:.2f} seconds")        
+        analyze_solution(assignment, employees, num_days, holidays)
         return build_schedule_table(assignment, num_employees, num_days)
     else:
         print("No solution found within timeout or constraints too restrictive.")
@@ -194,6 +195,33 @@ def generate_calendar(assignment, num_employees, num_days):
             t_count = sum(1 for v in employee_schedule if v.startswith("T_"))
             m_count = sum(1 for v in employee_schedule if v.startswith("M_"))
             print(f"Employee E{e}: {t_count} afternoon shifts (T), {m_count} morning shifts (M)")
+
+def analyze_solution(assignment, employees, num_days, holidays):
+    # 1. Count T->M violations
+    tm_violations = 0
+    for emp in employees:
+        for d in range(1, num_days):  # Up to num_days-1 since we check next day
+            curr_day = assignment.get(f"{emp}_{d}", "-")
+            next_day = assignment.get(f"{emp}_{d+1}", "-")
+            if curr_day.startswith("T_") and next_day.startswith("M_"):
+                tm_violations += 1
+    print(f"\nNumber of T->M restriction violations: {tm_violations}")
+
+    # 2. Shifts per team per day
+    print("\nShifts per team per day:")
+    for day in range(1, num_days + 1):
+        day_vars = [assignment.get(f"{emp}_{day}", "-") for emp in employees]
+        m_a = sum(1 for v in day_vars if v == "M_A")
+        t_a = sum(1 for v in day_vars if v == "T_A")
+        m_b = sum(1 for v in day_vars if v == "M_B")
+        t_b = sum(1 for v in day_vars if v == "T_B")
+        print(f"Day {day}: M_A={m_a}, T_A={t_a}, M_B={m_b}, T_B={t_b}")
+
+    # 3. Workdays on holidays per employee
+    print("\nWorkdays on holidays per employee:")
+    for emp in employees:
+        holiday_workdays = sum(1 for d in holidays if assignment.get(f"{emp}_{d}", "-") in ["M_A", "M_B", "T_A", "T_B"])
+        print(f"{emp}: {holiday_workdays} workdays on holidays")
 
 if __name__ == "__main__":
     employee_scheduling()
