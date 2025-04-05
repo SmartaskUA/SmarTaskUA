@@ -103,14 +103,11 @@ def employee_scheduling():
     variables = [f"{emp}_{d}" for emp in employees for d in range(1, num_days + 1)]
 
     def define_domain(emp):
-        if len(employee_teams[emp]) == 1:
-            return ["M", "T", "0"]
-        else:
-            domain = []
-            for team in employee_teams[emp]:
-                domain.extend([f"M_{team}", f"T_{team}"])
-            domain.append("0")
-            return domain
+        domain = []
+        for team in employee_teams[emp]:
+            domain.extend([f"M_{team}", f"T_{team}"])
+        domain.append("0")
+        return domain
 
     domains = {
         var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]]
@@ -141,8 +138,9 @@ def employee_scheduling():
 
     for day in range(1, num_days + 1):
         day_vars = [f"{emp}_{day}" for emp in employees]
-        handle_ho_constraint(csp, day_vars, lambda values: (sum(1 for v in values if (v == "M" or (("_" in v) and v.startswith("M_"))) ) >= 2) and
-                           (sum(1 for v in values if (v == "T" or (("_" in v) and v.startswith("T_"))) ) >= 2))
+        handle_ho_constraint(csp, day_vars, lambda values, teams=teams: all(
+            sum(1 for v in values if v == f"M_{team}") >= 2 for team in teams) and all(
+                sum(1 for v in values if v == f"T_{team}") >= 2 for team in teams))
 
     solution = csp.search(timeout=18000)
     if solution and solution["assignment"]:
