@@ -17,7 +17,7 @@ class CSP:
         temp_assignment[var] = value
         for constraint_key, constraint_func in self.constraints.items():
             if isinstance(constraint_key, tuple):
-                if len(constraint_key) == 2:  # Binary constraint
+                if len(constraint_key) == 2:
                     v1, v2 = constraint_key
                     if v1 in temp_assignment and v2 in temp_assignment:
                         val1 = temp_assignment[v1]
@@ -25,7 +25,7 @@ class CSP:
                         if not constraint_func(val1, val2):
                             print(f"Constraint failed for {v1}={val1}, {v2}={val2}")
                             return False
-                else:  # Higher-order constraint
+                else:
                     values = [temp_assignment.get(v) for v in constraint_key]
                     if None not in values and not constraint_func(values):
                         print(f"Higher-order constraint failed for {constraint_key}")
@@ -97,8 +97,6 @@ def employee_scheduling():
     tic = time.time()
     num_employees = 12
     num_days = 30
-    num_teams = 2
-    teams = ["A", "B"]
     employee_teams = {
         "E1": ["A"], "E2": ["A"], "E3": ["A"], "E4": ["A"],
         "E5": ["A", "B"], "E6": ["A", "B"], "E7": ["A"], "E8": ["A"],
@@ -135,26 +133,21 @@ def employee_scheduling():
 
     csp = CSP(variables, domains, constraints)
 
-    # Add higher-order constraints
     for emp in employees:
         emp_vars = [f"{emp}_{d}" for d in range(1, num_days + 1)]
         for start in range(num_days - 5):
             window_vars = emp_vars[start:start + 6]
-            handle_ho_constraint(csp, window_vars, 
-                lambda values: not all(v in ["M_A", "M_B", "T_A", "T_B"] for v in values))
-        handle_ho_constraint(csp, emp_vars, 
-            lambda values: sum(1 for v in values if v in ["M_A", "M_B", "T_A", "T_B"]) <= 20)
+            handle_ho_constraint(csp, window_vars, lambda values: not all(v in ["M_A", "M_B", "T_A", "T_B"] for v in values))
+        handle_ho_constraint(csp, emp_vars, lambda values: sum(1 for v in values if v in ["M_A", "M_B", "T_A", "T_B"]) <= 20)
         holiday_vars = [var for var in emp_vars if int(var.split('_')[1]) in holidays]
-        handle_ho_constraint(csp, holiday_vars, 
-            lambda values: sum(1 for v in values if v in ["M_A", "M_B", "T_A", "T_B"]) <= 2)
+        handle_ho_constraint(csp, holiday_vars, lambda values: sum(1 for v in values if v in ["M_A", "M_B", "T_A", "T_B"]) <= 2)
 
     for day in range(1, num_days + 1):
         day_vars = [f"{emp}_{day}" for emp in employees]
-        handle_ho_constraint(csp, day_vars, 
-            lambda values: sum(1 for v in values if v == "M_A") >= 2 and 
-                           sum(1 for v in values if v == "T_A") >= 2 and 
-                           sum(1 for v in values if v == "M_B") >= 1 and 
-                           sum(1 for v in values if v == "T_B") >= 1)
+        handle_ho_constraint(csp, day_vars, lambda values: sum(1 for v in values if v == "M_A") >= 2 and 
+                                                            sum(1 for v in values if v == "T_A") >= 2 and 
+                                                            sum(1 for v in values if v == "M_B") >= 1 and 
+                                                            sum(1 for v in values if v == "T_B") >= 1)
 
     solution = csp.search(timeout=600)
     if solution and "assignment" in solution:
@@ -197,17 +190,15 @@ def generate_calendar(assignment, num_employees, num_days):
             print(f"Employee E{e}: {t_count} afternoon shifts (T), {m_count} morning shifts (M)")
 
 def analyze_solution(assignment, employees, num_days, holidays):
-    # 1. Count T->M violations
     tm_violations = 0
     for emp in employees:
-        for d in range(1, num_days):  # Up to num_days-1 since we check next day
+        for d in range(1, num_days):
             curr_day = assignment.get(f"{emp}_{d}", "-")
             next_day = assignment.get(f"{emp}_{d+1}", "-")
             if curr_day.startswith("T_") and next_day.startswith("M_"):
                 tm_violations += 1
     print(f"\nNumber of T->M restriction violations: {tm_violations}")
 
-    # 2. Shifts per team per day
     print("\nShifts per team per day:")
     for day in range(1, num_days + 1):
         day_vars = [assignment.get(f"{emp}_{day}", "-") for emp in employees]
@@ -217,7 +208,6 @@ def analyze_solution(assignment, employees, num_days, holidays):
         t_b = sum(1 for v in day_vars if v == "T_B")
         print(f"Day {day}: M_A={m_a}, T_A={t_a}, M_B={m_b}, T_B={t_b}")
 
-    # 3. Workdays on holidays per employee
     print("\nWorkdays on holidays per employee:")
     for emp in employees:
         holiday_workdays = sum(1 for d in holidays if assignment.get(f"{emp}_{d}", "-") in ["M_A", "M_B", "T_A", "T_B"])
