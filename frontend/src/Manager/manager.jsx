@@ -33,7 +33,7 @@ const CalendarCard = ({ title, status, time, link, buttonLabel, className, onCli
 
 const LastSeenSection = () => (
   <>
-    <h3 className="section-title">Last Seen</h3>
+    <h3 className="section-title" style={{ marginTop: "20px"}}>Last Seen</h3>
     <div className="calendar-cards-container" style={{ gap: "30px" }}>
       <CalendarCard title="January, Algorithm X" status="green" link="/manager/calendar/abc123" buttonLabel="Open" className="completed-card" />
       <CalendarCard title="September, Algorithm Z" status="green" link="/manager/calendar/xyz456" buttonLabel="Open" className="completed-card" />

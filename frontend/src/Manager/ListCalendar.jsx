@@ -40,7 +40,6 @@ const ListCalendar = () => {
     return () => clearInterval(interval);
   }, []);
 
-
   const handleSearchInputChange = (event, newValue) => {
     setTitle(newValue);
     if (newValue.length > 0) {
@@ -57,7 +56,6 @@ const ListCalendar = () => {
     if (event.key === "Enter" && title.trim().length > 0) {
       event.preventDefault();
 
-      // Check if the entered title exists exactly in the list of calendars
       const calendarMatch = calendars.find(
         (calendar) => calendar.title.toLowerCase() === title.toLowerCase()
       );
@@ -111,8 +109,8 @@ const ListCalendar = () => {
           className="header"
           style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
         >
-          <h2 className="heading" style={{ marginRight: "201px" }}>
-            List Calendar
+          <h2 className="heading" style={{ marginRight: "201px", marginLeft:"1%" }}>
+            List Schedules
           </h2>
           <Autocomplete
             style={{ width: "250px", marginRight: "5%" }}
@@ -158,22 +156,55 @@ const ListCalendar = () => {
               <div
                 key={calendar.id}
                 className="calendar-card"
-                style={{ width: "300px", height: "150px", padding: "20px" }}
+                style={{
+                  width: "300px",
+                  height: "165px",
+                  padding: "20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  border: "1px solid #ddd",
+                  borderRadius: "8px",
+                  margin: "0.65%",
+                  boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+                }}
               >
-                <div className="calendar-card-header">
-                  <span className="status-dot" />
-                  <span className="calendar-card-title">
-                    {calendar.title}
-                    {calendar.algorithm ? `, ${calendar.algorithm}` : ""}
-                  </span>
+                <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
+                  <span className="status-dot" style={{ marginTop: "4%" }}/>
+                  <div style={{ marginLeft: "10px" }}>
+                    <div
+                      className="calendar-card-title"
+                      style={{ fontSize: "1.3rem", fontWeight: "600", color: "#333" }}
+                    >
+                      {calendar.title}
+                    </div>
+                    <div
+                      className="calendar-card-algorithm"
+                      style={{ fontSize: "1rem", color: "#777", marginTop: "5%", marginLeft:"3%" }}
+                    >
+                      {calendar.algorithm || "No algorithm specified"}
+                    </div>
+                  </div>
                 </div>
-                <Link
-                  to={`/manager/calendar/${calendar.id}`}
-                  className="open-button"
-                  style={{ backgroundColor: "#4CAF50" }}
-                >
-                  Open
-                </Link>
+
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <Link
+                    to={`/manager/calendar/${calendar.id}`}
+                    className="open-button"
+                    style={{
+                      backgroundColor: "#4CAF50",
+                      color: "#fff",
+                      padding: "8px 35%",
+                      textAlign: "center",
+                      textDecoration: "none",
+                      borderRadius: "8px",
+                      fontWeight: "bold",
+                      fontSize: "1rem",
+                    }}
+                  >
+                    Open
+                  </Link>
+                </div>
               </div>
             ))
           ) : (
