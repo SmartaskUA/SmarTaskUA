@@ -121,22 +121,21 @@
 	</dependencies>
 
 	<build>
-
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-
-					<annotationProcessorPaths>
-						<path>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok</artifactId>
-							<version>1.18.28</version>
-						</path>
-						<maven.compiler.proc>full</maven.compiler.proc>
-					</annotationProcessorPaths>
-				</configuration>
+				<version>3.12.1</version> <configuration>
+				<release>17</release>
+				<proc>full</proc>
+				<annotationProcessorPaths>
+					<path>
+						<groupId>org.projectlombok</groupId>
+						<artifactId>lombok</artifactId>
+						<version>1.18.24</version>
+					</path>
+				</annotationProcessorPaths>
+			</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

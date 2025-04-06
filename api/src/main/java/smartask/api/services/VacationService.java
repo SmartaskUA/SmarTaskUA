@@ -15,7 +15,10 @@ public class VacationService {
     VacationTemplateRepository vacationTemplateRepository;
 
     public void newTemplate(String name, Map<String, List<String>> vacations){
-        this.vacationTemplateRepository.save(VacationTemplate.builder().name(name).vacations(vacations).build());
+        System.out.println("\n vacations "+vacations);
+        final VacationTemplate vact = VacationTemplate.builder().name(name).vacations(vacations).build();
+        System.out.println(vact.getVacations());
+        this.vacationTemplateRepository.save(vact);
     }
 
     public List<VacationTemplate> getAll(){return this.vacationTemplateRepository.findAll();}
