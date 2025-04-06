@@ -12,16 +12,35 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: password
     volumes:
       - mongo_data:/data/db
+    networks:
+      - rabbitmq_network
 
   rabbitmq:
-      image: rabbitmq:3-management
-      container_name: rabbitmq
-      ports:
-        - "5672:5672" 
-        - "15672:15672" 
-      environment:
-        RABBITMQ_DEFAULT_USER: guest
-        RABBITMQ_DEFAULT_PASS: guest
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - rabbitmq_network
+
+  python-modules:
+    build:
+      context: .
+      dockerfile: Dockerfile.modules
+    container_name: python-modules
+    command: ["bash", "-c", "./modules/start-env && python3 -m modules.RabbitMQClient"]
+    depends_on:
+      - rabbitmq
+    volumes:
+      - .:/app
+    working_dir: /app
+    networks:
+      - rabbitmq_network
+
 networks:
   rabbitmq_network:
     driver: bridge
