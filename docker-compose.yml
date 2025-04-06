@@ -29,10 +29,10 @@ services:
 
   python-modules:
     build:
-      context: .
-      dockerfile: Dockerfile.modules
+      context: ./modules  # O contexto de build está em 'modules', onde está o Dockerfile
+      dockerfile: Dockerfile  # Nome do Dockerfile a ser usado
     container_name: python-modules
-    command: ["bash", "-c", "./modules/start-env && python3 -m modules.RabbitMQClient"]
+    command: ["python3", "-m", "modules.RabbitMQClient"]  # Comando que será executado após a instalação
     depends_on:
       - rabbitmq
     volumes:
