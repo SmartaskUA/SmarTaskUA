@@ -23,16 +23,16 @@ class CSP:
                         val1 = temp_assignment[v1]
                         val2 = temp_assignment[v2]
                         if not constraint_func(val1, val2):
-                            print(f"Constraint failed for {v1}={val1}, {v2}={val2}")
+                            # print(f"Constraint failed for {v1}={val1}, {v2}={val2}")
                             return False
                 else:
                     values = [temp_assignment.get(v) for v in constraint_key]
                     if None not in values and not constraint_func(values):
-                        print(f"Higher-order constraint failed for {constraint_key}")
+                        # print(f"Higher-order constraint failed for {constraint_key}")
                         return False
             else:
                 if not constraint_func(var, temp_assignment):
-                    print(f"Single constraint failed for {var}={value}")
+                    # print(f"Single constraint failed for {var}={value}")
                     return False
         return True
 
@@ -49,7 +49,7 @@ class CSP:
                     if self.check_constraints(other_var, val, {curr_var: curr_val, other_var: val}):
                         new_domain.append(val)
                 if not new_domain:
-                    print(f"Domain wiped out for {other_var} when assigning {curr_var} = {curr_val}")
+                    # print(f"Domain wiped out for {other_var} when assigning {curr_var} = {curr_val}")
                     return False
                 domains[other_var] = new_domain
                 if len(new_domain) == 1:
@@ -79,7 +79,7 @@ class CSP:
             var = self.select_variable(domains)
             if var is None:
                 return None
-            print(f"Depth {depth}: Selecting {var} with domain {domains[var]}")
+            # print(f"Depth {depth}: Selecting {var} with domain {domains[var]}")
             values = domains[var].copy()
             random.shuffle(values)  # Randomize value order
             for val in values:
@@ -175,7 +175,6 @@ def build_schedule_table(assignment, num_employees, num_days):
         for d in range(1, num_days + 1):
             row.append(assignment.get(f"E{e}_{d}", "-"))
         table.append(row)
-    print(type(table))
     return table
 
 def generate_calendar(assignment, num_employees, num_days):

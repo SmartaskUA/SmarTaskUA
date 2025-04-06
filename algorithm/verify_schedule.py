@@ -16,7 +16,6 @@ def verify_schedule(csv_file="calendario_turnos.csv"):
     holidays = {7, 14, 21, 28}
     is_valid = True
 
-    # Check T->M constraint
     print("\nChecking T->M violations:")
     for emp in employees:
         emp_schedule = schedule[emp]
@@ -27,7 +26,6 @@ def verify_schedule(csv_file="calendario_turnos.csv"):
                 print(f"T->M violation for {emp} on days {d+1} to {d+2}")
                 is_valid = False
 
-    # Check daily team requirements
     print("\nChecking daily team requirements:")
     for day in range(num_days):
         day_vars = [schedule[emp][day] for emp in employees]
@@ -39,7 +37,6 @@ def verify_schedule(csv_file="calendario_turnos.csv"):
             print(f"Day {day+1} team requirement violation: M_A={m_a}, T_A={t_a}, M_B={m_b}, T_B={t_b}")
             is_valid = False
 
-    # Check total shifts and holiday constraints
     print("\nChecking employee constraints:")
     for emp in employees:
         emp_schedule = schedule[emp]
@@ -59,6 +56,6 @@ def verify_schedule(csv_file="calendario_turnos.csv"):
 
     if is_valid:
         print("\nAll constraints satisfied!")
-        
+
 if __name__ == "__main__":
     verify_schedule()
