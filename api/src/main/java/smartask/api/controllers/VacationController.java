@@ -33,6 +33,14 @@ public class VacationController {
         }
     }
 
+    @PostMapping("/random/{name}")
+    public ResponseEntity<String> newRandomTemplate(@PathVariable String name)
+    {
+        this.service.newRandomTemplate(name);
+        return ResponseEntity.ok("New randomly generated vacation template");
+
+    }
+
     @GetMapping("/")
     public ResponseEntity<List<VacationTemplate>> newTemplate(){
         return ResponseEntity.ok(
