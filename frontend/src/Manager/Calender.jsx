@@ -99,10 +99,6 @@ const Calendar = () => {
           selectedMonth={selectedMonth}
           setSelectedMonth={setSelectedMonth}
           downloadCSV={downloadCSV}
-          startDay={startDay}
-          endDay={endDay}
-          setStartDay={setStartDay}
-          setEndDay={setEndDay}
         />
 
         <CalendarTable
