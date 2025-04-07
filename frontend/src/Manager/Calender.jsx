@@ -46,40 +46,31 @@ const Calendar = () => {
     return Object.keys(dayShifts).filter(day => condition(dayShifts[day]));
   };
 
-  // Funções para verificar conflitos
+  // Funções para verificar conflitos  
   const checkScheduleConflicts = () => checkConflicts((shifts) => shifts.has("T") && shifts.has("M"));
   const checkWorkloadConflicts = () => Object.keys(groupByEmployee()).filter(employee => groupByEmployee()[employee].size > 5);
-  const checkUnderworkedEmployees = () => Object.keys(groupByEmployee()).filter(employee => groupByEmployee()[employee].size < 22);
+  const checkUnderworkedEmployees = () => Object.keys(groupByEmployee()).filter(employee => groupByEmployee()[employee].size  <= 22);
 
   const checkVacationDays = () => {
-    const employeeVacations = data.reduce((acc, { employee, shift }) => {
-      if (shift === "Fe") {
-        acc[employee] = (acc[employee] || 0) + 1;
-      }
+    const employeeVacations = data.reduce((acc, [employee, ...shifts]) => {
+
+      if(employee === "Employee") return acc;
+
+      const vacationCount = shifts.filter(shift => shift === "F").length;
+  
+      acc[employee] = (acc[employee] || 0) + vacationCount;
+  
       return acc;
+      
     }, {});
 
+    console.log("data:",data);
+    console.log("employeeVACTIONS",employeeVacations);
+  
     return Object.keys(employeeVacations).filter(employee => employeeVacations[employee] !== 30);
   };
+  
 
-
-  // Função para verificar os dias de trabalho consecutivos
-  const checkMaxConsecutiveWorkdays = () => {
-    const employeeDays = groupByEmployee();
-    return Object.keys(employeeDays).filter((employee) => {
-      const sortedDays = [...employeeDays[employee]].sort();
-      let consecutiveDays = 1;
-      for (let i = 1; i < sortedDays.length; i++) {
-        if (sortedDays[i] === sortedDays[i - 1] + 1) consecutiveDays++;
-        else consecutiveDays = 1;
-        if (consecutiveDays > 5) return true;
-      }
-      return false;
-    });
-  };
-
-  // Função para verificar os funcionários com mais de 22 dias de trabalho no mês
-  const checkMaxWorkdays = () => Object.keys(groupByEmployee()).filter(employee => groupByEmployee()[employee].size > 22);
 
   const downloadCSV = () => {
     const csvContent = data.map(row => row.join(",")).join("\n");
@@ -110,13 +101,11 @@ const Calendar = () => {
         />
 
         <KPIReport
-          checkScheduleConflicts={checkScheduleConflicts}
-          checkWorkloadConflicts={checkWorkloadConflicts}
-          checkUnderworkedEmployees={checkUnderworkedEmployees}
-          checkVacationDays={checkVacationDays}
-          checkMaxWorkdays={checkMaxWorkdays}
-          checkMaxConsecutiveWorkdays={checkMaxConsecutiveWorkdays}
-
+          checkScheduleConflicts={checkScheduleConflicts} // sequencia inválida T-M
+          checkWorkloadConflicts={checkWorkloadConflicts} // não pode ter masi do 5 dias em sequencia de trabalho
+          checkUnderworkedEmployees={checkUnderworkedEmployees} // funcionários com mais de 22 Dias de Trabalho no ano feriados e domingos
+          checkVacationDays={checkVacationDays}  // 30 dias de trabalho máximo (feriados) durante todo ano
+      
         />
 
         <BarChartDropdown
