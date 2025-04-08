@@ -10,4 +10,5 @@ import java.util.List;
 public interface SchedulesRepository extends MongoRepository<Schedule, String> {
     boolean existsByTitle(String sample);
     Optional<Schedule> findByTitle(String title);
+    boolean existsByTitleAndAlgorithm(String title, String algorithm);
 }

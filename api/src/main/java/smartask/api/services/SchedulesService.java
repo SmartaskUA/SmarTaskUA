@@ -31,7 +31,13 @@ public class SchedulesService {
     private RabbitMqProducer producer;
 
     public String requestScheduleGeneration(ScheduleRequest schedule) {
-        // ToDo: Verify if a schedule with the same configuration was already generated
+
+        boolean exists = schedulerepository.existsByTitleAndAlgorithm(schedule.getTitle(), schedule.getAlgorithm());
+
+        if (exists) {
+            return "Schedule with the same title and algorithm exists!";
+        }
+
         final String res= producer.requestScheduleMessage(schedule);
         System.out.println("\n"+res);
         System.out.println(schedule);
