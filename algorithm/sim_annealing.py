@@ -1,208 +1,163 @@
 import numpy as np
-import time
+import random
 import csv
 
-# Definindo as preferências dos trabalhadores
-Prefs = [
-    [0], [0], [1], [1], [0, 1], [0, 1], [1], [0], [1], [0], [1], [1], [0, 1], [0, 1], [0, 1]
-]
+# --- Configurações principais ---
+nFuncionarios = 15
+nDias = 365
+turnos = [0, 1, 2]  # 0 = folga, 1 = manhã, 2 = tarde
 
-nTrabs = len(Prefs)  # Número de trabalhadores (baseado no número de preferências)
-nDias = 365  # Número de dias no ano
-nDiasFerias = 30  # Número de dias de férias por trabalhador
-nDiasTrabalho = 223  # Número de dias de trabalho no ano
-nDiasTrabalhoFDS = 22  # Número máximo de dias trabalhados nos finais de semana
-nDiasSeguidos = 5  # Número máximo de dias seguidos de trabalho
-nMinTrabs = 2  # Número mínimo de turnos que um trabalhador deve fazer
-nMaxFolga = 142  # Número máximo de dias de folga
-nTurnos = 2  # Número de turnos por dia (Manhã e Tarde)
+# --- Gerar feriados aleatórios (por enquanto 13 dias como em Portugal) ---
+feriados = np.zeros(nDias, dtype=bool)
+feriados[np.random.choice(nDias, size=13, replace=False)] = True
 
+# --- Gerar alarmes aleatórios (10% dos dias com alarme) ---
+alarmes = np.zeros(nDias, dtype=bool)
+alarmes[np.random.choice(nDias, size=int(nDias * 0.1), replace=False)] = True
 
-# Função para definir férias em blocos de no mínimo 3 dias
-def definir_ferias(nTrabs, nDias, nDiasFerias, nMaxSimultaneos=3):
-    Ferias = np.zeros((nTrabs, nDias), dtype=bool)
-    contagem_diaria = np.zeros(nDias, dtype=int)
+# --- Gerar preferências aleatórias (0 = indiferente, 1 = manhã, 2 = tarde) ---
+preferencias = np.random.randint(0, 3, size=(nFuncionarios, nDias))
 
-    for trab in range(nTrabs):
-        dias_restantes = nDiasFerias
-        tentativas = 0
+# --- Gerar funcionários (lista de nomes fictícios) ---
+funcionarios = [f"Funcionário {i+1}" for i in range(nFuncionarios)]
 
-        while dias_restantes >= 3 and tentativas < 1000:
-            max_bloco = min(10, dias_restantes)
-            bloco = np.random.randint(3, max_bloco + 1)
-            inicio = np.random.randint(0, nDias - bloco)
-            periodo = np.arange(inicio, inicio + bloco)
+# --- Função para gerar uma solução inicial válida ---
+def gerar_solucao_inicial():
+    solucao = np.zeros((nFuncionarios, nDias), dtype=int)
 
-            if np.all(contagem_diaria[periodo] < nMaxSimultaneos) and not np.any(Ferias[trab, periodo]):
-                Ferias[trab, periodo] = True
-                contagem_diaria[periodo] += 1
-                dias_restantes -= bloco
+    for i in range(nFuncionarios):
+        dias_trabalhados = 0
+        dias_consecutivos = 0
+        ultima_entrada = -1
+        domingos_feriados = 0
+
+        j = 0
+        while j < nDias:
+            if dias_trabalhados >= 223:
+                solucao[i][j:] = 0
+                break
+
+            dia_semana = j % 7
+            eh_feriado = feriados[j]
+
+            # Verifica se precisa folgar
+            if dias_consecutivos >= 5:
+                solucao[i][j] = 0
+                dias_consecutivos = 0
+                ultima_entrada = -1
+                j += 1
+                continue
+
+            if random.random() < 0.7:
+                turno = random.choice([1, 2])
+
+                # Impede sequência T→M
+                if ultima_entrada == 2 and turno == 1:
+                    turno = 2  # força tarde ou folga
+                    if random.random() < 0.5:
+                        turno = 0
+
+                if turno != 0:
+                    if (dia_semana == 6 or eh_feriado) and domingos_feriados >= 22:
+                        turno = 0  # já excedeu domingos/feriados
+
+                solucao[i][j] = turno
+
+                if turno == 0:
+                    dias_consecutivos = 0
+                    ultima_entrada = -1
+                else:
+                    dias_trabalhados += 1
+                    dias_consecutivos += 1
+                    ultima_entrada = turno
+                    if (dia_semana == 6 or eh_feriado):
+                        domingos_feriados += 1
             else:
-                tentativas += 1
+                solucao[i][j] = 0
+                dias_consecutivos = 0
+                ultima_entrada = -1
 
-        if tentativas == 1000:
-            print(f"⚠️ Não foi possível alocar todas as férias para o trabalhador {trab}.")
+            j += 1
 
-    return Ferias
-
-
-Ferias = definir_ferias(nTrabs, nDias, nDiasFerias)
-
-fds = np.zeros((nTrabs, nDias), dtype=bool)
-fds[:, 3::7] = fds[:, 4::7] = True
-
-dias = np.where(~Ferias)
-
-horario = np.zeros((nTrabs, nDias, nTurnos), dtype=int)
-for i in range(nTrabs):
-    dias_disponiveis = np.where(~Ferias[i])[0]
-    trabalho_indices = np.random.choice(dias_disponiveis, nDiasTrabalho, replace=False)
-    turnos = np.random.choice(nTurnos, len(trabalho_indices))
-    horario[i, trabalho_indices, turnos] = 1
+    return solucao
 
 
-# Função para o critério 1 (Limite de dias seguidos de trabalho)
-def criterio1(horario, nDiasSeguidos):
-    f1 = np.zeros(horario.shape[0], dtype=int)
-    for i in range(horario.shape[0]):
-        seq = np.sum(horario[i], axis=1)
-        count = 0
-        for day in seq:
-            if day == 1:
-                count += 1
-                if count >= nDiasSeguidos:
-                    f1[i] += 1
+# --- Função objetivo ---
+def funcao_objetivo(agenda, funcionarios, feriados, preferencias, alarmes):
+    penalidade = 0
+    n_funcionarios, n_dias = agenda.shape
+
+    for i in range(n_funcionarios):
+        dias_trabalhados = 0
+        domingos_feriados = 0
+        dias_consecutivos = 0
+        max_consecutivos = 0
+        folgas = 0
+        ultima_entrada = -1
+
+        for j in range(n_dias):
+            turno = agenda[i][j]
+            dia_semana = j % 7
+            feriado = feriados[j]
+
+            if turno != 0:
+                dias_trabalhados += 1
+                dias_consecutivos += 1
+                if (dia_semana == 6 or feriado):
+                    domingos_feriados += 1
+                if ultima_entrada != -1:
+                    if ultima_entrada == 2 and turno == 1:
+                        penalidade += 150  # Tarde → Manhã
+                ultima_entrada = turno
             else:
-                count = 0
-    return f1
+                if dias_consecutivos > max_consecutivos:
+                    max_consecutivos = dias_consecutivos
+                dias_consecutivos = 0
+                folgas += 1
+                ultima_entrada = -1
 
+            preferencia = preferencias[i][j]
+            if turno != 0 and preferencia != 0 and turno != preferencia:
+                penalidade += 5
 
-# Função para o critério 2 (Limite de dias de trabalho nos finais de semana)
-def criterio2(horario, fds, nDiasTrabalhoFDS):
-    return np.maximum(np.sum(np.sum(horario * fds[:, :, None], axis=1), axis=1) - nDiasTrabalhoFDS, 0)
+        if max_consecutivos > 5:
+            penalidade += (max_consecutivos - 5) * 100
+        if domingos_feriados > 22:
+            penalidade += (domingos_feriados - 22) * 80
+        if dias_trabalhados != 223:
+            penalidade += abs(dias_trabalhados - 223) * 60
 
+    # Penalidade por falta de cobertura em dias com alarme
+    for j in range(n_dias):
+        if alarmes[j] == 1:
+            cobertura = sum(agenda[i][j] != 0 for i in range(n_funcionarios))
+            if cobertura == 0:
+                penalidade += 20
 
-# Função para o critério 3 (Número mínimo de turnos de trabalho)
-def criterio3(horario, nMinTrabs):
-    return np.sum(np.sum(horario, axis=(0, 2)) < nMinTrabs)
+    return penalidade
 
+# --- Função para gerar vizinho ---
+def gerar_vizinho(agenda):
+    novo = agenda.copy()
+    i = random.randint(0, novo.shape[0] - 1)
+    j = random.randint(0, novo.shape[1] - 1)
+    novo[i][j] = random.choice(turnos)
+    return novo
 
-# Função para o critério 4 (Limite de folgas)
-def criterio4(horario, nMaxFolga):
-    folgas = nDias - np.sum(horario, axis=(1, 2))
-    return np.abs(folgas - nMaxFolga)
-
-
-# Função otimizada para o critério 5 (Proibição de "T_A" seguido de "M_A" ou "T_B" seguido de "M_B")
-def criterio5(horario, Prefs):
-    f5 = np.zeros(horario.shape[0], dtype=int)
-    for i in range(horario.shape[0]):
-        if 0 in Prefs[i] or 1 in Prefs[i]:
-            for d in range(nDias - 1):
-                if 0 in Prefs[i]:
-                    if horario[i, d, 1] == 1 and horario[i, d + 1, 0] == 1:
-                        f5[i] += 1
-                if 1 in Prefs[i]:
-                    if horario[i, d, 1] == 1 and horario[i, d + 1, 0] == 1:
-                        f5[i] += 1
-    return f5
-
-
-def calcular_criterios(horario, fds, nDiasSeguidos, nDiasTrabalhoFDS, nMinTrabs, nMaxFolga):
-    f1 = criterio1(horario, nDiasSeguidos)
-    f2 = criterio2(horario, fds, nDiasTrabalhoFDS)
-    f3 = criterio3(horario, nMinTrabs)
-    f4 = criterio4(horario, nMaxFolga)
-    f5 = criterio5(horario, Prefs)
-    return f1, f2, f3, f4, f5
-
-
-def identificar_equipes(Prefs):
-    equipe_A, equipe_B, ambas = [], [], []
-    for i, pref in enumerate(Prefs):
-        if 0 in pref and 1 in pref:
-            ambas.append(i)
-        elif 0 in pref:
-            equipe_A.append(i)
-        elif 1 in pref:
-            equipe_B.append(i)
-    return equipe_A, equipe_B, ambas
-
-
-def salvar_csv(horario, Ferias, nTurnos, nDias, Prefs):
-    with open("calendario2.csv", "w", newline="") as csvfile:
-        csvwriter = csv.writer(csvfile)
-        header = ["Trabalhador"] + [f"Dia {d + 1}" for d in range(nDias)] + ["Dias Trabalhados", "Dias de Férias"]
-        csvwriter.writerow(header)
-
-        for e in range(nTrabs):
-            employee_schedule = []
-            equipe = 'A' if 0 in Prefs[e] else 'B' if 1 in Prefs[e] else 'Ambas'
-            dias_trabalhados = np.sum(np.sum(horario[e], axis=1))  # Total working days
-            dias_ferias = np.sum(Ferias[e])  # Total vacation days
-
-            for d in range(nDias):
-                shift = "Fe" if Ferias[e, d] else "0"
-                if not Ferias[e, d]:
-                    if horario[e, d, 0] == 1:
-                        shift = f"M_{equipe}"
-                    elif horario[e, d, 1] == 1:
-                        shift = f"T_{equipe}"
-                employee_schedule.append(shift)
-
-            # Writing worker data to CSV
-            csvwriter.writerow([f"Empregado{e + 1}"] + employee_schedule + [dias_trabalhados, dias_ferias])
-
-
-# Início
-start_time = time.time()
-
-f1_opt, f2_opt, f3_opt, f4_opt, f5_opt = calcular_criterios(horario, fds, nDiasSeguidos, nDiasTrabalhoFDS, nMinTrabs,
-                                                            nMaxFolga)
-equipe_A, equipe_B, ambas = identificar_equipes(Prefs)
-
-
-# Função objetivo: soma ponderada das penalizações
-def funcao_objetivo(horario, fds, nDiasSeguidos, nDiasTrabalhoFDS, nMinTrabs, nMaxFolga):
-    f1, f2, f3, f4, f5 = calcular_criterios(horario, fds, nDiasSeguidos, nDiasTrabalhoFDS, nMinTrabs, nMaxFolga)
-    return (
-            np.sum(f1) * 10 +
-            np.sum(f2) * 10 +
-            f3 * 5 +
-            np.sum(f4) * 2 +
-            np.sum(f5) * 10
-    )
-
-
-# Gera um vizinho: altera um turno aleatório de um trabalhador num dia válido
-def gerar_vizinho(horario, Ferias):
-    novo_horario = horario.copy()
-    i = np.random.randint(0, horario.shape[0])  # trabalhador
-    d = np.random.randint(0, horario.shape[1])  # dia
-
-    if not Ferias[i, d]:  # só altera se não estiver de férias
-        turno_atual = np.argmax(novo_horario[i, d])
-        novo_horario[i, d] = 0  # limpa os turnos
-        novo_turno = np.random.choice([0, 1])
-        novo_horario[i, d, novo_turno] = 1
-
-    return novo_horario
-
-
-# Algoritmo de Simulated Annealing
-def simulated_annealing(horario_inicial, Ferias, fds, nDiasSeguidos, nDiasTrabalhoFDS, nMinTrabs, nMaxFolga,
-                        temp_inicial=1000, temp_final=0.1, alpha=0.95, max_iter=1000):
-    atual = horario_inicial
+# --- Simulated Annealing ---
+def simulated_annealing(solucao_inicial, funcionarios, feriados, preferencias, alarmes, temp_inicial=1000, temp_final=1, alpha=0.98, max_iter=5000):
+    atual = solucao_inicial
     melhor = atual
-    custo_atual = funcao_objetivo(atual, fds, nDiasSeguidos, nDiasTrabalhoFDS, nMinTrabs, nMaxFolga)
-    melhor_custo = custo_atual
     temp = temp_inicial
+    custo_atual = funcao_objetivo(atual, funcionarios, feriados, preferencias, alarmes)
+    melhor_custo = custo_atual
 
-    for iter in range(max_iter):
-        vizinho = gerar_vizinho(atual, Ferias)
-        custo_vizinho = funcao_objetivo(vizinho, fds, nDiasSeguidos, nDiasTrabalhoFDS, nMinTrabs, nMaxFolga)
+    for i in range(max_iter):
+        vizinho = gerar_vizinho(atual)
+        custo_vizinho = funcao_objetivo(vizinho, funcionarios, feriados, preferencias, alarmes)
+        delta = custo_vizinho - custo_atual
 
-        if custo_vizinho < custo_atual or np.random.rand() < np.exp(-(custo_vizinho - custo_atual) / temp):
+        if delta < 0 or random.uniform(0, 1) < np.exp(-delta / temp):
             atual = vizinho
             custo_atual = custo_vizinho
             if custo_vizinho < melhor_custo:
@@ -213,22 +168,57 @@ def simulated_annealing(horario_inicial, Ferias, fds, nDiasSeguidos, nDiasTrabal
         if temp < temp_final:
             break
 
-    return melhor
+    return melhor, melhor_custo
+
+# --- Exportar solução final para CSV ---
+def salvar_csv(horario, nDias, preferencias, funcionarios):
+    with open("calendario2.csv", "w", newline="") as csvfile:
+        nTrabs = horario.shape[0]
+        csvwriter = csv.writer(csvfile)
+        header = ["Trabalhador"] + [f"Dia {d + 1}" for d in range(nDias)] + ["Dias Trabalhados", "Dias de Férias"]
+        csvwriter.writerow(header)
+
+        for e in range(nTrabs):
+            employee_schedule = []
+            equipe = None
+            prefs = preferencias[e]
+
+            # Simples heurística para equipe baseada em preferências
+            if np.all((prefs == 1) | (prefs == 0)):
+                equipe = "A"
+            elif np.all((prefs == 2) | (prefs == 0)):
+                equipe = "B"
+
+            dias_trabalhados = 0
+            dias_ferias = 0
+
+            for d in range(nDias):
+                turno = horario[e][d]
+                if turno == 0:
+                    shift = "0"
+                elif turno == 1:
+                    shift = f"M_{equipe}" if equipe else "M"
+                    dias_trabalhados += 1
+                elif turno == 2:
+                    shift = f"T_{equipe}" if equipe else "T"
+                    dias_trabalhados += 1
+                elif turno == 9:  # se no futuro decidir usar 9 pra férias
+                    shift = "F"
+                    dias_ferias += 1
+                else:
+                    shift = "?"
+                employee_schedule.append(shift)
+
+            csvwriter.writerow([funcionarios[e]] + employee_schedule + [dias_trabalhados, dias_ferias])
 
 
-# Início do processo
-start_time = time.time()
+# --- Execução principal ---
+solucao_inicial = gerar_solucao_inicial()
+melhor_agenda, melhor_custo = simulated_annealing(solucao_inicial, funcionarios, feriados, preferencias, alarmes)
+print("Custo final:", melhor_custo)
 
-# Otimização com Simulated Annealing
-print("🔄 Otimizando com Simulated Annealing...")
-horario_otimizado = simulated_annealing(horario, Ferias, fds, nDiasSeguidos, nDiasTrabalhoFDS, nMinTrabs, nMaxFolga)
+# Exporta resultado para CSV
+salvar_csv(melhor_agenda, nDias, preferencias, funcionarios)
+print("Calendário exportado para calendario2.csv")
 
-# Avaliação final
-f1_opt, f2_opt, f3_opt, f4_opt, f5_opt = calcular_criterios(horario_otimizado, fds, nDiasSeguidos, nDiasTrabalhoFDS,
-                                                            nMinTrabs, nMaxFolga)
-print("✅ Otimização concluída.")
-print("Critérios finais:", sum(f1_opt), sum(f2_opt), f3_opt, sum(f4_opt), sum(f5_opt))
 
-# Salvar o horário otimizado
-salvar_csv(horario_otimizado, Ferias, nTurnos, nDias, Prefs)
-print(f"📁 Arquivo 'calendario.csv' salvo. Tempo total: {time.time() - start_time:.2f} segundos")
