@@ -1,17 +1,61 @@
-Solução encontrada com turnos da tarde distribuídos:
+Employee E1: 8 afternoon shifts (T), 5 morning shifts (M)
+Employee E2: 12 afternoon shifts (T), 3 morning shifts (M)
+Employee E3: 7 afternoon shifts (T), 7 morning shifts (M)
+Employee E4: 11 afternoon shifts (T), 6 morning shifts (M)
+Employee E5: 14 afternoon shifts (T), 5 morning shifts (M)
+Employee E6: 10 afternoon shifts (T), 7 morning shifts (M)
+Employee E7: 14 afternoon shifts (T), 5 morning shifts (M)
+Employee E8: 11 afternoon shifts (T), 7 morning shifts (M)
+Employee E9: 10 afternoon shifts (T), 9 morning shifts (M)
+Employee E10: 13 afternoon shifts (T), 5 morning shifts (M)
+Employee E11: 11 afternoon shifts (T), 4 morning shifts (M)
+Employee E12: 13 afternoon shifts (T), 5 morning shifts (M)
+Execution time: 29.54 seconds
 
-Calendário:
- 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30
-Seg Ter Qua Qui Sex Sáb Dom Seg Ter Qua Qui Sex Sáb Dom Seg Ter Qua Qui Sex Sáb Dom Seg Ter Qua Qui Sex Sáb Dom Seg Ter
-E1: M  M  M  F  M  M  M  M  M  F  M  F  M  M  F  M  M  F  M  F  M  M  M  M  M  F  M  M  M  M 
-E2: M  M  M  M  M  F  M  M  M  M  F  F  M  M  M  M  M  F  M  M  M  M  F  F  M  M  M  M  M  F 
-E3: M  M  M  F  M  M  M  M  F  F  M  M  M  M  M  F  M  F  M  M  M  M  M  F  M  M  M  M  M  F 
-E4: M  M  M  M  M  F  F  M  M  M  M  M  F  M  M  M  M  M  F  F  M  F  M  M  F  M  M  M  F  M 
-E5: M  M  M  M  M  F  M  M  M  F  M  F  M  M  M  M  M  F  M  F  F  M  M  M  M  M  F  M  M  F 
-E6: M  M  M  M  M  F  F  M  M  M  M  M  F  M  M  M  M  M  F  M  F  M  F  M  M  M  F  M  M  F 
-E7: M  M  M  M  M  F  F  M  M  M  M  M  F  M  M  M  M  M  F  M  F  M  M  M  M  F  M  M  M  M 
-E8: F  M  M  M  M  F  M  M  M  M  M  F  M  F  M  M  M  M  M  F  M  M  M  M  M  F  M  M  M  F 
-E9: M  M  F  M  M  M  M  F  F  M  M  M  M  M  F  M  M  M  M  M  F  F  M  M  M  M  M  F  M  F 
-E10: M  M  M  F  M  M  M  M  M  F  M  M  M  M  M  F  M  M  M  M  F  F  M  M  M  M  M  F  F  M 
-E11: M  M  M  M  M  F  M  M  M  M  F  M  M  F  M  M  M  F  M  F  M  M  M  M  M  F  M  M  M  F 
-E12: M  F  M  M  M  M  M  F  M  M  M  M  F  M  M  M  M  M  F  M  M  M  M  M  F  M  M  F  F  M 
+Number of T->M restriction violations: 0
+
+Shifts per team per day:
+Day 1: M_A=3, T_A=3, M_B=0, T_B=3
+Day 2: M_A=2, T_A=2, M_B=0, T_B=2
+Day 3: M_A=1, T_A=5, M_B=1, T_B=2
+Day 4: M_A=1, T_A=6, M_B=1, T_B=1
+Day 5: M_A=0, T_A=6, M_B=0, T_B=0
+Day 6: M_A=2, T_A=3, M_B=1, T_B=2
+Day 7: M_A=1, T_A=2, M_B=0, T_B=3
+Day 8: M_A=3, T_A=4, M_B=0, T_B=0
+Day 9: M_A=0, T_A=5, M_B=2, T_B=2
+Day 10: M_A=0, T_A=3, M_B=0, T_B=1
+Day 11: M_A=2, T_A=4, M_B=0, T_B=2
+Day 12: M_A=0, T_A=3, M_B=0, T_B=0
+Day 13: M_A=3, T_A=5, M_B=0, T_B=3
+Day 14: M_A=1, T_A=1, M_B=1, T_B=2
+Day 15: M_A=5, T_A=2, M_B=0, T_B=1
+Day 16: M_A=2, T_A=3, M_B=1, T_B=1
+Day 17: M_A=1, T_A=3, M_B=0, T_B=3
+Day 18: M_A=2, T_A=2, M_B=0, T_B=3
+Day 19: M_A=2, T_A=1, M_B=0, T_B=1
+Day 20: M_A=3, T_A=5, M_B=1, T_B=1
+Day 21: M_A=2, T_A=1, M_B=1, T_B=2
+Day 22: M_A=1, T_A=4, M_B=1, T_B=1
+Day 23: M_A=1, T_A=2, M_B=0, T_B=2
+Day 24: M_A=0, T_A=4, M_B=1, T_B=0
+Day 25: M_A=3, T_A=3, M_B=1, T_B=1
+Day 26: M_A=3, T_A=1, M_B=1, T_B=1
+Day 27: M_A=1, T_A=1, M_B=1, T_B=2
+Day 28: M_A=1, T_A=3, M_B=2, T_B=0
+Day 29: M_A=1, T_A=0, M_B=2, T_B=1
+Day 30: M_A=3, T_A=3, M_B=0, T_B=1
+
+Workdays on holidays per employee:
+E1: 1 workdays on holidays
+E2: 2 workdays on holidays
+E3: 1 workdays on holidays
+E4: 2 workdays on holidays
+E5: 2 workdays on holidays
+E6: 2 workdays on holidays
+E7: 1 workdays on holidays
+E8: 1 workdays on holidays
+E9: 3 workdays on holidays
+E10: 3 workdays on holidays
+E11: 2 workdays on holidays
+E12: 3 workdays on holidays
