@@ -8,7 +8,7 @@ from modules.TaskManager import TaskManager  # ✅ NOVO
 
 
 class RabbitMQClient:
-    def __init__(self, host='localhost', task_exchange='task-exchange', status_exchange='status-exchange',
+    def __init__(self, host='rabbitmq', task_exchange='task-exchange', status_exchange='status-exchange',
                  task_queue='task-queue', task_routing_key='task-routing-key', status_routing_key='status-routing-key'):
         self.host = host
         self.task_exchange = task_exchange

@@ -37,12 +37,15 @@ services:
       context: .
       dockerfile: modules/Dockerfile
     container_name: python-modules
-    command: [ "python3", "-m", "modules.RabbitMQClient" ]
+    command: python3 -m modules.RabbitMQClient
     depends_on:
       - rabbitmq
       - mongo
     networks:
       - rabbitmq_network
+    environment:
+      - PYTHONUNBUFFERED=1
+
 
   api:
     build:
