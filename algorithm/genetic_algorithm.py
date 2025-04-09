@@ -199,7 +199,7 @@ def salvar_csv(horario, ferias, nDias, preferencias):
 # Execução principal
 if __name__ == "__main__":
     random.seed(42)
-    populacao = toolbox.population(n=30)
+    populacao = toolbox.population(n=10)
     NGEN = 30
     for gen in range(NGEN):
         filhos = algorithms.varAnd(populacao, toolbox, cxpb=0.5, mutpb=0.2)
