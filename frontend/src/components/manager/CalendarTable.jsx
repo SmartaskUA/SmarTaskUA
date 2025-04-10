@@ -16,8 +16,8 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay }) =
     const normalized = value.toUpperCase();
     if (normalized === "0") return "F"; 
     if (normalized === "F") return "Fe"; 
-    if (["T", "TA", "TB"].includes(normalized)) return "T"; 
-    if (["M", "MA", "MB"].includes(normalized)) return "M"; 
+    if (["T", "T_A", "T_B"].includes(normalized)) return "T"; 
+    if (["M", "M_A", "M_B"].includes(normalized)) return "M"; 
     return value;
   };
 
@@ -25,8 +25,8 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay }) =
     const normalized = value.toUpperCase();
     if (normalized === "0") return { backgroundColor: "#a0d8ef", color: "#000" }; 
     if (normalized === "F") return { backgroundColor: "#ffcccb", color: "#000" }; 
-    if (["T", "TA", "TB"].includes(normalized)) return { backgroundColor: "#f9e79f", color: "#000" };
-    if (["M", "MA", "MB"].includes(normalized)) return { backgroundColor: "#d4edda", color: "#000" }; 
+    if (["T", "T_A", "T_B"].includes(normalized)) return { backgroundColor: "#f9e79f", color: "#000" };
+    if (["M", "M_A", "M_B"].includes(normalized)) return { backgroundColor: "#d4edda", color: "#000" }; 
     return {};
   };
 
