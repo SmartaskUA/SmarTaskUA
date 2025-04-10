@@ -37,10 +37,11 @@ public class SchedulesController {
     @PostMapping("/generate")
     public ResponseEntity<String> generateNewSchedule(@RequestBody ScheduleRequest scheduleRequest) {
         // ToDo : Should also verify if the request with the same configuration was already generated
-        if (service.requestScheduleGeneration(scheduleRequest)) {
+        final String res= service.requestScheduleGeneration(scheduleRequest) ;
+        if (res.equals("Sent task request")) {
             return ResponseEntity.ok("Schedule generation started for: " + scheduleRequest);
         } else {
-            return ResponseEntity.badRequest().body("Failed to start schedule generation for: " + scheduleRequest + ". Schedule with the title already exists");
+            return ResponseEntity.badRequest().body("Failed to start schedule generation for: " + scheduleRequest + ". Caused by: "+res);
         }
     }
 
