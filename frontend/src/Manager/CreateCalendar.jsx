@@ -161,7 +161,7 @@ const CreateCalendar = () => {
           anchorOrigin={{ vertical: "top", horizontal: "center" }}
         >
           <Alert onClose={() => setSuccessOpen(false)} severity="success" sx={{ width: "100%" }}>
-            Calendar created successfully!
+            Task Requested Successfully!
           </Alert>
         </Snackbar>
 
