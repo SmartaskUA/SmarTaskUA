@@ -1,5 +1,5 @@
 import React from "react";
-import { Home, CalendarDays, Users, Briefcase, CircleUserRound, Code2 } from "lucide-react"; 
+import { Home, CalendarDays, Users, Briefcase, CircleUserRound, Code2, Sun } from "lucide-react"; 
 import { Link, useLocation } from "react-router-dom";  
 import "../styles/Manager.css";
 import logo from '../assets/images/Logo.png';
@@ -29,6 +29,9 @@ const Sidebar_Manager = () => {
         </Link> 
         <Link to="/manager/compareCalendar" className={`nav-item ${isActive("/manager/compareCalendar") ? "active" : ""}`}> 
           <Code2 size={20} className="icon"/> Compare Algorithms
+        </Link> 
+        <Link to="/manager/generatevacations" className={`nav-item ${isActive("/manager/generatevacations") ? "active" : ""}`}> 
+          <Sun size={20} className="icon"/> Geração de Férias
         </Link> 
       </nav>
       <div className="manager-btn">

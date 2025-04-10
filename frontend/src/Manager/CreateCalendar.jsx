@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import baseurl from "../components/BaseUrl";
 import Sidebar_Manager from "../components/Sidebar_Manager";
@@ -13,6 +13,10 @@ import {
   Paper,
   Snackbar,
   Alert,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 
 const CreateCalendar = () => {
@@ -20,11 +24,26 @@ const CreateCalendar = () => {
   const [dateStart, setDateStart] = useState("");
   const [dateEnd, setDateEnd] = useState("");
   const [maxDuration, setMaxDuration] = useState("");
-
   const [selectedAlgorithm, setSelectedAlgorithm] = useState("Algorithm1");
+  const [vacationTemplate, setVacationTemplate] = useState("");
+  const [templateOptions, setTemplateOptions] = useState([]);
+  const [newTemplateName, setNewTemplateName] = useState("");
 
   const [successOpen, setSuccessOpen] = useState(false);
   const [errorOpen, setErrorOpen] = useState(false);
+
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+
+  const fetchTemplates = async () => {
+    try {
+      const response = await axios.get(`${baseurl}/vacation/`);
+      setTemplateOptions(response.data);
+    } catch (error) {
+      console.error("Erro ao buscar templates de férias:", error);
+    }
+  };
 
   const handleAlgorithmChange = (event, newAlgorithm) => {
     if (newAlgorithm !== null) {
@@ -32,7 +51,6 @@ const CreateCalendar = () => {
     }
   };
 
-  // Function to save the data
   const handleSave = async () => {
     const data = {
       init: dateStart,
@@ -41,34 +59,47 @@ const CreateCalendar = () => {
       title: title,
       maxTime: maxDuration,
       requestedAt: new Date().toISOString(),
+      vacationTemplate: vacationTemplate,
     };
 
     try {
       const response = await axios.post(`${baseurl}/schedules/generate`, data);
       console.log("API Response:", response.data);
-      setSuccessOpen(true); 
+      setSuccessOpen(true);
     } catch (error) {
       console.error("Error sending data:", error);
       if (error.response?.data?.trace) {
         console.error("Trace:", error.response.data.trace);
       }
-      setErrorOpen(true); 
+      setErrorOpen(true);
     }
   };
 
-  // Function to clear the fields
   const handleClear = () => {
     setTitle("");
     setDateStart("");
     setDateEnd("");
     setMaxDuration("");
     setSelectedAlgorithm("Algorithm1");
+    setVacationTemplate("");
+  };
+
+  const handleCreateTemplate = async () => {
+    if (!newTemplateName.trim()) return;
+    try {
+      await axios.post(`${baseurl}/vacation/random/${newTemplateName.trim()}`);
+      await fetchTemplates();
+      setNewTemplateName("");
+      setVacationTemplate(newTemplateName.trim());
+    } catch (err) {
+      console.error("Erro ao criar novo template de férias:", err);
+    }
   };
 
   return (
     <div className="admin-container">
       <Sidebar_Manager />
-      <div  
+      <div
         className="main-content"
         style={{
           flex: 1,
@@ -121,6 +152,43 @@ const CreateCalendar = () => {
                 onChange={(e) => setMaxDuration(e.target.value)}
                 margin="normal"
               />
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="template-select-label">Vacation Template</InputLabel>
+                <Select
+                  labelId="template-select-label"
+                  value={vacationTemplate}
+                  label="Vacation Template"
+                  onChange={(e) => setVacationTemplate(e.target.value)}
+                >
+                  {templateOptions.map((option) => (
+                    <MenuItem key={option.id} value={option.name}>
+                      {option.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Box mt={2}>
+                <Typography variant="body2" gutterBottom>
+                  Ou criar novo template de férias:
+                </Typography>
+                <Box display="flex" gap={2}>
+                  <TextField
+                    label="Nome do novo template"
+                    variant="outlined"
+                    size="small"
+                    value={newTemplateName}
+                    onChange={(e) => setNewTemplateName(e.target.value)}
+                    fullWidth
+                  />
+                  <Button
+                    variant="contained"
+                    color="success"
+                    onClick={handleCreateTemplate}
+                  >
+                    Criar
+                  </Button>
+                </Box>
+              </Box>
             </Paper>
           </Grid>
           <Grid item xs={12} md={6}>
