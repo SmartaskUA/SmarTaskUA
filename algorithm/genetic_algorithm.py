@@ -127,35 +127,55 @@ def cruzamento(ind1, ind2):
 
 # Avaliação (fitness)
 def avaliar(individuo):
-    custo = 0
+    score = 0
+    penalidade_consecutivos = 0
+    penalidade_tarde_manha = 0
+    penalidade_domingos_feriados = 0
+    penalidade_dias_vazios = 0
+
+    # Contar dias sem ninguém escalado
+    for d in range(nDias):
+        total_trabalhando = sum(1 for i in range(nFuncionarios) if individuo[i][d] not in [0])
+        if total_trabalhando == 0:
+            penalidade_dias_vazios += 1
+
+    score += penalidade_dias_vazios * 10  # Peso ajustável
+
     for i in range(nFuncionarios):
-        dias_trabalhados = np.sum((individuo[i] != 0) & (~ferias[i]))
-        domingos_feriados = sum(
-            1 for d in range(nDias)
-            if (d % 7 == 6 or d in feriados) and individuo[i][d] != 0 and not ferias[i][d]
-        )
-        if dias_trabalhados > 223:
-            custo += (dias_trabalhados - 223) * 50
-        elif dias_trabalhados < 223:
-            custo += (223 - dias_trabalhados) * 10
+        dias_consec = 0
+        domingos_feriados = 0
+
+        for d in range(nDias):
+            valor = individuo[i][d]
+
+            # 5 dias consecutivos
+            if valor != 0:
+                dias_consec += 1
+                if dias_consec > 5:
+                    penalidade_consecutivos += 1
+            else:
+                dias_consec = 0
+
+            # Penalização por Tarde → Manhã (2 -> 1)
+            if d > 0:
+                anterior = individuo[i][d - 1]
+                if anterior == 2 and valor == 1:
+                    penalidade_tarde_manha += 1
+
+            # Penalizar domingos (d % 7 == 6) e feriados
+            if (d in feriados or d % 7 == 6) and valor != 0:
+                domingos_feriados += 1
 
         if domingos_feriados > 22:
-            custo += (domingos_feriados - 22) * 20
+            penalidade_domingos_feriados += (domingos_feriados - 22)
 
-        dias_consecutivos = 0
-        for d in range(nDias):
-            if individuo[i][d] != 0:
-                dias_consecutivos += 1
-                if dias_consecutivos > 5:
-                    custo += 50
-            else:
-                dias_consecutivos = 0
+    score += penalidade_consecutivos * 5
+    score += penalidade_tarde_manha * 20
+    score += penalidade_domingos_feriados * 3
 
-        for d in range(1, nDias):
-            if individuo[i][d - 1] == 2 and individuo[i][d] == 1:
-                custo += 100
+    return score,
 
-    return custo,
+
 
 toolbox.register("individual", tools.initIterate, creator.Individual, gerar_individuo)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
@@ -196,11 +216,51 @@ def salvar_csv(horario, ferias, nDias, preferencias):
 
             csvwriter.writerow([f"Funcionário {e + 1}"] + employee_schedule + [dias_trabalhados, dias_ferias])
 
+# Análise de violações
+def analisar_violacoes(individuo):
+    violacoes = {
+            "dias_consecutivos": [],
+            "tarde_manha": [],
+            "domingos_feriados": [],
+            "dias_vazios": []
+    }
+
+    # Dias vazios (sem ninguém)
+    for d in range(nDias):
+        if all(individuo[i][d] == 0 for i in range(nFuncionarios)):
+            violacoes["dias_vazios"].append(d)
+
+    for i in range(nFuncionarios):
+        dias_consec = 0
+        domingos_feriados = 0
+        for d in range(nDias):
+            valor = individuo[i][d]
+
+                # 5+ dias consecutivos
+            if valor != 0:
+                dias_consec += 1
+                if dias_consec > 5:
+                    violacoes["dias_consecutivos"].append((i, d))
+            else:
+                dias_consec = 0
+
+            # Tarde → Manhã
+            if d > 0 and individuo[i][d - 1] == 2 and valor == 1:
+                violacoes["tarde_manha"].append((i, d - 1, d))
+
+            # Domingos e feriados
+            if (d in feriados or d % 7 == 6) and valor != 0:
+                    domingos_feriados += 1
+
+        if domingos_feriados > 22:
+            violacoes["domingos_feriados"].append((i, domingos_feriados))
+
+    return violacoes
 # Execução principal
 if __name__ == "__main__":
     random.seed(42)
-    populacao = toolbox.population(n=10)
-    NGEN = 30
+    populacao = toolbox.population(n=12)
+    NGEN = 60
     for gen in range(NGEN):
         filhos = algorithms.varAnd(populacao, toolbox, cxpb=0.5, mutpb=0.2)
         fits = toolbox.map(toolbox.evaluate, filhos)
@@ -208,7 +268,21 @@ if __name__ == "__main__":
             ind.fitness.values = fit
         populacao = toolbox.select(filhos, k=len(populacao))
         melhor = tools.selBest(populacao, 1)[0]
-        print(f"Geração {gen}, Custo: {melhor.fitness.values[0]}")
+        #print(f"Geração {gen}, Custo: {melhor.fitness.values[0]}")
 
     salvar_csv(melhor, ferias, nDias, preferencias)
+    violacoes = analisar_violacoes(melhor)
+
+    print("\n🔍 Análise de violações no melhor indivíduo:")
+    print(f"- Dias sem cobertura (vazios): {len(violacoes['dias_vazios'])} → Dias: {violacoes['dias_vazios']}")
+    print(f"- Violações de >5 dias consecutivos: {len(violacoes['dias_consecutivos'])}")
+    for i, d in violacoes['dias_consecutivos']:
+        print(f"  Funcionário {i} tem mais de 5 dias consecutivos até o dia {d}")
+    print(f"- Violações Tarde→Manhã: {len(violacoes['tarde_manha'])}")
+    for i, d1, d2 in violacoes['tarde_manha']:
+        print(f"  Funcionário {i} trabalhou Tarde no dia {d1} e Manhã no dia {d2}")
+    print(f"- Funcionários com mais de 22 domingos/feriados trabalhados: {len(violacoes['domingos_feriados'])}")
+    for i, qtd in violacoes['domingos_feriados']:
+        print(f"  Funcionário {i} trabalhou {qtd} domingos/feriados")
+
     print("Calendário exportado para calendario3.csv")
