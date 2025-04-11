@@ -18,7 +18,7 @@ nMaxFolga = 142                 # Número máximo de dias de folga
 nTurnos = 2                     # Número de turnos por dia (Manhã e Tarde)
 
 # Definindo os feriados
-feriados = [31, 60, 120, 150, 200, 240, 300, 330]  # Por exemplo, dias do ano (em números de 1 a 365)
+feriados = [31, 60, 120, 150, 200, 240, 300, 330]
 
 # Função para definir férias de forma otimizada
 def definir_ferias(nTrabs, nDias, nDiasFerias, nMaxSimultaneos=3):
@@ -61,9 +61,10 @@ for i in range(nTrabs):
     turnos = np.random.choice(nTurnos, len(trabalho_indices))
     horario[i, trabalho_indices, turnos] = 1
 
+# Função para calcular o número de dias seguidos trabalhados 5 máximo
 def criterio1(horario, nDiasSeguidos):
     f1 = np.zeros(horario.shape[0], dtype=int)
-    dias_trabalhados = np.sum(horario, axis=2) > 0  # True se trabalhou em pelo menos um turno
+    dias_trabalhados = np.sum(horario, axis=2) > 0 
 
     janela = np.ones(nDiasSeguidos, dtype=int)
 
@@ -74,12 +75,19 @@ def criterio1(horario, nDiasSeguidos):
 
     return f1
 
-# Dias de trabalho em fins de semana e feriados
+# Dias de trabalho em fins de semana e feriados 22 máximo
 def criterio2(horario, fds, nDiasTrabalhoFDS, feriados):
-    f2 = np.sum(np.sum(horario * fds[:, :, None], axis=1), axis=1)
-    for feriado in feriados:
-        f2 -= horario[:, feriado - 1, :].sum(axis=1)  # Exclui os feriados
-    return np.maximum(f2 - nDiasTrabalhoFDS, 0)
+    feriados = np.array(feriados)
+    
+    # Cria a máscara para os finais de semana e feriados
+    dias_fds_feriados = np.isin(np.arange(horario.shape[1]), feriados) 
+    dias_trabalhados = np.sum(horario * (fds[:, :, None] | dias_fds_feriados[:, None]), axis=(1, 2))
+    
+    # Verifica se algum trabalhador ultrapassou o limite de 22 dias
+    excedente = np.maximum(dias_trabalhados - nDiasTrabalhoFDS, 0)
+    
+    return excedente
+
 
 # Turnos abaixo do mínimo necessário
 def criterio3(horario, nMinTrabs):
@@ -173,7 +181,7 @@ print("Trabalhadores na equipe B:", equipe_B)
 print("Trabalhadores nas equipes A e B:", ambas)
 
 t, cont = 0, 0
-while t < 240000 and (np.any(f1_opt) or np.any(f2_opt) or np.any(f4_opt) or np.any(f5_opt)):
+while t < 270000 and (np.any(f1_opt) or np.any(f2_opt) or np.any(f4_opt) or np.any(f5_opt)):
     cont += 1
     i = np.random.randint(nTrabs)
     aux = np.random.choice(len(dias[1][dias[0] == i]), 2, replace=False)
