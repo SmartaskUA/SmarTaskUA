@@ -257,7 +257,8 @@ def analisar_violacoes(individuo):
 
     return violacoes
 # Execução principal
-if __name__ == "__main__":
+
+def solve():
     random.seed(42)
     populacao = toolbox.population(n=12)
     NGEN = 60
@@ -268,7 +269,7 @@ if __name__ == "__main__":
             ind.fitness.values = fit
         populacao = toolbox.select(filhos, k=len(populacao))
         melhor = tools.selBest(populacao, 1)[0]
-        #print(f"Geração {gen}, Custo: {melhor.fitness.values[0]}")
+        # print(f"Geração {gen}, Custo: {melhor.fitness.values[0]}")
 
     salvar_csv(melhor, ferias, nDias, preferencias)
     violacoes = analisar_violacoes(melhor)
@@ -286,3 +287,13 @@ if __name__ == "__main__":
         print(f"  Funcionário {i} trabalhou {qtd} domingos/feriados")
 
     print("Calendário exportado para calendario3.csv")
+    schedule = []
+    with open('calendario3.csv', mode='r') as csvfile:
+        reader = csv.reader(csvfile, dialect='excel')
+        for row in reader:
+            schedule.append(row)
+            #print(row)
+    return schedule
+
+if __name__ == "__main__":
+    print(solve())
