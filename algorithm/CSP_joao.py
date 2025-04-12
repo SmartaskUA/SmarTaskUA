@@ -161,10 +161,19 @@ def employee_scheduling():
         print("No solution found within timeout or constraints too restrictive.")
         return None
 
+# def handle_ho_constraint(csp, variables, constraint_func):
+#     def constraint(values):
+#         return constraint_func(values)
+#     csp.constraints[tuple(variables)] = constraint
+
 def handle_ho_constraint(csp, variables, constraint_func):
-    def constraint(values):
+    def constraint(var, assignment):
+        values = [assignment.get(v, None) for v in variables]
+        if None in values:
+            return True
         return constraint_func(values)
-    csp.constraints[tuple(variables)] = constraint
+    constraint_key = f"multi_{'_'.join(variables)}"
+    csp.constraints[constraint_key] = constraint
 
 def build_schedule_table(assignment, num_employees, num_days):
     table = []
