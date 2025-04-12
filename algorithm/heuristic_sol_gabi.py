@@ -188,70 +188,88 @@ def salvar_csv(horario, Ferias, nTurnos, nDias, Prefs):
     with open("calendario.csv", "w", encoding="utf-8", newline="") as f:
         f.write(output.getvalue())
 
-    return output.getvalue() 
-# Início
-start_time = time.time()
+    return output.getvalue()
 
-f1_opt, f2_opt, f3_opt, f4_opt, f5_opt = calcular_criterios(horario, fds, nDiasSeguidos, nDiasTrabalhoFDS, nMinTrabs, nMaxFolga, feriados)
-equipe_A, equipe_B, ambas = identificar_equipes(Prefs)
+def solve():
+    Ferias = definir_ferias(nTrabs, nDias, nDiasFerias)
 
-def print_result(label, data):
-    print(f"{label}:\n{data}\n")
+    fds = np.zeros((nTrabs, nDias), dtype=bool)
+    fds[:, 3::7] = fds[:, 4::7] = True
 
-# Exibição dos resultados
-print("Critério 1 - Dias seguidos de trabalho excedendo o limite (máx. 5 dias seguidos):                    ", f1_opt)
-print("Critério 2 - Dias trabalhados em fins de semana além do permitido (máx. 22):                         ", f2_opt)
-print("Critério 3 - Quantidade de turnos abaixo do mínimo necessário (mín. 2 por trabalhador):              ", f3_opt)
-print("Critério 4 - Diferença entre folgas reais e limite máximo permitido (máx. 142 dias de folga) :       ", f4_opt)
-print("Critério 5 - Violação da sequência proibida: Tarde seguida de Manhã no mesmo turno (preferência):    ", f5_opt)
-print("\nTrabalhadores na equipe A:", equipe_A)
-print("Trabalhadores na equipe B:", equipe_B)
-print("Trabalhadores nas equipes A e B:", ambas)
+    dias = np.where(~Ferias)
 
-t, cont = 0, 0
-while t < 270000 and (np.any(f1_opt) or np.any(f2_opt) or np.any(f4_opt) or np.any(f5_opt)):
-    cont += 1
-    i = np.random.randint(nTrabs)
-    aux = np.random.choice(len(dias[1][dias[0] == i]), 2, replace=False)
-    dia1, dia2 = dias[1][dias[0] == i][aux]
-    turno1, turno2 = np.random.choice(nTurnos, 2, replace=False)
+    horario = np.zeros((nTrabs, nDias, nTurnos), dtype=int)
+    for i in range(nTrabs):
+        dias_disponiveis = np.where(~Ferias[i])[0]
+        trabalho_indices = np.random.choice(dias_disponiveis, nDiasTrabalho, replace=False)
+        turnos = np.random.choice(nTurnos, len(trabalho_indices))
+        horario[i, trabalho_indices, turnos] = 1
+    # Início
+    start_time = time.time()
 
-    pode_trabalhar_A = 0 in Prefs[i]
-    pode_trabalhar_B = 1 in Prefs[i]
+    f1_opt, f2_opt, f3_opt, f4_opt, f5_opt = calcular_criterios(horario, fds, nDiasSeguidos, nDiasTrabalhoFDS, nMinTrabs, nMaxFolga, feriados)
+    equipe_A, equipe_B, ambas = identificar_equipes(Prefs)
 
-    if horario[i, dia1, turno1] != horario[i, dia2, turno2]:
-        hor = horario.copy()
-        if pode_trabalhar_A and pode_trabalhar_B:
-            hor[i, dia1, turno1], hor[i, dia2, turno2] = hor[i, dia2, turno2], hor[i, dia1, turno1]
-        elif pode_trabalhar_A:
-            hor[i, dia1, turno1] = 1
-            hor[i, dia2, turno2] = 0
-        elif pode_trabalhar_B:
-            hor[i, dia1, turno1] = 0
-            hor[i, dia2, turno2] = 1
+    def print_result(label, data):
+        print(f"{label}:\n{data}\n")
 
-        f1, f2, f3, f4, f5 = calcular_criterios(hor, fds, nDiasSeguidos, nDiasTrabalhoFDS, nMinTrabs, nMaxFolga, feriados)
+    # Exibição dos resultados
+    print("Critério 1 - Dias seguidos de trabalho excedendo o limite (máx. 5 dias seguidos):                    ", f1_opt)
+    print("Critério 2 - Dias trabalhados em fins de semana além do permitido (máx. 22):                         ", f2_opt)
+    print("Critério 3 - Quantidade de turnos abaixo do mínimo necessário (mín. 2 por trabalhador):              ", f3_opt)
+    print("Critério 4 - Diferença entre folgas reais e limite máximo permitido (máx. 142 dias de folga) :       ", f4_opt)
+    print("Critério 5 - Violação da sequência proibida: Tarde seguida de Manhã no mesmo turno (preferência):    ", f5_opt)
+    print("\nTrabalhadores na equipe A:", equipe_A)
+    print("Trabalhadores na equipe B:", equipe_B)
+    print("Trabalhadores nas equipes A e B:", ambas)
 
-        if np.all(f1 == 0) and np.all(f2 == 0) and f3 == 0 and np.all(f4 == 0) and np.all(f5 == 0):
-            f1_opt, f2_opt, f3_opt, f4_opt, f5_opt, horario = f1, f2, f3, f4, f5, hor
-            print("\nSolução perfeita encontrada!")
-            break
+    t, cont = 0, 0
+    while t < 270000 and (np.any(f1_opt) or np.any(f2_opt) or np.any(f4_opt) or np.any(f5_opt)):
+        cont += 1
+        i = np.random.randint(nTrabs)
+        aux = np.random.choice(len(dias[1][dias[0] == i]), 2, replace=False)
+        dia1, dia2 = dias[1][dias[0] == i][aux]
+        turno1, turno2 = np.random.choice(nTurnos, 2, replace=False)
 
-        if f1[i] + f2[i] + f3 + f4[i] + f5[i] < f1_opt[i] + f2_opt[i] + f3_opt + f4_opt[i] + f5_opt[i]:
-            f1_opt[i], f2_opt[i], f3_opt, f4_opt[i], f5_opt[i], horario = f1[i], f2[i], f3, f4[i], f5[i], hor
+        pode_trabalhar_A = 0 in Prefs[i]
+        pode_trabalhar_B = 1 in Prefs[i]
 
-    t += 1
+        if horario[i, dia1, turno1] != horario[i, dia2, turno2]:
+            hor = horario.copy()
+            if pode_trabalhar_A and pode_trabalhar_B:
+                hor[i, dia1, turno1], hor[i, dia2, turno2] = hor[i, dia2, turno2], hor[i, dia1, turno1]
+            elif pode_trabalhar_A:
+                hor[i, dia1, turno1] = 1
+                hor[i, dia2, turno2] = 0
+            elif pode_trabalhar_B:
+                hor[i, dia1, turno1] = 0
+                hor[i, dia2, turno2] = 1
 
-execution_time = time.time() - start_time
+            f1, f2, f3, f4, f5 = calcular_criterios(hor, fds, nDiasSeguidos, nDiasTrabalhoFDS, nMinTrabs, nMaxFolga, feriados)
 
-print("======= RESULTADOS =======\n")
-print_result("Critério 1 - Dias seguidos de trabalho excedendo o limite (máx. 5 dias seguidos)", f1_opt)
-print_result("Critério 2 - Dias trabalhados nos finais de semana além do limite (máx. 22)     ", f2_opt)
-print_result("Critério 3 - Turnos abaixo do mínimo necessário (mín. 2 por trabalhador)        ", f3_opt)
-print_result("Critério 4 - Folgas excedendo o limite (máx. 142 dias de folga)                 ", f4_opt)
-print_result("Critério 5 - Violação das preferências de turno                                 ", f5_opt)
+            if np.all(f1 == 0) and np.all(f2 == 0) and f3 == 0 and np.all(f4 == 0) and np.all(f5 == 0):
+                f1_opt, f2_opt, f3_opt, f4_opt, f5_opt, horario = f1, f2, f3, f4, f5, hor
+                print("\nSolução perfeita encontrada!")
+                break
 
-print(f"\nTempo de execução: {execution_time:.2f} segundos")
-print(f"Número de iterações realizadas: {cont}")
+            if f1[i] + f2[i] + f3 + f4[i] + f5[i] < f1_opt[i] + f2_opt[i] + f3_opt + f4_opt[i] + f5_opt[i]:
+                f1_opt[i], f2_opt[i], f3_opt, f4_opt[i], f5_opt[i], horario = f1[i], f2[i], f3, f4[i], f5[i], hor
 
-salvar_csv(horario, Ferias, nTurnos, nDias, Prefs)
+        t += 1
+
+    execution_time = time.time() - start_time
+
+    print("======= RESULTADOS =======\n")
+    print_result("Critério 1 - Dias seguidos de trabalho excedendo o limite (máx. 5 dias seguidos)", f1_opt)
+    print_result("Critério 2 - Dias trabalhados nos finais de semana além do limite (máx. 22)     ", f2_opt)
+    print_result("Critério 3 - Turnos abaixo do mínimo necessário (mín. 2 por trabalhador)        ", f3_opt)
+    print_result("Critério 4 - Folgas excedendo o limite (máx. 142 dias de folga)                 ", f4_opt)
+    print_result("Critério 5 - Violação das preferências de turno                                 ", f5_opt)
+
+    print(f"\nTempo de execução: {execution_time:.2f} segundos")
+    print(f"Número de iterações realizadas: {cont}")
+
+    return salvar_csv(horario, Ferias, nTurnos, nDias, Prefs)
+
+if __name__ == "__main__":
+    print(solve())
