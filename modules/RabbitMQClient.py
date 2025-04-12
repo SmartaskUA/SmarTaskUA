@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from modules.MongoDBClient import MongoDBClient
-from algorithm.CSP_joao import employee_scheduling
+from modules.TaskManager import TaskManager  # ✅ NOVO
 
 
 class RabbitMQClient:
@@ -18,6 +18,7 @@ class RabbitMQClient:
         self.status_routing_key = status_routing_key
         self.executor = ThreadPoolExecutor(max_workers=5)
         self.mongodb_client = MongoDBClient()
+        self.task_manager = TaskManager()
         self.connect_to_rabbitmq()
         self.publisher_connection, self.publisher_channel = self.create_publisher_connection()
 
@@ -40,7 +41,7 @@ class RabbitMQClient:
 
                 self.channel.exchange_declare(exchange=self.status_exchange, exchange_type='direct', durable=True)
 
-                self.channel.basic_qos(prefetch_count=5)  # Para evitar sobrecarga
+                self.channel.basic_qos(prefetch_count=5)
 
                 print(f"Connected to RabbitMQ - Task Exchange: {self.task_exchange}, Queue: {self.task_queue}")
                 return
@@ -49,26 +50,22 @@ class RabbitMQClient:
                 time.sleep(5)  # Espera antes de tentar novamente
 
     def create_publisher_connection(self):
-        """Cria uma conexão e canal separados para envio de mensagens."""
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host))
         channel = connection.channel()
         return connection, channel
 
     def consume_messages(self):
-        """Consome mensagens da fila."""
-
         def callback(ch, method, properties, body):
             try:
                 message = json.loads(body)
                 print(f"\n Request : {message}")
                 task_id = message.get("taskId", "No Task ID")
-                title  = message.get("title")
+                title = message.get("title")
+                algorithm_name = message.get("algorithm", "CSP Scheduling")
 
                 print(f"\n[Received Task] Task ID: {task_id}")
 
-                self.executor.submit(self.handle_task_processing, task_id, title)
-
-                # Confirma o recebimento para liberar a fila
+                self.executor.submit(self.handle_task_processing, task_id, title, algorithm_name)
                 ch.basic_ack(delivery_tag=method.delivery_tag)
             except Exception as e:
                 print(f"Error processing message: {e}")
@@ -87,20 +84,19 @@ class RabbitMQClient:
                 self.close_connection()
                 break
 
-    def handle_task_processing(self, task_id, title):
+    def handle_task_processing(self, task_id, title, algorithm_name):
         self.send_task_status(task_id, "IN_PROGRESS")
         try:
-            print(f"Running CSP scheduling for Task ID: {task_id}")
+            print(f"[RabbitMQClient] Delegando execução da task {task_id} para TaskManager...")
+            schedule_data = self.task_manager.run_task(task_id, title, algorithm_name)
 
-            schedule_data = employee_scheduling()
-            print(f"\nSchedule data : {schedule_data}")
             self.mongodb_client.insert_schedule(
                 data=schedule_data,
                 title=title,
-                algorithm="CSP Scheduling"
+                algorithm=algorithm_name
             )
 
-            print(f"Schedule complete for Task ID: {task_id}")
+            print(f"[RabbitMQClient] Schedule complete for Task ID: {task_id}")
             self.send_task_status(task_id, "COMPLETED")
         except Exception as e:
             print(f"Error during schedule execution: {e}")
@@ -130,7 +126,6 @@ class RabbitMQClient:
                 time.sleep(2)  # Pequena espera antes de tentar novamente
 
     def close_connection(self):
-        """Fecha conexões do RabbitMQ e encerra a thread pool."""
         self.executor.shutdown(wait=True)
         self.connection.close()
         self.publisher_connection.close()
