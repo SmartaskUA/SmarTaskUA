@@ -79,6 +79,10 @@ services:
       SPRING_RABBITMQ_LISTENER_SIMPLE_RETRY_MULTIPLIER: "2.0"
       SPRING_RABBITMQ_LISTENER_SIMPLE_RETRY_MAX_INTERVAL: "10000"
 
+      # Upload config
+      SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE: 10MB
+      SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE: 10MB
+
     depends_on:
       rabbitmq:
         condition: service_healthy
