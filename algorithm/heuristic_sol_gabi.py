@@ -1,6 +1,7 @@
 import numpy as np
 import time
 import csv
+import io
 
 # Definindo as preferências dos trabalhadores
 Prefs = [
@@ -137,30 +138,57 @@ def identificar_equipes(Prefs):
             equipe_B.append(i)
     return equipe_A, equipe_B, ambas
 
-# Função para salvar os resultados em um arquivo CSV
+# # Função para salvar os resultados em um arquivo CSV
+# def salvar_csv(horario, Ferias, nTurnos, nDias, Prefs):
+#     with open("calendario.csv", "w", newline="") as csvfile:
+#         csvwriter = csv.writer(csvfile)
+#         header = ["Trabalhador"] + [f"Dia {d+1}" for d in range(nDias)] + ["Dias Trabalhados", "Dias de Férias"]
+#         csvwriter.writerow(header)
+
+#         for e in range(nTrabs):
+#             employee_schedule = []
+#             equipe = 'A' if 0 in Prefs[e] else 'B' if 1 in Prefs[e] else 'Ambas'
+#             dias_trabalhados = np.sum(np.sum(horario[e], axis=1))
+#             dias_ferias = np.sum(Ferias[e])
+
+#             for d in range(nDias):
+#                 shift = "Fe" if Ferias[e, d] else "0"
+#                 if not Ferias[e, d]:
+#                     if horario[e, d, 0] == 1:
+#                         shift = f"M_{equipe}"
+#                     elif horario[e, d, 1] == 1:
+#                         shift = f"T_{equipe}"
+#                 employee_schedule.append(shift)
+
+#             csvwriter.writerow([f"Empregado{e + 1}"] + employee_schedule + [dias_trabalhados, dias_ferias])
 def salvar_csv(horario, Ferias, nTurnos, nDias, Prefs):
-    with open("calendario.csv", "w", newline="") as csvfile:
-        csvwriter = csv.writer(csvfile)
-        header = ["Trabalhador"] + [f"Dia {d+1}" for d in range(nDias)] + ["Dias Trabalhados", "Dias de Férias"]
-        csvwriter.writerow(header)
+    output = io.StringIO()
+    csvwriter = csv.writer(output)
+    
+    header = ["Trabalhador"] + [f"Dia {d+1}" for d in range(nDias)] + ["Dias Trabalhados", "Dias de Férias"]
+    csvwriter.writerow(header)
 
-        for e in range(nTrabs):
-            employee_schedule = []
-            equipe = 'A' if 0 in Prefs[e] else 'B' if 1 in Prefs[e] else 'Ambas'
-            dias_trabalhados = np.sum(np.sum(horario[e], axis=1))
-            dias_ferias = np.sum(Ferias[e])
+    for e in range(nTrabs):
+        employee_schedule = []
+        equipe = 'A' if 0 in Prefs[e] else 'B' if 1 in Prefs[e] else 'Ambas'
+        dias_trabalhados = np.sum(np.sum(horario[e], axis=1))
+        dias_ferias = np.sum(Ferias[e])
 
-            for d in range(nDias):
-                shift = "Fe" if Ferias[e, d] else "0"
-                if not Ferias[e, d]:
-                    if horario[e, d, 0] == 1:
-                        shift = f"M_{equipe}"
-                    elif horario[e, d, 1] == 1:
-                        shift = f"T_{equipe}"
-                employee_schedule.append(shift)
+        for d in range(nDias):
+            shift = "Fe" if Ferias[e, d] else "0"
+            if not Ferias[e, d]:
+                if horario[e, d, 0] == 1:
+                    shift = f"M_{equipe}"
+                elif horario[e, d, 1] == 1:
+                    shift = f"T_{equipe}"
+            employee_schedule.append(shift)
 
-            csvwriter.writerow([f"Empregado{e + 1}"] + employee_schedule + [dias_trabalhados, dias_ferias])
+        csvwriter.writerow([f"Empregado{e + 1}"] + employee_schedule + [dias_trabalhados, dias_ferias])
 
+    with open("calendario.csv", "w", encoding="utf-8", newline="") as f:
+        f.write(output.getvalue())
+
+    return output.getvalue() 
 # Início
 start_time = time.time()
 
