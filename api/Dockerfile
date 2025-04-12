@@ -3,7 +3,6 @@ FROM openjdk:17-jdk-slim
 
 # Copie o arquivo .jar do diretório atual para o container
 
-CMD ["mvn", "install"]
 COPY ./target/api-0.0.1-SNAPSHOT.jar api.jar
 
 # Define o diretório de trabalho dentro do container
