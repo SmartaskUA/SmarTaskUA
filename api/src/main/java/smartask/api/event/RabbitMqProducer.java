@@ -4,11 +4,14 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import smartask.api.models.TaskStatus;
+import smartask.api.models.VacationTemplate;
 import smartask.api.models.requests.ScheduleRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import smartask.api.repositories.TaskStatusRepository;
+import smartask.api.repositories.VacationTemplateRepository;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -26,8 +29,18 @@ public class RabbitMqProducer {
     @Autowired
     private TaskStatusRepository taskStatusRepository;
 
-    public void requestScheduleMessage(ScheduleRequest schedule) {
+    @Autowired
+    private VacationTemplateRepository vacationTemplateRepository;
+
+    public String requestScheduleMessage(ScheduleRequest schedule) {
+        //Verify the existence of the vacationTemplate
+            String res ;
+            final Optional<VacationTemplate> vactemp = vacationTemplateRepository.findByName(schedule.getVacationTemplate());
+            if (vactemp.isEmpty()){
+                return res= "Vacation template not found";
+            }
         try {
+
             // Generate a unique task ID
             String taskId = UUID.randomUUID().toString();
             schedule.setTaskId(taskId);
@@ -48,9 +61,11 @@ public class RabbitMqProducer {
             // Send message to RabbitMQ
             rabbitTemplate.convertAndSend(EXCHANGE_NAME, ROUTING_KEY, jsonMessage);
             System.out.println("Sent task request: " + jsonMessage);
+            return res ="Sent task request";
 
         } catch (JsonProcessingException e) {
             System.err.println("Error converting ScheduleRequest to JSON: " + e.getMessage());
+            return res = "Error converting ScheduleRequest to JSON: " + e.getMessage();
         }
     }
 

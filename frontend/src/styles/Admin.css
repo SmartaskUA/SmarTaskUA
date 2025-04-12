@@ -49,6 +49,11 @@
   margin-top: 206%;
 }
 
+.nav-item.active {
+  background-color: #90caf9;
+  font-weight: bold;
+}
+
 /* Slidebar Css + css acima */
 
 .admin-btn {
