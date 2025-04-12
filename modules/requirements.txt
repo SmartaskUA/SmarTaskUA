@@ -1,3 +1,7 @@
 pika
 pymongo
 pytz
+numpy
+pandas
+deap
+pika
