@@ -12,16 +12,96 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: password
     volumes:
       - mongo_data:/data/db
+    networks:
+      - rabbitmq_network
 
   rabbitmq:
-      image: rabbitmq:3-management
-      container_name: rabbitmq
-      ports:
-        - "5672:5672" 
-        - "15672:15672" 
-      environment:
-        RABBITMQ_DEFAULT_USER: guest
-        RABBITMQ_DEFAULT_PASS: guest
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - rabbitmq_network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  python-modules:
+    build:
+      context: .
+      dockerfile: modules/Dockerfile
+    container_name: python-modules
+    command: python3 -m modules.RabbitMQClient
+    depends_on:
+      - rabbitmq
+      - mongo
+    networks:
+      - rabbitmq_network
+    environment:
+      - PYTHONUNBUFFERED=1
+
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: api
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_APPLICATION_NAME: api
+      SPRING_SERVER_PORT: 8081
+
+      # MongoDB
+      SPRING_DATA_MONGODB_HOST: mongodb
+      SPRING_DATA_MONGODB_PORT: 27017
+      SPRING_DATA_MONGODB_USERNAME: admin
+      SPRING_DATA_MONGODB_PASSWORD: password
+      SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE: admin
+      SPRING_DATA_MONGODB_DATABASE: mydatabase
+
+      # RabbitMQ
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+
+      # Retry config (resiliência)
+      SPRING_RABBITMQ_LISTENER_SIMPLE_RETRY_ENABLED: "true"
+      SPRING_RABBITMQ_LISTENER_SIMPLE_RETRY_MAX_ATTEMPTS: "10"
+      SPRING_RABBITMQ_LISTENER_SIMPLE_RETRY_INITIAL_INTERVAL: "2000"
+      SPRING_RABBITMQ_LISTENER_SIMPLE_RETRY_MULTIPLIER: "2.0"
+      SPRING_RABBITMQ_LISTENER_SIMPLE_RETRY_MAX_INTERVAL: "10000"
+
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      python-modules:
+        condition: service_started
+      mongo:
+        condition: service_started
+    volumes:
+      - ./api/application.properties:/app/application.properties
+    networks:
+      - rabbitmq_network
+
+  frontend:
+    container_name: frontend
+
+    build:
+      context: frontend/
+      dockerfile: Dockerfile
+    depends_on:
+      - api
+    ports:
+      - "5173:5173"
+
 networks:
   rabbitmq_network:
     driver: bridge
