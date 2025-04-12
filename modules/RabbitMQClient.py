@@ -97,23 +97,29 @@ class RabbitMQClient:
             self.send_task_status(task_id, "FAILED")
 
     def send_task_status(self, task_id, status):
-        try:
-            task_status_message = {
-                "taskId": task_id,
-                "status": status,
-                "updatedAt": datetime.now().isoformat()
-            }
+        task_status_message = {
+            "taskId": task_id,
+            "status": status,
+            "updatedAt": datetime.now().isoformat()
+        }
 
-            self.publisher_channel.basic_publish(
-                exchange=self.status_exchange,
-                routing_key=self.status_routing_key,
-                body=json.dumps(task_status_message),
-                properties=pika.BasicProperties(content_type='application/json', delivery_mode=2)
-            )
-            print(f"Sent task status update: {task_status_message}")
-        except pika.exceptions.AMQPConnectionError as e:
-            print(f"Error sending status: {e}. Reconnecting...")
-            self.publisher_connection, self.publisher_channel = self.create_publisher_connection()
+        while True:
+            try:
+                self.publisher_channel.basic_publish(
+                    exchange=self.status_exchange,
+                    routing_key=self.status_routing_key,
+                    body=json.dumps(task_status_message),
+                    properties=pika.BasicProperties(content_type='application/json', delivery_mode=2)
+                )
+                print(f"Sent task status update: {task_status_message}")
+                break  # Sucesso, então sair do loop
+            except pika.exceptions.AMQPConnectionError as e:
+                print(f"[send_task_status] Connection error while sending status: {e}. Retrying in 5 seconds...")
+                time.sleep(5)
+                self.publisher_connection, self.publisher_channel = self.create_publisher_connection()
+            except Exception as e:
+                print(f"[send_task_status] Unexpected error: {e}. Retrying in 5 seconds...")
+                time.sleep(5)
 
     def close_connection(self):
         self.executor.shutdown(wait=True)
