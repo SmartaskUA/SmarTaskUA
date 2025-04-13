@@ -203,8 +203,8 @@ const CreateCalendar = () => {
                   exclusive
                   onChange={handleAlgorithmChange}
                 >
-                  <ToggleButton value="CSP_joao">CSP</ToggleButton>
-                  <ToggleButton value="heuristic_sol_gabi">Hill Climbing</ToggleButton>
+                  <ToggleButton value="CSP Scheduling">CSP</ToggleButton>
+                  <ToggleButton value="hill climbing">Hill Climbing</ToggleButton>
                   <ToggleButton value="genetic_algorithm">Genetic</ToggleButton>
                 </ToggleButtonGroup>
               </Box>
