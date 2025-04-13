@@ -86,7 +86,7 @@ def criterio2(horario, fds, nDiasTrabalhoFDS, feriados):
 # Turnos abaixo do mínimo necessário (mín. 2 turnos no total por trabalhador)
 def criterio3(horario, nMinTrabs):
 
-    total_turnos = np.sum(horario, axis=(1, 2))                  # Soma por trabalhador ao longo do ano
+    total_turnos = np.sum(horario, axis=(1, 2))              # Soma por trabalhador ao longo do ano
 
     return np.sum(total_turnos < nMinTrabs)
 
