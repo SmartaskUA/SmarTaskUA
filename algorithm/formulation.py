@@ -11,7 +11,7 @@ class CSP:
         self.domains = domains
         self.constraints = constraints
 
-def formulation():
+def generate_initial_calendar():
     num_employees = 12
     num_days = 30
     employee_teams = {
@@ -36,9 +36,55 @@ def formulation():
     variables = [f"{emp}_{day}_{shift}" for emp in employees for day in range(1, num_days + 1) for shift in shifts]
 
     def define_domain(emp):
-        return [f"{t}" for t in employee_teams[emp]] + [f"{t}" for t in employee_teams[emp]] + ["0"]
+        return [f"{t}" for t in employee_teams[emp]] + ["0"]
 
     domains = {
         var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]] else define_domain(var.split('_')[0])
         for var in variables
     }
+
+    calendar = {}
+    for emp in employees:
+        calendar[emp] = []
+        for day in range(1, num_days + 1):
+            m_var = f"{emp}_{day}_M"
+            t_var = f"{emp}_{day}_T"
+            if day in vacations[emp]:
+                calendar[emp].append(("F", "F"))
+            else:
+                m_val = "0" if "0" in domains[m_var] else domains[m_var][0]
+                t_val = "0" if "0" in domains[t_var] else domains[t_var][0]
+                calendar[emp].append((m_val, t_val))
+
+    print("\nInitial Calendar Preview (Representative Shift Possibilities):")
+    print("       ", end="")
+    for day in range(1, 6):
+        print(f"   {day}    ", end="")
+    print()
+    print("       ", end="")
+    for _ in range(5):
+        print(" M T ", end="")
+    print()
+    print("-------" + "-----" * 5)
+
+    for emp in employees:
+        print(f"{emp:<6} ", end="")
+        for m_val, t_val in calendar[emp][:5]:
+            print(f"{m_val} {t_val} ", end="")
+        print()
+
+    with open("initial_calendar.csv", "w", newline="") as csvfile:
+        csvwriter = csv.writer(csvfile)
+        header = ["Employee"]
+        for day in range(1, num_days + 1):
+            header.extend([f"{day}_M", f"{day}_T"])
+        csvwriter.writerow(header)
+        for emp in employees:
+            row = [emp]
+            for m_val, t_val in calendar[emp]:
+                row.extend([m_val, t_val])
+            csvwriter.writerow(row)
+    print("\Full initial calendar saved to 'initial_calendar_formatted.csv'")
+
+if __name__ == "__main__":
+    generate_initial_calendar()
