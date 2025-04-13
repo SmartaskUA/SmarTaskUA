@@ -47,23 +47,22 @@ def generate_initial_calendar():
     for emp in employees:
         calendar[emp] = []
         for day in range(1, num_days + 1):
-            m_var = f"{emp}_{day}_M"
-            t_var = f"{emp}_{day}_T"
             if day in vacations[emp]:
-                calendar[emp].append(("F", "F"))
+                calendar[emp].append("FF")
             else:
-                m_val = "0" if "0" in domains[m_var] else domains[m_var][0]
-                t_val = "0" if "0" in domains[t_var] else domains[t_var][0]
-                calendar[emp].append((m_val, t_val))
+                calendar[emp].append("00")
 
     with open("initial_calendar.csv", "w", newline="") as csvfile:
-        csvwriter = csv.writer(csvfile)
-        header = ["Employee"] + [str(day) for day in range(1, num_days + 1)]
+        csvwriter = csv.writer(csvfile, delimiter=',')
+        col_width = 5
+        first_col_width = 6
+        header = ["dia".ljust(first_col_width)] + [f"|{str(day).ljust(col_width-2)}" for day in range(1, num_days + 1)] + ["|"]
         csvwriter.writerow(header)
+        subheader = ["turno".ljust(first_col_width)] + [f"|{'MT'.ljust(col_width-2)}" for _ in range(num_days)] + ["|"]
+        csvwriter.writerow(subheader)
         for emp in employees:
-            row = [emp]
-            for m_val, t_val in calendar[emp]:
-                row.append(f"{m_val},{t_val}")
+            emp_id = emp.lower().replace("E", "e")
+            row = [emp_id.ljust(first_col_width)] + [f"| {shift.ljust(col_width-3)}" for shift in calendar[emp]] + ["|"]
             csvwriter.writerow(row)
     print("Full initial calendar saved to 'initial_calendar.csv'")
 
