@@ -1,124 +1,136 @@
 import copy
-import random
 import csv
-import time
-import os
 import json
 
 class CSP:
-    def __init__(self, variables, domains, constraints):
+    def __init__(self, variables, domains, employee_teams, num_days, num_employees):
         self.variables = variables
         self.domains = domains
-        self.constraints = constraints
+        self.employee_teams = employee_teams
+        self.num_days = num_days
+        self.num_employees = num_employees
+        self.neighbors = self.build_neighbors()
 
-    def check_constraints(self, var, value, assignment):
-        temp_assignment = assignment.copy()
-        temp_assignment[var] = value
-        for constraint_key, constraint_func in self.constraints.items():
-            if isinstance(constraint_key, tuple):
-                if len(constraint_key) == 2:
-                    v1, v2 = constraint_key
-                    if v1 in temp_assignment and v2 in temp_assignment:
-                        if not constraint_func(temp_assignment[v1], temp_assignment[v2]):
-                            return False
-                else:
-                    values = [temp_assignment.get(v) for v in constraint_key]
-                    if None not in values and not constraint_func(values):
-                        return False
-        return True
+    def build_neighbors(self):
+        neighbors = {var: [] for var in self.variables}
+        for var in self.variables:
+            emp, day, shift = var.split('_')
+            day = int(day)
+            if shift == "M":
+                t_var = f"{emp}_{day}_T"
+                if t_var in self.variables:
+                    neighbors[var].append(t_var)
+                    neighbors[t_var].append(var)
+            if shift == "T" and day < self.num_days:
+                m_var = f"{emp}_{day+1}_M"
+                if m_var in self.variables:
+                    neighbors[var].append(m_var)
+                    neighbors[m_var].append(var)
+            for other_var in self.variables:
+                other_emp, other_day, other_shift = other_var.split('_')
+                if other_day == str(day) and other_shift == shift and other_var != var:
+                    neighbors[var].append(other_var)
+        return neighbors
 
-    def propagate(self, domains, var, value):
-        domains[var] = [value]
-        queue = [(var, value)]
-        while queue:
-            curr_var, curr_val = queue.pop(0)
-            for constraint_key, constraint_func in self.constraints.items():
-                if not isinstance(constraint_key, tuple) or len(constraint_key) != 2:
-                    continue
-                v1, v2 = constraint_key
-                if v1 != curr_var and v2 != curr_var:
-                    continue
-                other_var = v2 if v1 == curr_var else v1
-                if len(domains[other_var]) == 1:
-                    continue
-                new_domain = []
-                for val in domains[other_var]:
-                    if self.check_constraints(other_var, val, {curr_var: curr_val}):
-                        new_domain.append(val)
-                if not new_domain:
-                    return False
-                domains[other_var] = new_domain
-                if len(new_domain) == 1:
-                    queue.append((other_var, new_domain[0]))
-            for constraint_key, constraint_func in self.constraints.items():
-                if not isinstance(constraint_key, tuple) or len(constraint_key) == 2:
-                    continue
-                if curr_var not in constraint_key:
-                    continue
-                new_domains = {v: domains[v].copy() for v in constraint_key}
-                for v in constraint_key:
-                    if v == curr_var:
-                        continue
-                    new_domain = []
-                    for val in domains[v]:
-                        test_assignment = {curr_var: curr_val, v: val}
-                        if self.check_constraints(v, val, {curr_var: curr_val}):
-                            new_domain.append(val)
-                    if not new_domain:
-                        return False
-                    domains[v] = new_domain
-                    if len(new_domain) == 1:
-                        queue.append((v, new_domain[0]))
-        return True
+def forward_check(csp, var, value, assignment, domains):
+    emp, day, shift = var.split('_')
+    day = int(day)
+    new_domains = copy.deepcopy(domains)
 
-    def select_variable(self, domains):
-        unassigned_vars = [v for v in domains if len(domains[v]) > 1]
-        if not unassigned_vars:
-            return None
-        return min(unassigned_vars, key=lambda var: len(domains[var]))
+    for neighbor in csp.neighbors[var]:
+        n_emp, n_day, n_shift = neighbor.split('_')
+        n_day = int(n_day)
 
-    def search(self, domains=None, timeout=60):
-        start_time = time.time()
-        if domains is None:
-            domains = copy.deepcopy(self.domains)
+        if neighbor in assignment:
+            continue
 
-        def timed_search(domains, depth=0):
-            if time.time() - start_time > timeout:
-                print(f"\n[Timeout] Exited at depth {depth} after {timeout} seconds")
-                return None
-            if any(len(lv) == 0 for lv in domains.values()):
-                print(f"[Depth {depth}] Failure: Empty domain detected")
-                return None
-            if all(len(lv) == 1 for lv in domains.values()):
-                print(f"[Depth {depth}] Solution found")
-                assignment = {v: lv[0] for v, lv in domains.items()}
-                return {"assignment": assignment}
-            var = self.select_variable(domains)
-            if var is None:
-                print(f"[Depth {depth}] No unassigned variable")
-                return None
-            print(f"[Depth {depth}] Selecting {var} (domain size: {len(domains[var])})")
-            values = domains[var].copy()
-            random.shuffle(values)
-            for val in values:
-                print(f"[Depth {depth}] Trying {var} = {val}")
-                new_domains = copy.deepcopy(domains)
-                if self.propagate(new_domains, var, val):
-                    solution = timed_search(new_domains, depth + 1)
-                    if solution is not None:
-                        return solution
-                else:
-                    print(f"[Depth {depth}] Propagation failed for {var} = {val}")
-                print(f"[Depth {depth}] Backtracking from {var} = {val}")
+        if n_day == day and n_shift != shift:
+            if value == "F":
+                new_domains[neighbor] = ["F"]
+            elif value in ["A", "B"]:
+                new_domains[neighbor] = ["0"]
+            elif value == "0":
+                pass
+            else:
+                new_domains[neighbor] = ["0"]
+        elif shift == "T" and n_shift == "M" and n_day == day + 1 and n_emp == emp:
+            if value in ["A", "B"]:
+                new_domains[neighbor] = ["0"]
+
+        if not new_domains[neighbor]:
             return None
 
-        return timed_search(domains)
+        if n_day == day and n_shift == shift and neighbor != var:
+            m_a_count = 0
+            m_b_count = 0
+            t_a_count = 0
+            t_b_count = 0
+            assigned = set()
+            for v in csp.variables:
+                e, d, s = v.split('_')
+                if int(d) != day or v in assigned:
+                    continue
+                val = assignment.get(v, new_domains[v][0] if len(new_domains[v]) == 1 else None)
+                if val:
+                    assigned.add(v)
+                    if s == "M":
+                        if val == "A":
+                            m_a_count += 1
+                        elif val == "B":
+                            m_b_count += 1
+                    else:
+                        if val == "A":
+                            t_a_count += 1
+                        elif val == "B":
+                            t_b_count += 1
+            unassigned = sum(1 for v in csp.variables if int(v.split('_')[1]) == day and v not in assigned and v != neighbor)
+            if shift == "M":
+                if value == "A":
+                    m_a_count += 1
+                elif value == "B":
+                    m_b_count += 1
+                remaining_a = sum(1 for v in csp.variables if int(v.split('_')[1]) == day and v.split('_')[2] == "M" and v not in assigned and "A" in new_domains[v])
+                remaining_b = sum(1 for v in csp.variables if int(v.split('_')[1]) == day and v.split('_')[2] == "M" and v not in assigned and "B" in new_domains[v])
+                if m_a_count + remaining_a < 2 or m_b_count + remaining_b < 1:
+                    return None
+            else:
+                if value == "A":
+                    t_a_count += 1
+                elif value == "B":
+                    t_b_count += 1
+                remaining_a = sum(1 for v in csp.variables if int(v.split('_')[1]) == day and v.split('_')[2] == "T" and v not in assigned and "A" in new_domains[v])
+                remaining_b = sum(1 for v in csp.variables if int(v.split('_')[1]) == day and v.split('_')[2] == "T" and v not in assigned and "B" in new_domains[v])
+                if t_a_count + remaining_a < 2 or t_b_count + remaining_b < 1:
+                    return None
 
-def handle_ho_constraint(csp, variables, constraint_func):
-    csp.constraints[tuple(variables)] = constraint_func
+    return new_domains
 
-def employee_scheduling():
-    tic = time.time()
+def select_unassigned_variable(csp, assignment):
+    unassigned = [var for var in csp.variables if var not in assignment]
+    return min(unassigned, key=lambda var: len(csp.domains[var]), default=None)
+
+def order_domain_values(csp, var):
+    return sorted(csp.domains[var], key=lambda val: 0 if val == "0" else 1)
+
+def backtrack(csp, assignment, domains):
+    if len(assignment) == len(csp.variables):
+        return assignment
+
+    var = select_unassigned_variable(csp, assignment)
+    if not var:
+        return None
+
+    for value in order_domain_values(csp, var):
+        new_domains = forward_check(csp, var, value, assignment, domains)
+        if new_domains is not None:
+            assignment[var] = value
+            result = backtrack(csp, assignment, new_domains)
+            if result is not None:
+                return result
+            del assignment[var]
+    return None
+
+def solve_calendar():
     num_employees = 12
     num_days = 30
     employee_teams = {
@@ -126,110 +138,63 @@ def employee_scheduling():
         "E5": ["A", "B"], "E6": ["A", "B"], "E7": ["A"], "E8": ["A"],
         "E9": ["A"], "E10": ["B"], "E11": ["A", "B"], "E12": ["B"]
     }
-    holidays = {7, 14, 21, 28}
     employees = [f"E{e}" for e in range(1, num_employees + 1)]
-    num_of_vacations = 4
+    shifts = ["M", "T"]
 
-    if os.path.exists("vacations.json"):
-        with open("vacations.json", "r") as f:
-            vacations = json.load(f)
-            vacations = {emp: set(days) for emp, days in vacations.items()}
-    else:
-        vacations = {emp: set(random.sample(range(1, num_days + 1), num_of_vacations)) for emp in employees}
-        with open("vacations.json", "w") as f:
-            json.dump({emp: list(days) for emp, days in vacations.items()}, f, indent=2)
+    with open("vacations.json", "r") as f:
+        vacations = json.load(f)
+        vacations = {emp: set(days) for emp, days in vacations.items()}
 
-    variables = [f"{emp}_{d}" for emp in employees for d in range(1, num_days + 1)]
+    variables = [f"{emp}_{day}_{shift}" for emp in employees for day in range(1, num_days + 1) for shift in shifts]
 
     def define_domain(emp):
-        return [f"M_{t}" for t in employee_teams[emp]] + [f"T_{t}" for t in employee_teams[emp]] + ["0"]
+        return [f"{t}" for t in employee_teams[emp]] + ["0"]
 
     domains = {
         var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]] else define_domain(var.split('_')[0])
         for var in variables
     }
 
-    constraints = {
-        (v1, v2): (lambda x1, x2: not (x1.startswith("T_") and x2.startswith("M_")))
-        for v1 in variables for v2 in variables
-        if v1.split('_')[0] == v2.split('_')[0] and int(v1.split('_')[1]) + 1 == int(v2.split('_')[1])
-    }
+    csp = CSP(variables, domains, employee_teams, num_days, num_employees)
+    assignment = {}
+    for var in variables:
+        if domains[var] == ["F"]:
+            assignment[var] = "F"
 
-    csp = CSP(variables, domains, constraints)
+    solution = backtrack(csp, assignment, domains)
+    if solution is None:
+        print("No solution found.")
+        return
 
+    calendar = {}
     for emp in employees:
-        emp_vars = [f"{emp}_{d}" for d in range(1, num_days + 1)]
-        for start in range(num_days - 5):
-            window_vars = emp_vars[start:start + 6]
-            handle_ho_constraint(csp, window_vars, lambda values: not all(v in ["M_A", "M_B", "T_A", "T_B"] for v in values))
-        handle_ho_constraint(csp, emp_vars, lambda values: sum(1 for v in values if v in ["M_A", "M_B", "T_A", "T_B"]) <= 20)
-        holiday_vars = [var for var in emp_vars if int(var.split('_')[1]) in holidays]
-        handle_ho_constraint(csp, holiday_vars, lambda values: sum(1 for v in values if v in ["M_A", "M_B", "T_A", "T_B"]) <= 2)
+        calendar[emp] = []
+        for day in range(1, num_days + 1):
+            m_var = f"{emp}_{day}_M"
+            t_var = f"{emp}_{day}_T"
+            m_val = solution[m_var]
+            t_val = solution[t_var]
+            if m_val == "F":
+                shift = "FF"
+            elif m_val == "0" and t_val == "0":
+                shift = "00"
+            else:
+                shift = f"{m_val}{t_val}"
+            calendar[emp].append(shift)
 
-    for day in range(1, num_days + 1):
-        day_vars = [f"{emp}_{day}" for emp in employees]
-        handle_ho_constraint(csp, day_vars, lambda values: sum(1 for v in values if v == "M_A") >= 2 and 
-                                                            sum(1 for v in values if v == "T_A") >= 2 and 
-                                                            sum(1 for v in values if v == "M_B") >= 1 and 
-                                                            sum(1 for v in values if v == "T_B") >= 1)
-
-    solution = csp.search(timeout=600)
-    if solution and "assignment" in solution:
-        assignment = solution["assignment"]
-        generate_calendar(assignment, num_employees, num_days)
-        toc = time.time()
-        print(f"Execution time: {toc - tic:.2f} seconds")        
-        analyze_solution(assignment, employees, num_days, holidays)
-        return build_schedule_table(assignment, num_employees, num_days)
-    else:
-        print("No solution found within timeout or constraints too restrictive.")
-        return None
-
-def build_schedule_table(assignment, num_employees, num_days):
-    table = []
-    header = ["Employee"] + [str(day) for day in range(1, num_days + 1)]
-    table.append(header)
-    for e in range(1, num_employees + 1):
-        row = [f"E{e}"]
-        for d in range(1, num_days + 1):
-            row.append(assignment.get(f"E{e}_{d}", "-"))
-        table.append(row)
-    return table
-
-def generate_calendar(assignment, num_employees, num_days):
-    with open("calendario_turnos.csv", "w", newline="") as csvfile:
-        csvwriter = csv.writer(csvfile)
-        csvwriter.writerow(["Employee"] + [str(day) for day in range(1, num_days + 1)])
-        for e in range(1, num_employees + 1):
-            employee_schedule = [assignment.get(f"E{e}_{d}", "-") for d in range(1, num_days + 1)]
-            csvwriter.writerow([f"E{e}"] + employee_schedule)
-            t_count = sum(1 for v in employee_schedule if v.startswith("T_"))
-            m_count = sum(1 for v in employee_schedule if v.startswith("M_"))
-            print(f"Employee E{e}: {t_count} afternoon shifts (T), {m_count} morning shifts (M)")
-
-def analyze_solution(assignment, employees, num_days, holidays):
-    tm_violations = 0
-    for emp in employees:
-        for d in range(1, num_days):
-            curr_day = assignment.get(f"{emp}_{d}", "-")
-            next_day = assignment.get(f"{emp}_{d+1}", "-")
-            if curr_day.startswith("T_") and next_day.startswith("M_"):
-                tm_violations += 1
-    print(f"\nNumber of T->M restriction violations: {tm_violations}")
-
-    print("\nShifts per team per day:")
-    for day in range(1, num_days + 1):
-        day_vars = [assignment.get(f"{emp}_{day}", "-") for emp in employees]
-        m_a = sum(1 for v in day_vars if v == "M_A")
-        t_a = sum(1 for v in day_vars if v == "T_A")
-        m_b = sum(1 for v in day_vars if v == "M_B")
-        t_b = sum(1 for v in day_vars if v == "T_B")
-        print(f"Day {day}: M_A={m_a}, T_A={t_a}, M_B={m_b}, T_B={t_b}")
-
-    print("\nWorkdays on holidays per employee:")
-    for emp in employees:
-        holiday_workdays = sum(1 for d in holidays if assignment.get(f"{emp}_{d}", "-") in ["M_A", "M_B", "T_A", "T_B"])
-        print(f"{emp}: {holiday_workdays} workdays on holidays")
+    with open("solved_calendar.csv", "w", newline="") as csvfile:
+        csvwriter = csv.writer(csvfile, delimiter=',')
+        col_width = 5
+        first_col_width = 6
+        header = ["dia".ljust(first_col_width)] + [f"|{str(day).ljust(col_width-2)}" for day in range(1, num_days + 1)] + ["|"]
+        csvwriter.writerow(header)
+        subheader = ["turno".ljust(first_col_width)] + [f"|{'MT'.ljust(col_width-2)}" for _ in range(num_days)] + ["|"]
+        csvwriter.writerow(subheader)
+        for emp in employees:
+            emp_id = emp.lower().replace("E", "e")
+            row = [emp_id.ljust(first_col_width)] + [f"| {shift.ljust(col_width-3)}" for shift in calendar[emp]] + ["|"]
+            csvwriter.writerow(row)
+    print("Solved calendar saved to 'solved_calendar.csv'")
 
 if __name__ == "__main__":
-    employee_scheduling()
+    solve_calendar()
