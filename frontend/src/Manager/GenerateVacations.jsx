@@ -11,12 +11,16 @@ import {
   Typography,
   Snackbar,
   Alert,
+  Input,
 } from "@mui/material";
 
 const GenerateVacations = () => {
   const [templateName, setTemplateName] = useState("");
+  const [csvFile, setCsvFile] = useState(null);
+  const [uploadedFileName, setUploadedFileName] = useState("");
   const [successOpen, setSuccessOpen] = useState(false);
   const [errorOpen, setErrorOpen] = useState(false);
+  const [nameError, setNameError] = useState(false);
   const [log, setLog] = useState(null);
   const [templates, setTemplates] = useState([]);
 
@@ -34,14 +38,52 @@ const GenerateVacations = () => {
   }, []);
 
   const handleGenerate = async () => {
+    if (!templateName.trim()) {
+      setNameError(true);
+      return;
+    }
     try {
       await axios.post(`${baseurl}/vacation/random/${templateName}`);
       await fetchTemplates();
       await showTemplateDetails(templateName);
       setSuccessOpen(true);
+      setNameError(false);
     } catch (err) {
       console.error("Erro ao gerar férias:", err);
       setErrorOpen(true);
+    }
+  };
+
+  const handleCsvUpload = async () => {
+    if (!templateName.trim()) {
+      setNameError(true);
+      return;
+    }
+    if (!csvFile) return;
+
+    const formData = new FormData();
+    formData.append("file", csvFile);
+
+    try {
+      await axios.post(`${baseurl}/vacation/csv/${templateName}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      await fetchTemplates();
+      await showTemplateDetails(templateName);
+      setCsvFile(null);
+      setSuccessOpen(true);
+      setNameError(false);
+    } catch (err) {
+      console.error("Erro ao importar CSV:", err);
+      setErrorOpen(true);
+    }
+  };
+
+  const handleFileSelection = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setCsvFile(file);
+      setUploadedFileName(file.name);
     }
   };
 
@@ -66,24 +108,58 @@ const GenerateVacations = () => {
         <Typography variant="h4" gutterBottom>
           Geração de Férias
         </Typography>
-        <Paper style={{ padding: 20 }}>
+
+        <Paper style={{ padding: 20, marginBottom: 20 }}>
+          <Typography variant="h6" gutterBottom>
+            Criar novo template
+          </Typography>
           <TextField
             label="Nome do Template"
             fullWidth
             value={templateName}
             onChange={(e) => setTemplateName(e.target.value)}
             margin="normal"
+            error={nameError && !templateName.trim()}
+            helperText={nameError && !templateName.trim() ? "Insira um nome para o template" : ""}
           />
-          <Box display="flex" justifyContent="center" mt={2}>
+          <Box display="flex" justifyContent="center" gap={2} mt={2}>
             <Button
               variant="contained"
               color="primary"
               onClick={handleGenerate}
-              disabled={!templateName.trim()}
             >
-              Gerar Férias
+              Gerar Aleatório
+            </Button>
+            <label htmlFor="csv-upload">
+              <Input
+                id="csv-upload"
+                type="file"
+                inputProps={{ accept: ".csv" }}
+                onChange={handleFileSelection}
+                style={{ display: "none" }}
+              />
+              <Button
+                variant="contained"
+                component="span"
+                color="secondary"
+              >
+                Escolher CSV
+              </Button>
+            </label>
+            <Button
+              variant="outlined"
+              onClick={handleCsvUpload}
+            >
+              Enviar CSV
             </Button>
           </Box>
+          {uploadedFileName && (
+            <Box mt={2}>
+              <Typography variant="body2" color="textSecondary">
+                Ficheiro selecionado: <strong>{uploadedFileName}</strong>
+              </Typography>
+            </Box>
+          )}
         </Paper>
 
         {log && <VacationsTemplate name={log.name} data={log.data} />}
@@ -126,13 +202,13 @@ const GenerateVacations = () => {
 
         <Snackbar open={successOpen} autoHideDuration={3000} onClose={() => setSuccessOpen(false)}>
           <Alert onClose={() => setSuccessOpen(false)} severity="success" sx={{ width: "100%" }}>
-            Férias geradas com sucesso!
+            Operação realizada com sucesso!
           </Alert>
         </Snackbar>
 
         <Snackbar open={errorOpen} autoHideDuration={3000} onClose={() => setErrorOpen(false)}>
           <Alert onClose={() => setErrorOpen(false)} severity="error" sx={{ width: "100%" }}>
-            Erro ao gerar férias.
+            Ocorreu um erro. Verifique o formato do CSV.
           </Alert>
         </Snackbar>
       </div>
