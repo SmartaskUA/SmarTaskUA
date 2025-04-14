@@ -19,9 +19,8 @@ const Calendar = () => {
   const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
   const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   // Lista de feriados representados por números de dias no ano
-const holidays = [31, 60, 120, 150, 200, 240, 300, 330]; // Exemplo de feriados
+const holidays = [31, 60, 120, 150, 200, 240, 300, 330]; 
 
-// Função que retorna o dia do ano de uma data (1 = 1º de janeiro, 365 = 31 de dezembro)
 const getDayOfYear = (date) => {
   const start = new Date(date.getFullYear(), 0, 0);
   const diff = date - start;
@@ -38,15 +37,12 @@ const checkUnderworkedEmployees = () => {
     let totalWorkedDays = 0;
 
     daysWorked.forEach(day => {
-      // Convertendo o dia para um objeto Date (supondo que `day` seja uma data no formato 'YYYY-MM-DD')
       const date = new Date(day); 
 
-      // Calculando o número do dia no ano
       const dayOfYear = getDayOfYear(date);
 
-      // Verifica se o dia é sábado, domingo ou um feriado
-      const isWeekend = date.getDay() === 6 || date.getDay() === 0; // Verifica se é sábado (6) ou domingo (0)
-      const isHoliday = holidays.includes(dayOfYear); // Verifica se o dia é um feriado
+      const isWeekend = date.getDay() === 6 || date.getDay() === 0; 
+      const isHoliday = holidays.includes(dayOfYear);
 
       // Se for um dia útil ou feriado, conta como dia trabalhado
       if (isWeekend || isHoliday) {
