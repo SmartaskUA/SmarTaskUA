@@ -9,12 +9,16 @@ class CSP:
         self.variables = variables
         self.domains = domains
         self.constraints = constraints
+        self.var_to_constraints = {var: [] for var in variables}
+        for constraint_key, func in constraints.items():
+            for var in constraint_key:
+                self.var_to_constraints[var].append((constraint_key, func))
 
     def check_constraints(self, var, value, assignment):
         temp_assignment = assignment.copy()
         temp_assignment[var] = value
         print(f"Checking constraints for {var} = {value}")
-        for constraint_key, constraint_func in self.constraints.items():
+        for constraint_key, constraint_func in self.var_to_constraints[var]:
             if isinstance(constraint_key, tuple):
                 if len(constraint_key) == 2:
                     v1, v2 = constraint_key
@@ -26,29 +30,31 @@ class CSP:
                             return False
                 else:
                     values = [temp_assignment.get(v) for v in constraint_key]
-                    if not constraint_func(values, constraint_key):
-                        print(f"Higher-order constraint failed for {constraint_key}: values={values}")
-                        return False
-            else:
-                if not constraint_func(var, temp_assignment):
-                    print(f"Single constraint failed for {var}={value}")
-                    return False
+                    assigned_vars = [v for v, val in zip(constraint_key, values) if val is not None]
+                    if len(assigned_vars) == len(constraint_key):
+                        if not constraint_func(values, constraint_key):
+                            print(f"Higher-order constraint failed for {constraint_key}: values={values}, assigned_vars={assigned_vars}")
+                            return False
         print(f"All constraints passed for {var} = {value}")
         return True
 
-    def propagate(self, domains, var, value):
+    def propagate(self, domains, var, value, assignment):
         domains[var] = [value]
         queue = [(var, value)]
         print(f"Propagating: {var} = {value}")
         while queue:
             curr_var, curr_val = queue.pop(0)
-            for other_var in self.variables:
-                if other_var == curr_var or len(domains[other_var]) == 1:
+            related_vars = set()
+            for constraint_key, _ in self.var_to_constraints[curr_var]:
+                related_vars.update(constraint_key)
+            related_vars.discard(curr_var)
+            for other_var in related_vars:
+                if len(domains[other_var]) == 1:
                     continue
                 print(f"Checking domain of {other_var}: {domains[other_var]}")
                 new_domain = []
                 for val in domains[other_var]:
-                    if self.check_constraints(other_var, val, {curr_var: curr_val, other_var: val}):
+                    if self.check_constraints(other_var, val, assignment | {curr_var: curr_val, other_var: val}):
                         new_domain.append(val)
                 if not new_domain:
                     print(f"Domain wiped out for {other_var} when assigning {curr_var} = {curr_val}")
@@ -64,70 +70,99 @@ class CSP:
         if not unassigned_vars:
             print("No unassigned variables left to select.")
             return None
-        var = min(unassigned_vars, key=lambda var: len(domains[var]))
+        unassigned_vars.sort(key=lambda var: (int(var.split('_')[1]), len(domains[var])))
+        var = unassigned_vars[0]
         print(f"Selected variable: {var} with domain {domains[var]}")
         return var
 
-    def search(self, domains=None, timeout=60):
+    def search(self, domains=None, timeout=600):
         start_time = time.time()
         if domains is None:
             domains = copy.deepcopy(self.domains)
         print("Starting CSP search...")
         assigned_count = 0
         total_vars = len(self.variables)
+        assignment = {}
+        domain_history = []
+        assignment_history = []
 
-        def timed_search(domains, depth=0):
-            nonlocal assigned_count
+        # Stack for iterative search: (depth, var, values_iterator, domains, assignment)
+        stack = []
+        depth = 0
+        var = self.select_variable(domains)
+        if var is None:
+            print("No variable to select at start.")
+            return None
+        values = domains[var].copy()
+        values.sort(key=lambda x: 0 if x == "0" else 1)
+        stack.append((depth, var, iter(values), domains.copy(), assignment.copy()))
+
+        while stack:
             if time.time() - start_time > timeout:
                 print(f"Search timed out after {timeout} seconds")
                 return None
             if any(len(lv) == 0 for lv in domains.values()):
                 print("Empty domain detected, search failed.")
-                return None
+                # Backtrack
+                stack.pop()
+                if stack:
+                    depth, var, values_iterator, domains, assignment = stack[-1]
+                    assigned_count -= 1
+                    print(f"Progress after backtrack: {assigned_count}/{total_vars} variables assigned ({(assigned_count/total_vars)*100:.1f}%)")
+                continue
             if all(len(lv) == 1 for lv in domains.values()):
                 assignment = {v: lv[0] for v, lv in domains.items()}
                 print("Solution found!")
                 return {"assignment": assignment}
-            var = self.select_variable(domains)
-            if var is None:
-                print("No variable to select, solution may be complete.")
-                return None
+
+            depth, var, values_iterator, domains, assignment = stack[-1]
             print(f"Depth {depth}: Trying variable {var} with domain {domains[var]}")
-            values = domains[var].copy()
-            random.shuffle(values)
-            for val in values:
+            try:
+                val = next(values_iterator)
                 print(f"Trying {var} = {val}")
-                new_domains = copy.deepcopy(domains)
+                new_domains = domains.copy()
+                new_assignment = assignment.copy()
+                new_assignment[var] = val
                 new_domains[var] = [val]
-                if self.propagate(new_domains, var, val):
+                if self.propagate(new_domains, var, val, new_assignment):
                     assigned_count += 1
                     print(f"Progress: {assigned_count}/{total_vars} variables assigned ({(assigned_count/total_vars)*100:.1f}%)")
-                    solution = timed_search(new_domains, depth + 1)
-                    if solution is not None:
-                        return solution
+                    # Push the current state back with the updated iterator
+                    stack[-1] = (depth, var, values_iterator, domains, assignment)
+                    # Select the next variable
+                    next_var = self.select_variable(new_domains)
+                    if next_var is None:
+                        print("No variable to select, solution may be complete.")
+                        return None
+                    next_values = new_domains[next_var].copy()
+                    next_values.sort(key=lambda x: 0 if x == "0" else 1)
+                    stack.append((depth + 1, next_var, iter(next_values), new_domains, new_assignment))
+                    depth += 1
+                    var = next_var
+                    values_iterator = iter(next_values)
+                    domains = new_domains
+                    assignment = new_assignment
                 else:
-                    print(f"Propagation failed for {var} = {val}, backtracking...")
+                    print(f"Propagation failed for {var} = {val}, trying next value...")
+            except StopIteration:
+                print(f"No more values for {var}, backtracking...")
+                stack.pop()
+                if stack:
+                    depth, var, values_iterator, domains, assignment = stack[-1]
                     assigned_count -= 1
                     print(f"Progress after backtrack: {assigned_count}/{total_vars} variables assigned ({(assigned_count/total_vars)*100:.1f}%)")
-            print(f"No valid values for {var}, backtracking...")
-            return None
+                continue
 
-        return timed_search(domains)
+        print("No solution found.")
+        return None
 
 def handle_ho_constraint(csp, variables, constraint_func):
     csp.constraints[tuple(variables)] = constraint_func
-
-# def handle_ho_constraint(csp, variables, constraint_func):
-#     def constraint(values):
-#         return constraint_func(values)
-#     csp.constraints[tuple(variables)] = constraint
 
 def solve_calendar():
     tic = time.time()
     print("Loading initial calendar data...")
     variables, domains, employee_teams, employees, num_days, num_employees, holidays = generate_initial_calendar()
-    # holidays = {7, 14, 21, 28}
-    # holidays = {1, 107, 109, 114, 121, 161, 170, 226, 276, 303, 333, 340, 357}
     print(f"Variables: {len(variables)}, Employees: {num_employees}, Days: {num_days}")
     constraints = {}
 
