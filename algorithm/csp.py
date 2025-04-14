@@ -125,10 +125,10 @@ def handle_ho_constraint(csp, variables, constraint_func):
 def solve_calendar():
     tic = time.time()
     print("Loading initial calendar data...")
-    variables, domains, employee_teams, employees, num_days, num_employees = generate_initial_calendar()
-    holidays = {7, 14, 21, 28}
+    variables, domains, employee_teams, employees, num_days, num_employees, holidays = generate_initial_calendar()
+    # holidays = {7, 14, 21, 28}
+    # holidays = {1, 107, 109, 114, 121, 161, 170, 226, 276, 303, 333, 340, 357}
     print(f"Variables: {len(variables)}, Employees: {num_employees}, Days: {num_days}")
-    print("Setting up T-to-M constraints...")
     constraints = {}
 
     for v1 in variables:
@@ -158,14 +158,14 @@ def solve_calendar():
                 val in ["A", "B"] for val, var in zip(values, vars) if val is not None
             ) or any(val is None for val in values))
         handle_ho_constraint(csp, emp_vars, lambda values, vars: 
-            sum(1 for val in values if val in ["A", "B"]) <= 20 or 
+            sum(1 for val in values if val in ["A", "B"]) <= 223 or 
             any(val is None for val in values)
         )
         holiday_vars = []
         for d in holidays:
             holiday_vars.extend([f"{emp}_{d}_M", f"{emp}_{d}_T"])
         handle_ho_constraint(csp, holiday_vars, lambda values, vars: 
-            sum(1 for val in values if val in ["A", "B"]) <= 2 or 
+            sum(1 for val in values if val in ["A", "B"]) <= 22 or 
             any(val is None for val in values)
         )
 
