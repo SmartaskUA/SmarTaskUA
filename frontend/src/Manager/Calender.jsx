@@ -18,6 +18,50 @@ const Calendar = () => {
 
   const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
   const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  // Lista de feriados representados por números de dias no ano
+const holidays = [31, 60, 120, 150, 200, 240, 300, 330]; // Exemplo de feriados
+
+// Função que retorna o dia do ano de uma data (1 = 1º de janeiro, 365 = 31 de dezembro)
+const getDayOfYear = (date) => {
+  const start = new Date(date.getFullYear(), 0, 0);
+  const diff = date - start;
+  const oneDay = 1000 * 60 * 60 * 24;
+  return Math.floor(diff / oneDay);
+};
+
+const checkUnderworkedEmployees = () => {
+  const employeeDays = groupByEmployee();
+  const underworkedEmployees = [];
+
+  Object.keys(employeeDays).forEach(employee => {
+    const daysWorked = employeeDays[employee];
+    let totalWorkedDays = 0;
+
+    daysWorked.forEach(day => {
+      // Convertendo o dia para um objeto Date (supondo que `day` seja uma data no formato 'YYYY-MM-DD')
+      const date = new Date(day); 
+
+      // Calculando o número do dia no ano
+      const dayOfYear = getDayOfYear(date);
+
+      // Verifica se o dia é sábado, domingo ou um feriado
+      const isWeekend = date.getDay() === 6 || date.getDay() === 0; // Verifica se é sábado (6) ou domingo (0)
+      const isHoliday = holidays.includes(dayOfYear); // Verifica se o dia é um feriado
+
+      // Se for um dia útil ou feriado, conta como dia trabalhado
+      if (isWeekend || isHoliday) {
+        totalWorkedDays++;
+      }
+    });
+
+    // Se o funcionário tem 22 ou menos dias de trabalho, ele está subtrabalhado
+    if (totalWorkedDays <= 22) {
+      underworkedEmployees.push(employee);
+    }
+  });
+
+  return underworkedEmployees;
+};
 
   useEffect(() => {
     const baseUrl = BaseUrl;
@@ -48,20 +92,40 @@ const Calendar = () => {
 
   // Funções para verificar conflitos  
   const checkScheduleConflicts = () => checkConflicts((shifts) => shifts.has("T") && shifts.has("M"));
-  const checkWorkloadConflicts = () => Object.keys(groupByEmployee()).filter(employee => groupByEmployee()[employee].size > 5);
-  const checkUnderworkedEmployees = () => Object.keys(groupByEmployee()).filter(employee => groupByEmployee()[employee].size  <= 22);
+  //const checkWorkloadConflicts = () => Object.keys(groupByEmployee()).filter(employee => groupByEmployee()[employee].size > 5); 
+  //const checkUnderworkedEmployees = () => Object.keys(groupByEmployee()).filter(employee => groupByEmployee()[employee].size  <= 22);
 
+  const checkWorkloadConflicts = () => {
+    const conflicts = [];
+  
+    const grouped = groupByEmployee();
+    for (const employee in grouped) {
+      const days = Array.from(grouped[employee]).map(Number).sort((a, b) => a - b);
+  
+      let consecutiveCount = 1;
+      for (let i = 1; i < days.length; i++) {
+        if (days[i] === days[i - 1] + 1) {
+          consecutiveCount++;
+          if (consecutiveCount > 5) {
+            conflicts.push(employee);
+            break;
+          }
+        } else {
+          consecutiveCount = 1;
+        }
+      }
+    }
+  
+    return conflicts;
+  };
+  
   const checkVacationDays = () => {
-    const employeeVacations = data.reduce((acc, [employee, ...shifts]) => {
-
-      if(employee === "Employee") return acc;
-
-      const vacationCount = shifts.filter(shift => shift === "F").length;
-  
-      acc[employee] = (acc[employee] || 0) + vacationCount;
-  
+    const employeeVacations = data.reduce((acc, { employee, shift }) => {
+      if (employee === "Employee") return acc;
+      if (shift === "F") {
+        acc[employee] = (acc[employee] || 0) + 1;
+      }
       return acc;
-      
     }, {});
 
     console.log("data:",data);
