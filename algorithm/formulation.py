@@ -22,6 +22,7 @@ def generate_initial_calendar():
     holidays = {7, 14, 21, 28}
     employees = [f"E{e}" for e in range(1, num_employees + 1)]
     num_of_vacations = 4
+    shifts = ["M", "T"]
 
     if os.path.exists("vacations.json"):
         with open("vacations.json", "r") as f:
@@ -32,10 +33,10 @@ def generate_initial_calendar():
         with open("vacations.json", "w") as f:
             json.dump({emp: list(days) for emp, days in vacations.items()}, f, indent=2)
 
-    variables = [f"{emp}_{d}" for emp in employees for d in range(1, num_days + 1)]
+    variables = [f"{emp}_{day}_{shift}" for emp in employees for day in range(1, num_days + 1) for shift in shifts]
 
     def define_domain(emp):
-        return [f"M_{t}" for t in employee_teams[emp]] + [f"T_{t}" for t in employee_teams[emp]] + ["0"]
+        return [f"{t}" for t in employee_teams[emp]] + ["0"]
 
     domains = {
         var: ["F"] if int(var.split('_')[1]) in vacations[var.split('_')[0]] else define_domain(var.split('_')[0])
@@ -65,7 +66,7 @@ def generate_initial_calendar():
             csvwriter.writerow(row)
     print("Full initial calendar saved to 'initial_calendar.csv'")
 
-    return variables, domains, employee_teams, employees, num_days, num_employees, holidays
+    return variables, domains, employee_teams, employees, num_days, num_employees
 
 if __name__ == "__main__":
-    variables, domains, employee_teams, employees, num_days, num_employees, holidays = generate_initial_calendar()
+    generate_initial_calendar()
