@@ -129,13 +129,21 @@ def solve_calendar():
     holidays = {7, 14, 21, 28}
     print(f"Variables: {len(variables)}, Employees: {num_employees}, Days: {num_days}")
     print("Setting up T-to-M constraints...")
-    constraints = {
-        (v1, v2): (lambda x1, x2: not (x1 in ["A", "B"] and x2 in ["A", "B"]))
-        for v1 in variables for v2 in variables
-        if v1.split('_')[0] == v2.split('_')[0] and 
-           int(v1.split('_')[1]) + 1 == int(v2.split('_')[1]) and 
-           v1.endswith('_T') and v2.endswith('_M')
-    }
+    constraints = {}
+
+    for v1 in variables:
+        for v2 in variables:
+            if (v1.split('_')[0] == v2.split('_')[0] and 
+                int(v1.split('_')[1]) + 1 == int(v2.split('_')[1]) and 
+                v1.endswith('_T') and v2.endswith('_M')):
+                constraints[(v1, v2)] = lambda x1, x2: not (x1 in ["A", "B"] and x2 in ["A", "B"])
+
+    for v1 in variables:
+        for v2 in variables:
+            if (v1.split('_')[0] == v2.split('_')[0] and 
+                int(v1.split('_')[1]) == int(v2.split('_')[1]) and 
+                v1.endswith('_M') and v2.endswith('_T')):
+                constraints[(v1, v2)] = lambda x1, x2: not (x1 in ["A", "B"] and x2 in ["A", "B"])
 
     csp = CSP(variables, domains, constraints)
 
