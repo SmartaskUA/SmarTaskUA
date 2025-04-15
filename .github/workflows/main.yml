@@ -1,11 +1,14 @@
 name: Docker Compose Release
 
 on:
+  release:
+    types: [published]
   push:
     tags:
       - 'v*'
     branches:
       - release/version-for-m3
+
 
 env:
   REGISTRY: docker.io
