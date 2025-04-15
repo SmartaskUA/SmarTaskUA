@@ -1,27 +1,33 @@
-name: Docker Compose Release
+name: Release to DockerHub
 
 on:
   release:
     types: [published]
-  push:
-    tags:
-      - 'v*'
-    branches:
-      - release/version-for-m3
-
 
 env:
   REGISTRY: docker.io
   IMAGE_PREFIX: tkauati
-  
+
 jobs:
   build-and-release:
-    name: Build, Push & Release
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # precisamos de todas as refs para verificar a branch da tag
+
+      - name: Verify tag is on correct branch
+        run: |
+          TAG_REF=${GITHUB_REF#refs/tags/}
+          BRANCH=$(git branch -r --contains refs/tags/${TAG_REF} | grep 'origin/release/version-for-m3' || true)
+          if [ -z "$BRANCH" ]; then
+            echo "❌ Tag $TAG_REF não está na branch release/version-for-m3. Cancelando."
+            exit 1
+          else
+            echo "✅ Tag $TAG_REF confirmada na branch release/version-for-m3."
+          fi
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -60,9 +66,5 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ steps.extract_version.outputs.VERSION }}
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Confirm Release
+        run: echo "🎉 Release com tag ${{ steps.extract_version.outputs.VERSION }} publicada com sucesso!"
