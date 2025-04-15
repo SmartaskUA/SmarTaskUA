@@ -12,18 +12,20 @@ class CSP:
         self.constraints = constraints
 
 def generate_initial_calendar():
-    num_employees = 20
-    num_days = 365
+    num_employees = 12
+    num_days = 30
     employee_teams = {
         "E1": ["A"], "E2": ["A"], "E3": ["A"], "E4": ["A"],
         "E5": ["A", "B"], "E6": ["A", "B"], "E7": ["A"], "E8": ["A"],
-        "E9": ["A"], "E10": ["B"], "E11": ["A", "B"], "E12": ["B"], "E13": ["B"],
-        "E14": ["A"], "E15": ["A"], "E16": ["B", "A"], "E17": ["B"],
-        "E18": ["B"], "E19": ["B", "A"], "E20": ["B"]
+        "E9": ["A"], "E10": ["B"], "E11": ["A", "B"], "E12": ["B"]
+        # "E13": ["B"],
+        # "E14": ["A"], "E15": ["A"], "E16": ["B", "A"], "E17": ["B"],
+        # "E18": ["B"], "E19": ["B", "A"], "E20": ["B"]
     }
-    holidays = {1, 107, 109, 114, 121, 161, 170, 226, 276, 303, 333, 340, 357}
+    # holidays = {1, 107, 109, 114, 121, 161, 170, 226, 276, 303, 333, 340, 357}
+    holidays = {7, 21}
     employees = [f"E{e}" for e in range(1, num_employees + 1)]
-    num_of_vacations = 30
+    num_of_vacations = 4
     shifts = ["M", "T"]
 
     if os.path.exists("vacations.json"):
@@ -52,7 +54,7 @@ def generate_initial_calendar():
             if day in vacations[emp]:
                 calendar[emp].append("FF")
             else:
-                calendar[emp].append("00")
+                calendar[emp].append("--")
 
     with open("initial_calendar.csv", "w", newline="") as csvfile:
         csvwriter = csv.writer(csvfile, delimiter=',')
@@ -68,7 +70,7 @@ def generate_initial_calendar():
             csvwriter.writerow(row)
     print("Full initial calendar saved to 'initial_calendar.csv'")
 
-    return variables, domains, employee_teams, employees, num_days, num_employees, holidays
+    return variables, domains, employees, num_days, num_employees, holidays
 
 if __name__ == "__main__":
     generate_initial_calendar()
