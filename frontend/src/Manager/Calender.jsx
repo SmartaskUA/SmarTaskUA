@@ -18,10 +18,50 @@ const Calendar = () => {
 
   const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
   const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  // Lista de feriados representados por números de dias no ano
+const holidays = [31, 60, 120, 150, 200, 240, 300, 330]; 
+
+const getDayOfYear = (date) => {
+  const start = new Date(date.getFullYear(), 0, 0);
+  const diff = date - start;
+  const oneDay = 1000 * 60 * 60 * 24;
+  return Math.floor(diff / oneDay);
+};
+
+const checkUnderworkedEmployees = () => {
+  const employeeDays = groupByEmployee();
+  const underworkedEmployees = [];
+
+  Object.keys(employeeDays).forEach(employee => {
+    const daysWorked = employeeDays[employee];
+    let totalWorkedDays = 0;
+
+    daysWorked.forEach(day => {
+      const date = new Date(day); 
+
+      const dayOfYear = getDayOfYear(date);
+
+      const isWeekend = date.getDay() === 6 || date.getDay() === 0; 
+      const isHoliday = holidays.includes(dayOfYear);
+
+      // Se for um dia útil ou feriado, conta como dia trabalhado
+      if (isWeekend || isHoliday) {
+        totalWorkedDays++;
+      }
+    });
+
+    // Se o funcionário tem 22 ou menos dias de trabalho, ele está subtrabalhado
+    if (totalWorkedDays <= 22) {
+      underworkedEmployees.push(employee);
+    }
+  });
+
+  return underworkedEmployees;
+};
 
   useEffect(() => {
-    const baseUrl = BaseUrl();
-    axios.get(`${baseUrl}schedules/fetch/${calendarId}`)
+    const baseUrl = BaseUrl;
+    axios.get(`${baseUrl}/schedules/fetch/${calendarId}`)
       .then((response) => {
         if (response.data) setData(response.data.data);
       })
@@ -46,37 +86,52 @@ const Calendar = () => {
     return Object.keys(dayShifts).filter(day => condition(dayShifts[day]));
   };
 
-  // Funções para verificar conflitos
+  // Funções para verificar conflitos  
   const checkScheduleConflicts = () => checkConflicts((shifts) => shifts.has("T") && shifts.has("M"));
-  const checkWorkloadConflicts = () => Object.keys(groupByEmployee()).filter(employee => groupByEmployee()[employee].size > 5);
-  const checkUnderworkedEmployees = () => Object.keys(groupByEmployee()).filter(employee => groupByEmployee()[employee].size < 22);
+  //const checkWorkloadConflicts = () => Object.keys(groupByEmployee()).filter(employee => groupByEmployee()[employee].size > 5); 
+  //const checkUnderworkedEmployees = () => Object.keys(groupByEmployee()).filter(employee => groupByEmployee()[employee].size  <= 22);
+
+  const checkWorkloadConflicts = () => {
+    const conflicts = [];
+  
+    const grouped = groupByEmployee();
+    for (const employee in grouped) {
+      const days = Array.from(grouped[employee]).map(Number).sort((a, b) => a - b);
+  
+      let consecutiveCount = 1;
+      for (let i = 1; i < days.length; i++) {
+        if (days[i] === days[i - 1] + 1) {
+          consecutiveCount++;
+          if (consecutiveCount > 5) {
+            conflicts.push(employee);
+            break;
+          }
+        } else {
+          consecutiveCount = 1;
+        }
+      }
+    }
+  
+    return conflicts;
+  };
+  
   const checkVacationDays = () => {
     const employeeVacations = data.reduce((acc, { employee, shift }) => {
-      if (shift === "Fe") acc[employee] = (acc[employee] || 0) + 1;
+      if (employee === "Employee") return acc;
+      if (shift === "F") {
+        acc[employee] = (acc[employee] || 0) + 1;
+      }
       return acc;
     }, {});
+
+    console.log("data:",data);
+    console.log("employeeVACTIONS",employeeVacations);
+  
     return Object.keys(employeeVacations).filter(employee => employeeVacations[employee] !== 30);
   };
+  
 
-  // Função para verificar os dias de trabalho consecutivos
-  const checkMaxConsecutiveWorkdays = () => {
-    const employeeDays = groupByEmployee();
-    return Object.keys(employeeDays).filter((employee) => {
-      const sortedDays = [...employeeDays[employee]].sort();
-      let consecutiveDays = 1;
-      for (let i = 1; i < sortedDays.length; i++) {
-        if (sortedDays[i] === sortedDays[i - 1] + 1) consecutiveDays++;
-        else consecutiveDays = 1;
-        if (consecutiveDays > 5) return true;
-      }
-      return false;
-    });
-  };
 
-  // Função para verificar os funcionários com mais de 22 dias de trabalho no mês
-  const checkMaxWorkdays = () => Object.keys(groupByEmployee()).filter(employee => groupByEmployee()[employee].size > 22);
-
-  // Função para baixar o CSV
   const downloadCSV = () => {
     const csvContent = data.map(row => row.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
@@ -95,10 +150,6 @@ const Calendar = () => {
           selectedMonth={selectedMonth}
           setSelectedMonth={setSelectedMonth}
           downloadCSV={downloadCSV}
-          startDay={startDay}
-          endDay={endDay}
-          setStartDay={setStartDay}
-          setEndDay={setEndDay}
         />
 
         <CalendarTable
@@ -110,13 +161,11 @@ const Calendar = () => {
         />
 
         <KPIReport
-          checkScheduleConflicts={checkScheduleConflicts}
-          checkWorkloadConflicts={checkWorkloadConflicts}
-          checkUnderworkedEmployees={checkUnderworkedEmployees}
-          checkVacationDays={checkVacationDays}
-          checkMaxWorkdays={checkMaxWorkdays}
-          checkMaxConsecutiveWorkdays={checkMaxConsecutiveWorkdays}
-
+          checkScheduleConflicts={checkScheduleConflicts} // sequencia inválida T-M
+          checkWorkloadConflicts={checkWorkloadConflicts} // não pode ter masi do 5 dias em sequencia de trabalho
+          checkUnderworkedEmployees={checkUnderworkedEmployees} // funcionários com mais de 22 Dias de Trabalho no ano feriados e domingos
+          checkVacationDays={checkVacationDays}  // 30 dias de trabalho máximo (feriados) durante todo ano
+      
         />
 
         <BarChartDropdown

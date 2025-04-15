@@ -30,6 +30,7 @@ public class ApiApplication {
 								   SchedulesRepository schedulesRepository, SchedulesService schedulesService, RabbitMqProducer producer) {
 		return args -> {
 			// Check if Team A exists, if not create and save it
+
 			if (teamService.getTeams().isEmpty() || teamService.getTeams().stream().noneMatch(team -> "A".equals(team.getName()))) {
 				Team teamA = new Team("A");
 				teamService.addTeam(teamA);
@@ -59,7 +60,7 @@ public class ApiApplication {
 			} else {
 				System.out.println("Sample schedule already exists.");
 			}
-			/*
+/*
 			ScheduleRequest mockRequest = new ScheduleRequest(
 					"string",                               // taskId
 					LocalDate.parse("2025-03-30"),           // init

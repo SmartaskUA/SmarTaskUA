@@ -9,6 +9,7 @@ import Teams from "./Manager/Teams";
 import Employer from "./Manager/Employer";
 import Calendar from "./Manager/Calender";  
 import CreateCalendar from "./Manager/CreateCalendar";
+import GenerateVacations from "./Manager/GenerateVacations";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./components/NotFound";
@@ -29,6 +30,7 @@ const App = () => {
           <Route path="/manager/calendar/:calendarId" element={<ProtectedRoute role="manager"><Calendar /></ProtectedRoute>} />
           <Route path="/manager/createCalendar" element={<ProtectedRoute role="manager"><CreateCalendar /></ProtectedRoute>} />
           <Route path="/manager/compareCalendar" element={<ProtectedRoute role="manager"><CompareCalendar /></ProtectedRoute>} />
+          <Route path="/manager/generatevacations" element={<ProtectedRoute role="manager"><GenerateVacations /></ProtectedRoute>} />
           <Route path="/manager/*" element={<NotFound />} />
           <Route path="/admin/*" element={<NotFound />} />
           <Route path="*" element={<NotFound />} />
