@@ -1,0 +1,320 @@
+/* Slidebar_manager Css */
+
+.sidebar {
+  height: 100%;
+  width: 250px;
+  background-color: #e3f2fd;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+}
+
+.logo-img {
+  height: 80px;
+  margin-right: 10px;
+  margin-bottom: 17%;
+}
+
+.nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.nav-item {
+  text-decoration: none;
+  font-size: 16px;
+  padding: 10px;
+  border-radius: 5px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background 0.3s;
+}
+
+.nav-item:hover {
+  background-color: #90caf9;
+}
+
+.icon {
+  color: #333;
+}
+
+.manager-btn {
+  margin-top: 206%;
+}
+
+.nav-item.active {
+  background-color: #90caf9;
+  font-weight: bold;
+}
+
+/* Slidebar Css + css acima */
+
+.admin-btn {
+  margin-top: 45rem;
+}
+
+.admin-btn button {
+  width: 100%;
+  padding: 10px;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: background 0.3s;
+  cursor: default;
+}
+
+ 
+.admin-btn button:hover {
+  background-color: #1565c0;
+}
+
+
+  
+.manager-btn button {
+  width: 100%;
+  padding: 10px;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: background 0.3s;
+  cursor: default;
+}
+
+
+/* Admin Css + Add_Algor é o mesmo css*/
+
+.admin-container {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  background: #fff;
+  overflow: hidden;
+  color: black;
+}
+
+.main-content {
+  margin-top: 1.8%;
+  margin-left: 300px;
+  padding: 20px;
+  flex-grow: 1;
+}
+
+
+.heading-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.heading {
+  font-size: 24px;
+  font-weight: bold;
+  margin-top: 1%;
+}
+  
+.dropdown-container {
+  position: relative;
+}
+
+.order-button {
+  background-color: #28a745;
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-right: 150px;
+}
+
+.order-button:hover {
+  background-color: #218838;
+}
+  
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: white;
+  border: 1px solid #ccc;
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  min-width: 150px;
+  margin-top: 5px;
+}
+
+.dropdown-item {
+  padding: 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.dropdown-item:hover {
+  background-color: #f1f1f1;
+}
+
+.dropdown-item:active {
+  background-color: #ddd;
+}
+
+/* Cards admin + AlgorithmCard*/
+
+.algorithm-cards {
+  display: flex;
+  justify-content: flex-start;
+  gap: 40px;
+  margin-top: 20px;
+}
+
+.algorithm-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 220px;
+  height: 120px;
+  border-radius: 10px;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+
+.purple { background-color: #e0d4fc; }
+.green { background-color: #d4fcd4; }
+.yellow { background-color: #fcf4d4; }
+
+
+
+
+/* Algoritmo Form  */
+
+.algorithm-form-container {
+  padding: 20px;
+  max-width: 100%;
+  margin-right: 60%;
+}
+
+.color-preview {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.color-box {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+  border-radius: 5px;
+}
+
+.color-label {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.form-input, .color-input, .file-input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.color-input {
+  width: 60px;
+}
+
+.color-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.color-code {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+}
+
+.form-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: #4CAF50;
+  color: white;
+}
+
+.form-button:hover {
+  background-color: #45a049;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.action-button {
+  padding: 12px 25px;
+  font-size: 16px;
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.action-button:hover {
+  background-color: #0056b3;
+}
+
+.cancel-button {
+  background-color: #dc3545;
+}
+
+.cancel-button:hover {
+  background-color: #c82333;
+}
+
+/* ---------------------------------------------- */
