@@ -123,9 +123,12 @@ class RabbitMQClient:
                 print(f"[send_task_status] Connection error while sending status: {e}. Retrying in 5 seconds...")
                 time.sleep(5)
                 self.publisher_connection, self.publisher_channel = self.create_publisher_connection()
-            except Exception as e:
-                print(f"[send_task_status] Unexpected error: {e}. Retrying in 5 seconds...")
+                time.sleep(2)  # Pequena espera antes de tentar novamente
+                break  # Sucesso, então sair do loop
+            except pika.exceptions.AMQPConnectionError as e:
+                print(f"[send_task_status] Connection error while sending status: {e}. Retrying in 5 seconds...")
                 time.sleep(5)
+                self.publisher_connection, self.publisher_channel = self.create_publisher_connection()
 
     def close_connection(self):
         self.executor.shutdown(wait=True)
