@@ -158,6 +158,7 @@ def mutacao(individuo):
     novo_ind = np.copy(individuo)
     novo_ind[i][d1], novo_ind[i][d2] = novo_ind[i][d2], novo_ind[i][d1]
 
+    # Verificar 5 dias consecutivos
     dias_consec = 0
     for d in range(nDias):
         if novo_ind[i][d] != 0:
@@ -167,7 +168,21 @@ def mutacao(individuo):
         else:
             dias_consec = 0
 
+    # Verificar total de dias de trabalho no ano (exatamente 223)
+    total_trabalho = np.sum(novo_ind[i] != 0)
+    if total_trabalho != 223:
+        return individuo,
+
+    # Verificar número de domingos/feriados trabalhados (máximo 22)
+    holiday_sunday_indexes = get_holiday_and_sunday_indexes()
+    trabalho_em_feriados_domingos = sum(
+        1 for d in holiday_sunday_indexes if novo_ind[i][d] != 0
+    )
+    if trabalho_em_feriados_domingos > 22:
+        return individuo,
+
     return creator.Individual(novo_ind),
+
 
 
 def cruzamento(ind1, ind2):
@@ -190,58 +205,52 @@ def cruzamento(ind1, ind2):
     else:
         return ind1, ind2
 
-# Avaliação (fitness)
+
 def avaliar(individuo):
     score = 0
-    penalidade_consecutivos = 0
-    penalidade_tarde_manha = 0
     penalidade_domingos_feriados = 0
-    penalidade_dias_vazios = 0
+    penalidade_dias_totais = 0
+    penalidade_consecutivos = 0
+    penalidade_turnos = 0
 
-    # Contar dias sem ninguém escalado
-    for d in range(nDias):
-        total_trabalhando = sum(1 for i in range(nFuncionarios) if individuo[i][d] != 0)
-        if total_trabalhando == 0:
-            penalidade_dias_vazios += 1
+    # Verificar dias trabalhados (exatamente 223)
+    for i in range(nFuncionarios):
+        dias_trabalhados = np.sum(individuo[i] != 0)
+        if dias_trabalhados != 223:
+            penalidade_dias_totais += abs(dias_trabalhados - 223) * 8
 
-    score += penalidade_dias_vazios * 10  # Peso ajustável
+    # Verificar domingos e feriados (máximo 22)
+    for i in range(nFuncionarios):
+        dias_especiais = sum(1 for d in range(nDias)
+                             if (d in feriados or d % 7 == 6)
+                             and individuo[i][d] != 0)
+        if dias_especiais > 22:
+            penalidade_domingos_feriados += (dias_especiais - 22) ** 2
 
+    # Verificar dias consecutivos (máximo 5)
     for i in range(nFuncionarios):
         dias_consec = 0
-        domingos_feriados_trabalhados = 0
-
         for d in range(nDias):
-            valor = individuo[i][d]
-
-            # Penalizar mais de 5 dias consecutivos de trabalho
-            if valor != 0:
+            if individuo[i][d] != 0:
                 dias_consec += 1
                 if dias_consec > 5:
                     penalidade_consecutivos += 1
             else:
                 dias_consec = 0
 
-            # Penalização por sequência Tarde → Manhã (2 -> 1)
-            if d > 0:
-                anterior = individuo[i][d - 1]
-                if anterior == 2 and valor == 1:
-                    penalidade_tarde_manha += 1
+    # Verificar sequências de turnos
+    for i in range(nFuncionarios):
+        for d in range(1, nDias):
+            if individuo[i][d - 1] == 2 and individuo[i][d] == 1:
+                penalidade_turnos += 1
 
-            # Penalizar se estiver trabalhando em feriado ou domingo
-            if d in feriados or d % 7 == 6:  # Domingo
-                if valor != 0:
-                    domingos_feriados_trabalhados += 1
-
-        # Penalizar somente o excesso além do limite de 22 dias
-        if domingos_feriados_trabalhados > 22:
-            penalidade_domingos_feriados += (domingos_feriados_trabalhados - 22)
-
-    # Aplicar pesos às penalizações
-    score += penalidade_consecutivos * 5
-    score += penalidade_tarde_manha * 20
-    score += penalidade_domingos_feriados * 3
+    score = (penalidade_domingos_feriados * 3 +
+             penalidade_dias_totais * 8 +
+             penalidade_consecutivos * 5 +
+             penalidade_turnos * 20)
 
     return score,
+
 
 
 
@@ -332,18 +341,15 @@ def solve():
     random.seed(42)
 
     # Tamanho da população mais robusto
-    populacao = toolbox.population(n=120)
+    populacao = toolbox.population(n=100)
+    NGEN = 120
+    CXPB = 0.7
+    MUTPB = 0.3
 
-    # Mais gerações para convergência em problema complexo
-    NGEN = 140
-
-    # Parâmetros de crossover e mutação ajustados
-    CXPB = 0.9
-    MUTPB = 0.2
-    melhor=None
     for gen in range(NGEN):
         filhos = algorithms.varAnd(populacao, toolbox, cxpb=CXPB, mutpb=MUTPB)
-
+        melhores = tools.selBest(populacao, 5)
+        populacao = toolbox.select(filhos, k=len(populacao) - 5) + melhores
         # Avaliar os filhos
         fits = toolbox.map(toolbox.evaluate, filhos)
         for fit, ind in zip(fits, filhos):
