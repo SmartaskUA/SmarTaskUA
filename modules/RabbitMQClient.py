@@ -118,17 +118,15 @@ class RabbitMQClient:
                     properties=pika.BasicProperties(content_type='application/json', delivery_mode=2)
                 )
                 print(f"Sent task status update: {task_status_message}")
-                break  # Sucesso, então sair do loop
+                break  # Sucesso, então sai do loop
             except pika.exceptions.AMQPConnectionError as e:
-                print(f"[send_task_status] Connection error while sending status: {e}. Retrying in 5 seconds...")
+                print(f"[send_task_status] Connection error while sending status: {e}. Reconnecting and retrying in 5 seconds...")
                 time.sleep(5)
                 self.publisher_connection, self.publisher_channel = self.create_publisher_connection()
-                time.sleep(2)  # Pequena espera antes de tentar novamente
-                break  # Sucesso, então sair do loop
-            except pika.exceptions.AMQPConnectionError as e:
-                print(f"[send_task_status] Connection error while sending status: {e}. Retrying in 5 seconds...")
+                # sem break aqui — tenta novamente com nova conexão
+            except Exception as e:
+                print(f"[send_task_status] Unexpected error: {e}. Retrying in 5 seconds...")
                 time.sleep(5)
-                self.publisher_connection, self.publisher_channel = self.create_publisher_connection()
 
     def close_connection(self):
         self.executor.shutdown(wait=True)
