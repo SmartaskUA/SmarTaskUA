@@ -2,6 +2,7 @@ import copy
 import random
 import csv
 import time
+from itertools import product
 from formulation import generate_initial_calendar
 
 class CSP:
@@ -9,12 +10,17 @@ class CSP:
         self.variables = variables
         self.domains = domains
         self.constraints = constraints
+        self.var_to_constraints = {var: [] for var in variables}
+        for constraint_key, func in constraints.items():
+            if isinstance(constraint_key, tuple):
+                for var in constraint_key:
+                    self.var_to_constraints[var].append((constraint_key, func))
 
     def check_constraints(self, var, value, assignment):
         temp_assignment = assignment.copy()
         temp_assignment[var] = value
         print(f"Checking constraints for {var} = {value}")
-        for constraint_key, constraint_func in self.constraints.items():
+        for constraint_key, constraint_func in self.var_to_constraints.get(var, []):
             if isinstance(constraint_key, tuple):
                 if len(constraint_key) == 2:
                     v1, v2 = constraint_key
@@ -26,13 +32,10 @@ class CSP:
                             return False
                 else:
                     values = [temp_assignment.get(v) for v in constraint_key]
-                    if not constraint_func(values, constraint_key):
-                        print(f"Higher-order constraint failed for {constraint_key}: values={values}")
-                        return False
-            else:
-                if not constraint_func(var, temp_assignment):
-                    print(f"Single constraint failed for {var}={value}")
-                    return False
+                    if all(val is not None for val in values):  # Only check if all variables are assigned
+                        if not constraint_func(values, constraint_key):
+                            print(f"Higher-order constraint failed for {constraint_key}: values={values}")
+                            return False
         print(f"All constraints passed for {var} = {value}")
         return True
 
@@ -42,8 +45,12 @@ class CSP:
         print(f"Propagating: {var} = {value}")
         while queue:
             curr_var, curr_val = queue.pop(0)
-            for other_var in self.variables:
-                if other_var == curr_var or len(domains[other_var]) == 1:
+            related_vars = set()
+            for constraint_key, _ in self.var_to_constraints.get(curr_var, []):
+                related_vars.update(constraint_key)
+            related_vars.discard(curr_var)
+            for other_var in related_vars:
+                if other_var not in domains or len(domains[other_var]) == 1:
                     continue
                 print(f"Checking domain of {other_var}: {domains[other_var]}")
                 new_domain = []
@@ -114,44 +121,41 @@ class CSP:
 
         return timed_search(domains)
 
-def handle_ho_constraint(csp, variables, constraint_func):
-    csp.constraints[tuple(variables)] = constraint_func
-
-# def handle_ho_constraint(csp, variables, constraint_func):
-#     def constraint(values):
-#         return constraint_func(values)
-#     csp.constraints[tuple(variables)] = constraint
-
-
-# def handle_ho_constraint(domains,constraints,variables,constraint):
-#     A = "".join(variables)
-#     ho_domains = [domains[v] for v in variables]
-#     A_domain = []
-#     for combo in product(*ho_domains):
-#         if constraint(combo):
-#             A_domain.append(combo)
-#     domains[A] = A_domain
-#     variables.append(A)
-#     for i, v in enumerate(variables):
-#         if v == A:
-#             continue
-#         def make_constraint(index, aux=A, var=v):
-#             def binary_constraint(varA, valA, varV, valV):
-#                 if varA == aux:
-#                     return valA[index] == valV
-#                 if varV == aux:
-#                     return valV[index] == valA
-#                 return True
-#             return binary_constraint
-#         c_fn = make_constraint(i)
-#         constraints[(A,v)] = c_fn
-#         constraints[(v,A)] = c_fn
+def handle_ho_constraint(csp, domains, variables, constraint_func):
+    aux_var = "".join(variables)
+    ho_domains = [domains[v] for v in variables]
+    aux_domain = []
+    for combo in product(*ho_domains):
+        if constraint_func(combo, variables):
+            aux_domain.append(combo)
+    domains[aux_var] = aux_domain
+    csp.variables.append(aux_var)
+    csp.var_to_constraints[aux_var] = []
+    for i, v in enumerate(variables):
+        def make_constraint(index, aux=aux_var, var=v):
+            def binary_constraint(valA, valV):
+                if valA is None or valV is None:
+                    return True
+                if isinstance(valA, tuple):
+                    return valA[index] == valV
+                if isinstance(valV, tuple):
+                    return valV[index] == valA
+                return True
+            return binary_constraint
+        c_fn = make_constraint(i)
+        constraint_key = (aux_var, v)
+        csp.constraints[constraint_key] = c_fn
+        csp.var_to_constraints[aux_var].append((constraint_key, c_fn))
+        csp.var_to_constraints[v].append((constraint_key, c_fn))
+        constraint_key = (v, aux_var)
+        csp.constraints[constraint_key] = c_fn
+        csp.var_to_constraints[v].append((constraint_key, c_fn))
+        csp.var_to_constraints[aux_var].append((constraint_key, c_fn))
 
 def solve_calendar():
     tic = time.time()
     print("Loading initial calendar data...")
     variables, domains, employees, num_days, num_employees, holidays = generate_initial_calendar()
-    # holidays = {7, 14, 21, 28}
     print(f"Variables: {len(variables)}, Employees: {num_employees}, Days: {num_days}")
     print("Setting up T-to-M constraints...")
     constraints = {}
@@ -179,38 +183,34 @@ def solve_calendar():
             window_vars = []
             for d in range(start + 1, start + 7):
                 window_vars.extend([f"{emp}_{d}_M", f"{emp}_{d}_T"])
-            handle_ho_constraint(csp, window_vars, lambda values, vars: not all(
-                val in ["A", "B"] for val, var in zip(values, vars) if val is not None
-            ) or any(val is None for val in values))
-        handle_ho_constraint(csp, emp_vars, lambda values, vars: 
-            sum(1 for val in values if val in ["A", "B"]) <= 20 or 
-            any(val is None for val in values)
+            handle_ho_constraint(csp, domains, window_vars, lambda values, vars: not all(
+                val in ["A", "B"] for val in values
+            ))
+        handle_ho_constraint(csp, domains, emp_vars, lambda values, vars: 
+            sum(1 for val in values if val in ["A", "B"]) <= 20
         )
         holiday_vars = []
         for d in holidays:
             holiday_vars.extend([f"{emp}_{d}_M", f"{emp}_{d}_T"])
-        handle_ho_constraint(csp, holiday_vars, lambda values, vars: 
-            sum(1 for val in values if val in ["A", "B"]) <= 2 or 
-            any(val is None for val in values)
+        handle_ho_constraint(csp, domains, holiday_vars, lambda values, vars: 
+            sum(1 for val in values if val in ["A", "B"]) <= 2
         )
 
     print("Setting up daily shift requirements...")
     for day in range(1, num_days + 1):
         m_vars = [f"{emp}_{day}_M" for emp in employees]
         t_vars = [f"{emp}_{day}_T" for emp in employees]
-        handle_ho_constraint(csp, m_vars, lambda values, vars: 
+        handle_ho_constraint(csp, domains, m_vars, lambda values, vars: 
             sum(1 for val in values if val == "A") >= 2 and 
-            sum(1 for val in values if val == "B") >= 1 or 
-            any(val is None for val in values)
+            sum(1 for val in values if val == "B") >= 1
         )
-        handle_ho_constraint(csp, t_vars, lambda values, vars: 
+        handle_ho_constraint(csp, domains, t_vars, lambda values, vars: 
             sum(1 for val in values if val == "A") >= 2 and 
-            sum(1 for val in values if val == "B") >= 1 or 
-            any(val is None for val in values)
+            sum(1 for val in values if val == "B") >= 1
         )
 
     print("Starting search...")
-    solution = csp.search(timeout=600)
+    solution = csp.search(timeout=600, domains=domains)
     if solution and "assignment" in solution:
         assignment = solution["assignment"]
         print("Generating calendar...")
