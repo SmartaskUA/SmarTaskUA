@@ -1,0 +1,79 @@
+Welcome to the CBC MILP Solver 
+Version: 2.10.3 
+Build Date: Dec 15 2019 
+
+command line - /home/tk/UA/PI/genetic-alg/SmartTask/algorithm/venv/lib/python3.13/site-packages/pulp/apis/../solverdir/cbc/linux/i64/cbc /tmp/9602fddd6e0f4d528a6f5b7363ee06cc-pulp.mps -sec 14400 -timeMode elapsed -branch -printingOptions all -solution /tmp/9602fddd6e0f4d528a6f5b7363ee06cc-pulp.sol (default strategy 1)
+At line 2 NAME          MODEL
+At line 3 ROWS
+At line 18190 COLUMNS
+At line 165299 RHS
+At line 183485 BOUNDS
+At line 200994 ENDATA
+Problem MODEL has 18185 rows, 17508 columns and 106212 elements
+Coin0008I MODEL read with 0 errors
+seconds was changed from 1e+100 to 14400
+Option for timeMode changed from cpu to elapsed
+Continuous objective value is 1260 - 0.07 seconds
+Cgl0003I 0 fixed, 0 tightened bounds, 15 strengthened rows, 0 substitutions
+Cgl0004I processed model has 16004 rows, 15681 columns (15681 integer (15681 of which binary)) and 94837 elements
+Cutoff increment increased from 1e-05 to 9.9999
+Cbc0038I Initial state - 0 integers unsatisfied sum - 0
+Cbc0038I Solution found of 1260
+Cbc0038I Before mini branch and bound, 11704 integers at bound fixed and 3977 continuous
+Cbc0038I Mini branch and bound did not improve solution (0.78 seconds)
+Cbc0038I After 0.79 seconds - Feasibility pump exiting with objective of 1260 - took 0.02 seconds
+Cbc0012I Integer solution of 1260 found by feasibility pump after 0 iterations and 0 nodes (0.79 seconds)
+Cbc0001I Search completed - best objective 1260, took 0 iterations and 0 nodes (0.80 seconds)
+Cbc0035I Maximum depth 0, 0 variables fixed on reduced cost
+Cuts at root node changed objective from 1260 to 1260
+Probing was tried 0 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+Gomory was tried 0 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+Knapsack was tried 0 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+Clique was tried 0 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+MixedIntegerRounding2 was tried 0 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+FlowCover was tried 0 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+TwoMirCuts was tried 0 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+ZeroHalf was tried 0 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
+
+Result - Optimal solution found
+
+Objective value:                1260.00000000
+Enumerated nodes:               0
+Total iterations:               0
+Time (CPU seconds):             0.80
+Time (Wallclock seconds):       0.84
+
+Option for printingOptions changed from normal to all
+Total time (CPU seconds):       0.85   (Wallclock seconds):       0.89
+
+Escala exportada para calendario4.csv
+
+Resumo das verificações de restrições por funcionário:
+
++---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
+|   Funcionário |   Dom/Feriado Trabalhados |   Dias Trabalhados |   Máx Seq. Trabalho |   Transições T->M |   Férias como Folga |
++===============+===========================+====================+=====================+===================+=====================+
+|             0 |                        10 |                223 |                   5 |                 0 |                  30 |
++---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
+|             1 |                         9 |                223 |                   5 |                 0 |                  30 |
++---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
+|             2 |                        13 |                223 |                   5 |                 0 |                  30 |
++---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
+|             3 |                        11 |                223 |                   5 |                 0 |                  30 |
++---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
+|             4 |                         6 |                223 |                   5 |                 0 |                  30 |
++---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
+|             5 |                        12 |                223 |                   5 |                 0 |                  30 |
++---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
+|             6 |                        12 |                223 |                   5 |                 0 |                  30 |
++---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
+|             7 |                        11 |                223 |                   5 |                 0 |                  30 |
++---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
+|             8 |                        12 |                223 |                   5 |                 0 |                  30 |
++---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
+|             9 |                         7 |                223 |                   5 |                 0 |                  30 |
++---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
+|            10 |                        10 |                223 |                   5 |                 0 |                  30 |
++---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
+|            11 |                        13 |                223 |                   5 |                 0 |                  30 |
++---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
