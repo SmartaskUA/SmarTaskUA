@@ -2,6 +2,8 @@ import pulp
 import pandas as pd
 from datetime import date, timedelta
 import holidays
+import random
+from tabulate import tabulate
 
 # ==== PARÂMETROS BÁSICOS ====
 ano = 2025
@@ -12,10 +14,13 @@ turnos = [0, 1, 2]  # 0 = folga, 1 = manhã, 2 = tarde
 
 # ==== FERIADOS NACIONAIS + DOMINGOS ====
 feriados = holidays.country_holidays("PT", years=[ano])
-domingos_feriados = [
-    d for d in dias_ano
-    if d.weekday() == 6 or d in feriados
-]
+domingos_feriados = [d for d in dias_ano if d.weekday() == 6 or d in feriados]
+
+# ==== FÉRIAS ====
+ferias = {
+    f: set(random.sample(dias_ano, 30))
+    for f in funcionarios
+}
 
 # ==== VARIÁVEIS DE DECISÃO ====
 x = {
@@ -32,21 +37,17 @@ x = {
 # ==== MODELO ====
 model = pulp.LpProblem("Escala_Trabalho", pulp.LpMinimize)
 
-# ==== OBJETIVO (penalizações para transições e domingos/feriados) ====
-# ==== VARIÁVEIS AUXILIARES PARA TRANSIÇÕES T->M ====
-z_tm = {}  # z[f,d] = 1 se houve transição T->M entre dia d e d+1
+# ==== OBJETIVO ====
+z_tm = {}
 for f in funcionarios:
     for i in range(len(dias_ano) - 1):
         d = dias_ano[i]
         z_tm[f, d] = pulp.LpVariable(f"z_tm_{f}_{d.strftime('%Y%m%d')}", cat="Binary")
-
-        # z_tm[f,d] >= x[f][d][2] + x[f][d+1][1] - 1  --> só será 1 se ambos forem 1
         model += (
             z_tm[f, d] >= x[f][d][2] + x[f][d + timedelta(days=1)][1] - 1,
             f"def_z_tm_{f}_{d}"
         )
 
-# ==== FUNÇÃO OBJETIVO ====
 penalizacao_domingo = pulp.lpSum(
     x[f][d][1] + x[f][d][2]
     for f in funcionarios
@@ -62,29 +63,19 @@ model += 10 * penalizacao_domingo + 50 * penalizacao_transicao_TM, "Funcao_objet
 
 # ==== RESTRIÇÕES ====
 
-# 1. Um turno por dia por funcionário
 for f in funcionarios:
     for d in dias_ano:
-        model += (
-            pulp.lpSum(x[f][d][t] for t in turnos) == 1,
-            f"um_turno_por_dia_{f}_{d}"
-        )
+        model += (pulp.lpSum(x[f][d][t] for t in turnos) == 1, f"um_turno_por_dia_{f}_{d}")
 
-# 2. Exatamente 223 dias de trabalho por funcionário
 for f in funcionarios:
-    model += (
-        pulp.lpSum(x[f][d][1] + x[f][d][2] for d in dias_ano) == 223,
-        f"total_dias_trabalho_{f}"
-    )
+    model += (pulp.lpSum(x[f][d][1] + x[f][d][2] for d in dias_ano) == 223, f"total_dias_trabalho_{f}")
 
-# 3. Máximo de 22 domingos/feriados por funcionário
 for f in funcionarios:
     model += (
         pulp.lpSum(x[f][d][1] + x[f][d][2] for d in domingos_feriados if d in x[f]) <= 22,
         f"limite_domingo_feriado_{f}"
     )
 
-# 4. No máximo 5 dias consecutivos de trabalho
 for f in funcionarios:
     for i in range(len(dias_ano) - 5):
         dias_seq = dias_ano[i:i + 6]
@@ -93,15 +84,21 @@ for f in funcionarios:
             f"limite_5_dias_seguidos_{f}_{dias_ano[i]}"
         )
 
-# 5. Transição Tarde -> Manhã é proibida
 for f in funcionarios:
     for i in range(len(dias_ano) - 1):
         d = dias_ano[i]
         d_next = dias_ano[i + 1]
-        model += (
-            x[f][d][2] + x[f][d_next][1] <= 1,
-            f"proibe_TM_{f}_{d}"
-        )
+        model += (x[f][d][2] + x[f][d_next][1] <= 1, f"proibe_TM_{f}_{d}")
+
+for f in funcionarios:
+    for d in ferias[f]:
+        model += (x[f][d][0] == 1, f"ferias_folga_{f}_{d}")
+
+for d in dias_ano:
+    model += (
+        pulp.lpSum(x[f][d][1] + x[f][d][2] for f in funcionarios) >= 2,
+        f"cobertura_minima_{d}"
+    )
 
 # ==== RESOLUÇÃO ====
 solver = pulp.PULP_CBC_CMD(msg=True, timeLimit=14400)
@@ -121,6 +118,62 @@ escala = {
 df = pd.DataFrame.from_dict(escala, orient="index")
 df.index.name = "funcionario"
 df.reset_index(inplace=True)
-
 df.to_csv("calendario4.csv", index=False)
 print("Escala exportada para calendario4.csv")
+
+# ==== VERIFICAÇÕES DE RESTRIÇÕES ====
+
+verificacoes = []
+
+for f in funcionarios:
+    escalaf = df[df["funcionario"] == f].drop(columns="funcionario").T
+    escalaf.columns = ["turno"]
+    escalaf["data"] = pd.to_datetime(escalaf.index)
+    escalaf["trabalho"] = escalaf["turno"].isin(["M", "T"])
+    escalaf["domingo_feriado"] = escalaf["data"].apply(lambda d: d in domingos_feriados)
+
+    # 1. Domingos e feriados trabalhados
+    dom_fer = escalaf.query("trabalho & domingo_feriado").shape[0]
+
+    # 2. Total de dias trabalhados
+    total_trabalho = escalaf["trabalho"].sum()
+
+    # 3. Maior sequência de trabalho
+    escalaf["grupo"] = (escalaf["trabalho"] != escalaf["trabalho"].shift()).cumsum()
+    grupos = escalaf.groupby("grupo")["trabalho"].agg(["first", "size"])
+    max_consec = grupos.query("first == True")["size"].max()
+
+    # 4. Transições T->M
+    turnos_seq = escalaf["turno"].tolist()
+    transicoes_TM = sum(
+        1 for i in range(len(turnos_seq) - 1)
+        if turnos_seq[i] == "T" and turnos_seq[i + 1] == "M"
+    )
+
+    # 5. Férias como folga
+    dias_ferias_folga = sum(
+        1 for d in ferias[f]
+        if df.at[f, d.strftime("%Y-%m-%d")] == "F"
+    )
+
+    verificacoes.append([
+        f,
+        dom_fer,
+        total_trabalho,
+        max_consec,
+        transicoes_TM,
+        dias_ferias_folga
+    ])
+
+# ==== TABELA NO TERMINAL ====
+headers = [
+    "Funcionário",
+    "Dom/Feriado Trabalhados",
+    "Dias Trabalhados",
+    "Máx Seq. Trabalho",
+    "Transições T->M",
+    "Férias como Folga"
+]
+
+print("\nResumo das verificações de restrições por funcionário:\n")
+print(tabulate(verificacoes, headers=headers, tablefmt="grid"))
