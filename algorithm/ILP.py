@@ -206,19 +206,23 @@ headers = [
 print("\nResumo das verificações de restrições por funcionário:\n")
 print(tabulate(verificacoes, headers=headers, tablefmt="grid"))
 
-# ==== VERIFICAÇÃO DE COBERTURA POR EQUIPE E TURNO ====
+# ==== VERIFICAÇÃO DE COBERTURA POR EQUIPE E TURNO (DETALHADO) ====
 
 # Equipes
-equipe_A = list(range(9))   # Funcionários 0 a 8
-equipe_B = list(range(9, 12))  # Funcionários 9 a 11
+equipe_A = list(range(9))       # Funcionários 0 a 8
+equipe_B = list(range(9, 12))   # Funcionários 9 a 11
 
-falhas_cobertura = []
+falhas_cobertura_detalhadas = {
+    "manha_A": [],
+    "tarde_A": [],
+    "manha_B": [],
+    "tarde_B": []
+}
 
 for d in dias_ano:
     data_str = d.strftime("%Y-%m-%d")
     dia_data = df.set_index("funcionario")[data_str]
 
-    # Separar turnos por equipe
     turnos_A = dia_data.loc[equipe_A]
     turnos_B = dia_data.loc[equipe_B]
 
@@ -227,24 +231,25 @@ for d in dias_ano:
     manha_B = (turnos_B == "M").sum()
     tarde_B = (turnos_B == "T").sum()
 
-    falha = {
-        "data": data_str,
-        "manha_A": manha_A,
-        "tarde_A": tarde_A,
-        "manha_B": manha_B,
-        "tarde_B": tarde_B,
-        "falha_manha_A": manha_A < 2,
-        "falha_tarde_A": tarde_A < 2,
-        "falha_manha_B": manha_B < 1,
-        "falha_tarde_B": tarde_B < 1
-    }
+    if manha_A < 2:
+        falhas_cobertura_detalhadas["manha_A"].append((data_str, manha_A))
+    if tarde_A < 2:
+        falhas_cobertura_detalhadas["tarde_A"].append((data_str, tarde_A))
+    if manha_B < 1:
+        falhas_cobertura_detalhadas["manha_B"].append((data_str, manha_B))
+    if tarde_B < 1:
+        falhas_cobertura_detalhadas["tarde_B"].append((data_str, tarde_B))
 
-    if any([falha["falha_manha_A"], falha["falha_tarde_A"],
-            falha["falha_manha_B"], falha["falha_tarde_B"]]):
-        falhas_cobertura.append(falha)
+# ==== RESUMO DAS FALHAS POR CATEGORIA ====
 
-# Resumo
-total_falhas = len(falhas_cobertura)
-print(f"\n⚠️ Dias com falha de cobertura mínima por equipe e turno: {total_falhas} dias")
+print("\n🔍 Falhas específicas de cobertura mínima por equipe e turno:\n")
+
+for categoria, falhas in falhas_cobertura_detalhadas.items():
+    print(f"{categoria}: {len(falhas)} dias")
+    for data, valor in falhas[:5]:  # Exibe apenas os 5 primeiros casos como exemplo
+        print(f"  - {data}: apenas {valor} turno(s)")
+    if len(falhas) > 5:
+        print("  ...")
+    print()
 
 
