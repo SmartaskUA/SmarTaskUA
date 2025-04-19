@@ -133,11 +133,37 @@ solver = pulp.PULP_CBC_CMD(msg=True, timeLimit=14400)
 status = model.solve(solver)
 
 # ==== EXPORTAÇÃO EM FORMATO LARGO ====
+# Define as equipas explicitamente
+equipe_A = set(range(9))
+equipe_B = set(range(9, 12))
+
+
+def get_turno_com_equipa(f, d, turno_str):
+    if turno_str == "F":
+        if d in ferias[f]:
+            return "Fe"
+        else:
+            return "F"
+
+    esta_em_A = f in equipe_A
+    esta_em_B = f in equipe_B
+
+    if esta_em_A and not esta_em_B:
+        return f"{turno_str}_A"
+    elif esta_em_B and not esta_em_A:
+        return f"{turno_str}_B"
+    else:
+        return turno_str  # Caso esteja em ambas (ou indefinido), deixa como "M"/"T" puro
+
+
+# Construção da escala com informação da equipa e distinção entre F e Fe
 escala = {
     f: {
-        d.strftime("%Y-%m-%d"): {0: "F", 1: "M", 2: "T"}[
-            max((t for t in turnos if pulp.value(x[f][d][t]) == 1), default=0)
-        ]
+        d.strftime("%Y-%m-%d"): get_turno_com_equipa(
+            f,
+            d,
+            {0: "F", 1: "M", 2: "T"}[max((t for t in turnos if pulp.value(x[f][d][t]) == 1), default=0)]
+        )
         for d in dias_ano
     }
     for f in funcionarios
@@ -150,6 +176,9 @@ df.to_csv("calendario4.csv", index=False)
 print("Escala exportada para calendario4.csv")
 
 # ==== VERIFICAÇÕES DE RESTRIÇÕES ====
+# Equipes (use listas, não sets)
+equipe_A = list(range(9))       # Funcionários 0 a 8
+equipe_B = list(range(9, 12))   # Funcionários 9 a 11
 
 verificacoes = []
 
@@ -157,8 +186,9 @@ for f in funcionarios:
     escalaf = df[df["funcionario"] == f].drop(columns="funcionario").T
     escalaf.columns = ["turno"]
     escalaf["data"] = pd.to_datetime(escalaf.index)
-    escalaf["trabalho"] = escalaf["turno"].isin(["M", "T"])
-    escalaf["domingo_feriado"] = escalaf["data"].apply(lambda d: d in domingos_feriados)
+
+    escalaf["trabalho"] = escalaf["turno"].str.startswith("M") | escalaf["turno"].str.startswith("T")
+    escalaf["domingo_feriado"] = escalaf["data"].isin(domingos_feriados)
 
     # 1. Domingos e feriados trabalhados
     dom_fer = escalaf.query("trabalho & domingo_feriado").shape[0]
@@ -171,11 +201,11 @@ for f in funcionarios:
     grupos = escalaf.groupby("grupo")["trabalho"].agg(["first", "size"])
     max_consec = grupos.query("first == True")["size"].max()
 
-    # 4. Transições T->M
+    # 4. Transições T->M (qualquer equipe)
     turnos_seq = escalaf["turno"].tolist()
     transicoes_TM = sum(
         1 for i in range(len(turnos_seq) - 1)
-        if turnos_seq[i] == "T" and turnos_seq[i + 1] == "M"
+        if turnos_seq[i].startswith("T") and turnos_seq[i + 1].startswith("M")
     )
 
     # 5. Férias como folga
@@ -208,10 +238,6 @@ print(tabulate(verificacoes, headers=headers, tablefmt="grid"))
 
 # ==== VERIFICAÇÃO DE COBERTURA POR EQUIPE E TURNO (DETALHADO) ====
 
-# Equipes
-equipe_A = list(range(9))       # Funcionários 0 a 8
-equipe_B = list(range(9, 12))   # Funcionários 9 a 11
-
 falhas_cobertura_detalhadas = {
     "manha_A": [],
     "tarde_A": [],
@@ -226,10 +252,10 @@ for d in dias_ano:
     turnos_A = dia_data.loc[equipe_A]
     turnos_B = dia_data.loc[equipe_B]
 
-    manha_A = (turnos_A == "M").sum()
-    tarde_A = (turnos_A == "T").sum()
-    manha_B = (turnos_B == "M").sum()
-    tarde_B = (turnos_B == "T").sum()
+    manha_A = turnos_A.str.startswith("M").sum()
+    tarde_A = turnos_A.str.startswith("T").sum()
+    manha_B = turnos_B.str.startswith("M").sum()
+    tarde_B = turnos_B.str.startswith("T").sum()
 
     if manha_A < 2:
         falhas_cobertura_detalhadas["manha_A"].append((data_str, manha_A))
