@@ -2,30 +2,30 @@ Welcome to the CBC MILP Solver
 Version: 2.10.3 
 Build Date: Dec 15 2019 
 
-command line - /home/tk/UA/PI/genetic-alg/SmartTask/algorithm/venv/lib/python3.13/site-packages/pulp/apis/../solverdir/cbc/linux/i64/cbc /tmp/712961604db14773b08a82ddb69b0a60-pulp.mps -sec 14400 -timeMode elapsed -branch -printingOptions all -solution /tmp/712961604db14773b08a82ddb69b0a60-pulp.sol (default strategy 1)
+command line - /home/tk/UA/PI/genetic-alg/SmartTask/algorithm/venv/lib/python3.13/site-packages/pulp/apis/../solverdir/cbc/linux/i64/cbc /tmp/3e4021be941641e6a2117cd840373e36-pulp.mps -sec 14400 -timeMode elapsed -branch -printingOptions all -solution /tmp/3e4021be941641e6a2117cd840373e36-pulp.sol (default strategy 1)
 At line 2 NAME          MODEL
 At line 3 ROWS
-At line 18190 COLUMNS
-At line 165299 RHS
-At line 183485 BOUNDS
-At line 200994 ENDATA
-Problem MODEL has 18185 rows, 17508 columns and 106212 elements
+At line 18920 COLUMNS
+At line 174789 RHS
+At line 193705 BOUNDS
+At line 211214 ENDATA
+Problem MODEL has 18915 rows, 17508 columns and 114972 elements
 Coin0008I MODEL read with 0 errors
 seconds was changed from 1e+100 to 14400
 Option for timeMode changed from cpu to elapsed
-Continuous objective value is 1260 - 0.11 seconds
-Cgl0003I 0 fixed, 0 tightened bounds, 13 strengthened rows, 0 substitutions
-Cgl0004I processed model has 15998 rows, 15672 columns (15672 integer (15672 of which binary)) and 94837 elements
+Continuous objective value is 2520 - 0.18 seconds
+Cgl0003I 0 fixed, 0 tightened bounds, 24 strengthened rows, 0 substitutions
+Cgl0004I processed model has 16768 rows, 15732 columns (15732 integer (15732 of which binary)) and 103220 elements
 Cutoff increment increased from 1e-05 to 9.9999
 Cbc0038I Initial state - 0 integers unsatisfied sum - 0
-Cbc0038I Solution found of 1260
-Cbc0038I Before mini branch and bound, 11692 integers at bound fixed and 3980 continuous
-Cbc0038I Mini branch and bound did not improve solution (1.24 seconds)
-Cbc0038I After 1.25 seconds - Feasibility pump exiting with objective of 1260 - took 0.04 seconds
-Cbc0012I Integer solution of 1260 found by feasibility pump after 0 iterations and 0 nodes (1.26 seconds)
-Cbc0001I Search completed - best objective 1260, took 0 iterations and 0 nodes (1.27 seconds)
+Cbc0038I Solution found of 2520
+Cbc0038I Before mini branch and bound, 11733 integers at bound fixed and 3999 continuous
+Cbc0038I Mini branch and bound did not improve solution (1.82 seconds)
+Cbc0038I After 1.83 seconds - Feasibility pump exiting with objective of 2520 - took 0.04 seconds
+Cbc0012I Integer solution of 2520 found by feasibility pump after 0 iterations and 0 nodes (1.84 seconds)
+Cbc0001I Search completed - best objective 2520, took 0 iterations and 0 nodes (1.85 seconds)
 Cbc0035I Maximum depth 0, 0 variables fixed on reduced cost
-Cuts at root node changed objective from 1260 to 1260
+Cuts at root node changed objective from 2520 to 2520
 Probing was tried 0 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
 Gomory was tried 0 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
 Knapsack was tried 0 times and created 0 cuts of which 0 were active after adding rounds of cuts (0.000 seconds)
@@ -37,14 +37,14 @@ ZeroHalf was tried 0 times and created 0 cuts of which 0 were active after addin
 
 Result - Optimal solution found
 
-Objective value:                1260.00000000
+Objective value:                2520.00000000
 Enumerated nodes:               0
 Total iterations:               0
-Time (CPU seconds):             1.27
-Time (Wallclock seconds):       1.34
+Time (CPU seconds):             1.84
+Time (Wallclock seconds):       1.92
 
 Option for printingOptions changed from normal to all
-Total time (CPU seconds):       1.35   (Wallclock seconds):       1.43
+Total time (CPU seconds):       1.93   (Wallclock seconds):       2.01
 
 Escala exportada para calendario4.csv
 
@@ -53,29 +53,29 @@ Resumo das verificações de restrições por funcionário:
 +---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
 |   Funcionário |   Dom/Feriado Trabalhados |   Dias Trabalhados |   Máx Seq. Trabalho |   Transições T->M |   Férias como Folga |
 +===============+===========================+====================+=====================+===================+=====================+
-|             0 |                        12 |                223 |                   5 |                 0 |                  30 |
+|             0 |                        22 |                223 |                   5 |                 0 |                  30 |
 +---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
-|             1 |                         8 |                223 |                   5 |                 0 |                  30 |
+|             1 |                        21 |                223 |                   5 |                 0 |                  30 |
 +---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
-|             2 |                        10 |                223 |                   5 |                 0 |                  30 |
+|             2 |                        22 |                223 |                   5 |                 0 |                  30 |
 +---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
-|             3 |                        15 |                223 |                   5 |                 0 |                  30 |
+|             3 |                        21 |                223 |                   5 |                 0 |                  30 |
 +---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
-|             4 |                        12 |                223 |                   5 |                 0 |                  30 |
+|             4 |                        21 |                223 |                   5 |                 0 |                  30 |
 +---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
 |             5 |                        14 |                223 |                   5 |                 0 |                  30 |
 +---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
-|             6 |                         9 |                223 |                   5 |                 0 |                  30 |
+|             6 |                        22 |                223 |                   5 |                 0 |                  30 |
 +---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
-|             7 |                         9 |                223 |                   5 |                 0 |                  30 |
+|             7 |                        22 |                223 |                   5 |                 0 |                  30 |
 +---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
-|             8 |                         7 |                223 |                   5 |                 0 |                  30 |
+|             8 |                        21 |                223 |                   5 |                 0 |                  30 |
 +---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
-|             9 |                         9 |                223 |                   5 |                 0 |                  30 |
+|             9 |                        22 |                223 |                   5 |                 0 |                  30 |
 +---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
-|            10 |                        11 |                223 |                   5 |                 0 |                  30 |
+|            10 |                        22 |                223 |                   5 |                 0 |                  30 |
 +---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
-|            11 |                        10 |                223 |                   5 |                 0 |                  30 |
+|            11 |                        22 |                223 |                   5 |                 0 |                  30 |
 +---------------+---------------------------+--------------------+---------------------+-------------------+---------------------+
 
-⚠️ Dias com falha de cobertura mínima por equipe e turno: 257 dias
+⚠️ Dias com falha de cobertura mínima por equipe e turno: 276 dias

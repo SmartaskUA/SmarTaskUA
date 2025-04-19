@@ -100,6 +100,17 @@ for d in dias_ano:
         pulp.lpSum(x[f][d][1] + x[f][d][2] for f in funcionarios) >= 2,
         f"cobertura_minima_{d}"
     )
+for d in dias_ano:
+    # Pelo menos 2 turnos de manhã no dia
+    model += (
+        pulp.lpSum(x[f][d][1] for f in funcionarios) >= 2,
+        f"minimo_manha_{d}"
+    )
+    # Pelo menos 2 turnos de tarde no dia
+    model += (
+        pulp.lpSum(x[f][d][2] for f in funcionarios) >= 2,
+        f"minimo_tarde_{d}"
+    )
 
 # ==== RESOLUÇÃO ====
 solver = pulp.PULP_CBC_CMD(msg=True, timeLimit=14400)
