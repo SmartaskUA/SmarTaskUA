@@ -91,7 +91,7 @@ class CSP:
 
 def employee_scheduling():
     tic = time.time()
-    variables, domains, employees, num_days, num_employees, holidays = generate_initial_calendar()
+    variables, domains, employees, num_days, holidays = generate_initial_calendar()
 
     constraints = {}
     
@@ -123,11 +123,11 @@ def employee_scheduling():
     solution = csp.search(timeout=600)
     if solution and "assignment" in solution:
         assignment = solution["assignment"]
-        generate_calendar(assignment, num_employees, num_days, employees)
+        generate_calendar(assignment, num_days, employees)
         toc = time.time()
         print(f"Execution time: {toc - tic:.2f} seconds")
         analyze_solution(assignment, employees, num_days, holidays)
-        return build_schedule_table(assignment, num_employees, num_days, employees)
+        return build_schedule_table(assignment, num_days, employees)
     else:
         print("No solution found within timeout or constraints too restrictive.")
         return None
@@ -141,7 +141,7 @@ def handle_ho_constraint(csp, variables, constraint_func):
     constraint_key = f"multi_{'_'.join(variables)}"
     csp.constraints[constraint_key] = constraint
 
-def build_schedule_table(assignment, num_employees, num_days, employees):
+def build_schedule_table(assignment, num_days, employees):
     table = []
     header = ["Employee"] + [str(day) for day in range(1, num_days + 1)]
     table.append(header)
@@ -158,7 +158,7 @@ def build_schedule_table(assignment, num_employees, num_days, employees):
         table.append(row)
     return table
 
-def generate_calendar(assignment, num_employees, num_days, employees):
+def generate_calendar(assignment, num_days, employees):
     with open("calendario_turnos.csv", "w", newline="") as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(["Employee"] + [str(day) for day in range(1, num_days + 1)])
