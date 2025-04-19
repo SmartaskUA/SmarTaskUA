@@ -137,13 +137,12 @@ status = model.solve(solver)
 equipe_A = set(range(9))
 equipe_B = set(range(9, 12))
 
-
 def get_turno_com_equipa(f, d, turno_str):
     if turno_str == "F":
         if d in ferias[f]:
-            return "Fe"
+            return "F"  # Férias
         else:
-            return "F"
+            return "0"  # Folga
 
     esta_em_A = f in equipe_A
     esta_em_B = f in equipe_B
@@ -153,7 +152,8 @@ def get_turno_com_equipa(f, d, turno_str):
     elif esta_em_B and not esta_em_A:
         return f"{turno_str}_B"
     else:
-        return turno_str  # Caso esteja em ambas (ou indefinido), deixa como "M"/"T" puro
+        return turno_str  # fallback
+
 
 
 # Construção da escala com informação da equipa e distinção entre F e Fe
@@ -211,7 +211,7 @@ for f in funcionarios:
     # 5. Férias como folga
     dias_ferias_folga = sum(
         1 for d in ferias[f]
-        if df.at[f, d.strftime("%Y-%m-%d")] == "F"
+        if df.at[f, d.strftime("%Y-%m-%d")] == "0"
     )
 
     verificacoes.append([
