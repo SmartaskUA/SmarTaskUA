@@ -59,7 +59,23 @@ penalizacao_transicao_TM = pulp.lpSum(
     z_tm[f, d] for (f, d) in z_tm
 )
 
-model += 10 * penalizacao_domingo + 50 * penalizacao_transicao_TM, "Funcao_objetivo"
+# Cobertura adicional por turno (opcional e suave)
+bonus_manha = pulp.lpSum(
+    pulp.lpSum(x[f][d][1] for f in funcionarios) for d in dias_ano
+)
+
+bonus_tarde = pulp.lpSum(
+    pulp.lpSum(x[f][d][2] for f in funcionarios) for d in dias_ano
+)
+
+# Nova função objetivo com pesos equilibrados
+model += (
+    5 * penalizacao_domingo +        # Penalizar suavemente domingos/feriados
+    30 * penalizacao_transicao_TM -  # Penalizar transições T→M
+    0.01 * bonus_manha -             # Leve incentivo a mais manhãs
+    0.01 * bonus_tarde               # Leve incentivo a mais tardes
+), "Funcao_objetivo"
+
 
 # ==== RESTRIÇÕES ====
 
