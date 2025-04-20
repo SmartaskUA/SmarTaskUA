@@ -159,7 +159,7 @@ def build_schedule_table(assignment, num_days, employees):
     return table
 
 def generate_calendar(assignment, num_days, employees):
-    with open("calendario_turnos.csv", "w", newline="") as csvfile:
+    with open("solved_calendar.csv", "w", newline="") as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(["Employee"] + [str(day) for day in range(1, num_days + 1)])
         for emp in employees:
