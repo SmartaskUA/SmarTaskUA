@@ -230,6 +230,28 @@ headers = [
 print("\nResumo das verificações de restrições por funcionário:\n")
 print(tabulate(verificacoes, headers=headers, tablefmt="grid"))
 
+# ==== VERIFICAÇÃO FINAL: DIAS SEM NENHUMA COBERTURA (0 turnos) ====
+
+dias_sem_cobertura_total = []
+
+for d in dias_ano:
+    data_str = d.strftime("%Y-%m-%d")
+    dia_data = df.set_index("funcionario")[data_str]
+
+    total_manha = dia_data.str.startswith("M").sum()
+    total_tarde = dia_data.str.startswith("T").sum()
+
+    if total_manha + total_tarde == 0:
+        dias_sem_cobertura_total.append(data_str)
+
+print("\n🚨 Dias sem nenhuma cobertura (0 turnos manhã e tarde):\n")
+if dias_sem_cobertura_total:
+    for dia in dias_sem_cobertura_total:
+        print(f"  - {dia}")
+else:
+    print("✅ Nenhum dia sem cobertura total.")
+
+
 # ==== VERIFICAÇÃO DE COBERTURA POR EQUIPE E TURNO (DETALHADO) ====
 
 falhas_cobertura_detalhadas = {
