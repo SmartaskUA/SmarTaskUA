@@ -2,6 +2,61 @@ import random
 import numpy as np
 import csv
 from deap import base, creator, tools, algorithms
+from datetime import datetime, timedelta
+
+def get_holidays_2025():
+    holidays = [
+        datetime(2025, 1, 1),
+        datetime(2025, 3, 4),
+        datetime(2025, 4, 18),
+        datetime(2025, 4, 20),
+        datetime(2025, 4, 25),
+        datetime(2025, 5, 1),
+        datetime(2025, 6, 10),
+        datetime(2025, 6, 19),
+        datetime(2025, 8, 15),
+        datetime(2025, 10, 5),
+        datetime(2025, 11, 1),
+        datetime(2025, 12, 1),
+        datetime(2025, 12, 8),
+        datetime(2025, 12, 25),
+    ]
+    return set([h.date() for h in holidays])
+
+def get_sundays_2025():
+    sundays = set()
+    date = datetime(2025, 1, 1)
+    while date.year == 2025:
+        if date.weekday() == 6:  # Sunday
+            sundays.add(date.date())
+        date += timedelta(days=1)
+    return sundays
+
+def get_holiday_and_sunday_indexes():
+    holidays = get_holidays_2025()
+    sundays = get_sundays_2025()
+    combined = holidays.union(sundays)
+    return set((date - datetime(2025, 1, 1).date()).days for date in combined)
+
+def count_sunday_holiday_workdays(schedule):
+    holiday_indexes = get_holiday_and_sunday_indexes()
+    violations = 0
+    for employee_schedule in schedule:
+        count = sum(1 for i, day in enumerate(employee_schedule) if i in holiday_indexes and day != 0 and day != 'F')
+        if count > 22:
+            violations += (count - 22)
+    return violations
+
+def penalizar_domingos_feriados(schedule, holiday_set, sunday_indices, max_allowed=22):
+    total_penalty = 0
+    for employee_schedule in schedule:
+        worked_special_days = sum(
+            1 for i, day in enumerate(employee_schedule)
+            if i in holiday_set or i in sunday_indices and day in [1, 2]  # Turno T ou M
+        )
+        excesso = max(0, worked_special_days - max_allowed)
+        total_penalty += excesso ** 2  # penalização quadrática (mais forte)
+    return total_penalty
 
 # --- Parâmetros gerais ---
 nFuncionarios = 12
@@ -37,9 +92,13 @@ toolbox = base.Toolbox()
 # Gera indivíduo: matriz (funcionários x dias) com 0 (folga) ou 1 (M) ou 2 (T)
 def gerar_individuo():
     individuo = np.zeros((nFuncionarios, nDias), dtype=int)
+    holiday_indexes = get_holiday_and_sunday_indexes()
+
     for i in range(nFuncionarios):
         dias_trabalho = 0
         j = 0
+        domingos_feriados_trabalhados = 0
+
         while j < nDias and dias_trabalho < 223:
             if ferias[i][j]:
                 j += 1
@@ -48,22 +107,26 @@ def gerar_individuo():
             dias_lote = random.randint(1, min(5, 223 - dias_trabalho))
             turno = random.choice(preferencias[i])
             valid = True
+            lote_indices = []
 
-            # Verifica se haverá violação ao inserir esse bloco
             for k in range(dias_lote):
                 dia = j + k
                 if dia >= nDias or ferias[i][dia]:
                     valid = False
                     break
 
-                # Verifica dias antes e depois para evitar ultrapassar 5
+                # Verifica dias consecutivos
                 antes = sum(1 for d in range(dia - 5, dia) if 0 <= d < nDias and individuo[i][d] != 0)
                 depois = sum(1 for d in range(dia + 1, dia + 6) if d < nDias and individuo[i][d] != 0)
                 if antes + 1 + depois > 5:
                     valid = False
                     break
 
-            if not valid:
+                # Contar feriados/domingos desse bloco
+                if dia in holiday_indexes:
+                    lote_indices.append(dia)
+
+            if not valid or (domingos_feriados_trabalhados + len(lote_indices) > 22):
                 j += 1
                 continue
 
@@ -73,12 +136,15 @@ def gerar_individuo():
                     break
                 individuo[i][dia] = turno
                 dias_trabalho += 1
+                if dia in holiday_indexes:
+                    domingos_feriados_trabalhados += 1
 
             j += dias_lote
             if j < nDias:
                 individuo[i][j] = 0  # folga obrigatória
                 j += 1
     return individuo
+
 
 def mutacao(individuo):
     i = random.randint(0, nFuncionarios - 1)
@@ -92,6 +158,7 @@ def mutacao(individuo):
     novo_ind = np.copy(individuo)
     novo_ind[i][d1], novo_ind[i][d2] = novo_ind[i][d2], novo_ind[i][d1]
 
+    # Verificar 5 dias consecutivos
     dias_consec = 0
     for d in range(nDias):
         if novo_ind[i][d] != 0:
@@ -101,7 +168,21 @@ def mutacao(individuo):
         else:
             dias_consec = 0
 
+    # Verificar total de dias de trabalho no ano (exatamente 223)
+    total_trabalho = np.sum(novo_ind[i] != 0)
+    if total_trabalho != 223:
+        return individuo,
+
+    # Verificar número de domingos/feriados trabalhados (máximo 22)
+    holiday_sunday_indexes = get_holiday_and_sunday_indexes()
+    trabalho_em_feriados_domingos = sum(
+        1 for d in holiday_sunday_indexes if novo_ind[i][d] != 0
+    )
+    if trabalho_em_feriados_domingos > 22:
+        return individuo,
+
     return creator.Individual(novo_ind),
+
 
 
 def cruzamento(ind1, ind2):
@@ -125,55 +206,52 @@ def cruzamento(ind1, ind2):
         return ind1, ind2
 
 
-# Avaliação (fitness)
 def avaliar(individuo):
     score = 0
-    penalidade_consecutivos = 0
-    penalidade_tarde_manha = 0
     penalidade_domingos_feriados = 0
-    penalidade_dias_vazios = 0
+    penalidade_dias_totais = 0
+    penalidade_consecutivos = 0
+    penalidade_turnos = 0
 
-    # Contar dias sem ninguém escalado
-    for d in range(nDias):
-        total_trabalhando = sum(1 for i in range(nFuncionarios) if individuo[i][d] not in [0])
-        if total_trabalhando == 0:
-            penalidade_dias_vazios += 1
+    # Verificar dias trabalhados (exatamente 223)
+    for i in range(nFuncionarios):
+        dias_trabalhados = np.sum(individuo[i] != 0)
+        if dias_trabalhados != 223:
+            penalidade_dias_totais += abs(dias_trabalhados - 223) * 8
 
-    score += penalidade_dias_vazios * 10  # Peso ajustável
+    # Verificar domingos e feriados (máximo 22)
+    for i in range(nFuncionarios):
+        dias_especiais = sum(1 for d in range(nDias)
+                             if (d in feriados or d % 7 == 6)
+                             and individuo[i][d] != 0)
+        if dias_especiais > 22:
+            penalidade_domingos_feriados += (dias_especiais - 22) ** 2
 
+    # Verificar dias consecutivos (máximo 5)
     for i in range(nFuncionarios):
         dias_consec = 0
-        domingos_feriados = 0
-
         for d in range(nDias):
-            valor = individuo[i][d]
-
-            # 5 dias consecutivos
-            if valor != 0:
+            if individuo[i][d] != 0:
                 dias_consec += 1
                 if dias_consec > 5:
                     penalidade_consecutivos += 1
             else:
                 dias_consec = 0
 
-            # Penalização por Tarde → Manhã (2 -> 1)
-            if d > 0:
-                anterior = individuo[i][d - 1]
-                if anterior == 2 and valor == 1:
-                    penalidade_tarde_manha += 1
+    # Verificar sequências de turnos
+    for i in range(nFuncionarios):
+        for d in range(1, nDias):
+            if individuo[i][d - 1] == 2 and individuo[i][d] == 1:
+                penalidade_turnos += 1
 
-            # Penalizar domingos (d % 7 == 6) e feriados
-            if (d in feriados or d % 7 == 6) and valor != 0:
-                domingos_feriados += 1
-
-        if domingos_feriados > 22:
-            penalidade_domingos_feriados += (domingos_feriados - 22)
-
-    score += penalidade_consecutivos * 5
-    score += penalidade_tarde_manha * 20
-    score += penalidade_domingos_feriados * 3
+    score = (penalidade_domingos_feriados * 3 +
+             penalidade_dias_totais * 8 +
+             penalidade_consecutivos * 5 +
+             penalidade_turnos * 20)
 
     return score,
+
+
 
 
 
@@ -258,18 +336,31 @@ def analisar_violacoes(individuo):
     return violacoes
 # Execução principal
 
+
 def solve():
     random.seed(42)
-    populacao = toolbox.population(n=12)
-    NGEN = 60
+
+    # Tamanho da população mais robusto
+    populacao = toolbox.population(n=100)
+    NGEN = 120
+    CXPB = 0.7
+    MUTPB = 0.3
+
     for gen in range(NGEN):
-        filhos = algorithms.varAnd(populacao, toolbox, cxpb=0.5, mutpb=0.2)
+        filhos = algorithms.varAnd(populacao, toolbox, cxpb=CXPB, mutpb=MUTPB)
+        melhores = tools.selBest(populacao, 5)
+        populacao = toolbox.select(filhos, k=len(populacao) - 5) + melhores
+        # Avaliar os filhos
         fits = toolbox.map(toolbox.evaluate, filhos)
         for fit, ind in zip(fits, filhos):
             ind.fitness.values = fit
+
+        # Seleção para próxima geração
         populacao = toolbox.select(filhos, k=len(populacao))
+
+        # Melhor indivíduo da geração
         melhor = tools.selBest(populacao, 1)[0]
-        # print(f"Geração {gen}, Custo: {melhor.fitness.values[0]}")
+        print(f"Geração {gen + 1}, Custo: {melhor.fitness.values[0]}")
 
     salvar_csv(melhor, ferias, nDias, preferencias)
     violacoes = analisar_violacoes(melhor)
@@ -296,4 +387,4 @@ def solve():
     return schedule
 
 if __name__ == "__main__":
-    print(solve())
+    solve()
