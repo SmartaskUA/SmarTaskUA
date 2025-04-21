@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from modules.MongoDBClient import MongoDBClient
-from modules.TaskManager import TaskManager  # ✅ NOVO
+from modules.TaskManager import TaskManager 
 
 
 class RabbitMQClient:
