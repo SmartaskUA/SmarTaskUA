@@ -18,20 +18,26 @@ def analyze(file):
     missed_work_days = 0
     missed_vacation_days = 0
     missed_team_min = 0
-
-    for index, row in df.iterrows():
+    workHolidays = 0
+    holiday_cols = [f'Dia {d}' for d in holidays if f'Dia {d}' in df.columns]
+    for _, row in df.iterrows():
         worked_days = int(row['Dias Trabalhados'])
         vacation_days = int(row['Dias de Férias'])
 
         missed_work_days += abs(223 - worked_days)
         missed_vacation_days += abs(30 - vacation_days)
 
+        numHolidays = sum(row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] for col in holiday_cols)
+        if numHolidays > 22:
+            workHolidays += numHolidays - 22
+
+
     for col in df.columns:
         if col.startswith('Dia'):
-            M_A = sum(row[col] == 'M_A' for index, row in df.iterrows())
-            T_A = sum(row[col] == 'T_A' for index, row in df.iterrows())
-            M_B = sum(row[col] == 'M_B' for index, row in df.iterrows())
-            T_B = sum(row[col] == 'T_B' for index, row in df.iterrows())
+            M_A = sum(row[col] == 'M_A' for _, row in df.iterrows())
+            T_A = sum(row[col] == 'T_A' for _, row in df.iterrows())
+            M_B = sum(row[col] == 'M_B' for _, row in df.iterrows())
+            T_B = sum(row[col] == 'T_B' for _, row in df.iterrows())
             if M_A < 2:
                 missed_team_min += 1
             if T_A < 2:
@@ -42,19 +48,20 @@ def analyze(file):
                 missed_team_min += 1
             
 
-    return missed_work_days, missed_vacation_days
+    return missed_work_days, missed_vacation_days, missed_team_min, workHolidays
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("Usage: python kpiComparison.py <file1> <file2>")
         sys.exit(1)
 
+    holidays = [1, 107, 109, 114, 121, 161, 170, 226, 276, 303, 333, 340, 357]
     file1 = sys.argv[1]
     file2 = sys.argv[2]
     check_files(file1, file2)
 
-    dataFile1 = analyze(file1)
-    dataFile2 = analyze(file2)
+    dataFile1 = analyze(file1, holidays)
+    dataFile2 = analyze(file2, holidays)
 
     print(f"\nResults for {file1}:")
     print(f"  Missed Work Days: {dataFile1[0]}")
