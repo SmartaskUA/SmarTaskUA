@@ -208,19 +208,14 @@ for f in funcionarios:
         if turnos_seq[i].startswith("T") and turnos_seq[i + 1].startswith("M")
     )
 
-    # 5. Férias como folga
-    dias_ferias_folga = sum(
-        1 for d in ferias[f]
-        if df.at[f, d.strftime("%Y-%m-%d")] == "0"
-    )
+
 
     verificacoes.append([
         f,
         dom_fer,
         total_trabalho,
         max_consec,
-        transicoes_TM,
-        dias_ferias_folga
+        transicoes_TM
     ])
 
 # ==== TABELA NO TERMINAL ====
@@ -229,8 +224,7 @@ headers = [
     "Dom/Feriado Trabalhados",
     "Dias Trabalhados",
     "Máx Seq. Trabalho",
-    "Transições T->M",
-    "Férias como Folga"
+    "Transições T->M"
 ]
 
 print("\nResumo das verificações de restrições por funcionário:\n")
