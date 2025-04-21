@@ -12,6 +12,10 @@ def check_files(file1, file2):
     if file1 == file2:
         print("Files are the same")
         sys.exit(1)
+    if "Dia 1" not in header1 and "Dia 1" not in header2:
+        print("Wrong header format")
+        sys.exit(1)
+
 
 def analyze(file, holidays):
     df = pd.read_csv(file)
