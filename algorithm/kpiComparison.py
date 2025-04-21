@@ -13,12 +13,13 @@ def check_files(file1, file2):
         print("Files are the same")
         sys.exit(1)
 
-def analyze(file):
+def analyze(file, holidays):
     df = pd.read_csv(file)
     missed_work_days = 0
     missed_vacation_days = 0
     missed_team_min = 0
     workHolidays = 0
+    consecutiveDays = 0
     holiday_cols = [f'Dia {d}' for d in holidays if f'Dia {d}' in df.columns]
     for _, row in df.iterrows():
         worked_days = int(row['Dias Trabalhados'])
@@ -30,6 +31,22 @@ def analyze(file):
         numHolidays = sum(row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] for col in holiday_cols)
         if numHolidays > 22:
             workHolidays += numHolidays - 22
+
+        work_sequence = [
+            1 if row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] else 0
+            for col in df.columns if col.startswith("Dia ")
+        ]
+
+        streak = 0
+        fails = 0
+        for day in work_sequence:
+            if day == 1:
+                streak += 1
+                if streak >= 6:
+                    fails += 1
+            else:
+                streak = 0
+        consecutiveDays += fails
 
 
     for col in df.columns:
@@ -48,7 +65,7 @@ def analyze(file):
                 missed_team_min += 1
             
 
-    return missed_work_days, missed_vacation_days, missed_team_min, workHolidays
+    return missed_work_days, missed_vacation_days, missed_team_min, workHolidays, consecutiveDays
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
@@ -66,7 +83,13 @@ if __name__ == "__main__":
     print(f"\nResults for {file1}:")
     print(f"  Missed Work Days: {dataFile1[0]}")
     print(f"  Missed Vacation Days: {dataFile1[1]}")
+    print(f"  Missed Team Min: {dataFile1[2]}")
+    print(f"  Work Holidays: {dataFile1[3]}")
+    print(f"  Consecutive Days: {dataFile1[4]}")
 
     print(f"\nResults for {file2}:")
     print(f"  Missed Work Days: {dataFile2[0]}")
     print(f"  Missed Vacation Days: {dataFile2[1]}")
+    print(f"  Missed Team Min: {dataFile2[2]}")
+    print(f"  Work Holidays: {dataFile2[3]}")
+    print(f"  Consecutive Days: {dataFile2[4]}")
