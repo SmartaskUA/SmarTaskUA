@@ -3,13 +3,16 @@
 from algorithm.CSP_joao import employee_scheduling
 from algorithm.genetic_algorithm import solve as genetic_alg_solver
 from algorithm.heuristic_sol_gabi import solve as hill_clibing_alg_solver
+from algorithm.ILP import solve as ilp_solver
 class TaskManager:
     def __init__(self):
         # No futuro, você pode adicionar suporte a múltiplos algoritmos aqui
         # ToDo: this must be converted to a json file that can be dynamically modified
         self.algorithms = {
             "CSP Scheduling": employee_scheduling,
-            "genetic_algorithm" : genetic_alg_solver, "hill climbing" : hill_clibing_alg_solver
+            "genetic_algorithm" : genetic_alg_solver,
+            "hill climbing" : hill_clibing_alg_solver,
+            "linear programming": ilp_solver
         }
 
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling"):
