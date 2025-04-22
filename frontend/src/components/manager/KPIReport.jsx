@@ -33,6 +33,18 @@ const KPIReport = ({
     return "error.main";
   };
 
+  const renderIssueList = (list) => {
+    return list.length > 0 ? (
+      <ul style={{ marginTop: 4 }}>
+        {list.map((item, idx) => (
+          <li key={idx}>
+            <Typography variant="body2">{item}</Typography>
+          </li>
+        ))}
+      </ul>
+    ) : null;
+  };
+
   return (
     <CardContent sx={{ display: "flex", flexDirection: "column", padding: 2, marginRight: 0 }}>
       <Accordion>
@@ -47,36 +59,48 @@ const KPIReport = ({
 
         <AccordionDetails>
           <Typography variant="body2" color="textSecondary" paragraph>
-            These indicators help to monitor possible conflicts, overloads, and vacation periods in the work schedule.
+            Estes indicadores ajudam a monitorar possíveis conflitos de escala, sobrecarga de trabalho e férias.
           </Typography>
 
           <Typography variant="h6" color="primary">
-            Invalid T-M sequence
+            Sequência inválida T-M
           </Typography>
           <Typography color={scheduleConflicts.length > 0 ? "error" : "success.main"}>
-            {scheduleConflicts.length > 0 ? "Conflict found" : "No conflict found."}
+            {scheduleConflicts.length > 0
+              ? "Conflitos encontrados nos dias:"
+              : "Nenhum conflito encontrado."}
           </Typography>
+          {renderIssueList(scheduleConflicts)}
 
           <Typography variant="h6" color="primary" sx={{ marginTop: 2 }}>
-            No more than 5 consecutive workdays
+            Mais de 5 dias consecutivos de trabalho
           </Typography>
           <Typography color={workloadConflicts.length > 0 ? "error" : "success.main"}>
-            {workloadConflicts.length > 0 ? "Overload found" : "No work overload detected."}
+            {workloadConflicts.length > 0
+              ? "Funcionários em sobrecarga:"
+              : "Nenhuma sobrecarga detectada."}
           </Typography>
+          {renderIssueList(workloadConflicts)}
 
           <Typography variant="h6" color="primary" sx={{ marginTop: 2 }}>
-            Max 22 workdays (Sundays and holidays) per year
+            Mais de 22 dias úteis trabalhados no ano
           </Typography>
           <Typography color={underworkedEmployees.length > 0 ? "error" : "success.main"}>
-            {underworkedEmployees.length > 0 ? "Employees with more than 22 workdays" : "All employees worked less than 22 days."}
+            {underworkedEmployees.length > 0
+              ? "Funcionários com carga excessiva:"
+              : "Todos os funcionários estão dentro do limite."}
           </Typography>
+          {renderIssueList(underworkedEmployees)}
 
           <Typography variant="h6" color="primary" sx={{ marginTop: 2 }}>
-            30 days of vacation per year
+            30 dias de férias por ano
           </Typography>
           <Typography color={vacationIssues.length > 0 ? "error" : "success.main"}>
-            {vacationIssues.length > 0 ? "Vacation issues found" : "Vacation days correctly recorded."}
+            {vacationIssues.length > 0
+              ? "Funcionários com férias incorretas:"
+              : "Todos os registros de férias estão corretos."}
           </Typography>
+          {renderIssueList(vacationIssues)}
         </AccordionDetails>
       </Accordion>
     </CardContent>
