@@ -1,5 +1,6 @@
 import sys
 import pandas as pd
+import json
 
 def check_files(file1, file2):
     with open(file1, 'r') as f1, open(file2, 'r') as f2:
@@ -69,7 +70,13 @@ def analyze(file, holidays):
                 missed_team_min += 1
             
 
-    return missed_work_days, missed_vacation_days, missed_team_min, workHolidays, consecutiveDays
+    return {
+        "missedWorkDays": missed_work_days,
+        "missedVacationDays": missed_vacation_days,
+        "missedTeamMin": missed_team_min,
+        "workHolidays": workHolidays,
+        "consecutiveDays": consecutiveDays
+    }
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
@@ -84,16 +91,8 @@ if __name__ == "__main__":
     dataFile1 = analyze(file1, holidays)
     dataFile2 = analyze(file2, holidays)
 
-    print(f"\nResults for {file1}:")
-    print(f"  Missed Work Days: {dataFile1[0]}")
-    print(f"  Missed Vacation Days: {dataFile1[1]}")
-    print(f"  Missed Team Min: {dataFile1[2]}")
-    print(f"  Work Holidays: {dataFile1[3]}")
-    print(f"  Consecutive Days: {dataFile1[4]}")
 
-    print(f"\nResults for {file2}:")
-    print(f"  Missed Work Days: {dataFile2[0]}")
-    print(f"  Missed Vacation Days: {dataFile2[1]}")
-    print(f"  Missed Team Min: {dataFile2[2]}")
-    print(f"  Work Holidays: {dataFile2[3]}")
-    print(f"  Consecutive Days: {dataFile2[4]}")
+    print(json.dumps({
+        "file1": dataFile1,
+        "file2": dataFile2
+    }))

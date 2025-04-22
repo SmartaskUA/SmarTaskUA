@@ -6,13 +6,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.multipart.MultipartFile;
 import smartask.api.models.Schedule;
 import smartask.api.models.requests.ScheduleRequest;
 import smartask.api.services.SchedulesService;
-
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.io.File;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:5173")
@@ -92,5 +93,19 @@ public class SchedulesController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @PostMapping("/analyze")
+    public ResponseEntity<String> analyzeSchedules(@RequestParam("file1") MultipartFile file1,
+                                 @RequestParam("file2") MultipartFile file2) throws IOException {
+
+    File temp1 = File.createTempFile("file1-", ".csv");
+    File temp2 = File.createTempFile("file2-", ".csv");
+    file1.transferTo(temp1);
+    file2.transferTo(temp2);
+
+    String jsonOutput = service.analyzeSchedules(temp1, temp2);
+
+    return ResponseEntity.ok(jsonOutput);
+}
 
 }
