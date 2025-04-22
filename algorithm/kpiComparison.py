@@ -19,7 +19,7 @@ def check_files(file1, file2):
 
 
 def analyze(file, holidays):
-    df = pd.read_csv(file)
+    df = pd.read_csv(file, encoding='ISO-8859-1')
     missed_work_days = 0
     missed_vacation_days = 0
     missed_team_min = 0
@@ -90,7 +90,6 @@ if __name__ == "__main__":
 
     dataFile1 = analyze(file1, holidays)
     dataFile2 = analyze(file2, holidays)
-
 
     print(json.dumps({
         "file1": dataFile1,

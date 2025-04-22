@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,11 +14,14 @@ import smartask.api.models.Schedule;
 import smartask.api.models.requests.ScheduleRequest;
 import smartask.api.services.SchedulesService;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:5173")
@@ -104,24 +108,27 @@ public class SchedulesController {
     @PostMapping("/analyze")
     public ResponseEntity<Map<String,String>> analyzeSchedules(@RequestParam MultipartFile file1,
                                                 @RequestParam MultipartFile file2) throws IOException {
+        try {
+            Path sharedDir = Paths.get("/shared_tmp");
+            Path path1 = Files.createTempFile(sharedDir, "file1-", ".csv");
+            Path path2 = Files.createTempFile(sharedDir, "file2-", ".csv");
 
-        File temp1 = File.createTempFile("file1-", ".csv");
-        File temp2 = File.createTempFile("file2-", ".csv");
-        file1.transferTo(temp1);
-        file2.transferTo(temp2);
+            file1.transferTo(path1.toFile());
+            file2.transferTo(path2.toFile());
 
-        String requestId = UUID.randomUUID().toString();
+            String requestId = UUID.randomUUID().toString();
+            Map<String, String> message = Map.of(
+                "requestId", requestId,
+                "file1Path", path1.toString(),
+                "file2Path", path2.toString()
+            );
 
-        Map<String, String> message = Map.of(
-            "requestId", requestId,
-            "file1Path", temp1.getAbsolutePath(),
-            "file2Path", temp2.getAbsolutePath()
-        );
+            rabbitTemplate.convertAndSend("comparison-exchange", "comparison-queue", message);
 
-        rabbitTemplate.convertAndSend("", "comparison-queue", new ObjectMapper().writeValueAsString(message));
+            return ResponseEntity.ok(Map.of("requestId", requestId));
 
-        return ResponseEntity.ok(Map.of("requestId", requestId));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
-
-
 }
