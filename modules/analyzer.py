@@ -9,7 +9,7 @@ mongo = MongoClient("mongodb://mongo:27017/")
 db = mongo["mydatabase"]
 comparison_results = db["comparisons"]
 
-def callback(ch, method, properties, body):
+def callback(ch, method, body):
     try:
         message = json.loads(body)
         request_id = message["requestId"]
@@ -24,6 +24,8 @@ def callback(ch, method, properties, body):
         result_doc = {
             "requestId": request_id,
             "status": "done",
+            "file1": file1,
+            "file2": file2,
             "result": {
                 "file1": result1,
                 "file2": result2
