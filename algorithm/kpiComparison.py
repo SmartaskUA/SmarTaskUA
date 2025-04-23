@@ -19,6 +19,10 @@ def check_files(file1, file2):
 
 
 def analyze(file, holidays):
+    print(f"Analyzing file: {file}")
+    with open(file, "rb") as f:
+        content = f.read()
+        print(content[:100])  # para ver os primeiros 100 bytes
     df = pd.read_csv(file, encoding='ISO-8859-1')
     missed_work_days = 0
     missed_vacation_days = 0
@@ -86,6 +90,8 @@ if __name__ == "__main__":
     holidays = [1, 107, 109, 114, 121, 161, 170, 226, 276, 303, 333, 340, 357]
     file1 = sys.argv[1]
     file2 = sys.argv[2]
+    print(f"File 1: {file1}")
+    print(f"File 2: {file2}")
     check_files(file1, file2)
 
     dataFile1 = analyze(file1, holidays)

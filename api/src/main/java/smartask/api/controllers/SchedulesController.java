@@ -123,6 +123,7 @@ public class SchedulesController {
                 "file2Path", path2.toString()
             );
 
+            System.out.println("Sending message: " + new ObjectMapper().writeValueAsString(message));
             rabbitTemplate.convertAndSend("comparison-exchange", "comparison-queue", message);
 
             return ResponseEntity.ok(Map.of("requestId", requestId));

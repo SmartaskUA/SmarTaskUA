@@ -12,7 +12,13 @@ comparison_results = db["comparisons"]
 
 def callback(ch, method, properties, body):
     try:
-        message = json.loads(body)
+        try:
+            print("[DEBUG] Raw body:", body)
+            message = json.loads(body.decode('utf-8'))
+        except UnicodeDecodeError as e:
+            print(f"[Comparison] Failed to decode message body: {e}")
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            return
         request_id = message["requestId"]
         file1 = message["file1Path"]
         file2 = message["file2Path"]
