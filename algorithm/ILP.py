@@ -15,8 +15,12 @@ def solve():
     funcionarios = list(range(num_funcionarios))
     turnos = [0, 1, 2]  # 0 = folga, 1 = manhã, 2 = tarde
 
+    equipe_A = set(range(9))  # Funcionários 0 a 8
+    equipe_B = set(range(9, 12))  # Funcionários 9 a 11
+
     # ==== FERIADOS NACIONAIS + DOMINGOS ====
     feriados = holidays.country_holidays("PT", years=[ano])
+    print(feriados)
     domingos_feriados = [d for d in dias_ano if d.weekday() == 6 or d in feriados]
 
     # ==== FÉRIAS ====
@@ -40,45 +44,36 @@ def solve():
     # ==== MODELO ====
     model = pulp.LpProblem("Escala_Trabalho", pulp.LpMinimize)
 
-    # ==== OBJETIVO ====
-    z_tm = {}
-    for f in funcionarios:
-        for i in range(len(dias_ano) - 1):
-            d = dias_ano[i]
-            z_tm[f, d] = pulp.LpVariable(f"z_tm_{f}_{d.strftime('%Y%m%d')}", cat="Binary")
-            model += (
-                z_tm[f, d] >= x[f][d][2] + x[f][d + timedelta(days=1)][1] - 1,
-                f"def_z_tm_{f}_{d}"
-            )
+    # ==== FUNÇÃO OBJETIVO E COBERTURA MÍNIMA SUAVE POR TURNO/EQUIPE ====
 
-    penalizacao_domingo = pulp.lpSum(
-        x[f][d][1] + x[f][d][2]
-        for f in funcionarios
-        for d in domingos_feriados
-        if d in x[f]
-    )
+    y = {}
+    penalizacao_cobertura = []
 
-    penalizacao_transicao_TM = pulp.lpSum(
-        z_tm[f, d] for (f, d) in z_tm
-    )
+    for d in dias_ano:
+        for equipe, funcionarios_equipe, minimo in [
+            ("A", equipe_A, 1), ("B", equipe_B, 2)
+        ]:
+            for turno_id, turno_nome in [(1, "manha"), (2, "tarde")]:
+                var_name = f"y_{turno_nome}_{equipe}_{d.strftime('%Y%m%d')}"
+                yvar = pulp.LpVariable(var_name, lowBound=0, cat="Integer")
+                y[(turno_nome, equipe, d)] = yvar
 
-    # Cobertura adicional por turno (opcional e suave)
-    bonus_manha = pulp.lpSum(
-        pulp.lpSum(x[f][d][1] for f in funcionarios) for d in dias_ano
-    )
+                soma_turno = pulp.lpSum(x[f][d][turno_id] for f in funcionarios_equipe)
 
-    bonus_tarde = pulp.lpSum(
-        pulp.lpSum(x[f][d][2] for f in funcionarios) for d in dias_ano
-    )
+                # Restrição suave: permitir descumprimento com penalização
+                model += (
+                    soma_turno + yvar >= minimo,
+                    f"minimo_suave_{turno_nome}_{equipe}_{d}"
+                )
 
-    # Nova função objetivo com pesos equilibrados
+                # Penalização: quanto menor a cobertura, maior a penalidade
+                penalizacao_cobertura.append(10 * yvar)
+
+    # ==== FUNÇÃO OBJETIVO FINAL ====
+
     model += (
-        5 * penalizacao_domingo +        # Penalizar suavemente domingos/feriados
-        30 * penalizacao_transicao_TM -  # Penalizar transições T→M
-        0.01 * bonus_manha -             # Leve incentivo a mais manhãs
-        0.01 * bonus_tarde               # Leve incentivo a mais tardes
+            pulp.lpSum(penalizacao_cobertura)
     ), "Funcao_objetivo"
-
 
     # ==== RESTRIÇÕES ====
 
@@ -97,6 +92,7 @@ def solve():
 
     for f in funcionarios:
         for i in range(len(dias_ano) - 5):
+            #Verificar
             dias_seq = dias_ano[i:i + 6]
             model += (
                 pulp.lpSum(x[f][d][1] + x[f][d][2] for d in dias_seq) <= 5,
