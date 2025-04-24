@@ -43,14 +43,12 @@ def callback(ch, method, properties, body):
                 "result": result
             })
             print(f"[Verification] Result saved for requestId={request_id}")
-            os.remove(files[0])
 
         elif len(files) >= 2:
             # Comparison mode (multiple files)
             results = {}
             for f in files:
                 results[f] = compareKpis(f, holidays)
-                os.remove(f)
 
             comparison_results.insert_one({
                 "requestId": request_id,
