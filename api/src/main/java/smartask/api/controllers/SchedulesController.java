@@ -15,6 +15,7 @@ import smartask.api.models.requests.ScheduleRequest;
 import smartask.api.services.SchedulesService;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -106,21 +107,21 @@ public class SchedulesController {
     }
 
     @PostMapping("/analyze")
-    public ResponseEntity<Map<String,String>> analyzeSchedules(@RequestParam MultipartFile file1,
-                                                @RequestParam MultipartFile file2) throws IOException {
+    public ResponseEntity<Map<String, String>> analyzeSchedules(@RequestParam("files") MultipartFile[] files) {
         try {
             Path sharedDir = Paths.get("/shared_tmp");
-            Path path1 = Files.createTempFile(sharedDir, "file1-", ".csv");
-            Path path2 = Files.createTempFile(sharedDir, "file2-", ".csv");
+            List<String> filePaths = new ArrayList<>();
 
-            file1.transferTo(path1.toFile());
-            file2.transferTo(path2.toFile());
+            for (MultipartFile file : files) {
+                Path tempFile = Files.createTempFile(sharedDir, "temp-", ".csv");
+                file.transferTo(tempFile.toFile());
+                filePaths.add(tempFile.toString());
+            }
 
             String requestId = UUID.randomUUID().toString();
-            Map<String, String> message = Map.of(
+            Map<String, Object> message = Map.of(
                 "requestId", requestId,
-                "file1Path", path1.toString(),
-                "file2Path", path2.toString()
+                "files", filePaths
             );
 
             System.out.println("Sending message: " + new ObjectMapper().writeValueAsString(message));
@@ -132,4 +133,5 @@ public class SchedulesController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
 }

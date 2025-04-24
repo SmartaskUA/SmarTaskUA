@@ -1,7 +1,7 @@
 import sys
 import pandas as pd
 import json
-from kpiVerification import analyze as singleVerification
+from algorithm.kpiVerification import analyze as singleVerification
 
 def check_files(file_paths):
     headers = []
