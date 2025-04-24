@@ -3,37 +3,37 @@ import pandas as pd
 import json
 from kpiVerification import analyze
 
-def check_files(file1, file2):
-    with open(file1, 'r') as f1, open(file2, 'r') as f2:
-        header1 = f1.readline().strip().split(',')
-        header2 = f2.readline().strip().split(',')
+def check_files(file_paths):
+    headers = []
+    for path in file_paths:
+        with open(path, 'r') as f:
+            header = f.readline().strip().split(',')
+            headers.append(header)
 
-    if len(header1) != len(header2):
-        print(f"Files have different number of columns: {len(header1)} - {len(header2)}")
-        sys.exit(1)
-    if file1 == file2:
-        print("Files are the same")
-        sys.exit(1)
-    if "Dia 1" not in header1 and "Dia 1" not in header2:
+    first = headers[0]
+    for i, header in enumerate(headers[1:], start=1):
+        if len(header) != len(first):
+            print(f"File {file_paths[i]} has a different number of columns: {len(header)} vs {len(first)}")
+            sys.exit(1)
+
+    if any("Dia 1" not in h for h in headers):
         print("Wrong header format")
         sys.exit(1)
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("Usage: python kpiComparison.py <file1> <file2>")
+        print("Usage: python kpiComparison.py <file1> <file2> [<file3> ...]")
         sys.exit(1)
 
     holidays = [1, 107, 109, 114, 121, 161, 170, 226, 276, 303, 333, 340, 357]
-    file1 = sys.argv[1]
-    file2 = sys.argv[2]
-    print(f"File 1: {file1}")
-    print(f"File 2: {file2}")
-    check_files(file1, file2)
+    file_paths = sys.argv[1:]
 
-    dataFile1 = analyze(file1, holidays)
-    dataFile2 = analyze(file2, holidays)
+    print(f"Files to compare: {file_paths}")
+    check_files(file_paths)
 
-    print(json.dumps({
-        "file1": dataFile1,
-        "file2": dataFile2
-    }))
+    results = {}
+    for path in file_paths:
+        print(f"Analyzing: {path}")
+        results[path] = analyze(path, holidays)
+
+    print(json.dumps(results, indent=2))
