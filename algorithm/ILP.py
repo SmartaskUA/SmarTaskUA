@@ -1,10 +1,11 @@
 import csv
 import pulp
 import pandas as pd
-from datetime import date, timedelta
 import holidays
 import random
 from tabulate import tabulate
+import json
+
 
 def solve():
     # ==== PARÂMETROS BÁSICOS ====
@@ -23,9 +24,20 @@ def solve():
     is_domingos_feriados = {d: (d in domingos_feriados) for d in dias_ano}
 
     # ==== FÉRIAS ====
+    # ==== FÉRIAS (a partir do CSV sem cabeçalho, com dias 1 a 365) ====
+    ferias_raw = pd.read_csv("horarioReferencia.csv", header=None)
+
+    # Constrói a lista de datas do ano correspondente às colunas 1 a 365
+    datas_do_ano = pd.date_range(start="2025-01-01", periods=365)
+
+    # Cria o dicionário de férias a partir do DataFrame
     ferias = {
-        f: set(random.sample(dias_ano, 30))
-        for f in funcionarios
+        f: {
+            datas_do_ano[i]
+            for i in range(365)
+            if ferias_raw.iloc[f, i + 1] == 1  # +1 para ignorar coluna de funcionário
+        }
+        for f in range(len(ferias_raw))
     }
 
     # ==== VARIÁVEIS DE DECISÃO ====
