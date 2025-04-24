@@ -1,7 +1,7 @@
 import sys
 import pandas as pd
 import json
-from kpiVerification import analyze
+from kpiVerification import analyze as singleVerification
 
 def check_files(file_paths):
     headers = []
@@ -19,6 +19,9 @@ def check_files(file_paths):
     if any("Dia 1" not in h for h in headers):
         print("Wrong header format")
         sys.exit(1)
+
+def analyze(file_path, holidays):
+    return singleVerification(file_path, holidays)
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
