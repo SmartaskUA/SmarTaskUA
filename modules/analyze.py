@@ -1,14 +1,16 @@
 import pika
 import json
-from pymongo import MongoClient
-from algorithm.kpiComparison import analyze
 import os
+from pymongo import MongoClient
+from algorithm.kpiComparison import analyze as compareKpis
+from algorithm.kpiVerification import analyze as verifyKpis
 
 holidays = [1, 107, 109, 114, 121, 161, 170, 226, 276, 303, 333, 340, 357]
 
 mongo = MongoClient("mongodb://mongo:27017/")
 db = mongo["mydatabase"]
 comparison_results = db["comparisons"]
+verification_results = db["verifications"]
 
 def callback(ch, method, properties, body):
     try:
@@ -19,37 +21,47 @@ def callback(ch, method, properties, body):
             print(f"[Comparison] Failed to decode message body: {e}")
             ch.basic_ack(delivery_tag=method.delivery_tag)
             return
+
         request_id = message["requestId"]
-        file1 = message["file1Path"]
-        file2 = message["file2Path"]
+        files = message.get("files", [])
 
-        print(f"[DEBUG] file1 = {file1}")
-        print(f"[DEBUG] file2 = {file2}")
-
+        if not files:
+            print("[ERROR] No files received.")
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            return
 
         print(f"[Comparison] Processing requestId={request_id}")
+        print(f"[DEBUG] Files = {files}")
 
-        result1 = analyze(file1, holidays)
-        result2 = analyze(file2, holidays)
+        if len(files) == 1:
+            # Verification mode (one file)
+            result = verifyKpis(files[0], holidays)
+            verification_results.insert_one({
+                "requestId": request_id,
+                "status": "done",
+                "file": files[0],
+                "result": result
+            })
+            print(f"[Verification] Result saved for requestId={request_id}")
+            os.remove(files[0])
 
-        result_doc = {
-            "requestId": request_id,
-            "status": "done",
-            "file1": file1,
-            "file2": file2,
-            "result": {
-                "file1": result1,
-                "file2": result2
-            }
-        }
+        elif len(files) >= 2:
+            # Comparison mode (multiple files)
+            results = {}
+            for f in files:
+                results[f] = compareKpis(f, holidays)
+                os.remove(f)
 
-        comparison_results.insert_one(result_doc)
-        print(f"[Comparison] Result saved for requestId={request_id}")
-
-        os.remove(file1)
-        os.remove(file2)
+            comparison_results.insert_one({
+                "requestId": request_id,
+                "status": "done",
+                "files": files,
+                "result": results
+            })
+            print(f"[Comparison] Results saved for requestId={request_id}")
 
         ch.basic_ack(delivery_tag=method.delivery_tag)
+
     except Exception as e:
         print(f"[Comparison] Error: {e}")
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
