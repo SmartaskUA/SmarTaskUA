@@ -20,7 +20,6 @@ def solve():
 
     # ==== FERIADOS NACIONAIS + DOMINGOS ====
     feriados = holidays.country_holidays("PT", years=[ano])
-    print(feriados)
     domingos_feriados = [d for d in dias_ano if d.weekday() == 6 or d in feriados]
 
     # ==== FÉRIAS ====
@@ -51,7 +50,7 @@ def solve():
 
     for d in dias_ano:
         for equipe, funcionarios_equipe, minimo in [
-            ("A", equipe_A, 1), ("B", equipe_B, 2)
+            ("A", equipe_A, 2), ("B", equipe_B, 1)
         ]:
             for turno_id, turno_nome in [(1, "manha"), (2, "tarde")]:
                 var_name = f"y_{turno_nome}_{equipe}_{d.strftime('%Y%m%d')}"
@@ -60,19 +59,18 @@ def solve():
 
                 soma_turno = pulp.lpSum(x[f][d][turno_id] for f in funcionarios_equipe)
 
-                # Restrição suave: permitir descumprimento com penalização
+                # Restricão suave: permitir descumprimento com penalização
                 model += (
                     soma_turno + yvar >= minimo,
                     f"minimo_suave_{turno_nome}_{equipe}_{d}"
                 )
 
-                # Penalização: quanto menor a cobertura, maior a penalidade
-                penalizacao_cobertura.append(10 * yvar)
+                penalizacao_cobertura.append(1_000 * yvar)
 
     # ==== FUNÇÃO OBJETIVO FINAL ====
 
     model += (
-            pulp.lpSum(penalizacao_cobertura)
+        pulp.lpSum(penalizacao_cobertura)
     ), "Funcao_objetivo"
 
     # ==== RESTRIÇÕES ====
@@ -92,13 +90,11 @@ def solve():
 
     for f in funcionarios:
         for i in range(len(dias_ano) - 5):
-            #Verificar
             dias_seq = dias_ano[i:i + 6]
             model += (
                 pulp.lpSum(x[f][d][1] + x[f][d][2] for d in dias_seq) <= 5,
                 f"limite_5_dias_seguidos_{f}_{dias_ano[i]}"
             )
-
 
     for f in funcionarios:
         for i in range(len(dias_ano) - 1):
@@ -115,26 +111,24 @@ def solve():
             pulp.lpSum(x[f][d][1] + x[f][d][2] for f in funcionarios) >= 2,
             f"cobertura_minima_{d}"
         )
+
     for d in dias_ano:
-        # Pelo menos 2 turnos de manhã no dia
         model += (
             pulp.lpSum(x[f][d][1] for f in funcionarios) >= 2,
             f"minimo_manha_{d}"
         )
-        # Pelo menos 2 turnos de tarde no dia
         model += (
             pulp.lpSum(x[f][d][2] for f in funcionarios) >= 2,
             f"minimo_tarde_{d}"
         )
 
     # ==== RESOLUÇÃO ====
-    solver = pulp.PULP_CBC_CMD(msg=True, timeLimit=14400)
+    solver = pulp.PULP_CBC_CMD(msg=True, timeLimit=28800, gapRel=0.01)
+
     status = model.solve(solver)
+    print(f"\nstatus : {status} ")
 
     # ==== EXPORTAÇÃO EM FORMATO LARGO ====
-    # Define as equipas explicitamente
-    equipe_A = set(range(9))
-    equipe_B = set(range(9, 12))
 
     def get_turno_com_equipa(f, d, turno_str):
         if turno_str == "F":
@@ -153,9 +147,6 @@ def solve():
         else:
             return turno_str  # fallback
 
-
-
-    # Construção da escala com informação da equipa e distinção entre F e Fe
     escala = {
         f: {
             d.strftime("%Y-%m-%d"): get_turno_com_equipa(
@@ -173,6 +164,7 @@ def solve():
     df.reset_index(inplace=True)
     df.to_csv("calendario4.csv", index=False)
     print("Escala exportada para calendario4.csv")
+
 
     # ==== VERIFICAÇÕES DE RESTRIÇÕES ====
     # Equipes (use listas, não sets)
