@@ -1,11 +1,13 @@
 import csv
 import pandas as pd
+import sys
+import json
 
 def analyze(file, holidays):
     print(f"Analyzing file: {file}")
-    with open(file, "rb") as f:
-        content = f.read()
-        print(content[:100])  # para ver os primeiros 100 bytes
+    # with open(file, "rb") as f:
+    #     content = f.read()
+    #     print(content[:100])
     df = pd.read_csv(file, encoding='ISO-8859-1')
     missed_work_days = 0
     missed_vacation_days = 0
@@ -13,9 +15,11 @@ def analyze(file, holidays):
     workHolidays = 0
     consecutiveDays = 0
     holiday_cols = [f'Dia {d}' for d in holidays if f'Dia {d}' in df.columns]
+    dia_cols = [col for col in df.columns if col.startswith("Dia ")]
     for _, row in df.iterrows():
-        worked_days = int(row['Dias Trabalhados'])
-        vacation_days = int(row['Dias de Férias'])
+        worked_days = sum(row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] for col in dia_cols)
+        print(f"Worked days: {worked_days}")
+        vacation_days = sum(row[col] in ['F'] for col in dia_cols)
 
         missed_work_days += abs(223 - worked_days)
         missed_vacation_days += abs(30 - vacation_days)
@@ -66,4 +70,11 @@ def analyze(file, holidays):
     }
 
 if __name__ == "__main__":
-    analyze()
+    if len(sys.argv) != 2:
+        print("Usage: python kpiVerification.py <file>")
+        sys.exit(1)
+    holidays = [1, 107, 109, 114, 121, 161, 170, 226, 276, 303, 333, 340, 357]
+    file = sys.argv[1]
+    data = analyze(file, holidays)
+
+    print(json.dumps(data, indent=4))
