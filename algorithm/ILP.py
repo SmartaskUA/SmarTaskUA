@@ -21,6 +21,7 @@ def solve():
     # ==== FERIADOS NACIONAIS + DOMINGOS ====
     feriados = holidays.country_holidays("PT", years=[ano])
     domingos_feriados = [d for d in dias_ano if d.weekday() == 6 or d in feriados]
+    is_domingos_feriados = {d: (d in domingos_feriados) for d in dias_ano}
 
     # ==== FÉRIAS ====
     ferias = {
@@ -65,7 +66,8 @@ def solve():
                     f"minimo_suave_{turno_nome}_{equipe}_{d}"
                 )
 
-                penalizacao_cobertura.append(1_000 * yvar)
+                fator = 20 if is_domingos_feriados[d] else 10
+                penalizacao_cobertura.append(fator * yvar)
 
     # ==== FUNÇÃO OBJETIVO FINAL ====
 
@@ -112,7 +114,6 @@ def solve():
             f"cobertura_minima_{d}"
         )
 
-    for d in dias_ano:
         model += (
             pulp.lpSum(x[f][d][1] for f in funcionarios) >= 2,
             f"minimo_manha_{d}"
