@@ -4,6 +4,7 @@ import os
 from pymongo import MongoClient
 from algorithm.kpiComparison import analyze as compareKpis
 from algorithm.kpiVerification import analyze as verifyKpis
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 holidays = [1, 107, 109, 114, 121, 161, 170, 226, 276, 303, 333, 340, 357]
 
@@ -34,7 +35,6 @@ def callback(ch, method, properties, body):
         print(f"[DEBUG] Files = {files}")
 
         if len(files) == 1:
-            # Verification mode (one file)
             result = verifyKpis(files[0], holidays)
             verification_results.insert_one({
                 "requestId": request_id,
@@ -45,7 +45,6 @@ def callback(ch, method, properties, body):
             print(f"[Verification] Result saved for requestId={request_id}")
 
         elif len(files) >= 2:
-            # Comparison mode (multiple files)
             results = {}
             for f in files:
                 results[f] = compareKpis(f, holidays)
@@ -64,9 +63,27 @@ def callback(ch, method, properties, body):
         print(f"[Comparison] Error: {e}")
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
+@retry(
+    stop=stop_after_attempt(10),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    retry=retry_if_exception_type(pika.exceptions.AMQPConnectionError)
+)
+def connect_to_rabbitmq():
+    rabbit_host = os.getenv("RABBITMQ_HOST", "localhost")
+    rabbit_username = os.getenv("RABBITMQ_USERNAME", "guest")
+    rabbit_password = os.getenv("RABBITMQ_PASSWORD", "guest")
+    print(f"[DEBUG] Attempting to connect to RabbitMQ at {rabbit_host}")
+    credentials = pika.PlainCredentials(rabbit_username, rabbit_password)
+    return pika.BlockingConnection(
+        pika.ConnectionParameters(
+            host=rabbit_host,
+            credentials=credentials
+        )
+    )
+
 def start_consumer():
-    rabbit_host = os.getenv("rabbitmq", "localhost")
-    connection = pika.BlockingConnection(pika.ConnectionParameters(rabbit_host))
+    print("[BOOT] Analyzer worker started and listening...")
+    connection = connect_to_rabbitmq()
     channel = connection.channel()
     channel.exchange_declare(
         exchange="comparison-exchange",

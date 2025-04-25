@@ -109,13 +109,13 @@ public class SchedulesController {
     @PostMapping("/analyze")
     public ResponseEntity<Map<String, String>> analyzeSchedules(@RequestParam("files") MultipartFile[] files) {
         try {
-            Path sharedDir = Paths.get("/shared_tmp");
+            Path sharedDir = Paths.get("shared_tmp");
             List<String> filePaths = new ArrayList<>();
 
             for (MultipartFile file : files) {
                 Path tempFile = Files.createTempFile(sharedDir, "temp-", ".csv");
                 file.transferTo(tempFile.toFile());
-                filePaths.add(tempFile.toString());
+                filePaths.add("shared_tmp/" + tempFile.getFileName());
             }
 
             String requestId = UUID.randomUUID().toString();
