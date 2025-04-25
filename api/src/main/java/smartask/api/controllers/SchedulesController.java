@@ -3,26 +3,28 @@ package smartask.api.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.slf4j.Logger;
 import smartask.api.models.Schedule;
 import smartask.api.models.requests.ScheduleRequest;
 import smartask.api.services.SchedulesService;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
 
 @RestController
 @CrossOrigin(origins = "http://localhost:5173")
@@ -30,6 +32,7 @@ import java.nio.file.Paths;
 @RequiredArgsConstructor
 @Tag(name = "Schedule Management", description = "Endpoints for managing work schedules")
 public class SchedulesController {
+    private static final Logger log = LoggerFactory.getLogger(SchedulesController.class);
 
     @Autowired
     private SchedulesService service;
@@ -106,31 +109,36 @@ public class SchedulesController {
         }
     }
 
+
     @PostMapping("/analyze")
-    public ResponseEntity<Map<String, String>> analyzeSchedules(@RequestParam("files") MultipartFile[] files) {
+    public ResponseEntity<?> analyzeSchedules(@RequestParam("files") List<MultipartFile> files) {
         try {
-            Path sharedDir = Paths.get("shared_tmp");
+            log.info("Received request to analyze {} files", files.size());
+            String requestId = UUID.randomUUID().toString();
             List<String> filePaths = new ArrayList<>();
 
             for (MultipartFile file : files) {
-                Path tempFile = Files.createTempFile(sharedDir, "temp-", ".csv");
-                file.transferTo(tempFile.toFile());
-                filePaths.add("shared_tmp/" + tempFile.getFileName());
+                if (file.isEmpty()) {
+                    log.error("Received empty file: {}", file.getOriginalFilename());
+                    return ResponseEntity.badRequest().body(Map.of("error", "Empty file uploaded"));
+                }
+                String fileName = file.getOriginalFilename();
+                Path filePath = Paths.get("/shared_tmp", fileName);
+                log.info("Saving file to: {}", filePath);
+                Files.write(filePath, file.getBytes());
+                filePaths.add(filePath.toString());
             }
 
-            String requestId = UUID.randomUUID().toString();
-            Map<String, Object> message = Map.of(
-                "requestId", requestId,
-                "files", filePaths
-            );
-
-            System.out.println("Sending message: " + new ObjectMapper().writeValueAsString(message));
+            Map<String, Object> message = new HashMap<>();
+            message.put("requestId", requestId);
+            message.put("files", filePaths);
+            log.info("Publishing message to comparison-exchange: {}", message);
             rabbitTemplate.convertAndSend("comparison-exchange", "comparison-queue", message);
 
-            return ResponseEntity.ok(Map.of("requestId", requestId));
-
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.accepted().body(Map.of("requestId", requestId, "status", "Processing"));
+        } catch (Exception e) {
+            log.error("Error processing /schedules/analyze request", e);
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
     }
 
