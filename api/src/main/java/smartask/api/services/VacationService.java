@@ -78,41 +78,42 @@ public class VacationService {
 
         // Ler o CSV
         try (FileReader reader = new FileReader(filePath);
-             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withHeader())) {
+             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT)) {
 
             for (CSVRecord record : csvParser) {
-                String employeeName = record.get(0); // Nome do funcionário
-                Employee employee = employeeRepository.findByName(employeeName)
-                        .orElseThrow(() -> new IllegalArgumentException("Employee " + employeeName + " not found in the database."));
+                String employeeName = record.get(0).trim(); // Nome do funcionário
+                //System.out.println("Lendo funcionário: '" + employeeName + "'");
 
+                Employee employee = employeeRepository.findByName(employeeName)
+                        .orElseThrow(() -> new IllegalArgumentException("Funcionário '" + employeeName + "' não encontrado no banco de dados."));
 
                 List<String> vacationDays = new ArrayList<>();
-                // Para cada coluna (exceto a primeira), verifica se é 1 (férias)
+                // Para cada coluna (exceto a primeira), verifica se é "1" (férias)
                 for (int i = 1; i < record.size(); i++) {
-                    String dayStatus = record.get(i);
-                    if (dayStatus.equals("1")) {
-                        vacationDays.add(String.valueOf(i)); // O dia de férias será o número da coluna
+                    String dayStatus = record.get(i).trim();
+                    if ("1".equals(dayStatus)) {
+                        vacationDays.add(String.valueOf(i)); // Número da coluna representa o dia
                     }
                 }
 
-                // Verifica se o funcionário tem férias válidas (30 dias)
+                // Verifica se o funcionário tem exatamente 30 dias de férias
                 if (vacationDays.size() != 30) {
-                    throw new IllegalArgumentException("Employee " + employeeName + " must have exactly 30 vacation days.");
+                    throw new IllegalArgumentException("Funcionário '" + employeeName + "' deve ter exatamente 30 dias de férias (atualmente tem " + vacationDays.size() + ").");
                 }
 
                 vacations.put(employeeName, vacationDays);
             }
         }
 
-        // Criar o template de férias
+        // Criar e salvar o template de férias
         VacationTemplate template = VacationTemplate.builder()
                 .name(name)
                 .vacations(vacations)
                 .build();
 
-        // Salvar o template de férias no banco de dados
         vacationTemplateRepository.save(template);
     }
+
 
     public boolean validateVacationTemplateFormat(Map<String, List<String>> vacations) {
         if (vacations == null || vacations.isEmpty()) return false;
