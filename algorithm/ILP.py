@@ -1,11 +1,10 @@
 import csv
 import pulp
 import pandas as pd
+from datetime import date, timedelta
 import holidays
 import random
 from tabulate import tabulate
-import json
-
 
 def solve():
     # ==== PARÂMETROS BÁSICOS ====
@@ -23,19 +22,14 @@ def solve():
     domingos_feriados = [d for d in dias_ano if d.weekday() == 6 or d in feriados]
     is_domingos_feriados = {d: (d in domingos_feriados) for d in dias_ano}
 
-    # ==== FÉRIAS ====
-    # ==== FÉRIAS (a partir do CSV sem cabeçalho, com dias 1 a 365) ====
+    # ==== FÉRIAS A PARTIR DO CSV DE REFERÊNCIA ====
     ferias_raw = pd.read_csv("horarioReferencia.csv", header=None)
-
-    # Constrói a lista de datas do ano correspondente às colunas 1 a 365
     datas_do_ano = pd.date_range(start="2025-01-01", periods=365)
-
-    # Cria o dicionário de férias a partir do DataFrame
     ferias = {
         f: {
             datas_do_ano[i]
             for i in range(365)
-            if ferias_raw.iloc[f, i + 1] == 1  # +1 para ignorar coluna de funcionário
+            if ferias_raw.iloc[f, i + 1] == 1
         }
         for f in range(len(ferias_raw))
     }
@@ -57,7 +51,7 @@ def solve():
             t: {
                 e: pulp.LpVariable(f"y_{d.strftime('%Y%m%d')}_{t}_{e}", lowBound=0, cat="Integer")
                 for e in ["A", "B"]
-            } for t in [1, 2]  # turnos válidos
+            } for t in [1, 2]
         } for d in dias_ano
     }
 
@@ -65,17 +59,17 @@ def solve():
     model = pulp.LpProblem("Escala_Trabalho", pulp.LpMinimize)
 
     # ==== FUNÇÃO OBJETIVO ====
-    penalizacoes = []
+    coverage_factor = []
 
     for d in dias_ano:
         for t in [1, 2]:
             for e in ["A", "B"]:
-                ideal = 3 if e == "A" else 2
-                excesso = pulp.LpVariable(f"penal_{d.strftime('%Y%m%d')}_{t}_{e}", lowBound=0, cat="Continuous")
-                model += excesso >= ideal - y[d][t][e], f"restr_penal_{d}_{t}_{e}"
-                penalizacoes.append(excesso)
+                minimo = 2 if e == "A" else 1
+                penal = pulp.LpVariable(f"penal_{d.strftime('%Y%m%d')}_{t}_{e}", lowBound=0, cat="Continuous")
+                model += penal >= minimo - y[d][t][e], f"restr_penal_{d}_{t}_{e}"
+                coverage_factor.append(penal)
 
-    model += pulp.lpSum(penalizacoes), "Minimizar_desvios_da_cobertura_ideal"
+    model += pulp.lpSum(coverage_factor), "Minimizar_descumprimentos_minimos"
 
     # ==== RESTRIÇÕES ====
     for f in funcionarios:
@@ -136,10 +130,11 @@ def solve():
             )
 
     # ==== RESOLUÇÃO ====
-    solver = pulp.PULP_CBC_CMD(msg=True, timeLimit=28800, gapRel=0.01)
+    solver = pulp.PULP_CBC_CMD(msg=True, timeLimit=28800, gapRel=0.005)
 
     status = model.solve(solver)
     print(f"\nstatus : {status} ")
+
 
     # ==== EXPORTAÇÃO EM FORMATO LARGO ====
 
