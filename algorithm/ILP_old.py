@@ -1,4 +1,5 @@
 import csv
+
 import pulp
 import pandas as pd
 from datetime import date, timedelta
@@ -14,24 +15,18 @@ def solve():
     funcionarios = list(range(num_funcionarios))
     turnos = [0, 1, 2]  # 0 = folga, 1 = manhã, 2 = tarde
 
-    equipe_A = set(range(9))
-    equipe_B = set(range(9, 12))
+    equipe_A = set(range(9))  # Funcionários 0 a 8
+    equipe_B = set(range(9, 12))  # Funcionários 9 a 11
 
     # ==== FERIADOS NACIONAIS + DOMINGOS ====
     feriados = holidays.country_holidays("PT", years=[ano])
     domingos_feriados = [d for d in dias_ano if d.weekday() == 6 or d in feriados]
     is_domingos_feriados = {d: (d in domingos_feriados) for d in dias_ano}
 
-    # ==== FÉRIAS A PARTIR DO CSV DE REFERÊNCIA ====
-    ferias_raw = pd.read_csv("horarioReferencia.csv", header=None)
-    datas_do_ano = pd.date_range(start="2025-01-01", periods=365)
+    # ==== FÉRIAS ====
     ferias = {
-        f: {
-            datas_do_ano[i]
-            for i in range(365)
-            if ferias_raw.iloc[f, i + 1] == 1
-        }
-        for f in range(len(ferias_raw))
+        f: set(random.sample(dias_ano, 30))
+        for f in funcionarios
     }
 
     # ==== VARIÁVEIS DE DECISÃO ====
@@ -46,32 +41,42 @@ def solve():
         for f in funcionarios
     }
 
-    y = {
-        d: {
-            t: {
-                e: pulp.LpVariable(f"y_{d.strftime('%Y%m%d')}_{t}_{e}", lowBound=0, cat="Integer")
-                for e in ["A", "B"]
-            } for t in [1, 2]
-        } for d in dias_ano
-    }
-
     # ==== MODELO ====
     model = pulp.LpProblem("Escala_Trabalho", pulp.LpMinimize)
 
-    # ==== FUNÇÃO OBJETIVO ====
-    coverage_factor = []
+    # ==== FUNÇÃO OBJETIVO E COBERTURA MÍNIMA SUAVE POR TURNO/EQUIPE ====
+
+    y = {}
+    penalizacao_cobertura = []
 
     for d in dias_ano:
-        for t in [1, 2]:
-            for e in ["A", "B"]:
-                minimo = 2 if e == "A" else 1
-                penal = pulp.LpVariable(f"penal_{d.strftime('%Y%m%d')}_{t}_{e}", lowBound=0, cat="Continuous")
-                model += penal >= minimo - y[d][t][e], f"restr_penal_{d}_{t}_{e}"
-                coverage_factor.append(penal)
+        for equipe, funcionarios_equipe, minimo in [
+            ("A", equipe_A, 2), ("B", equipe_B, 1)
+        ]:
+            for turno_id, turno_nome in [(1, "manha"), (2, "tarde")]:
+                var_name = f"y_{turno_nome}_{equipe}_{d.strftime('%Y%m%d')}"
+                yvar = pulp.LpVariable(var_name, lowBound=0, cat="Integer")
+                y[(turno_nome, equipe, d)] = yvar
 
-    model += pulp.lpSum(coverage_factor), "Minimizar_descumprimentos_minimos"
+                soma_turno = pulp.lpSum(x[f][d][turno_id] for f in funcionarios_equipe)
+
+                # Restricão suave: permitir descumprimento com penalização
+                model += (
+                    soma_turno + yvar >= minimo,
+                    f"minimo_suave_{turno_nome}_{equipe}_{d}"
+                )
+
+                fator = 20 if is_domingos_feriados[d] else 10
+                penalizacao_cobertura.append(fator * yvar)
+
+    # ==== FUNÇÃO OBJETIVO FINAL ====
+
+    model += (
+        pulp.lpSum(penalizacao_cobertura)
+    ), "Funcao_objetivo"
 
     # ==== RESTRIÇÕES ====
+
     for f in funcionarios:
         for d in dias_ano:
             model += (pulp.lpSum(x[f][d][t] for t in turnos) == 1, f"um_turno_por_dia_{f}_{d}")
@@ -118,38 +123,30 @@ def solve():
             f"minimo_tarde_{d}"
         )
 
-    for d in dias_ano:
-        for t in [1, 2]:
-            model += (
-                y[d][t]["A"] == pulp.lpSum(x[f][d][t] for f in equipe_A),
-                f"def_y_{d}_{t}_A"
-            )
-            model += (
-                y[d][t]["B"] == pulp.lpSum(x[f][d][t] for f in equipe_B),
-                f"def_y_{d}_{t}_B"
-            )
-
     # ==== RESOLUÇÃO ====
-    solver = pulp.PULP_CBC_CMD(msg=True, timeLimit=28800, gapRel=0.005)
+    solver = pulp.PULP_CBC_CMD(msg=True, timeLimit=28800, gapRel=0.01)
 
     status = model.solve(solver)
     print(f"\nstatus : {status} ")
-
 
     # ==== EXPORTAÇÃO EM FORMATO LARGO ====
 
     def get_turno_com_equipa(f, d, turno_str):
         if turno_str == "F":
             if d in ferias[f]:
-                return "F"
+                return "F"  # Férias
             else:
-                return "0"
+                return "0"  # Folga
 
-        if f in equipe_A:
+        esta_em_A = f in equipe_A
+        esta_em_B = f in equipe_B
+
+        if esta_em_A and not esta_em_B:
             return f"{turno_str}_A"
-        elif f in equipe_B:
+        elif esta_em_B and not esta_em_A:
             return f"{turno_str}_B"
-        return turno_str
+        else:
+            return turno_str  # fallback
 
     escala = {
         f: {
@@ -168,7 +165,6 @@ def solve():
     df.reset_index(inplace=True)
     df.to_csv("calendario4.csv", index=False)
     print("Escala exportada para calendario4.csv")
-
 
 
     # ==== VERIFICAÇÕES DE RESTRIÇÕES ====
@@ -301,5 +297,4 @@ def solve():
 
 if __name__ == "__main__":
     print(solve())
-
 
