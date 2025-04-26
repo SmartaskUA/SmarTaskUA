@@ -8,7 +8,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 
 holidays = [1, 107, 109, 114, 121, 161, 170, 226, 276, 303, 333, 340, 357]
 
-mongo = MongoClient("mongodb://mongo:27017/")
+mongo = MongoClient("mongodb://admin:password@mongo:27017/")
 db = mongo["mydatabase"]
 comparison_results = db["comparisons"]
 verification_results = db["verifications"]
@@ -35,27 +35,38 @@ def callback(ch, method, properties, body):
         print(f"[DEBUG] Files = {files}")
 
         if len(files) == 1:
+            print("[DEBUG] Running verifyKpis for file:", files[0])
             result = verifyKpis(files[0], holidays)
-            verification_results.insert_one({
-                "requestId": request_id,
-                "status": "done",
-                "file": files[0],
-                "result": result
-            })
-            print(f"[Verification] Result saved for requestId={request_id}")
+            print("[DEBUG] verifyKpis result:", result)
+            try:
+                verification_results.insert_one({
+                    "requestId": request_id,
+                    "status": "done",
+                    "file": files[0],
+                    "result": result
+                })
+                print(f"[Verification] Result saved for requestId={request_id}")
+            except Exception as e:
+                print(f"[ERROR] Failed to save verification result: {e}")
+                raise
 
         elif len(files) >= 2:
             results = {}
             for f in files:
+                print("[DEBUG] Running compareKpis for file:", f)
                 results[f] = compareKpis(f, holidays)
-
-            comparison_results.insert_one({
-                "requestId": request_id,
-                "status": "done",
-                "files": files,
-                "result": results
-            })
-            print(f"[Comparison] Results saved for requestId={request_id}")
+            print("[DEBUG] compareKpis results:", results)
+            try:
+                comparison_results.insert_one({
+                    "requestId": request_id,
+                    "status": "done",
+                    "files": files,
+                    "result": results
+                })
+                print(f"[Comparison] Results saved for requestId={request_id}")
+            except Exception as e:
+                print(f"[ERROR] Failed to save comparison results: {e}")
+                raise
 
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
