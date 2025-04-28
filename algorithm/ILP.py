@@ -3,7 +3,6 @@ import pulp
 import pandas as pd
 from datetime import date, timedelta
 import holidays
-import random
 from tabulate import tabulate
 
 def solve():
@@ -20,7 +19,6 @@ def solve():
     # ==== FERIADOS NACIONAIS + DOMINGOS ====
     feriados = holidays.country_holidays("PT", years=[ano])
     domingos_feriados = [d for d in dias_ano if d.weekday() == 6 or d in feriados]
-    is_domingos_feriados = {d: (d in domingos_feriados) for d in dias_ano}
 
     # ==== FÉRIAS A PARTIR DO CSV DE REFERÊNCIA ====
     ferias_raw = pd.read_csv("horarioReferencia.csv", header=None)
@@ -33,6 +31,26 @@ def solve():
         }
         for f in range(len(ferias_raw))
     }
+
+    # ==== MINIMOS A PARTIR DO CSV minimuns.csv ====
+    minimos_raw = pd.read_csv("minimuns.csv", header=None)
+
+    dias_colunas = minimos_raw.iloc[0, 3:].tolist()
+    dias_colunas = pd.date_range(start="2025-01-01", periods=len(dias_colunas))
+
+    minimos = {}
+
+    linhas_minimos = {
+        ("A", 1): 1,  # Linha 2: Equipe A, Manhã
+        ("A", 2): 3,  # Linha 4: Equipe A, Tarde
+        ("B", 1): 5,  # Linha 6: Equipe B, Manhã
+        ("B", 2): 7   # Linha 8: Equipe B, Tarde
+    }
+
+    for (equipe, turno), linha_idx in linhas_minimos.items():
+        valores = minimos_raw.iloc[linha_idx, 3:].tolist()
+        for dia, minimo in zip(dias_colunas, valores):
+            minimos[(dia, equipe, turno)] = int(minimo)
 
     # ==== VARIÁVEIS DE DECISÃO ====
     x = {
@@ -64,7 +82,7 @@ def solve():
     for d in dias_ano:
         for t in [1, 2]:
             for e in ["A", "B"]:
-                minimo = 2 if e == "A" else 1
+                minimo = minimos[(d, e, t)]
                 penal = pulp.LpVariable(f"penal_{d.strftime('%Y%m%d')}_{t}_{e}", lowBound=0, cat="Continuous")
                 model += penal >= minimo - y[d][t][e], f"restr_penal_{d}_{t}_{e}"
                 coverage_factor.append(penal)
@@ -247,48 +265,72 @@ def solve():
     else:
         print("✅ Nenhum dia sem cobertura total.")
 
+    # ==== LEITURA DOS MÍNIMOS DE COBERTURA A PARTIR DO CSV ====
 
-    # ==== VERIFICAÇÃO DE COBERTURA POR EQUIPE E TURNO (DETALHADO) ====
+    minimuns_raw = pd.read_csv("minimuns.csv", header=None)
 
-    falhas_cobertura_detalhadas = {
-        "manha_A": [],
-        "tarde_A": [],
-        "manha_B": [],
-        "tarde_B": []
+    # Corrige meses de português para inglês
+    meses_pt_en = {
+        "jan": "Jan", "fev": "Feb", "mar": "Mar", "abr": "Apr",
+        "mai": "May", "jun": "Jun", "jul": "Jul", "ago": "Aug",
+        "set": "Sep", "out": "Oct", "nov": "Nov", "dez": "Dec"
     }
 
-    for d in dias_ano:
-        data_str = d.strftime("%Y-%m-%d")
+    dias_min = minimuns_raw.iloc[0, 3:].tolist()
+    dias_min_corrigidos = []
+    for d in dias_min:
+        if isinstance(d, str):
+            dia, mes_pt = d.strip().split(" ")
+            mes_en = meses_pt_en.get(mes_pt.lower())
+            dias_min_corrigidos.append(f"2025-{mes_en}-{dia.zfill(2)}")
+
+    dias_min = pd.to_datetime(dias_min_corrigidos, format="%Y-%b-%d")
+
+    # Construir o dicionário de mínimos
+    minimos_por_dia_turno_equipe = {}
+
+    for idx, linha in minimuns_raw.iterrows():
+        if isinstance(linha[0], str) and linha[0].strip().startswith("quipa"):
+            equipe = "A" if "A" in linha[0] else "B"
+        if isinstance(linha[1], str) and linha[1].strip() == "Minimo":
+            turno = 1 if linha[2].strip() == "M" else 2
+            for i, dia in enumerate(dias_min):
+                key = (dia, turno, equipe)
+                valor = linha[i + 3]
+                if not pd.isna(valor):
+                    minimos_por_dia_turno_equipe[key] = int(valor)
+    # ==== VERIFICAÇÃO FINAL USANDO OS MÍNIMOS DO CSV ====
+
+    print("\n🔍 Verificando cobertura real contra os mínimos do CSV:\n")
+
+    falhas_minimos = []
+
+    for (dia, turno, equipe), minimo in minimos_por_dia_turno_equipe.items():
+        data_str = dia.strftime("%Y-%m-%d")
+        if data_str not in df.columns:
+            continue
+
         dia_data = df.set_index("funcionario")[data_str]
 
-        turnos_A = dia_data.loc[equipe_A]
-        turnos_B = dia_data.loc[equipe_B]
+        if equipe == "A":
+            turnos = dia_data.loc[equipe_A]
+        else:
+            turnos = dia_data.loc[equipe_B]
 
-        manha_A = turnos_A.str.startswith("M").sum()
-        tarde_A = turnos_A.str.startswith("T").sum()
-        manha_B = turnos_B.str.startswith("M").sum()
-        tarde_B = turnos_B.str.startswith("T").sum()
+        if turno == 1:
+            qtd_turnos = turnos.str.startswith("M").sum()
+        else:
+            qtd_turnos = turnos.str.startswith("T").sum()
 
-        if manha_A < 2:
-            falhas_cobertura_detalhadas["manha_A"].append((data_str, manha_A))
-        if tarde_A < 2:
-            falhas_cobertura_detalhadas["tarde_A"].append((data_str, tarde_A))
-        if manha_B < 1:
-            falhas_cobertura_detalhadas["manha_B"].append((data_str, manha_B))
-        if tarde_B < 1:
-            falhas_cobertura_detalhadas["tarde_B"].append((data_str, tarde_B))
+        if qtd_turnos < minimo:
+            falhas_minimos.append((data_str, turno, equipe, qtd_turnos, minimo))
 
-    # ==== RESUMO DAS FALHAS POR CATEGORIA ====
-
-    print("\n🔍 Falhas específicas de cobertura mínima por equipe e turno:\n")
-
-    for categoria, falhas in falhas_cobertura_detalhadas.items():
-        print(f"{categoria}: {len(falhas)} dias")
-        for data, valor in falhas[:5]:  # Exibe apenas os 5 primeiros casos como exemplo
-            print(f"  - {data}: apenas {valor} turno(s)")
-        if len(falhas) > 5:
-            print("  ...")
-        print()
+    print(f"Total de falhas: {len(falhas_minimos)} dias\n")
+    for data_str, turno, equipe, real, minimo in falhas_minimos[:10]:  # mostra apenas 10 primeiros
+        turno_nome = "Manhã" if turno == 1 else "Tarde"
+        print(f"  - {data_str} [{turno_nome} Equipe {equipe}]: {real} (mínimo exigido {minimo})")
+    if len(falhas_minimos) > 10:
+        print("  ...")
 
     schedule = []
     with open('calendario4.csv', mode='r') as csvfile:
