@@ -62,7 +62,7 @@ class CSP:
             return None
         return min(unassigned_vars, key=lambda var: len(domains[var]))
 
-    def search(self, domains=None, timeout=60):
+    def search(self, domains=None, timeout=300):
         start_time = time.time()
         if domains is None:
             domains = copy.deepcopy(self.domains)
@@ -142,13 +142,6 @@ def employee_scheduling():
         holiday_vars = [var for var in emp_vars if int(var.split('_')[1]) in holidays]
         handle_ho_constraint(csp, holiday_vars, lambda values: sum(1 for v in values if v in ["M_A", "M_B", "T_A", "T_B"]) <= 2)
 
-    for day in range(1, num_days + 1):
-        day_vars = [f"{emp}_{day}" for emp in employees]
-        handle_ho_constraint(csp, day_vars, lambda values: sum(1 for v in values if v == "M_A") >= 2 and 
-                                                            sum(1 for v in values if v == "T_A") >= 2 and 
-                                                            sum(1 for v in values if v == "M_B") >= 1 and 
-                                                            sum(1 for v in values if v == "T_B") >= 1)
-
     solution = csp.search(timeout=600)
     if solution and "assignment" in solution:
         assignment = solution["assignment"]
@@ -206,15 +199,6 @@ def analyze_solution(assignment, employees, num_days, holidays):
             if curr_day.startswith("T_") and next_day.startswith("M_"):
                 tm_violations += 1
     print(f"\nNumber of T->M restriction violations: {tm_violations}")
-
-    print("\nShifts per team per day:")
-    for day in range(1, num_days + 1):
-        day_vars = [assignment.get(f"{emp}_{day}", "-") for emp in employees]
-        m_a = sum(1 for v in day_vars if v == "M_A")
-        t_a = sum(1 for v in day_vars if v == "T_A")
-        m_b = sum(1 for v in day_vars if v == "M_B")
-        t_b = sum(1 for v in day_vars if v == "T_B")
-        print(f"Day {day}: M_A={m_a}, T_A={t_a}, M_B={m_b}, T_B={t_b}")
 
     print("\nWorkdays on holidays per employee:")
     for emp in employees:
