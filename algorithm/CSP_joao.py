@@ -200,14 +200,14 @@ def build_schedule_table(assignment, num_employees, num_days):
     return table
 
 def generate_calendar(assignment, num_employees, num_days):
-    with open("csp_third_run.csv", "w", newline="") as csvfile:
+    with open("csp_fourth_run.csv", "w", newline="") as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(["Employee"] + [str(day) for day in range(1, num_days + 1)])
         for e in range(1, num_employees + 1):
             employee_schedule = [assignment.get(f"E{e}_{d}", "-") for d in range(1, num_days + 1)]
             csvwriter.writerow([f"E{e}"] + employee_schedule)
 
-def analyze_solution(assignment, employees, num_days, holidays, filename="csp_third_run.txt"):
+def analyze_solution(assignment, employees, num_days, holidays, filename="csp_fourth_run.txt"):
     MORNING = {"M_A", "M_B"}
     AFTERNOON = {"T_A", "T_B"}
     WORK = MORNING | AFTERNOON
@@ -224,7 +224,7 @@ def analyze_solution(assignment, employees, num_days, holidays, filename="csp_th
 
     lines.append("\nWorkdays on holidays per employee:")
     holiday_counts   = {} 
-    shift_statistics = [] 
+    shifts = [] 
 
     for emp in employees:
         holiday_workdays = sum(
@@ -242,7 +242,7 @@ def analyze_solution(assignment, employees, num_days, holidays, filename="csp_th
                 morning += 1
             elif v in AFTERNOON:
                 afternoon += 1
-        shift_statistics.append((emp, morning, afternoon, morning + afternoon))
+        shifts.append((emp, morning, afternoon, morning + afternoon))
 
     employees_over_5 = []
     for emp in employees:
@@ -265,7 +265,7 @@ def analyze_solution(assignment, employees, num_days, holidays, filename="csp_th
         lines.append("None")
 
     lines.append("\nShifts worked per employee:")
-    for emp, morning, afternoon, total in shift_statistics:
+    for emp, morning, afternoon, total in shifts:
         lines.append(f"{emp}: {morning} morning shifts, {afternoon} afternoon shifts, {total} total shifts")
 
     report_text = "\n".join(lines)
