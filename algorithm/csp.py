@@ -100,15 +100,22 @@ def employee_scheduling():
             var_t = f"{emp}_{d}_T"
             var_m = f"{emp}_{d+1}_M"
             constraints[(var_t, var_m)] = lambda t_val, m_val: not (t_val in ["A", "B"] and m_val in ["A", "B"])
+    
+    for emp in employees:
+        for d in range(1, num_days + 1):
+            m_var = f"{emp}_{d}_M"
+            t_var = f"{emp}_{d}_T"
+            constraints[(m_var, t_var)] = lambda m_val, t_val: not (m_val in ["A", "B"] and t_val in ["A", "B"])
+
 
     csp = CSP(variables, domains, constraints)
 
     for emp in employees:
         emp_vars = [f"{emp}_{d}_{s}" for d in range(1, num_days + 1) for s in ["M", "T"]]
         for start in range(num_days - 5):
-            window_vars = [f"{emp}_{d}_{s}" for d in range(start + 1, start + 7) for s in ["M", "T"]]
+            window_vars = [f"{emp}_{d}_{s}" for d in range(start, start + 6) for s in ["M", "T"]]
             handle_ho_constraint(csp, window_vars, lambda values: not all(v in ["A", "B"] for v in values))   
-        handle_ho_constraint(csp, emp_vars, lambda values: sum(1 for v in values if v in ["A", "B"]) <= 40)
+        handle_ho_constraint(csp, emp_vars, lambda values: sum(1 for v in values if v in ["A", "B"]) <= 23)
         holiday_vars = [f"{emp}_{d}_{s}" for d in holidays for s in ["M", "T"]]
         handle_ho_constraint(csp, holiday_vars, lambda values: sum(1 for v in values if v in ["A", "B"]) <= 2)
 
@@ -117,8 +124,7 @@ def employee_scheduling():
             day_shift_vars = [f"{emp}_{day}_{shift}" for emp in employees]
             handle_ho_constraint(csp, day_shift_vars, lambda values: (
                 sum(1 for v in values if v == "A") >= 2 and
-                sum(1 for v in values if v == "B") >= (1 if shift == "T" else 1)
-            ))
+                sum(1 for v in values if v == "B") >= 1))
 
     solution = csp.search(timeout=600)
     if solution and "assignment" in solution:
@@ -172,7 +178,7 @@ def generate_calendar(assignment, num_days, employees):
                 if m_val == "F" or t_val == "F":
                     shift = "FF"
                 else:
-                    shift = f"{m_val if m_val in ['A', 'B'] else '-'}{t_val if t_val in ['A', 'B'] else '-'}"
+                    shift = f"{m_val}{t_val}"
                     if m_val in ["A", "B"]:
                         m_count += 1
                     if t_val in ["A", "B"]:
