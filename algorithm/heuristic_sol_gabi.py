@@ -19,7 +19,7 @@ nDiasSeguidos = 5
 nMinTrabs = 2
 nMaxFolga = 142
 nTurnos = 2
-feriados = [31, 60, 120, 150, 200, 240, 300, 330]
+feriados = [1, 107, 109, 114, 121, 161, 170, 226, 276, 303, 333, 340, 357]
 
 # Férias otimizadas
 def definir_ferias(nTrabs, nDias, nDiasFerias, nMaxSimultaneos=3):
@@ -43,7 +43,7 @@ def definir_ferias(nTrabs, nDias, nDiasFerias, nMaxSimultaneos=3):
                 tentativas += 1
 
         if tentativas == 1000:
-            print(f"⚠️ Não foi possível alocar todas as férias para o trabalhador {trab}.")
+            print(f"Não foi possível alocar todas as férias para o trabalhador {trab}.")
 
     return Ferias
 
@@ -115,7 +115,7 @@ def salvar_csv(horario, Ferias, nTurnos, nDias, Prefs):
         dias_ferias = np.sum(Ferias[e])
 
         for d in range(nDias):
-            shift = "Fe" if Ferias[e, d] else "0"
+            shift = "F" if Ferias[e, d] else "0"
             if not Ferias[e, d]:
                 if horario[e, d, 0] == 1:
                     shift = f"M_{equipe}"

@@ -45,6 +45,27 @@ services:
       - rabbitmq_network
     environment:
       - PYTHONUNBUFFERED=1
+    volumes:
+      - shared_tmp:/shared_tmp
+
+  analyzer:
+    build:
+      context: .
+      dockerfile: modules/Dockerfile
+    container_name: analyzer
+    command: python3 -m modules.analyze
+    depends_on:
+      - rabbitmq
+      - mongo
+    networks:
+      - rabbitmq_network
+    environment:
+      - PYTHONUNBUFFERED=1
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
+    volumes:
+      - shared_tmp:/shared_tmp
 
 
   api:
@@ -92,6 +113,7 @@ services:
         condition: service_started
     volumes:
       - ./api/application.properties:/app/application.properties
+      - shared_tmp:/shared_tmp
     networks:
       - rabbitmq_network
 
@@ -112,3 +134,4 @@ networks:
 
 volumes:
   mongo_data:
+  shared_tmp:

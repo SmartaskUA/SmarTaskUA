@@ -16,5 +16,6 @@ RUN chmod +x ./modules/start-env
 
 # Instala as dependências
 RUN pip install --no-cache-dir -r /app/modules/requirements
+RUN pip install --no-cache-dir tenacity
 
 # O comando será definido no docker-compose (command)
