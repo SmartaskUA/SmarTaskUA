@@ -12,6 +12,21 @@ class CSP:
         self.domains = domains
         self.constraints = constraints
 
+    def is_consistent(self, assignment):
+        """Return True iff assignment satisfies **all** constraints."""
+        for key, func in self.constraints.items():
+            if isinstance(key, tuple):
+                if len(key) == 2:
+                    if not func(assignment[key[0]], assignment[key[1]]):
+                        return False
+                else:
+                    if not func([assignment[v] for v in key]):
+                        return False
+            else:
+                if not func(None, assignment):
+                    return False
+        return True
+
     def check_constraints(self, var, value, assignment):
         temp_assignment = assignment.copy()
         temp_assignment[var] = value
@@ -23,37 +38,46 @@ class CSP:
                         val1 = temp_assignment[v1]
                         val2 = temp_assignment[v2]
                         if not constraint_func(val1, val2):
-                            # print(f"Constraint failed for {v1}={val1}, {v2}={val2}")
+                            print(f"Constraint failed for {v1}={val1}, {v2}={val2}")
                             return False
                 else:
                     values = [temp_assignment.get(v) for v in constraint_key]
                     if None not in values and not constraint_func(values):
-                        # print(f"Higher-order constraint failed for {constraint_key}")
+                        print(f"Higher-order constraint failed for {constraint_key}")
                         return False
             else:
                 if not constraint_func(var, temp_assignment):
-                    # print(f"Single constraint failed for {var}={value}")
+                    print(f"Single constraint failed for {var}={value}")
                     return False
         return True
 
     def propagate(self, domains, var, value):
         domains[var] = [value]
-        queue = [(var, value)]
+        queue = [var]
+
         while queue:
-            curr_var, curr_val = queue.pop(0)
+            curr_var = queue.pop(0)
+
+            current_assignment = {v: d[0] for v, d in domains.items() if len(d) == 1}
+
             for other_var in self.variables:
                 if other_var == curr_var or len(domains[other_var]) == 1:
                     continue
+
                 new_domain = []
                 for val in domains[other_var]:
-                    if self.check_constraints(other_var, val, {curr_var: curr_val, other_var: val}):
+                    if self.check_constraints(other_var, val,
+                                            {**current_assignment,
+                                            other_var: val}):
                         new_domain.append(val)
+
                 if not new_domain:
-                    # print(f"Domain wiped out for {other_var} when assigning {curr_var} = {curr_val}")
                     return False
-                domains[other_var] = new_domain
-                if len(new_domain) == 1:
-                    queue.append((other_var, new_domain[0]))
+
+                if len(new_domain) < len(domains[other_var]):
+                    domains[other_var] = new_domain
+                    if len(new_domain) == 1:
+                        queue.append(other_var)
         return True
 
     def select_variable(self, domains):
@@ -75,11 +99,13 @@ class CSP:
                 return None
             if all(len(lv) == 1 for lv in domains.values()):
                 assignment = {v: lv[0] for v, lv in domains.items()}
-                return {"assignment": assignment}
+                if self.is_consistent(assignment):
+                    return {"assignment": assignment}
+                return None
             var = self.select_variable(domains)
             if var is None:
                 return None
-            # print(f"Depth {depth}: Selecting {var} with domain {domains[var]}")
+            print(f"Depth {depth}: Selecting {var} with domain {domains[var]}")
             values = domains[var].copy()
             random.shuffle(values)  # Randomize value order
             for val in values:
@@ -159,14 +185,17 @@ def employee_scheduling():
 #         return constraint_func(values)
 #     csp.constraints[tuple(variables)] = constraint
 
+# def handle_ho_constraint(csp, variables, constraint_func):
+#     def constraint(var, assignment):
+#         values = [assignment.get(v, None) for v in variables]
+#         if None in values:
+#             return True
+#         return constraint_func(values)
+#     constraint_key = f"multi_{'_'.join(variables)}"
+#     csp.constraints[constraint_key] = constraint
+
 def handle_ho_constraint(csp, variables, constraint_func):
-    def constraint(var, assignment):
-        values = [assignment.get(v, None) for v in variables]
-        if None in values:
-            return True
-        return constraint_func(values)
-    constraint_key = f"multi_{'_'.join(variables)}"
-    csp.constraints[constraint_key] = constraint
+    csp.constraints[tuple(variables)] = lambda values: constraint_func(values)
 
 def build_schedule_table(assignment, num_employees, num_days):
     table = []
