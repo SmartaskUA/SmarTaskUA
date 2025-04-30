@@ -4,20 +4,16 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import smartask.api.event.RabbitMqProducer;
 import smartask.api.models.Employee;
 import smartask.api.models.Team;
-import smartask.api.models.requests.ScheduleRequest;
-import smartask.api.repositories.EmployeesRepository;
 import smartask.api.repositories.SchedulesRepository;
-import smartask.api.repositories.TeamRepository;
 import smartask.api.services.EmployeeService;
 import smartask.api.services.SchedulesService;
 import smartask.api.services.TeamService;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
+@EnableScheduling
 @SpringBootApplication
 public class ApiApplication {
 

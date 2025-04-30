@@ -138,7 +138,7 @@ def salvar_csv(horario, Ferias, nTurnos, nDias, Prefs):
             dias_ferias = np.sum(Ferias[e])                                 # Total vacation days
 
             for d in range(nDias):
-                shift = "Fe" if Ferias[e, d] else "0"
+                shift = "F" if Ferias[e, d] else "0"
                 if not Ferias[e, d]:
                     if horario[e, d, 0] == 1:
                         shift = f"M_{equipe}"

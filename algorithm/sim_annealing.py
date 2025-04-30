@@ -8,7 +8,7 @@ nDias = 365
 temperatura_inicial = 1000
 temperatura_final = 1
 taxa_resfriamento = 0.95
-feriados = [i for i in range(nDias) if i % 30 == 0]  # Exemplo simples: feriados a cada 30 dias
+feriados = [1, 107, 109, 114, 121, 161, 170, 226, 276, 303, 333, 340, 357]
 alarmes = []  # Ignorar por agora
 
 # --- Gerar férias (30 dias aleatórios por funcionário) ---
