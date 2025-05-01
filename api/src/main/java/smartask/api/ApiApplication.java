@@ -13,6 +13,8 @@ import smartask.api.services.EmployeeService;
 import smartask.api.services.SchedulesService;
 import smartask.api.services.TeamService;
 
+import java.util.List;
+
 @EnableScheduling
 @SpringBootApplication
 public class ApiApplication {
@@ -30,10 +32,9 @@ public class ApiApplication {
 				teamA = new Team("A");
 				teamService.addTeam(teamA);
 				for (int i = 1; i <= 9; i++) {
-					Employee employee = new Employee("Employee " + i); // assign team after saving
+					Employee employee = new Employee("Employee " + i);
 					employeeService.addEmployee(employee);
 				}
-				// Assign to team A
 				var aEmployees = employeeService.getEmployees().stream()
 						.filter(e -> e.getName().startsWith("Employee ") && Integer.parseInt(e.getName().split(" ")[1]) <= 9)
 						.map(Employee::getId)
@@ -46,18 +47,33 @@ public class ApiApplication {
 				teamB = new Team("B");
 				teamService.addTeam(teamB);
 				for (int i = 10; i <= 12; i++) {
-					Employee employee = new Employee("Employee " + i); // assign team after saving
+					Employee employee = new Employee("Employee " + i);
 					employeeService.addEmployee(employee);
 				}
-				// Assign to team B
 				var bEmployees = employeeService.getEmployees().stream()
 						.filter(e -> e.getName().startsWith("Employee ") && Integer.parseInt(e.getName().split(" ")[1]) >= 10)
 						.map(Employee::getId)
 						.toList();
 				teamService.addEmployeesToTeam(teamB.getId(), bEmployees, employeeService);
 			}
+
+			// Add Employee 5 and 6 to team B (they're already in A)
+			var employee5 = employeeService.getEmployees().stream().filter(e -> e.getName().equals("Employee 5")).findFirst().orElse(null);
+			var employee6 = employeeService.getEmployees().stream().filter(e -> e.getName().equals("Employee 6")).findFirst().orElse(null);
+			if (employee5 != null && employee6 != null) {
+				teamService.addEmployeesToTeam(teamB.getId(),
+						List.of(employee5.getId(), employee6.getId()),
+						employeeService);
+			}
+
+			// Add Employee 11 to team A (he's already in B)
+			var employee11 = employeeService.getEmployees().stream().filter(e -> e.getName().equals("Employee 11")).findFirst().orElse(null);
+			if (employee11 != null) {
+				teamService.addEmployeesToTeam(teamA.getId(), List.of(employee11.getId()), employeeService);
+			}
 		};
 	}
+
 
 
 
