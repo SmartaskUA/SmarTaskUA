@@ -2,61 +2,37 @@ package smartask.api.models;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
 import jakarta.validation.constraints.NotBlank;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 
 @Document(collection = "employees")
 public class Employee {
 
     @Id
-    private String id; // Custom ID of type Long
+    private String id;
 
     @NotBlank
     private String name;
 
-    private Team team;
+    // Armazena os IDs dos times aos quais pertence
+    private Set<String> teamIds = new HashSet<>();
 
-    private Map<String, List<String>> restrictions;
+    private Map<String, List<String>> restrictions = new HashMap<>();
 
-    // Constructor and getters/setters
-    public Employee(String name, Team team) {
-        this.name = name;
-        this.team = team;
-        this.restrictions = new HashMap<>();
-    }
-
-    public String getId() {
-        return this.id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return this.name;
-    }
-
-    public void setName(String name) {
+    public Employee(String name) {
         this.name = name;
     }
 
-    public Team getTeam() {
-        return this.team;
-    }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
-    public void setTeam(Team team) {
-        this.team = team;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public void setRestrictions(Map<String, List<String>> restrictions) {
-        this.restrictions = restrictions;
-    }
+    public Set<String> getTeamIds() { return teamIds; }
+    public void setTeamIds(Set<String> teamIds) { this.teamIds = teamIds; }
 
-    public Map<String, List<String>> getRestrictions() {
-        return this.restrictions;
-    }
+    public Map<String, List<String>> getRestrictions() { return restrictions; }
+    public void setRestrictions(Map<String, List<String>> restrictions) { this.restrictions = restrictions; }
 }

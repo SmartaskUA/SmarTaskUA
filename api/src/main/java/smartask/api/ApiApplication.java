@@ -25,50 +25,41 @@ public class ApiApplication {
 	CommandLineRunner initDatabase(TeamService teamService, EmployeeService employeeService,
 								   SchedulesRepository schedulesRepository, SchedulesService schedulesService, RabbitMqProducer producer) {
 		return args -> {
-			// Check if Team A exists, if not create and save it
-
-			if (teamService.getTeams().isEmpty() || teamService.getTeams().stream().noneMatch(team -> "A".equals(team.getName()))) {
-				Team teamA = new Team("A");
+			Team teamA = teamService.getTeams().stream().filter(team -> "A".equals(team.getName())).findFirst().orElse(null);
+			if (teamA == null) {
+				teamA = new Team("A");
 				teamService.addTeam(teamA);
-
-				// Create and add 9 employees to Team A
 				for (int i = 1; i <= 9; i++) {
-					Employee employee = new Employee("Employee " + i, teamA);
+					Employee employee = new Employee("Employee " + i); // assign team after saving
 					employeeService.addEmployee(employee);
 				}
+				// Assign to team A
+				var aEmployees = employeeService.getEmployees().stream()
+						.filter(e -> e.getName().startsWith("Employee ") && Integer.parseInt(e.getName().split(" ")[1]) <= 9)
+						.map(Employee::getId)
+						.toList();
+				teamService.addEmployeesToTeam(teamA.getId(), aEmployees, employeeService);
 			}
 
-			// Check if Team B exists, if not create and save it
-			if (teamService.getTeams().isEmpty() || teamService.getTeams().stream().noneMatch(team -> "B".equals(team.getName()))) {
-				Team teamB = new Team("B");
+			Team teamB = teamService.getTeams().stream().filter(team -> "B".equals(team.getName())).findFirst().orElse(null);
+			if (teamB == null) {
+				teamB = new Team("B");
 				teamService.addTeam(teamB);
-
-				// Create and add 3 employees to Team B
 				for (int i = 10; i <= 12; i++) {
-					Employee employee = new Employee("Employee " + i, teamB);
+					Employee employee = new Employee("Employee " + i); // assign team after saving
 					employeeService.addEmployee(employee);
 				}
+				// Assign to team B
+				var bEmployees = employeeService.getEmployees().stream()
+						.filter(e -> e.getName().startsWith("Employee ") && Integer.parseInt(e.getName().split(" ")[1]) >= 10)
+						.map(Employee::getId)
+						.toList();
+				teamService.addEmployeesToTeam(teamB.getId(), bEmployees, employeeService);
 			}
-
-			if (!schedulesRepository.existsByTitle("Sample")) {
-				schedulesService.readex1();
-				System.out.println("Sample schedule created at startup.");
-			} else {
-				System.out.println("Sample schedule already exists.");
-			}
-/*
-			ScheduleRequest mockRequest = new ScheduleRequest(
-					"string",                               // taskId
-					LocalDate.parse("2025-03-30"),           // init
-					LocalDate.parse("2025-03-30"),           // end
-					"string",                               // algorithm
-					"startconn",                                     // title
-					"string",                               // maxTime
-					LocalDateTime.parse("2025-03-30T15:57:23.796")  // requestedAt
-			);
-			producer.requestScheduleMessage(mockRequest);
-
-			 */
 		};
 	}
+
+
+
+
 }
