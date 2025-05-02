@@ -1,8 +1,13 @@
 FROM python:3.11-slim
 
+WORKDIR /app
 
-COPY . .
+# Copia diretórios e arquivos necessários
+COPY ../algorithm ./algorithm
+COPY ../modules ./modules
 
-RUN pip install  pika pymongo pytz numpy pandas deap pika pulp holidays tabulate tenacity
+# Instala dependências
+RUN pip install pika pymongo pytz numpy pandas deap pulp holidays tabulate tenacity
 
+# Comando de entrada
 CMD ["python3", "-u", "-m", "modules.RabbitMQClient"]
