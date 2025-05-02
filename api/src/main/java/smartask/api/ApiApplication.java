@@ -27,9 +27,9 @@ public class ApiApplication {
 	CommandLineRunner initDatabase(TeamService teamService, EmployeeService employeeService,
 								   SchedulesRepository schedulesRepository, SchedulesService schedulesService, RabbitMqProducer producer) {
 		return args -> {
-			Team teamA = teamService.getTeams().stream().filter(team -> "A".equals(team.getName())).findFirst().orElse(null);
+			Team teamA = teamService.getTeams().stream().filter(team -> "Equipa A".equals(team.getName())).findFirst().orElse(null);
 			if (teamA == null) {
-				teamA = new Team("A");
+				teamA = new Team("Equipa A");
 				teamService.addTeam(teamA);
 				for (int i = 1; i <= 9; i++) {
 					Employee employee = new Employee("Employee " + i);
@@ -42,9 +42,9 @@ public class ApiApplication {
 				teamService.addEmployeesToTeam(teamA.getId(), aEmployees, employeeService);
 			}
 
-			Team teamB = teamService.getTeams().stream().filter(team -> "B".equals(team.getName())).findFirst().orElse(null);
+			Team teamB = teamService.getTeams().stream().filter(team -> "Equipa B".equals(team.getName())).findFirst().orElse(null);
 			if (teamB == null) {
-				teamB = new Team("B");
+				teamB = new Team("Equipa B");
 				teamService.addTeam(teamB);
 				for (int i = 10; i <= 12; i++) {
 					Employee employee = new Employee("Employee " + i);

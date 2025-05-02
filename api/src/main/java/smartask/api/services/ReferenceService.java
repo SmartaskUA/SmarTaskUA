@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import smartask.api.models.ReferenceTemplate;
+import smartask.api.models.Team;
 import smartask.api.repositories.ReferenceTemplateRepository;
 
 import java.io.BufferedReader;
@@ -16,13 +17,16 @@ import java.util.*;
 public class ReferenceService {
 
     private final ReferenceTemplateRepository repository;
+    private final TeamService teamService;
 
     public ReferenceTemplate createTemplateFromCsv(String name, MultipartFile file) {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
 
             Map<String, List<String>> dataMap = new HashMap<>();
-            String headerLine = reader.readLine(); // Header
+            Set<String> teamsInCsv = new HashSet<>();
+
+            String headerLine = reader.readLine(); // header
             if (headerLine == null) throw new RuntimeException("CSV vazio");
 
             String[] headers = headerLine.split(",");
@@ -38,6 +42,12 @@ public class ReferenceService {
                     currentTeam = values[0].trim();
                 }
 
+                if (currentTeam == null) {
+                    throw new RuntimeException("Equipa não especificada em uma linha");
+                }
+
+                teamsInCsv.add(currentTeam);
+
                 String tipo = values[1].trim();     // "Minimo" ou "Ideal"
                 String turno = values[2].trim();    // "M" ou "T"
 
@@ -49,6 +59,19 @@ public class ReferenceService {
                 }
 
                 dataMap.put(key, diaList);
+            }
+
+            // Validação das equipas
+            List<Team> existingTeams = teamService.getTeams();
+            Set<String> existingTeamNames = new HashSet<>();
+            for (Team t : existingTeams) {
+                existingTeamNames.add(t.getName());
+            }
+
+            for (String teamName : teamsInCsv) {
+                if (!existingTeamNames.contains(teamName)) {
+                    throw new IllegalArgumentException("Equipa inexistente no sistema: " + teamName);
+                }
             }
 
             ReferenceTemplate template = ReferenceTemplate.builder()
