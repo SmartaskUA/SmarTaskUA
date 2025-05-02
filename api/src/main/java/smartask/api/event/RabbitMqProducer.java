@@ -69,7 +69,7 @@ public class RabbitMqProducer {
             String jsonMessage = objectMapper.writeValueAsString(schedule);
 
             // Send message to RabbitMQ
-            rabbitTemplate.convertAndSend(EXCHANGE_NAME, ROUTING_KEY, jsonMessage);
+            rabbitTemplate.convertAndSend(EXCHANGE_NAME, ROUTING_KEY, schedule);
             System.out.println("Sent task request: " + jsonMessage);
             return res ="Sent task request";
 
