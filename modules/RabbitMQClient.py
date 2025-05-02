@@ -58,7 +58,9 @@ class RabbitMQClient:
         def callback(ch, method, properties, body):
             try:
                 message = json.loads(body)
-                print(f"\n Request : {message}")
+                print(f"Type of message: {type(message)}")
+                print(f"Message content: {message}")
+
                 task_id = message.get("taskId", "No Task ID")
                 title = message.get("title")
                 algorithm_name = message.get("algorithm", "CSP Scheduling")
