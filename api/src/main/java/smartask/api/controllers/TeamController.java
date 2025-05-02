@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import smartask.api.models.Team;
+import smartask.api.models.requests.AddEmployeesToTeamRequest;
+import smartask.api.services.EmployeeService;
 import smartask.api.services.TeamService;
 import java.util.List;
 
@@ -16,6 +18,10 @@ import java.util.List;
 public class TeamController {
     @Autowired
     private TeamService teamService;
+
+    @Autowired
+    EmployeeService employeeService;
+
 
     public TeamController(TeamService teamService) {
         this.teamService = teamService;
@@ -49,5 +55,16 @@ public class TeamController {
         return ResponseEntity.ok("Team updated successfully");
     }
 
-    
+    @Operation(summary = "Add employees to a team")
+    @PostMapping("/{teamId}/add-employees")
+    public ResponseEntity<String> addEmployeesToTeam(
+            @PathVariable String teamId,
+            @RequestBody AddEmployeesToTeamRequest request
+    ) {
+        teamService.addEmployeesToTeam(teamId, request.getEmployeeIds(), employeeService);
+        return ResponseEntity.ok("Employees added to team successfully");
+    }
+
+
+
 }
