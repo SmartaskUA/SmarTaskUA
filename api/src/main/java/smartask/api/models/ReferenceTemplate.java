@@ -19,5 +19,5 @@ public class ReferenceTemplate {
     @NotBlank
     private String name;
 
-    private Map<String, List<String>> vacations;
+    private Map<String, List<String>> minimuns;
 }

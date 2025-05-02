@@ -53,7 +53,7 @@ public class ReferenceService {
 
             ReferenceTemplate template = ReferenceTemplate.builder()
                     .name(name)
-                    .vacations(dataMap)
+                    .minimuns(dataMap)
                     .build();
 
             return repository.save(template);
@@ -75,7 +75,7 @@ public class ReferenceService {
     public ReferenceTemplate updateTemplate(String id, ReferenceTemplate updated) {
         ReferenceTemplate existing = getTemplateById(id);
         existing.setName(updated.getName());
-        existing.setVacations(updated.getVacations());
+        existing.setMinimuns(updated.getMinimuns());
         return repository.save(existing);
     }
 
