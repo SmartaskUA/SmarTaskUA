@@ -20,8 +20,14 @@ def solve():
     feriados = holidays.country_holidays("PT", years=[ano])
     domingos_feriados = [d for d in dias_ano if d.weekday() == 6 or d in feriados]
 
+    import os
+
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    horario_csv_path = os.path.join(base_dir, "horarioReferencia.csv")
+    minimuns_csv_path = os.path.join(base_dir, "minimuns.csv")
     # ==== FÉRIAS A PARTIR DO CSV DE REFERÊNCIA ====
-    ferias_raw = pd.read_csv("horarioReferencia.csv", header=None)
+    ferias_raw = pd.read_csv(horario_csv_path, header=None)
     datas_do_ano = pd.date_range(start="2025-01-01", periods=365)
     ferias = {
         f: {
@@ -32,11 +38,12 @@ def solve():
         for f in range(len(ferias_raw))
     }
 
-    # ==== MINIMOS A PARTIR DO CSV minimuns.csv ====
-    minimos_raw = pd.read_csv("minimuns.csv", header=None)
+    # ==== MÍNIMOS A PARTIR DO CSV minimuns.csv ====
+    minimos_raw = pd.read_csv(minimuns_csv_path, header=None)
 
     dias_colunas = minimos_raw.iloc[0, 3:].tolist()
     dias_colunas = pd.date_range(start="2025-01-01", periods=len(dias_colunas))
+
 
     minimos = {}
 
@@ -266,8 +273,11 @@ def solve():
         print("✅ Nenhum dia sem cobertura total.")
 
     # ==== LEITURA DOS MÍNIMOS DE COBERTURA A PARTIR DO CSV ====
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    minimuns_csv_path = os.path.join(base_dir, "minimuns.csv")
 
-    minimuns_raw = pd.read_csv("minimuns.csv", header=None)
+
+    minimuns_raw = pd.read_csv(minimuns_csv_path, header=None)
 
     # Corrige meses de português para inglês
     meses_pt_en = {
