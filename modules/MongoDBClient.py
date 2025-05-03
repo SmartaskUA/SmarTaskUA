@@ -8,11 +8,12 @@ from datetime import datetime
 class MongoDBClient:
     def __init__(self, db_name="mydatabase", employees_collection="employees",
                  schedules_collection="schedules"
-                 ,vacations_collection="vacations"):
+                 ,vacations_collection="vacations"
+                 ,reference_collection="reference"):
         """Initialize connection to MongoDB."""
         try:
             # MongoDB connection parameters (change if needed)
-            self.host = os.getenv("MONGO_HOST", "mongo")
+            self.host = os.getenv("MONGO_HOST", "localhost")
             self.port = int(os.getenv("MONGO_PORT", 27017))
             self.username = os.getenv("MONGO_INITDB_ROOT_USERNAME", "admin")
             self.password = os.getenv("MONGO_INITDB_ROOT_PASSWORD", "password")
@@ -29,6 +30,7 @@ class MongoDBClient:
             self.employees_collection = self.db[employees_collection]
             self.schedules_collection = self.db[schedules_collection]
             self.vacations_collection = self.db[vacations_collection]
+            self.reference_collection = self.db[reference_collection]
             print(f"Connected to MongoDB database '{db_name}'")
 
         except errors.PyMongoError as e:
@@ -83,6 +85,18 @@ class MongoDBClient:
             print(f"Failed to fetch vacation by name: {e}")
             return None
 
+    def fetch_reference_by_name(self, name):
+        """Fetch a reference template by its name."""
+        try:
+            result = self.reference_collection.find_one({"name": name})
+            if result:
+                print(f"Found reference template: {result}")
+            else:
+                print(f"No reference template found with name '{name}'")
+            return result
+        except errors.PyMongoError as e:
+            print(f"Failed to fetch reference by name: {e}")
+            return None
 
     def close_connection(self):
         """Close the connection to the MongoDB database."""
@@ -104,29 +118,7 @@ if __name__ == "__main__":
     print("\n------------Fetching Vacation Template by name='v1'-----------------------\n")
     mongo_client.fetch_vacation_by_name("v1")
 
-    # Insert a new schedule from 'schedule.csv'
-    print("\n------------Inserting New Schedule from CSV-----------------------\n")
-    try:
-        csv_file = "schedule.csv"
-        schedule_data = []
-
-        with open(csv_file, mode="r") as file:
-            csv_reader = csv.reader(file)
-            for row in csv_reader:
-                schedule_data.append(row)  # Each row becomes a list of strings
-
-        # Insert the new schedule into the database with title, algorithm, and timestamp
-        title = "S5"
-        algorithm = "Imported Algorithm"
-        timestamp = datetime.now().isoformat()  # Adding timestamp
-        inserted_id = mongo_client.insert_schedule(data=schedule_data, title=title, algorithm=algorithm,
-                                                   timestamp=timestamp)
-        print(f"New schedule inserted with ID: {inserted_id}")
-
-    except FileNotFoundError:
-        print(f"Error: The file '{csv_file}' was not found.")
-    except Exception as e:
-        print(f"An error occurred while processing the CSV file: {e}")
-
+    print("\n------------Fetching Reference Template by name='m1'-----------------------\n")
+    mongo_client.fetch_reference_by_name("m1")
     # Close the connection when done
     mongo_client.close_connection()
