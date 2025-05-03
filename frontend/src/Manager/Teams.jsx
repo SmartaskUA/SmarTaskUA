@@ -271,6 +271,9 @@ const Teams = () => {
                       <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
                         {team.description || "Sem descrição"}
                       </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: "bold" }}>
+                        {team.employeeIds?.length || 0} empregado(s)
+                      </Typography>
                       <Button
                         variant="outlined"
                         color="primary"
@@ -296,7 +299,6 @@ const Teams = () => {
         </Box>
       </div>
 
-      {/* Modal Nova/Editar Equipe */}
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>{editTeamId ? "Editar Equipe" : "Nova Equipe"}</DialogTitle>
         <DialogContent>
@@ -323,7 +325,6 @@ const Teams = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Modal Detalhes Equipe */}
       <Dialog open={openDetailsDialog} onClose={handleCloseDetailsDialog}>
         <DialogTitle>
           Detalhes da Equipe
