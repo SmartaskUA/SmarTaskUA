@@ -36,13 +36,41 @@ class MongoDBClient:
         except errors.PyMongoError as e:
             print(f"Failed to connect to MongoDB: {e}")
 
+    from bson import ObjectId
+
     def fetch_employees(self):
-        """Fetch all employees from the employees collection."""
-        employees = list(self.employees_collection.find())
-        print(f"Retrieved {len(employees)} employees.")
-        for employee in employees:
-            print(employee)
-        return employees
+        """
+        Fetch all employees and return a list of dicts with their name and team names.
+        """
+        try:
+            employees = list(self.employees_collection.find())
+
+            # Mapeia ID do time (como string) para nome
+            team_id_to_name = {
+                str(team["_id"]): team["name"]
+                for team in self.db["teams"].find({}, {"_id": 1, "name": 1})
+            }
+
+            result = []
+            for emp in employees:
+                emp_name = emp.get("name")
+                team_ids = emp.get("teamIds", [])
+                team_names = [team_id_to_name.get(str(team_id)) for team_id in team_ids]
+
+                result.append({
+                    "name": emp_name,
+                    "teams": team_names
+                })
+
+            print(f"Retrieved {len(result)} employees with team names.")
+            for item in result:
+                print(item)
+
+            return result
+
+        except Exception as e:
+            print(f"Error while fetching employees: {e}")
+            return []
 
     def fetch_schedules(self):
         """Fetch all schedules from the schedules collection."""
@@ -116,9 +144,9 @@ if __name__ == "__main__":
     mongo_client.fetch_schedules()
 
     print("\n------------Fetching Vacation Template by name='v1'-----------------------\n")
-    mongo_client.fetch_vacation_by_name("v1")
+    #mongo_client.fetch_vacation_by_name("v1")
 
     print("\n------------Fetching Reference Template by name='m1'-----------------------\n")
-    mongo_client.fetch_reference_by_name("m1")
+    #mongo_client.fetch_reference_by_name("m1")
     # Close the connection when done
     mongo_client.close_connection()
