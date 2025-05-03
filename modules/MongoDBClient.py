@@ -13,7 +13,7 @@ class MongoDBClient:
         """Initialize connection to MongoDB."""
         try:
             # MongoDB connection parameters (change if needed)
-            self.host = os.getenv("MONGO_HOST", "localhost")
+            self.host = os.getenv("MONGO_HOST", "mongo")
             self.port = int(os.getenv("MONGO_PORT", 27017))
             self.username = os.getenv("MONGO_INITDB_ROOT_USERNAME", "admin")
             self.password = os.getenv("MONGO_INITDB_ROOT_PASSWORD", "password")
