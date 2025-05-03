@@ -6,7 +6,9 @@ import csv
 from datetime import datetime
 
 class MongoDBClient:
-    def __init__(self, db_name="mydatabase", employees_collection="employees", schedules_collection="schedules"):
+    def __init__(self, db_name="mydatabase", employees_collection="employees",
+                 schedules_collection="schedules"
+                 ,vacations_collection="vacations"):
         """Initialize connection to MongoDB."""
         try:
             # MongoDB connection parameters (change if needed)
@@ -26,6 +28,7 @@ class MongoDBClient:
             self.db = self.client[db_name]
             self.employees_collection = self.db[employees_collection]
             self.schedules_collection = self.db[schedules_collection]
+            self.vacations_collection = self.db[vacations_collection]
             print(f"Connected to MongoDB database '{db_name}'")
 
         except errors.PyMongoError as e:
@@ -67,6 +70,19 @@ class MongoDBClient:
             print(f"Failed to insert schedule: {e}")
             return None
 
+    def fetch_vacation_by_name(self, name):
+        """Fetch a vacation template by its name."""
+        try:
+            result = self.vacations_collection.find_one({"name": name})
+            if result:
+                print(f"Found vacation template: {result}")
+            else:
+                print(f"No vacation template found with name '{name}'")
+            return result
+        except errors.PyMongoError as e:
+            print(f"Failed to fetch vacation by name: {e}")
+            return None
+
 
     def close_connection(self):
         """Close the connection to the MongoDB database."""
@@ -84,6 +100,9 @@ if __name__ == "__main__":
 
     print("\n------------Schedules-----------------------\n")
     mongo_client.fetch_schedules()
+
+    print("\n------------Fetching Vacation Template by name='v1'-----------------------\n")
+    mongo_client.fetch_vacation_by_name("v1")
 
     # Insert a new schedule from 'schedule.csv'
     print("\n------------Inserting New Schedule from CSV-----------------------\n")
