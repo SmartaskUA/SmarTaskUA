@@ -142,6 +142,8 @@ const Employer = () => {
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}>ID</TableCell>
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}>Nome</TableCell>
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}>Equipa</TableCell>
+                    <TableCell style={{ color: "#fff", fontWeight: "bold" }}>Restrições</TableCell>
+
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}></TableCell>
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}></TableCell>
                   </TableRow>
@@ -163,6 +165,18 @@ const Employer = () => {
                         <TableCell>{emp.id}</TableCell>
                         <TableCell>{emp.name}</TableCell>
                         <TableCell>{teamDisplay}</TableCell>
+                        <TableCell>
+                          {emp.restrictions && Object.keys(emp.restrictions).length > 0 ? (
+                            Object.entries(emp.restrictions).map(([key, value]) => (
+                              <div key={key}>
+                                {key}: {value.toString()}
+                              </div>
+                            ))
+                          ) : (
+                            <em>Sem restrições</em>
+                          )}
+                        </TableCell>
+
                         <TableCell>
                           {removalMode && (
                             <IconButton

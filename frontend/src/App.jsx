@@ -14,7 +14,6 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./components/NotFound";
 import CompareCalendar from "./Manager/CompareCalendar";
-import TeamEmployees from "./Manager/TeamEmployees";
 
 const App = () => {
   return (
@@ -32,8 +31,6 @@ const App = () => {
           <Route path="/manager/createCalendar" element={<ProtectedRoute role="manager"><CreateCalendar /></ProtectedRoute>} />
           <Route path="/manager/compareCalendar" element={<ProtectedRoute role="manager"><CompareCalendar /></ProtectedRoute>} />
           <Route path="/manager/generatevacations" element={<ProtectedRoute role="manager"><GenerateVacations /></ProtectedRoute>} />
-          <Route path="/manager/team/:teamId/employees" element={<ProtectedRoute role="manager"><TeamEmployees /></ProtectedRoute>} />
-
           <Route path="/manager/*" element={<NotFound />} />
           <Route path="/admin/*" element={<NotFound />} />
           <Route path="*" element={<NotFound />} />
