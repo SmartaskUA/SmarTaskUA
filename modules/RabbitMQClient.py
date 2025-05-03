@@ -18,6 +18,7 @@ class RabbitMQClient:
         self.status_routing_key = status_routing_key
         self.executor = ThreadPoolExecutor(max_workers=5)
         self.mongodb_client = MongoDBClient()
+        print(f"\n Vacation : {self.mongodb_client.fetch_vacation_by_name("v1")}")
         self.task_manager = TaskManager()
         self.connect_to_rabbitmq()
         self.publisher_connection, self.publisher_channel = self.create_publisher_connection()
