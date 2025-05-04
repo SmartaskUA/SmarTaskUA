@@ -23,42 +23,27 @@ public class ReferenceService {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
 
-            Map<String, List<String>> dataMap = new HashMap<>();
+            ArrayList<ArrayList<String>> lines = new ArrayList<>();
             Set<String> teamsInCsv = new HashSet<>();
 
-            String headerLine = reader.readLine(); // header
+            String headerLine = reader.readLine(); // Ignorar ou armazenar se quiser
             if (headerLine == null) throw new RuntimeException("CSV vazio");
 
-            String[] headers = headerLine.split(",");
-
             String line;
-            String currentTeam = null;
-
             while ((line = reader.readLine()) != null) {
                 String[] values = line.split(",");
                 if (values.length < 4) continue;
 
-                if (!values[0].isBlank()) {
-                    currentTeam = values[0].trim();
+                String team = values[0].trim();
+                if (!team.isEmpty()) {
+                    teamsInCsv.add(team);
                 }
 
-                if (currentTeam == null) {
-                    throw new RuntimeException("Equipa não especificada em uma linha");
+                ArrayList<String> row = new ArrayList<>();
+                for (String value : values) {
+                    row.add(value.trim());
                 }
-
-                teamsInCsv.add(currentTeam);
-
-                String tipo = values[1].trim();     // "Minimo" ou "Ideal"
-                String turno = values[2].trim();    // "M" ou "T"
-
-                String key = currentTeam + "-" + tipo + "-" + turno;
-                List<String> diaList = new ArrayList<>();
-
-                for (int i = 3; i < values.length; i++) {
-                    diaList.add(values[i].trim());
-                }
-
-                dataMap.put(key, diaList);
+                lines.add(row);
             }
 
             // Validação das equipas
@@ -76,15 +61,18 @@ public class ReferenceService {
 
             ReferenceTemplate template = ReferenceTemplate.builder()
                     .name(name)
-                    .minimuns(dataMap)
+                    .minimuns(new ArrayList<>(lines))
                     .build();
 
+            System.out.println("\nTemplate generated: " + template);
             return repository.save(template);
 
         } catch (Exception e) {
             throw new RuntimeException("Erro ao processar CSV: " + e.getMessage(), e);
         }
     }
+
+
 
     public List<ReferenceTemplate> getAllTemplates() {
         return repository.findAll();
