@@ -69,6 +69,24 @@ class RabbitMQClient:
 
                 task_id = message.get("taskId", "No Task ID")
                 title = message.get("title")
+                vacation_template_name = message.get("vacationTemplate")
+                fetched_vacation = self.mongodb_client.fetch_vacation_by_name(vacation_template_name)
+                vacations_data = fetched_vacation.get("vacations", {})
+
+                print(
+                    f"\nVacation template name: {vacation_template_name}"
+                    f"\nExtracted vacations: {vacations_data}"
+                )
+
+                minimuns = message.get("minimuns")
+                fetched_reference = self.mongodb_client.fetch_reference_by_name(minimuns)
+                minimuns_data = fetched_reference.get("minimuns", {})
+
+                print(
+                    f"\nMinimuns template name: {minimuns}"
+                    f"\nExtracted minimuns: {minimuns_data}"
+                )
+
                 algorithm_name = message.get("algorithm", "CSP Scheduling")
 
                 print(f"\n[Received Task] Task ID: {task_id}")
