@@ -1,6 +1,8 @@
 import random
 from collections import defaultdict
 import holidays
+from datetime import date, timedelta
+import csv
 
 class GreedyRandomized:
     def __init__(self, employees, num_days, holidays, vacations, minimums, ideals, teams, num_iter=10):
@@ -94,16 +96,16 @@ class GreedyRandomized:
 
 def schedule():
     num_employees = 12
-    employees = list(range(num_employees))
+    employees = list(range(1, num_employees + 1))
     num_days = 365  
     holiDays = holidays.country_holidays("PT", years=[2025])
 
     vacations = {emp: list(range(1 + i * 30, 1 + i * 30 + 30)) for i, emp in enumerate(employees)}
 
     teams = {
-        "E1": [1], "E2": [1], "E3": [1], "E4": [1],
-        "E5": [1, 2], "E6": [1, 2], "E7": [1], "E8": [1],
-        "E9": [1], "E10": [2], "E11": [1, 2], "E12": [2]
+        1: [1], 2: [1], 3: [1], 4: [1],
+        5: [1, 2], 6: [1, 2], 7: [1], 8: [1],
+        9: [1], 10: [2], 11: [1, 2], 12: [2]
     }
 
     minimums = {}
@@ -124,5 +126,35 @@ def schedule():
             print(f"  Day {day}: {shift_str}, Team {team}")
 
     print("\nSchedule generation complete.")
+    return scheduler
 
-schedule()
+def export_schedule_to_csv(scheduler, filename="schedule.csv"):
+    header = ["funcionario"] + [f"Dia {i+1}" for i in range(365)]
+
+    with open(filename, mode="w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(header)
+
+        for emp in scheduler.employees:
+            row = [emp]
+            day_assignments = {day: (shift, team) for (day, shift, team) in scheduler.assignment[emp]}
+            vacation_days = set(scheduler.vacations.get(emp, []))
+
+            for day_num in range(1, 366):
+                if day_num in vacation_days:
+                    row.append("F")
+                elif day_num in day_assignments:
+                    shift, team = day_assignments[day_num]
+                    if shift == 1:
+                        row.append(f"M_{'A' if team == 1 else 'B'}")
+                    else:
+                        row.append(f"T_{'A' if team == 1 else 'B'}")
+                else:
+                    row.append("0")
+
+            writer.writerow(row)
+
+    print(f"Schedule exported to {filename}")
+
+scheduler = schedule()
+export_schedule_to_csv(scheduler)
