@@ -21,8 +21,7 @@ import {
 
 const CreateCalendar = () => {
   const [title, setTitle] = useState("");
-  const [dateStart, setDateStart] = useState("");
-  const [dateEnd, setDateEnd] = useState("");
+  const [year, setYear] = useState("");
   const [maxDuration, setMaxDuration] = useState("");
   const [selectedAlgorithm, setSelectedAlgorithm] = useState("Algorithm1");
   const [vacationTemplate, setVacationTemplate] = useState("");
@@ -65,8 +64,7 @@ const CreateCalendar = () => {
   const handleSave = async () => {
     try {
       const data = {
-        init: dateStart,
-        end: dateEnd,
+        year: year,
         algorithm: selectedAlgorithm,
         title: title,
         maxTime: maxDuration,
@@ -86,8 +84,7 @@ const CreateCalendar = () => {
 
   const handleClear = () => {
     setTitle("");
-    setDateStart("");
-    setDateEnd("");
+    setYear("");
     setMaxDuration("");
     setSelectedAlgorithm("Algorithm1");
     setVacationTemplate("");
@@ -107,8 +104,7 @@ const CreateCalendar = () => {
             <Paper style={{ padding: "20px" }}>
               <Typography variant="h6" gutterBottom>Schedule Information</Typography>
               <TextField fullWidth label="Title" value={title} onChange={(e) => setTitle(e.target.value)} margin="normal" />
-              <TextField fullWidth type="date" label="Start Date" value={dateStart} onChange={(e) => setDateStart(e.target.value)} InputLabelProps={{ shrink: true }} margin="normal" />
-              <TextField fullWidth type="date" label="End Date" value={dateEnd} onChange={(e) => setDateEnd(e.target.value)} InputLabelProps={{ shrink: true }} margin="normal" />
+              <TextField fullWidth type="number" label="Year" value={year} onChange={(e) => setYear(e.target.value)} margin="normal" />
               <TextField fullWidth type="number" label="Max Duration (minutes)" value={maxDuration} onChange={(e) => setMaxDuration(e.target.value)} margin="normal" />
 
               <FormControl fullWidth margin="normal">
