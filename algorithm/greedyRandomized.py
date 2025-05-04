@@ -1,5 +1,6 @@
 import random
 from collections import defaultdict
+import holidays
 
 class GreedyRandomized:
     def __init__(self, employees, num_days, holidays, vacations, minimums, ideals, teams, num_iter=10):
@@ -89,3 +90,39 @@ class GreedyRandomized:
 
     def is_complete(self):
         return all(len(self.assignment[p]) >= 223 for p in self.employees)
+
+
+def schedule():
+    num_employees = 12
+    employees = list(range(num_employees))
+    num_days = 365  
+    holiDays = holidays.country_holidays("PT", years=[2025])
+
+    vacations = {emp: list(range(1 + i * 30, 1 + i * 30 + 30)) for i, emp in enumerate(employees)}
+
+    teams = {
+        "E1": [1], "E2": [1], "E3": [1], "E4": [1],
+        "E5": [1, 2], "E6": [1, 2], "E7": [1], "E8": [1],
+        "E9": [1], "E10": [2], "E11": [1, 2], "E12": [2]
+    }
+
+    minimums = {}
+    ideals = {}
+    for day in range(1, num_days + 1):
+        for shift in [1, 2]:
+            for team in [1, 2]:
+                minimums[(day, shift, team)] = 2
+                ideals[(day, shift, team)] = 4
+
+    scheduler = GreedyRandomized(employees, num_days, holiDays, vacations, minimums, ideals, teams)
+    scheduler.build_schedule()
+
+    for emp in employees:
+        print(f"\nSchedule for {emp} ({len(scheduler.assignment[emp])} working days):")
+        for (day, shift, team) in sorted(scheduler.assignment[emp]):
+            shift_str = "M" if shift == 1 else "T"
+            print(f"  Day {day}: {shift_str}, Team {team}")
+
+    print("\nSchedule generation complete.")
+
+schedule()
