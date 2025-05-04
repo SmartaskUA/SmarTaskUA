@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 public class ScheduleRequest {
 
     private String taskId;
-    private LocalDate init, end;
+    private String year;
     private String algorithm;
     private String title;
     private String maxTime;
@@ -21,10 +21,9 @@ public class ScheduleRequest {
     private String minimuns;
 
     // Construtor explícito
-    public ScheduleRequest(String taskId, LocalDate init, LocalDate end, String algorithm, String title, String maxTime, LocalDateTime requestedAt, String vacationTemplate, String minimuns) {
+    public ScheduleRequest(String taskId, String year, String algorithm, String title, String maxTime, LocalDateTime requestedAt, String vacationTemplate, String minimuns) {
         this.taskId = taskId;
-        this.init = init;
-        this.end = end;
+        this.year =  year;
         this.algorithm = algorithm;
         this.title = title;
         this.maxTime = maxTime;
