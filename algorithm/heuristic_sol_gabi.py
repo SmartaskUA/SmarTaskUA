@@ -42,7 +42,7 @@ def ler_ferias_csv(caminho_csv, nDias):
         Ferias[trab] = row[1:].values == 1 
     return Ferias
 
-Ferias = ler_ferias_csv("algorithm/feriasA.csv", nDias)
+Ferias = ler_ferias_csv("algorithm/feriasR.csv", nDias)
 
 # marcar domingos
 fds = np.zeros((nTrabs, nDias), dtype=bool)
