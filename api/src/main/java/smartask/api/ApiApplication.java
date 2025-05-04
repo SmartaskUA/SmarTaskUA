@@ -13,6 +13,8 @@ import smartask.api.services.EmployeeService;
 import smartask.api.services.SchedulesService;
 import smartask.api.services.TeamService;
 
+import java.util.List;
+
 @EnableScheduling
 @SpringBootApplication
 public class ApiApplication {
@@ -25,50 +27,55 @@ public class ApiApplication {
 	CommandLineRunner initDatabase(TeamService teamService, EmployeeService employeeService,
 								   SchedulesRepository schedulesRepository, SchedulesService schedulesService, RabbitMqProducer producer) {
 		return args -> {
-			// Check if Team A exists, if not create and save it
-
-			if (teamService.getTeams().isEmpty() || teamService.getTeams().stream().noneMatch(team -> "A".equals(team.getName()))) {
-				Team teamA = new Team("A");
+			Team teamA = teamService.getTeams().stream().filter(team -> "Equipa A".equals(team.getName())).findFirst().orElse(null);
+			if (teamA == null) {
+				teamA = new Team("Equipa A");
 				teamService.addTeam(teamA);
-
-				// Create and add 9 employees to Team A
 				for (int i = 1; i <= 9; i++) {
-					Employee employee = new Employee("Employee " + i, teamA);
+					Employee employee = new Employee("Employee " + i);
 					employeeService.addEmployee(employee);
 				}
+				var aEmployees = employeeService.getEmployees().stream()
+						.filter(e -> e.getName().startsWith("Employee ") && Integer.parseInt(e.getName().split(" ")[1]) <= 9)
+						.map(Employee::getId)
+						.toList();
+				teamService.addEmployeesToTeam(teamA.getId(), aEmployees, employeeService);
 			}
 
-			// Check if Team B exists, if not create and save it
-			if (teamService.getTeams().isEmpty() || teamService.getTeams().stream().noneMatch(team -> "B".equals(team.getName()))) {
-				Team teamB = new Team("B");
+			Team teamB = teamService.getTeams().stream().filter(team -> "Equipa B".equals(team.getName())).findFirst().orElse(null);
+			if (teamB == null) {
+				teamB = new Team("Equipa B");
 				teamService.addTeam(teamB);
-
-				// Create and add 3 employees to Team B
 				for (int i = 10; i <= 12; i++) {
-					Employee employee = new Employee("Employee " + i, teamB);
+					Employee employee = new Employee("Employee " + i);
 					employeeService.addEmployee(employee);
 				}
+				var bEmployees = employeeService.getEmployees().stream()
+						.filter(e -> e.getName().startsWith("Employee ") && Integer.parseInt(e.getName().split(" ")[1]) >= 10)
+						.map(Employee::getId)
+						.toList();
+				teamService.addEmployeesToTeam(teamB.getId(), bEmployees, employeeService);
 			}
 
-			if (!schedulesRepository.existsByTitle("Sample")) {
-				schedulesService.readex1();
-				System.out.println("Sample schedule created at startup.");
-			} else {
-				System.out.println("Sample schedule already exists.");
+			// Add Employee 5 and 6 to team B (they're already in A)
+			var employee5 = employeeService.getEmployees().stream().filter(e -> e.getName().equals("Employee 5")).findFirst().orElse(null);
+			var employee6 = employeeService.getEmployees().stream().filter(e -> e.getName().equals("Employee 6")).findFirst().orElse(null);
+			if (employee5 != null && employee6 != null) {
+				teamService.addEmployeesToTeam(teamB.getId(),
+						List.of(employee5.getId(), employee6.getId()),
+						employeeService);
 			}
-/*
-			ScheduleRequest mockRequest = new ScheduleRequest(
-					"string",                               // taskId
-					LocalDate.parse("2025-03-30"),           // init
-					LocalDate.parse("2025-03-30"),           // end
-					"string",                               // algorithm
-					"startconn",                                     // title
-					"string",                               // maxTime
-					LocalDateTime.parse("2025-03-30T15:57:23.796")  // requestedAt
-			);
-			producer.requestScheduleMessage(mockRequest);
 
-			 */
+			// Add Employee 11 to team A (he's already in B)
+			var employee11 = employeeService.getEmployees().stream().filter(e -> e.getName().equals("Employee 11")).findFirst().orElse(null);
+			if (employee11 != null) {
+				teamService.addEmployeesToTeam(teamA.getId(), List.of(employee11.getId()), employeeService);
+			}
 		};
 	}
+
+
+
+
+
 }

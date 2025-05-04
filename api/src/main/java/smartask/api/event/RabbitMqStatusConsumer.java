@@ -18,22 +18,23 @@ public class RabbitMqStatusConsumer {
     private ObjectMapper objectMapper;
 
     @RabbitListener(queues = "status-queue")
-    public void receiveStatusUpdate(String message) {
+    public void receiveStatusUpdate(TaskStatus receivedStatus) {
+        System.out.println("Mensagem recebida: " + receivedStatus);
+
         try {
-            // Parse JSON message to retrieve taskId and status update
-            TaskStatus receivedStatus = objectMapper.readValue(message, TaskStatus.class);
             String taskId = receivedStatus.getTaskId();
             String newStatus = receivedStatus.getStatus();
 
             System.out.println("Received status update: " + taskId + " -> " + newStatus);
 
-            // Update task status in the database
             updateTaskStatus(taskId, newStatus);
-
         } catch (Exception e) {
             System.err.println("Error processing status message: " + e.getMessage());
+            e.printStackTrace();
         }
     }
+
+
 
     private void updateTaskStatus(String taskId, String status) {
         Optional<TaskStatus> taskOpt = taskStatusRepository.findByTaskId(taskId);

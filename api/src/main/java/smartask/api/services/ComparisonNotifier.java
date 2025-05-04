@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.bson.Document;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class ComparisonNotifier {
@@ -22,16 +23,27 @@ public class ComparisonNotifier {
 
     @Scheduled(fixedDelay = 2000)
     public void notifyComparisonResults() {
+        System.out.println("\n ===================================");
+
         Query query = new Query(Criteria.where("status").is("done"));
         List<Document> results = mongoTemplate.find(query, Document.class, "comparisons");
+        System.out.println("\n results : "+results);
 
-        for (Document doc : results) {
-            String requestId = doc.getString("requestId");
-            Object result = doc.get("result");
+        if (!results.isEmpty()) {
+            // Pode enviar os documentos inteiros, ou apenas os resultados
+            List<Object> comparisonResults = results.stream()
+                    .map(doc -> {
+                        Document response = new Document();
+                        response.put("requestId", doc.getString("requestId"));
+                        response.put("result", doc.get("result"));
+                        return response;
+                    })
+                    .collect(Collectors.toList());
 
-            messagingTemplate.convertAndSend("/topic/comparison/" + requestId, result);
+            messagingTemplate.convertAndSend("/topic/comparison/all", comparisonResults);
 
-            mongoTemplate.remove(doc, "comparisons");
+            // Remove todos os documentos enviados
+            mongoTemplate.remove(query, "comparisons");
         }
     }
 }
