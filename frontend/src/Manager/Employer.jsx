@@ -100,6 +100,15 @@ const Employer = () => {
     setRemovalMode(!removalMode);
   };
 
+  const disableBackgroundInteraction = (disable) => {
+    const rootElement = document.getElementById('root');
+    if (disable) {
+      rootElement.setAttribute('inert', ''); 
+    } else {
+      rootElement.removeAttribute('inert'); 
+    }
+  };
+
   return (
     <div className="admin-container" style={{ display: "flex", minHeight: "100vh" }}>
       <Sidebar_Manager />
@@ -107,7 +116,7 @@ const Employer = () => {
         <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h4">List of Employees</Typography>
           <Box>
-            <Button variant="contained" color="success" onClick={() => setOpenAddDialog(true)}>
+            <Button variant="contained" color="success" onClick={() => { setOpenAddDialog(true); disableBackgroundInteraction(true); }}>
               Add Employee
             </Button>
             <Button
@@ -207,13 +216,13 @@ const Employer = () => {
           <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="60vh">
             <Typography variant="h6">Nenhum employee encontrado.</Typography>
             <Box mt={2}>
-              <Button variant="contained" color="success" onClick={() => setOpenAddDialog(true)}>
+              <Button variant="contained" color="success" onClick={() => { setOpenAddDialog(true); disableBackgroundInteraction(true); }}>
                 Add Employee
               </Button>
             </Box>
           </Box>
         )}
-        <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)}>
+        <Dialog open={openAddDialog} onClose={() => { setOpenAddDialog(false); disableBackgroundInteraction(false); }}>
           <DialogTitle>Add Employee</DialogTitle>
           <DialogContent>
             <TextField
@@ -250,7 +259,7 @@ const Employer = () => {
             </FormControl>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenAddDialog(false)} color="secondary">
+            <Button onClick={() => { setOpenAddDialog(false); disableBackgroundInteraction(false); }} color="secondary">
               Cancel
             </Button>
             <Button onClick={handleAddEmployee} color="primary">
@@ -272,7 +281,7 @@ const Employer = () => {
             </Button>
           </DialogActions>
         </Dialog>
-        <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)}>
+        <Dialog open={openEditDialog} onClose={() => { setOpenEditDialog(false); disableBackgroundInteraction(false); }}>
           <DialogTitle>Edit Employee</DialogTitle>
           <DialogContent>
             {selectedEmployee && (
@@ -329,7 +338,7 @@ const Employer = () => {
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenEditDialog(false)} color="secondary">
+            <Button onClick={() => { setOpenEditDialog(false); disableBackgroundInteraction(false); }} color="secondary">
               Cancel
             </Button>
             <Button onClick={handleEditEmployee} color="primary">
