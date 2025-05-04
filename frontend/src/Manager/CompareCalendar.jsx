@@ -12,6 +12,8 @@ import Sidebar_Manager from "../components/Sidebar_Manager";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import axios from "axios";
+import { CheckCircle, Cancel } from "@mui/icons-material";
+
 
 function CompareCalendar() {
   const [calendars, setCalendars] = useState([]);
@@ -137,14 +139,52 @@ function CompareCalendar() {
           Comparar
         </Button>
 
-        {comparisonResults && (
+        {comparisonResults?.result && (
           <Box mt={4}>
-            <Typography variant="h6">Resultado da Comparação</Typography>
-            <pre style={{ background: "#f0f0f0", padding: "16px" }}>
-              {JSON.stringify(comparisonResults, null, 2)}
-            </pre>
+            <Typography variant="h6" gutterBottom>
+              Resultado da Comparação
+            </Typography>
+
+            <table style={{ width: "100%", borderCollapse: "collapse", backgroundColor: "#fafafa" }}>
+              <thead>
+                <tr>
+                  <th style={{ borderBottom: "2px solid #ccc", padding: "10px", textAlign: "left" }}>Métrica</th>
+                  <th style={{ borderBottom: "2px solid #ccc", padding: "10px", textAlign: "left" }}>Calendário 1</th>
+                  <th style={{ borderBottom: "2px solid #ccc", padding: "10px", textAlign: "left" }}>Calendário 2</th>
+                  <th style={{ borderBottom: "2px solid #ccc", padding: "10px", textAlign: "left" }}>Diferença</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.keys(comparisonResults.result["/shared_tmp/1.csv"]).map((key) => {
+                  const val1 = comparisonResults.result["/shared_tmp/1.csv"][key];
+                  const val2 = comparisonResults.result["/shared_tmp/2.csv"][key];
+                  const diff = val2 - val1;
+
+                  return (
+                    <tr key={key}>
+                      <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>{key}</td>
+                      <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>{val1}</td>
+                      <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>{val2}</td>
+                      <td
+                        style={{
+                          padding: "10px",
+                          borderBottom: "1px solid #eee",
+                          color: diff === 0 ? "green" : "red",
+                        }}
+                      >
+                        {diff === 0 ? "Igual" : `${diff > 0 ? "+" : ""}${diff}`}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </Box>
-        )}
+        )} 
+       
+     
+
+
       </div>
     </div>
   );
