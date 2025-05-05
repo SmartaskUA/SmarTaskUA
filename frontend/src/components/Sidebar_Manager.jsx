@@ -40,10 +40,10 @@ const Sidebar_Manager = () => {
           <Code2 size={20} className="icon"/> Compare Algorithms
         </Link>
         <Link to="/manager/generatevacations" className={`nav-item ${isActive("/manager/generatevacations") ? "active" : ""}`}>
-          <Sun size={20} className="icon"/> Geração de Férias
+          <Sun size={20} className="icon"/> Vacation Generation
         </Link>
         <Link to="/manager/importminimus" className={`nav-item ${isActive("/manager/importminimus") ? "active" : ""}`}>
-          <FileText size={20} className="icon"/> Importar Mínimos
+          <FileText size={20} className="icon"/> Import Minimums
         </Link>
       </nav>
       <div className="manager-btn">
