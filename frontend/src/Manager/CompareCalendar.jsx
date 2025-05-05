@@ -34,14 +34,14 @@ function CompareCalendar() {
               setComparisonResults(data[0]);
             }
           } catch (err) {
-            console.error("Erro ao processar resultado:", err);
-            setError("Erro ao processar resultado.");
+            console.error("Error processing result:", err);
+            setError("Error processing result.");
           }
         });
       },
       onStompError: (frame) => {
-        console.error("Erro STOMP:", frame);
-        setError("Erro de conexão WebSocket.");
+        console.error("STOMP error:", frame);
+        setError("WebSocket connection error.");
       },
     });
     stompClient.activate();
@@ -53,8 +53,8 @@ function CompareCalendar() {
       .get("http://localhost:8081/schedules/fetch")
       .then((res) => setCalendars(res.data))
       .catch((err) => {
-        console.error("Erro ao buscar calendários:", err);
-        setError("Erro ao buscar calendários.");
+        console.error("Error fetching calendars:", err);
+        setError("Error fetching calendars.");
       });
   }, []);
 
@@ -75,17 +75,17 @@ function CompareCalendar() {
         headers: { "Content-Type": "multipart/form-data" },
       });
     } catch (err) {
-      console.error("Erro ao iniciar comparação:", err);
-      setError("Erro ao iniciar comparação.");
+      console.error("Error starting comparison:", err);
+      setError("Error starting comparison.");
     }
   };
 
   return (
     <div className="admin-container">
       <Sidebar_Manager />
-      <div className="main-content">
-        <Typography variant="h4" gutterBottom>
-          Comparar Calendários
+      <div className="main-content" style={{ marginRight: "5%" }}>
+        <Typography variant="h4" style={{marginBottom:"3.5%"}}gutterBottom>
+          Compare Calendars
         </Typography>
 
         {error && (
@@ -94,13 +94,14 @@ function CompareCalendar() {
           </Typography>
         )}
 
-        <Box display="flex" gap={2} mb={2} mt={2}>
+        <Box display="flex" gap={2} mb={2} mt={2} alignItems="center">
           <FormControl fullWidth>
-            <InputLabel>Calendário 1</InputLabel>
+            <InputLabel>Calendar 1</InputLabel>
             <Select
               value={selected1}
-              label="Calendário 1"
+              label="Calendar 1"
               onChange={(e) => setSelected1(e.target.value)}
+              style={{ width: "500px" }}
             >
               {calendars
                 .filter((c) => c.id !== selected2)
@@ -113,11 +114,12 @@ function CompareCalendar() {
           </FormControl>
 
           <FormControl fullWidth>
-            <InputLabel>Calendário 2</InputLabel>
+            <InputLabel>Calendar 2</InputLabel>
             <Select
               value={selected2}
-              label="Calendário 2"
+              label="Calendar 2"
               onChange={(e) => setSelected2(e.target.value)}
+              style={{ width: "500px" }}
             >
               {calendars
                 .filter((c) => c.id !== selected1)
@@ -128,30 +130,31 @@ function CompareCalendar() {
                 ))}
             </Select>
           </FormControl>
-        </Box>
 
-        <Button
-          variant="contained"
-          color="primary"
-          disabled={!selected1 || !selected2}
-          onClick={handleCompare}
-        >
-          Comparar
-        </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            disabled={!selected1 || !selected2}
+            onClick={handleCompare}
+            style={{ height: '100%' , width: '60%', alignItems: 'center', justifyContent: 'center', display: 'flex'}}
+          >
+            Compare
+          </Button>
+        </Box>
 
         {comparisonResults?.result && (
           <Box mt={4}>
             <Typography variant="h6" gutterBottom>
-              Resultado da Comparação
+              Comparison Results
             </Typography>
 
             <table style={{ width: "100%", borderCollapse: "collapse", backgroundColor: "#fafafa" }}>
               <thead>
                 <tr>
-                  <th style={{ borderBottom: "2px solid #ccc", padding: "10px", textAlign: "left" }}>Métrica</th>
-                  <th style={{ borderBottom: "2px solid #ccc", padding: "10px", textAlign: "left" }}>Calendário 1</th>
-                  <th style={{ borderBottom: "2px solid #ccc", padding: "10px", textAlign: "left" }}>Calendário 2</th>
-                  <th style={{ borderBottom: "2px solid #ccc", padding: "10px", textAlign: "left" }}>Diferença</th>
+                  <th style={{ borderBottom: "2px solid #ccc", padding: "10px", textAlign: "left" }}>Metric</th>
+                  <th style={{ borderBottom: "2px solid #ccc", padding: "10px", textAlign: "left" }}>Calendar 1</th>
+                  <th style={{ borderBottom: "2px solid #ccc", padding: "10px", textAlign: "left" }}>Calendar 2</th>
+                  <th style={{ borderBottom: "2px solid #ccc", padding: "10px", textAlign: "left" }}>Difference</th>
                 </tr>
               </thead>
               <tbody>
@@ -172,7 +175,7 @@ function CompareCalendar() {
                           color: diff === 0 ? "green" : "red",
                         }}
                       >
-                        {diff === 0 ? "Igual" : `${diff > 0 ? "+" : ""}${diff}`}
+                        {diff === 0 ? "Equal" : `${diff > 0 ? "+" : ""}${diff}`}
                       </td>
                     </tr>
                   );
@@ -182,9 +185,6 @@ function CompareCalendar() {
           </Box>
         )} 
        
-     
-
-
       </div>
     </div>
   );
