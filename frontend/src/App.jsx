@@ -15,7 +15,6 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./components/NotFound";
 import CompareCalendar from "./Manager/CompareCalendar";
-import Teams from "./Manager/Teams";
 
 const App = () => {
   return (
