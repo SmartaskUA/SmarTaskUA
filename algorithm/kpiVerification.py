@@ -3,7 +3,7 @@ import pandas as pd
 import sys
 import json
 
-def analyze(file, holidays):
+def analyze(file, holidays, teams):
     print(f"Analyzing file: {file}")
     df = pd.read_csv(file, encoding='ISO-8859-1')
 
@@ -14,6 +14,9 @@ def analyze(file, holidays):
     consecutiveDays = 0
     total_morning = 0
     total_afternoon = 0
+    total_tm_fails = 0
+    single_team_violations = 0
+    two_team_preference_violations = 0
 
     holiday_cols = [f'Dia {d}' for d in holidays if f'Dia {d}' in df.columns]
     dia_cols = [col for col in df.columns if col.startswith("Dia ")]
@@ -45,6 +48,40 @@ def analyze(file, holidays):
             else:
                 streak = 0
         consecutiveDays += fails
+
+        tm_fails = 0
+        for i in range(len(dia_cols) - 1):
+            today = row[dia_cols[i]]
+            tomorrow = row[dia_cols[i + 1]]
+            if today in ['T_A', 'T_B'] and tomorrow in ['M_A', 'M_B']:
+                tm_fails += 1
+
+        total_tm_fails += tm_fails
+
+        emp_id = row['funcionario']
+        allowed_teams = teams.get(emp_id, [])
+        team_counts = {1: 0, 2: 0}
+
+        for col in dia_cols:
+            shift_val = row[col]
+            if shift_val in ['M_A', 'T_A']:
+                team = 1
+            elif shift_val in ['M_B', 'T_B']:
+                team = 2
+            else:
+                continue
+            team_counts[team] += 1
+
+        if len(allowed_teams) == 1:
+            allowed_team = allowed_teams[0]
+            other_team = 2 if allowed_team == 1 else 1
+            if team_counts[other_team] > 0:
+                single_team_violations += 1
+        elif len(allowed_teams) == 2:
+            preferred_team = allowed_teams[0]
+            other_team = 2 if preferred_team == 1 else 1
+            if team_counts[preferred_team] < team_counts[other_team]:
+                two_team_preference_violations += 1
 
         total_morning += sum(row[col] in ['M_A', 'M_B'] for col in dia_cols)
         total_afternoon += sum(row[col] in ['T_A', 'T_B'] for col in dia_cols)
@@ -78,7 +115,10 @@ def analyze(file, holidays):
         "missedTeamMin": missed_team_min,
         "workHolidays": workHolidays,
         "consecutiveDays": consecutiveDays,
-        "shiftBalance": round(shift_balance, 2)  # Rounded to 2 decimals
+        "shiftBalance": round(shift_balance, 2),
+        "tmFails": total_tm_fails,
+        "singleTeamViolations": single_team_violations,
+        "twoTeamPreferenceViolations": two_team_preference_violations,
     }
 
 if __name__ == "__main__":
@@ -87,6 +127,11 @@ if __name__ == "__main__":
         sys.exit(1)
     holidays = [1, 107, 109, 114, 121, 161, 170, 226, 276, 303, 333, 340, 357]
     file = sys.argv[1]
-    data = analyze(file, holidays)
+    teams = {
+        1: [1], 2: [1], 3: [1], 4: [1],
+        5: [1, 2], 6: [1, 2], 7: [1], 8: [1],
+        9: [1], 10: [2], 11: [2, 1], 12: [2]
+    }
+    data = analyze(file, holidays, teams)
 
     print(json.dumps(data, indent=4))
