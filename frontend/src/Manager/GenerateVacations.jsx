@@ -88,13 +88,13 @@ const GenerateVacations = () => {
   return (
     <div className="admin-container">
       <Sidebar_Manager />
-      <div className="main-content" style={{ padding: 20 }}>
+      <div className="main-content" style={{ padding: 20}}>
         <Typography variant="h4" gutterBottom>
           Vacation Generation
         </Typography>
 
         <Paper
-          style={{ padding: 20, marginBottom: 20, width: "35%", marginTop: 50 }}
+          style={{ padding: 20, marginBottom: 20, width: "35%", marginTop: 50}}
         >
           <Typography variant="h6" gutterBottom>
             Create New Template

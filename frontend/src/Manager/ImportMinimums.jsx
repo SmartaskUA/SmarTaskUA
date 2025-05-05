@@ -83,17 +83,17 @@ const ImportMinimums = () => {
   return (
     <div className="admin-container">
       <Sidebar_Manager />
-      <div className="main-content" style={{ padding: 20 }}>
-        <Typography variant="h4" gutterBottom>
+      <div className="main-content" style={{ padding: 20  , marginRight: "5%" }}>
+        <Typography variant="h4" gutterBottom >
           Importar Mínimos por Dia
         </Typography>
 
-        <Paper style={{ padding: 20, marginBottom: 20 }}>
+        <Paper style={{ padding: 20, marginBottom: 20, width: "100%" }}>
           <Typography variant="h6" gutterBottom>
             Nome do Template de Mínimos
           </Typography>
 
-          <Box display="flex" alignItems="center" gap={2} mt={2}>
+          <Box display="flex" alignItems="center" gap={2} mt={2} style={{ width: "40%" }}>
             <TextField
               label="Nome do Template"
               value={templateName}
@@ -111,7 +111,7 @@ const ImportMinimums = () => {
                 onChange={handleFileSelection}
                 style={{ display: "none" }}
               />
-              <Button variant="contained" component="span" color="primary">
+              <Button variant="contained" component="span" color="success">
                 Escolher CSV
               </Button>
             </label>
