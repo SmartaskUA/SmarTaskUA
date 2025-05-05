@@ -30,7 +30,12 @@ const VacationsTemplate = ({ name, data }) => {
   ];
 
   const maxDay = 365;
-  const rows = Object.entries(data);
+
+  const sortedRows = Object.entries(data).sort(([a], [b]) => {
+    const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+    const numB = parseInt(b.match(/\d+/)?.[0] || 0);
+    return numA - numB;
+  });
 
   const getMonthHeaderCells = () => {
     const cells = [<TableCell key="label" sx={{ border: '1px solid #ddd', fontWeight: 'bold' }}>Meses</TableCell>];
@@ -85,7 +90,7 @@ const VacationsTemplate = ({ name, data }) => {
             <TableRow>{getDayNumberCells()}</TableRow>
           </TableHead>
           <TableBody>
-            {rows.map(([employee, days]) => (
+            {sortedRows.map(([employee, days]) => (
               <TableRow key={employee} sx={{ height: 40 }}>
                 <TableCell sx={{ border: '1px solid #ddd', whiteSpace: 'nowrap' }}>{employee}</TableCell>
                 {[...Array(maxDay).keys()].map((i) => (
