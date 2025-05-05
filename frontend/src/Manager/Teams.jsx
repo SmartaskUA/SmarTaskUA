@@ -49,10 +49,10 @@ const Teams = () => {
       if (response.ok) {
         setTeams(data);
       } else {
-        console.error("Erro ao buscar equipes:", data);
+        console.error("Error fetching teams:", data);
       }
     } catch (error) {
-      console.error("Erro ao buscar equipes:", error);
+      console.error("Error fetching teams:", error);
     } finally {
       setLoading(false);
     }
@@ -96,10 +96,10 @@ const Teams = () => {
         fetchTeams();
       } else {
         const errorData = await response.json();
-        console.error("Erro ao adicionar ou atualizar equipe:", errorData);
+        console.error("Error adding or updating team:", errorData);
       }
     } catch (error) {
-      console.error("Erro ao adicionar ou atualizar equipe:", error);
+      console.error("Error adding or updating team:", error);
     }
   };
 
@@ -133,7 +133,7 @@ const Teams = () => {
 
       const teamData = await response.json();
       if (!response.ok) {
-        console.error("Erro ao buscar detalhes da equipe:", teamData);
+        console.error("Error fetching team details:", teamData);
         return;
       }
 
@@ -151,10 +151,10 @@ const Teams = () => {
             if (res.ok) {
               return { id: data.id, name: data.name, restrictions: data.restrictions };
             } else {
-              return { id, name: "Erro ao carregar", restrictions: {} };
+              return { id, name: "Error loading", restrictions: {} };
             }
           } catch (err) {
-            return { id, name: "Erro na requisição", restrictions: {} };
+            return { id, name: "Request error", restrictions: {} };
           }
         })
       );
@@ -166,7 +166,7 @@ const Teams = () => {
 
       setOpenDetailsDialog(true);
     } catch (error) {
-      console.error("Erro ao buscar detalhes da equipe:", error);
+      console.error("Error fetching team details:", error);
     }
   };
 
@@ -178,7 +178,7 @@ const Teams = () => {
 
   const handleAddEmployeesToTeam = async () => {
     if (!newEmployeeIds) {
-      console.error("Nenhum ID de empregado fornecido.");
+      console.error("No employee IDs provided.");
       return;
     }
 
@@ -208,17 +208,17 @@ const Teams = () => {
             ...prevDetails.employees,
             ...employeeIds.map((id) => ({
               id,
-              name: "Carregando...",
+              name: "Loading...",
               restrictions: {},
             })),
           ],
         }));
         setNewEmployeeIds("");
       } else {
-        console.error("Erro ao adicionar empregados:", data);
+        console.error("Error adding employees:", data);
       }
     } catch (error) {
-      console.error("Erro ao adicionar empregados:", error);
+      console.error("Error adding employees:", error);
     }
   };
 
@@ -229,11 +229,11 @@ const Teams = () => {
         <Box sx={{ padding: 4, flexGrow: 1 }}>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
             <Typography variant="h4" gutterBottom>
-              Lista de Equipes
+              Team List
             </Typography>
             <Box display="flex" gap={2} alignItems="center" sx={{ width: "35%" }}>
               <TextField
-                label="Buscar por ID da Equipe"
+                label="Search by Team ID"
                 variant="outlined"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -242,11 +242,11 @@ const Teams = () => {
               />
               <Button
                 variant="contained"
-                color="primary"
+                color="success"
                 onClick={() => setOpenDialog(true)}
                 sx={{ height: "100%", padding: "10px 20px", fontWeight: "bold", borderRadius: "8px" }}
               >
-                + Nova Equipe
+                + New Team
               </Button>
             </Box>
           </Box>
@@ -259,7 +259,7 @@ const Teams = () => {
             <Grid container spacing={4}>
               {filteredTeams.length === 0 ? (
                 <Typography variant="body1" color="textSecondary">
-                  Nenhuma equipe encontrada.
+                  No teams found.
                 </Typography>
               ) : (
                 filteredTeams.map((team) => (
@@ -269,10 +269,10 @@ const Teams = () => {
                         {team.name}
                       </Typography>
                       <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                        {team.description || "Sem descrição"}
+                        {team.description || "No description"}
                       </Typography>
                       <Typography variant="body2" sx={{ fontWeight: "bold" }}>
-                        {team.employeeIds?.length || 0} empregado(s)
+                        {team.employeeIds?.length || 0} employee(s)
                       </Typography>
                       <Button
                         variant="outlined"
@@ -280,7 +280,7 @@ const Teams = () => {
                         onClick={() => handleViewTeamDetails(team.id)}
                         sx={{ marginTop: 1, width: "100%" }}
                       >
-                        Ver Detalhes
+                        View Details
                       </Button>
                       <Button
                         variant="contained"
@@ -288,7 +288,7 @@ const Teams = () => {
                         onClick={() => handleEditTeam(team)}
                         sx={{ marginTop: 1, width: "100%" }}
                       >
-                        Editar
+                        Edit
                       </Button>
                     </Paper>
                   </Grid>
@@ -300,17 +300,17 @@ const Teams = () => {
       </div>
 
       <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>{editTeamId ? "Editar Equipe" : "Nova Equipe"}</DialogTitle>
+        <DialogTitle>{editTeamId ? "Edit Team" : "New Team"}</DialogTitle>
         <DialogContent>
           <TextField
-            label="Nome da Equipe"
+            label="Team Name"
             fullWidth
             margin="normal"
             value={newTeamName}
             onChange={(e) => setNewTeamName(e.target.value)}
           />
           <TextField
-            label="IDs dos Empregados (separados por vírgula)"
+            label="Employee IDs (comma separated)"
             fullWidth
             margin="normal"
             value={employeeIdsInput}
@@ -318,16 +318,16 @@ const Teams = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancelar</Button>
-          <Button variant="contained" color="primary" onClick={handleAddOrUpdateTeam}>
-            {editTeamId ? "Atualizar" : "Adicionar"}
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button variant="contained" color="success" onClick={handleAddOrUpdateTeam}>
+            {editTeamId ? "Update" : "Add"}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={openDetailsDialog} onClose={handleCloseDetailsDialog}>
         <DialogTitle>
-          Detalhes da Equipe
+          Team Details
           <IconButton
             edge="end"
             color="inherit"
@@ -341,14 +341,14 @@ const Teams = () => {
           {teamDetails ? (
             <Box>
               <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                Nome: {teamDetails.name}
+                Name: {teamDetails.name}
               </Typography>
               <Typography variant="body2" color="textSecondary" sx={{ marginTop: 1 }}>
-                Descrição: {teamDetails.description || "Sem descrição"}
+                Description: {teamDetails.description || "No description"}
               </Typography>
               <Divider sx={{ marginTop: 2 }} />
               <Typography variant="subtitle1" sx={{ marginTop: 2, fontWeight: 'bold' }}>
-                Empregados:
+                Employees:
               </Typography>
               {teamDetails.employees.map((emp) => (
                 <Box key={emp.id} sx={{ ml: 2, mt: 1 }}>
@@ -357,22 +357,22 @@ const Teams = () => {
                   </Typography>
                   {Object.keys(emp.restrictions).length > 0 ? (
                     <Typography variant="caption" color="error">
-                      Restrições: {JSON.stringify(emp.restrictions)}
+                      Restrictions: {JSON.stringify(emp.restrictions)}
                     </Typography>
                   ) : (
                     <Typography variant="caption" color="textSecondary">
-                      Sem restrições
+                      No restrictions
                     </Typography>
                   )}
                 </Box>
               ))}
               <TextField
-                label="Adicionar IDs dos Empregados"
+                label="Add Employee IDs"
                 fullWidth
                 margin="normal"
                 value={newEmployeeIds}
                 onChange={(e) => setNewEmployeeIds(e.target.value)}
-                helperText="Digite os IDs separados por vírgula"
+                helperText="Enter IDs separated by commas"
               />
               <Button
                 variant="contained"
@@ -380,7 +380,7 @@ const Teams = () => {
                 onClick={handleAddEmployeesToTeam}
                 sx={{ marginTop: 2 }}
               >
-                Adicionar Empregados
+                Add Employees
               </Button>
             </Box>
           ) : (
@@ -389,7 +389,7 @@ const Teams = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDetailsDialog} color="primary">
-            Fechar
+            Close
           </Button>
         </DialogActions>
       </Dialog>
