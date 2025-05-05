@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import baseurl from "../components/BaseUrl";
 import Sidebar_Manager from "../components/Sidebar_Manager";
+import MinimumsTemplate from "../components/manager/MinimumsTemplate";
 import {
   Box,
   Button,
@@ -90,16 +91,17 @@ const ImportMinimums = () => {
           <Typography variant="h6" gutterBottom>
             Nome do Template de Mínimos
           </Typography>
-          <TextField
-            label="Nome do Template"
-            fullWidth
-            value={templateName}
-            onChange={(e) => setTemplateName(e.target.value)}
-            margin="normal"
-            error={nameError && !templateName.trim()}
-            helperText={nameError && !templateName.trim() ? "Insira um nome para o template" : ""}
-          />
-          <Box display="flex" justifyContent="center" gap={2} mt={2}>
+
+          <Box display="flex" alignItems="center" gap={2} mt={2}>
+            <TextField
+              label="Nome do Template"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              error={nameError && !templateName.trim()}
+              helperText={nameError && !templateName.trim() ? "Insira um nome para o template" : ""}
+              size="small"
+              sx={{ flex: 1 }}
+            />
             <label htmlFor="csv-upload">
               <Input
                 id="csv-upload"
@@ -120,6 +122,7 @@ const ImportMinimums = () => {
               Enviar CSV
             </Button>
           </Box>
+
           {uploadedFileName && (
             <Box mt={2}>
               <Typography variant="body2" color="textSecondary">
@@ -170,11 +173,7 @@ const ImportMinimums = () => {
             <Typography variant="h5" gutterBottom>
               Detalhes do Template: {selectedTemplate.name}
             </Typography>
-            <Paper style={{ padding: 16 }}>
-              <pre style={{ whiteSpace: "pre-wrap" }}>
-                {JSON.stringify(selectedTemplate.minimuns, null, 2)}
-              </pre>
-            </Paper>
+            <MinimumsTemplate name={selectedTemplate.name} data={selectedTemplate.minimuns} />
           </Box>
         )}
 
