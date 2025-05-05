@@ -153,8 +153,8 @@ const CreateCalendar = () => {
         </Grid>
 
         <Box sx={{ display: "flex", justifyContent: "center", marginTop: 3, gap: 2 }}>
-          <Button variant="contained" color="primary" onClick={handleSave}>Generate</Button>
-          <Button variant="contained" color="secondary" onClick={handleClear}>Clear All</Button>
+          <Button variant="contained" color="success" onClick={handleSave}>Generate</Button>
+          <Button variant="contained" color="error" onClick={handleClear}>Clear All</Button>
         </Box>
 
         <Snackbar open={successOpen} autoHideDuration={3000} onClose={() => setSuccessOpen(false)} anchorOrigin={{ vertical: "top", horizontal: "center" }}>
