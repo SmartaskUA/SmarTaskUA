@@ -3,6 +3,8 @@ from collections import defaultdict
 import holidays
 from datetime import date, timedelta
 import csv
+import time
+import pandas as pd
 
 class GreedyRandomized:
     def __init__(self, employees, num_days, holidays, vacations, minimums, ideals, teams, num_iter=10):
@@ -100,32 +102,22 @@ def schedule():
     num_days = 365  
     holiDays = holidays.country_holidays("PT", years=[2025])
 
-    vacations = {emp: list(range(1 + i * 30, 1 + i * 30 + 30)) for i, emp in enumerate(employees)}
+    vacations = parse_vacations("horarioReferencia.csv")
+    minimums, ideals = parse_requirements("minimuns.csv")
 
     teams = {
         1: [1], 2: [1], 3: [1], 4: [1],
         5: [1, 2], 6: [1, 2], 7: [1], 8: [1],
-        9: [1], 10: [2], 11: [1, 2], 12: [2]
+        9: [1], 10: [2], 11: [2, 1], 12: [2]
     }
 
-    minimums = {}
-    ideals = {}
-    for day in range(1, num_days + 1):
-        for shift in [1, 2]:
-            for team in [1, 2]:
-                minimums[(day, shift, team)] = 2
-                ideals[(day, shift, team)] = 4
-
+    start_time = time.time()
     scheduler = GreedyRandomized(employees, num_days, holiDays, vacations, minimums, ideals, teams)
     scheduler.build_schedule()
+    end_time = time.time()
 
-    for emp in employees:
-        print(f"\nSchedule for {emp} ({len(scheduler.assignment[emp])} working days):")
-        for (day, shift, team) in sorted(scheduler.assignment[emp]):
-            shift_str = "M" if shift == 1 else "T"
-            print(f"  Day {day}: {shift_str}, Team {team}")
-
-    print("\nSchedule generation complete.")
+    print(f"Execution time: {end_time - start_time:.2f} seconds")
+    print("Schedule generation complete.")
     return scheduler
 
 def export_schedule_to_csv(scheduler, filename="schedule.csv"):
@@ -155,6 +147,50 @@ def export_schedule_to_csv(scheduler, filename="schedule.csv"):
             writer.writerow(row)
 
     print(f"Schedule exported to {filename}")
+
+def parse_vacations(file_path):
+    vacations = {}
+    with open(file_path, newline='') as f:
+        reader = csv.reader(f)
+        for row in reader:
+            if row[0].startswith("Employee"):
+                emp_id = int(row[0].split()[1])
+                vacations[emp_id] = [i + 1 for i, val in enumerate(row[1:]) if val.strip() == "1"]
+    return vacations
+
+def parse_requirements(file_path):
+    minimos = {}
+    ideais = {}
+
+    with open(file_path, newline='', encoding='ISO-8859-1') as f:
+        reader = list(csv.reader(f))
+        dias_colunas = list(range(1, len(reader[0]) - 3 + 1)) 
+
+        linhas_requisitos = {
+            ("A", 1, "Minimo"): 1,
+            ("A", 2, "Minimo"): 3,
+            ("B", 1, "Minimo"): 5,
+            ("B", 2, "Minimo"): 7,
+            ("A", 1, "Ideal"): 2, 
+            ("A", 2, "Ideal"): 4, 
+            ("B", 1, "Ideal"): 6, 
+            ("B", 2, "Ideal"): 8  
+        }
+
+        for (equipa, turno, tipo), linha_idx in linhas_requisitos.items():
+            valores = reader[linha_idx][3:]
+            for dia, valor in zip(dias_colunas, valores):
+                try:
+                    valor_int = int(valor)
+                    if tipo == "Minimo":
+                        minimos[(dia, equipa, turno)] = valor_int
+                    else:
+                        ideais[(dia, equipa, turno)] = valor_int
+                except ValueError:
+                    continue 
+
+    return minimos, ideais
+
 
 scheduler = schedule()
 export_schedule_to_csv(scheduler)
