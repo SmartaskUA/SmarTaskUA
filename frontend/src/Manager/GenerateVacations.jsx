@@ -29,7 +29,7 @@ const GenerateVacations = () => {
       const response = await axios.get(`${baseurl}/vacation/`);
       setTemplates(response.data);
     } catch (error) {
-      console.error("Erro ao buscar templates:", error);
+      console.error("Error fetching templates:", error);
     }
   };
 
@@ -58,7 +58,7 @@ const GenerateVacations = () => {
       setSuccessOpen(true);
       setNameError(false);
     } catch (err) {
-      console.error("Erro ao importar CSV:", err);
+      console.error("Error uploading CSV:", err);
       setErrorOpen(true);
     }
   };
@@ -81,7 +81,7 @@ const GenerateVacations = () => {
         setLog(null);
       }
     } catch (err) {
-      console.error("Erro ao buscar detalhes do template:", err);
+      console.error("Error fetching template details:", err);
     }
   };
 
@@ -90,23 +90,25 @@ const GenerateVacations = () => {
       <Sidebar_Manager />
       <div className="main-content" style={{ padding: 20 }}>
         <Typography variant="h4" gutterBottom>
-          Geração de Férias
+          Vacation Generation
         </Typography>
 
-        <Paper style={{ padding: 20, marginBottom: 20, width: "35%",marginTop: 50 }}>
+        <Paper
+          style={{ padding: 20, marginBottom: 20, width: "35%", marginTop: 50 }}
+        >
           <Typography variant="h6" gutterBottom>
-            Criar novo template
+            Create New Template
           </Typography>
 
           <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
             <TextField
-              label="Nome do Template"
+              label="Template Name"
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
               error={nameError && !templateName.trim()}
               helperText={
                 nameError && !templateName.trim()
-                  ? "Insira um nome para o template"
+                  ? "Please enter a template name"
                   : ""
               }
               size="small"
@@ -120,19 +122,23 @@ const GenerateVacations = () => {
                 onChange={handleFileSelection}
                 style={{ display: "none" }}
               />
-              <Button variant="contained" component="span" color="secondary">
-                Escolher CSV
+              <Button
+                variant="contained"
+                component="span"
+                color="success" // Green button
+              >
+                Choose CSV
               </Button>
             </label>
             <Button variant="outlined" onClick={handleCsvUpload}>
-              Enviar CSV
+              Upload CSV
             </Button>
           </Box>
 
           {uploadedFileName && (
             <Box mt={2}>
               <Typography variant="body2" color="textSecondary">
-                Ficheiro selecionado: <strong>{uploadedFileName}</strong>
+                Selected file: <strong>{uploadedFileName}</strong>
               </Typography>
             </Box>
           )}
@@ -143,7 +149,7 @@ const GenerateVacations = () => {
         {templates.length > 0 && (
           <Box mt={4}>
             <Typography variant="h5" gutterBottom>
-              Templates Existentes
+              Existing Templates
             </Typography>
             <Box display="flex" flexWrap="wrap" gap={2} style={{ marginTop: 30 }}>
               {templates.map((template) => (
@@ -161,8 +167,8 @@ const GenerateVacations = () => {
                     {template.name}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
-                    {Object.keys(template.vacations).length} empregados com
-                    férias
+                    {Object.keys(template.vacations).length} employees with
+                    vacations
                   </Typography>
                   <Box display="flex" justifyContent="center" mt={2}>
                     <Button
@@ -170,7 +176,7 @@ const GenerateVacations = () => {
                       size="small"
                       onClick={() => showTemplateDetails(template.name)}
                     >
-                      Abrir
+                      Open
                     </Button>
                   </Box>
                 </Paper>
@@ -189,7 +195,7 @@ const GenerateVacations = () => {
             severity="success"
             sx={{ width: "100%" }}
           >
-            Operação realizada com sucesso!
+            Operation completed successfully!
           </Alert>
         </Snackbar>
 
@@ -203,7 +209,7 @@ const GenerateVacations = () => {
             severity="error"
             sx={{ width: "100%" }}
           >
-            Ocorreu um erro. Verifique o formato do CSV.
+            An error occurred. Please check the CSV format.
           </Alert>
         </Snackbar>
       </div>
