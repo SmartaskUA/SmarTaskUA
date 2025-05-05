@@ -69,6 +69,7 @@ const ImportMinimums = () => {
   const showTemplateDetails = async (id) => {
     try {
       const response = await axios.get(`${baseurl}/reference/${id}`);
+      console.log("Resposta recebida (JSON):", response.data);
       setSelectedTemplate(response.data);
     } catch (err) {
       console.error("Erro ao carregar detalhes do template:", err);
@@ -151,7 +152,7 @@ const ImportMinimums = () => {
                     {template.name}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
-                    {Object.keys(template.minimuns || {}).length} grupos de mínimos
+                    {template.minimuns?.length || 0} linhas de dados
                   </Typography>
                   <Box display="flex" justifyContent="center" mt={2}>
                     <Button
@@ -170,9 +171,6 @@ const ImportMinimums = () => {
 
         {selectedTemplate && (
           <Box mt={4}>
-            <Typography variant="h5" gutterBottom>
-              Detalhes do Template: {selectedTemplate.name}
-            </Typography>
             <MinimumsTemplate name={selectedTemplate.name} data={selectedTemplate.minimuns} />
           </Box>
         )}
