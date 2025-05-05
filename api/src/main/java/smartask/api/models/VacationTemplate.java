@@ -20,5 +20,5 @@ public class VacationTemplate {
     @NotBlank
     private String name;
 
-    private Map<String, List<String>> vacations;
+    private List<List<String>> vacations;
 }
