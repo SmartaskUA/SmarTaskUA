@@ -284,7 +284,7 @@ const Teams = () => {
                       </Button>
                       <Button
                         variant="contained"
-                        color="secondary"
+                        color="primary"
                         onClick={() => handleEditTeam(team)}
                         sx={{ marginTop: 1, width: "100%" }}
                       >
