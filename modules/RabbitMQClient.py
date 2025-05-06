@@ -73,25 +73,36 @@ class RabbitMQClient:
                 fetched_vacation = self.mongodb_client.fetch_vacation_by_name(vacation_template_name)
                 vacations_data = fetched_vacation.get("vacations", {})
 
+                '''
                 print(
                     f"\nVacation template name: {vacation_template_name}"
                     f"\nExtracted vacations: {vacations_data}"
                 )
-
+                '''
                 minimuns = message.get("minimuns")
                 fetched_reference = self.mongodb_client.fetch_reference_by_name(minimuns)
                 minimuns_data = fetched_reference.get("minimuns", {})
 
+                '''
                 print(
                     f"\nMinimuns template name: {minimuns}"
                     f"\nExtracted minimuns: {minimuns_data}"
                 )
+                '''
 
                 algorithm_name = message.get("algorithm", "CSP Scheduling")
 
                 print(f"\n[Received Task] Task ID: {task_id}")
 
-                self.executor.submit(self.handle_task_processing, task_id, title, algorithm_name)
+                self.executor.submit(
+                    self.handle_task_processing,
+                    task_id,
+                    title,
+                    algorithm_name,
+                    vacations_data,
+                    minimuns_data
+                )
+
                 ch.basic_ack(delivery_tag=method.delivery_tag)
             except Exception as e:
                 print(f"Error processing message: {e}")
@@ -110,11 +121,17 @@ class RabbitMQClient:
                 self.close_connection()
                 break
 
-    def handle_task_processing(self, task_id, title, algorithm_name):
+    def handle_task_processing(self, task_id, title, algorithm_name, vacations_data, minimuns_data):
         self.send_task_status(task_id, "IN_PROGRESS")
         try:
             print(f"[RabbitMQClient] Delegando execução da task {task_id} para TaskManager...")
-            schedule_data = self.task_manager.run_task(task_id, title, algorithm_name)
+            schedule_data = self.task_manager.run_task(
+                task_id=task_id,
+                title=title,
+                algorithm_name=algorithm_name,
+                vacations=vacations_data,
+                minimuns=minimuns_data
+            )
 
             self.mongodb_client.insert_schedule(
                 data=schedule_data,
