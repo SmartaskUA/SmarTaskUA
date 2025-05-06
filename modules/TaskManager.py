@@ -15,7 +15,11 @@ class TaskManager:
             "linear programming": ilp_solver
         }
 
-    def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None):
+    def run_task(self, task_id, title, algorithm_name="CSP Scheduling",
+                 vacations=None,
+                 minimuns=None,
+                 employees=None):
+        print(f"\n[DEBUG] Current employee set:\n{employees}")
         print(f"\n[DEBUG] Vacations received:\n{vacations}")
         print(f"\n[DEBUG] Minimuns received:\n{minimuns}")
 

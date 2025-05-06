@@ -91,7 +91,7 @@ class RabbitMQClient:
                 '''
 
                 algorithm_name = message.get("algorithm", "CSP Scheduling")
-
+                employees_data = self.mongodb_client.fetch_employees()
                 print(f"\n[Received Task] Task ID: {task_id}")
 
                 self.executor.submit(
@@ -100,7 +100,8 @@ class RabbitMQClient:
                     title,
                     algorithm_name,
                     vacations_data,
-                    minimuns_data
+                    minimuns_data,
+                    employees_data
                 )
 
                 ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -121,7 +122,7 @@ class RabbitMQClient:
                 self.close_connection()
                 break
 
-    def handle_task_processing(self, task_id, title, algorithm_name, vacations_data, minimuns_data):
+    def handle_task_processing(self, task_id, title, algorithm_name, vacations_data, minimuns_data, employees_data):
         self.send_task_status(task_id, "IN_PROGRESS")
         try:
             print(f"[RabbitMQClient] Delegando execução da task {task_id} para TaskManager...")
@@ -130,7 +131,8 @@ class RabbitMQClient:
                 title=title,
                 algorithm_name=algorithm_name,
                 vacations=vacations_data,
-                minimuns=minimuns_data
+                minimuns=minimuns_data,
+                employees=employees_data
             )
 
             self.mongodb_client.insert_schedule(
