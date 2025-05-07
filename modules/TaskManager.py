@@ -15,16 +15,14 @@ class TaskManager:
             "linear programming": ilp_solver
         }
 
-    def run_task(self, task_id, title, algorithm_name="CSP Scheduling"):
-        """
-        Executa o algoritmo especificado e retorna o resultado.
+    def run_task(self, task_id, title, algorithm_name="CSP Scheduling",
+                 vacations=None,
+                 minimuns=None,
+                 employees=None):
+        print(f"\n[DEBUG] Current employee set:\n{employees}")
+        print(f"\n[DEBUG] Vacations received:\n{vacations}")
+        print(f"\n[DEBUG] Minimuns received:\n{minimuns}")
 
-        :param task_id: ID da tarefa
-        :param title: Título associado ao calendário
-        :param algorithm_name: Nome do algoritmo a ser executado
-        :return: dicionário com dados do calendário gerado
-        :raises: Exception se a execução falhar
-        """
         if algorithm_name not in self.algorithms:
             raise ValueError(f"Algoritmo '{algorithm_name}' não encontrado.")
 
