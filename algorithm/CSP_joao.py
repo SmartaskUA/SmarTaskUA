@@ -12,6 +12,20 @@ class CSP:
         self.domains = domains
         self.constraints = constraints
 
+    def is_consistent(self, assignment):
+        for key, func in self.constraints.items():
+            if isinstance(key, tuple):
+                if len(key) == 2:
+                    if not func(assignment[key[0]], assignment[key[1]]):
+                        return False
+                else:
+                    if not func([assignment[v] for v in key]):
+                        return False
+            else:
+                if not func(None, assignment):
+                    return False
+        return True
+
     def check_constraints(self, var, value, assignment):
         temp_assignment = assignment.copy()
         temp_assignment[var] = value
@@ -23,37 +37,38 @@ class CSP:
                         val1 = temp_assignment[v1]
                         val2 = temp_assignment[v2]
                         if not constraint_func(val1, val2):
-                            # print(f"Constraint failed for {v1}={val1}, {v2}={val2}")
+                            print(f"Constraint failed for {v1}={val1}, {v2}={val2}")
                             return False
                 else:
                     values = [temp_assignment.get(v) for v in constraint_key]
                     if None not in values and not constraint_func(values):
-                        # print(f"Higher-order constraint failed for {constraint_key}")
+                        print(f"Higher-order constraint failed for {constraint_key}")
                         return False
             else:
                 if not constraint_func(var, temp_assignment):
-                    # print(f"Single constraint failed for {var}={value}")
+                    print(f"Single constraint failed for {var}={value}")
                     return False
         return True
 
     def propagate(self, domains, var, value):
         domains[var] = [value]
-        queue = [(var, value)]
+        queue = [var]
         while queue:
-            curr_var, curr_val = queue.pop(0)
+            curr_var = queue.pop(0)
+            current_assignment = {v: d[0] for v, d in domains.items() if len(d) == 1}
             for other_var in self.variables:
                 if other_var == curr_var or len(domains[other_var]) == 1:
                     continue
                 new_domain = []
                 for val in domains[other_var]:
-                    if self.check_constraints(other_var, val, {curr_var: curr_val, other_var: val}):
+                    if self.check_constraints(other_var, val, {**current_assignment, other_var: val}):
                         new_domain.append(val)
                 if not new_domain:
-                    # print(f"Domain wiped out for {other_var} when assigning {curr_var} = {curr_val}")
                     return False
-                domains[other_var] = new_domain
-                if len(new_domain) == 1:
-                    queue.append((other_var, new_domain[0]))
+                if len(new_domain) < len(domains[other_var]):
+                    domains[other_var] = new_domain
+                    if len(new_domain) == 1:
+                        queue.append(other_var)
         return True
 
     def select_variable(self, domains):
@@ -62,7 +77,7 @@ class CSP:
             return None
         return min(unassigned_vars, key=lambda var: len(domains[var]))
 
-    def search(self, domains=None, timeout=60):
+    def search(self, domains=None, timeout=300):
         start_time = time.time()
         if domains is None:
             domains = copy.deepcopy(self.domains)
@@ -75,11 +90,13 @@ class CSP:
                 return None
             if all(len(lv) == 1 for lv in domains.values()):
                 assignment = {v: lv[0] for v, lv in domains.items()}
-                return {"assignment": assignment}
+                if self.is_consistent(assignment):
+                    return {"assignment": assignment}
+                return None
             var = self.select_variable(domains)
             if var is None:
                 return None
-            # print(f"Depth {depth}: Selecting {var} with domain {domains[var]}")
+            print(f"Depth {depth}: Selecting {var} with domain {domains[var]}")
             values = domains[var].copy()
             random.shuffle(values)  # Randomize value order
             for val in values:
@@ -142,13 +159,6 @@ def employee_scheduling():
         holiday_vars = [var for var in emp_vars if int(var.split('_')[1]) in holidays]
         handle_ho_constraint(csp, holiday_vars, lambda values: sum(1 for v in values if v in ["M_A", "M_B", "T_A", "T_B"]) <= 2)
 
-    for day in range(1, num_days + 1):
-        day_vars = [f"{emp}_{day}" for emp in employees]
-        handle_ho_constraint(csp, day_vars, lambda values: sum(1 for v in values if v == "M_A") >= 2 and 
-                                                            sum(1 for v in values if v == "T_A") >= 2 and 
-                                                            sum(1 for v in values if v == "M_B") >= 1 and 
-                                                            sum(1 for v in values if v == "T_B") >= 1)
-
     solution = csp.search(timeout=600)
     if solution and "assignment" in solution:
         assignment = solution["assignment"]
@@ -166,14 +176,17 @@ def employee_scheduling():
 #         return constraint_func(values)
 #     csp.constraints[tuple(variables)] = constraint
 
+# def handle_ho_constraint(csp, variables, constraint_func):
+#     def constraint(var, assignment):
+#         values = [assignment.get(v, None) for v in variables]
+#         if None in values:
+#             return True
+#         return constraint_func(values)
+#     constraint_key = f"multi_{'_'.join(variables)}"
+#     csp.constraints[constraint_key] = constraint
+
 def handle_ho_constraint(csp, variables, constraint_func):
-    def constraint(var, assignment):
-        values = [assignment.get(v, None) for v in variables]
-        if None in values:
-            return True
-        return constraint_func(values)
-    constraint_key = f"multi_{'_'.join(variables)}"
-    csp.constraints[constraint_key] = constraint
+    csp.constraints[tuple(variables)] = lambda values: constraint_func(values)
 
 def build_schedule_table(assignment, num_employees, num_days):
     table = []
@@ -187,39 +200,80 @@ def build_schedule_table(assignment, num_employees, num_days):
     return table
 
 def generate_calendar(assignment, num_employees, num_days):
-    with open("calendario_turnos.csv", "w", newline="") as csvfile:
+    with open("csp_fourth_run.csv", "w", newline="") as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(["Employee"] + [str(day) for day in range(1, num_days + 1)])
         for e in range(1, num_employees + 1):
             employee_schedule = [assignment.get(f"E{e}_{d}", "-") for d in range(1, num_days + 1)]
             csvwriter.writerow([f"E{e}"] + employee_schedule)
-            t_count = sum(1 for v in employee_schedule if v.startswith("T_"))
-            m_count = sum(1 for v in employee_schedule if v.startswith("M_"))
-            print(f"Employee E{e}: {t_count} afternoon shifts (T), {m_count} morning shifts (M)")
 
-def analyze_solution(assignment, employees, num_days, holidays):
+def analyze_solution(assignment, employees, num_days, holidays, filename="csp_fourth_run.txt"):
+    MORNING = {"M_A", "M_B"}
+    AFTERNOON = {"T_A", "T_B"}
+    WORK = MORNING | AFTERNOON
+    lines = []
     tm_violations = 0
+
     for emp in employees:
         for d in range(1, num_days):
             curr_day = assignment.get(f"{emp}_{d}", "-")
             next_day = assignment.get(f"{emp}_{d+1}", "-")
             if curr_day.startswith("T_") and next_day.startswith("M_"):
                 tm_violations += 1
-    print(f"\nNumber of T->M restriction violations: {tm_violations}")
+    lines.append(f"\nNumber of T->M restriction violations: {tm_violations}")
 
-    print("\nShifts per team per day:")
-    for day in range(1, num_days + 1):
-        day_vars = [assignment.get(f"{emp}_{day}", "-") for emp in employees]
-        m_a = sum(1 for v in day_vars if v == "M_A")
-        t_a = sum(1 for v in day_vars if v == "T_A")
-        m_b = sum(1 for v in day_vars if v == "M_B")
-        t_b = sum(1 for v in day_vars if v == "T_B")
-        print(f"Day {day}: M_A={m_a}, T_A={t_a}, M_B={m_b}, T_B={t_b}")
+    lines.append("\nWorkdays on holidays per employee:")
+    holiday_counts   = {} 
+    shifts = [] 
 
-    print("\nWorkdays on holidays per employee:")
     for emp in employees:
-        holiday_workdays = sum(1 for d in holidays if assignment.get(f"{emp}_{d}", "-") in ["M_A", "M_B", "T_A", "T_B"])
-        print(f"{emp}: {holiday_workdays} workdays on holidays")
+        holiday_workdays = sum(
+            1
+            for d in holidays
+            if assignment.get(f"{emp}_{d}", "-") in WORK
+        )
+        holiday_counts[emp] = holiday_workdays
+        lines.append(f"{emp}: {holiday_workdays} workdays on holidays")
+
+        morning = afternoon = 0
+        for d in range(1, num_days + 1):
+            v = assignment.get(f"{emp}_{d}", "-")
+            if v in MORNING:
+                morning += 1
+            elif v in AFTERNOON:
+                afternoon += 1
+        shifts.append((emp, morning, afternoon, morning + afternoon))
+
+    employees_over_5 = []
+    for emp in employees:
+        streak = max_streak = 0
+        for d in range(1, num_days + 1):
+            shift = assignment.get(f"{emp}_{d}", "-")
+            if shift in ["M_A", "M_B", "T_A", "T_B"]:
+                streak += 1
+                max_streak = max(max_streak, streak)
+            else:
+                streak = 0
+        if max_streak > 5:
+            employees_over_5.append((emp, max_streak))
+
+    lines.append("\nEmployees working more than 5 consecutive days:")
+    if employees_over_5:
+        for emp, streak_len in employees_over_5:
+            lines.append(f"{emp}: {streak_len} consecutive workdays")
+    else:
+        lines.append("None")
+
+    lines.append("\nShifts worked per employee:")
+    for emp, morning, afternoon, total in shifts:
+        lines.append(f"{emp}: {morning} morning shifts, {afternoon} afternoon shifts, {total} total shifts")
+
+    report_text = "\n".join(lines)
+    print(report_text)
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(report_text)
+    print(f"\nAnalysis written to {filename}")
+
 
 if __name__ == "__main__":
     employee_scheduling()
