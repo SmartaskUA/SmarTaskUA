@@ -32,7 +32,7 @@ class TaskManager:
         # Verifica assinatura e repassa os argumentos corretamente
         if algorithm_name == "linear programming":
             # Passa vacations, minimuns e employees explicitamente
-            schedule_data = algorithm(vacations=vacations)
+            schedule_data = algorithm(vacations=vacations, minimuns=minimuns)
         else:
             # Algoritmos que ainda não usam os argumentos extras
             schedule_data = algorithm()

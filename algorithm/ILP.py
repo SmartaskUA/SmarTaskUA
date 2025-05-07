@@ -5,9 +5,10 @@ from datetime import date, timedelta
 import holidays
 from tabulate import tabulate
 
-def solve(vacations):
+def solve(vacations, minimuns):
     # ==== PARÂMETROS BÁSICOS ====
     print(f"[ILP] vacations '{vacations}' ")
+    print(f"[ILP] Minimuns '{minimuns}' ")
 
     ano = 2025
     num_funcionarios = 12
