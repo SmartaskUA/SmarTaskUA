@@ -5,8 +5,10 @@ from datetime import date, timedelta
 import holidays
 from tabulate import tabulate
 
-def solve():
+def solve(vacations):
     # ==== PARÂMETROS BÁSICOS ====
+    print(f"[ILP] vacations '{vacations}' ")
+
     ano = 2025
     num_funcionarios = 12
     dias_ano = pd.date_range(start=f'{ano}-01-01', end=f'{ano}-12-31').to_list()
@@ -24,18 +26,16 @@ def solve():
 
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    horario_csv_path = os.path.join(base_dir, "horarioReferencia.csv")
     minimuns_csv_path = os.path.join(base_dir, "minimuns.csv")
     # ==== FÉRIAS A PARTIR DO CSV DE REFERÊNCIA ====
-    ferias_raw = pd.read_csv(horario_csv_path, header=None)
     datas_do_ano = pd.date_range(start="2025-01-01", periods=365)
     ferias = {
-        f: {
+        f_idx: {
             datas_do_ano[i]
-            for i in range(365)
-            if ferias_raw.iloc[f, i + 1] == 1
+            for i, val in enumerate(vacations[f_idx][1:])
+            if int(val) == 1
         }
-        for f in range(len(ferias_raw))
+        for f_idx in range(len(vacations))
     }
 
     # ==== MÍNIMOS A PARTIR DO CSV minimuns.csv ====
