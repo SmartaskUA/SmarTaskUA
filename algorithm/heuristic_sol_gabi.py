@@ -9,102 +9,68 @@ Prefs = [
     [0], [0], [1], [1], [0, 1], [0, 1], [1], [0], [1], [0], [1], [1]
 ]
 
-nTrabs = len(Prefs)  # Número de trabalhadores (baseado no número de preferências)
-nDias = 365  # Número de dias no ano
-nDiasFerias = 30  # Número de dias de férias por trabalhador
-nDiasTrabalho = 223  # Número de dias de trabalho no ano
-nDiasTrabalhoFDS = 22  # Número máximo de dias trabalhados nos finais de semana
-nDiasSeguidos = 5  # Número máximo de dias seguidos de trabalho
-nMinTrabs = 2  # Número mínimo de turnos que um trabalhador deve fazer
-nMaxFolga = 142  # Número máximo de dias de folga
-nTurnos = 2  # Número de turnos por dia (Manhã e Tarde)
+nTrabs = len(Prefs)             # Número de trabalhadores (baseado no número de preferências)
+nDias = 365                     # Número de dias no ano
+nDiasFerias = 30                # Número de dias de férias por trabalhador
+nDiasTrabalho = 223             # Número de dias de trabalho no ano
+nDiasTrabalhoFDS = 22           # Número máximo de dias trabalhados nos finais de semana
+nDiasSeguidos = 5               # Número máximo de dias seguidos de trabalho
+nMinTrabs = 2                   # Número mínimo de turnos que um trabalhador deve fazer
+nMaxFolga = 142                 # Número máximo de dias de folga
+nTurnos = 2                     # Número de turnos por dia (Manhã e Tarde)
 
 # Definindo os feriados
-feriados = [31, 60, 120, 150, 200, 240, 300, 330]
-
-minimos_equipa_A_manha = [2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2,
-                          2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2,
-                          2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2,
-                          2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1,
-                          2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2,
-                          2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2,
-                          1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2,
-                          2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2,
-                          2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2,
-                          2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2,
-                          2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1,
-                          2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2]
-minimos_equipa_A_tarde = [2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2,
-                          2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2,
-                          2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2,
-                          2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1,
-                          2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2,
-                          2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2,
-                          1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2,
-                          2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2,
-                          2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2,
-                          2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2,
-                          2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1,
-                          2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2]
-
-minimos_equipa_B_manha = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-minimos_equipa_B_tarde = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+feriados = [1, 108, 110, 115, 121, 161, 170, 227, 278, 305, 335, 342, 359] 
 
 
-# Função para definir férias lendo um csv
-def ler_ferias_csv(caminho_csv, nDias):
-    df = pd.read_csv(caminho_csv, header=None)
+def ler_minimos_csv(minimuns, nDias):
+    minimos_equipa_A_manha = np.zeros(nDias, dtype=int)
+    minimos_equipa_A_tarde = np.zeros(nDias, dtype=int)
+    minimos_equipa_B_manha = np.zeros(nDias, dtype=int)
+    minimos_equipa_B_tarde = np.zeros(nDias, dtype=int)
 
-    nTrabs = len(df)  # Número de trabalhadores
+    for i in range(nDias):
+        try:
+            val1 = str(minimuns[1][i]) if i < len(minimuns[1]) else ""
+            val2 = str(minimuns[1][i + 1])if i + 1 < len(minimuns[1]) else ""
+            val3 = str(minimuns[2][i])if i < len(minimuns[2]) else ""
+            val4 = str(minimuns[2][i + 1]) if i + 1 < len(minimuns[2]) else ""
+
+            if "minimo" in val1:
+                minimos_equipa_A_manha[i] = 1
+            if "minimo" in val2:
+                minimos_equipa_A_tarde[i] = 1
+            if "minimo" in val3:
+                minimos_equipa_B_manha[i] = 1
+            if "minimo" in val4:
+                minimos_equipa_B_tarde[i] = 1
+
+        except Exception as e:
+            print(f"[ler_minimos_csv] Erro no índice {i}: {e}")
+
+    return minimos_equipa_A_manha, minimos_equipa_A_tarde, minimos_equipa_B_manha, minimos_equipa_B_tarde
+
+# Função para definir férias lendo um lista
+def ler_ferias_csv(vacations, nDias):
+    nTrabs = len(vacations)
     Ferias = np.zeros((nTrabs, nDias), dtype=bool)
 
-    # Preenche a matriz de férias com base no CSV
-    for trab, row in df.iterrows():
-        # Ignora o nome do trabalhador (primeira coluna) e usa o restante para os dias de férias
-        Ferias[trab] = row[1:].values == 1  # Transforma 1 em True (férias) e 0 em False (não férias)
+    for trab in range(nTrabs):
+        for dia in range(nDias):
+            Ferias[trab, dia] = vacations[trab][dia] == 1
 
     return Ferias
 
 
-# Ferias = ler_ferias_csv("../feriasR.csv", nDias)
 
-# fds = np.zeros((nTrabs, nDias), dtype=bool)
-# fds[:, 4::7] = True     #domingos
-
-# dias = np.where(~Ferias)
-
-# horario = np.zeros((nTrabs, nDias, nTurnos), dtype=int)
-# # Assumindo que você tenha 'nTrabs' como número de trabalhadores
-# nTrabs = Ferias.shape[0]  # Número de trabalhadores (linhas de Ferias)
+horario = np.zeros((nTrabs, nDias, nTurnos), dtype=int)
 
 
 def atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos):
-    for i in range(nTrabs):
+    for i in range(nTrabs): 
         dias_disponiveis = np.where(~Ferias[i])[0]
         np.random.shuffle(dias_disponiveis)
-
+        
         turnos_assigned = 0
         d = 0
 
@@ -140,104 +106,77 @@ def atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos):
                         turnos_assigned += 1
                         break
 
-
-# atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos)
+#atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos)
 
 # Função para calcular o número de dias seguidos trabalhados 5 máximo
 def criterio1(horario, nDiasSeguidos):
-    f1 = np.zeros(horario.shape[0], dtype=int)  # Armazenar o número de sequências válidas
-    dias_trabalhados = np.sum(horario, axis=2) > 0  # matriz trabalhor x dia , pelo menos 1 turno - true
-
-    janela = np.ones(nDiasSeguidos, dtype=int)  # cria um vetor 5 dias
-
-    for i in range(horario.shape[0]):
-        # convolução contar quantos dias seguidos foram trabalhados em blocos
-        sequencia = np.convolve(dias_trabalhados[i].astype(int), janela,
-                                mode='valid')  # deslisa a janela e multiplica (deteta sequencias)
-        f1[i] = np.sum(sequencia == nDiasSeguidos)  # [1, 1, 1, 1, 1, 1, 0, 1]   -- [5,5,4,4]
-
-    return f1
+    dias_trabalhados = np.sum(horario, axis=2) > 0
+    janela = np.ones(nDiasSeguidos, dtype=int)
+    sequencias = np.apply_along_axis(lambda x: np.convolve(x.astype(int), janela, mode='valid'), 1, dias_trabalhados)
+    return np.sum(sequencias == nDiasSeguidos, axis=1)
 
 
-# um limite de 22 dias de trabalho no total durante fins de semana (domingos) e feriados
 def criterio2(horario, fds, nDiasTrabalhoFDS, feriados):
-    # Criação do vetor booleana para marcar finais de semana e feriados
-    dias_ano = np.arange(horario.shape[1])
+    # Garantir que sejam arrays 1D de inteiros
+    fds = np.array(fds, dtype=int).flatten()
+    feriados = np.array(feriados, dtype=int).flatten()
 
-    dias_fds = fds.sum(axis=0) > 0  # domingos
-    dias_feriados = np.isin(dias_ano, feriados)  # feriados
-    dias_fds_feriados = dias_fds | dias_feriados
-    dias_fds_feriados = dias_fds_feriados[None, :, None]  # ajustar array para Forma (1, 365, 1)
+    # Criar vetor de 365 posições (1 por dia do ano)
+    dias_fds_feriados = np.zeros(365, dtype=bool)
 
-    dias_trabalhados = np.sum(horario * dias_fds_feriados,
-                              axis=(1, 2))  # soma de turnos trabalhados em finais de semana e feriados
+    # Validar se os índices estão dentro do intervalo
+    fds = fds[(fds >= 0) & (fds < 365)]
+    feriados = feriados[(feriados >= 0) & (feriados < 365)]
 
-    excedente = np.maximum(dias_trabalhados - nDiasTrabalhoFDS,
-                           0)  # calcula o excedente de dias trabalhados em relação ao limite permitido
+    # Marcar os dias como True
+    dias_fds_feriados[fds] = True
+    dias_fds_feriados[feriados] = True
 
-    return excedente
+    # Expandir para compatibilizar com o shape de `horario` (12, 365, 2)
+    mascara = dias_fds_feriados[None, :, None]
+
+    # Aplicar a máscara e somar os dias trabalhados em fds/feriados
+    dias_trabalhados = np.sum(horario * mascara, axis=(1, 2))
+
+    # Penalidade por exceder os dias permitidos
+    penalidade = np.sum(np.maximum(0, dias_trabalhados - nDiasTrabalhoFDS))
+    return penalidade
+
 
 
 # vereficar numero de trabalhadores  abaixo do mínimo necessário
 def criterio3(horario, nMinTrabs):
-    trabalhadores_por_dia = np.sum(horario, axis=1)  # Soma de trabalhadores por dia em coluna
-    dias_com_menos_trabalhadores = np.sum(trabalhadores_por_dia < nMinTrabs,
-                                          axis=1)  # Para cada trabalhador, contamos quantos dias têm menos trabalhadores que o mínimo necessário.
 
+    trabalhadores_por_dia = np.sum(horario, axis=1)                                   
+    dias_com_menos_trabalhadores = np.sum(trabalhadores_por_dia < nMinTrabs, axis=1)  
+    
     return np.sum(dias_com_menos_trabalhadores)
 
-
-# Diferença entre folgas e limite máximo permitido
-
-def criterio4(horario, nMaxFolga):
-    Ferias = ler_ferias_csv("../feriasR.csv", nDias)
-    dias_trabalhados_por_trabalhador = []
-
-    for i in range(horario.shape[0]):  # Iterar por cada trabalhador
-        dias_trabalhados = 0
-
-        # Contar os dias trabalhados
-        dias_trabalhados = np.sum(np.sum(horario[i, :] > 0, axis=1) & ~Ferias[i, :])
-
-        dias_trabalhados_por_trabalhador.append(dias_trabalhados)
-
-    dias_diferenca = np.abs(np.array(dias_trabalhados_por_trabalhador) - nDiasTrabalho)
-
-    return dias_diferenca
+def criterio4(horario, Ferias, nMaxFolga):
+    dias_trabalhados = np.sum(horario > 0, axis=2)
+    dias_ativos = dias_trabalhados & ~Ferias
+    dias_trabalhados_por_trabalhador = np.sum(dias_ativos, axis=1)
+    folgas = nDias - dias_trabalhados_por_trabalhador
+    excesso_folga = np.maximum(folgas - nMaxFolga, 0)
+    return excesso_folga
 
 
-# def criterio5(horario, Prefs):
-#     f5 = np.zeros(horario.shape[0], dtype=int)
-
-#     for i, pref in enumerate(Prefs):  # trabalhor e preferencias
-#         if any(p in pref for p in [0, 1]):  # ve se é M ou T
-#             # Loop sobre os dias
-#             for d in range(nDias - 1):
-#                 # Verifica se houve a sequência Tarde seguida de Manhã
-#                 if horario[i, d, 1] == 1 and horario[i, d + 1, 0] == 1:
-#                     f5[i] += 1
-#     return f5
 
 def criterio5(horario):
-    f5 = np.zeros(horario.shape[0], dtype=int)  # Vetor para contar as sequências
+    f5 = np.zeros(horario.shape[0], dtype=int)  
 
-    # Verifica os turnos de cada trabalhador
-    for i in range(horario.shape[0]):  # Para cada trabalhador
-        for d in range(horario.shape[1] - 1):  # Para cada dia (exceto o último)
-            # Verifica se houve Tarde (1) no dia `d` e Manhã (0) no dia `d+1`
+    for i in range(horario.shape[0]):  
+        for d in range(horario.shape[1] - 1):  
             if horario[i, d, 1] == 1 and horario[i, d + 1, 0] == 1:
-                f5[i] += 1  # Incrementa a contagem para esse trabalhador
+                f5[i] += 1  
 
     return f5
 
-
-def criterio6(horario, minimos_equipa_A_manha, minimos_equipa_A_tarde, minimos_equipa_B_manha, minimos_equipa_B_tarde,
-              Prefs):
+def criterio6(horario, minimuns, Prefs):
     nTrabs, nDias, _ = horario.shape
     violacoes_por_trab = np.zeros(nTrabs, dtype=int)
 
-    equipe_A, equipe_B, ambas = identificar_equipes(
-        Prefs)  # A função identificar_equipes deve estar definida em algum lugar
+    equipe_A, equipe_B, ambas = identificar_equipes(Prefs)
 
     equipe_A_set = set(equipe_A)
     equipe_B_set = set(equipe_B)
@@ -256,33 +195,41 @@ def criterio6(horario, minimos_equipa_A_manha, minimos_equipa_A_tarde, minimos_e
             # Verificando se o trabalhador deve trabalhar no turno da manhã
             if 0 in prefs:
                 if i in equipe_A_set or i in ambas_set:
-                    if horario[i, d, 0] == 1 and A_manha_totais[d] < minimos_equipa_A_manha[d]:
+                    if horario[i, d, 0] == 1 and A_manha_totais[d] < minimuns[0][d]:
                         violacoes_por_trab[i] += 1
                 if i in equipe_B_set or i in ambas_set:
-                    if horario[i, d, 0] == 1 and B_manha_totais[d] < minimos_equipa_B_manha[d]:
+                    if horario[i, d, 0] == 1 and B_manha_totais[d] < minimuns[2][d]:
                         violacoes_por_trab[i] += 1
 
             # Verificando se o trabalhador deve trabalhar no turno da tarde
             if 1 in prefs:
                 if i in equipe_A_set or i in ambas_set:
-                    if horario[i, d, 1] == 1 and A_tarde_totais[d] < minimos_equipa_A_tarde[d]:
+                    if horario[i, d, 1] == 1 and A_tarde_totais[d] < minimuns[1][d]:
                         violacoes_por_trab[i] += 1
                 if i in equipe_B_set or i in ambas_set:
-                    if horario[i, d, 1] == 1 and B_tarde_totais[d] < minimos_equipa_B_tarde[d]:
+                    if horario[i, d, 1] == 1 and B_tarde_totais[d] < minimuns[3][d]:
                         violacoes_por_trab[i] += 1
 
     return violacoes_por_trab
 
 
 # Função para calcular os critérios
-def calcular_criterios(horario, fds, nDiasSeguidos, nDiasTrabalhoFDS, nMinTrabs, nMaxFolga, feriados):
+def calcular_criterios(
+    horario, fds, nDiasSeguidos, nDiasTrabalhoFDS,
+    nMinTrabs, nMaxFolga, feriados,
+    vacations, minimuns, Prefs, nDias
+    
+):
+    # Gera a matriz de férias a partir da lista vacations
+    Ferias = ler_ferias_csv(vacations, nDias)
+
     f1 = criterio1(horario, nDiasSeguidos)
     f2 = criterio2(horario, fds, nDiasTrabalhoFDS, feriados)
     f3 = criterio3(horario, nMinTrabs)
-    f4 = criterio4(horario, nMaxFolga)
+    f4 = criterio4(horario, Ferias, nMaxFolga)
     f5 = criterio5(horario)
-    f6 = criterio6(horario, minimos_equipa_A_manha, minimos_equipa_A_tarde, minimos_equipa_B_manha,
-                   minimos_equipa_B_tarde, Prefs)
+    f6 = criterio6(horario, minimuns, Prefs)
+
     return f1, f2, f3, f4, f5, f6
 
 
@@ -298,12 +245,11 @@ def identificar_equipes(Prefs):
             equipe_B.append(i)
     return equipe_A, equipe_B, ambas
 
-
 def salvar_csv(horario, Ferias, nTurnos, nDias, Prefs):
     output = io.StringIO()
     csvwriter = csv.writer(output)
-
-    header = ["funcionario"] + [f"Dia {d + 1}" for d in range(nDias)]
+    
+    header = ["funcionario"] + [f"Dia {d+1}" for d in range(nDias)] 
     csvwriter.writerow(header)
 
     for e in range(nTrabs):
@@ -321,36 +267,50 @@ def salvar_csv(horario, Ferias, nTurnos, nDias, Prefs):
                     shift = f"T_{equipe}"
             employee_schedule.append(shift)
 
-        csvwriter.writerow([f"Empregado{e + 1}"] + employee_schedule)
+        csvwriter.writerow([f"Empregado{e + 1}"] + employee_schedule )
 
     with open("calendario.csv", "w", encoding="utf-8", newline="") as f:
         f.write(output.getvalue())
 
-    return output.getvalue()
+    return output.getvalue() 
+
+def solve(vacations, minimuns):
+    
+    print("vacations", vacations)
+    print("minimuns", minimuns)
+    print(f"minimuns[1] type: {type(minimuns[1])}")
+    print(f"vacations type: {type(vacations)}")
+    Ferias = ler_ferias_csv(vacations, nDias)
+    minimos = ler_minimos_csv(minimuns, nDias)
 
 
-def solve():
     start_time = time.time()
-    Ferias = ler_ferias_csv("../feriasR.csv", nDias)
-    dias = np.where(~Ferias)
-    global horario
+    Ferias = ler_ferias_csv(vacations, nDias)
+    dias = np.where(~Ferias)   
     fds = np.zeros((nTrabs, nDias), dtype=bool)
-    fds[:, 4::7] = True  # domingos
-    f1_opt, f2_opt, f3_opt, f4_opt, f5_opt, f6_opt = calcular_criterios(horario, fds, nDiasSeguidos, nDiasTrabalhoFDS,
-                                                                        nMinTrabs, nMaxFolga, feriados)
+    fds[:, 4::7] = True     #domingos
+    global horario
+    atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos)
+    f1_opt, f2_opt, f3_opt, f4_opt, f5_opt, f6_opt = calcular_criterios(
+    horario, fds, nDiasSeguidos, nDiasTrabalhoFDS,
+    nMinTrabs, nMaxFolga, feriados,
+    vacations, minimuns, Prefs, nDias
+    
+)
+
     equipe_A, equipe_B, ambas = identificar_equipes(Prefs)
 
     t, cont = 0, 0
     max_iter = 400000
 
     while t < max_iter and (np.any(f1_opt) or np.any(f2_opt) or np.any(f4_opt) or np.any(f5_opt) or np.any(f6_opt)):
-        cont += 1
-        i = np.random.randint(nTrabs)  # Seleciona aleatoriamente um trabalhador
+        cont += 1   
+        i = np.random.randint(nTrabs)  
         dias_trabalhados = dias[1][dias[0] == i]
-
+        
         if len(dias_trabalhados) < 2:
             t += 1
-            continue  # Pula se não houver dias suficientes para trocar
+            continue  
 
         aux = np.random.choice(len(dias_trabalhados), 2, replace=False)
         dia1, dia2 = dias_trabalhados[aux[0]], dias_trabalhados[aux[1]]
@@ -373,8 +333,12 @@ def solve():
                 hor[i, dia2, turno2] = 1
 
             # Recalcula critérios
-            f1, f2, f3, f4, f5, f6 = calcular_criterios(hor, fds, nDiasSeguidos, nDiasTrabalhoFDS, nMinTrabs, nMaxFolga,
-                                                        feriados)
+            f1, f2, f3, f4, f5, f6 = calcular_criterios(
+    horario, fds, nDiasSeguidos, nDiasTrabalhoFDS,
+    nMinTrabs, nMaxFolga, feriados,
+    vacations, minimuns, Prefs, nDias
+    
+)
 
             # Verifica se é uma solução perfeita
             if np.all(f1 == 0) and np.all(f2 == 0) and f3 == 0 and np.all(f4 == 0) and np.all(f5 == 0):
@@ -383,12 +347,15 @@ def solve():
                 break
 
             # Atualiza se a solução for melhor
-            if f1[i] + f2[i] + f3 + f4[i] + f5[i] < f1_opt[i] + f2_opt[i] + f3_opt + f4_opt[i] + f5_opt[i]:
-                f1_opt[i], f2_opt[i], f3_opt, f4_opt[i], f5_opt[i], horario = f1[i], f2[i], f3, f4[i], f5[i], hor
+            # Fix the condition to handle scalar vs array indexing
+            if np.sum(f1) + np.sum(f2) + f3 + np.sum(f4) + np.sum(f5) < np.sum(f1_opt) + np.sum(f2_opt) + f3_opt + np.sum(f4_opt) + np.sum(f5_opt):
+                f1_opt, f2_opt, f3_opt, f4_opt, f5_opt, horario = f1, f2, f3, f4, f5, hor
 
         t += 1
 
+
     execution_time = time.time() - start_time
+
 
     print(f"\nTempo de execução: {execution_time:.2f} segundos")
     print(f"Número de iterações realizadas: {cont}")
@@ -403,7 +370,7 @@ def solve():
             schedule.append(row)
 
     return schedule
-
-
+    
 if __name__ == "__main__":
-    solve()
+    
+   solve()
