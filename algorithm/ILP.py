@@ -8,7 +8,7 @@ import pandas as pd
 import pulp
 import holidays
 
-def solve(vacations, minimuns):
+def solve(vacations, minimuns, employees):
     print(f"[ILP] Minimuns '{minimuns}' ")
 
     ano = 2025
