@@ -30,7 +30,7 @@ class TaskManager:
         algorithm = self.algorithms[algorithm_name]
 
         # Verifica assinatura e repassa os argumentos corretamente
-        if algorithm_name == "linear programming":
+        if algorithm_name == "linear programming" or algorithm_name == "hill climbing":
             # Passa vacations, minimuns e employees explicitamente
             schedule_data = algorithm(vacations=vacations, minimuns=minimuns)
         else:
