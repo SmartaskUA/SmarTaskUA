@@ -20,8 +20,8 @@ def check_files(file_paths):
         print("Wrong header format")
         sys.exit(1)
 
-def analyze(file_path, holidays):
-    return singleVerification(file_path, holidays)
+def analyze(file_path, holidays, teams):
+    return singleVerification(file_path, holidays, teams)
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
