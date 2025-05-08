@@ -4,10 +4,9 @@ import pandas as pd
 from datetime import date, timedelta
 import holidays
 from tabulate import tabulate
-
 def solve(vacations, minimuns):
     # ==== PARÂMETROS BÁSICOS ====
-    print(f"[ILP] vacations '{vacations}' ")
+    #print(f"[ILP] vacations '{vacations}' ")
     print(f"[ILP] Minimuns '{minimuns}' ")
 
     ano = 2025
@@ -23,11 +22,7 @@ def solve(vacations, minimuns):
     feriados = holidays.country_holidays("PT", years=[ano])
     domingos_feriados = [d for d in dias_ano if d.weekday() == 6 or d in feriados]
 
-    import os
 
-
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    minimuns_csv_path = os.path.join(base_dir, "minimuns.csv")
     # ==== FÉRIAS A PARTIR DO CSV DE REFERÊNCIA ====
     datas_do_ano = pd.date_range(start="2025-01-01", periods=365)
     ferias = {
@@ -40,25 +35,30 @@ def solve(vacations, minimuns):
     }
 
     # ==== MÍNIMOS A PARTIR DO CSV minimuns.csv ====
-    minimos_raw = pd.read_csv(minimuns_csv_path, header=None)
+    # Esse bloco lê e organiza os mínimos do CSV de forma adicional, sem interferir nas variáveis já usadas no modelo.
 
-    dias_colunas = minimos_raw.iloc[0, 3:].tolist()
-    dias_colunas = pd.date_range(start="2025-01-01", periods=len(dias_colunas))
+    # Garante que minimuns seja DataFrame
+    if isinstance(minimuns, list):
+        # Gera nomes de colunas automáticos: ['team', 'type', 'shift', 'day_1', 'day_2', ...]
+        num_days = len(minimuns[0]) - 3  # quantidade de colunas de dias
+        columns = ['team', 'type', 'shift'] + [f'day_{i + 1}' for i in range(num_days)]
+        minimuns = pd.DataFrame(minimuns, columns=columns)
 
+    # Processa os mínimos por equipa e turno
+    minimos_por_equipa_turno = {}
+    equipa_atual = None
 
-    minimos = {}
+    for _, row in minimuns.iterrows():
+        if pd.notna(row['team']) and row['team'] != '':
+            equipa_atual = row['team']
+        if row['type'] == 'Minimo':
+            turno = row['shift']
+            valores_minimos = [int(v) for v in row[3:]]
+            minimos_por_equipa_turno[(equipa_atual, turno)] = valores_minimos
 
-    linhas_minimos = {
-        ("A", 1): 1,  # Linha 2: Equipe A, Manhã
-        ("A", 2): 3,  # Linha 4: Equipe A, Tarde
-        ("B", 1): 5,  # Linha 6: Equipe B, Manhã
-        ("B", 2): 7   # Linha 8: Equipe B, Tarde
-    }
-
-    for (equipe, turno), linha_idx in linhas_minimos.items():
-        valores = minimos_raw.iloc[linha_idx, 3:].tolist()
-        for dia, minimo in zip(dias_colunas, valores):
-            minimos[(dia, equipe, turno)] = int(minimo)
+    # Exemplo de log para verificar os mínimos capturados
+    for (equipa, turno), valores in minimos_por_equipa_turno.items():
+        print(f"Equipa {equipa}, Turno {turno}, Valores: {valores}")
 
     # ==== VARIÁVEIS DE DECISÃO ====
     x = {
@@ -87,10 +87,16 @@ def solve(vacations, minimuns):
     # ==== FUNÇÃO OBJETIVO ====
     coverage_factor = []
 
-    for d in dias_ano:
+    for i, d in enumerate(dias_ano):
         for t in [1, 2]:
             for e in ["A", "B"]:
-                minimo = minimos[(d, e, t)]
+                key = (e, 'M' if t == 1 else 'T')
+                if key in minimos_por_equipa_turno:
+                    valores = minimos_por_equipa_turno[key]
+                    minimo = valores[i] if i < len(valores) else 0
+                else:
+                    minimo = 0
+
                 penal = pulp.LpVariable(f"penal_{d.strftime('%Y%m%d')}_{t}_{e}", lowBound=0, cat="Continuous")
                 model += penal >= minimo - y[d][t][e], f"restr_penal_{d}_{t}_{e}"
                 coverage_factor.append(penal)
