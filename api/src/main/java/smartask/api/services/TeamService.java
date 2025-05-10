@@ -149,6 +149,24 @@ public class TeamService {
     }
 
 
+    public void deleteTeam(String teamId) {
+        Team team = getTeamById(teamId);
+
+        // Remove o teamId de todos os employees
+        List<String> employeeIds = team.getEmployeeIds();
+        for (String employeeId : employeeIds) {
+            Employee employee = employeeService.getEmployeeById(employeeId);
+            Set<String> teamIds = employee.getTeamIds();
+            if (teamIds.contains(teamId)) {
+                teamIds.remove(teamId);
+                employee.setTeamIds(teamIds);
+                employeeService.saveEmployee(employee);
+            }
+        }
+
+        // Finalmente, apaga o time do banco
+        teamRepository.deleteById(teamId);
+    }
 
 
 

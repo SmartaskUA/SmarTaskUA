@@ -96,6 +96,13 @@ public class TeamController {
         return ResponseEntity.ok("Employee removed from team successfully");
     }
 
+    @Operation(summary = "Delete a team by ID and remove it from all employees")
+    @DeleteMapping("/{teamId}")
+    public ResponseEntity<String> deleteTeam(@PathVariable String teamId) {
+        teamService.deleteTeam(teamId);
+        return ResponseEntity.ok("Team deleted successfully");
+    }
+
 
 
 }
