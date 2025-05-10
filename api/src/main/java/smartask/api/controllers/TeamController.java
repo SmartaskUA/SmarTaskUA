@@ -75,6 +75,16 @@ public class TeamController {
         return ResponseEntity.ok("First preference set successfully");
     }
 
+    @Operation(summary = "Set team at specific position for an employee")
+    @PutMapping("/{employeeId}/set-team-preference-index/{teamName}/{position}")
+    public ResponseEntity<String> setEmployeeTeamAtPosition(
+            @PathVariable String employeeId,
+            @PathVariable String teamName,
+            @PathVariable int position
+    ) {
+        teamService.setEmployeeTeamAtPosition(employeeId, teamName, position);
+        return ResponseEntity.ok("Team position set successfully");
+    }
 
 
 }

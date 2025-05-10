@@ -88,6 +88,40 @@ public class TeamService {
         teamRepository.save(team);
     }
 
+    public void setEmployeeTeamAtPosition(String employeeId, String teamName, int position) {
+        // Busca employee
+        Employee employee = employeeService.getEmployeeById(employeeId);
+
+        // Busca team pelo nome
+        Team team = teamRepository.findByName(teamName)
+                .orElseThrow(() -> new IllegalArgumentException("Team with name " + teamName + " not found"));
+
+        // Prepara a lista ordenada
+        List<String> teamIdList = employee.getTeamIds() != null ? new ArrayList<>(employee.getTeamIds()) : new ArrayList<>();
+
+        // Remove se já existir na lista
+        teamIdList.remove(team.getId());
+
+        // Corrige a posição (Java é indexado em 0)
+        int insertIndex = Math.max(0, Math.min(position - 1, teamIdList.size()));
+        teamIdList.add(insertIndex, team.getId());
+
+        // Atualiza o employee
+        employee.setTeamIds(new LinkedHashSet<>(teamIdList));
+
+        // Atualiza o team, adicionando employeeId se necessário
+        List<String> employeeIds = team.getEmployeeIds() != null ? new ArrayList<>(team.getEmployeeIds()) : new ArrayList<>();
+        if (!employeeIds.contains(employeeId)) {
+            employeeIds.add(employeeId);
+            team.setEmployeeIds(employeeIds);
+        }
+
+        // Salva ambos
+        employeeService.saveEmployee(employee);
+        teamRepository.save(team);
+    }
+
+
 
 
     public void saveTeam(Team team) {
