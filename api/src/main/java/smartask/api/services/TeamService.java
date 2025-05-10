@@ -123,6 +123,32 @@ public class TeamService {
         teamRepository.save(team);
     }
 
+    public void removeEmployeeFromTeam(String employeeId, String teamName) {
+        // Busca o time pelo nome
+        Team team = teamRepository.findAll().stream()
+                .filter(t -> t.getName().equals(teamName))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Team not found"));
+
+        // Remove o employeeId da lista do time
+        List<String> employeeIds = team.getEmployeeIds();
+        if (employeeIds.contains(employeeId)) {
+            employeeIds.remove(employeeId);
+            team.setEmployeeIds(employeeIds);
+            saveTeam(team);
+        }
+
+        // Remove o teamId do employee
+        Employee employee = employeeService.getEmployeeById(employeeId);
+        Set<String> teamIds = employee.getTeamIds();
+        if (teamIds.contains(team.getId())) {
+            teamIds.remove(team.getId());
+            employee.setTeamIds(teamIds);
+            employeeService.saveEmployee(employee);
+        }
+    }
+
+
 
 
 

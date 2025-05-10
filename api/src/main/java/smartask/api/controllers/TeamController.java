@@ -87,5 +87,15 @@ public class TeamController {
         return ResponseEntity.ok("Team position set successfully");
     }
 
+    @Operation(summary = "Remove an employee from a team by name")
+    @DeleteMapping("/{teamName}/remove-employee/{employeeId}")
+    public ResponseEntity<String> removeEmployeeFromTeam(
+            @PathVariable String teamName,
+            @PathVariable String employeeId) {
+        teamService.removeEmployeeFromTeam(employeeId, teamName);
+        return ResponseEntity.ok("Employee removed from team successfully");
+    }
+
+
 
 }
