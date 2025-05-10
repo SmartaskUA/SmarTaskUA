@@ -43,38 +43,38 @@ nTurnos = 2                     # Número de turnos por dia (Manhã e Tarde)
 
 # Definindo os feriados
 feriados = [1, 108, 110, 115, 121, 161, 170, 227, 278, 305, 335, 342, 359] 
+import pandas as pd
 
 def ler_minimos_csv(minimuns, nDias):
-    # Converte a lista de listas (incluindo o cabeçalho) para um DataFrame
-    df = pd.DataFrame(minimuns[1:], columns=minimuns[0])
+    n_dias_totais = len(minimuns[0]) - 3
+    colunas = ['equipa', 'tipo', 'turno'] + [f'dia_{i+1}' for i in range(n_dias_totais)]
 
-    # Remove espaços extras
-    df['Equipa'] = df['Equipa'].str.strip()
-    df['Tipo'] = df['Tipo'].str.strip()
-    df['Turno'] = df['Turno'].str.strip()
+    # Cria o DataFrame
+    df = pd.DataFrame(minimuns, columns=colunas)
 
-    # Filtrar as linhas relevantes
-    A_manha = df[(df['Equipa'] == 'Equipa A') & (df['Tipo'] == 'Minimo') & (df['Turno'] == 'M')]
-    A_tarde = df[(df['Equipa'] == 'Equipa A') & (df['Tipo'] == 'Minimo') & (df['Turno'] == 'T')]
-    B_manha = df[(df['Equipa'] == 'Equipa B') & (df['Tipo'] == 'Minimo') & (df['Turno'] == 'M')]
-    B_tarde = df[(df['Equipa'] == 'Equipa B') & (df['Tipo'] == 'Minimo') & (df['Turno'] == 'T')]
+    # Normaliza strings
+    df['equipa'] = df['equipa'].str.strip()
+    df['tipo'] = df['tipo'].str.strip()
+    df['turno'] = df['turno'].str.strip()
 
-    # Converter os dados para inteiros (ignorando as 3 primeiras colunas)
-    minimos_equipa_A_manha = A_manha.iloc[0, 3:].astype(int).values[:nDias]
-    minimos_equipa_A_tarde = A_tarde.iloc[0, 3:].astype(int).values[:nDias]
-    minimos_equipa_B_manha = B_manha.iloc[0, 3:].astype(int).values[:nDias]
-    minimos_equipa_B_tarde = B_tarde.iloc[0, 3:].astype(int).values[:nDias]
+    # Filtros
+    A_manha = df[(df['equipa'] == 'Equipa A') & (df['tipo'] == 'Minimo') & (df['turno'] == 'M')]
+    A_tarde = df[(df['equipa'] == 'Equipa A') & (df['tipo'] == 'Minimo') & (df['turno'] == 'T')]
+    B_manha = df[(df['equipa'] == 'Equipa B') & (df['tipo'] == 'Minimo') & (df['turno'] == 'M')]
+    B_tarde = df[(df['equipa'] == 'Equipa B') & (df['tipo'] == 'Minimo') & (df['turno'] == 'T')]
+
+    # Função segura de extração
+    def extrair_minimos(linha):
+        if linha.empty:
+            return [0] * nDias
+        return linha.iloc[0, 3:3 + nDias].astype(int).values
 
     return (
-        minimos_equipa_A_manha,
-        minimos_equipa_A_tarde,
-        minimos_equipa_B_manha,
-        minimos_equipa_B_tarde,
+        extrair_minimos(A_manha),
+        extrair_minimos(A_tarde),
+        extrair_minimos(B_manha),
+        extrair_minimos(B_tarde),
     )
-
-
-
-
 
 
 # Função para definir férias lendo um lista
@@ -294,10 +294,10 @@ def salvar_csv(horario, Ferias, nTurnos, nDias, Prefs):
 
 def solve(vacations, minimuns, employees):
     Prefs = gerar_preferencias_automatica(employees)
-    print(Prefs) 
+    print("preferencias : ",Prefs) 
     
     Ferias = ler_ferias_csv(vacations, nDias)
-    print(Ferias) 
+    # print("ferias",Ferias) 
     minimuns = ler_minimos_csv(minimuns, nDias)
     nTrabs = len(Prefs)
 
