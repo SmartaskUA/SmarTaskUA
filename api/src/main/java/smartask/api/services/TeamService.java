@@ -24,7 +24,9 @@ public class TeamService {
         return teamRepository.findAll();
     }
 
-    public void addTeam(Team team) {
+    public void addTeam(String teamName) {
+        Team team = new Team(teamName);
+        team.setEmployeeIds(new ArrayList<>());  // começa vazio, por segurança
         saveTeam(team);
     }
 

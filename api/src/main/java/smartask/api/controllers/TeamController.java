@@ -43,10 +43,11 @@ public class TeamController {
 
     @Operation(summary = "Add a new team")
     @PostMapping("/")
-    public ResponseEntity<String> addTeam(@RequestBody Team team) {
-        teamService.addTeam(team);
+    public ResponseEntity<String> addTeam(@RequestBody String teamName) {
+        teamService.addTeam(teamName);
         return ResponseEntity.ok("Team created successfully");
     }
+
 
     @Operation(summary = "Update a team")
     @PutMapping("/{id}")
