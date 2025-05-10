@@ -10,6 +10,7 @@ import io
 # ]
 
 def gerar_preferencias_automatica(employees):
+    print("employes",employees)
     Prefs = []
     for emp in employees:
         equipes = emp.get('teams', [])
@@ -58,7 +59,7 @@ def ler_minimos_csv(minimuns, nDias):
     B_manha = df[(df['Equipa'] == 'Equipa B') & (df['Tipo'] == 'Minimo') & (df['Turno'] == 'M')]
     B_tarde = df[(df['Equipa'] == 'Equipa B') & (df['Tipo'] == 'Minimo') & (df['Turno'] == 'T')]
 
-    # Converter os dados (ignorando as 3 primeiras colunas) para inteiros
+    # Converter os dados para inteiros (ignorando as 3 primeiras colunas)
     minimos_equipa_A_manha = A_manha.iloc[0, 3:].astype(int).values[:nDias]
     minimos_equipa_A_tarde = A_tarde.iloc[0, 3:].astype(int).values[:nDias]
     minimos_equipa_B_manha = B_manha.iloc[0, 3:].astype(int).values[:nDias]
@@ -70,6 +71,7 @@ def ler_minimos_csv(minimuns, nDias):
         minimos_equipa_B_manha,
         minimos_equipa_B_tarde,
     )
+
 
 
 
@@ -290,11 +292,13 @@ def salvar_csv(horario, Ferias, nTurnos, nDias, Prefs):
 
     return output.getvalue() 
 
-def solve(vacations, minimuns, employees = None):
+def solve(vacations, minimuns, employees):
     Prefs = gerar_preferencias_automatica(employees)
+    print(Prefs) 
     
     Ferias = ler_ferias_csv(vacations, nDias)
-    minimos = ler_minimos_csv(minimuns, nDias)
+    print(Ferias) 
+    minimuns = ler_minimos_csv(minimuns, nDias)
     nTrabs = len(Prefs)
 
     start_time = time.time()
