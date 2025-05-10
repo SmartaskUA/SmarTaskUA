@@ -6,14 +6,15 @@ import smartask.api.models.Employee;
 import smartask.api.models.Team;
 import smartask.api.repositories.TeamRepository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class TeamService {
     @Autowired
     private TeamRepository teamRepository;
+
+    @Autowired
+    private EmployeeService employeeService;
 
     public TeamService(TeamRepository teamRepository) {
         this.teamRepository = teamRepository;
@@ -58,6 +59,36 @@ public class TeamService {
         team.setEmployeeIds(currentEmployeeIds);
         saveTeam(team);
     }
+
+    public void setEmployeeFirstPreference(String employeeId, String teamName) {
+        // Busca o employee
+        Employee employee = employeeService.getEmployeeById(employeeId);
+
+        // Busca o team pelo nome
+        Team team = teamRepository.findByName(teamName)
+                .orElseThrow(() -> new IllegalArgumentException("Team with name " + teamName + " not found"));
+
+        // Atualiza o set de teamIds do employee (LinkedHashSet para garantir ordem)
+        Set<String> currentTeamIds = employee.getTeamIds() != null ? new LinkedHashSet<>(employee.getTeamIds()) : new LinkedHashSet<>();
+        currentTeamIds.remove(team.getId());  // Remove se já estiver
+        LinkedHashSet<String> updatedTeamIds = new LinkedHashSet<>();
+        updatedTeamIds.add(team.getId());     // Adiciona como primeira preferência
+        updatedTeamIds.addAll(currentTeamIds);
+        employee.setTeamIds(updatedTeamIds);
+
+        // Atualiza o list de employeeIds do team (ArrayList mantendo ordem)
+        List<String> currentEmployeeIds = team.getEmployeeIds() != null ? new ArrayList<>(team.getEmployeeIds()) : new ArrayList<>();
+        if (!currentEmployeeIds.contains(employeeId)) {
+            currentEmployeeIds.add(employeeId);
+            team.setEmployeeIds(currentEmployeeIds);
+        }
+
+        // Salva ambos no banco
+        employeeService.saveEmployee(employee);
+        teamRepository.save(team);
+    }
+
+
 
     public void saveTeam(Team team) {
         teamRepository.save(team);
