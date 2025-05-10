@@ -24,31 +24,32 @@ feriados = [1, 108, 110, 115, 121, 161, 170, 227, 278, 305, 335, 342, 359]
 
 
 def ler_minimos_csv(minimuns, nDias):
-    minimos_equipa_A_manha = np.zeros(nDias, dtype=int)
-    minimos_equipa_A_tarde = np.zeros(nDias, dtype=int)
-    minimos_equipa_B_manha = np.zeros(nDias, dtype=int)
-    minimos_equipa_B_tarde = np.zeros(nDias, dtype=int)
+    # Converte a lista de listas (incluindo o cabeçalho) para um DataFrame
+    df = pd.DataFrame(minimuns[1:], columns=minimuns[0])
 
-    for i in range(nDias):
-        try:
-            val1 = str(minimuns[1][i]) if i < len(minimuns[1]) else ""
-            val2 = str(minimuns[1][i + 1])if i + 1 < len(minimuns[1]) else ""
-            val3 = str(minimuns[2][i])if i < len(minimuns[2]) else ""
-            val4 = str(minimuns[2][i + 1]) if i + 1 < len(minimuns[2]) else ""
+    # Remove espaços extras
+    df['Equipa'] = df['Equipa'].str.strip()
+    df['Tipo'] = df['Tipo'].str.strip()
+    df['Turno'] = df['Turno'].str.strip()
 
-            if "minimo" in val1:
-                minimos_equipa_A_manha[i] = 1
-            if "minimo" in val2:
-                minimos_equipa_A_tarde[i] = 1
-            if "minimo" in val3:
-                minimos_equipa_B_manha[i] = 1
-            if "minimo" in val4:
-                minimos_equipa_B_tarde[i] = 1
+    # Filtrar as linhas relevantes
+    A_manha = df[(df['Equipa'] == 'Equipa A') & (df['Tipo'] == 'Minimo') & (df['Turno'] == 'M')]
+    A_tarde = df[(df['Equipa'] == 'Equipa A') & (df['Tipo'] == 'Minimo') & (df['Turno'] == 'T')]
+    B_manha = df[(df['Equipa'] == 'Equipa B') & (df['Tipo'] == 'Minimo') & (df['Turno'] == 'M')]
+    B_tarde = df[(df['Equipa'] == 'Equipa B') & (df['Tipo'] == 'Minimo') & (df['Turno'] == 'T')]
 
-        except Exception as e:
-            print(f"[ler_minimos_csv] Erro no índice {i}: {e}")
+    # Converter os dados (ignorando as 3 primeiras colunas) para inteiros
+    minimos_equipa_A_manha = A_manha.iloc[0, 3:].astype(int).values[:nDias]
+    minimos_equipa_A_tarde = A_tarde.iloc[0, 3:].astype(int).values[:nDias]
+    minimos_equipa_B_manha = B_manha.iloc[0, 3:].astype(int).values[:nDias]
+    minimos_equipa_B_tarde = B_tarde.iloc[0, 3:].astype(int).values[:nDias]
 
-    return minimos_equipa_A_manha, minimos_equipa_A_tarde, minimos_equipa_B_manha, minimos_equipa_B_tarde
+    return (
+        minimos_equipa_A_manha,
+        minimos_equipa_A_tarde,
+        minimos_equipa_B_manha,
+        minimos_equipa_B_tarde,
+    )
 
 # Função para definir férias lendo um lista
 def ler_ferias_csv(vacations, nDias):
@@ -274,12 +275,12 @@ def salvar_csv(horario, Ferias, nTurnos, nDias, Prefs):
 
     return output.getvalue() 
 
-def solve(vacations, minimuns):
-    
+def solve(vacations, minimuns, employees = None):
+    if employees is None:
+        employees = Prefs 
     print("vacations", vacations)
     print("minimuns", minimuns)
-    print(f"minimuns[1] type: {type(minimuns[1])}")
-    print(f"vacations type: {type(vacations)}")
+    print("employees", employees)
     Ferias = ler_ferias_csv(vacations, nDias)
     minimos = ler_minimos_csv(minimuns, nDias)
 
