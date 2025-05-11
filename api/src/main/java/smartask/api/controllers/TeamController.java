@@ -57,12 +57,12 @@ public class TeamController {
     }
 
     @Operation(summary = "Add employees to a team")
-    @PostMapping("/{teamId}/add-employees")
+    @PostMapping("/{teamName}/add-employees")
     public ResponseEntity<String> addEmployeesToTeam(
-            @PathVariable String teamId,
+            @PathVariable String teamName,
             @RequestBody AddEmployeesToTeamRequest request
     ) {
-        teamService.addEmployeesToTeam(teamId, request.getEmployeeIds(), employeeService);
+        teamService.addEmployeesToTeam(teamName, request.getEmployeeIds());
         return ResponseEntity.ok("Employees added to team successfully");
     }
 
@@ -96,10 +96,10 @@ public class TeamController {
         return ResponseEntity.ok("Employee removed from team successfully");
     }
 
-    @Operation(summary = "Delete a team by ID and remove it from all employees")
-    @DeleteMapping("/{teamId}")
-    public ResponseEntity<String> deleteTeam(@PathVariable String teamId) {
-        teamService.deleteTeam(teamId);
+    @Operation(summary = "Delete a team by Name and remove it from all employees")
+    @DeleteMapping("/{teamName}")
+    public ResponseEntity<String> deleteTeam(@PathVariable String teamName) {
+        teamService.deleteTeam(teamName);
         return ResponseEntity.ok("Team deleted successfully");
     }
 

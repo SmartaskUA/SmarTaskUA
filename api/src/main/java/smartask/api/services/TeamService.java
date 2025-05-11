@@ -41,8 +41,13 @@ public class TeamService {
         saveTeam(teamToUpdate);
     }
 
-    public void addEmployeesToTeam(String teamId, List<String> employeeIds, EmployeeService employeeService) {
-        Team team = getTeamById(teamId);
+    public void addEmployeesToTeam(String teamName, List<String> employeeIds) {
+        Team team = teamRepository.findAll().stream()
+                .filter(t -> t.getName().equals(teamName))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Team with name '" + teamName + "' not found"));
+
+        String teamId = team.getId();
         List<String> currentEmployeeIds = team.getEmployeeIds() != null ? team.getEmployeeIds() : new ArrayList<>();
 
         for (String empId : employeeIds) {
@@ -61,6 +66,7 @@ public class TeamService {
         team.setEmployeeIds(currentEmployeeIds);
         saveTeam(team);
     }
+
 
     public void setEmployeeFirstPreference(String employeeId, String teamName) {
         // Busca o employee
@@ -149,8 +155,13 @@ public class TeamService {
     }
 
 
-    public void deleteTeam(String teamId) {
-        Team team = getTeamById(teamId);
+    public void deleteTeam(String teamName) {
+        Team team = teamRepository.findAll().stream()
+                .filter(t -> t.getName().equals(teamName))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Team with name '" + teamName + "' not found"));
+
+        String teamId = team.getId();
 
         // Remove o teamId de todos os employees
         List<String> employeeIds = team.getEmployeeIds();
@@ -167,6 +178,7 @@ public class TeamService {
         // Finalmente, apaga o time do banco
         teamRepository.deleteById(teamId);
     }
+
 
 
 
