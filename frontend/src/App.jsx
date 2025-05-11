@@ -12,7 +12,6 @@ import CreateCalendar from "./Manager/CreateCalendar";
 import GenerateVacations from "./Manager/GenerateVacations";
 import ImportMinimums from "./Manager/ImportMinimums";
 import { AuthProvider } from "./context/AuthContext";
-import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./components/NotFound";
 import CompareCalendar from "./Manager/CompareCalendar";
 
@@ -22,18 +21,18 @@ const App = () => {
       <Router>
         <Routes>
           <Route path="/" element={<Login />} />
-          <Route path="/admin" element={<ProtectedRoute role="admin"><Admin /></ProtectedRoute>} />
-          <Route path="/admin/add_algor" element={<ProtectedRoute role="admin"><Add_Algor /></ProtectedRoute>} />
-          <Route path="/manager" element={<ProtectedRoute role="manager"><Manager /></ProtectedRoute>} />
-          <Route path="/manager/listcalendar" element={<ProtectedRoute role="manager"><List_Calendar /></ProtectedRoute>} />
-          <Route path="/manager/teams" element={<ProtectedRoute role="manager"><Teams /></ProtectedRoute>} />
-          <Route path="/manager/employer" element={<ProtectedRoute role="manager"><Employer /></ProtectedRoute>} />
-          <Route path="/manager/calendar/:calendarId" element={<ProtectedRoute role="manager"><Calendar /></ProtectedRoute>} />
-          <Route path="/manager/createCalendar" element={<ProtectedRoute role="manager"><CreateCalendar /></ProtectedRoute>} />
-          <Route path="/manager/compareCalendar" element={<ProtectedRoute role="manager"><CompareCalendar /></ProtectedRoute>} />
-          <Route path="/manager/generatevacations" element={<ProtectedRoute role="manager"><GenerateVacations /></ProtectedRoute>} />
-          <Route path="/manager/importminimus" element={<ProtectedRoute role="manager"><ImportMinimums /></ProtectedRoute>} />
-          <Route path="/manager/teams" element={<ProtectedRoute role="manager"><Teams /></ProtectedRoute>} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/add_algor" element={<Add_Algor />} />
+          <Route path="/manager" element={<Manager />} />
+          <Route path="/manager/listcalendar" element={<List_Calendar />} />
+          <Route path="/manager/teams" element={<Teams />} />
+          <Route path="/manager/employer" element={<Employer />} />
+          <Route path="/manager/calendar/:calendarId" element={<Calendar />} />
+          <Route path="/manager/createCalendar" element={<CreateCalendar />} />
+          <Route path="/manager/compareCalendar" element={<CompareCalendar />} />
+          <Route path="/manager/generatevacations" element={<GenerateVacations />} />
+          <Route path="/manager/importminimus" element={<ImportMinimums />} />
+          <Route path="/manager/teams" element={<Teams />} />
 
           <Route path="/manager/*" element={<NotFound />} />
           <Route path="/admin/*" element={<NotFound />} />

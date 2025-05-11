@@ -29,8 +29,9 @@ public class ApiApplication {
 		return args -> {
 			Team teamA = teamService.getTeams().stream().filter(team -> "Equipa A".equals(team.getName())).findFirst().orElse(null);
 			if (teamA == null) {
-				teamA = new Team("Equipa A");
-				teamService.addTeam(teamA);
+				teamService.addTeam("Equipa A");
+				teamA = teamService.getTeams().stream().filter(team -> "Equipa A".equals(team.getName())).findFirst().orElse(null);
+
 				for (int i = 1; i <= 9; i++) {
 					Employee employee = new Employee("Employee " + i);
 					employeeService.addEmployee(employee);
@@ -44,8 +45,9 @@ public class ApiApplication {
 
 			Team teamB = teamService.getTeams().stream().filter(team -> "Equipa B".equals(team.getName())).findFirst().orElse(null);
 			if (teamB == null) {
-				teamB = new Team("Equipa B");
-				teamService.addTeam(teamB);
+				teamService.addTeam("Equipa B");
+				teamB = teamService.getTeams().stream().filter(team -> "Equipa B".equals(team.getName())).findFirst().orElse(null);
+
 				for (int i = 10; i <= 12; i++) {
 					Employee employee = new Employee("Employee " + i);
 					employeeService.addEmployee(employee);
