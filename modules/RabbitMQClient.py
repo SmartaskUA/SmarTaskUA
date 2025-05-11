@@ -135,10 +135,20 @@ class RabbitMQClient:
                 employees=employees_data
             )
 
+            # Construção do campo metadata com os 5 itens solicitados
+            metadata = {
+                "vacationTemplate": vacations_data,
+                "minimunsTemplate": minimuns_data,
+                "employeesTeamInfo": employees_data,
+                "algorithmType": algorithm_name,
+                "scheduleName": title
+            }
+
             self.mongodb_client.insert_schedule(
                 data=schedule_data,
                 title=title,
-                algorithm=algorithm_name
+                algorithm=algorithm_name,
+                metadata=metadata
             )
 
             print(f"[RabbitMQClient] Schedule complete for Task ID: {task_id}")
