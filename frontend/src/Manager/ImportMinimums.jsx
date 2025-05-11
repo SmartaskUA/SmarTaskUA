@@ -81,19 +81,19 @@ const ImportMinimums = () => {
   }, []);
 
   return (
-    <div className="admin-container">
+    <div className="admin-container" style={{ overflow: "auto", height: "100vh" }}>
       <Sidebar_Manager />
-      <div className="main-content" style={{ padding: 20  , marginRight: "5%" }}>
-        <Typography variant="h4" gutterBottom >
+      <div className="main-content" style={{ padding: 20, marginRight: "2%", maxWidth: "100%" }}>
+        <Typography variant="h4" gutterBottom>
           Importar Mínimos por Dia
         </Typography>
 
-        <Paper style={{ padding: 20, marginBottom: 20, width: "100%", marginTop: 50 }}>
+        <Paper style={{ padding: 20, marginBottom: 20, width: "60%", marginTop: 30 }}>
           <Typography variant="h6" gutterBottom>
             Nome do Template de Mínimos
           </Typography>
 
-          <Box display="flex" alignItems="center" gap={2} mt={2} style={{ width: "40%" }}>
+          <Box display="flex" alignItems="center" gap={2} mt={2} flexWrap="wrap">
             <TextField
               label="Nome do Template"
               value={templateName}
@@ -101,7 +101,7 @@ const ImportMinimums = () => {
               error={nameError && !templateName.trim()}
               helperText={nameError && !templateName.trim() ? "Insira um nome para o template" : ""}
               size="small"
-              sx={{ flex: 1 }}
+              sx={{ flex: 1, minWidth: "220px", maxWidth: "250px" }}
             />
             <label htmlFor="csv-upload">
               <Input
@@ -170,7 +170,7 @@ const ImportMinimums = () => {
         )}
 
         {selectedTemplate && (
-          <Box mt={4}>
+          <Box mt={4} style={{ overflowX: "auto" }}>
             <MinimumsTemplate name={selectedTemplate.name} data={selectedTemplate.minimuns} />
           </Box>
         )}
