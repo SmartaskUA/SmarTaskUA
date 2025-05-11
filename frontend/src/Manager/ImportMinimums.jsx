@@ -88,7 +88,7 @@ const ImportMinimums = () => {
           Importar Mínimos por Dia
         </Typography>
 
-        <Paper style={{ padding: 20, marginBottom: 20, width: "100%" }}>
+        <Paper style={{ padding: 20, marginBottom: 20, width: "100%", marginTop: 50 }}>
           <Typography variant="h6" gutterBottom>
             Nome do Template de Mínimos
           </Typography>
