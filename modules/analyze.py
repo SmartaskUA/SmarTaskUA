@@ -34,9 +34,15 @@ def callback(ch, method, properties, body):
         print(f"[Comparison] Processing requestId={request_id}")
         print(f"[DEBUG] Files = {files}")
 
+        teams = {
+            1: [1], 2: [1], 3: [1], 4: [1],
+            5: [1, 2], 6: [1, 2], 7: [1], 8: [1],
+            9: [1], 10: [2], 11: [2, 1], 12: [2]
+        }
+
         if len(files) == 1:
             print("[DEBUG] Running verifyKpis for file:", files[0])
-            result = verifyKpis(files[0], holidays)
+            result = verifyKpis(files[0], holidays, teams)
             print("[DEBUG] verifyKpis result:", result)
             try:
                 verification_results.insert_one({
@@ -54,7 +60,7 @@ def callback(ch, method, properties, body):
             results = {}
             for f in files:
                 print("[DEBUG] Running compareKpis for file:", f)
-                results[f] = compareKpis(f, holidays)
+                results[f] = compareKpis(f, holidays, teams)
             print("[DEBUG] compareKpis results:", results)
             try:
                 comparison_results.insert_one({

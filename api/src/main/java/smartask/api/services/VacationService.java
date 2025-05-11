@@ -13,6 +13,7 @@ import smartask.api.repositories.VacationTemplateRepository;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class VacationService {
@@ -83,14 +84,16 @@ public class VacationService {
             for (CSVRecord record : csvParser) {
                 if (record.size() < 2) continue;
 
-                String employeeName = record.get(0).trim();
+                // Remove BOM (\uFEFF), trim e normaliza espaços
+                String employeeName = record.get(0).replace("\uFEFF", "").trim();
+
                 if (!employeeName.isEmpty()) {
                     employeesInCsv.add(employeeName);
                 }
 
                 List<String> row = new ArrayList<>();
                 for (String value : record) {
-                    row.add(value.trim());
+                    row.add(value.replace("\uFEFF", "").trim());
                 }
                 vacations.add(row);
             }
@@ -98,15 +101,21 @@ public class VacationService {
 
         // Validação: checa se todos os funcionários existem no sistema
         List<Employee> existingEmployees = employeeRepository.findAll();
-        Set<String> existingNames = new HashSet<>();
-        for (Employee emp : existingEmployees) {
-            existingNames.add(emp.getName());
-        }
+        Set<String> existingNames = existingEmployees.stream()
+                .map(emp -> emp.getName().trim())
+                .collect(Collectors.toSet());
 
+        // Checa se todos os nomes do CSV existem no banco
         for (String nameInCsv : employeesInCsv) {
             if (!existingNames.contains(nameInCsv)) {
-                throw new IllegalArgumentException("Funcionário inexistente: " + nameInCsv);
+                throw new IllegalArgumentException("Funcionário inexistente no banco de dados: " + nameInCsv);
             }
+        }
+
+        // Checa se o número total de funcionários no CSV é igual ao do banco
+        if (employeesInCsv.size() != existingNames.size()) {
+            throw new IllegalArgumentException("Número de funcionários no CSV (" + employeesInCsv.size() +
+                    ") difere do número de funcionários no banco de dados (" + existingNames.size() + ").");
         }
 
         VacationTemplate template = VacationTemplate.builder()
@@ -116,6 +125,7 @@ public class VacationService {
 
         vacationTemplateRepository.save(template);
     }
+
 
 
 
