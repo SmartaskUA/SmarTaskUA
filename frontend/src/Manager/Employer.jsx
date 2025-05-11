@@ -18,7 +18,7 @@ const Employer = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openAddDialog, setOpenAddDialog] = useState(false);
-  const [newEmployee, setNewEmployee] = useState({ id: "", name: "", team: [] });
+  const [newEmployee, setNewEmployee] = useState({ id: "", name: "", team: [], preferences: {} });
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
@@ -37,7 +37,6 @@ const Employer = () => {
         setEmployees(response.data);
         setFilteredEmployees(response.data);
         setLoading(false);
-        console.log(response.data);
       })
       .catch(() => {
         setError("Erro ao buscar employees.");
@@ -67,14 +66,42 @@ const Employer = () => {
   };
 
   const handleEditEmployee = () => {
-    axios.put(`${BaseUrl}/api/v1/employees/${selectedEmployee.id}`, selectedEmployee)
-      .then(() => { setOpenEditDialog(false); setSelectedEmployee(null); fetchEmployees(); })
-      .catch((error) => console.error("Erro ao editar employee:", error));
+    const { id, preferences, ...employeeData } = selectedEmployee;
+
+    // Atualiza os dados principais do empregado
+    axios.put(`${BaseUrl}/api/v1/employees/${id}`, employeeData)
+      .then(() => {
+        // Se houver preferências, atualiza-as também
+        if (preferences) {
+          axios.put(`${BaseUrl}/api/v1/employees/restriction/${id}`, preferences)
+            .then(() => {
+              fetchEmployees();
+              setOpenEditDialog(false);
+              setSelectedEmployee(null);
+            })
+            .catch((error) => {
+              console.error("Erro ao atualizar preferências:", error);
+              alert("Erro ao atualizar preferências");
+            });
+        } else {
+          fetchEmployees();
+          setOpenEditDialog(false);
+          setSelectedEmployee(null);
+        }
+      })
+      .catch((error) => {
+        console.error("Erro ao editar employee:", error);
+        alert("Erro ao editar empregado");
+      });
   };
 
   const handleAddEmployee = () => {
     axios.post(`${BaseUrl}/api/v1/employees/`, newEmployee)
-      .then(() => { setOpenAddDialog(false); setNewEmployee({ id: "", name: "", team: [] }); fetchEmployees(); })
+      .then(() => {
+        setOpenAddDialog(false);
+        setNewEmployee({ id: "", name: "", team: [], preferences: {} });
+        fetchEmployees();
+      })
       .catch((error) => console.error("Erro ao adicionar employee:", error));
   };
 
@@ -151,7 +178,7 @@ const Employer = () => {
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}>ID</TableCell>
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}>Nome</TableCell>
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}>Equipa</TableCell>
-                    <TableCell style={{ color: "#fff", fontWeight: "bold" }}>Restrições</TableCell>
+                    <TableCell style={{ color: "#fff", fontWeight: "bold" }}>Preferências</TableCell>
 
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}></TableCell>
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}></TableCell>
@@ -175,14 +202,14 @@ const Employer = () => {
                         <TableCell>{emp.name}</TableCell>
                         <TableCell>{teamDisplay}</TableCell>
                         <TableCell>
-                          {emp.restrictions && Object.keys(emp.restrictions).length > 0 ? (
-                            Object.entries(emp.restrictions).map(([key, value]) => (
+                          {emp.preferences && Object.keys(emp.preferences).length > 0 ? (
+                            Object.entries(emp.preferences).map(([key, value]) => (
                               <div key={key}>
                                 {key}: {value.toString()}
                               </div>
                             ))
                           ) : (
-                            <em>Sem restrições</em>
+                            <em>Sem preferências</em>
                           )}
                         </TableCell>
 
@@ -334,6 +361,23 @@ const Employer = () => {
                     ))}
                   </Select>
                 </FormControl>
+
+                {/* Preferências */}
+                <TextField
+                  margin="dense"
+                  label="Turno preferido"
+                  fullWidth
+                  value={selectedEmployee.preferences?.shift || ""}
+                  onChange={(e) =>
+                    setSelectedEmployee({
+                      ...selectedEmployee,
+                      preferences: {
+                        ...selectedEmployee.preferences,
+                        shift: e.target.value,
+                      },
+                    })
+                  }
+                />
               </>
             )}
           </DialogContent>
