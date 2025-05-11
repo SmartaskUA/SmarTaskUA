@@ -137,9 +137,9 @@ const Employer = () => {
   };
 
   return (
-    <div className="admin-container" style={{ display: "flex", minHeight: "100vh" }}>
+    <div className="admin-container" style={{ display: "flex", minHeight: "100vh"}}>
       <Sidebar_Manager />
-      <div className="main-content" style={{ flex: 1, padding: "20px" }}>
+      <div className="main-content" style={{ flex: 1, padding: "20px",  marginRight: 52 }}>
         <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h4">List of Employees</Typography>
           <Box>

@@ -259,7 +259,7 @@ const Teams = () => {
   return (
     <div className="admin-container">
       <Sidebar_Manager />
-      <div className="main-content" style={{ flex: 1, padding: "20px" }}>
+      <div className="main-content" style={{ flex: 1, padding: "20px", marginRight: 52 }}>
         <Box sx={{ padding: 4, flexGrow: 1 }}>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
             <Typography variant="h4" gutterBottom>
