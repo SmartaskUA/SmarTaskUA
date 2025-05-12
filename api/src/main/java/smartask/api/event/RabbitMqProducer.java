@@ -39,15 +39,15 @@ public class RabbitMqProducer {
 
     public String requestScheduleMessage(ScheduleRequest schedule) {
         //Verify the existence of the vacationTemplate
-            String res ;
-            final Optional<VacationTemplate> vactemp = vacationTemplateRepository.findByName(schedule.getVacationTemplate());
-            if (vactemp.isEmpty()){
-                return res= "Vacation template not found";
-            }
+        String res ;
+        final Optional<VacationTemplate> vactemp = vacationTemplateRepository.findByName(schedule.getVacationTemplate());
+        if (vactemp.isEmpty()){
+            return res = "Vacation template not found";
+        }
 
         final Optional<ReferenceTemplate> mins = referenceTemplateRepository.findByName(schedule.getMinimuns());
         if (mins.isEmpty()){
-            return res= "minimuns template not found";
+            return res = "minimuns template not found";
         }
         try {
 

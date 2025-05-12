@@ -193,7 +193,9 @@ def parse_requirements(file_path):
 
 
 def solve(vacations, minimuns, employees):
+    print(f"[GreedyRandomized] Executando Greedy Randomized Scheduling")
     num_employees = len(employees)
+    print(f"[GreedyRandomized] Número de funcionários: {num_employees}")
     num_days      = 365
     feriados      = holidays.country_holidays("PT", years=[2025])
 
@@ -238,5 +240,5 @@ def solve(vacations, minimuns, employees):
     return output
 
 
-scheduler = schedule()
-export_schedule_to_csv(scheduler)
+# scheduler = schedule()
+# export_schedule_to_csv(scheduler)

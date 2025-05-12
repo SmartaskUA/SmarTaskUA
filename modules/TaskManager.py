@@ -22,9 +22,9 @@ class TaskManager:
                  vacations=None,
                  minimuns=None,
                  employees=None):
-        #print(f"\n[DEBUG] Current employee set:\n{employees}")
+        print(f"\n[DEBUG] Current employee set:\n{employees}")
         print(f"\n[DEBUG] Vacations received:\n{vacations}")
-        #print(f"\n[DEBUG] Minimuns received:\n{minimuns}")
+        print(f"\n[DEBUG] Minimuns received:\n{minimuns}")
 
         if algorithm_name not in self.algorithms:
             raise ValueError(f"Algoritmo '{algorithm_name}' não encontrado.")
@@ -33,7 +33,7 @@ class TaskManager:
         algorithm = self.algorithms[algorithm_name]
 
         # Verifica assinatura e repassa os argumentos corretamente
-        if algorithm_name == "linear programming" or algorithm_name == "hill climbing":
+        if algorithm_name == "linear programming" or algorithm_name == "hill climbing" or algorithm_name == "Greedy Randomized":
             # Passa vacations, minimuns e employees explicitamente
             schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees)
         else:
