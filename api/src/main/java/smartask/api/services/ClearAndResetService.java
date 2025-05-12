@@ -3,6 +3,7 @@ package smartask.api.services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import smartask.api.models.Employee;
+import smartask.api.repositories.SchedulesRepository;
 import smartask.api.services.EmployeeService;
 import smartask.api.services.TeamService;
 import smartask.api.repositories.TeamRepository;
@@ -20,6 +21,8 @@ public class ClearAndResetService {
     private  TeamService teamService;
     @Autowired
     private  EmployeeService employeeService;
+    @Autowired
+    private SchedulesRepository schedulesRepository;
 
 
     /**
@@ -65,5 +68,9 @@ public class ClearAndResetService {
                 .filter(e -> e.getName().equals("Employee 11"))
                 .map(Employee::getId)
                 .forEach(id -> teamService.addEmployeesToTeam("Equipa A", List.of(id)));
+    }
+
+    public void deleteAllSchedules() {
+        schedulesRepository.deleteAll();
     }
 }

@@ -19,4 +19,14 @@ public class ClearAndResetController {
         service.clearAndResetData();
         return "Dados de funcionários e equipes foram resetados com sucesso.";
     }
+
+    /**
+     * Endpoint para deletar todos os documentos da coleção "schedules".
+     */
+    @DeleteMapping("delete-schedules")
+    public String deleteAllSchedules() {
+        service.deleteAllSchedules();
+        return "Todos os documentos da coleção 'schedules' foram deletados com sucesso.";
+    }
+
 }
