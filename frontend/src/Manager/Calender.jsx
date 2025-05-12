@@ -8,6 +8,7 @@ import BarChartDropdown from "../components/manager/BarChartDropdown";
 import BarChartDropdownFolgasFerias from "../components/manager/BarChartDropdownFolgasFerias";
 import KPIReport from "../components/manager/KPIReport";
 import BaseUrl from "../components/BaseUrl";
+import MetadataInfo from "../components/manager/MetadataInfo";
 
 const Calendar = () => {
   const [data, setData] = useState([]);
@@ -15,6 +16,8 @@ const Calendar = () => {
   const [startDay, setStartDay] = useState(1);
   const [endDay, setEndDay] = useState(31);
   const { calendarId } = useParams();
+  const [metadata, setMetadata] = useState(null); 
+
 
   const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
   const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -73,15 +76,25 @@ const checkUnderworkedEmployees = () => {
 };
 
 
+useEffect(() => {
+  const baseUrl = BaseUrl;
 
-  useEffect(() => {
-    const baseUrl = BaseUrl;
-    axios.get(`${baseUrl}/schedules/fetch/${calendarId}`)
-      .then((response) => {
-        if (response.data) setData(response.data.data);
-      })
-      .catch(console.error);
-  }, [calendarId]);
+  axios.get(`${baseUrl}/schedules/fetch/${calendarId}`)
+    .then((response) => {
+      if (response.data) {
+        setData(response.data.data);
+        setMetadata(response.data.metadata); // <- ESTA LINHA É ESSENCIAL
+
+        console.log("Dados recebidos:", response.data.data);
+        console.log("Metadata completo:", response.data.metadata);
+      }
+    })
+    .catch((error) => {
+      console.error("Erro ao buscar dados do calendário:", error);
+    });
+}, [calendarId]);
+
+
 
   const groupByEmployee = () => {
     const employeeDays = {};
@@ -174,6 +187,7 @@ const checkUnderworkedEmployees = () => {
           startDay={startDay}
           endDay={endDay}
         />
+        <MetadataInfo metadata={metadata} />
 
         <KPIReport
           checkScheduleConflicts={checkScheduleConflicts} // sequencia inválida T-M
