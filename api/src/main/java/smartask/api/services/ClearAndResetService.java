@@ -3,11 +3,9 @@ package smartask.api.services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import smartask.api.models.Employee;
-import smartask.api.repositories.SchedulesRepository;
+import smartask.api.repositories.*;
 import smartask.api.services.EmployeeService;
 import smartask.api.services.TeamService;
-import smartask.api.repositories.TeamRepository;
-import smartask.api.repositories.EmployeesRepository;
 
 import java.util.List;
 
@@ -23,7 +21,10 @@ public class ClearAndResetService {
     private  EmployeeService employeeService;
     @Autowired
     private SchedulesRepository schedulesRepository;
-
+    @Autowired
+    private ReferenceTemplateRepository referenceTemplateRepository;
+    @Autowired
+    private VacationTemplateRepository vacationTemplateRepository;
 
     /**
      * Apaga todos os dados de equipes e funcionários e reseta a estrutura inicial.
@@ -73,4 +74,20 @@ public class ClearAndResetService {
     public void deleteAllSchedules() {
         schedulesRepository.deleteAll();
     }
+
+    public void deleteAllReferenceTemplates() {
+        referenceTemplateRepository.deleteAll();
+    }
+
+
+
+    /**
+     * Apaga todos os documentos da coleção "vacations".
+     */
+    public void deleteAllVacationTemplates() {
+        vacationTemplateRepository.deleteAll();
+    }
+
+
+
 }
