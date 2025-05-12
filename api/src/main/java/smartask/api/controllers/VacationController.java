@@ -67,4 +67,25 @@ public class VacationController {
                 this.service.getAll()
         );
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteTemplateById(@PathVariable String id) {
+        try {
+            service.deleteTemplateById(id);
+            return ResponseEntity.ok("Template deletado com sucesso (ID: " + id + ")");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erro ao deletar: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/by-name/{name}")
+    public ResponseEntity<String> deleteTemplateByName(@PathVariable String name) {
+        try {
+            service.deleteTemplateByName(name);
+            return ResponseEntity.ok("Template deletado com sucesso (nome: " + name + ")");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erro ao deletar: " + e.getMessage());
+        }
+    }
+
 }
