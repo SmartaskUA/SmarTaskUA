@@ -5,11 +5,33 @@ import csv
 import io
 
 # Definindo as preferências dos trabalhadores
-Prefs = [
-    [0], [0], [1], [1], [0, 1], [0, 1], [1], [0], [1], [0], [1], [1]
-]
+# Prefs = [
+#     [0], [0], [1], [1], [0, 1], [0, 1], [1], [0], [1], [0], [1], [1]
+# ]
 
-nTrabs = len(Prefs)             # Número de trabalhadores (baseado no número de preferências)
+def gerar_preferencias_automatica(employees):
+    print("employes",employees)
+    Prefs = []
+    for emp in employees:
+        equipes = emp.get('teams', [])
+        
+        if not isinstance(equipes, list):
+            raise ValueError(f"'teams' não é uma lista válida no empregado: {emp}")
+        
+        if 'Equipa A' in equipes and 'Equipa B' in equipes:
+            Prefs.append([0, 1]) 
+        elif 'Equipa A' in equipes:
+            Prefs.append([0])  
+        elif 'Equipa B' in equipes:
+            Prefs.append([1])  
+        else:
+            raise ValueError(f"O empregado não pertence a nenhuma equipa conhecida: {emp}")
+    
+    return Prefs
+
+
+
+#nTrabs = len(Prefs)             # Número de trabalhadores (baseado no número de preferências)
 nDias = 365                     # Número de dias no ano
 nDiasFerias = 30                # Número de dias de férias por trabalhador
 nDiasTrabalho = 223             # Número de dias de trabalho no ano
@@ -21,35 +43,39 @@ nTurnos = 2                     # Número de turnos por dia (Manhã e Tarde)
 
 # Definindo os feriados
 feriados = [1, 108, 110, 115, 121, 161, 170, 227, 278, 305, 335, 342, 359] 
-
+import pandas as pd
 
 def ler_minimos_csv(minimuns, nDias):
-    # Converte a lista de listas (incluindo o cabeçalho) para um DataFrame
-    df = pd.DataFrame(minimuns[1:], columns=minimuns[0])
+    n_dias_totais = len(minimuns[0]) - 3
+    colunas = ['equipa', 'tipo', 'turno'] + [f'dia_{i+1}' for i in range(n_dias_totais)]
 
-    # Remove espaços extras
-    df['Equipa'] = df['Equipa'].str.strip()
-    df['Tipo'] = df['Tipo'].str.strip()
-    df['Turno'] = df['Turno'].str.strip()
+    # Cria o DataFrame
+    df = pd.DataFrame(minimuns, columns=colunas)
 
-    # Filtrar as linhas relevantes
-    A_manha = df[(df['Equipa'] == 'Equipa A') & (df['Tipo'] == 'Minimo') & (df['Turno'] == 'M')]
-    A_tarde = df[(df['Equipa'] == 'Equipa A') & (df['Tipo'] == 'Minimo') & (df['Turno'] == 'T')]
-    B_manha = df[(df['Equipa'] == 'Equipa B') & (df['Tipo'] == 'Minimo') & (df['Turno'] == 'M')]
-    B_tarde = df[(df['Equipa'] == 'Equipa B') & (df['Tipo'] == 'Minimo') & (df['Turno'] == 'T')]
+    # Normaliza strings
+    df['equipa'] = df['equipa'].str.strip()
+    df['tipo'] = df['tipo'].str.strip()
+    df['turno'] = df['turno'].str.strip()
 
-    # Converter os dados (ignorando as 3 primeiras colunas) para inteiros
-    minimos_equipa_A_manha = A_manha.iloc[0, 3:].astype(int).values[:nDias]
-    minimos_equipa_A_tarde = A_tarde.iloc[0, 3:].astype(int).values[:nDias]
-    minimos_equipa_B_manha = B_manha.iloc[0, 3:].astype(int).values[:nDias]
-    minimos_equipa_B_tarde = B_tarde.iloc[0, 3:].astype(int).values[:nDias]
+    # Filtros
+    A_manha = df[(df['equipa'] == 'Equipa A') & (df['tipo'] == 'Minimo') & (df['turno'] == 'M')]
+    A_tarde = df[(df['equipa'] == 'Equipa A') & (df['tipo'] == 'Minimo') & (df['turno'] == 'T')]
+    B_manha = df[(df['equipa'] == 'Equipa B') & (df['tipo'] == 'Minimo') & (df['turno'] == 'M')]
+    B_tarde = df[(df['equipa'] == 'Equipa B') & (df['tipo'] == 'Minimo') & (df['turno'] == 'T')]
+
+    # Função segura de extração
+    def extrair_minimos(linha):
+        if linha.empty:
+            return [0] * nDias
+        return linha.iloc[0, 3:3 + nDias].astype(int).values
 
     return (
-        minimos_equipa_A_manha,
-        minimos_equipa_A_tarde,
-        minimos_equipa_B_manha,
-        minimos_equipa_B_tarde,
+        extrair_minimos(A_manha),
+        extrair_minimos(A_tarde),
+        extrair_minimos(B_manha),
+        extrair_minimos(B_tarde),
     )
+
 
 # Função para definir férias lendo um lista
 def ler_ferias_csv(vacations, nDias):
@@ -62,12 +88,10 @@ def ler_ferias_csv(vacations, nDias):
 
     return Ferias
 
-
-
-horario = np.zeros((nTrabs, nDias, nTurnos), dtype=int)
-
-
-def atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos):
+def atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos, nDias):
+    nTrabs = len(Prefs)
+    horario = np.zeros((nTrabs, nDias, nTurnos), dtype=int)
+    
     for i in range(nTrabs): 
         dias_disponiveis = np.where(~Ferias[i])[0]
         np.random.shuffle(dias_disponiveis)
@@ -86,8 +110,6 @@ def atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos):
                 elif turno == 0:  # Manhã
                     if dia - 1 < 0 or horario[i, dia - 1, 1] == 0:
                         turnos_possiveis.append(turno)
-                else:
-                    turnos_possiveis.append(turno)
 
             if turnos_possiveis:
                 turno = np.random.choice(turnos_possiveis)
@@ -106,6 +128,8 @@ def atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos):
                         horario[i, dia, turno] = 1
                         turnos_assigned += 1
                         break
+    return horario
+
 
 #atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos)
 
@@ -118,28 +142,20 @@ def criterio1(horario, nDiasSeguidos):
 
 
 def criterio2(horario, fds, nDiasTrabalhoFDS, feriados):
-    # Garantir que sejam arrays 1D de inteiros
     fds = np.array(fds, dtype=int).flatten()
     feriados = np.array(feriados, dtype=int).flatten()
 
-    # Criar vetor de 365 posições (1 por dia do ano)
     dias_fds_feriados = np.zeros(365, dtype=bool)
-
-    # Validar se os índices estão dentro do intervalo
     fds = fds[(fds >= 0) & (fds < 365)]
     feriados = feriados[(feriados >= 0) & (feriados < 365)]
 
-    # Marcar os dias como True
     dias_fds_feriados[fds] = True
     dias_fds_feriados[feriados] = True
 
-    # Expandir para compatibilizar com o shape de `horario` (12, 365, 2)
     mascara = dias_fds_feriados[None, :, None]
 
-    # Aplicar a máscara e somar os dias trabalhados em fds/feriados
     dias_trabalhados = np.sum(horario * mascara, axis=(1, 2))
 
-    # Penalidade por exceder os dias permitidos
     penalidade = np.sum(np.maximum(0, dias_trabalhados - nDiasTrabalhoFDS))
     return penalidade
 
@@ -219,7 +235,6 @@ def calcular_criterios(
     horario, fds, nDiasSeguidos, nDiasTrabalhoFDS,
     nMinTrabs, nMaxFolga, feriados,
     vacations, minimuns, Prefs, nDias
-    
 ):
     # Gera a matriz de férias a partir da lista vacations
     Ferias = ler_ferias_csv(vacations, nDias)
@@ -232,6 +247,7 @@ def calcular_criterios(
     f6 = criterio6(horario, minimuns, Prefs)
 
     return f1, f2, f3, f4, f5, f6
+
 
 
 # Função para identificar as equipes
@@ -249,6 +265,7 @@ def identificar_equipes(Prefs):
 def salvar_csv(horario, Ferias, nTurnos, nDias, Prefs):
     output = io.StringIO()
     csvwriter = csv.writer(output)
+    nTrabs = len(Prefs)
     
     header = ["funcionario"] + [f"Dia {d+1}" for d in range(nDias)] 
     csvwriter.writerow(header)
@@ -275,31 +292,28 @@ def salvar_csv(horario, Ferias, nTurnos, nDias, Prefs):
 
     return output.getvalue() 
 
-def solve(vacations, minimuns, employees = None):
-    if employees is None:
-        employees = Prefs 
-    print("vacations", vacations)
-    print("minimuns", minimuns)
-    print("employees", employees)
+def solve(vacations, minimuns, employees):
+    Prefs = gerar_preferencias_automatica(employees)
+    print("preferencias : ",Prefs) 
+    
     Ferias = ler_ferias_csv(vacations, nDias)
-    minimos = ler_minimos_csv(minimuns, nDias)
-
+    # print("ferias",Ferias) 
+    minimuns = ler_minimos_csv(minimuns, nDias)
+    nTrabs = len(Prefs)
 
     start_time = time.time()
-    Ferias = ler_ferias_csv(vacations, nDias)
     dias = np.where(~Ferias)   
     fds = np.zeros((nTrabs, nDias), dtype=bool)
-    fds[:, 4::7] = True     #domingos
+    fds[:, 4::7] = True     # domingos
     global horario
-    atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos)
+    horario = atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos, nDias)
     f1_opt, f2_opt, f3_opt, f4_opt, f5_opt, f6_opt = calcular_criterios(
-    horario, fds, nDiasSeguidos, nDiasTrabalhoFDS,
-    nMinTrabs, nMaxFolga, feriados,
-    vacations, minimuns, Prefs, nDias
-    
-)
+        horario, fds, nDiasSeguidos, nDiasTrabalhoFDS,
+        nMinTrabs, nMaxFolga, feriados,
+        vacations, minimuns, Prefs, nDias
+        
+    )
 
-    equipe_A, equipe_B, ambas = identificar_equipes(Prefs)
 
     t, cont = 0, 0
     max_iter = 400000
@@ -335,20 +349,16 @@ def solve(vacations, minimuns, employees = None):
 
             # Recalcula critérios
             f1, f2, f3, f4, f5, f6 = calcular_criterios(
-    horario, fds, nDiasSeguidos, nDiasTrabalhoFDS,
-    nMinTrabs, nMaxFolga, feriados,
-    vacations, minimuns, Prefs, nDias
-    
-)
+                horario, fds, nDiasSeguidos, nDiasTrabalhoFDS,
+                nMinTrabs, nMaxFolga, feriados,
+                vacations, minimuns, Prefs, nDias
+                
+            )
 
-            # Verifica se é uma solução perfeita
             if np.all(f1 == 0) and np.all(f2 == 0) and f3 == 0 and np.all(f4 == 0) and np.all(f5 == 0):
                 f1_opt, f2_opt, f3_opt, f4_opt, f5_opt, horario = f1, f2, f3, f4, f5, hor
                 print("\nSolução perfeita encontrada!")
                 break
-
-            # Atualiza se a solução for melhor
-            # Fix the condition to handle scalar vs array indexing
             if np.sum(f1) + np.sum(f2) + f3 + np.sum(f4) + np.sum(f5) < np.sum(f1_opt) + np.sum(f2_opt) + f3_opt + np.sum(f4_opt) + np.sum(f5_opt):
                 f1_opt, f2_opt, f3_opt, f4_opt, f5_opt, horario = f1, f2, f3, f4, f5, hor
 

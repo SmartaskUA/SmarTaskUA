@@ -73,22 +73,12 @@ class RabbitMQClient:
                 fetched_vacation = self.mongodb_client.fetch_vacation_by_name(vacation_template_name)
                 vacations_data = fetched_vacation.get("vacations", {})
 
-                '''
-                print(
-                    f"\nVacation template name: {vacation_template_name}"
-                    f"\nExtracted vacations: {vacations_data}"
-                )
-                '''
+
                 minimuns = message.get("minimuns")
                 fetched_reference = self.mongodb_client.fetch_reference_by_name(minimuns)
                 minimuns_data = fetched_reference.get("minimuns", {})
 
-                '''
-                print(
-                    f"\nMinimuns template name: {minimuns}"
-                    f"\nExtracted minimuns: {minimuns_data}"
-                )
-                '''
+
 
                 algorithm_name = message.get("algorithm", "CSP Scheduling")
                 employees_data = self.mongodb_client.fetch_employees()
@@ -101,7 +91,9 @@ class RabbitMQClient:
                     algorithm_name,
                     vacations_data,
                     minimuns_data,
-                    employees_data
+                    employees_data,
+                    vacation_template_name,
+                    minimuns  # este é o nome do template de mínimos
                 )
 
                 ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -122,7 +114,18 @@ class RabbitMQClient:
                 self.close_connection()
                 break
 
-    def handle_task_processing(self, task_id, title, algorithm_name, vacations_data, minimuns_data, employees_data):
+    def handle_task_processing(
+            self,
+            task_id,
+            title,
+            algorithm_name,
+            vacations_data,
+            minimuns_data,
+            employees_data,
+            vacation_template_name,
+            minimuns_template_name
+    ):
+
         self.send_task_status(task_id, "IN_PROGRESS")
         try:
             print(f"[RabbitMQClient] Delegando execução da task {task_id} para TaskManager...")
@@ -135,14 +138,26 @@ class RabbitMQClient:
                 employees=employees_data
             )
 
+            metadata = {
+                "scheduleName": title,
+                "algorithmType": algorithm_name,
+                "vacationTemplateName": vacation_template_name,
+                "minimunsTemplateName": minimuns_template_name,
+                "employeesTeamInfo": employees_data,
+                "vacationTemplateData": vacations_data,
+                "minimunsTemplateData": minimuns_data
+            }
+
             self.mongodb_client.insert_schedule(
                 data=schedule_data,
                 title=title,
-                algorithm=algorithm_name
+                algorithm=algorithm_name,
+                metadata=metadata
             )
 
             print(f"[RabbitMQClient] Schedule complete for Task ID: {task_id}")
             self.send_task_status(task_id, "COMPLETED")
+
         except Exception as e:
             print(f"Error during schedule execution: {e}")
             self.send_task_status(task_id, "FAILED")

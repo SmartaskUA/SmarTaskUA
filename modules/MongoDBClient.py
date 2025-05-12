@@ -80,18 +80,20 @@ class MongoDBClient:
             print(schedule["title"], ", ", schedule["algorithm"])
         return schedules
 
-    def insert_schedule(self, data, title, algorithm, timestamp=None):
-        """Insert a new schedule document into the schedules collection."""
+    def insert_schedule(self, data, title, algorithm, timestamp=None, metadata=None):
         try:
-            # Convert timestamp to datetime object if it's a string and ensure timezone awareness.
             timestamp = timestamp if isinstance(timestamp, datetime) else datetime.now(tz=pytz.UTC)
 
             schedule_document = {
                 "data": data,
                 "title": title,
                 "algorithm": algorithm,
-                "timestamp": timestamp  # Store as datetime object for proper ISODate in MongoDB
+                "timestamp": timestamp,
             }
+
+            if metadata:
+                schedule_document["metadata"] = metadata
+
             result = self.schedules_collection.insert_one(schedule_document)
             print(f"Schedule inserted successfully with ID: {result.inserted_id}")
             return result.inserted_id
