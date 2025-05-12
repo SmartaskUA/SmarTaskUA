@@ -23,13 +23,13 @@ public class ClearAndResetController {
     /**
      * Endpoint para deletar todos os documentos da coleção "schedules".
      */
-    @DeleteMapping("delete-schedules")
+    @DeleteMapping("clean-schedules")
     public String deleteAllSchedules() {
         service.deleteAllSchedules();
         return "Todos os documentos da coleção 'schedules' foram deletados com sucesso.";
     }
 
-    @DeleteMapping("delete-reference-templates")
+    @DeleteMapping("clean-reference-templates")
     public String deleteAllReferenceTemplates() {
         service.deleteAllReferenceTemplates();
         return "Todos os documentos da coleção 'reference' foram deletados com sucesso.";
@@ -38,7 +38,7 @@ public class ClearAndResetController {
     /**
      * Endpoint para deletar todos os documentos da coleção "vacations".
      */
-    @DeleteMapping("delete-vacation-templates")
+    @DeleteMapping("clean-vacation-templates")
     public String deleteAllVacationTemplates() {
         service.deleteAllVacationTemplates();
         return "Todos os documentos da coleção 'vacations' foram deletados com sucesso.";
