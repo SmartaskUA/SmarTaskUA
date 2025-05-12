@@ -192,5 +192,51 @@ def parse_requirements(file_path):
     return minimos, ideais
 
 
+def solve(vacations, minimuns, employees):
+    num_employees = len(employees)
+    num_days      = 365
+    feriados      = holidays.country_holidays("PT", years=[2025])
+
+    vac_map = {}
+    for idx, row in enumerate(vacations):
+        days_off = [i+1 for i,val in enumerate(row[1:]) if int(val)==1]
+        vac_map[idx] = days_off
+
+    min_req = {}
+    ideal_req = {}
+
+    teams = { idx: emp.get('teams', []) for idx, emp in enumerate(employees) }
+
+    scheduler = GreedyRandomized(
+        employees=list(range(num_employees)),
+        num_days=num_days,
+        holidays=feriados,
+        vacations=vac_map,
+        minimums=min_req,
+        ideals=ideal_req,
+        teams=teams,
+        num_iter=10
+    )
+    scheduler.build_schedule()
+
+    header = ["funcionario"] + [f"Dia {d}" for d in range(1, num_days+1)]
+    output = [header]
+    for p in scheduler.employees:
+        row = [p]
+        assign = {day:(s,t) for (day,s,t) in scheduler.assignment[p]}
+        for d in range(1, num_days+1):
+            if d in vac_map.get(p, []):
+                row.append("F")
+            elif d in assign:
+                s,t = assign[d]
+                suffix = "A" if t==1 else "B"
+                row.append(("M_" if s==1 else "T_") + suffix)
+            else:
+                row.append("0")
+        output.append(row)
+
+    return output
+
+
 scheduler = schedule()
 export_schedule_to_csv(scheduler)
