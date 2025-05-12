@@ -89,4 +89,22 @@ public class SchedulesService {
     public Optional<Schedule> getScheduleById(String id) {
         return schedulerepository.findById(id);
     }
+
+    public boolean deleteScheduleById(String id) {
+        if (schedulerepository.existsById(id)) {
+            schedulerepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean deleteScheduleByTitle(String title) {
+        Optional<Schedule> schedule = schedulerepository.findByTitle(title);
+        if (schedule.isPresent()) {
+            schedulerepository.delete(schedule.get());
+            return true;
+        }
+        return false;
+    }
+
 }

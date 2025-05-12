@@ -93,4 +93,11 @@ public class ReferenceService {
     public void deleteTemplate(String id) {
         repository.deleteById(id);
     }
+
+    public void deleteTemplateByName(String name) {
+        ReferenceTemplate template = repository.findByName(name)
+                .orElseThrow(() -> new NoSuchElementException("Template não encontrado com nome: " + name));
+        repository.delete(template);
+    }
+
 }
