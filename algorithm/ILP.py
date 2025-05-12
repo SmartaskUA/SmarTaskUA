@@ -4,62 +4,79 @@ import pandas as pd
 from datetime import date, timedelta
 import holidays
 from tabulate import tabulate
+import pandas as pd
+import pulp
+import holidays
 
-def solve():
-    # ==== PARÂMETROS BÁSICOS ====
+def solve(vacations, minimuns, employees):
+    print(f"[ILP] Minimuns '{minimuns}' ")
+
     ano = 2025
-    num_funcionarios = 12
+    num_funcionarios = len(employees)
     dias_ano = pd.date_range(start=f'{ano}-01-01', end=f'{ano}-12-31').to_list()
     funcionarios = list(range(num_funcionarios))
     turnos = [0, 1, 2]  # 0 = folga, 1 = manhã, 2 = tarde
 
-    equipe_A = set(range(9))
-    equipe_B = set(range(9, 12))
+    # === Processar equipes dinamicamente ===
+    equipas = {}
+    funcionario_equipa = {}
 
-    # ==== FERIADOS NACIONAIS + DOMINGOS ====
+    for idx, emp in enumerate(employees):
+        teams = emp.get('teams', [])
+        if not teams:
+            print(f"[WARNING] Funcionário {emp.get('name')} (índice {idx}) sem equipa atribuída")
+            continue
+
+        first_team = teams[0]
+        funcionario_equipa[idx] = first_team
+
+        if first_team not in equipas:
+            equipas[first_team] = set()
+        equipas[first_team].add(idx)
+
+    print(f"[ILP] Equipas identificadas: {list(equipas.keys())}")
+
+    # Feriados nacionais + domingos
     feriados = holidays.country_holidays("PT", years=[ano])
     domingos_feriados = [d for d in dias_ano if d.weekday() == 6 or d in feriados]
 
-    import os
-
-
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    horario_csv_path = os.path.join(base_dir, "horarioReferencia.csv")
-    minimuns_csv_path = os.path.join(base_dir, "minimuns.csv")
-    # ==== FÉRIAS A PARTIR DO CSV DE REFERÊNCIA ====
-    ferias_raw = pd.read_csv(horario_csv_path, header=None)
+    # Férias do CSV
     datas_do_ano = pd.date_range(start="2025-01-01", periods=365)
     ferias = {
-        f: {
+        f_idx: {
             datas_do_ano[i]
-            for i in range(365)
-            if ferias_raw.iloc[f, i + 1] == 1
+            for i, val in enumerate(vacations[f_idx][1:])
+            if int(val) == 1
         }
-        for f in range(len(ferias_raw))
+        for f_idx in range(len(vacations))
     }
 
-    # ==== MÍNIMOS A PARTIR DO CSV minimuns.csv ====
-    minimos_raw = pd.read_csv(minimuns_csv_path, header=None)
+    # === Extrair mínimos ===
+    if isinstance(minimuns, list):
+        num_days = len(minimuns[0]) - 3
+        columns = ['team', 'type', 'shift'] + [f'day_{i + 1}' for i in range(num_days)]
+        minimuns = pd.DataFrame(minimuns, columns=columns)
 
-    dias_colunas = minimos_raw.iloc[0, 3:].tolist()
-    dias_colunas = pd.date_range(start="2025-01-01", periods=len(dias_colunas))
-
+    minimos_por_equipa_turno = {}
+    equipa_atual = None
+    for _, row in minimuns.iterrows():
+        if pd.notna(row['team']) and row['team'] != '':
+            equipa_atual = row['team']
+        if row['type'] == 'Minimo':
+            turno = row['shift']
+            valores_minimos = [int(v) for v in row[3:]]
+            minimos_por_equipa_turno[(equipa_atual, turno)] = valores_minimos
 
     minimos = {}
+    for i, d in enumerate(dias_ano):
+        for e in equipas.keys():
+            for t in [1, 2]:
+                key = (e, 'M' if t == 1 else 'T')
+                valores = minimos_por_equipa_turno.get(key, [0] * len(dias_ano))
+                valor = valores[i] if i < len(valores) else 0
+                minimos[(d, e, t)] = valor
 
-    linhas_minimos = {
-        ("A", 1): 1,  # Linha 2: Equipe A, Manhã
-        ("A", 2): 3,  # Linha 4: Equipe A, Tarde
-        ("B", 1): 5,  # Linha 6: Equipe B, Manhã
-        ("B", 2): 7   # Linha 8: Equipe B, Tarde
-    }
-
-    for (equipe, turno), linha_idx in linhas_minimos.items():
-        valores = minimos_raw.iloc[linha_idx, 3:].tolist()
-        for dia, minimo in zip(dias_colunas, valores):
-            minimos[(dia, equipe, turno)] = int(minimo)
-
-    # ==== VARIÁVEIS DE DECISÃO ====
+    # Variáveis de decisão
     x = {
         f: {
             d: {
@@ -75,25 +92,34 @@ def solve():
         d: {
             t: {
                 e: pulp.LpVariable(f"y_{d.strftime('%Y%m%d')}_{t}_{e}", lowBound=0, cat="Integer")
-                for e in ["A", "B"]
+                for e in equipas.keys()
             } for t in [1, 2]
         } for d in dias_ano
     }
 
-    # ==== MODELO ====
+    # Modelo
     model = pulp.LpProblem("Escala_Trabalho", pulp.LpMinimize)
 
-    # ==== FUNÇÃO OBJETIVO ====
-    coverage_factor = []
-
+    # Ligação entre x e y
     for d in dias_ano:
         for t in [1, 2]:
-            for e in ["A", "B"]:
+            for e, members in equipas.items():
+                model += (
+                    y[d][t][e] == pulp.lpSum(x[f][d][t] for f in members),
+                    f"count_{e}_{d}_{t}"
+                )
+
+    # Penalizações por descumprimento dos mínimos
+    coverage_factor = []
+    for d in dias_ano:
+        for t in [1, 2]:
+            for e in equipas.keys():
                 minimo = minimos[(d, e, t)]
                 penal = pulp.LpVariable(f"penal_{d.strftime('%Y%m%d')}_{t}_{e}", lowBound=0, cat="Continuous")
                 model += penal >= minimo - y[d][t][e], f"restr_penal_{d}_{t}_{e}"
                 coverage_factor.append(penal)
 
+    # Função objetivo
     model += pulp.lpSum(coverage_factor), "Minimizar_descumprimentos_minimos"
 
     # ==== RESTRIÇÕES ====
@@ -133,7 +159,6 @@ def solve():
             pulp.lpSum(x[f][d][1] + x[f][d][2] for f in funcionarios) >= 2,
             f"cobertura_minima_{d}"
         )
-
         model += (
             pulp.lpSum(x[f][d][1] for f in funcionarios) >= 2,
             f"minimo_manha_{d}"
@@ -143,17 +168,6 @@ def solve():
             f"minimo_tarde_{d}"
         )
 
-    for d in dias_ano:
-        for t in [1, 2]:
-            model += (
-                y[d][t]["A"] == pulp.lpSum(x[f][d][t] for f in equipe_A),
-                f"def_y_{d}_{t}_A"
-            )
-            model += (
-                y[d][t]["B"] == pulp.lpSum(x[f][d][t] for f in equipe_B),
-                f"def_y_{d}_{t}_B"
-            )
-
     # ==== RESOLUÇÃO ====
     solver = pulp.PULP_CBC_CMD(msg=True, timeLimit=28800, gapRel=0.005)
 
@@ -162,7 +176,6 @@ def solve():
 
     # ==== EXPORTAÇÃO EM FORMATO LARGO ====
 
-    # Converte datas para "Dia X"
     dias_str = {d: f"Dia {i + 1}" for i, d in enumerate(dias_ano)}
 
     def get_turno_com_equipa(f, d, turno_str):
@@ -171,13 +184,10 @@ def solve():
                 return "F"
             else:
                 return "0"
-        if f in equipe_A:
-            return f"{turno_str}_A"
-        elif f in equipe_B:
-            return f"{turno_str}_B"
-        return turno_str
+        equipe = funcionario_equipa.get(f, '')
+        equipe_suffix = equipe[-1] if equipe else ''
+        return f"{turno_str}_{equipe_suffix}"
 
-    # Cria a escala com chaves "Dia X"
     escala = {
         f: {
             dias_str[d]: get_turno_com_equipa(
@@ -193,109 +203,10 @@ def solve():
     df = pd.DataFrame.from_dict(escala, orient="index")
     df.index.name = "funcionario"
     df.reset_index(inplace=True)
+    df['equipa'] = df['funcionario'].apply(lambda idx: funcionario_equipa.get(idx, ''))
     df.to_csv("calendario4.csv", index=False)
     print("Escala exportada para calendario4.csv")
 
-    # ==== VERIFICAÇÕES ====
-
-    verificacoes = []
-
-    for f in funcionarios:
-        escalaf = df[df["funcionario"] == f].drop(columns="funcionario").T
-        escalaf.columns = ["turno"]
-        escalaf["dia"] = escalaf.index
-        escalaf["data"] = [dias_ano[int(label.split()[1]) - 1] for label in escalaf["dia"]]
-
-        escalaf["trabalho"] = escalaf["turno"].str.startswith("M") | escalaf["turno"].str.startswith("T")
-        escalaf["domingo_feriado"] = escalaf["data"].isin(domingos_feriados)
-
-        dom_fer = escalaf.query("trabalho & domingo_feriado").shape[0]
-        total_trabalho = escalaf["trabalho"].sum()
-
-        escalaf["grupo"] = (escalaf["trabalho"] != escalaf["trabalho"].shift()).cumsum()
-        grupos = escalaf.groupby("grupo")["trabalho"].agg(["first", "size"])
-        max_consec = grupos.query("first == True")["size"].max()
-
-        turnos_seq = escalaf["turno"].tolist()
-        transicoes_TM = sum(
-            1 for i in range(len(turnos_seq) - 1)
-            if turnos_seq[i].startswith("T") and turnos_seq[i + 1].startswith("M")
-        )
-
-        verificacoes.append([
-            f,
-            dom_fer,
-            total_trabalho,
-            max_consec,
-            transicoes_TM
-        ])
-
-    from tabulate import tabulate
-
-    headers = [
-        "Funcionário",
-        "Dom/Feriado Trabalhados",
-        "Dias Trabalhados",
-        "Máx Seq. Trabalho",
-        "Transições T->M"
-    ]
-
-    print("\nResumo das verificações de restrições por funcionário:\n")
-    print(tabulate(verificacoes, headers=headers, tablefmt="grid"))
-
-    # ==== VERIFICAÇÃO DE DIAS SEM COBERTURA ====
-
-    dias_sem_cobertura_total = []
-
-    for i, d in enumerate(dias_ano):
-        col = f"Dia {i + 1}"
-        dia_data = df.set_index("funcionario")[col]
-        total_manha = dia_data.str.startswith("M").sum()
-        total_tarde = dia_data.str.startswith("T").sum()
-
-        if total_manha + total_tarde == 0:
-            dias_sem_cobertura_total.append(col)
-
-    print("\n🚨 Dias sem nenhuma cobertura (0 turnos manhã e tarde):\n")
-    if dias_sem_cobertura_total:
-        for dia in dias_sem_cobertura_total:
-            print(f"  - {dia}")
-    else:
-        print("✅ Nenhum dia sem cobertura total.")
-
-    # ==== VERIFICAÇÃO DOS MÍNIMOS DO CSV ====
-
-    print("\n🔍 Verificando cobertura real contra os mínimos do CSV:\n")
-    falhas_minimos = []
-
-    for (dia, turno, equipe), minimo in minimos_por_dia_turno_equipe.items():
-        index_dia = dias_ano.index(dia)
-        col = f"Dia {index_dia + 1}"
-
-        if col not in df.columns:
-            continue
-
-        dia_data = df.set_index("funcionario")[col]
-
-        if equipe == "A":
-            turnos = dia_data.loc[equipe_A]
-        else:
-            turnos = dia_data.loc[equipe_B]
-
-        if turno == 1:
-            qtd_turnos = turnos.str.startswith("M").sum()
-        else:
-            qtd_turnos = turnos.str.startswith("T").sum()
-
-        if qtd_turnos < minimo:
-            falhas_minimos.append((col, turno, equipe, qtd_turnos, minimo))
-
-    print(f"Total de falhas: {len(falhas_minimos)} dias\n")
-    for col, turno, equipe, real, minimo in falhas_minimos[:10]:
-        turno_nome = "Manhã" if turno == 1 else "Tarde"
-        print(f"  - {col} [{turno_nome} Equipe {equipe}]: {real} (mínimo exigido {minimo})")
-    if len(falhas_minimos) > 10:
-        print("  ...")
 
     schedule = []
     with open('calendario4.csv', mode='r') as csvfile:

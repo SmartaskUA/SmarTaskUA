@@ -1,0 +1,6 @@
+ cd api
+ mvn install
+ cd ..
+ docker compose build api
+ docker compose stop api
+ docker compose up -d api

@@ -1,6 +1,15 @@
 import React from "react";
-import { Home, CalendarDays, Users, Briefcase, CircleUserRound, Code2, Sun } from "lucide-react"; 
-import { Link, useLocation } from "react-router-dom";  
+import {
+  Home,
+  CalendarDays,
+  Users,
+  Briefcase,
+  CircleUserRound,
+  Code2,
+  Sun,
+  FileText,
+} from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import "../styles/Manager.css";
 import logo from '../assets/images/Logo.png';
 
@@ -21,18 +30,21 @@ const Sidebar_Manager = () => {
         <Link to="/manager/listcalendar" className={`nav-item ${isActive("/manager/listcalendar") ? "active" : ""}`}>
           <CalendarDays size={20} className="icon"/> Calendar
         </Link>
-        <Link to="/manager/teams" className={`nav-item ${isActive("/manager/teams") ? "active" : ""}`}> 
+        <Link to="/manager/teams" className={`nav-item ${isActive("/manager/teams") ? "active" : ""}`}>
           <Users size={20} className="icon"/> Teams
-        </Link> 
-        <Link to="/manager/employer" className={`nav-item ${isActive("/manager/employer") ? "active" : ""}`}> 
+        </Link>
+        <Link to="/manager/employer" className={`nav-item ${isActive("/manager/employer") ? "active" : ""}`}>
           <Briefcase size={20} className="icon"/> Employees
-        </Link> 
-        <Link to="/manager/compareCalendar" className={`nav-item ${isActive("/manager/compareCalendar") ? "active" : ""}`}> 
+        </Link>
+        <Link to="/manager/compareCalendar" className={`nav-item ${isActive("/manager/compareCalendar") ? "active" : ""}`}>
           <Code2 size={20} className="icon"/> Compare Algorithms
-        </Link> 
-        <Link to="/manager/generatevacations" className={`nav-item ${isActive("/manager/generatevacations") ? "active" : ""}`}> 
-          <Sun size={20} className="icon"/> Geração de Férias
-        </Link> 
+        </Link>
+        <Link to="/manager/generatevacations" className={`nav-item ${isActive("/manager/generatevacations") ? "active" : ""}`}>
+          <Sun size={20} className="icon"/> Vacation Generation
+        </Link>
+        <Link to="/manager/importminimus" className={`nav-item ${isActive("/manager/importminimus") ? "active" : ""}`}>
+          <FileText size={20} className="icon"/> Import Minimums
+        </Link>
       </nav>
       <div className="manager-btn">
         <Link>

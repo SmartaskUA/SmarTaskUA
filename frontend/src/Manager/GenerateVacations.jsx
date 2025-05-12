@@ -29,30 +29,13 @@ const GenerateVacations = () => {
       const response = await axios.get(`${baseurl}/vacation/`);
       setTemplates(response.data);
     } catch (error) {
-      console.error("Erro ao buscar templates:", error);
+      console.error("Error fetching templates:", error);
     }
   };
 
   useEffect(() => {
     fetchTemplates();
   }, []);
-
-  const handleGenerate = async () => {
-    if (!templateName.trim()) {
-      setNameError(true);
-      return;
-    }
-    try {
-      await axios.post(`${baseurl}/vacation/random/${templateName}`);
-      await fetchTemplates();
-      await showTemplateDetails(templateName);
-      setSuccessOpen(true);
-      setNameError(false);
-    } catch (err) {
-      console.error("Erro ao gerar férias:", err);
-      setErrorOpen(true);
-    }
-  };
 
   const handleCsvUpload = async () => {
     if (!templateName.trim()) {
@@ -71,10 +54,11 @@ const GenerateVacations = () => {
       await fetchTemplates();
       await showTemplateDetails(templateName);
       setCsvFile(null);
+      setUploadedFileName("");
       setSuccessOpen(true);
       setNameError(false);
     } catch (err) {
-      console.error("Erro ao importar CSV:", err);
+      console.error("Error uploading CSV:", err);
       setErrorOpen(true);
     }
   };
@@ -97,39 +81,39 @@ const GenerateVacations = () => {
         setLog(null);
       }
     } catch (err) {
-      console.error("Erro ao buscar detalhes do template:", err);
+      console.error("Error fetching template details:", err);
     }
   };
 
   return (
     <div className="admin-container">
       <Sidebar_Manager />
-      <div className="main-content" style={{ padding: 20 }}>
+      <div className="main-content" style={{ padding: 20}}>
         <Typography variant="h4" gutterBottom>
-          Geração de Férias
+          Vacation Generation
         </Typography>
 
-        <Paper style={{ padding: 20, marginBottom: 20 }}>
+        <Paper
+          style={{ padding: 20, marginBottom: 20, width: "35%", marginTop: 50}}
+        >
           <Typography variant="h6" gutterBottom>
-            Criar novo template
+            Create New Template
           </Typography>
-          <TextField
-            label="Nome do Template"
-            fullWidth
-            value={templateName}
-            onChange={(e) => setTemplateName(e.target.value)}
-            margin="normal"
-            error={nameError && !templateName.trim()}
-            helperText={nameError && !templateName.trim() ? "Insira um nome para o template" : ""}
-          />
-          <Box display="flex" justifyContent="center" gap={2} mt={2}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleGenerate}
-            >
-              Gerar Aleatório
-            </Button>
+
+          <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+            <TextField
+              label="Template Name"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              error={nameError && !templateName.trim()}
+              helperText={
+                nameError && !templateName.trim()
+                  ? "Please enter a template name"
+                  : ""
+              }
+              size="small"
+              style={{ flex: "0 0 250px" }}
+            />
             <label htmlFor="csv-upload">
               <Input
                 id="csv-upload"
@@ -141,22 +125,20 @@ const GenerateVacations = () => {
               <Button
                 variant="contained"
                 component="span"
-                color="secondary"
+                color="success" // Green button
               >
-                Escolher CSV
+                Choose CSV
               </Button>
             </label>
-            <Button
-              variant="outlined"
-              onClick={handleCsvUpload}
-            >
-              Enviar CSV
+            <Button variant="outlined" onClick={handleCsvUpload}>
+              Upload CSV
             </Button>
           </Box>
+
           {uploadedFileName && (
             <Box mt={2}>
               <Typography variant="body2" color="textSecondary">
-                Ficheiro selecionado: <strong>{uploadedFileName}</strong>
+                Selected file: <strong>{uploadedFileName}</strong>
               </Typography>
             </Box>
           )}
@@ -166,8 +148,10 @@ const GenerateVacations = () => {
 
         {templates.length > 0 && (
           <Box mt={4}>
-            <Typography variant="h5" gutterBottom>Templates Existentes</Typography>
-            <Box display="flex" flexWrap="wrap" gap={2}>
+            <Typography variant="h5" gutterBottom>
+              Existing Templates
+            </Typography>
+            <Box display="flex" flexWrap="wrap" gap={2} style={{ marginTop: 30 }}>
               {templates.map((template) => (
                 <Paper
                   key={template.id}
@@ -183,7 +167,8 @@ const GenerateVacations = () => {
                     {template.name}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
-                    {Object.keys(template.vacations).length} empregados com férias
+                    {Object.keys(template.vacations).length} employees with
+                    vacations
                   </Typography>
                   <Box display="flex" justifyContent="center" mt={2}>
                     <Button
@@ -191,7 +176,7 @@ const GenerateVacations = () => {
                       size="small"
                       onClick={() => showTemplateDetails(template.name)}
                     >
-                      Abrir
+                      Open
                     </Button>
                   </Box>
                 </Paper>
@@ -200,15 +185,31 @@ const GenerateVacations = () => {
           </Box>
         )}
 
-        <Snackbar open={successOpen} autoHideDuration={3000} onClose={() => setSuccessOpen(false)}>
-          <Alert onClose={() => setSuccessOpen(false)} severity="success" sx={{ width: "100%" }}>
-            Operação realizada com sucesso!
+        <Snackbar
+          open={successOpen}
+          autoHideDuration={3000}
+          onClose={() => setSuccessOpen(false)}
+        >
+          <Alert
+            onClose={() => setSuccessOpen(false)}
+            severity="success"
+            sx={{ width: "100%" }}
+          >
+            Operation completed successfully!
           </Alert>
         </Snackbar>
 
-        <Snackbar open={errorOpen} autoHideDuration={3000} onClose={() => setErrorOpen(false)}>
-          <Alert onClose={() => setErrorOpen(false)} severity="error" sx={{ width: "100%" }}>
-            Ocorreu um erro. Verifique o formato do CSV.
+        <Snackbar
+          open={errorOpen}
+          autoHideDuration={3000}
+          onClose={() => setErrorOpen(false)}
+        >
+          <Alert
+            onClose={() => setErrorOpen(false)}
+            severity="error"
+            sx={{ width: "100%" }}
+          >
+            An error occurred. Please check the CSV format.
           </Alert>
         </Snackbar>
       </div>

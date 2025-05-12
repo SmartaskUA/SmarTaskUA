@@ -43,10 +43,11 @@ public class TeamController {
 
     @Operation(summary = "Add a new team")
     @PostMapping("/")
-    public ResponseEntity<String> addTeam(@RequestBody Team team) {
-        teamService.addTeam(team);
+    public ResponseEntity<String> addTeam(@RequestBody String teamName) {
+        teamService.addTeam(teamName);
         return ResponseEntity.ok("Team created successfully");
     }
+
 
     @Operation(summary = "Update a team")
     @PutMapping("/{id}")
@@ -56,13 +57,50 @@ public class TeamController {
     }
 
     @Operation(summary = "Add employees to a team")
-    @PostMapping("/{teamId}/add-employees")
+    @PostMapping("/{teamName}/add-employees")
     public ResponseEntity<String> addEmployeesToTeam(
-            @PathVariable String teamId,
+            @PathVariable String teamName,
             @RequestBody AddEmployeesToTeamRequest request
     ) {
-        teamService.addEmployeesToTeam(teamId, request.getEmployeeIds(), employeeService);
+        teamService.addEmployeesToTeam(teamName, request.getEmployeeIds());
         return ResponseEntity.ok("Employees added to team successfully");
+    }
+
+    @Operation(summary = "Set first preference team for an employee")
+    @PutMapping("/{employeeId}/set-first-preference/{teamName}")
+    public ResponseEntity<String> setEmployeeFirstPreference(
+            @PathVariable String employeeId,
+            @PathVariable String teamName
+    ) {
+        teamService.setEmployeeFirstPreference(employeeId, teamName);
+        return ResponseEntity.ok("First preference set successfully");
+    }
+
+    @Operation(summary = "Set team at specific position for an employee")
+    @PutMapping("/{employeeId}/set-team-preference-index/{teamName}/{position}")
+    public ResponseEntity<String> setEmployeeTeamAtPosition(
+            @PathVariable String employeeId,
+            @PathVariable String teamName,
+            @PathVariable int position
+    ) {
+        teamService.setEmployeeTeamAtPosition(employeeId, teamName, position);
+        return ResponseEntity.ok("Team position set successfully");
+    }
+
+    @Operation(summary = "Remove an employee from a team by name")
+    @DeleteMapping("/{teamName}/remove-employee/{employeeId}")
+    public ResponseEntity<String> removeEmployeeFromTeam(
+            @PathVariable String teamName,
+            @PathVariable String employeeId) {
+        teamService.removeEmployeeFromTeam(employeeId, teamName);
+        return ResponseEntity.ok("Employee removed from team successfully");
+    }
+
+    @Operation(summary = "Delete a team by Name and remove it from all employees")
+    @DeleteMapping("/{teamName}")
+    public ResponseEntity<String> deleteTeam(@PathVariable String teamName) {
+        teamService.deleteTeam(teamName);
+        return ResponseEntity.ok("Team deleted successfully");
     }
 
 

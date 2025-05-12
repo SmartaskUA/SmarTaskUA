@@ -18,7 +18,7 @@ const Employer = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openAddDialog, setOpenAddDialog] = useState(false);
-  const [newEmployee, setNewEmployee] = useState({ id: "", name: "", team: [] });
+  const [newEmployee, setNewEmployee] = useState({ id: "", name: "", team: [], preferences: {} });
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
@@ -37,7 +37,6 @@ const Employer = () => {
         setEmployees(response.data);
         setFilteredEmployees(response.data);
         setLoading(false);
-        console.log(response.data);
       })
       .catch(() => {
         setError("Erro ao buscar employees.");
@@ -67,14 +66,42 @@ const Employer = () => {
   };
 
   const handleEditEmployee = () => {
-    axios.put(`${BaseUrl}/api/v1/employees/${selectedEmployee.id}`, selectedEmployee)
-      .then(() => { setOpenEditDialog(false); setSelectedEmployee(null); fetchEmployees(); })
-      .catch((error) => console.error("Erro ao editar employee:", error));
+    const { id, preferences, ...employeeData } = selectedEmployee;
+
+    // Atualiza os dados principais do empregado
+    axios.put(`${BaseUrl}/api/v1/employees/${id}`, employeeData)
+      .then(() => {
+        // Se houver preferências, atualiza-as também
+        if (preferences) {
+          axios.put(`${BaseUrl}/api/v1/employees/restriction/${id}`, preferences)
+            .then(() => {
+              fetchEmployees();
+              setOpenEditDialog(false);
+              setSelectedEmployee(null);
+            })
+            .catch((error) => {
+              console.error("Erro ao atualizar preferências:", error);
+              alert("Erro ao atualizar preferências");
+            });
+        } else {
+          fetchEmployees();
+          setOpenEditDialog(false);
+          setSelectedEmployee(null);
+        }
+      })
+      .catch((error) => {
+        console.error("Erro ao editar employee:", error);
+        alert("Erro ao editar empregado");
+      });
   };
 
   const handleAddEmployee = () => {
     axios.post(`${BaseUrl}/api/v1/employees/`, newEmployee)
-      .then(() => { setOpenAddDialog(false); setNewEmployee({ id: "", name: "", team: [] }); fetchEmployees(); })
+      .then(() => {
+        setOpenAddDialog(false);
+        setNewEmployee({ id: "", name: "", team: [], preferences: {} });
+        fetchEmployees();
+      })
       .catch((error) => console.error("Erro ao adicionar employee:", error));
   };
 
@@ -100,14 +127,23 @@ const Employer = () => {
     setRemovalMode(!removalMode);
   };
 
+  const disableBackgroundInteraction = (disable) => {
+    const rootElement = document.getElementById('root');
+    if (disable) {
+      rootElement.setAttribute('inert', ''); 
+    } else {
+      rootElement.removeAttribute('inert'); 
+    }
+  };
+
   return (
-    <div className="admin-container" style={{ display: "flex", minHeight: "100vh" }}>
+    <div className="admin-container" style={{ display: "flex", minHeight: "100vh"}}>
       <Sidebar_Manager />
-      <div className="main-content" style={{ flex: 1, padding: "20px" }}>
+      <div className="main-content" style={{ flex: 1, padding: "20px",  marginRight: 52 }}>
         <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h4">List of Employees</Typography>
           <Box>
-            <Button variant="contained" color="success" onClick={() => setOpenAddDialog(true)}>
+            <Button variant="contained" color="success" onClick={() => { setOpenAddDialog(true); disableBackgroundInteraction(true); }}>
               Add Employee
             </Button>
             <Button
@@ -142,6 +178,8 @@ const Employer = () => {
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}>ID</TableCell>
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}>Nome</TableCell>
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}>Equipa</TableCell>
+                    <TableCell style={{ color: "#fff", fontWeight: "bold" }}>Preferências</TableCell>
+
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}></TableCell>
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}></TableCell>
                   </TableRow>
@@ -163,6 +201,18 @@ const Employer = () => {
                         <TableCell>{emp.id}</TableCell>
                         <TableCell>{emp.name}</TableCell>
                         <TableCell>{teamDisplay}</TableCell>
+                        <TableCell>
+                          {emp.preferences && Object.keys(emp.preferences).length > 0 ? (
+                            Object.entries(emp.preferences).map(([key, value]) => (
+                              <div key={key}>
+                                {key}: {value.toString()}
+                              </div>
+                            ))
+                          ) : (
+                            <em>Sem preferências</em>
+                          )}
+                        </TableCell>
+
                         <TableCell>
                           {removalMode && (
                             <IconButton
@@ -193,13 +243,13 @@ const Employer = () => {
           <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="60vh">
             <Typography variant="h6">Nenhum employee encontrado.</Typography>
             <Box mt={2}>
-              <Button variant="contained" color="success" onClick={() => setOpenAddDialog(true)}>
+              <Button variant="contained" color="success" onClick={() => { setOpenAddDialog(true); disableBackgroundInteraction(true); }}>
                 Add Employee
               </Button>
             </Box>
           </Box>
         )}
-        <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)}>
+        <Dialog open={openAddDialog} onClose={() => { setOpenAddDialog(false); disableBackgroundInteraction(false); }}>
           <DialogTitle>Add Employee</DialogTitle>
           <DialogContent>
             <TextField
@@ -236,7 +286,7 @@ const Employer = () => {
             </FormControl>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenAddDialog(false)} color="secondary">
+            <Button onClick={() => { setOpenAddDialog(false); disableBackgroundInteraction(false); }} color="secondary">
               Cancel
             </Button>
             <Button onClick={handleAddEmployee} color="primary">
@@ -258,7 +308,7 @@ const Employer = () => {
             </Button>
           </DialogActions>
         </Dialog>
-        <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)}>
+        <Dialog open={openEditDialog} onClose={() => { setOpenEditDialog(false); disableBackgroundInteraction(false); }}>
           <DialogTitle>Edit Employee</DialogTitle>
           <DialogContent>
             {selectedEmployee && (
@@ -311,11 +361,28 @@ const Employer = () => {
                     ))}
                   </Select>
                 </FormControl>
+
+                {/* Preferências */}
+                <TextField
+                  margin="dense"
+                  label="Turno preferido"
+                  fullWidth
+                  value={selectedEmployee.preferences?.shift || ""}
+                  onChange={(e) =>
+                    setSelectedEmployee({
+                      ...selectedEmployee,
+                      preferences: {
+                        ...selectedEmployee.preferences,
+                        shift: e.target.value,
+                      },
+                    })
+                  }
+                />
               </>
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenEditDialog(false)} color="secondary">
+            <Button onClick={() => { setOpenEditDialog(false); disableBackgroundInteraction(false); }} color="secondary">
               Cancel
             </Button>
             <Button onClick={handleEditEmployee} color="primary">

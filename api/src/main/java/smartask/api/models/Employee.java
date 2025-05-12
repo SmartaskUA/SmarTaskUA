@@ -16,7 +16,7 @@ public class Employee {
     private String name;
 
     // Armazena os IDs dos times aos quais pertence
-    private Set<String> teamIds = new HashSet<>();
+    private Set<String> teamIds = new LinkedHashSet<>();
 
     private Map<String, List<String>> restrictions = new HashMap<>();
 

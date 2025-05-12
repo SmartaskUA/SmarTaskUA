@@ -36,7 +36,6 @@ const ListCalendar = () => {
 
     fetchCalendars();
     const interval = setInterval(fetchCalendars, 3000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -105,20 +104,15 @@ const ListCalendar = () => {
     <div className="admin-container">
       <Sidebar_Manager />
       <div className="main-content">
-        <div
-          className="header"
-          style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
-        >
-          <h2 className="heading" style={{ marginRight: "201px", marginLeft:"1%" }}>
+        <div className="header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h2 className="heading" style={{ marginRight: "201px", marginLeft: "1%" }}>
             List Schedules
           </h2>
           <Autocomplete
             style={{ width: "250px", marginRight: "5%" }}
             freeSolo
             options={suggestions.length > 0 ? suggestions : calendars}
-            getOptionLabel={(option) =>
-              typeof option === "string" ? option : option.title
-            }
+            getOptionLabel={(option) => typeof option === "string" ? option : option.title}
             inputValue={title}
             onInputChange={handleSearchInputChange}
             onChange={(event, newValue) => {
@@ -136,9 +130,7 @@ const ListCalendar = () => {
                 onKeyDown={handleSearchSubmit}
                 InputProps={{
                   ...params.InputProps,
-                  endAdornment: isLoadingSuggestions ? (
-                    <CircularProgress color="inherit" size={20} />
-                  ) : null,
+                  endAdornment: isLoadingSuggestions ? <CircularProgress color="inherit" size={20} /> : null,
                 }}
               />
             )}
@@ -151,65 +143,56 @@ const ListCalendar = () => {
         </div>
 
         <div className="calendar-cards-container">
-          {(suggestions.length > 0 ? suggestions : calendars).length > 0 ? (
-            (suggestions.length > 0 ? suggestions : calendars).map((calendar) => (
-              <div
-                key={calendar.id}
-                className="calendar-card"
-                style={{
-                  width: "300px",
-                  height: "165px",
-                  padding: "20px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  border: "1px solid #ddd",
-                  borderRadius: "8px",
-                  margin: "0.65%",
-                  boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-                }}
-              >
-                <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
-                  <span className="status-dot" style={{ marginTop: "4%" }}/>
-                  <div style={{ marginLeft: "10px" }}>
-                    <div
-                      className="calendar-card-title"
-                      style={{ fontSize: "1.3rem", fontWeight: "600", color: "#333" }}
-                    >
-                      {calendar.title}
-                    </div>
-                    <div
-                      className="calendar-card-algorithm"
-                      style={{ fontSize: "1rem", color: "#777", marginTop: "5%", marginLeft:"3%" }}
-                    >
-                      {calendar.algorithm || "No algorithm specified"}
-                    </div>
+          {(suggestions.length > 0 ? suggestions : calendars).map((calendar) => (
+            <div
+              key={calendar.id}
+              className="calendar-card"
+              style={{
+                width: "300px",
+                height: "165px",
+                padding: "20px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+                margin: "0.65%",
+                boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+                backgroundColor: "#fff",
+              }}
+            >
+              <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
+                <span className="status-dot" style={{ marginTop: "4%" }} />
+                <div style={{ marginLeft: "10px" }}>
+                  <div className="calendar-card-title" style={{ fontSize: "1.3rem", fontWeight: "600", color: "#333" }}>
+                    {calendar.title}
+                  </div>
+                  <div className="calendar-card-algorithm" style={{ fontSize: "1rem", color: "#777", marginTop: "5%", marginLeft: "3%" }}>
+                    {calendar.algorithm || "No algorithm specified"}
                   </div>
                 </div>
-
-                <div style={{ display: "flex", justifyContent: "center" }}>
-                  <Link
-                    to={`/manager/calendar/${calendar.id}`}
-                    className="open-button"
-                    style={{
-                      backgroundColor: "#4CAF50",
-                      color: "#fff",
-                      padding: "8px 35%",
-                      textAlign: "center",
-                      textDecoration: "none",
-                      borderRadius: "8px",
-                      fontWeight: "bold",
-                      fontSize: "1rem",
-                    }}
-                  >
-                    Open
-                  </Link>
-                </div>
               </div>
-            ))
-          ) : (
-            <p>No calendar found.</p>
-          )}
+
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <Link
+                  to={`/manager/calendar/${calendar.id}`}
+                  className="open-button"
+                  style={{
+                    backgroundColor: "#4CAF50",
+                    color: "#fff",
+                    padding: "8px 35%",
+                    textAlign: "center",
+                    textDecoration: "none",
+                    borderRadius: "8px",
+                    fontWeight: "bold",
+                    fontSize: "1rem",
+                  }}
+                >
+                  Open
+                </Link>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

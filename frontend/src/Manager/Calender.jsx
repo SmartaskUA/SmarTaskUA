@@ -29,35 +29,50 @@ const getDayOfYear = (date) => {
 };
 
 const checkUnderworkedEmployees = () => {
-  const employeeDays = groupByEmployee();
-  const underworkedEmployees = [];
+  const employeeWorkDays = {};
+  const holidays = [31, 60, 120, 150, 200, 240, 300, 330];
 
-  Object.keys(employeeDays).forEach(employee => {
-    const daysWorked = employeeDays[employee];
-    let totalWorkedDays = 0;
+  const getDayOfYear = (dateStr) => {
+    const date = new Date(dateStr);
+    const start = new Date(date.getFullYear(), 0, 0);
+    const diff = date - start;
+    const oneDay = 1000 * 60 * 60 * 24;
+    return Math.floor(diff / oneDay);
+  };
 
-    daysWorked.forEach(day => {
-      const date = new Date(day); 
+  data.forEach(({ employee, day, shift }) => {
+    if (!employeeWorkDays[employee]) {
+      employeeWorkDays[employee] = new Set();
+    }
 
-      const dayOfYear = getDayOfYear(date);
+    if (shift !== "F") {
+      const date = new Date(day);
+      const dayOfWeek = date.getDay(); // 0 = Domingo
+      const dayOfYear = getDayOfYear(day);
 
-      const isWeekend = date.getDay() === 6 || date.getDay() === 0; 
+      const isSunday = dayOfWeek === 0;
       const isHoliday = holidays.includes(dayOfYear);
 
-      // Se for um dia útil ou feriado, conta como dia trabalhado
-      if (isWeekend || isHoliday) {
-        totalWorkedDays++;
+      // Só conta se for domingo ou feriado
+      if (isSunday || isHoliday) {
+        employeeWorkDays[employee].add(day);
       }
-    });
-
-    // Se o funcionário tem 22 ou menos dias de trabalho, ele está subtrabalhado
-    if (totalWorkedDays <= 22) {
-      underworkedEmployees.push(employee);
     }
   });
 
-  return underworkedEmployees;
+  const overworked = [];
+
+  for (const employee in employeeWorkDays) {
+    const specialDaysWorked = employeeWorkDays[employee].size;
+    if (specialDaysWorked > 22) {
+      overworked.push(employee);
+    }
+  }
+
+  return overworked;
 };
+
+
 
   useEffect(() => {
     const baseUrl = BaseUrl;

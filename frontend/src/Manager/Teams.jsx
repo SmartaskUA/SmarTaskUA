@@ -1,59 +1,474 @@
 import React, { useEffect, useState } from "react";
-import Sidebar_Manager from "../components/Sidebar_Manager"; 
+import Sidebar_Manager from "../components/Sidebar_Manager";
 import BaseUrl from "../components/BaseUrl";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Paper,
+  Typography,
+  TextField,
+  Grid,
+  Divider,
+  IconButton,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+} from "@mui/material";
+import { Close as CloseIcon } from "@mui/icons-material";
 
 const Teams = () => {
   const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [newTeamName, setNewTeamName] = useState("");
+  const [employeeIdsInput, setEmployeeIdsInput] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [editTeamId, setEditTeamId] = useState(null);
+
+  const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
+  const [teamDetails, setTeamDetails] = useState(null);
+  const [newEmployeeIds, setNewEmployeeIds] = useState("");
+
+  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+  const [teamToDelete, setTeamToDelete] = useState(null);
 
   useEffect(() => {
+    fetchTeams();
+  }, []);
 
-    const fetchTeams = async () => {
-      try {
-        const response = await fetch(`${BaseUrl}/api/v1/teams/`, {
-          method: "GET",
+  const fetchTeams = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${BaseUrl}/api/v1/teams/`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setTeams(data);
+      } else {
+        console.error("Error fetching teams:", data);
+      }
+    } catch (error) {
+      console.error("Error fetching teams:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddOrUpdateTeam = async () => {
+    if (typeof newTeamName !== "string" || newTeamName.trim() === "") {
+      console.error("Team name is invalid or empty");
+      return;
+    }
+
+    const employeeIds = employeeIdsInput
+      .split(",")
+      .map((id) => id.trim())
+      .filter((id) => id);
+
+    const payload = {
+      name: newTeamName.trim(),
+      employeeIds: employeeIds,
+    };
+
+    try {
+      let response;
+      if (editTeamId) {
+        response = await fetch(`${BaseUrl}/api/v1/teams/${editTeamId}`, {
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
           },
+          body: JSON.stringify(payload),
         });
-        const data = await response.json();
-        if (response.ok) {
-          setTeams(data);
-        } else {
-          console.error("Error fetching teams:", data);
-        }
+      } else {
+        response = await fetch(`${BaseUrl}/api/v1/teams/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
       }
-      catch (error) {
-        console.error("Error fetching teams:", error);
+
+      if (response.ok) {
+        handleCloseDialog();
+        fetchTeams();
+      } else {
+        const errorData = await response.json();
+        console.error("Error adding or updating team:", errorData);
       }
+    } catch (error) {
+      console.error("Error adding or updating team:", error);
     }
-    fetchTeams();
-  }
-  , []);
-        
+  };
+
+  const handleDeleteTeam = async () => {
+    try {
+      const response = await fetch(`${BaseUrl}/api/v1/teams/${teamToDelete}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      });
+
+      if (response.ok) {
+        fetchTeams();
+        setOpenConfirmDialog(false);
+      } else {
+        const errorData = await response.json();
+        console.error("Error deleting team:", errorData);
+      }
+    } catch (error) {
+      console.error("Error deleting team:", error);
+    }
+  };
+
+  const handleEditTeam = (team) => {
+    setNewTeamName(team.name);
+    setEmployeeIdsInput(team.employeeIds.join(","));
+    setEditTeamId(team.id);
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setNewTeamName("");
+    setEmployeeIdsInput("");
+    setEditTeamId(null);
+  };
+
+  const filteredTeams = teams.filter((team) =>
+    team.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleViewTeamDetails = async (teamId) => {
+    try {
+      const response = await fetch(`${BaseUrl}/api/v1/teams/${teamId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      });
+
+      const teamData = await response.json();
+      if (!response.ok) {
+        console.error("Error fetching team details:", teamData);
+        return;
+      }
+
+      const employeeDetails = await Promise.all(
+        teamData.employeeIds.map(async (id) => {
+          try {
+            const res = await fetch(`${BaseUrl}/api/v1/employees/${id}`, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+            });
+            const data = await res.json();
+            if (res.ok) {
+              return { id: data.id, name: data.name, restrictions: data.restrictions };
+            } else {
+              return { id, name: "Error loading", restrictions: {} };
+            }
+          } catch (err) {
+            return { id, name: "Request error", restrictions: {} };
+          }
+        })
+      );
+
+      setTeamDetails({
+        ...teamData,
+        employees: employeeDetails,
+      });
+
+      setOpenDetailsDialog(true);
+    } catch (error) {
+      console.error("Error fetching team details:", error);
+    }
+  };
+
+  const handleCloseDetailsDialog = () => {
+    setOpenDetailsDialog(false);
+    setTeamDetails(null);
+    setNewEmployeeIds("");
+  };
+
+  const handleAddEmployeesToTeam = async () => {
+    if (!newEmployeeIds) {
+      console.error("No employee IDs provided.");
+      return;
+    }
+
+    const employeeIds = newEmployeeIds
+      .split(",")
+      .map((id) => id.trim())
+      .filter((id) => id);
+
+    try {
+      const response = await fetch(
+        `${BaseUrl}/api/v1/teams/${teamDetails.id}/add-employees`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ employeeIds }),
+        }
+      );
+
+      const data = await response.json();
+      if (response.ok) {
+        setTeamDetails((prevDetails) => ({
+          ...prevDetails,
+          employees: [
+            ...prevDetails.employees,
+            ...employeeIds.map((id) => ({
+              id,
+              name: "Loading...",
+              restrictions: {},
+            })),
+          ],
+        }));
+        setNewEmployeeIds("");
+      } else {
+        console.error("Error adding employees:", data);
+      }
+    } catch (error) {
+      console.error("Error adding employees:", error);
+    }
+  };
+
   return (
     <div className="admin-container">
-      <Sidebar_Manager />  
-      <div className="main-content">
-        <h2 className="heading">Teams</h2>
-        <div className="teams-list">
-          {teams.length > 0 ? (
-            teams.map((team) => (
-              <div key={team.id} className="team-item">
-                <div className="team-card">
-                  <h3 className="team-name">{team.name}</h3>
-                  <p className="team-employees">
-                    {team.employees.length} {team.employees.length === 1 ? 'Employee' : 'Employees'}
-                  </p>
-                </div>
-              </div>
-            ))
+      <Sidebar_Manager />
+      <div className="main-content" style={{ flex: 1, padding: "20px", marginRight: 52 }}>
+        <Box sx={{ padding: 4, flexGrow: 1 }}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+            <Typography variant="h4" gutterBottom>
+              Team List
+            </Typography>
+            <Box display="flex" gap={2} alignItems="center" sx={{ width: "50%" }}>
+              <TextField
+                label="Search by Team ID"
+                variant="outlined"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                margin="normal"
+                sx={{ flex: 1 }}
+              />
+
+              <Button variant="contained" color="success" onClick={() => setOpenDialog(true)}>
+                + New Team
+              </Button>
+
+              <FormControl sx={{ minWidth: 150 }}>
+                <InputLabel id="select-team-label">Select Team pra eliminar</InputLabel>
+                <Select
+                  labelId="select-team-label"
+                  value={editTeamId || ""}
+                  label="Select Team"
+                  onChange={(e) => setEditTeamId(e.target.value)}
+                >
+                  {teams.map((team) => (
+                    <MenuItem key={team.id} value={team.id}>
+                      {team.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {editTeamId && (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => {
+                    setTeamToDelete(editTeamId);
+                    setOpenConfirmDialog(true);
+                  }}
+                >
+                  Delete
+                </Button>
+              )}
+            </Box>
+          </Box>
+
+          {loading ? (
+            <Box display="flex" justifyContent="center" mt={4}>
+              <CircularProgress />
+            </Box>
           ) : (
-            <p className="loading-message">Loading teams...</p>
+            <Grid container spacing={4}>
+              {filteredTeams.length === 0 ? (
+                <Typography variant="body1" color="textSecondary">
+                  No teams found.
+                </Typography>
+              ) : (
+                filteredTeams.map((team) => (
+                  <Grid item key={team.id} xs={12} sm={6} md={4} lg={3}>
+                    <Paper sx={{ padding: 3, textAlign: "center", boxShadow: 3, borderRadius: 2 }}>
+                      <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
+                        {team.name}
+                      </Typography>
+
+                      <Typography variant="body2" sx={{ fontWeight: "bold" }}>
+                        {team.employeeIds?.length || 0} employee(s)
+                      </Typography>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={() => handleViewTeamDetails(team.id)}
+                        sx={{ marginTop: 1, width: "100%" }}
+                      >
+                        View Details
+                      </Button>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => handleEditTeam(team)}
+                        sx={{ marginTop: 1, width: "100%" }}
+                      >
+                        Edit
+                      </Button>
+                    </Paper>
+                  </Grid>
+                ))
+              )}
+            </Grid>
           )}
-        </div>
-      </div> 
+        </Box>
+      </div>
+
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>{editTeamId ? "Edit Team" : "New Team"}</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Team Name"
+            fullWidth
+            margin="normal"
+            value={newTeamName}
+            onChange={(e) => setNewTeamName(e.target.value)}
+          />
+          <TextField
+            label="Employee IDs (comma separated)"
+            fullWidth
+            margin="normal"
+            value={employeeIdsInput}
+            onChange={(e) => setEmployeeIdsInput(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button variant="contained" color="success" onClick={handleAddOrUpdateTeam}>
+            {editTeamId ? "Update" : "Add"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={openConfirmDialog} onClose={() => setOpenConfirmDialog(false)}>
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <Typography>Are you sure you want to delete this team?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenConfirmDialog(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteTeam}
+          >
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={openDetailsDialog} onClose={handleCloseDetailsDialog}>
+        <DialogTitle>
+          Team Details
+          <IconButton
+            edge="end"
+            color="inherit"
+            onClick={handleCloseDetailsDialog}
+            sx={{ position: "absolute", right: 8, top: 8 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ width: 420 }}>
+          {teamDetails ? (
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                Name: {teamDetails.name}
+              </Typography>
+              <Divider sx={{ marginTop: 2 }} />
+              <Typography variant="subtitle1" sx={{ marginTop: 2, fontWeight: 'bold' }}>
+                Employees:
+              </Typography>
+              {teamDetails.employees.map((emp) => (
+                <Box key={emp.id} sx={{ ml: 2, mt: 1 }}>
+                  <Typography variant="body2">
+                    • {emp.name} ({emp.id})
+                  </Typography>
+                  {Object.entries(emp.restrictions).length > 0 && (
+                    <Box sx={{ ml: 2, mt: 1 }}>
+                      <Typography variant="body2" color="textSecondary">
+                        Restrictions:
+                      </Typography>
+                      {Object.entries(emp.restrictions).map(([key, value]) => (
+                        <Typography key={key} variant="body2" sx={{ ml: 2 }}>
+                          • {key}: {value}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+              ))}
+              <TextField
+                label="Add Employee IDs"
+                fullWidth
+                margin="normal"
+                value={newEmployeeIds}
+                onChange={(e) => setNewEmployeeIds(e.target.value)}
+                helperText="Enter IDs separated by commas"
+              />
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleAddEmployeesToTeam}
+                sx={{ marginTop: 2 }}
+              >
+                Add Employees
+              </Button>
+            </Box>
+          ) : (
+            <CircularProgress sx={{ display: "block", margin: "0 auto" }} />
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDetailsDialog} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
+
   );
 };
 

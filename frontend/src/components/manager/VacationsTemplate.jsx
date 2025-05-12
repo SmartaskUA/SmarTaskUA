@@ -14,6 +14,10 @@ import {
 const VacationsTemplate = ({ name, data }) => {
   if (!data || Object.keys(data).length === 0) return null;
 
+  let sampleRow = Object.values(data)[0] || [];
+  if (sampleRow.length > 365) sampleRow = sampleRow.slice(0, 365);
+  const maxDay = sampleRow.length;
+
   const monthLabels = [
     { name: "Janeiro", days: 31 },
     { name: "Fevereiro", days: 28 },
@@ -29,17 +33,31 @@ const VacationsTemplate = ({ name, data }) => {
     { name: "Dezembro", days: 31 },
   ];
 
-  const maxDay = 365;
-  const rows = Object.entries(data);
+  const monthBoundaries = [];
+  let cumulative = 0;
+  for (let month of monthLabels) {
+    if (cumulative >= maxDay) break;
+    const days = Math.min(month.days, maxDay - cumulative);
+    monthBoundaries.push({ name: month.name, start: cumulative + 1, end: cumulative + days });
+    cumulative += days;
+  }
+
+  const sortedRows = Object.entries(data)
+    .sort(([a], [b]) => {
+      const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+      const numB = parseInt(b.match(/\d+/)?.[0] || 0);
+      return numA - numB;
+    })
+    .map(([, days], index) => ({ label: index + 1, days: days.slice(0, 365) }));
 
   const getMonthHeaderCells = () => {
     const cells = [<TableCell key="label" sx={{ border: '1px solid #ddd', fontWeight: 'bold' }}>Meses</TableCell>];
-    monthLabels.forEach((month) => {
+    monthBoundaries.forEach((month) => {
       cells.push(
         <TableCell
           key={month.name}
           align="center"
-          colSpan={month.days}
+          colSpan={month.end - month.start + 1}
           sx={{ border: '1px solid #ddd', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}
         >
           {month.name}
@@ -51,19 +69,17 @@ const VacationsTemplate = ({ name, data }) => {
 
   const getDayNumberCells = () => {
     const cells = [<TableCell key="label" sx={{ border: '1px solid #ddd', fontWeight: 'bold' }}>Funcionário</TableCell>];
-    monthLabels.forEach((month) => {
-      for (let i = 1; i <= month.days; i++) {
-        cells.push(
-          <TableCell
-            key={`${month.name}-${i}`}
-            align="center"
-            sx={{ border: '1px solid #ddd', padding: '6px' }}
-          >
-            {i}
-          </TableCell>
-        );
-      }
-    });
+    for (let i = 1; i <= maxDay; i++) {
+      cells.push(
+        <TableCell
+          key={`day-${i}`}
+          align="center"
+          sx={{ border: '1px solid #ddd', padding: '6px' }}
+        >
+          {i}
+        </TableCell>
+      );
+    }
     return cells;
   };
 
@@ -76,7 +92,7 @@ const VacationsTemplate = ({ name, data }) => {
         <Table size="small" sx={{ borderCollapse: 'collapse', tableLayout: 'fixed', minWidth: 1200 }}>
           <colgroup>
             <col style={{ width: '120px' }} />
-            {[...Array(maxDay).keys()].map((_, i) => (
+            {Array.from({ length: maxDay }, (_, i) => (
               <col key={i} style={{ width: '30px' }} />
             ))}
           </colgroup>
@@ -85,22 +101,22 @@ const VacationsTemplate = ({ name, data }) => {
             <TableRow>{getDayNumberCells()}</TableRow>
           </TableHead>
           <TableBody>
-            {rows.map(([employee, days]) => (
-              <TableRow key={employee} sx={{ height: 40 }}>
-                <TableCell sx={{ border: '1px solid #ddd', whiteSpace: 'nowrap' }}>{employee}</TableCell>
-                {[...Array(maxDay).keys()].map((i) => (
+            {sortedRows.map(({ label, days }, index) => (
+              <TableRow key={index} sx={{ height: 40 }}>
+                <TableCell sx={{ border: '1px solid #ddd', whiteSpace: 'nowrap' }}>{label}</TableCell>
+                {days.map((val, i) => (
                   <TableCell
                     key={i}
                     align="center"
                     sx={{
                       border: '1px solid #ddd',
-                      backgroundColor: days.includes((i + 1).toString()) ? "#ffcccb" : "#fff",
+                      backgroundColor: val === 1 || val === '1' ? "#ffcccb" : "#fff",
                       padding: '6px'
                     }}
                   >
-                    {days.includes((i + 1).toString()) ? "F" : ""}
+                    {val === 1 || val === '1' ? "F" : ""}
                   </TableCell>
-                ))}
+                )).slice(1).concat(<TableCell key={-1} />)}
               </TableRow>
             ))}
           </TableBody>

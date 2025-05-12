@@ -16,8 +16,8 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay }) =
     const normalized = value.toUpperCase();
     if (normalized === "0") return "F"; 
     if (normalized === "F") return "Fe"; 
-    if (["T", "T_A", "T_B"].includes(normalized)) return "T"; 
-    if (["M", "M_A", "M_B"].includes(normalized)) return "M"; 
+    // if (["T", "T_A", "T_B"].includes(normalized)) return "T"; 
+    // if (["M", "M_A", "M_B"].includes(normalized)) return "M"; 
     return value;
   };
 
