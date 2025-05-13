@@ -21,6 +21,14 @@ def analyze(file, holidays, teams):
     holiday_cols = [f'Dia {d}' for d in holidays if f'Dia {d}' in df.columns]
     dia_cols = [col for col in df.columns if col.startswith("Dia ")]
 
+    year = 2025 
+    sunday = []
+    for day in pd.date_range(start=f'{year}-01-01', end=f'{year}-12-31'):
+        if day.weekday() == 6: 
+            sunday.append(f'Dia {day.dayofyear}')
+
+    all_holidays = set(holidays).union(set(sunday))
+
     for _, row in df.iterrows():
         worked_days = sum(row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] for col in dia_cols)
         print(f"Worked days: {worked_days}")
@@ -30,8 +38,11 @@ def analyze(file, holidays, teams):
         missed_vacation_days += abs(30 - vacation_days)
 
         numHolidays = sum(row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] for col in holiday_cols)
-        if numHolidays > 22:
-            workHolidays += numHolidays - 22
+        numSundays = sum(row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] for col in sunday)
+
+        total_worked_holidays = numHolidays + numSundays
+        if total_worked_holidays > 22:
+            workHolidays += total_worked_holidays - 22
 
         work_sequence = [
             1 if row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] else 0

@@ -5,6 +5,7 @@ from datetime import date, timedelta
 import csv
 import time
 import pandas as pd
+import numpy as np
 
 class GreedyRandomized:
     def __init__(self, employees, num_days, holidays, vacs, mins, ideals, teams, num_iter=10):
@@ -18,6 +19,9 @@ class GreedyRandomized:
         self.num_iter = num_iter
         self.assignment = defaultdict(list)    
         self.schedule_table = defaultdict(list)
+        self.ano = 2025
+        self.dias_ano = pd.date_range(start=f'{self.ano}-01-01', end=f'{self.ano}-12-31').to_list()
+        self.sunday = [d for d in self.dias_ano if d.weekday() == 6]
 
     def f1(self, p, d, s):
         assignments = self.assignment[p]
@@ -32,8 +36,8 @@ class GreedyRandomized:
             else:
                 count = 1
 
-        sundays_and_holidays = sum(1 for (day, _, _) in assignments if day in self.holidays)
-        if d in self.holidays:
+        sundays_and_holidays = sum(1 for (day, _, _) in assignments if day in self.holidays or self.sunday[p - 1].date() == day)
+        if d in self.holidays or any(d == sunday.day for sunday in self.sunday):
             sundays_and_holidays += 1
         if sundays_and_holidays > 22:
             return False
@@ -265,5 +269,5 @@ def solve(vacations, minimuns, employees):
     return output
 
 
-# scheduler = schedule()
-# export_schedule_to_csv(scheduler)
+scheduler = schedule()
+export_schedule_to_csv(scheduler)
