@@ -15,33 +15,17 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay }) =
 
   const abbreviateValue = (value) => {
     const normalized = value.toUpperCase();
-    if (normalized === "F") return "Fe";
-    if (normalized === "0") return "";
+    if (normalized === "F") return "Fe"; 
+    if (normalized === "0") return "";   
     return value;
   };
 
-  const getCellStyle = (value, absoluteDay) => {
+  const getCellStyle = (value) => {
     const normalized = value.toUpperCase();
-
-    const holidayDays = [
-      1, 47, 88, 90, 115, 126, 157, 176, 226,
-      274, 305, 335, 340, 359 // feriados nacionais PT 2025
-    ];
-
-    const isHoliday = holidayDays.includes(absoluteDay);
-
-    if (normalized === "0") {
-      return { backgroundColor: "#ffffff", color: "#000" };
-    }
-
-    if (isHoliday) {
-      return { backgroundColor: "#ffe0b2", color: "#000" }; // destaque só na célula do feriado
-    }
-
-    if (normalized === "F") return { backgroundColor: "#ffcccb", color: "#000" };
-    if (["T", "T_A", "T_B"].includes(normalized)) return { backgroundColor: "#f9e79f", color: "#000" };
-    if (["M", "M_A", "M_B"].includes(normalized)) return { backgroundColor: "#d4edda", color: "#000" };
-
+    if (normalized === "0") return { backgroundColor: "#ffffff", color: "#000" }; 
+    if (normalized === "F") return { backgroundColor: "#ffcccb", color: "#000" }; 
+    if (["T", "T_A", "T_B"].includes(normalized)) return { backgroundColor: "#f9e79f", color: "#000" }; 
+    if (["M", "M_A", "M_B"].includes(normalized)) return { backgroundColor: "#d4edda", color: "#000" }; 
     return {};
   };
 
@@ -55,31 +39,59 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay }) =
   const displayedData = getDisplayedData();
   const numDays = displayedData[0]?.length - 1 || 0;
 
-  const firstDayOfYearIndex = 2; // 1 Jan 2025 é Quarta-feira
+  const firstDayOfYear = 3;
   const monthOffset = daysInMonth.slice(0, selectedMonth - 1).reduce((a, b) => a + b, 0);
-  const firstDayOfMonth = monthOffset + 1;
+  const firstDayOfMonth = firstDayOfYear + monthOffset;
+
+  const holidays2025 = [
+    { month: 1, day: 1 },   
+    { month: 4, day: 18 },  
+    { month: 4, day: 20 },  
+    { month: 4, day: 25 },  
+    { month: 5, day: 1 },   
+    { month: 6, day: 10 },  
+    { month: 8, day: 15 },  
+    { month: 10, day: 5 },  
+    { month: 11, day: 1 },  
+    { month: 12, day: 1 },  
+    { month: 12, day: 8 },  
+    { month: 12, day: 25 }, 
+  ];
+
+  const isHoliday = (month, day) => holidays2025.some(h => h.month === month && h.day === day);
 
   return (
     <div>
       <TableContainer component={Paper} style={{ marginTop: "15px", maxWidth: "100%" }}>
         <Table sx={{ minWidth: 450 }} aria-label="calendar table">
           <TableHead>
-            {/* Linha dos dias */}
             <TableRow style={{ backgroundColor: "#007bff" }}>
               <TableCell style={{ fontSize: "12px", padding: "6px", color: "white" }}>Funcionário</TableCell>
-              {Array.from({ length: numDays }, (_, i) => (
-                <TableCell key={i} style={{ fontSize: "12px", padding: "6px", color: "white" }}>
-                  Dia {startDay + i}
-                </TableCell>
-              ))}
+              {Array.from({ length: numDays }, (_, i) => {
+                const dayNumber = startDay + i;
+                const holiday = isHoliday(selectedMonth, dayNumber);
+                return (
+                  <TableCell
+                    key={i}
+                    style={{
+                      fontSize: "12px",
+                      padding: "6px",
+                      color: holiday ? "#fff" : "white",
+                      backgroundColor: holiday ? "#800080" : "#007bff",
+                      fontWeight: holiday ? "bold" : "normal",
+                    }}
+                  >
+                    Dia {dayNumber}
+                  </TableCell>
+                );
+              })}
             </TableRow>
 
-            {/* Linha dos dias da semana */}
             <TableRow style={{ backgroundColor: "#6fa8dc" }}>
               <TableCell style={{ fontSize: "12px", padding: "6px", color: "white" }}></TableCell>
               {Array.from({ length: numDays }, (_, i) => {
-                const absoluteDay = monthOffset + startDay + i;
-                const dayOfWeekIndex = (firstDayOfYearIndex + absoluteDay - 1) % 7;
+                const absoluteDayIndex = firstDayOfMonth + startDay + i - 1;
+                const dayOfWeekIndex = (absoluteDayIndex) % 7; // Segunda-feira = 0
                 return (
                   <TableCell key={i} style={{ fontSize: "12px", padding: "6px", color: "white" }}>
                     {dayNames[dayOfWeekIndex]}
@@ -92,29 +104,25 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay }) =
           <TableBody>
             {displayedData.slice(1).map((row, rowIndex) => (
               <TableRow key={rowIndex} style={{ height: "30px" }}>
-                {row.map((cell, cellIndex) => {
-                  const absoluteDay = monthOffset + startDay + cellIndex - 1;
-                  return (
-                    <TableCell
-                      key={cellIndex}
-                      style={{
-                        fontSize: "12px",
-                        padding: "6px",
-                        ...(cellIndex === 0
-                          ? {
-                              backgroundColor: "#cce5ff",
-                              fontWeight: "bold",
-                            }
-                          : {
-                              ...getCellStyle(cell || "", absoluteDay),
-                              backgroundColor: getCellStyle(cell || "", absoluteDay).backgroundColor || (rowIndex % 2 === 0 ? "#ffffff" : "#f1f1f1"),
-                            }),
-                      }}
-                    >
-                      {cellIndex === 0 ? `Funcionário ${rowIndex + 1}` : abbreviateValue(cell || "")}
-                    </TableCell>
-                  );
-                })}
+                {row.map((cell, cellIndex) => (
+                  <TableCell
+                    key={cellIndex}
+                    style={{
+                      fontSize: "12px",
+                      padding: "6px",
+                      backgroundColor:
+                        cellIndex === 0
+                          ? "#cce5ff"
+                          : rowIndex % 2 === 0
+                          ? "#ffffff"
+                          : "#f1f1f1",
+                      ...(cellIndex !== 0 ? getCellStyle(cell || "") : {}),
+                      fontWeight: cellIndex === 0 ? "bold" : "normal",
+                    }}
+                  >
+                    {cellIndex === 0 ? `Funcionário ${rowIndex + 1}` : abbreviateValue(cell || "")}
+                  </TableCell>
+                ))}
               </TableRow>
             ))}
           </TableBody>

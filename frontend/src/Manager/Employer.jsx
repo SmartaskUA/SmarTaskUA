@@ -15,10 +15,11 @@ const teamOptions = ["A", "B"];
 
 const Employer = () => {
   const [employees, setEmployees] = useState([]);
+  const [teamsDict, setTeamsDict] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openAddDialog, setOpenAddDialog] = useState(false);
-  const [newEmployee, setNewEmployee] = useState({ id: "", name: "", team: [], preferences: {} });
+  const [newEmployee, setNewEmployee] = useState({ id: "", name: "", teamIds: [] });
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
@@ -27,21 +28,31 @@ const Employer = () => {
   const [filteredEmployees, setFilteredEmployees] = useState([]);
 
   useEffect(() => {
-    fetchEmployees();
+    fetchAll();
   }, []);
 
-  const fetchEmployees = () => {
+  const fetchAll = async () => {
     setLoading(true);
-    axios.get(`${BaseUrl}/api/v1/employees/`)
-      .then((response) => {
-        setEmployees(response.data);
-        setFilteredEmployees(response.data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Erro ao buscar employees.");
-        setLoading(false);
+    try {
+      const [empRes, teamsRes] = await Promise.all([
+        axios.get(`${BaseUrl}/api/v1/employees/`),
+        axios.get(`${BaseUrl}/api/v1/teams/`)
+      ]);
+
+      const teamMap = {};
+      teamsRes.data.forEach(team => {
+        teamMap[team.id] = team.name;
       });
+
+      setTeamsDict(teamMap);
+      setEmployees(empRes.data);
+      setFilteredEmployees(empRes.data);
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      setError("Erro ao buscar dados.");
+      setLoading(false);
+    }
   };
 
   const handleSearch = (query) => {
@@ -56,7 +67,7 @@ const Employer = () => {
   };
 
   const handleRemoveEmployee = (id) => {
-    axios.delete(`${BaseUrl}/api/v1/employees/${id}`).then(fetchEmployees)
+    axios.delete(`${BaseUrl}/api/v1/employees/${id}`).then(fetchAll)
       .catch((error) => console.error("Erro ao remover employee:", error));
   };
 
@@ -66,41 +77,24 @@ const Employer = () => {
   };
 
   const handleEditEmployee = () => {
-    const { id, preferences, ...employeeData } = selectedEmployee;
-
-    // Atualiza os dados principais do empregado
-    axios.put(`${BaseUrl}/api/v1/employees/${id}`, employeeData)
+    axios.put(`${BaseUrl}/api/v1/employees/${selectedEmployee.id}`, {
+      name: selectedEmployee.name,
+      teamIds: selectedEmployee.teamIds,
+    })
       .then(() => {
-        // Se houver preferências, atualiza-as também
-        if (preferences) {
-          axios.put(`${BaseUrl}/api/v1/employees/restriction/${id}`, preferences)
-            .then(() => {
-              fetchEmployees();
-              setOpenEditDialog(false);
-              setSelectedEmployee(null);
-            })
-            .catch((error) => {
-              console.error("Erro ao atualizar preferências:", error);
-              alert("Erro ao atualizar preferências");
-            });
-        } else {
-          fetchEmployees();
-          setOpenEditDialog(false);
-          setSelectedEmployee(null);
-        }
+        setOpenEditDialog(false);
+        setSelectedEmployee(null);
+        fetchAll();
       })
-      .catch((error) => {
-        console.error("Erro ao editar employee:", error);
-        alert("Erro ao editar empregado");
-      });
+      .catch((error) => console.error("Erro ao editar employee:", error));
   };
 
   const handleAddEmployee = () => {
     axios.post(`${BaseUrl}/api/v1/employees/`, newEmployee)
       .then(() => {
         setOpenAddDialog(false);
-        setNewEmployee({ id: "", name: "", team: [], preferences: {} });
-        fetchEmployees();
+        setNewEmployee({ id: "", name: "", teamIds: [] });
+        fetchAll();
       })
       .catch((error) => console.error("Erro ao adicionar employee:", error));
   };
@@ -127,23 +121,21 @@ const Employer = () => {
     setRemovalMode(!removalMode);
   };
 
-  const disableBackgroundInteraction = (disable) => {
-    const rootElement = document.getElementById('root');
-    if (disable) {
-      rootElement.setAttribute('inert', ''); 
-    } else {
-      rootElement.removeAttribute('inert'); 
-    }
+  const getTeamNames = (teamIds) => {
+    if (!Array.isArray(teamIds) || teamIds.length === 0) return "N/A";
+    return teamIds
+      .map(id => (teamsDict[id] || id).replace(/^Equipa\s+/i, ''))
+      .join(", ");
   };
 
   return (
-    <div className="admin-container" style={{ display: "flex", minHeight: "100vh"}}>
+    <div className="admin-container" style={{ display: "flex", minHeight: "100vh" }}>
       <Sidebar_Manager />
-      <div className="main-content" style={{ flex: 1, padding: "20px",  marginRight: 52 }}>
+      <div className="main-content" style={{ flex: 1, padding: "20px" }}>
         <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h4">List of Employees</Typography>
           <Box>
-            <Button variant="contained" color="success" onClick={() => { setOpenAddDialog(true); disableBackgroundInteraction(true); }}>
+            <Button variant="contained" color="success" onClick={() => setOpenAddDialog(true)}>
               Add Employee
             </Button>
             <Button
@@ -177,9 +169,7 @@ const Employer = () => {
                   <TableRow>
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}>ID</TableCell>
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}>Nome</TableCell>
-                    <TableCell style={{ color: "#fff", fontWeight: "bold" }}>Equipa</TableCell>
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}>Preferências</TableCell>
-
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}></TableCell>
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}></TableCell>
                   </TableRow>
@@ -190,29 +180,11 @@ const Employer = () => {
                       ? { backgroundColor: "#f2f2f2" }
                       : { backgroundColor: "#ffffff" };
 
-                    const teamDisplay = Array.isArray(emp.team)
-                      ? emp.team.join(" e ")
-                      : emp.team
-                        ? emp.team.name
-                        : "N/A";
-
                     return (
                       <TableRow key={emp.id} style={rowStyle}>
                         <TableCell>{emp.id}</TableCell>
                         <TableCell>{emp.name}</TableCell>
-                        <TableCell>{teamDisplay}</TableCell>
-                        <TableCell>
-                          {emp.preferences && Object.keys(emp.preferences).length > 0 ? (
-                            Object.entries(emp.preferences).map(([key, value]) => (
-                              <div key={key}>
-                                {key}: {value.toString()}
-                              </div>
-                            ))
-                          ) : (
-                            <em>Sem preferências</em>
-                          )}
-                        </TableCell>
-
+                        <TableCell>{getTeamNames(emp.teamIds)}</TableCell>
                         <TableCell>
                           {removalMode && (
                             <IconButton
@@ -243,13 +215,15 @@ const Employer = () => {
           <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="60vh">
             <Typography variant="h6">Nenhum employee encontrado.</Typography>
             <Box mt={2}>
-              <Button variant="contained" color="success" onClick={() => { setOpenAddDialog(true); disableBackgroundInteraction(true); }}>
+              <Button variant="contained" color="success" onClick={() => setOpenAddDialog(true)}>
                 Add Employee
               </Button>
             </Box>
           </Box>
         )}
-        <Dialog open={openAddDialog} onClose={() => { setOpenAddDialog(false); disableBackgroundInteraction(false); }}>
+
+        {/* ADD EMPLOYEE */}
+        <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)}>
           <DialogTitle>Add Employee</DialogTitle>
           <DialogContent>
             <TextField
@@ -266,38 +240,23 @@ const Employer = () => {
               value={newEmployee.name}
               onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
             />
-            <FormControl fullWidth margin="dense">
-              <InputLabel id="team-label">Equipa</InputLabel>
-              <Select
-                labelId="team-label"
-                multiple
-                value={newEmployee.team}
-                onChange={(e) => setNewEmployee({ ...newEmployee, team: e.target.value })}
-                input={<OutlinedInput label="Equipa" />}
-                renderValue={(selected) => selected.join(" e ")}
-              >
-                {teamOptions.map((team) => (
-                  <MenuItem key={team} value={team}>
-                    <Checkbox checked={newEmployee.team.indexOf(team) > -1} />
-                    <ListItemText primary={team} />
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            {/* Aqui poderias usar um select de equipas futuras se necessário */}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => { setOpenAddDialog(false); disableBackgroundInteraction(false); }} color="secondary">
+            <Button onClick={() => setOpenAddDialog(false)} color="secondary">
               Cancel
             </Button>
             <Button onClick={handleAddEmployee} color="primary">
-              To add
+              Add
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* CONFIRM DELETE */}
         <Dialog open={openConfirmDialog} onClose={handleCancelDelete}>
           <DialogTitle>Confirmar Remoção</DialogTitle>
           <DialogContent>
-            <Typography>Você tem certeza que deseja remover este funcionário?</Typography>
+            <Typography>Tem certeza que deseja remover este funcionário?</Typography>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCancelDelete} color="secondary">
@@ -308,7 +267,9 @@ const Employer = () => {
             </Button>
           </DialogActions>
         </Dialog>
-        <Dialog open={openEditDialog} onClose={() => { setOpenEditDialog(false); disableBackgroundInteraction(false); }}>
+
+        {/* EDIT EMPLOYEE */}
+        <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)}>
           <DialogTitle>Edit Employee</DialogTitle>
           <DialogContent>
             {selectedEmployee && (
@@ -329,60 +290,12 @@ const Employer = () => {
                     setSelectedEmployee({ ...selectedEmployee, name: e.target.value })
                   }
                 />
-                <FormControl fullWidth margin="dense">
-                  <InputLabel id="edit-team-label">Equipa</InputLabel>
-                  <Select
-                    labelId="edit-team-label"
-                    multiple
-                    value={
-                      Array.isArray(selectedEmployee.team)
-                        ? selectedEmployee.team
-                        : selectedEmployee.team
-                          ? [selectedEmployee.team.name]
-                          : []
-                    }
-                    onChange={(e) =>
-                      setSelectedEmployee({ ...selectedEmployee, team: e.target.value })
-                    }
-                    input={<OutlinedInput label="Equipa" />}
-                    renderValue={(selected) => selected.join(" e ")}
-                  >
-                    {teamOptions.map((team) => (
-                      <MenuItem key={team} value={team}>
-                        <Checkbox
-                          checked={
-                            Array.isArray(selectedEmployee.team)
-                              ? selectedEmployee.team.indexOf(team) > -1
-                              : selectedEmployee.team && selectedEmployee.team.name === team
-                          }
-                        />
-                        <ListItemText primary={team} />
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                {/* Preferências */}
-                <TextField
-                  margin="dense"
-                  label="Turno preferido"
-                  fullWidth
-                  value={selectedEmployee.preferences?.shift || ""}
-                  onChange={(e) =>
-                    setSelectedEmployee({
-                      ...selectedEmployee,
-                      preferences: {
-                        ...selectedEmployee.preferences,
-                        shift: e.target.value,
-                      },
-                    })
-                  }
-                />
+                {/* Preferência (teamIds) não editável diretamente por agora */}
               </>
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => { setOpenEditDialog(false); disableBackgroundInteraction(false); }} color="secondary">
+            <Button onClick={() => setOpenEditDialog(false)} color="secondary">
               Cancel
             </Button>
             <Button onClick={handleEditEmployee} color="primary">
