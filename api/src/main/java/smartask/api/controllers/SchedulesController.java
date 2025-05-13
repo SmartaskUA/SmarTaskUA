@@ -142,4 +142,31 @@ public class SchedulesController {
         }
     }
 
+    @Operation(
+            summary = "Delete schedule by ID",
+            description = "Deletes the schedule with the specified ID if it exists."
+    )
+    @DeleteMapping("/delete/id/{id}")
+    public ResponseEntity<String> deleteById(@PathVariable String id) {
+        boolean deleted = service.deleteScheduleById(id);
+        if (deleted) {
+            return ResponseEntity.ok("Schedule with ID " + id + " deleted.");
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @Operation(
+            summary = "Delete schedule by title",
+            description = "Deletes the schedule with the specified title if it exists."
+    )
+    @DeleteMapping("/delete/title/{title}")
+    public ResponseEntity<String> deleteByTitle(@PathVariable String title) {
+        boolean deleted = service.deleteScheduleByTitle(title);
+        if (deleted) {
+            return ResponseEntity.ok("Schedule with title '" + title + "' deleted.");
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+
 }

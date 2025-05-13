@@ -73,4 +73,21 @@ public class EmployeeService {
     public void saveEmployee(Employee employee) {
         repository.save(employee);
     }
+
+
+    public void deleteEmployeeById(String id) {
+        if (!repository.existsById(id)) {
+            throw new IllegalArgumentException("Employee with ID " + id + " not found.");
+        }
+        repository.deleteById(id);
+    }
+
+    public void deleteEmployeeByName(String name) {
+        Optional<Employee> optional = repository.findByName(name);
+        if (optional.isEmpty()) {
+            throw new IllegalArgumentException("Employee with name '" + name + "' not found.");
+        }
+        repository.delete(optional.get());
+    }
+
 }

@@ -89,4 +89,19 @@ public class EmployeesController {
         employeeService.removeRestrictionFromEmployee(id, restrictionRequest.getRestrictionType(), restrictionRequest.getDate());
         return ResponseEntity.ok("Restriction deleted successfully");
     }
+
+    @Operation(summary = "Delete an employee by ID")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteEmployeeById(@PathVariable String id) {
+        employeeService.deleteEmployeeById(id);
+        return ResponseEntity.ok("Employee with ID " + id + " deleted successfully");
+    }
+
+    @Operation(summary = "Delete an employee by name")
+    @DeleteMapping("/by-name/{name}")
+    public ResponseEntity<String> deleteEmployeeByName(@PathVariable String name) {
+        employeeService.deleteEmployeeByName(name);
+        return ResponseEntity.ok("Employee with name '" + name + "' deleted successfully");
+    }
+
 }
