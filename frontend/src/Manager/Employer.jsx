@@ -222,7 +222,6 @@ const Employer = () => {
           </Box>
         )}
 
-        {/* ADD EMPLOYEE */}
         <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)}>
           <DialogTitle>Add Employee</DialogTitle>
           <DialogContent>
@@ -252,7 +251,6 @@ const Employer = () => {
           </DialogActions>
         </Dialog>
 
-        {/* CONFIRM DELETE */}
         <Dialog open={openConfirmDialog} onClose={handleCancelDelete}>
           <DialogTitle>Confirmar Remoção</DialogTitle>
           <DialogContent>
@@ -268,7 +266,6 @@ const Employer = () => {
           </DialogActions>
         </Dialog>
 
-        {/* EDIT EMPLOYEE */}
         <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)}>
           <DialogTitle>Edit Employee</DialogTitle>
           <DialogContent>
@@ -290,7 +287,67 @@ const Employer = () => {
                     setSelectedEmployee({ ...selectedEmployee, name: e.target.value })
                   }
                 />
-                {/* Preferência (teamIds) não editável diretamente por agora */}
+
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="team-select-label">Equipas</InputLabel>
+                  <Select
+                    labelId="team-select-label"
+                    multiple
+                    value={selectedEmployee.teamIds || []}
+                    onChange={(e) => setSelectedEmployee({ ...selectedEmployee, teamIds: e.target.value })}
+                    input={<OutlinedInput label="Equipas" />}
+                    renderValue={(selected) =>
+                      selected.map((id) => (teamsDict[id] || id).replace(/^Equipa\s+/i, "")).join(", ")
+                    }
+                  >
+                    {Object.entries(teamsDict).map(([id, name]) => (
+                      <MenuItem key={id} value={id}>
+                        <Checkbox checked={selectedEmployee.teamIds?.includes(id)} />
+                        <ListItemText primary={name.replace(/^Equipa\s+/i, "")} />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                {selectedEmployee.teamIds?.length > 0 && (
+                  <Box mt={2}>
+                    <Typography variant="subtitle1" gutterBottom>
+                      Ordem de Preferência
+                    </Typography>
+                    <Box display="flex" flexDirection="column" gap={1}>
+                      {selectedEmployee.teamIds.map((id, index) => (
+                        <Box key={id} display="flex" alignItems="center" gap={1}>
+                          <Typography>{index + 1}.</Typography>
+                          <Typography>{teamsDict[id].replace(/^Equipa\s+/i, "")}</Typography>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            disabled={index === 0}
+                            onClick={() => {
+                              const newOrder = [...selectedEmployee.teamIds];
+                              [newOrder[index - 1], newOrder[index]] = [newOrder[index], newOrder[index - 1]];
+                              setSelectedEmployee({ ...selectedEmployee, teamIds: newOrder });
+                            }}
+                          >
+                            ↑
+                          </Button>
+                          <Button 
+                            variant="outlined"
+                            size="small"
+                            disabled={index === selectedEmployee.teamIds.length - 1}
+                            onClick={() => {
+                              const newOrder = [...selectedEmployee.teamIds];
+                              [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
+                              setSelectedEmployee({ ...selectedEmployee, teamIds: newOrder });
+                            }}
+                          >
+                            ↓
+                          </Button>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                )}
               </>
             )}
           </DialogContent>
@@ -298,7 +355,38 @@ const Employer = () => {
             <Button onClick={() => setOpenEditDialog(false)} color="secondary">
               Cancel
             </Button>
-            <Button onClick={handleEditEmployee} color="primary">
+            <Button
+              onClick={async () => {
+                try {
+                  await axios.put(`${BaseUrl}/api/v1/employees/${selectedEmployee.id}`, {
+                    name: selectedEmployee.name
+                  });
+
+                  const employeeId = selectedEmployee.id;
+                  const newPrefs = selectedEmployee.teamIds;
+
+                  for (const [teamId, name] of Object.entries(teamsDict)) {
+                    await axios.delete(`${BaseUrl}/api/v1/teams/${name}/remove-employee/${employeeId}`);
+                  }
+
+                  for (let i = 0; i < newPrefs.length; i++) {
+                    const reversedIndex = newPrefs.length - 1 - i;
+                    const teamName = teamsDict[newPrefs[reversedIndex]];
+                    await axios.post(`${BaseUrl}/api/v1/teams/${teamName}/add-employees`, {
+                      employeeIds: [employeeId]
+                    });
+                    await axios.put(`${BaseUrl}/api/v1/teams/${employeeId}/set-team-preference-index/${teamName}/${i}`);
+                  }
+
+                  setOpenEditDialog(false);
+                  setSelectedEmployee(null);
+                  fetchAll();
+                } catch (err) {
+                  console.error("Erro ao guardar alterações:", err);
+                }
+              }}
+              color="primary"
+            >
               Save
             </Button>
           </DialogActions>

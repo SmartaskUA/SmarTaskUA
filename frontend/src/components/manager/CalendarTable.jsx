@@ -91,7 +91,7 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay }) =
               <TableCell style={{ fontSize: "12px", padding: "6px", color: "white" }}></TableCell>
               {Array.from({ length: numDays }, (_, i) => {
                 const absoluteDayIndex = firstDayOfMonth + startDay + i - 1;
-                const dayOfWeekIndex = (absoluteDayIndex) % 7; // Segunda-feira = 0
+                const dayOfWeekIndex = (absoluteDayIndex) % 7; 
                 return (
                   <TableCell key={i} style={{ fontSize: "12px", padding: "6px", color: "white" }}>
                     {dayNames[dayOfWeekIndex]}
