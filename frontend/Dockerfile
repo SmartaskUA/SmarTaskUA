@@ -4,16 +4,20 @@ FROM node:18-alpine
 # Diretório de trabalho
 WORKDIR /app
 
+# Copia apenas arquivos de dependência primeiro para melhor cache
+COPY package.json package-lock.json ./
+
 # Instala dependências
-COPY package.json ./
-COPY package-lock.json ./
 RUN npm install
 
-# Copia o restante da app
+# Copia o restante da aplicação
 COPY . .
 
-# Expõe a porta que o Vite usa por padrão
+# Remove qualquer cache antigo do Vite
+RUN rm -rf node_modules/.vite
+
+# Expõe a porta usada pelo Vite
 EXPOSE 5173
 
-# Comando para iniciar o servidor de desenvolvimento
+# Comando para iniciar o servidor
 CMD ["npm", "run", "dev"]
