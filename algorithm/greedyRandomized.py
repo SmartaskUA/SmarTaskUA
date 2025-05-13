@@ -11,7 +11,6 @@ class GreedyRandomized:
     def __init__(self, employees, num_days, holidays, vacs, mins, ideals, teams, num_iter=10):
         self.employees = employees   
         self.num_days = num_days     
-        self.holidays = set(holidays)
         self.vacs = vacs   
         self.mins = mins     
         self.ideals = ideals         
@@ -21,7 +20,9 @@ class GreedyRandomized:
         self.schedule_table = defaultdict(list)
         self.ano = 2025
         self.dias_ano = pd.date_range(start=f'{self.ano}-01-01', end=f'{self.ano}-12-31').to_list()
-        self.sunday = [d for d in self.dias_ano if d.weekday() == 6]
+        start_date = self.dias_ano[0].date()
+        self.holidays = {(d - start_date).days + 1 for d in holidays}
+        self.sunday = [d.dayofyear for d in self.dias_ano if d.weekday() == 6]
 
     def f1(self, p, d, s):
         assignments = self.assignment[p]
@@ -36,8 +37,8 @@ class GreedyRandomized:
             else:
                 count = 1
 
-        sundays_and_holidays = sum(1 for (day, _, _) in assignments if day in self.holidays or self.sunday[p - 1].date() == day)
-        if d in self.holidays or any(d == sunday.day for sunday in self.sunday):
+        sundays_and_holidays = sum(1 for (day, _, _) in assignments if day in self.holidays or day in self.sunday)
+        if d in self.holidays or d in self.sunday:
             sundays_and_holidays += 1
         if sundays_and_holidays > 22:
             return False
@@ -68,6 +69,7 @@ class GreedyRandomized:
         # print("Vacs:", self.vacs)
         # print("Teams:", self.teams)
         # print("Employees:", self.employees)
+        # print("Holidays:", self.holidays)
         all_days = set(range(1, self.num_days + 1))
 
         while not self.is_complete():

@@ -2,6 +2,7 @@ import csv
 import pandas as pd
 import sys
 import json
+import holidays as hl
 
 def analyze(file, holidays, teams):
     print(f"Analyzing file: {file}")
@@ -18,14 +19,17 @@ def analyze(file, holidays, teams):
     single_team_violations = 0
     two_team_preference_violations = 0
 
-    holiday_cols = [f'Dia {d}' for d in holidays if f'Dia {d}' in df.columns]
+    holiday_cols = [d for d in holidays if f'Dia {d}' in df.columns]
     dia_cols = [col for col in df.columns if col.startswith("Dia ")]
 
     year = 2025 
     sunday = []
     for day in pd.date_range(start=f'{year}-01-01', end=f'{year}-12-31'):
         if day.weekday() == 6: 
-            sunday.append(f'Dia {day.dayofyear}')
+            sunday.append(day.dayofyear)
+
+    print(f"Sunday: {sunday}")
+    print(f"Holiday columns: {holiday_cols}")
 
     all_holidays = set(holidays).union(set(sunday))
 
@@ -37,8 +41,12 @@ def analyze(file, holidays, teams):
         missed_work_days += abs(223 - worked_days)
         missed_vacation_days += abs(30 - vacation_days)
 
+        for col in sunday:
+            print(f"Day {col}: {row[col]}")
+
         numHolidays = sum(row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] for col in holiday_cols)
         numSundays = sum(row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] for col in sunday)
+        print(f"Num Holidays: {numHolidays}, Num Sundays: {numSundays}")
 
         total_worked_holidays = numHolidays + numSundays
         if total_worked_holidays > 22:
@@ -136,7 +144,11 @@ if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: python kpiVerification.py <file>")
         sys.exit(1)
-    holidays = [1, 107, 109, 114, 121, 161, 170, 226, 276, 303, 333, 340, 357]
+    ano = 2025
+    holidays = hl.country_holidays("PT", years=[ano])
+    dias_ano = pd.date_range(start=f'{ano}-01-01', end=f'{ano}-12-31').to_list()
+    start_date = dias_ano[0].date()
+    holidays = {(d - start_date).days + 1 for d in holidays}
     file = sys.argv[1]
     teams = {
         1: [1], 2: [1], 3: [1], 4: [1],
