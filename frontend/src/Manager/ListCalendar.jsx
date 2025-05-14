@@ -86,7 +86,7 @@ const ListCalendar = () => {
     if (!confirmDelete) return;
 
     try {
-      await axios.delete(`${baseurl}/cleanreset/clean-schedules`);
+      await axios.delete(`${baseurl}/clearnreset/clean-schedules`);
       setSuccessOpen(true);
     } catch (err) {
       console.error("Erro ao apagar todos os schedules:", err);

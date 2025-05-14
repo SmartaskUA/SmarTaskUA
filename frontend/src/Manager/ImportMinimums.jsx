@@ -71,7 +71,7 @@ const ImportMinimums = () => {
     if (!confirmDelete) return;
 
     try {
-      await axios.delete(`${baseurl}/cleanreset/clean-reference-templates`);
+      await axios.delete(`${baseurl}/clearnreset/clean-reference-templates`);
       await fetchTemplates();
       setSelectedTemplate(null);
       setSuccessOpen(true);

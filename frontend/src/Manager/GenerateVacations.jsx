@@ -84,7 +84,7 @@ const GenerateVacations = () => {
     if (!confirmDelete) return;
 
     try {
-      await axios.delete(`${baseurl}/cleanreset/clean-vacation-templates`);
+      await axios.delete(`${baseurl}/clearnreset/clean-vacation-templates`);
       await fetchTemplates();
       setLog(null);
       setSuccessOpen(true);
