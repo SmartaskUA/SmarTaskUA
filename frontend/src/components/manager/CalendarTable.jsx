@@ -11,7 +11,24 @@ import {
 import LegendBox from "./LegendBox";
 
 const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay, firstDayOfYear }) => {
-  // Prepara os dados exibidos
+  const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+  const abbreviateValue = (value) => {
+    const normalized = value.toUpperCase();
+    if (normalized === "0") return ""; 
+    if (normalized === "F") return "Fe"; 
+    return value;
+  };
+
+  const getCellStyle = (value) => {
+    const normalized = value.toUpperCase();
+    if (normalized === "0") return { backgroundColor: "#ffffff", color: "#000" }; 
+    if (normalized === "F") return { backgroundColor: "#ffcccb", color: "#000" }; 
+    if (["T", "T_A", "T_B"].includes(normalized)) return { backgroundColor: "#f9e79f", color: "#000" };
+    if (["M", "M_A", "M_B"].includes(normalized)) return { backgroundColor: "#d4edda", color: "#000" }; 
+    return {};
+  };
+
   const getDisplayedData = () => {
     const offset = daysInMonth.slice(0, selectedMonth - 1).reduce((a, b) => a + b, 0);
     const start = offset + startDay;
@@ -19,62 +36,72 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay, fir
     return data.map((row) => [row[0], ...row.slice(start, end)]);
   };
 
+  const isFixedHoliday = (month, day) => {
+    const holidays = {
+      1: [1],
+      4: [25],
+      5: [1],
+      6: [10],
+      8: [15],
+      10: [5],
+      11: [1],
+      12: [1, 8, 25],
+    };
+    return holidays[month]?.includes(day);
+  };
+
   const displayedData = getDisplayedData();
+  const numDays = displayedData[0]?.length - 1 || 0;
   const monthOffset = daysInMonth.slice(0, selectedMonth - 1).reduce((a, b) => a + b, 0);
-  // Deslocamento do dia da semana para o primeiro dia mostrado (startDay)
-  const baseOffset = (firstDayOfYear + monthOffset + (startDay - 1)) % 7;
-  const numDays = (displayedData[0]?.length || 1) - 1;
-  const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-
-  // Abrevia valores e estilos de célula
-  const abbreviateValue = (value) => {
-    const v = (value || "").toUpperCase();
-    if (v === "0") return "";
-    if (v === "F") return "Fe";
-    if (["T", "T_A", "T_B"].includes(v)) return "T";
-    if (["M", "M_A", "M_B"].includes(v)) return "M";
-    return value;
-  };
-
-  const getCellStyle = (value) => {
-    const v = (value || "").toUpperCase();
-    if (v === "F") return { backgroundColor: "#ffcccb", color: "#000" }; 
-    if (["T", "T_A", "T_B"].includes(v)) return { backgroundColor: "#f9e79f", color: "#000" };
-    if (["M", "M_A", "M_B"].includes(v)) return { backgroundColor: "#d4edda", color: "#000" };
-    return {};
-  };
+  const firstDayOfMonth = (firstDayOfYear + monthOffset) % 7;
 
   return (
     <div>
       <TableContainer component={Paper} style={{ marginTop: "15px", maxWidth: "100%" }}>
         <Table sx={{ minWidth: 450 }} aria-label="calendar table">
           <TableHead>
-            {/* Cabeçalho com Dia X */}
-            <TableRow style={{ backgroundColor: "#007bff" }}>
-              <TableCell style={{ fontSize: "12px", padding: "6px", backgroundColor: "#007bff", color: "white" }}>
-                Funcionário
-              </TableCell>
-              {displayedData[0]?.slice(1).map((_, i) => (
-                <TableCell key={i} style={{ fontSize: "12px", padding: "6px", backgroundColor: "#007bff", color: "white" }}>
-                  Dia {startDay + i}
-                </TableCell>
-              ))}
+            <TableRow style={{ backgroundColor: "#007bff", color: "white" }}>
+              <TableCell style={{ fontSize: "12px", padding: "6px", color: "white" }}>Funcionário</TableCell>
+              {Array.from({ length: numDays }, (_, index) => {
+                const currentDay = startDay + index;
+                const isHoliday = isFixedHoliday(selectedMonth, currentDay);
+                return (
+                  <TableCell
+                    key={index}
+                    style={{
+                      fontSize: "12px",
+                      padding: "6px",
+                      backgroundColor: isHoliday ? "#800080" : "#007bff",
+                      color: isHoliday ? "#fff" : "white",
+                      fontWeight: isHoliday ? "bold" : undefined,
+                    }}
+                  >
+                    Dia {currentDay}
+                  </TableCell>
+                );
+              })}
             </TableRow>
-            {/* Cabeçalho com dias da semana */}
-            <TableRow style={{ backgroundColor: "#6fa8dc" }}>
+            <TableRow>
               <TableCell style={{ fontSize: "12px", padding: "6px", backgroundColor: "#6fa8dc", color: "white" }}></TableCell>
-              {Array.from({ length: numDays }, (_, i) => (
-                <TableCell key={i} style={{ fontSize: "12px", padding: "6px", backgroundColor: "#6fa8dc", color: "white" }}>
-                  {dayNames[(baseOffset + i) % 7]}
-                </TableCell>
-              ))}
+              {Array.from({ length: numDays }, (_, i) => {
+                const dayOfWeekIndex = (firstDayOfMonth + startDay + i - 1) % 7;
+                const isWeekend = dayOfWeekIndex === 0 || dayOfWeekIndex === 6;
+                const bgColor = isWeekend ? "#b0c4de" : "#6fa8dc";
+                return (
+                  <TableCell
+                    key={i}
+                    style={{ fontSize: "12px", padding: "6px", color: "white", backgroundColor: bgColor }}
+                  >
+                    {dayNames[dayOfWeekIndex]}
+                  </TableCell>
+                );
+              })}
             </TableRow>
           </TableHead>
           <TableBody>
             {displayedData.slice(1).map((row, rowIndex) => (
               <TableRow key={rowIndex} style={{ height: "30px" }}>
                 {row.map((cell, cellIndex) => {
-                  // Primeira coluna: nomes/índice de Funcionário em azul
                   if (cellIndex === 0) {
                     return (
                       <TableCell
@@ -91,22 +118,17 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay, fir
                       </TableCell>
                     );
                   }
-
-                  // Detecta fim de semana
-                  const isWeekend = [0, 6].includes((baseOffset + (cellIndex - 1)) % 7);
-                  const bgColor = isWeekend ? "#f0f8ff" : "#ffffff"; // branco para dias úteis
-
                   return (
                     <TableCell
                       key={cellIndex}
                       style={{
                         fontSize: "12px",
                         padding: "6px",
-                        backgroundColor: bgColor,
-                        ...getCellStyle(cell),
+                        backgroundColor: "#ffffff",
+                        ...getCellStyle(cell || ""),
                       }}
                     >
-                      {abbreviateValue(cell)}
+                      {abbreviateValue(cell || "")}
                     </TableCell>
                   );
                 })}
