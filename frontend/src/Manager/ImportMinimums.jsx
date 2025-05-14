@@ -66,6 +66,22 @@ const ImportMinimums = () => {
     }
   };
 
+  const handleDeleteAllReferenceTemplates = async () => {
+    const confirmDelete = window.confirm("Tem a certeza que deseja apagar todos os templates de referência?");
+    if (!confirmDelete) return;
+
+    try {
+      await axios.delete(`${baseurl}/cleanreset/clean-reference-templates`);
+      await fetchTemplates();
+      setSelectedTemplate(null);
+      setSuccessOpen(true);
+    } catch (err) {
+      console.error("Erro ao apagar templates de referência:", err);
+      alert("Erro ao apagar templates: " + (err.response?.data?.error || err.message));
+      setErrorOpen(true);
+    }
+  };
+
   const showTemplateDetails = async (id) => {
     try {
       const response = await axios.get(`${baseurl}/reference/${id}`);
@@ -174,6 +190,12 @@ const ImportMinimums = () => {
             <MinimumsTemplate name={selectedTemplate.name} data={selectedTemplate.minimuns} />
           </Box>
         )}
+
+        <Box mt={6} display="flex" justifyContent="center">
+          <Button variant="contained" color="error" onClick={handleDeleteAllReferenceTemplates}>
+            Apagar Todos os Templates de Referência
+          </Button>
+        </Box>
 
         <Snackbar open={successOpen} autoHideDuration={3000} onClose={() => setSuccessOpen(false)}>
           <Alert onClose={() => setSuccessOpen(false)} severity="success" sx={{ width: "100%" }}>

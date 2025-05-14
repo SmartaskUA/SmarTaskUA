@@ -128,6 +128,19 @@ const Employer = () => {
       .join(", ");
   };
 
+  const handleResetEmployeesAndTeams = async () => {
+    const confirmReset = window.confirm("Tem a certeza que deseja repor os employees e equipas para o estado inicial?");
+    if (!confirmReset) return;
+
+    try {
+      await axios.post(`${BaseUrl}/cleanreset/reset-employees-teams`);
+      await fetchAll();
+    } catch (err) {
+      console.error("Erro ao fazer reset dos employees e equipas:", err);
+      alert("Erro ao fazer reset: " + (err.response?.data?.error || err.message));
+    }
+  };
+
   return (
     <div className="admin-container" style={{ display: "flex", minHeight: "100vh" }}>
       <Sidebar_Manager />
@@ -145,6 +158,14 @@ const Employer = () => {
               style={{ marginLeft: "10px" }}
             >
               {removalMode ? "Cancelar Remoção" : "Remover Employees"}
+            </Button>
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={handleResetEmployeesAndTeams}
+              style={{ marginLeft: "10px" }}
+            >
+              Reset Equipas e Employees
             </Button>
           </Box>
         </Box>
