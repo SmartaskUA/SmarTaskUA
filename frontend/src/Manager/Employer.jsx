@@ -133,7 +133,7 @@ const Employer = () => {
     if (!confirmReset) return;
 
     try {
-      await axios.post(`${BaseUrl}/cleanreset/reset-employees-teams`);
+      await axios.post(`${BaseUrl}/clearnreset/reset-employees-teams`);
       await fetchAll();
     } catch (err) {
       console.error("Erro ao fazer reset dos employees e equipas:", err);
