@@ -9,19 +9,20 @@ import io
 
 class CombinedScheduler:
     def __init__(self, employees, num_days, holidays, vacs, mins, ideals, teams, num_iter=10):
-        self.employees = employees
-        self.num_days = num_days
-        self.holidays = set(holidays)
-        self.vacs = vacs
-        self.mins = mins
-        self.ideals = ideals
-        self.teams = teams
+        self.employees = employees   
+        self.num_days = num_days     
+        self.vacs = vacs   
+        self.mins = mins     
+        self.ideals = ideals         
+        self.teams = teams           
         self.num_iter = num_iter
-        self.assignment = defaultdict(list)
+        self.assignment = defaultdict(list)    
         self.schedule_table = defaultdict(list)
-        self.fds = np.zeros((len(self.employees), self.num_days), dtype=bool)
-        self.fds[:, 4::7] = True  # Sundays
-        self.vac_array = self._create_vacation_array()
+        self.ano = 2025
+        self.dias_ano = pd.date_range(start=f'{self.ano}-01-01', end=f'{self.ano}-12-31').to_list()
+        start_date = self.dias_ano[0].date()
+        self.holidays = {(d - start_date).days + 1 for d in holidays}
+        self.sunday = [d.dayofyear for d in self.dias_ano if d.weekday() == 6]
 
     def _create_vacation_array(self):
         vac_array = np.zeros((len(self.employees), self.num_days), dtype=bool)
@@ -35,25 +36,24 @@ class CombinedScheduler:
         days = sorted([day for (day, _, _) in assignments] + [d])
         count = 1
         for i in range(1, len(days)):
-            if days[i] == days[i - 1] + 1:
+            if days[i] == days[i-1] + 1:
                 count += 1
                 if count > 5:
                     return False
             else:
                 count = 1
-
-        sundays_and_holidays = sum(1 for (day, _, _) in assignments if day in self.holidays)
-        if d in self.holidays:
+                
+        special_days = set(self.holidays).union(self.sunday)
+        sundays_and_holidays = sum(1 for (day, _, _) in assignments if day in special_days)
+        if d in special_days:
             sundays_and_holidays += 1
         if sundays_and_holidays > 22:
             return False
-
         for (day, shift, _) in assignments:
             if shift == 2 and day + 1 == d and s == 1:
                 return False
             if shift == 1 and day - 1 == d and s == 2:
                 return False
-
         return True
 
     def f2(self, d, s, t):
