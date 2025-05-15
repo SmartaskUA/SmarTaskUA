@@ -134,7 +134,8 @@ class CombinedScheduler:
         no_improve = 0
         iteration = 0
 
-        while iteration < max_iterations and no_improve < max_no_improve:
+        # and no_improve < max_no_improve
+        while iteration < max_iterations:
             iteration += 1
             emp_idx = np.random.randint(len(self.employees))
             emp = self.employees[emp_idx]
@@ -145,16 +146,13 @@ class CombinedScheduler:
             d1, d2 = np.random.choice(available_days, 2, replace=False)
             s1, s2 = np.random.choice([0, 1], 2, replace=False)
 
-            # Check if swap is valid (respects team preferences)
             t1, t2 = horario[emp_idx, d1, s1], horario[emp_idx, d2, s2]
             if (t1 > 0 and t1 not in self.teams[emp]) or (t2 > 0 and t2 not in self.teams[emp]):
                 continue
 
-            # Perform swap
             new_horario = horario.copy()
             new_horario[emp_idx, d1, s1], new_horario[emp_idx, d2, s2] = t2, t1
 
-            # Check shift sequence constraints
             if s1 == 1 and d1 + 1 < self.num_days and new_horario[emp_idx, d1 + 1, 0] > 0:
                 continue
             if s2 == 1 and d2 + 1 < self.num_days and new_horario[emp_idx, d2 + 1, 0] > 0:
@@ -164,8 +162,8 @@ class CombinedScheduler:
             if s2 == 0 and d2 > 0 and new_horario[emp_idx, d2 - 1, 1] > 0:
                 continue
 
-            # Evaluate new schedule
             score = self.score(new_horario)
+            print(score)
 
             if score < best_score:
                 horario = new_horario
@@ -180,16 +178,11 @@ class CombinedScheduler:
         return horario
 
     def score(self, horario):
-        """
-        You can re‐weight these if you like, but this
-        makes sure hill‐climbing never accepts a worse KPI.
-        """
         c1 = self.criterio1(horario)
         c2 = self.criterio2(horario)
         c3 = self.criterio3(horario)
         c4 = self.criterio4(horario)
         c5 = self.criterio5(horario)
-        # example: equal weight to all criteria
         return c1 + c2 + c3 + c4 + c5
 
 
@@ -205,7 +198,6 @@ class CombinedScheduler:
                     if run > max_consec:
                         total_violation += 1
                     run = 0
-            # check tail
             if run > max_consec:
                 total_violation += 1
         return total_violation
