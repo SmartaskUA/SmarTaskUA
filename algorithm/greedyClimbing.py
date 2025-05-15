@@ -24,7 +24,6 @@ class CombinedScheduler:
         self.holidays = {(d - start_date).days + 1 for d in holidays}
         self.sunday = [d.dayofyear for d in self.dias_ano if d.weekday() == 6]
         self.vac_array = self._create_vacation_array()
-        # fds: mark every Sunday for every employee
         self.fds = np.zeros_like(self.vac_array)
         for day in self.sunday:
             self.fds[:, day-1] = True
@@ -316,7 +315,7 @@ def generate_schedule():
     start_time = time.time()
     scheduler = CombinedScheduler(employees, num_days, holidays, vacs, mins, ideals, teams)
     scheduler.build_schedule()
-    export_schedule_to_csv(scheduler, "schedule.csv")
+    export_schedule_to_csv(scheduler, "schedule1.csv")
     scheduler.create_horario()
     score = scheduler.score(scheduler.create_horario())
     print("Initial solution criteria:")
