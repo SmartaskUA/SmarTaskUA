@@ -8,7 +8,7 @@ import BarChartDropdown from "../components/manager/BarChartDropdown";
 import BarChartDropdownFolgasFerias from "../components/manager/BarChartDropdownFolgasFerias";
 import KPIReport from "../components/manager/KPIReport";
 import BaseUrl from "../components/BaseUrl";
-
+import MetadataInfo from "../components/manager/MetadataInfo";
 const Calendar = () => {
   const [data, setData] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(1);
@@ -16,6 +16,7 @@ const Calendar = () => {
   const [endDay, setEndDay] = useState(31);
   const [firstDayOfYear, setFirstDayOfYear] = useState(0);
   const { calendarId } = useParams();
+  const [metadata, setMetadata] = useState(null);
 
   const months = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -82,6 +83,11 @@ const Calendar = () => {
           setFirstDayOfYear(firstDay);
           setData(scheduleData);
         }
+        if (response.data) {
+          setData(response.data.data);
+          setMetadata(response.data.metadata);
+        }
+    
       })
       .catch(console.error);
   }, [calendarId]);
@@ -166,7 +172,7 @@ const Calendar = () => {
           endDay={endDay}
           firstDayOfYear={firstDayOfYear}
         />
-
+        <MetadataInfo metadata={metadata} />
         <KPIReport
           checkScheduleConflicts={checkScheduleConflicts}
           checkWorkloadConflicts={checkWorkloadConflicts}
