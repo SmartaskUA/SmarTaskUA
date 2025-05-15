@@ -11,16 +11,19 @@ import {
   TableRow,
 } from "@mui/material";
 
-const VacationsTemplate = ({ name, data }) => {
+const isLeapYear = (year) => {
+  if (!year) return false;
+  return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+};
+
+const VacationsTemplate = ({ name, data, year }) => {
   if (!data || Object.keys(data).length === 0) return null;
 
-  let sampleRow = Object.values(data)[0] || [];
-  if (sampleRow.length > 365) sampleRow = sampleRow.slice(0, 365);
-  const maxDay = sampleRow.length;
+  const febDays = isLeapYear(year) ? 29 : 28;
 
   const monthLabels = [
     { name: "Janeiro", days: 31 },
-    { name: "Fevereiro", days: 28 },
+    { name: "Fevereiro", days: febDays },
     { name: "Março", days: 31 },
     { name: "Abril", days: 30 },
     { name: "Maio", days: 31 },
@@ -33,13 +36,17 @@ const VacationsTemplate = ({ name, data }) => {
     { name: "Dezembro", days: 31 },
   ];
 
-  const monthBoundaries = [];
-  let cumulative = 0;
-  for (let month of monthLabels) {
-    if (cumulative >= maxDay) break;
-    const days = Math.min(month.days, maxDay - cumulative);
-    monthBoundaries.push({ name: month.name, start: cumulative + 1, end: cumulative + days });
-    cumulative += days;
+  let sampleRow = Object.values(data)[0] || [];
+  if (sampleRow.length > 365) sampleRow = sampleRow.slice(0, 365);
+  const maxDay = sampleRow.length;
+
+  const months = [];
+  let daysCounted = 0;
+  for (const month of monthLabels) {
+    if (daysCounted >= maxDay) break;
+    const daysThisMonth = Math.min(month.days, maxDay - daysCounted);
+    months.push({ ...month, days: daysThisMonth });
+    daysCounted += daysThisMonth;
   }
 
   const sortedRows = Object.entries(data)
@@ -48,75 +55,129 @@ const VacationsTemplate = ({ name, data }) => {
       const numB = parseInt(b.match(/\d+/)?.[0] || 0);
       return numA - numB;
     })
-    .map(([, days], index) => ({ label: index + 1, days: days.slice(0, 365) }));
+    .map(([, days], index) => ({ label: index + 1, days: days.slice(0, maxDay) }));
 
   const getMonthHeaderCells = () => {
-    const cells = [<TableCell key="label" sx={{ border: '1px solid #ddd', fontWeight: 'bold' }}>Meses</TableCell>];
-    monthBoundaries.forEach((month) => {
-      cells.push(
-        <TableCell
-          key={month.name}
-          align="center"
-          colSpan={month.end - month.start + 1}
-          sx={{ border: '1px solid #ddd', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}
-        >
-          {month.name}
-        </TableCell>
-      );
+    return months.map((month) => (
+      <TableCell
+        key={month.name}
+        align="center"
+        colSpan={month.days}
+        sx={{
+          backgroundColor: "#e0e7ff",
+          fontWeight: "bold",
+          border: "1px solid #ccc",
+          padding: "8px 0",
+          userSelect: "none",
+          fontSize: "0.875rem",
+        }}
+      >
+        {month.name}
+      </TableCell>
+    ));
+  };
+
+  const getDayNumberCells = () => {
+    const cells = [];
+    months.forEach((month) => {
+      for (let day = 1; day <= month.days; day++) {
+        cells.push(
+          <TableCell
+            key={`${month.name}-${day}`}
+            align="center"
+            sx={{
+              border: "1px solid #eee",
+              padding: "4px 6px",
+              fontSize: "0.75rem",
+              color: "#555",
+              userSelect: "none",
+            }}
+          >
+            {day}
+          </TableCell>
+        );
+      }
     });
     return cells;
   };
 
-  const getDayNumberCells = () => {
-    const cells = [<TableCell key="label" sx={{ border: '1px solid #ddd', fontWeight: 'bold' }}>Funcionário</TableCell>];
-    for (let i = 1; i <= maxDay; i++) {
-      cells.push(
-        <TableCell
-          key={`day-${i}`}
-          align="center"
-          sx={{ border: '1px solid #ddd', padding: '6px' }}
-        >
-          {i}
-        </TableCell>
-      );
-    }
-    return cells;
-  };
-
   return (
-    <Box mt={4}>
+    <Box mt={4} style={{ paddingRight: "6%" }}>
       <Typography variant="h6" gutterBottom>
         Visualização das Férias - Template: {name}
       </Typography>
       <TableContainer component={Paper} style={{ overflowX: "auto" }}>
-        <Table size="small" sx={{ borderCollapse: 'collapse', tableLayout: 'fixed', minWidth: 1200 }}>
+        <Table
+          size="small"
+          sx={{
+            borderCollapse: "collapse",
+            minWidth: 1200,
+            "& th, & td": {
+              border: "1px solid #ddd",
+              padding: "6px 8px",
+              userSelect: "none",
+            },
+            "& tbody tr:hover": {
+              backgroundColor: "#f5f5f5",
+            },
+          }}
+        >
           <colgroup>
-            <col style={{ width: '120px' }} />
+            <col style={{ width: "120px" }} />
             {Array.from({ length: maxDay }, (_, i) => (
-              <col key={i} style={{ width: '30px' }} />
+              <col key={i} style={{ width: "30px" }} />
             ))}
           </colgroup>
           <TableHead>
-            <TableRow>{getMonthHeaderCells()}</TableRow>
-            <TableRow>{getDayNumberCells()}</TableRow>
+            <TableRow>
+              <TableCell
+                sx={{
+                  border: "none",
+                  padding: 0,
+                  margin: 0,
+                  width: "120px",
+                  backgroundColor: "transparent",
+                  userSelect: "none",
+                }}
+              />
+              {getMonthHeaderCells()}
+            </TableRow>
+            <TableRow>
+              <TableCell
+                sx={{
+                  fontWeight: "bold",
+                  padding: "6px 12px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Funcionário
+              </TableCell>
+              {getDayNumberCells()}
+            </TableRow>
           </TableHead>
           <TableBody>
             {sortedRows.map(({ label, days }, index) => (
-              <TableRow key={index} sx={{ height: 40 }}>
-                <TableCell sx={{ border: '1px solid #ddd', whiteSpace: 'nowrap' }}>{label}</TableCell>
+              <TableRow
+                key={index}
+                sx={{
+                  height: 36,
+                  "&:hover": { backgroundColor: "#f5f5f5" },
+                }}
+              >
+                <TableCell sx={{ whiteSpace: "nowrap" }}>{label}</TableCell>
                 {days.map((val, i) => (
                   <TableCell
                     key={i}
                     align="center"
                     sx={{
-                      border: '1px solid #ddd',
-                      backgroundColor: val === 1 || val === '1' ? "#ffcccb" : "#fff",
-                      padding: '6px'
+                      backgroundColor: val === 1 || val === "1" ? "#fbeaea" : "#fff",
+                      color: val === 1 || val === "1" ? "#000" : "inherit",
+                      fontWeight: val === 1 || val === "1" ? "600" : "normal",
                     }}
                   >
-                    {val === 1 || val === '1' ? "F" : ""}
+                    {val === 1 || val === "1" ? "F" : ""}
                   </TableCell>
-                )).slice(1).concat(<TableCell key={-1} />)}
+                ))}
               </TableRow>
             ))}
           </TableBody>

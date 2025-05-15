@@ -144,7 +144,7 @@ const Employer = () => {
   return (
     <div className="admin-container" style={{ display: "flex", minHeight: "100vh" }}>
       <Sidebar_Manager />
-      <div className="main-content" style={{ flex: 1, padding: "20px" }}>
+      <div className="main-content" style={{ flex: 1, padding: "20px" , paddingRight: "6%"}}>
         <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h4">List of Employees</Typography>
           <Box>
@@ -205,7 +205,40 @@ const Employer = () => {
                       <TableRow key={emp.id} style={rowStyle}>
                         <TableCell>{emp.id}</TableCell>
                         <TableCell>{emp.name}</TableCell>
-                        <TableCell>{getTeamNames(emp.teamIds)}</TableCell>
+                        <TableCell>
+                        <Box display="flex" flexWrap="wrap" gap={1}>
+                          {(emp.teamIds || []).map((id) => {
+                            const teamName = teamsDict[id]?.replace(/^Equipa\s+/i, "") || id;
+
+                            const colorMap = {
+                              A: "#e0f7fa", 
+                              B: "#fce4ec",
+                              C: "#fff9c4",
+                              D: "#e8f5e9",
+                              E: "#FFA726"
+                            };
+
+                            const bgColor = colorMap[teamName] || "#E0E0E0"; 
+
+                            return (
+                              <Box
+                                key={id}
+                                px={2}
+                                py={0.5}
+                                borderRadius="20px"
+                                bgcolor={bgColor}
+                                color="#4E342E"
+                                fontWeight="600"
+                                fontSize="0.85rem"
+                                boxShadow="0px 1px 3px rgba(0, 0, 0, 0.1)"
+                              >
+                                {teamName}
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      </TableCell>
+
                         <TableCell>
                           {removalMode && (
                             <IconButton
