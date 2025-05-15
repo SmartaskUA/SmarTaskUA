@@ -23,6 +23,11 @@ class CombinedScheduler:
         start_date = self.dias_ano[0].date()
         self.holidays = {(d - start_date).days + 1 for d in holidays}
         self.sunday = [d.dayofyear for d in self.dias_ano if d.weekday() == 6]
+        self.vac_array = self._create_vacation_array()
+        # fds: mark every Sunday for every employee
+        self.fds = np.zeros_like(self.vac_array)
+        for day in self.sunday:
+            self.fds[:, day-1] = True
 
     def _create_vacation_array(self):
         vac_array = np.zeros((len(self.employees), self.num_days), dtype=bool)
@@ -126,8 +131,7 @@ class CombinedScheduler:
 
     def hill_climbing(self, max_iterations=400000, max_no_improve=10000):
         horario = self.create_horario()
-        f1_opt, f2_opt, f3_opt, f4_opt, f5_opt = self.calculate_criteria(horario)
-        best_score = np.sum(f1_opt) + np.sum(f2_opt) + f3_opt + np.sum(f4_opt) + np.sum(f5_opt)
+        best_score = self.score(horario)
         no_improve = 0
         iteration = 0
 
@@ -162,12 +166,10 @@ class CombinedScheduler:
                 continue
 
             # Evaluate new schedule
-            f1, f2, f3, f4, f5 = self.calculate_criteria(new_horario)
-            score = np.sum(f1) + np.sum(f2) + f3 + np.sum(f4) + np.sum(f5)
+            score = self.score(new_horario)
 
             if score < best_score:
                 horario = new_horario
-                f1_opt, f2_opt, f3_opt, f4_opt, f5_opt = f1, f2, f3, f4, f5
                 best_score = score
                 no_improve = 0
                 self.update_from_horario(horario)
@@ -176,52 +178,96 @@ class CombinedScheduler:
                 no_improve += 1
 
         print(f"Hill Climbing completed after {iteration} iterations.")
-        return f1_opt, f2_opt, f3_opt, f4_opt, f5_opt
+        return horario
 
-    def calculate_criteria(self, horario):
-        f1 = criterio1(horario, 5)
-        f2 = criterio2(horario, self.fds, 22, list(self.holidays))
-        f3 = criterio3(horario, 2)
-        f4 = criterio4(horario, self.vac_array, 223)
-        f5 = criterio5(horario, [self.teams[emp] for emp in self.employees])
-        return f1, f2, f3, f4, f5
+    def score(self, horario):
+        """
+        You can re‐weight these if you like, but this
+        makes sure hill‐climbing never accepts a worse KPI.
+        """
+        c1 = self.criterio1(horario)
+        c2 = self.criterio2(horario)
+        c3 = self.criterio3(horario)
+        c4 = self.criterio4(horario)
+        c5 = self.criterio5(horario)
+        # example: equal weight to all criteria
+        return c1 + c2 + c3 + c4 + c5
 
-def criterio1(horario, nDiasSeguidos):
-    f1 = np.zeros(horario.shape[0], dtype=int)
-    dias_trabalhados = np.sum(horario, axis=2) > 0
-    janela = np.ones(nDiasSeguidos, dtype=int)
-    for i in range(horario.shape[0]):
-        sequencia = np.convolve(dias_trabalhados[i].astype(int), janela, mode='valid')
-        f1[i] = np.sum(sequencia == nDiasSeguidos)
-    return f1
 
-def criterio2(horario, fds, nDiasTrabalhoFDS, feriados):
-    dias_ano = np.arange(horario.shape[1])
-    dias_fds = fds.sum(axis=0) > 0
-    dias_feriados = np.isin(dias_ano, feriados)
-    dias_fds_feriados = dias_fds | dias_feriados
-    dias_fds_feriados = dias_fds_feriados[None, :, None]
-    dias_trabalhados = np.sum(horario * dias_fds_feriados, axis=(1, 2))
-    excedente = np.maximum(dias_trabalhados - nDiasTrabalhoFDS, 0)
-    return excedente
+    def criterio1(self, horario, max_consec=5):
+        worked = (horario.sum(axis=2) > 0).astype(int)
+        total_violation = 0
+        for i in range(worked.shape[0]):
+            run = 0
+            for d in range(worked.shape[1]):
+                if worked[i, d]:
+                    run += 1
+                else:
+                    if run > max_consec:
+                        total_violation += (run - max_consec)
+                    run = 0
+            # check tail
+            if run > max_consec:
+                total_violation += (run - max_consec)
+        return total_violation
 
-def criterio3(horario, nMinTrabs):
-    trabalhadores_por_dia = np.sum(horario > 0, axis=0)
-    dias_com_menos_trabalhadores = np.sum(trabalhadores_por_dia < nMinTrabs, axis=0)
-    return np.sum(dias_com_menos_trabalhadores)
+    def criterio2(self, horario):
+        """
+        Total number of work‐days (any shift) that fall on a holiday or Sunday.
+        """
+        # build a boolean mask of holiday/Sunday indices
+        mask = np.zeros(self.num_days, dtype=bool)
+        for d in self.holidays.union(self.sunday):
+            mask[d-1] = True
+        worked = (horario.sum(axis=2) > 0)
+        # count all (employee × day) where both worked and mask
+        return int(np.sum(worked[:, mask]))
 
-def criterio4(horario, vac_array, nDiasTrabalho):
-    dias_trabalhados_por_trabalhador = np.sum(np.sum(horario > 0, axis=2) & ~vac_array, axis=1)
-    dias_diferenca = np.abs(dias_trabalhados_por_trabalhador - nDiasTrabalho)
-    return dias_diferenca
+    def criterio3(self, horario):
+        """
+        Sum of all shortages: for each (day,shift,team),
+        max(0, min_required - actually_assigned).
+        """
+        # count[day,shift,team]
+        counts = np.zeros((self.num_days, 2, 2), dtype=int)
+        # horario[p,d,s] = team_id or 0
+        for p_idx in range(horario.shape[0]):
+            for d in range(self.num_days):
+                for s in (0, 1):
+                    t = horario[p_idx, d, s]
+                    if t > 0:
+                        counts[d, s, t-1] += 1
 
-def criterio5(horario, teams):
-    f5 = np.zeros(horario.shape[0], dtype=int)
-    for i in range(horario.shape[0]):
-        for d in range(horario.shape[1] - 1):
-            if horario[i, d, 1] > 0 and horario[i, d + 1, 0] > 0:
-                f5[i] += 1
-    return f5
+        shortage = 0
+        for d in range(self.num_days):
+            for s in (0, 1):
+                for t in (1, 2):
+                    required = self.mins.get((d+1, s+1, t), 0)
+                    if counts[d, s, t-1] < required:
+                        shortage += (required - counts[d, s, t-1])
+        return shortage
+
+    def criterio4(self, horario, target_workdays=223):
+        """
+        Sum over employees of | actual_workdays - target_workdays |
+        where actual_workdays excludes vacations.
+        """
+        # work = any shift > 0
+        work = (horario.sum(axis=2) > 0)
+        diffs = np.abs(np.sum(work & ~self.vac_array, axis=1) - target_workdays)
+        return int(np.sum(diffs))
+
+    def criterio5(self, horario):
+        """
+        Count of forbidden T→M transitions:
+        an afternoon shift on day d followed by a morning on day d+1.
+        """
+        violations = 0
+        for i in range(horario.shape[0]):
+            for d in range(self.num_days - 1):
+                if horario[i, d, 1] > 0 and horario[i, d+1, 0] > 0:
+                    violations += 1
+        return violations
 
 def parse_vacs(file_path):
     vacs = {}
@@ -280,9 +326,9 @@ def generate_schedule():
     start_time = time.time()
     scheduler = CombinedScheduler(employees, num_days, holidays, vacs, mins, ideals, teams)
     scheduler.build_schedule()
-    f1, f2, f3, f4, f5 = scheduler.calculate_criteria(scheduler.create_horario())
+    score = scheduler.score(scheduler.create_horario())
     print("Initial solution criteria:")
-    print(f"C1: {f1}, C2: {f2}, C3: {f3}, C4: {f4}, C5: {f5}")
+    print(f"Score: {score}")
     scheduler.hill_climbing()
     end_time = time.time()
 
