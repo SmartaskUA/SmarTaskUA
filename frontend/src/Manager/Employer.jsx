@@ -161,7 +161,7 @@ const Employer = () => {
             </Button>
             <Button
               variant="outlined"
-              color="secondary"
+              color="primary"
               onClick={handleResetEmployeesAndTeams}
               style={{ marginLeft: "10px" }}
             >
@@ -260,7 +260,6 @@ const Employer = () => {
               value={newEmployee.name}
               onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
             />
-            {/* Aqui poderias usar um select de equipas futuras se necessário */}
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setOpenAddDialog(false)} color="secondary">
@@ -308,7 +307,6 @@ const Employer = () => {
                     setSelectedEmployee({ ...selectedEmployee, name: e.target.value })
                   }
                 />
-
                 <FormControl fullWidth margin="normal">
                   <InputLabel id="team-select-label">Equipas</InputLabel>
                   <Select

@@ -24,6 +24,19 @@ const ImportMinimums = () => {
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
 
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+
+  const fetchTemplates = async () => {
+    try {
+      const response = await axios.get(`${baseurl}/reference/`);
+      setTemplates(response.data);
+    } catch (err) {
+      console.error("Error fetching templates:", err);
+    }
+  };
+
   const handleFileSelection = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -52,22 +65,13 @@ const ImportMinimums = () => {
       setTemplateName("");
       fetchTemplates();
     } catch (err) {
-      console.error("Erro ao importar CSV de mínimos:", err);
+      console.error("Error uploading minimums CSV:", err);
       setErrorOpen(true);
     }
   };
 
-  const fetchTemplates = async () => {
-    try {
-      const response = await axios.get(`${baseurl}/reference/`);
-      setTemplates(response.data);
-    } catch (err) {
-      console.error("Erro ao buscar templates:", err);
-    }
-  };
-
   const handleDeleteAllReferenceTemplates = async () => {
-    const confirmDelete = window.confirm("Tem a certeza que deseja apagar todos os templates de referência?");
+    const confirmDelete = window.confirm("Are you sure you want to delete all reference templates?");
     if (!confirmDelete) return;
 
     try {
@@ -76,8 +80,8 @@ const ImportMinimums = () => {
       setSelectedTemplate(null);
       setSuccessOpen(true);
     } catch (err) {
-      console.error("Erro ao apagar templates de referência:", err);
-      alert("Erro ao apagar templates: " + (err.response?.data?.error || err.message));
+      console.error("Error deleting reference templates:", err);
+      alert("Error deleting templates: " + (err.response?.data?.error || err.message));
       setErrorOpen(true);
     }
   };
@@ -85,37 +89,32 @@ const ImportMinimums = () => {
   const showTemplateDetails = async (id) => {
     try {
       const response = await axios.get(`${baseurl}/reference/${id}`);
-      console.log("Resposta recebida (JSON):", response.data);
       setSelectedTemplate(response.data);
     } catch (err) {
-      console.error("Erro ao carregar detalhes do template:", err);
+      console.error("Error loading template details:", err);
     }
   };
-
-  useEffect(() => {
-    fetchTemplates();
-  }, []);
 
   return (
     <div className="admin-container" style={{ overflow: "auto", height: "100vh" }}>
       <Sidebar_Manager />
       <div className="main-content" style={{ padding: 20, marginRight: "2%", maxWidth: "100%" }}>
         <Typography variant="h4" gutterBottom>
-          Importar Mínimos por Dia
+          Import Daily Minimums
         </Typography>
 
         <Paper style={{ padding: 20, marginBottom: 20, width: "60%", marginTop: 30 }}>
           <Typography variant="h6" gutterBottom>
-            Nome do Template de Mínimos
+            Reference Template Name
           </Typography>
 
           <Box display="flex" alignItems="center" gap={2} mt={2} flexWrap="wrap">
             <TextField
-              label="Nome do Template"
+              label="Template Name"
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
               error={nameError && !templateName.trim()}
-              helperText={nameError && !templateName.trim() ? "Insira um nome para o template" : ""}
+              helperText={nameError && !templateName.trim() ? "Please enter a template name" : ""}
               size="small"
               sx={{ flex: 1, minWidth: "220px", maxWidth: "250px" }}
             />
@@ -128,7 +127,7 @@ const ImportMinimums = () => {
                 style={{ display: "none" }}
               />
               <Button variant="contained" component="span" color="success">
-                Escolher CSV
+                Choose CSV
               </Button>
             </label>
             <Button
@@ -136,14 +135,22 @@ const ImportMinimums = () => {
               onClick={handleCsvUpload}
               disabled={!csvFile}
             >
-              Enviar CSV
+              Upload CSV
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleDeleteAllReferenceTemplates}
+              sx={{ ml: 21}}
+            >
+              Delete All Templates
             </Button>
           </Box>
 
           {uploadedFileName && (
             <Box mt={2}>
               <Typography variant="body2" color="textSecondary">
-                Ficheiro selecionado: <strong>{uploadedFileName}</strong>
+                Selected file: <strong>{uploadedFileName}</strong>
               </Typography>
             </Box>
           )}
@@ -151,7 +158,7 @@ const ImportMinimums = () => {
 
         {templates.length > 0 && (
           <Box mt={4}>
-            <Typography variant="h5" gutterBottom>Templates Existentes</Typography>
+            <Typography variant="h5" gutterBottom>Existing Templates</Typography>
             <Box display="flex" flexWrap="wrap" gap={2}>
               {templates.map((template) => (
                 <Paper
@@ -168,7 +175,7 @@ const ImportMinimums = () => {
                     {template.name}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
-                    {template.minimuns?.length || 0} linhas de dados
+                    {template.minimuns?.length || 0} rows of data
                   </Typography>
                   <Box display="flex" justifyContent="center" mt={2}>
                     <Button
@@ -176,7 +183,7 @@ const ImportMinimums = () => {
                       size="small"
                       onClick={() => showTemplateDetails(template.id)}
                     >
-                      Abrir
+                      Open
                     </Button>
                   </Box>
                 </Paper>
@@ -191,21 +198,15 @@ const ImportMinimums = () => {
           </Box>
         )}
 
-        <Box mt={6} display="flex" justifyContent="center">
-          <Button variant="contained" color="error" onClick={handleDeleteAllReferenceTemplates}>
-            Apagar Todos os Templates de Referência
-          </Button>
-        </Box>
-
         <Snackbar open={successOpen} autoHideDuration={3000} onClose={() => setSuccessOpen(false)}>
           <Alert onClose={() => setSuccessOpen(false)} severity="success" sx={{ width: "100%" }}>
-            CSV de mínimos enviado com sucesso!
+            Operation completed successfully!
           </Alert>
         </Snackbar>
 
         <Snackbar open={errorOpen} autoHideDuration={3000} onClose={() => setErrorOpen(false)}>
           <Alert onClose={() => setErrorOpen(false)} severity="error" sx={{ width: "100%" }}>
-            Erro ao enviar o CSV. Verifique o formato.
+            An error occurred. Please check the CSV format.
           </Alert>
         </Snackbar>
       </div>

@@ -265,6 +265,9 @@ const Teams = () => {
             <Typography variant="h4" gutterBottom>
               Team List
             </Typography>
+            <Button sx={{ marginLeft: "30%" }} variant="contained" color="success" onClick={() => setOpenDialog(true)}>
+              + New Team
+            </Button>
             <Box display="flex" gap={2} alignItems="center" sx={{ width: "50%" }}>
               <TextField
                 label="Search by Team ID"
@@ -274,11 +277,6 @@ const Teams = () => {
                 margin="normal"
                 sx={{ flex: 1 }}
               />
-
-              <Button variant="contained" color="success" onClick={() => setOpenDialog(true)}>
-                + New Team
-              </Button>
-
               <FormControl sx={{ minWidth: 150 }}>
                 <InputLabel id="select-team-label">Select Team pra eliminar</InputLabel>
                 <Select
@@ -411,35 +409,76 @@ const Teams = () => {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ width: 420 }}>
+        <DialogContent dividers sx={{ padding: 4, bgcolor: "#fafafa" }}>
           {teamDetails ? (
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                Name: {teamDetails.name}
+            <>
+              <Typography
+                variant="h5"
+                gutterBottom
+                sx={{ fontWeight: "700", color: "#1976d2", mb: 3, letterSpacing: 0.5 }}
+              >
+                {teamDetails.name}
               </Typography>
-              <Divider sx={{ marginTop: 2 }} />
-              <Typography variant="subtitle1" sx={{ marginTop: 2, fontWeight: 'bold' }}>
-                Employees:
+
+              <Divider sx={{ mb: 3 }} />
+
+              <Typography variant="subtitle1" sx={{ fontWeight: "600", mb: 2 }}>
+                Employees ({teamDetails.employees.length})
               </Typography>
+
               {teamDetails.employees.map((emp) => (
-                <Box key={emp.id} sx={{ ml: 2, mt: 1 }}>
-                  <Typography variant="body2">
-                    • {emp.name} ({emp.id})
+                <Paper
+                  key={emp.id}
+                  elevation={3}
+                  sx={{
+                    p: 2,
+                    mb: 2,
+                    borderRadius: 3,
+                    transition: "transform 0.15s ease-in-out",
+                    cursor: "default",
+                    "&:hover": {
+                      boxShadow: "0 4px 20px rgba(25, 118, 210, 0.3)",
+                      transform: "translateY(-3px)",
+                    },
+                  }}
+                >
+                  <Typography variant="body1" sx={{ fontWeight: "600" }}>
+                    {emp.name}{" "}
+                    <Typography component="span" color="text.secondary" sx={{ fontWeight: "400" }}>
+                      ({emp.id})
+                    </Typography>
                   </Typography>
+
                   {Object.entries(emp.restrictions).length > 0 && (
-                    <Box sx={{ ml: 2, mt: 1 }}>
-                      <Typography variant="body2" color="textSecondary">
-                        Restrictions:
-                      </Typography>
+                    <Box sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 1 }}>
                       {Object.entries(emp.restrictions).map(([key, value]) => (
-                        <Typography key={key} variant="body2" sx={{ ml: 2 }}>
-                          • {key}: {value}
-                        </Typography>
+                        <Box
+                          key={key}
+                          sx={{
+                            backgroundColor: "#e3f2fd",
+                            borderRadius: "16px",
+                            px: 2,
+                            py: 0.5,
+                            fontSize: "0.85rem",
+                            color: "#0d47a1",
+                            fontWeight: "500",
+                            boxShadow: "0 1px 3px rgba(13, 71, 161, 0.2)",
+                            cursor: "default",
+                            userSelect: "none",
+                            transition: "background-color 0.3s",
+                            "&:hover": {
+                              backgroundColor: "#bbdefb",
+                            },
+                          }}
+                        >
+                          {key}: {value}
+                        </Box>
                       ))}
                     </Box>
                   )}
-                </Box>
+                </Paper>
               ))}
+
               <TextField
                 label="Add Employee IDs"
                 fullWidth
@@ -447,22 +486,32 @@ const Teams = () => {
                 value={newEmployeeIds}
                 onChange={(e) => setNewEmployeeIds(e.target.value)}
                 helperText="Enter IDs separated by commas"
+                sx={{ mt: 2 }}
               />
               <Button
                 variant="contained"
-                color="primary"
+                color="success"
                 onClick={handleAddEmployeesToTeam}
-                sx={{ marginTop: 2 }}
+                sx={{ mt: 2, boxShadow: "0 4px 10px rgba(25, 118, 210, 0.3)" }}
+                fullWidth
               >
                 Add Employees
               </Button>
-            </Box>
+            </>
           ) : (
-            <CircularProgress sx={{ display: "block", margin: "0 auto" }} />
+            <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+              <CircularProgress size={48} />
+            </Box>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDetailsDialog} color="primary">
+
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={handleCloseDetailsDialog}
+            color="error"
+            sx={{ fontWeight: "700" }}
+            autoFocus
+          >
             Close
           </Button>
         </DialogActions>
