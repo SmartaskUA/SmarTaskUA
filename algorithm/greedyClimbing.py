@@ -204,64 +204,54 @@ class CombinedScheduler:
                     run += 1
                 else:
                     if run > max_consec:
-                        total_violation += (run - max_consec)
+                        total_violation += 1
                     run = 0
             # check tail
             if run > max_consec:
-                total_violation += (run - max_consec)
+                total_violation += 1
         return total_violation
 
     def criterio2(self, horario):
-        """
-        Total number of work‐days (any shift) that fall on a holiday or Sunday.
-        """
-        # build a boolean mask of holiday/Sunday indices
-        mask = np.zeros(self.num_days, dtype=bool)
-        for d in self.holidays.union(self.sunday):
-            mask[d-1] = True
-        worked = (horario.sum(axis=2) > 0)
-        # count all (employee × day) where both worked and mask
-        return int(np.sum(worked[:, mask]))
+        worked = (horario.sum(axis=2) > 0).astype(int)
+        allowed = 22
+        total_violation = 0
+        special_days = set(self.holidays).union(self.sunday)
+        for i in range(worked.shape[0]):
+            num = 0
+            for d in range(worked.shape[1]):
+                if worked[i, d] and d + 1 in special_days:
+                    num += 1
+            if num > allowed:
+                total_violation = num - allowed
+        return total_violation
 
     def criterio3(self, horario):
-        """
-        Sum of all shortages: for each (day,shift,team),
-        max(0, min_required - actually_assigned).
-        """
-        # count[day,shift,team]
-        counts = np.zeros((self.num_days, 2, 2), dtype=int)
-        # horario[p,d,s] = team_id or 0
-        for p_idx in range(horario.shape[0]):
+        counts = np.zeros((self.num_days, 2, 2)).astype(int)
+        n_emps = horario.shape[0]
+        for p in range(n_emps):
             for d in range(self.num_days):
                 for s in (0, 1):
-                    t = horario[p_idx, d, s]
+                    t = horario[p, d, s]
                     if t > 0:
                         counts[d, s, t-1] += 1
 
         shortage = 0
-        for d in range(self.num_days):
-            for s in (0, 1):
-                for t in (1, 2):
-                    required = self.mins.get((d+1, s+1, t), 0)
-                    if counts[d, s, t-1] < required:
-                        shortage += (required - counts[d, s, t-1])
-        return shortage
+        for (day, shift, team), required in self.mins.items():
+            d_idx = day - 1
+            s_idx = shift - 1
+            t_idx = team - 1
+            assigned = counts[d_idx, s_idx, t_idx]
+            if assigned < required:
+                shortage += (required - assigned)
+
+        return int(shortage)
 
     def criterio4(self, horario, target_workdays=223):
-        """
-        Sum over employees of | actual_workdays - target_workdays |
-        where actual_workdays excludes vacations.
-        """
-        # work = any shift > 0
-        work = (horario.sum(axis=2) > 0)
+        work = (horario.sum(axis=2) > 0).astype(int)
         diffs = np.abs(np.sum(work & ~self.vac_array, axis=1) - target_workdays)
         return int(np.sum(diffs))
 
     def criterio5(self, horario):
-        """
-        Count of forbidden T→M transitions:
-        an afternoon shift on day d followed by a morning on day d+1.
-        """
         violations = 0
         for i in range(horario.shape[0]):
             for d in range(self.num_days - 1):
@@ -326,6 +316,8 @@ def generate_schedule():
     start_time = time.time()
     scheduler = CombinedScheduler(employees, num_days, holidays, vacs, mins, ideals, teams)
     scheduler.build_schedule()
+    export_schedule_to_csv(scheduler, "schedule.csv")
+    scheduler.create_horario()
     score = scheduler.score(scheduler.create_horario())
     print("Initial solution criteria:")
     print(f"Score: {score}")
