@@ -35,7 +35,7 @@ class GreedyRandomized:
                     return False
             else:
                 count = 1
-                
+
         special_days = set(self.holidays).union(self.sunday)
         sundays_and_holidays = sum(1 for (day, _, _) in assignments if day in special_days)
         if d in special_days:
@@ -88,18 +88,13 @@ class GreedyRandomized:
                 d = random.choice(available_days)
                 s = random.choice([1, 2])
 
-                # print(self.f1(p, d, s), self.f2(d, s, self.teams[p][0]))
                 if self.f1(p, d, s):
-                    print(self.f1(p, d, s))
                     count += 1
                     for t in self.teams[p]:
                         f_aux = self.f2(d, s, t)
                         if f_aux < f_value:
                             f_value = f_aux
                             best = (d, s, t)
-            print(self.f1(p, d, s))
-            if (self.f1(p, d, s) is False):
-                print(best)
             if best:
                 d, s, t = best
                 self.assignment[p].append((d, s, t))
@@ -107,21 +102,20 @@ class GreedyRandomized:
 
     def is_complete(self):
         return all(len(self.assignment[p]) >= 223 for p in self.employees)
-    
-    def check_holiday_violations(self):
-        violations = []
-        for p in self.employees:
-            sunday_holiday_count = sum(1 for (day, _, _) in self.assignment[p] if day in self.holidays or day in self.sunday)
-            if sunday_holiday_count > 22:
-                violations.append((p, sunday_holiday_count))
-        if violations:
-            print("Holiday/Sunday violations found:")
-            for p, count in violations:
-                print(f"Employee {p}: {count} Sundays/holidays (>22)")
-        else:
-            print("No Holiday/Sunday violations.")
-        return violations
-
+     
+    # def check_holiday_violations(self):
+    #     violations = []
+    #     for p in self.employees:
+    #         sunday_holiday_count = sum(1 for (day, _, _) in self.assignment[p] if day in self.holidays or day in self.sunday)
+    #         if sunday_holiday_count > 22:
+    #             violations.append((p, sunday_holiday_count))
+    #     if violations:
+    #         print("Holiday/Sunday violations found:")
+    #         for p, count in violations:
+    #             print(f"Employee {p}: {count} Sundays/holidays (>22)")
+    #     else:
+    #         print("No Holiday/Sunday violations.")
+    #     return violations
 
 def schedule():
     num_employees = 12
@@ -288,5 +282,5 @@ def solve(vacations, minimuns, employees):
 
 
 scheduler = schedule()
-scheduler.check_holiday_violations()
+# scheduler.check_holiday_violations()
 export_schedule_to_csv(scheduler)
