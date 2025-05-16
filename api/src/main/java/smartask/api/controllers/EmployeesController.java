@@ -57,38 +57,6 @@ public class EmployeesController {
     }
 
 
-    @Operation(summary = "Get all the restrictions for an employee by their ID")
-    @GetMapping("/restriction/{id}")
-    public ResponseEntity<Map<String, List<String>>> getRestriction(@PathVariable String id) {
-        return ResponseEntity.ok(employeeService.getEmployeeRestrictions(id));
-    }
-
-    @Operation(summary = "Add new restriction to an employee by their ID")
-    @PostMapping("/restriction/{id}")
-    public ResponseEntity<String> addRestriction(@RequestBody RestrictionRequest restrictionRequest,
-                                                 @PathVariable String id) {
-        System.out.println(restrictionRequest + " for " + id);
-        employeeService.addRestrictionToEmployee(id, restrictionRequest.getRestrictionType(), restrictionRequest.getDate());
-        return ResponseEntity.ok("Restriction added successfully");
-    }
-
-    @Operation(summary = "Update restriction for an employee by their ID")
-    @PutMapping("/restriction/{id}")
-    public ResponseEntity<String> updateRestriction(@RequestBody RestrictionRequest restrictionRequest,
-                                                    @PathVariable String id) {
-        System.out.println(restrictionRequest + " for " + id);
-        // Process the received restrictionType and date (a ser implementado, se necessário)
-        return ResponseEntity.ok("Restriction updated successfully");
-    }
-
-    @Operation(summary = "Delete restriction for an employee by their ID")
-    @DeleteMapping("/restriction/{id}")
-    public ResponseEntity<String> deleteRestriction(@RequestBody RestrictionRequest restrictionRequest,
-                                                    @PathVariable String id) {
-        System.out.println(restrictionRequest + " for " + id);
-        employeeService.removeRestrictionFromEmployee(id, restrictionRequest.getRestrictionType(), restrictionRequest.getDate());
-        return ResponseEntity.ok("Restriction deleted successfully");
-    }
 
     @Operation(summary = "Delete an employee by ID")
     @DeleteMapping("/{id}")
