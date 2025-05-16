@@ -8,10 +8,7 @@ import smartask.api.event.RabbitMqProducer;
 import smartask.api.models.Schedule;
 import smartask.api.models.VacationTemplate;
 import smartask.api.models.requests.ScheduleRequest;
-import smartask.api.repositories.EmployeesRepository;
-import smartask.api.repositories.FShandler;
-import smartask.api.repositories.SchedulesRepository;
-import smartask.api.repositories.VacationTemplateRepository;
+import smartask.api.repositories.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +29,9 @@ public class SchedulesService {
 
     @Autowired
     private EmployeesRepository Emprepository;
+
+    @Autowired
+    private TaskStatusRepository taskStatusRepository;
 
     @Autowired
     private RabbitMqProducer producer;
@@ -133,8 +133,16 @@ public class SchedulesService {
     }
 
     public boolean deleteScheduleById(String id) {
-        if (schedulerepository.existsById(id)) {
+        Optional<Schedule> schedule = schedulerepository.findById(id);
+        if (schedule.isPresent()) {
+            String title = schedule.get().getTitle();
+
+            // Deletar Schedule
             schedulerepository.deleteById(id);
+
+            // Deletar todos os TaskStatus com mesmo title
+            taskStatusRepository.deleteAllByScheduleRequest_Title(title);
+
             return true;
         }
         return false;
@@ -143,7 +151,12 @@ public class SchedulesService {
     public boolean deleteScheduleByTitle(String title) {
         Optional<Schedule> schedule = schedulerepository.findByTitle(title);
         if (schedule.isPresent()) {
+            // Deletar Schedule
             schedulerepository.delete(schedule.get());
+
+            // Deletar todos os TaskStatus com mesmo title
+            taskStatusRepository.deleteAllByScheduleRequest_Title(title);
+
             return true;
         }
         return false;
