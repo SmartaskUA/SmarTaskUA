@@ -1,5 +1,6 @@
 package smartask.api.models;
 
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import jakarta.validation.constraints.NotBlank;
@@ -7,6 +8,7 @@ import jakarta.validation.constraints.NotBlank;
 import java.util.*;
 
 @Document(collection = "employees")
+@NoArgsConstructor
 public class Employee {
 
     @Id
@@ -18,7 +20,6 @@ public class Employee {
     // Armazena os IDs dos times aos quais pertence
     private Set<String> teamIds = new LinkedHashSet<>();
 
-    private Map<String, List<String>> restrictions = new HashMap<>();
 
     public Employee(String name) {
         this.name = name;
@@ -33,6 +34,4 @@ public class Employee {
     public Set<String> getTeamIds() { return teamIds; }
     public void setTeamIds(Set<String> teamIds) { this.teamIds = teamIds; }
 
-    public Map<String, List<String>> getRestrictions() { return restrictions; }
-    public void setRestrictions(Map<String, List<String>> restrictions) { this.restrictions = restrictions; }
 }

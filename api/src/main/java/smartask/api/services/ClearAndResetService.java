@@ -25,6 +25,8 @@ public class ClearAndResetService {
     private ReferenceTemplateRepository referenceTemplateRepository;
     @Autowired
     private VacationTemplateRepository vacationTemplateRepository;
+    @Autowired
+    private TaskStatusRepository taskStatusRepository;
 
     /**
      * Apaga todos os dados de equipes e funcionários e reseta a estrutura inicial.
@@ -73,6 +75,7 @@ public class ClearAndResetService {
 
     public void deleteAllSchedules() {
         schedulesRepository.deleteAll();
+        taskStatusRepository.deleteAll();
     }
 
     public void deleteAllReferenceTemplates() {

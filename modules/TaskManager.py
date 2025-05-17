@@ -18,7 +18,8 @@ class TaskManager:
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling",
                  vacations=None,
                  minimuns=None,
-                 employees=None):
+                 employees=None,
+                 maxTime=10):
         #print(f"\n[DEBUG] Current employee set:\n{employees}")
         print(f"\n[DEBUG] Vacations received:\n{vacations}")
         #print(f"\n[DEBUG] Minimuns received:\n{minimuns}")
@@ -32,7 +33,7 @@ class TaskManager:
         # Verifica assinatura e repassa os argumentos corretamente
         if algorithm_name == "linear programming" or algorithm_name == "hill climbing":
             # Passa vacations, minimuns e employees explicitamente
-            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees)
+            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime)
         else:
             # Algoritmos que ainda não usam os argumentos extras
             schedule_data = algorithm()

@@ -8,8 +8,9 @@ import pandas as pd
 import pulp
 import holidays
 
-def solve(vacations, minimuns, employees):
-    print(f"[ILP] Minimuns '{minimuns}' ")
+def solve(vacations, minimuns, employees, maxTime):
+    #print(f"[ILP] Minimuns '{minimuns}' ")
+    print(f"[ILP] MaxTime '{maxTime}' ")
 
     ano = 2025
     num_funcionarios = len(employees)
