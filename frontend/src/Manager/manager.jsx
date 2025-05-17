@@ -1,23 +1,79 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import "../styles/Manager.css";
 import BaseUrl from "../components/BaseUrl";
-import { CircularProgress } from "@mui/material"; 
+import { CircularProgress } from "@mui/material";
 
-const CalendarCard = ({ title, status, time, link, buttonLabel, className, onClick, showLoader }) => (
-  <div className={`calendar-card ${className}`} style={{ width: "300px", height: "160px", padding: "20px", position: "relative" }}>
-    <div className="calendar-card-header">
-      <span className={`status-dot ${status?.toLowerCase() || 'unknown'}`} />
-      <span className="calendar-card-title" style={{ fontSize: "18px" }}>{title}</span>
-    </div>
-    {time && <span className="draft-time" style={{ fontSize: "14px" }}>{time}</span>}
-    {link && buttonLabel && (
-      <Link to={link} className={`open-button btn-${status?.toLowerCase() || 'default'}`} style={{ fontSize: "16px", padding: "10px 20px" }} onClick={onClick}>
-        {buttonLabel}
-      </Link>
+const CalendarCard = ({ title, algorithm, status, time, onClick, buttonLabel, className, showLoader, buttonColor, showFailedTag }) => (
+  <div className={`calendar-card ${className || ""}`} style={{
+    width: "300px",
+    height: "165px",
+    padding: "20px",
+    position: "relative",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    border: "1px solid #ddd",
+    borderRadius: "8px",
+    boxShadow: "0 2px 5px rgba(0,0,0,0.1)"
+  }}>
+    {showFailedTag && (
+      <div style={{
+        position: "absolute",
+        top: "8px",
+        right: "10px",
+        backgroundColor: "#dc3545",
+        color: "white",
+        padding: "2px 8px",
+        borderRadius: "5px",
+        fontSize: "0.75rem",
+        fontWeight: "bold"
+      }}>
+        FAILED
+      </div>
     )}
+
+    <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
+      <span
+        className="status-dot"
+        style={{ marginTop: "4%", backgroundColor: status === "failed" ? "#dc3545" : "#28a745" }}
+      />
+      <div style={{ marginLeft: "10px" }}>
+        <div className="calendar-card-title" style={{ fontSize: "1.3rem", fontWeight: "600", color: "#333" }}>
+          {title}
+        </div>
+        {algorithm && (
+          <div className="calendar-card-algorithm" style={{ fontSize: "1rem", color: "#777", marginTop: "5%", marginLeft: "3%" }}>
+            {algorithm}
+          </div>
+        )}
+      </div>
+    </div>
+
+    {time && <span className="draft-time" style={{ fontSize: "14px" }}>{time}</span>}
+
+    {buttonLabel && (
+      <button
+        className="open-button"
+        style={{
+          backgroundColor: buttonColor || "#4CAF50",
+          color: "#fff",
+          padding: "8px 35%",
+          textAlign: "center",
+          border: "none",
+          borderRadius: "8px",
+          fontWeight: "bold",
+          fontSize: "1rem",
+          cursor: "pointer"
+        }}
+        onClick={onClick}
+      >
+        {buttonLabel}
+      </button>
+    )}
+
     {showLoader && (
       <div style={{
         position: "absolute",
@@ -31,25 +87,91 @@ const CalendarCard = ({ title, status, time, link, buttonLabel, className, onCli
   </div>
 );
 
-const LastSeenSection = () => (
-  <>
-    <h3 className="section-title" style={{ marginTop: "20px"}}>Last Seen</h3>
-    <div className="calendar-cards-container" style={{ gap: "30px" }}>
-      <CalendarCard title="January, Algorithm X" status="green" link="/manager/calendar/abc123" buttonLabel="Open" className="completed-card" />
-      <CalendarCard title="September, Algorithm Z" status="green" link="/manager/calendar/xyz456" buttonLabel="Open" className="completed-card" />
-      <CalendarCard title="Another Calendar" status="green" link="/manager/calendar/def789" buttonLabel="Open" className="completed-card" />
-    </div>
-  </>
-);
+const LastProcessedSection = () => {
+  const [lastTasks, setLastTasks] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchLastTasks = async () => {
+      try {
+        const response = await axios.get(`${BaseUrl}/tasks`);
+        const tasks = response.data;
+
+        const sorted = tasks
+          .filter(task => task.status === "COMPLETED" || task.status === "FAILED")
+          .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+          .slice(0, 3);
+
+        setLastTasks(sorted);
+      } catch (err) {
+        console.error("Erro ao buscar últimas tarefas:", err);
+      }
+    };
+
+    fetchLastTasks();
+  }, []);
+
+  const handleOpenCalendar = async (title) => {
+    try {
+      const response = await axios.get(`${BaseUrl}/schedules/${title}`);
+      const calendarId = response.data?.id;
+      if (calendarId) {
+        navigate(`/manager/calendar/${calendarId}`);
+      } else {
+        alert("Calendário não encontrado.");
+      }
+    } catch (error) {
+      console.error("Erro ao abrir calendário:", error);
+      alert("Erro ao abrir calendário.");
+    }
+  };
+
+  return (
+    <>
+      <h3 className="section-title" style={{ marginTop: "20px" }}>Last Processed</h3>
+      <div className="calendar-cards-container" style={{ gap: "30px" }}>
+        {lastTasks.map((task) => {
+          const { status, taskId, scheduleRequest } = task;
+          const title = scheduleRequest?.title || "No Title";
+          const algorithm = scheduleRequest?.algorithm || "";
+          const isCompleted = status === "COMPLETED";
+          const isFailed = status === "FAILED";
+
+          return (
+            <CalendarCard
+              key={taskId}
+              title={title}
+              algorithm={algorithm}
+              status={status.toLowerCase()}
+              buttonLabel={isCompleted ? "Open" : "Delete"}
+              buttonColor={isCompleted ? "#4CAF50" : "#f44336"}
+              className={isFailed ? "failed-card" : ""}
+              showFailedTag={isFailed}
+              onClick={
+                isCompleted
+                  ? () => handleOpenCalendar(title)
+                  : () => alert(`TODO: Delete task ${taskId}`)
+              }
+            />
+          );
+        })}
+      </div>
+    </>
+  );
+};
 
 const NewCalendarSection = () => (
   <>
-    <h3 className="section-title">New Calendar & Drafts</h3>
+    <h3 className="section-title">New Calendar</h3>
     <div className="cards-row" style={{ gap: "30px" }}>
-      <CalendarCard title="New Calendar" status="blue" link="/manager/createCalendar" buttonLabel="Create" className="new-calendar-card" />
-      <CalendarCard title="Draft Schedule 1" status="orange" time="10min ago" className="draft-card" />
-      <CalendarCard title="Draft Schedule 2" status="orange" time="10min ago" className="draft-card" />
-      <CalendarCard title="Draft Schedule 3" status="orange" time="15min ago" className="draft-card" />
+      <CalendarCard
+        title="New Calendar"
+        status="blue"
+        buttonLabel="Create"
+        buttonColor="#007BFF"
+        onClick={() => window.location.href = "/manager/createCalendar"}
+        className="new-calendar-card"
+      />
     </div>
   </>
 );
@@ -61,20 +183,16 @@ const CalendarsInProcessSection = () => {
   useEffect(() => {
     const fetchCalendars = async () => {
       try {
-        const response = await axios.get(`${BaseUrl}/tasks`, {
-          headers: { "Accept": "application/json" },
-        });
-        const rawData = response.data;
-        let data = Array.isArray(rawData) ? rawData : Object.values(rawData);
-        const filtered = data.filter(task => {
-          const status = task.status ? task.status.toLowerCase() : "";
-          return status === "in_progress" || status === "done";
-        });
+        const response = await axios.get(`${BaseUrl}/tasks`);
+        const data = response.data;
+        const filtered = data.filter(task =>
+          ["in_progress", "pending"].includes(task.status?.toLowerCase())
+        );
         setProcessingCalendars(filtered);
         setErrorMessage("");
       } catch (error) {
-        setErrorMessage("Failed to load calendars. Please check the API connection.");
         console.error("Error fetching tasks:", error);
+        setErrorMessage("Failed to load calendars. Please check the API connection.");
       }
     };
 
@@ -90,38 +208,19 @@ const CalendarsInProcessSection = () => {
         {errorMessage ? (
           <p style={{ color: "red" }}>{errorMessage}</p>
         ) : processingCalendars.length > 0 ? (
-          processingCalendars.map((calendar) => {
-            const status = calendar.status ? calendar.status.toLowerCase() : "";
-            if (status === "in_progress") {
-              return (
-                <CalendarCard 
-                  key={calendar.id} 
-                  title={calendar.scheduleRequest?.title || "Unknown"} 
-                  status="orange" 
-                  time="In progress..." 
-                  className="in-process"
-                  showLoader={true}
-                />
-              );
-            } else if (status === "done") {
-              return (
-                <CalendarCard 
-                  key={calendar.id} 
-                  title={calendar.scheduleRequest?.title || "Unknown"} 
-                  status="green" 
-                  time="Done" 
-                  link={`/manager/calendar/${calendar.taskId}`} 
-                  buttonLabel="Open"
-                  className="done" 
-                  showLoader={false}
-                />
-              );
-            } else {
-              return null;
-            }
-          })
+          processingCalendars.map((calendar) => (
+            <CalendarCard
+              key={calendar.id}
+              title={calendar.scheduleRequest?.title || "Unknown"}
+              algorithm={calendar.scheduleRequest?.algorithm}
+              status="orange"
+              time="In progress..."
+              className="in-process"
+              showLoader={true}
+            />
+          ))
         ) : (
-          <p>No calendars in process</p>
+          <p>No calendars in progress</p>
         )}
       </div>
     </>
@@ -135,7 +234,7 @@ const Manager = () => {
       <div className="main-content" style={{ padding: "40px" }}>
         <NewCalendarSection />
         <CalendarsInProcessSection />
-        <LastSeenSection />
+        <LastProcessedSection />
       </div>
     </div>
   );
