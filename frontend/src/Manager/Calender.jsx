@@ -162,6 +162,8 @@ const Calendar = () => {
           selectedMonth={selectedMonth}
           setSelectedMonth={setSelectedMonth}
           downloadCSV={downloadCSV}
+          calendarTitle={metadata?.scheduleName || "Work Calendar"}
+          algorithmName={metadata?.algorithmType}
         />
 
         <CalendarTable

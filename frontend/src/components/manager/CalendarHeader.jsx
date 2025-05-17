@@ -1,9 +1,26 @@
 import React from "react";
 
-const CalendarHeader = ({ months, selectedMonth, setSelectedMonth, downloadCSV }) => {
+const CalendarHeader = ({ months, selectedMonth, setSelectedMonth, downloadCSV, calendarTitle, algorithmName }) => {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
-      <h2 className="heading">Work Calendar</h2>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <h2 className="heading" style={{ margin: 0 }}>{calendarTitle}</h2>
+        {algorithmName && (
+          <span
+            style={{
+              backgroundColor: "#e3f2fd",
+              color: "black",
+              padding: "4px 10px",
+              borderRadius: "5px",
+              fontSize: "0.9rem",
+              fontWeight: "500",
+              display: "inline-block",
+            }}
+          >
+            {algorithmName}
+          </span>
+        )}
+      </div>
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
         <select
           onChange={(e) => setSelectedMonth(Number(e.target.value))}
