@@ -6,7 +6,12 @@ import "../styles/Manager.css";
 import BaseUrl from "../components/BaseUrl";
 import { CircularProgress } from "@mui/material";
 
-const CalendarCard = ({ title, algorithm, status, time, onClick, buttonLabel, className, showLoader, buttonColor, showFailedTag }) => (
+const CalendarCard = ({
+  title, algorithm, status, time,
+  onClick, buttonLabel, className,
+  showLoader, buttonColor,
+  showFailedTag, showCompletedTag
+}) => (
   <div className={`calendar-card ${className || ""}`} style={{
     width: "300px",
     height: "165px",
@@ -15,7 +20,7 @@ const CalendarCard = ({ title, algorithm, status, time, onClick, buttonLabel, cl
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
-    border: "1px solid #ddd",
+    border: showFailedTag ? "1px solid #dc3545" : "1px solid #ddd",
     borderRadius: "8px",
     boxShadow: "0 2px 5px rgba(0,0,0,0.1)"
   }}>
@@ -35,17 +40,42 @@ const CalendarCard = ({ title, algorithm, status, time, onClick, buttonLabel, cl
       </div>
     )}
 
+    {showCompletedTag && (
+      <div style={{
+        position: "absolute",
+        top: "8px",
+        right: "10px",
+        backgroundColor: "#28a745",
+        color: "white",
+        padding: "2px 8px",
+        borderRadius: "5px",
+        fontSize: "0.75rem",
+        fontWeight: "bold"
+      }}>
+        COMPLETED
+      </div>
+    )}
+
     <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
-      <span
-        className="status-dot"
-        style={{ marginTop: "4%", backgroundColor: status === "failed" ? "#dc3545" : "#28a745" }}
-      />
+      <span className="status-dot" style={{
+        marginTop: "4%",
+        backgroundColor: status === "failed" ? "#dc3545" : "#28a745"
+      }} />
       <div style={{ marginLeft: "10px" }}>
-        <div className="calendar-card-title" style={{ fontSize: "1.3rem", fontWeight: "600", color: "#333" }}>
+        <div className="calendar-card-title" style={{
+          fontSize: "1.3rem",
+          fontWeight: "600",
+          color: "#333"
+        }}>
           {title}
         </div>
         {algorithm && (
-          <div className="calendar-card-algorithm" style={{ fontSize: "1rem", color: "#777", marginTop: "5%", marginLeft: "3%" }}>
+          <div className="calendar-card-algorithm" style={{
+            fontSize: "1rem",
+            color: "#777",
+            marginTop: "5%",
+            marginLeft: "3%"
+          }}>
             {algorithm}
           </div>
         )}
@@ -54,7 +84,7 @@ const CalendarCard = ({ title, algorithm, status, time, onClick, buttonLabel, cl
 
     {time && <span className="draft-time" style={{ fontSize: "14px" }}>{time}</span>}
 
-    {buttonLabel && (
+    {!showFailedTag && buttonLabel && (
       <button
         className="open-button"
         style={{
@@ -143,15 +173,12 @@ const LastProcessedSection = () => {
               title={title}
               algorithm={algorithm}
               status={status.toLowerCase()}
-              buttonLabel={isCompleted ? "Open" : "Delete"}
-              buttonColor={isCompleted ? "#4CAF50" : "#f44336"}
+              buttonLabel={isCompleted ? "Open" : null}
+              buttonColor={isCompleted ? "#4CAF50" : null}
               className={isFailed ? "failed-card" : ""}
               showFailedTag={isFailed}
-              onClick={
-                isCompleted
-                  ? () => handleOpenCalendar(title)
-                  : () => alert(`TODO: Delete task ${taskId}`)
-              }
+              showCompletedTag={isCompleted}
+              onClick={isCompleted ? () => handleOpenCalendar(title) : null}
             />
           );
         })}
