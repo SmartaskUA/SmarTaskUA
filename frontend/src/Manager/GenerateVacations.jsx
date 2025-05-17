@@ -177,8 +177,6 @@ const GenerateVacations = () => {
           )}
         </Paper>
 
-        {log && <VacationsTemplate name={log.name} data={log.data} />}
-
         {templates.length > 0 && (
           <Box mt={4}>
             <Typography variant="h5" gutterBottom>Existing Templates</Typography>
@@ -212,6 +210,13 @@ const GenerateVacations = () => {
                 </Paper>
               ))}
             </Box>
+          </Box>
+        )}
+
+        {/* MOVIDO PARA O FINAL */}
+        {log && (
+          <Box mt={6}>
+            <VacationsTemplate name={log.name} data={log.data} />
           </Box>
         )}
 

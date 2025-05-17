@@ -49,6 +49,16 @@ const VacationsTemplate = ({ name, data, year }) => {
     daysCounted += daysThisMonth;
   }
 
+  const monthBoundaries = months.reduce((acc, month, idx) => {
+    const start = acc.length === 0 ? 0 : acc[idx - 1].end;
+    acc.push({ start, end: start + month.days });
+    return acc;
+  }, []);
+
+  const isMonthEndIndex = (index) => {
+    return monthBoundaries.some((b) => index === b.end - 1);
+  };
+
   const sortedRows = Object.entries(data)
     .sort(([a], [b]) => {
       const numA = parseInt(a.match(/\d+/)?.[0] || 0);
@@ -64,9 +74,9 @@ const VacationsTemplate = ({ name, data, year }) => {
         align="center"
         colSpan={month.days}
         sx={{
-          backgroundColor: "#e0e7ff",
+          backgroundColor: "#ffe5d0",
           fontWeight: "bold",
-          border: "1px solid #ccc",
+          borderRight: "2px solid #000",
           padding: "8px 0",
           userSelect: "none",
           fontSize: "0.875rem",
@@ -81,14 +91,18 @@ const VacationsTemplate = ({ name, data, year }) => {
     const cells = [];
     months.forEach((month) => {
       for (let day = 1; day <= month.days; day++) {
+        const isLastDay = day === month.days;
         cells.push(
           <TableCell
             key={`${month.name}-${day}`}
             align="center"
             sx={{
-              border: "1px solid #eee",
-              padding: "4px 6px",
+              fontWeight: "bold",
               fontSize: "0.75rem",
+              borderRight: isLastDay ? "2px solid #000" : undefined,
+              borderBottom: "1px solid #ccc",
+              borderTop: "1px solid #ccc",
+              padding: "4px 6px",
               color: "#555",
               userSelect: "none",
             }}
@@ -106,20 +120,12 @@ const VacationsTemplate = ({ name, data, year }) => {
       <Typography variant="h6" gutterBottom>
         Visualização das Férias - Template: {name}
       </Typography>
-      <TableContainer component={Paper} style={{ overflowX: "auto" }}>
+      <TableContainer component={Paper} sx={{ overflowX: "auto", borderRadius: 2 }}>
         <Table
           size="small"
           sx={{
             borderCollapse: "collapse",
             minWidth: 1200,
-            "& th, & td": {
-              border: "1px solid #ddd",
-              padding: "6px 8px",
-              userSelect: "none",
-            },
-            "& tbody tr:hover": {
-              backgroundColor: "#f5f5f5",
-            },
           }}
         >
           <colgroup>
@@ -132,11 +138,11 @@ const VacationsTemplate = ({ name, data, year }) => {
             <TableRow>
               <TableCell
                 sx={{
-                  border: "none",
+                  backgroundColor: "#ffe5d0",
+                  borderBottom: "none",
                   padding: 0,
                   margin: 0,
                   width: "120px",
-                  backgroundColor: "transparent",
                   userSelect: "none",
                 }}
               />
@@ -148,6 +154,9 @@ const VacationsTemplate = ({ name, data, year }) => {
                   fontWeight: "bold",
                   padding: "6px 12px",
                   whiteSpace: "nowrap",
+                  backgroundColor: "#fff",
+                  borderBottom: "1px solid #ccc", // adicionada borda inferior leve
+                  borderTop: "1px solid #ccc",    // adicionada borda superior leve
                 }}
               >
                 Funcionário
@@ -156,30 +165,40 @@ const VacationsTemplate = ({ name, data, year }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {sortedRows.map(({ label, days }, index) => (
-              <TableRow
-                key={index}
-                sx={{
-                  height: 36,
-                  "&:hover": { backgroundColor: "#f5f5f5" },
-                }}
-              >
-                <TableCell sx={{ whiteSpace: "nowrap" }}>{label}</TableCell>
-                {days.map((val, i) => (
+            {sortedRows.map(({ label, days }, index) => {
+              const rowBg = index % 2 === 0 ? "#ffffff" : "#f9f9f9";
+              return (
+                <TableRow
+                  key={index}
+                  sx={{ backgroundColor: rowBg }}
+                >
                   <TableCell
-                    key={i}
-                    align="center"
                     sx={{
-                      backgroundColor: val === 1 || val === "1" ? "#fbeaea" : "#fff",
-                      color: val === 1 || val === "1" ? "#000" : "inherit",
-                      fontWeight: val === 1 || val === "1" ? "600" : "normal",
+                      whiteSpace: "nowrap",
+                      fontWeight: "bold",
+                      backgroundColor: rowBg,
                     }}
                   >
-                    {val === 1 || val === "1" ? "F" : ""}
+                    {label}
                   </TableCell>
-                ))}
-              </TableRow>
-            ))}
+                  {days.map((val, i) => (
+                    <TableCell
+                      key={i}
+                      align="center"
+                      sx={{
+                        backgroundColor:
+                          val === 1 || val === "1" ? "#fde2e2" : rowBg,
+                        color: val === 1 || val === "1" ? "#000" : "inherit",
+                        fontWeight: val === 1 || val === "1" ? "600" : "normal",
+                        borderRight: isMonthEndIndex(i) ? "2px solid #000" : undefined,
+                      }}
+                    >
+                      {val === 1 || val === "1" ? "F" : ""}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>
