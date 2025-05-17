@@ -12,8 +12,8 @@ const CalendarHeader = ({ months, selectedMonth, setSelectedMonth, downloadCSV, 
               color: "black",
               padding: "4px 10px",
               borderRadius: "5px",
-              fontSize: "0.9rem",
-              fontWeight: "500",
+              fontSize: "1rem",
+              fontWeight: "700",
               display: "inline-block",
             }}
           >
