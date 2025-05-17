@@ -15,17 +15,17 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay, fir
 
   const abbreviateValue = (value) => {
     const normalized = value.toUpperCase();
-    if (normalized === "0") return ""; 
-    if (normalized === "F") return "Fe"; 
+    if (normalized === "0") return "";
+    if (normalized === "F") return "Fe";
     return value;
   };
 
   const getCellStyle = (value) => {
     const normalized = value.toUpperCase();
-    if (normalized === "0") return { backgroundColor: "#ffffff", color: "#000" }; 
-    if (normalized === "F") return { backgroundColor: "#ffcccb", color: "#000" }; 
+    if (normalized === "0") return { backgroundColor: "#ffffff", color: "#000" };
+    if (normalized === "F") return { backgroundColor: "#ffcccb", color: "#000" };
     if (["T", "T_A", "T_B"].includes(normalized)) return { backgroundColor: "#f9e79f", color: "#000" };
-    if (["M", "M_A", "M_B"].includes(normalized)) return { backgroundColor: "#d4edda", color: "#000" }; 
+    if (["M", "M_A", "M_B"].includes(normalized)) return { backgroundColor: "#d4edda", color: "#000" };
     return {};
   };
 
@@ -61,7 +61,18 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay, fir
         <Table sx={{ minWidth: 450 }} aria-label="calendar table">
           <TableHead>
             <TableRow style={{ backgroundColor: "#007bff", color: "white" }}>
-              <TableCell style={{ fontSize: "12px", padding: "6px", color: "white" }}>Funcionário</TableCell>
+              <TableCell
+                style={{
+                  fontSize: "11.5px",
+                  padding: "4px",
+                  color: "white",
+                  whiteSpace: "nowrap",
+                  textAlign: "center",
+                  verticalAlign: "middle",
+                }}
+              >
+                Funcionário
+              </TableCell>
               {Array.from({ length: numDays }, (_, index) => {
                 const currentDay = startDay + index;
                 const isHoliday = isFixedHoliday(selectedMonth, currentDay);
@@ -69,8 +80,11 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay, fir
                   <TableCell
                     key={index}
                     style={{
-                      fontSize: "12px",
-                      padding: "6px",
+                      fontSize: "11.5px",
+                      padding: "4px",
+                      whiteSpace: "nowrap",
+                      textAlign: "center",
+                      verticalAlign: "middle",
                       backgroundColor: isHoliday ? "#800080" : "#007bff",
                       color: isHoliday ? "#fff" : "white",
                       fontWeight: isHoliday ? "bold" : undefined,
@@ -82,7 +96,17 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay, fir
               })}
             </TableRow>
             <TableRow>
-              <TableCell style={{ fontSize: "12px", padding: "6px", backgroundColor: "#6fa8dc", color: "white" }}></TableCell>
+              <TableCell
+                style={{
+                  fontSize: "11.5px",
+                  padding: "4px",
+                  backgroundColor: "#6fa8dc",
+                  color: "white",
+                  whiteSpace: "nowrap",
+                  textAlign: "center",
+                  verticalAlign: "middle",
+                }}
+              ></TableCell>
               {Array.from({ length: numDays }, (_, i) => {
                 const dayOfWeekIndex = (firstDayOfMonth + startDay + i - 1) % 7;
                 const isWeekend = dayOfWeekIndex === 0 || dayOfWeekIndex === 6;
@@ -90,7 +114,15 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay, fir
                 return (
                   <TableCell
                     key={i}
-                    style={{ fontSize: "12px", padding: "6px", color: "white", backgroundColor: bgColor }}
+                    style={{
+                      fontSize: "11.5px",
+                      padding: "4px",
+                      whiteSpace: "nowrap",
+                      textAlign: "center",
+                      verticalAlign: "middle",
+                      color: "white",
+                      backgroundColor: bgColor,
+                    }}
                   >
                     {dayNames[dayOfWeekIndex]}
                   </TableCell>
@@ -102,13 +134,22 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay, fir
             {displayedData.slice(1).map((row, rowIndex) => (
               <TableRow key={rowIndex} style={{ height: "30px" }}>
                 {row.map((cell, cellIndex) => {
+                  const baseStyle = {
+                    fontSize: "11.5px",
+                    padding: "4px",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  };
+
                   if (cellIndex === 0) {
                     return (
                       <TableCell
                         key={cellIndex}
                         style={{
-                          fontSize: "12px",
-                          padding: "6px",
+                          ...baseStyle,
                           fontWeight: "bold",
                           backgroundColor: "#007bff",
                           color: "white",
@@ -118,12 +159,12 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay, fir
                       </TableCell>
                     );
                   }
+
                   return (
                     <TableCell
                       key={cellIndex}
                       style={{
-                        fontSize: "12px",
-                        padding: "6px",
+                        ...baseStyle,
                         backgroundColor: "#ffffff",
                         ...getCellStyle(cell || ""),
                       }}
