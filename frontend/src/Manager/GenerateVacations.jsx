@@ -17,7 +17,9 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  IconButton,
 } from "@mui/material";
+import { Close } from "@mui/icons-material";
 
 const GenerateVacations = () => {
   const [templateName, setTemplateName] = useState("");
@@ -29,6 +31,8 @@ const GenerateVacations = () => {
   const [log, setLog] = useState(null);
   const [templates, setTemplates] = useState([]);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState(null);
+  const [hoveredTemplateId, setHoveredTemplateId] = useState(null);
 
   const fetchTemplates = async () => {
     try {
@@ -58,8 +62,9 @@ const GenerateVacations = () => {
         headers: { "Content-Type": "multipart/form-data" },
       });
       await fetchTemplates();
-      await showTemplateDetails(templateName);
+      // Removido showTemplateDetails(templateName) para evitar visualização automática
       setCsvFile(null);
+      setUploadedFileName("");
       setSuccessOpen(true);
       setNameError(false);
     } catch (err) {
@@ -78,6 +83,24 @@ const GenerateVacations = () => {
       console.error("Error deleting templates:", err);
       alert("Error deleting templates: " + (err.response?.data?.error || err.message));
       setErrorOpen(true);
+    }
+  };
+
+  const handleDeleteOneTemplate = async () => {
+    if (!templateToDelete) return;
+    try {
+      await axios.delete(`${baseurl}/vacation/${templateToDelete.id}`);
+      setTemplates((prev) => prev.filter((t) => t.id !== templateToDelete.id));
+      if (log?.name === templateToDelete.name) {
+        setLog(null);
+      }
+      setSuccessOpen(true);
+    } catch (err) {
+      console.error("Error deleting template:", err);
+      setErrorOpen(true);
+    } finally {
+      setConfirmDialogOpen(false);
+      setTemplateToDelete(null);
     }
   };
 
@@ -184,14 +207,40 @@ const GenerateVacations = () => {
               {templates.map((template) => (
                 <Paper
                   key={template.id}
+                  onMouseEnter={() => setHoveredTemplateId(template.id)}
+                  onMouseLeave={() => setHoveredTemplateId(null)}
                   style={{
                     width: "250px",
                     padding: "16px",
                     borderRadius: "8px",
                     border: "1px solid #ccc",
                     boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+                    position: "relative",
                   }}
                 >
+                  {hoveredTemplateId === template.id && (
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setTemplateToDelete(template);
+                        setConfirmDialogOpen(true);
+                      }}
+                      sx={{
+                        position: "absolute",
+                        top: 6,
+                        right: 6,
+                        backgroundColor: "#ff5252",
+                        color: "white",
+                        "&:hover": { backgroundColor: "#ff1744" },
+                        width: "20px",
+                        height: "20px",
+                        padding: "2px",
+                      }}
+                    >
+                      <Close fontSize="10px" />
+                    </IconButton>
+                  )}
+
                   <Typography variant="h6" gutterBottom>
                     {template.name}
                   </Typography>
@@ -213,7 +262,6 @@ const GenerateVacations = () => {
           </Box>
         )}
 
-        {/* MOVIDO PARA O FINAL */}
         {log && (
           <Box mt={6}>
             <VacationsTemplate name={log.name} data={log.data} />
@@ -239,18 +287,25 @@ const GenerateVacations = () => {
           <DialogTitle>Confirm Deletion</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              Are you sure you want to delete all templates? This action cannot be undone.
+              {templateToDelete
+                ? `Are you sure you want to delete the template "${templateToDelete.name}"?`
+                : "Are you sure you want to delete all templates? This action cannot be undone."}
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setConfirmDialogOpen(false)} color="primary">
-              Cancel
-            </Button>
             <Button onClick={() => {
               setConfirmDialogOpen(false);
-              handleDeleteAllTemplates();
-            }} color="error">
-              Delete All
+              setTemplateToDelete(null);
+            }} color="primary">
+              Cancel
+            </Button>
+            <Button
+              onClick={() =>
+                templateToDelete ? handleDeleteOneTemplate() : handleDeleteAllTemplates()
+              }
+              color="error"
+            >
+              Delete
             </Button>
           </DialogActions>
         </Dialog>

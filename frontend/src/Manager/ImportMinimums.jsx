@@ -12,7 +12,14 @@ import {
   Snackbar,
   Alert,
   Input,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  IconButton,
 } from "@mui/material";
+import { Close } from "@mui/icons-material";
 
 const ImportMinimums = () => {
   const [templateName, setTemplateName] = useState("");
@@ -23,6 +30,9 @@ const ImportMinimums = () => {
   const [nameError, setNameError] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [templateToDelete, setTemplateToDelete] = useState(null);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [hoveredTemplateId, setHoveredTemplateId] = useState(null);
 
   useEffect(() => {
     fetchTemplates();
@@ -86,6 +96,24 @@ const ImportMinimums = () => {
     }
   };
 
+  const handleDeleteOneTemplate = async () => {
+    if (!templateToDelete) return;
+    try {
+      await axios.delete(`${baseurl}/reference/${templateToDelete.id}`);
+      setTemplates((prev) => prev.filter((t) => t.id !== templateToDelete.id));
+      if (selectedTemplate?.id === templateToDelete.id) {
+        setSelectedTemplate(null);
+      }
+      setSuccessOpen(true);
+    } catch (err) {
+      console.error("Error deleting template:", err);
+      setErrorOpen(true);
+    } finally {
+      setTemplateToDelete(null);
+      setConfirmDialogOpen(false);
+    }
+  };
+
   const showTemplateDetails = async (id) => {
     try {
       const response = await axios.get(`${baseurl}/reference/${id}`);
@@ -141,7 +169,7 @@ const ImportMinimums = () => {
               variant="contained"
               color="error"
               onClick={handleDeleteAllReferenceTemplates}
-              sx={{ ml: 21}}
+              sx={{ ml: 21 }}
             >
               Delete All Templates
             </Button>
@@ -163,14 +191,40 @@ const ImportMinimums = () => {
               {templates.map((template) => (
                 <Paper
                   key={template.id}
+                  onMouseEnter={() => setHoveredTemplateId(template.id)}
+                  onMouseLeave={() => setHoveredTemplateId(null)}
                   style={{
                     width: "250px",
                     padding: "16px",
                     borderRadius: "8px",
                     border: "1px solid #ccc",
                     boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+                    position: "relative",
                   }}
                 >
+                  {hoveredTemplateId === template.id && (
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setTemplateToDelete(template);
+                        setConfirmDialogOpen(true);
+                      }}
+                      sx={{
+                        position: "absolute",
+                        top: 6,
+                        right: 6,
+                        backgroundColor: "#ff5252",
+                        color: "white",
+                        "&:hover": { backgroundColor: "#ff1744" },
+                        width: "20px",
+                        height: "20px",
+                        padding: "2px",
+                      }}
+                    >
+                      <Close fontSize="10px" />
+                    </IconButton>
+                  )}
+
                   <Typography variant="h6" gutterBottom>
                     {template.name}
                   </Typography>
@@ -209,6 +263,23 @@ const ImportMinimums = () => {
             An error occurred. Please check the CSV format.
           </Alert>
         </Snackbar>
+
+        <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
+          <DialogTitle>Confirm Deletion</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to delete the template "{templateToDelete?.name}"?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setConfirmDialogOpen(false)} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={handleDeleteOneTemplate} color="error">
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
       </div>
     </div>
   );
