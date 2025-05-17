@@ -65,7 +65,13 @@ const VacationsTemplate = ({ name, data, year }) => {
       const numB = parseInt(b.match(/\d+/)?.[0] || 0);
       return numA - numB;
     })
-    .map(([, days], index) => ({ label: index + 1, days: days.slice(0, maxDay) }));
+    .map(([, days], index) => ({
+      label: index + 1,
+      days: days
+        .map(Number)
+        .map((val, i, arr) => (i === 0 ? undefined : val))
+        .slice(1, maxDay + 1),
+    }));
 
   const getMonthHeaderCells = () => {
     return months.map((month) => (
@@ -155,8 +161,8 @@ const VacationsTemplate = ({ name, data, year }) => {
                   padding: "6px 12px",
                   whiteSpace: "nowrap",
                   backgroundColor: "#fff",
-                  borderBottom: "1px solid #ccc", // adicionada borda inferior leve
-                  borderTop: "1px solid #ccc",    // adicionada borda superior leve
+                  borderBottom: "1px solid #ccc",
+                  borderTop: "1px solid #ccc",
                 }}
               >
                 Funcionário
@@ -168,10 +174,7 @@ const VacationsTemplate = ({ name, data, year }) => {
             {sortedRows.map(({ label, days }, index) => {
               const rowBg = index % 2 === 0 ? "#ffffff" : "#f9f9f9";
               return (
-                <TableRow
-                  key={index}
-                  sx={{ backgroundColor: rowBg }}
-                >
+                <TableRow key={index} sx={{ backgroundColor: rowBg }}>
                   <TableCell
                     sx={{
                       whiteSpace: "nowrap",
