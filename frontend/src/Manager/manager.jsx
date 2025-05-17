@@ -11,113 +11,128 @@ const CalendarCard = ({
   onClick, buttonLabel, className,
   showLoader, buttonColor,
   showFailedTag, showCompletedTag
-}) => (
-  <div className={`calendar-card ${className || ""}`} style={{
-    width: "300px",
-    height: "165px",
-    padding: "20px",
-    position: "relative",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    border: showFailedTag ? "1px solid #dc3545" : "1px solid #ddd",
-    borderRadius: "8px",
-    boxShadow: "0 2px 5px rgba(0,0,0,0.1)"
-  }}>
-    {showFailedTag && (
-      <div style={{
-        position: "absolute",
-        top: "8px",
-        right: "10px",
-        backgroundColor: "#dc3545",
-        color: "white",
-        padding: "2px 8px",
-        borderRadius: "5px",
-        fontSize: "0.75rem",
-        fontWeight: "bold"
-      }}>
-        FAILED
-      </div>
-    )}
+}) => {
+  const getBorderStyle = () => {
+    if (showFailedTag) return "1px solid #dc3545";
+    if (status === "orange") return "2px dashed #FFA500";
+    return "1px solid #ddd";
+  };
 
-    {showCompletedTag && (
-      <div style={{
-        position: "absolute",
-        top: "8px",
-        right: "10px",
-        backgroundColor: "#28a745",
-        color: "white",
-        padding: "2px 8px",
-        borderRadius: "5px",
-        fontSize: "0.75rem",
-        fontWeight: "bold"
-      }}>
-        COMPLETED
-      </div>
-    )}
+  const getDotColor = () => {
+    if (status === "orange") return "#FFA500";
+    if (status === "blue") return "#007BFF";
+    if (status === "failed") return "#dc3545";
+    return "#28a745";
+  };
 
-    <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
-      <span className="status-dot" style={{
-        marginTop: "4%",
-        backgroundColor: status === "failed" ? "#dc3545" : "#28a745"
-      }} />
-      <div style={{ marginLeft: "10px" }}>
-        <div className="calendar-card-title" style={{
-          fontSize: "1.3rem",
-          fontWeight: "600",
-          color: "#333"
+  return (
+    <div className={`calendar-card ${className || ""}`} style={{
+      width: "300px",
+      height: "165px",
+      padding: "20px",
+      position: "relative",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "space-between",
+      border: getBorderStyle(),
+      borderRadius: "8px",
+      boxShadow: "0 2px 5px rgba(0,0,0,0.1)"
+    }}>
+      {showFailedTag && (
+        <div style={{
+          position: "absolute",
+          top: "8px",
+          right: "10px",
+          backgroundColor: "#dc3545",
+          color: "white",
+          padding: "2px 8px",
+          borderRadius: "5px",
+          fontSize: "0.75rem",
+          fontWeight: "bold"
         }}>
-          {title}
+          FAILED
         </div>
-        {algorithm && (
-          <div className="calendar-card-algorithm" style={{
-            fontSize: "1rem",
-            color: "#777",
-            marginTop: "5%",
-            marginLeft: "3%"
+      )}
+
+      {showCompletedTag && (
+        <div style={{
+          position: "absolute",
+          top: "8px",
+          right: "10px",
+          backgroundColor: "#28a745",
+          color: "white",
+          padding: "2px 8px",
+          borderRadius: "5px",
+          fontSize: "0.75rem",
+          fontWeight: "bold"
+        }}>
+          COMPLETED
+        </div>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
+        <span className="status-dot" style={{
+          marginTop: "4%",
+          backgroundColor: getDotColor()
+        }} />
+        <div style={{ marginLeft: "10px" }}>
+          <div className="calendar-card-title" style={{
+            fontSize: "1.3rem",
+            fontWeight: "600",
+            color: "#333"
           }}>
-            {algorithm}
+            {title}
           </div>
-        )}
+          {algorithm && (
+            <div className="calendar-card-algorithm" style={{
+              fontSize: "1rem",
+              color: "#777",
+              marginTop: "5%",
+              marginLeft: "3%"
+            }}>
+              {algorithm}
+            </div>
+          )}
+        </div>
       </div>
+
+      {time && <span className="draft-time" style={{ fontSize: "14px" }}>{time}</span>}
+
+      {!showFailedTag && buttonLabel && (
+        <button
+          className="open-button"
+          style={{
+            backgroundColor: buttonColor || "#4CAF50",
+            color: "#fff",
+            padding: "8px 35%",
+            textAlign: "center",
+            border: "none",
+            borderRadius: "8px",
+            fontWeight: "bold",
+            fontSize: "1rem",
+            cursor: "pointer"
+          }}
+          onClick={onClick}
+        >
+          {buttonLabel}
+        </button>
+      )}
+
+      {showLoader && (
+        <div style={{
+          position: "absolute",
+          top: "60%",
+          left: "50%",
+          transform: "translate(-50%, -50%)"
+        }}>
+          <CircularProgress color="warning" />
+        </div>
+      )}
     </div>
+  );
+};
 
-    {time && <span className="draft-time" style={{ fontSize: "14px" }}>{time}</span>}
-
-    {!showFailedTag && buttonLabel && (
-      <button
-        className="open-button"
-        style={{
-          backgroundColor: buttonColor || "#4CAF50",
-          color: "#fff",
-          padding: "8px 35%",
-          textAlign: "center",
-          border: "none",
-          borderRadius: "8px",
-          fontWeight: "bold",
-          fontSize: "1rem",
-          cursor: "pointer"
-        }}
-        onClick={onClick}
-      >
-        {buttonLabel}
-      </button>
-    )}
-
-    {showLoader && (
-      <div style={{
-        position: "absolute",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)"
-      }}>
-        <CircularProgress color="warning" />
-      </div>
-    )}
-  </div>
-);
-
-const LastProcessedSection = () => {
+const LastProcessedSection = ({ refreshTrigger }) => {
   const [lastTasks, setLastTasks] = useState([]);
   const navigate = useNavigate();
 
@@ -139,7 +154,7 @@ const LastProcessedSection = () => {
     };
 
     fetchLastTasks();
-  }, []);
+  }, [refreshTrigger]);
 
   const handleOpenCalendar = async (title) => {
     try {
@@ -203,30 +218,41 @@ const NewCalendarSection = () => (
   </>
 );
 
-const CalendarsInProcessSection = () => {
+const CalendarsInProcessSection = ({ setRefreshTrigger }) => {
   const [processingCalendars, setProcessingCalendars] = useState([]);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState([]);
 
   useEffect(() => {
     const fetchCalendars = async () => {
       try {
         const response = await axios.get(`${BaseUrl}/tasks`);
         const data = response.data;
-        const filtered = data.filter(task =>
-          ["in_progress", "pending"].includes(task.status?.toLowerCase())
+
+        const stillProcessing = data.filter(task => {
+          const s = task.status?.toLowerCase();
+          return s === "in_progress" || s === "pending";
+        });
+
+        const justFinished = processingCalendars.filter(old =>
+          !stillProcessing.find(newT => newT.taskId === old.taskId)
         );
-        setProcessingCalendars(filtered);
+
+        if (justFinished.length > 0) {
+          setRefreshTrigger(prev => prev + 1);
+        }
+
+        setProcessingCalendars(stillProcessing);
         setErrorMessage("");
-      } catch (error) {
-        console.error("Error fetching tasks:", error);
-        setErrorMessage("Failed to load calendars. Please check the API connection.");
+      } catch (err) {
+        console.error("Erro ao atualizar tarefas em progresso:", err);
+        setErrorMessage("Erro ao atualizar tarefas em progresso.");
       }
     };
 
     fetchCalendars();
     const interval = setInterval(fetchCalendars, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [processingCalendars, setRefreshTrigger]);
 
   return (
     <>
@@ -255,13 +281,15 @@ const CalendarsInProcessSection = () => {
 };
 
 const Manager = () => {
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
   return (
     <div className="admin-container">
       <Sidebar_Manager />
       <div className="main-content" style={{ padding: "40px" }}>
         <NewCalendarSection />
-        <CalendarsInProcessSection />
-        <LastProcessedSection />
+        <CalendarsInProcessSection setRefreshTrigger={setRefreshTrigger} />
+        <LastProcessedSection refreshTrigger={refreshTrigger} />
       </div>
     </div>
   );
