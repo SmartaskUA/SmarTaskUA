@@ -3,6 +3,7 @@ import axios from "axios";
 import baseurl from "../components/BaseUrl";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import VacationsTemplate from "../components/manager/VacationsTemplate";
+import NotificationSnackbar from "../components/manager/NotificationSnackbar";
 import {
   Box,
   Button,
@@ -268,17 +269,20 @@ const GenerateVacations = () => {
           </Box>
         )}
 
-        <Snackbar open={successOpen} autoHideDuration={3000} onClose={() => setSuccessOpen(false)}>
-          <Alert onClose={() => setSuccessOpen(false)} severity="success" sx={{ width: "100%" }}>
-            Operation completed successfully!
-          </Alert>
-        </Snackbar>
+       
+        <NotificationSnackbar
+          open={successOpen}
+          severity="success"
+          message="Task Requested Successfully!"
+          onClose={() => setSuccessOpen(false)}
+        />
 
-        <Snackbar open={errorOpen} autoHideDuration={3000} onClose={() => setErrorOpen(false)}>
-          <Alert onClose={() => setErrorOpen(false)} severity="error" sx={{ width: "100%" }}>
-            An error occurred. Please check the CSV format.
-          </Alert>
-        </Snackbar>
+        <NotificationSnackbar
+          open={errorOpen}
+          severity="error"
+          message="An error occurred. Please check the CSV format."
+          onClose={() => setErrorOpen(false)}
+        />
 
         <Dialog
           open={confirmDialogOpen}

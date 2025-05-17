@@ -14,24 +14,24 @@ import {
 const getRowColor = (index, type) => {
   const isEvenBlock = Math.floor(index / 4) % 2 === 0;
   const base = isEvenBlock ? "#f9f9f9" : "#eef4ff";
-  if (type === "Minimo") return "#e0f7fa";
+  if (type === "Minimum") return "#e0f7fa";
   if (type === "Ideal") return "#f1f8e9";
   return base;
 };
 
 const monthLabels = [
-  { name: "Janeiro", days: 31 },
-  { name: "Fevereiro", days: 28 },
-  { name: "Março", days: 31 },
-  { name: "Abril", days: 30 },
-  { name: "Maio", days: 31 },
-  { name: "Junho", days: 30 },
-  { name: "Julho", days: 31 },
-  { name: "Agosto", days: 31 },
-  { name: "Setembro", days: 30 },
-  { name: "Outubro", days: 31 },
-  { name: "Novembro", days: 30 },
-  { name: "Dezembro", days: 31 },
+  { name: "January", days: 31 },
+  { name: "February", days: 28 },
+  { name: "March", days: 31 },
+  { name: "April", days: 30 },
+  { name: "May", days: 31 },
+  { name: "June", days: 30 },
+  { name: "July", days: 31 },
+  { name: "August", days: 31 },
+  { name: "September", days: 30 },
+  { name: "October", days: 31 },
+  { name: "November", days: 30 },
+  { name: "December", days: 31 },
 ];
 
 const monthBoundaries = monthLabels.reduce((acc, month, idx) => {
@@ -59,7 +59,9 @@ const MinimumsTemplate = ({ name, data }) => {
 
   const getMonthHeader = () => {
     const cells = [
-      <TableCell key="empty-1" />, <TableCell key="empty-2" />, <TableCell key="empty-3" />
+      <TableCell key="empty-1" />,
+      <TableCell key="empty-2" />,
+      <TableCell key="empty-3" />,
     ];
     monthLabels.forEach((month, i) => {
       cells.push(
@@ -70,7 +72,7 @@ const MinimumsTemplate = ({ name, data }) => {
           sx={{
             fontWeight: "bold",
             backgroundColor: "#d3eaf2",
-            borderRight: "2px solid #000"
+            borderRight: "2px solid #000",
           }}
         >
           {month.name}
@@ -81,7 +83,11 @@ const MinimumsTemplate = ({ name, data }) => {
   };
 
   const getDayNumbersRow = () => {
-    const cells = [<TableCell key="empty-1" />, <TableCell key="empty-2" />, <TableCell key="empty-3" />];
+    const cells = [
+      <TableCell key="empty-1" />,
+      <TableCell key="empty-2" />,
+      <TableCell key="empty-3" />,
+    ];
     monthLabels.forEach((month) => {
       for (let i = 1; i <= month.days; i++) {
         const isLastDay = i === month.days;
@@ -91,7 +97,7 @@ const MinimumsTemplate = ({ name, data }) => {
             align="center"
             sx={{
               fontWeight: "bold",
-              borderRight: isLastDay ? "2px solid #000" : undefined
+              borderRight: isLastDay ? "2px solid #000" : undefined,
             }}
           >
             {i}
@@ -109,7 +115,7 @@ const MinimumsTemplate = ({ name, data }) => {
   return (
     <Box mt={4}>
       <Typography variant="h6" gutterBottom>
-        Visualização dos Mínimos - Template: {name}
+        Minimums Visualization - Template: {name}
       </Typography>
       <TableContainer component={Paper} sx={{ overflowX: "auto", borderRadius: 2 }}>
         <Table size="small" sx={{ minWidth: 1200 }}>
@@ -123,7 +129,9 @@ const MinimumsTemplate = ({ name, data }) => {
                 const bgColor = getRowColor(teamIndex * 4 + rowIndex, row[1]);
                 return (
                   <TableRow key={`${teamIndex}-${rowIndex}`} sx={{ backgroundColor: bgColor }}>
-                    <TableCell sx={{ whiteSpace: "nowrap" }}>{rowIndex === 0 ? team : ""}</TableCell>
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>
+                      {rowIndex === 0 ? team : ""}
+                    </TableCell>
                     <TableCell>{row[1]}</TableCell>
                     <TableCell>{row[2]}</TableCell>
                     {row.slice(3).map((val, i) => (
@@ -131,7 +139,7 @@ const MinimumsTemplate = ({ name, data }) => {
                         key={i}
                         align="center"
                         sx={{
-                          borderRight: isMonthEndIndex(i) ? "2px solid #000" : undefined
+                          borderRight: isMonthEndIndex(i) ? "2px solid #000" : undefined,
                         }}
                       >
                         {val}

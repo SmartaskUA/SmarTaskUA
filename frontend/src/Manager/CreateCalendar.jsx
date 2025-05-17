@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import baseurl from "../components/BaseUrl";
 import Sidebar_Manager from "../components/Sidebar_Manager";
+import NotificationSnackbar from "../components/manager/NotificationSnackbar";
 import {
   Typography,
   Grid,
@@ -156,14 +157,19 @@ const CreateCalendar = () => {
           <Button variant="contained" color="success" onClick={handleSave}>Generate</Button>
           <Button variant="contained" color="error" onClick={handleClear}>Clear All</Button>
         </Box>
+        <NotificationSnackbar
+          open={successOpen}
+          severity="success"
+          message="Task Requested Successfully!"
+          onClose={() => setSuccessOpen(false)}
+        />
 
-        <Snackbar open={successOpen} autoHideDuration={3000} onClose={() => setSuccessOpen(false)} anchorOrigin={{ vertical: "top", horizontal: "center" }}>
-          <Alert onClose={() => setSuccessOpen(false)} severity="success" sx={{ width: "100%" }}>Task Requested Successfully!</Alert>
-        </Snackbar>
-
-        <Snackbar open={errorOpen} autoHideDuration={3000} onClose={() => setErrorOpen(false)} anchorOrigin={{ vertical: "top", horizontal: "center" }}>
-          <Alert onClose={() => setErrorOpen(false)} severity="error" sx={{ width: "100%" }}>Failed to create calendar. Try again.</Alert>
-        </Snackbar>
+        <NotificationSnackbar
+          open={errorOpen}
+          severity="error"
+          message="Failed to create calendar. Try again."
+          onClose={() => setErrorOpen(false)}
+        />
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
+import NotificationSnackbar from "./NotificationSnackbar";
 
 const isLeapYear = (year) => {
   if (!year) return false;
@@ -22,18 +23,18 @@ const VacationsTemplate = ({ name, data, year }) => {
   const febDays = isLeapYear(year) ? 29 : 28;
 
   const monthLabels = [
-    { name: "Janeiro", days: 31 },
-    { name: "Fevereiro", days: febDays },
-    { name: "Março", days: 31 },
-    { name: "Abril", days: 30 },
-    { name: "Maio", days: 31 },
-    { name: "Junho", days: 30 },
-    { name: "Julho", days: 31 },
-    { name: "Agosto", days: 31 },
-    { name: "Setembro", days: 30 },
-    { name: "Outubro", days: 31 },
-    { name: "Novembro", days: 30 },
-    { name: "Dezembro", days: 31 },
+    { name: "January", days: 31 },
+    { name: "February", days: febDays },
+    { name: "March", days: 31 },
+    { name: "April", days: 30 },
+    { name: "May", days: 31 },
+    { name: "June", days: 30 },
+    { name: "July", days: 31 },
+    { name: "August", days: 31 },
+    { name: "September", days: 30 },
+    { name: "October", days: 31 },
+    { name: "November", days: 30 },
+    { name: "December", days: 31 },
   ];
 
   let sampleRow = Object.values(data)[0] || [];
@@ -124,7 +125,7 @@ const VacationsTemplate = ({ name, data, year }) => {
   return (
     <Box mt={4} style={{ paddingRight: "6%" }}>
       <Typography variant="h6" gutterBottom>
-        Visualização das Férias - Template: {name}
+        Vacations Visualization - Template: {name}
       </Typography>
       <TableContainer component={Paper} sx={{ overflowX: "auto", borderRadius: 2 }}>
         <Table
@@ -165,7 +166,7 @@ const VacationsTemplate = ({ name, data, year }) => {
                   borderTop: "1px solid #ccc",
                 }}
               >
-                Funcionário
+                Employee
               </TableCell>
               {getDayNumberCells()}
             </TableRow>
@@ -196,7 +197,7 @@ const VacationsTemplate = ({ name, data, year }) => {
                         borderRight: isMonthEndIndex(i) ? "2px solid #000" : undefined,
                       }}
                     >
-                      {val === 1 || val === "1" ? "F" : ""}
+                      {val === 1 || val === "1" ? "V" : ""}
                     </TableCell>
                   ))}
                 </TableRow>
