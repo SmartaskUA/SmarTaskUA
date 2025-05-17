@@ -281,13 +281,6 @@ const Employer = () => {
           <DialogContent>
             <TextField
               margin="dense"
-              label="ID"
-              fullWidth
-              value={newEmployee.id}
-              onChange={(e) => setNewEmployee({ ...newEmployee, id: e.target.value })}
-            />
-            <TextField
-              margin="dense"
               label="Nome"
               fullWidth
               value={newEmployee.name}
@@ -298,7 +291,18 @@ const Employer = () => {
             <Button onClick={() => setOpenAddDialog(false)} color="secondary">
               Cancel
             </Button>
-            <Button onClick={handleAddEmployee} color="primary">
+            <Button
+              onClick={() => {
+                axios.post(`${BaseUrl}/api/v1/employees/`, { name: newEmployee.name })
+                  .then(() => {
+                    setOpenAddDialog(false);
+                    setNewEmployee({ name: "" });
+                    fetchAll();
+                  })
+                  .catch((error) => console.error("Erro ao adicionar employee:", error));
+              }}
+              color="primary"
+            >
               Add
             </Button>
           </DialogActions>
