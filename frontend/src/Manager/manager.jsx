@@ -142,12 +142,27 @@ const LastProcessedSection = ({ refreshTrigger }) => {
         const response = await axios.get(`${BaseUrl}/tasks`);
         const tasks = response.data;
 
-        const sorted = tasks
+        const recent = tasks
           .filter(task => task.status === "COMPLETED" || task.status === "FAILED")
           .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
-          .slice(0, 3);
+          .slice(0, 6);
 
-        setLastTasks(sorted);
+        const validTasks = await Promise.all(
+          recent.map(async (task) => {
+            if (task.status === "FAILED") return task;
+
+            const title = task.scheduleRequest?.title;
+            try {
+              const res = await axios.get(`${BaseUrl}/schedules/${title}`);
+              if (res.data?.id) return task;
+            } catch {
+              return null;
+            }
+          })
+        );
+
+        const filtered = validTasks.filter(Boolean).slice(0, 3);
+        setLastTasks(filtered);
       } catch (err) {
         console.error("Erro ao buscar últimas tarefas:", err);
       }
@@ -220,7 +235,7 @@ const NewCalendarSection = () => (
 
 const CalendarsInProcessSection = ({ setRefreshTrigger }) => {
   const [processingCalendars, setProcessingCalendars] = useState([]);
-  const [errorMessage, setErrorMessage] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const fetchCalendars = async () => {
