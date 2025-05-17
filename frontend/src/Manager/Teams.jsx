@@ -353,7 +353,6 @@ const Teams = () => {
           )}
         </Box>
       </div>
-
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>{editTeamId ? "Edit Team" : "New Team"}</DialogTitle>
         <DialogContent>
@@ -379,7 +378,6 @@ const Teams = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog open={openConfirmDialog} onClose={() => setOpenConfirmDialog(false)}>
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
@@ -387,16 +385,11 @@ const Teams = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenConfirmDialog(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleDeleteTeam}
-          >
+          <Button variant="contained" color="error" onClick={handleDeleteTeam}>
             Confirm
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog open={openDetailsDialog} onClose={handleCloseDetailsDialog}>
         <DialogTitle>
           Team Details
@@ -412,11 +405,7 @@ const Teams = () => {
         <DialogContent dividers sx={{ padding: 4, bgcolor: "#fafafa" }}>
           {teamDetails ? (
             <>
-              <Typography
-                variant="h5"
-                gutterBottom
-                sx={{ fontWeight: "700", color: "#1976d2", mb: 3, letterSpacing: 0.5 }}
-              >
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: "700", color: "#1976d2", mb: 3 }}>
                 {teamDetails.name}
               </Typography>
 
@@ -435,7 +424,6 @@ const Teams = () => {
                     mb: 2,
                     borderRadius: 3,
                     transition: "transform 0.15s ease-in-out",
-                    cursor: "default",
                     "&:hover": {
                       boxShadow: "0 4px 20px rgba(25, 118, 210, 0.3)",
                       transform: "translateY(-3px)",
@@ -449,33 +437,33 @@ const Teams = () => {
                     </Typography>
                   </Typography>
 
-                  {Object.entries(emp.restrictions).length > 0 && (
-                    <Box sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 1 }}>
-                      {Object.entries(emp.restrictions).map(([key, value]) => (
-                        <Box
-                          key={key}
-                          sx={{
-                            backgroundColor: "#e3f2fd",
-                            borderRadius: "16px",
-                            px: 2,
-                            py: 0.5,
-                            fontSize: "0.85rem",
-                            color: "#0d47a1",
-                            fontWeight: "500",
-                            boxShadow: "0 1px 3px rgba(13, 71, 161, 0.2)",
-                            cursor: "default",
-                            userSelect: "none",
-                            transition: "background-color 0.3s",
-                            "&:hover": {
-                              backgroundColor: "#bbdefb",
-                            },
-                          }}
-                        >
-                          {key}: {value}
-                        </Box>
-                      ))}
-                    </Box>
-                  )}
+                  {emp?.restrictions &&
+                    typeof emp.restrictions === "object" &&
+                    Object.entries(emp.restrictions).length > 0 && (
+                      <Box sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 1 }}>
+                        {Object.entries(emp.restrictions).map(([key, value]) => (
+                          <Box
+                            key={key}
+                            sx={{
+                              backgroundColor: "#e3f2fd",
+                              borderRadius: "16px",
+                              px: 2,
+                              py: 0.5,
+                              fontSize: "0.85rem",
+                              color: "#0d47a1",
+                              fontWeight: "500",
+                              boxShadow: "0 1px 3px rgba(13, 71, 161, 0.2)",
+                              userSelect: "none",
+                              "&:hover": {
+                                backgroundColor: "#bbdefb",
+                              },
+                            }}
+                          >
+                            {key}: {value}
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
                 </Paper>
               ))}
 
@@ -492,7 +480,7 @@ const Teams = () => {
                 variant="contained"
                 color="success"
                 onClick={handleAddEmployeesToTeam}
-                sx={{ mt: 2, boxShadow: "0 4px 10px rgba(25, 118, 210, 0.3)" }}
+                sx={{ mt: 2 }}
                 fullWidth
               >
                 Add Employees
@@ -504,20 +492,13 @@ const Teams = () => {
             </Box>
           )}
         </DialogContent>
-
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={handleCloseDetailsDialog}
-            color="error"
-            sx={{ fontWeight: "700" }}
-            autoFocus
-          >
+          <Button onClick={handleCloseDetailsDialog} color="error" sx={{ fontWeight: "700" }} autoFocus>
             Close
           </Button>
         </DialogActions>
       </Dialog>
     </div>
-
   );
 };
 
