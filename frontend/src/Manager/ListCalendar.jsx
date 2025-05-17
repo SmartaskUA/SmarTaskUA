@@ -4,12 +4,12 @@ import Sidebar_Manager from "../components/Sidebar_Manager";
 import baseurl from "../components/BaseUrl";
 import axios from "axios";
 import "../styles/Manager.css";
+import NotificationSnackbar from "../components/manager/NotificationSnackbar";
 import {
   Autocomplete,
   TextField,
   CircularProgress,
   Button,
-  Box,
   Snackbar,
   Alert,
   Dialog,
@@ -32,6 +32,7 @@ const ListCalendar = () => {
   const [errorOpen, setErrorOpen] = useState(false);
   const [calendarToDelete, setCalendarToDelete] = useState(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmDeleteAllOpen, setConfirmDeleteAllOpen] = useState(false); 
   const [hoveredCardId, setHoveredCardId] = useState(null);
 
   const navigate = useNavigate();
@@ -92,12 +93,21 @@ const ListCalendar = () => {
     }
   };
 
-  const handleDeleteAllSchedules = async () => {
-    const confirmDelete = window.confirm("Tem a certeza que deseja apagar todos os schedules?");
-    if (!confirmDelete) return;
+  // Funções para o diálogo de confirmação "Apagar todos"
+  const handleOpenConfirmDeleteAll = () => {
+    setConfirmDeleteAllOpen(true);
+  };
+
+  const handleCancelDeleteAll = () => {
+    setConfirmDeleteAllOpen(false);
+  };
+
+  const handleConfirmDeleteAll = async () => {
+    setConfirmDeleteAllOpen(false);
     try {
       await axios.delete(`${baseurl}/clearnreset/clean-schedules`);
       setSuccessOpen(true);
+      fetchCalendars(); // atualiza lista após apagar tudo
     } catch (err) {
       console.error("Erro ao apagar todos os schedules:", err);
       alert("Erro ao apagar schedules: " + (err.response?.data?.error || err.message));
@@ -149,10 +159,22 @@ const ListCalendar = () => {
     <div className="admin-container">
       <Sidebar_Manager />
       <div className="main-content">
-        <div className="header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div
+          className="header"
+          style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+        >
           <h2 className="heading" style={{ marginRight: "201px", marginLeft: "1%" }}>
             List Schedules
           </h2>
+
+          <Button style={{marginLeft: "40%", height: "100%"}} 
+            variant="contained"
+            color="error"
+            onClick={handleOpenConfirmDeleteAll}
+          >
+            Delete All Schedules
+          </Button>
+
           <Autocomplete
             style={{ width: "250px", marginRight: "5%" }}
             freeSolo
@@ -274,40 +296,53 @@ const ListCalendar = () => {
           ))}
         </div>
 
-        <Box mt={4} display="flex" justifyContent="center">
-          <Button variant="contained" color="error" onClick={handleDeleteAllSchedules}>
-            Apagar Todos os Schedules
-          </Button>
-        </Box>
-
         <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
-          <DialogTitle>Confirmar Remoção</DialogTitle>
+          <DialogTitle>Confirm Deletion</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              Tem a certeza que deseja apagar o calendário "{calendarToDelete?.title}"?
+              Are you sure you want to delete the calendar "{calendarToDelete?.title}"?
             </DialogContentText>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setConfirmDialogOpen(false)} color="primary">
-              Cancelar
+              Cancel
             </Button>
             <Button onClick={handleConfirmDelete} color="error">
-              Apagar
+              Delete
             </Button>
           </DialogActions>
         </Dialog>
 
-        <Snackbar open={successOpen} autoHideDuration={3000} onClose={() => setSuccessOpen(false)}>
-          <Alert onClose={() => setSuccessOpen(false)} severity="success" sx={{ width: "100%" }}>
-            Operação realizada com sucesso!
-          </Alert>
-        </Snackbar>
-
-        <Snackbar open={errorOpen} autoHideDuration={3000} onClose={() => setErrorOpen(false)}>
-          <Alert onClose={() => setErrorOpen(false)} severity="error" sx={{ width: "100%" }}>
-            Erro ao apagar calendário.
-          </Alert>
-        </Snackbar>
+        <Dialog open={confirmDeleteAllOpen} onClose={handleCancelDeleteAll}>
+          <DialogTitle>Confirm Deletion</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to delete all schedules?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCancelDeleteAll} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmDeleteAll} color="error">
+              Delete All
+            </Button>
+          </DialogActions>
+        </Dialog>
+         <NotificationSnackbar
+            open={successOpen}
+            severity="success"
+            message="Task Requested Successfully!"
+            onClose={() => setSuccessOpen(false)}
+         />
+        
+        <NotificationSnackbar
+            open={errorOpen}
+            severity="error"
+            message="Failed to create calendar. Try again."
+            onClose={() => setErrorOpen(false)}
+        />
+        
       </div>
     </div>
   );
