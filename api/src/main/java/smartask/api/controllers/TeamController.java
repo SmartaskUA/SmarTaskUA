@@ -42,8 +42,8 @@ public class TeamController {
     }
 
     @Operation(summary = "Add a new team")
-    @PostMapping("/")
-    public ResponseEntity<String> addTeam(@RequestBody String teamName) {
+    @PostMapping("/{teamName}")
+    public ResponseEntity<String> addTeam(@PathVariable String teamName) {
         teamService.addTeam(teamName);
         return ResponseEntity.ok("Team created successfully");
     }
