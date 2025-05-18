@@ -93,7 +93,6 @@ const ListCalendar = () => {
     }
   };
 
-  // Funções para o diálogo de confirmação "Apagar todos"
   const handleOpenConfirmDeleteAll = () => {
     setConfirmDeleteAllOpen(true);
   };
@@ -107,7 +106,7 @@ const ListCalendar = () => {
     try {
       await axios.delete(`${baseurl}/clearnreset/clean-schedules`);
       setSuccessOpen(true);
-      fetchCalendars(); // atualiza lista após apagar tudo
+      fetchCalendars();
     } catch (err) {
       console.error("Erro ao apagar todos os schedules:", err);
       alert("Erro ao apagar schedules: " + (err.response?.data?.error || err.message));
@@ -159,10 +158,7 @@ const ListCalendar = () => {
     <div className="admin-container">
       <Sidebar_Manager />
       <div className="main-content">
-        <div
-          className="header"
-          style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
-        >
+        <div className="header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h2 className="heading" style={{ marginRight: "201px", marginLeft: "1%" }}>
             List Schedules
           </h2>
@@ -234,27 +230,26 @@ const ListCalendar = () => {
                 position: "relative",
               }}
             >
-              {hoveredCardId === calendar.id && (
-                <IconButton
-                  size="small"
-                  onClick={() => confirmDeleteCalendar(calendar)}
-                  sx={{
-                    position: "absolute",
-                    top: 6,
-                    right: 6,
-                    backgroundColor: "#ff5252",
-                    color: "white",
-                    "&:hover": {
-                      backgroundColor: "#ff1744",
-                    },
-                    width: "20px",
-                    height: "20px",
-                    padding: "2px",
-                  }}
-                >
-                  <Close fontSize="10px" />
-                </IconButton>
-              )}
+              <IconButton
+                size="small"
+                onClick={() => confirmDeleteCalendar(calendar)}
+                sx={{
+                  position: "absolute",
+                  top: 6,
+                  right: 6,
+                  backgroundColor:
+                    hoveredCardId === calendar.id ? "#ff5252" : "#e0e0e0",
+                  color: hoveredCardId === calendar.id ? "#fff" : "#555",
+                  "&:hover": {
+                    backgroundColor: "#ff1744",
+                  },
+                  width: "20px",
+                  height: "20px",
+                  padding: "2px",
+                }}
+              >
+                <Close fontSize="10px" />
+              </IconButton>
 
               <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
                 <span className="status-dot" style={{ marginTop: "4%" }} />
@@ -329,20 +324,20 @@ const ListCalendar = () => {
             </Button>
           </DialogActions>
         </Dialog>
-         <NotificationSnackbar
-            open={successOpen}
-            severity="success"
-            message="Task Requested Successfully!"
-            onClose={() => setSuccessOpen(false)}
-         />
-        
+
         <NotificationSnackbar
-            open={errorOpen}
-            severity="error"
-            message="Failed to create calendar. Try again."
-            onClose={() => setErrorOpen(false)}
+          open={successOpen}
+          severity="success"
+          message="Task Requested Successfully!"
+          onClose={() => setSuccessOpen(false)}
         />
-        
+
+        <NotificationSnackbar
+          open={errorOpen}
+          severity="error"
+          message="Failed to create calendar. Try again."
+          onClose={() => setErrorOpen(false)}
+        />
       </div>
     </div>
   );

@@ -10,8 +10,6 @@ import {
   Paper,
   TextField,
   Typography,
-  Snackbar,
-  Alert,
   Input,
   Dialog,
   DialogActions,
@@ -63,7 +61,6 @@ const GenerateVacations = () => {
         headers: { "Content-Type": "multipart/form-data" },
       });
       await fetchTemplates();
-      // Removido showTemplateDetails(templateName) para evitar visualização automática
       setCsvFile(null);
       setUploadedFileName("");
       setSuccessOpen(true);
@@ -219,28 +216,26 @@ const GenerateVacations = () => {
                     position: "relative",
                   }}
                 >
-                  {hoveredTemplateId === template.id && (
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        setTemplateToDelete(template);
-                        setConfirmDialogOpen(true);
-                      }}
-                      sx={{
-                        position: "absolute",
-                        top: 6,
-                        right: 6,
-                        backgroundColor: "#ff5252",
-                        color: "white",
-                        "&:hover": { backgroundColor: "#ff1744" },
-                        width: "20px",
-                        height: "20px",
-                        padding: "2px",
-                      }}
-                    >
-                      <Close fontSize="10px" />
-                    </IconButton>
-                  )}
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      setTemplateToDelete(template);
+                      setConfirmDialogOpen(true);
+                    }}
+                    sx={{
+                      position: "absolute",
+                      top: 6,
+                      right: 6,
+                      backgroundColor: hoveredTemplateId === template.id ? "#ff5252" : "#e0e0e0",
+                      color: hoveredTemplateId === template.id ? "#fff" : "#555",
+                      "&:hover": { backgroundColor: "#ff1744" },
+                      width: "20px",
+                      height: "20px",
+                      padding: "2px",
+                    }}
+                  >
+                    <Close fontSize="10px" />
+                  </IconButton>
 
                   <Typography variant="h6" gutterBottom>
                     {template.name}
@@ -269,7 +264,6 @@ const GenerateVacations = () => {
           </Box>
         )}
 
-       
         <NotificationSnackbar
           open={successOpen}
           severity="success"
