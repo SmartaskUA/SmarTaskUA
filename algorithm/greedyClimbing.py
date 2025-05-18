@@ -163,7 +163,7 @@ class CombinedScheduler:
                 continue
 
             score = self.score(new_horario)
-            print(score)
+            # print(score)
 
             if score < best_score:
                 horario = new_horario

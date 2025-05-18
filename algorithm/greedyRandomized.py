@@ -123,7 +123,7 @@ def schedule():
     num_days = 365  
     holiDays = holidays.country_holidays("PT", years=[2025])
 
-    vacs = parse_vacs("horarioReferencia.csv")
+    vacs = parse_vacs("feriasA.csv")
     mins, ideals = parse_requirements("minimuns.csv")
 
     teams = {
