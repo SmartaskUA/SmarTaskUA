@@ -2,6 +2,7 @@ import sys
 import pandas as pd
 import json
 from algorithm.kpiVerification import analyze as singleVerification
+import holidays as hl
 
 def check_files(file_paths):
     headers = []
@@ -28,7 +29,11 @@ if __name__ == "__main__":
         print("Usage: python kpiComparison.py <file1> <file2> [<file3> ...]")
         sys.exit(1)
 
-    holidays = [1, 107, 109, 114, 121, 161, 170, 226, 276, 303, 333, 340, 357]
+    ano = 2025
+    holidays = hl.country_holidays("PT", years=[ano])
+    dias_ano = pd.date_range(start=f'{ano}-01-01', end=f'{ano}-12-31').to_list()
+    start_date = dias_ano[0].date()
+    holidays = {(d - start_date).days + 1 for d in holidays}
     file_paths = sys.argv[1:]
 
     print(f"Files to compare: {file_paths}")

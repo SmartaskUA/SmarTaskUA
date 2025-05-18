@@ -131,7 +131,7 @@ def analyze(file, holidays, teams):
 
 def parse_requirements(file_path):
     minimos = {}
-    with open(file_path, newline='', encoding='ISO-8859-1') as f:
+    with open(file_path, newline='') as f:
         reader = list(csv.reader(f))
         dias_colunas = list(range(1, len(reader[0]) - 3 + 1)) 
 
