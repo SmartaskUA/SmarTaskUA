@@ -78,7 +78,11 @@ class RabbitMQClient:
                 fetched_reference = self.mongodb_client.fetch_reference_by_name(minimuns)
                 minimuns_data = fetched_reference.get("minimuns", {})
 
+                year = message.get("year")
+                print(f"\nyear : {year}")
 
+                maxTime =  message.get("maxTime")
+                print(f"\nmaxTime : {maxTime}")
 
                 algorithm_name = message.get("algorithm", "CSP Scheduling")
                 employees_data = self.mongodb_client.fetch_employees()
@@ -93,7 +97,9 @@ class RabbitMQClient:
                     minimuns_data,
                     employees_data,
                     vacation_template_name,
-                    minimuns  # este é o nome do template de mínimos
+                    minimuns,
+                    year,
+                    maxTime
                 )
 
                 ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -123,7 +129,9 @@ class RabbitMQClient:
             minimuns_data,
             employees_data,
             vacation_template_name,
-            minimuns_template_name
+            minimuns_template_name,
+            year,
+            maxTime
     ):
 
         self.send_task_status(task_id, "IN_PROGRESS")
@@ -135,12 +143,15 @@ class RabbitMQClient:
                 algorithm_name=algorithm_name,
                 vacations=vacations_data,
                 minimuns=minimuns_data,
-                employees=employees_data
+                employees=employees_data,
+                maxTime=maxTime
             )
 
             metadata = {
                 "scheduleName": title,
                 "algorithmType": algorithm_name,
+                "year": year,
+                "maxTime": maxTime,
                 "vacationTemplateName": vacation_template_name,
                 "minimunsTemplateName": minimuns_template_name,
                 "employeesTeamInfo": employees_data,

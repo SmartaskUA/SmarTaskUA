@@ -155,4 +155,15 @@ public class VacationService {
 
         return true;
     }
+
+    public void deleteTemplateById(String id) {
+        vacationTemplateRepository.deleteById(id);
+    }
+
+    public void deleteTemplateByName(String name) {
+        VacationTemplate template = vacationTemplateRepository.findByName(name)
+                .orElseThrow(() -> new NoSuchElementException("Template não encontrado com nome: " + name));
+        vacationTemplateRepository.delete(template);
+    }
+
 }

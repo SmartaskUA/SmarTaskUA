@@ -54,4 +54,12 @@ public class ReferenceController {
         referenceService.deleteTemplate(id);
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "Excluir template de referência por nome")
+    @DeleteMapping("/by-name/{name}")
+    public ResponseEntity<Void> deleteTemplateByName(@PathVariable String name) {
+        referenceService.deleteTemplateByName(name);
+        return ResponseEntity.noContent().build();
+    }
+
 }

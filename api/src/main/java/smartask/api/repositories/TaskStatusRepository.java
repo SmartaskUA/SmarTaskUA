@@ -10,4 +10,8 @@ import java.util.Optional;
 @Repository
 public interface TaskStatusRepository extends MongoRepository<TaskStatus, String> {
     Optional<TaskStatus> findByTaskId(String taskId);
+    void deleteByTaskId(String taskId);
+    Optional<TaskStatus> findByScheduleRequest_Title(String title);
+    void deleteByScheduleRequest_Title(String title);
+    void deleteAllByScheduleRequest_Title(String title);
 }

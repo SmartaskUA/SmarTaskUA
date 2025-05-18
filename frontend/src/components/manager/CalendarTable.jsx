@@ -10,20 +10,19 @@ import {
 } from "@mui/material";
 import LegendBox from "./LegendBox";
 
-const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay }) => {
+const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay, firstDayOfYear }) => {
+  const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
   const abbreviateValue = (value) => {
     const normalized = value.toUpperCase();
-    if (normalized === "0") return "F"; 
+    if (normalized === "0") return ""; 
     if (normalized === "F") return "Fe"; 
-    // if (["T", "T_A", "T_B"].includes(normalized)) return "T"; 
-    // if (["M", "M_A", "M_B"].includes(normalized)) return "M"; 
     return value;
   };
 
   const getCellStyle = (value) => {
     const normalized = value.toUpperCase();
-    if (normalized === "0") return { backgroundColor: "#a0d8ef", color: "#000" }; 
+    if (normalized === "0") return { backgroundColor: "#ffffff", color: "#000" }; 
     if (normalized === "F") return { backgroundColor: "#ffcccb", color: "#000" }; 
     if (["T", "T_A", "T_B"].includes(normalized)) return { backgroundColor: "#f9e79f", color: "#000" };
     if (["M", "M_A", "M_B"].includes(normalized)) return { backgroundColor: "#d4edda", color: "#000" }; 
@@ -37,36 +36,102 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay }) =
     return data.map((row) => [row[0], ...row.slice(start, end)]);
   };
 
+  const isFixedHoliday = (month, day) => {
+    const holidays = {
+      1: [1],
+      4: [25],
+      5: [1],
+      6: [10],
+      8: [15],
+      10: [5],
+      11: [1],
+      12: [1, 8, 25],
+    };
+    return holidays[month]?.includes(day);
+  };
+
+  const displayedData = getDisplayedData();
+  const numDays = displayedData[0]?.length - 1 || 0;
+  const monthOffset = daysInMonth.slice(0, selectedMonth - 1).reduce((a, b) => a + b, 0);
+  const firstDayOfMonth = (firstDayOfYear + monthOffset) % 7;
+
   return (
     <div>
       <TableContainer component={Paper} style={{ marginTop: "15px", maxWidth: "100%" }}>
         <Table sx={{ minWidth: 450 }} aria-label="calendar table">
           <TableHead>
             <TableRow style={{ backgroundColor: "#007bff", color: "white" }}>
-              <TableCell style={{ fontSize: "12px", padding: "6px" }}>Funcionário</TableCell>
-              {getDisplayedData()[0]?.slice(1).map((_, index) => (
-                <TableCell key={index} style={{ fontSize: "12px", padding: "6px" }}>
-                  Dia {startDay + index}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {getDisplayedData().slice(1).map((row, rowIndex) => (
-              <TableRow key={rowIndex} style={{ height: "30px" }}>
-                {row.map((cell, cellIndex) => (
+              <TableCell style={{ fontSize: "12px", padding: "6px", color: "white" }}>Funcionário</TableCell>
+              {Array.from({ length: numDays }, (_, index) => {
+                const currentDay = startDay + index;
+                const isHoliday = isFixedHoliday(selectedMonth, currentDay);
+                return (
                   <TableCell
-                    key={cellIndex}
+                    key={index}
                     style={{
                       fontSize: "12px",
                       padding: "6px",
-                      backgroundColor: rowIndex % 2 === 0 ? "#ffffff" : "#f1f1f1",
-                      ...getCellStyle(cell || ""),
+                      backgroundColor: isHoliday ? "#800080" : "#007bff",
+                      color: isHoliday ? "#fff" : "white",
+                      fontWeight: isHoliday ? "bold" : undefined,
                     }}
                   >
-                    {abbreviateValue(cell || "")}
+                    Dia {currentDay}
                   </TableCell>
-                ))}
+                );
+              })}
+            </TableRow>
+            <TableRow>
+              <TableCell style={{ fontSize: "12px", padding: "6px", backgroundColor: "#6fa8dc", color: "white" }}></TableCell>
+              {Array.from({ length: numDays }, (_, i) => {
+                const dayOfWeekIndex = (firstDayOfMonth + startDay + i - 1) % 7;
+                const isWeekend = dayOfWeekIndex === 0 || dayOfWeekIndex === 6;
+                const bgColor = isWeekend ? "#b0c4de" : "#6fa8dc";
+                return (
+                  <TableCell
+                    key={i}
+                    style={{ fontSize: "12px", padding: "6px", color: "white", backgroundColor: bgColor }}
+                  >
+                    {dayNames[dayOfWeekIndex]}
+                  </TableCell>
+                );
+              })}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {displayedData.slice(1).map((row, rowIndex) => (
+              <TableRow key={rowIndex} style={{ height: "30px" }}>
+                {row.map((cell, cellIndex) => {
+                  if (cellIndex === 0) {
+                    return (
+                      <TableCell
+                        key={cellIndex}
+                        style={{
+                          fontSize: "12px",
+                          padding: "6px",
+                          fontWeight: "bold",
+                          backgroundColor: "#007bff",
+                          color: "white",
+                        }}
+                      >
+                        Funcionário {rowIndex + 1}
+                      </TableCell>
+                    );
+                  }
+                  return (
+                    <TableCell
+                      key={cellIndex}
+                      style={{
+                        fontSize: "12px",
+                        padding: "6px",
+                        backgroundColor: "#ffffff",
+                        ...getCellStyle(cell || ""),
+                      }}
+                    >
+                      {abbreviateValue(cell || "")}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ))}
           </TableBody>
