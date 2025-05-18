@@ -4,8 +4,6 @@ import axios from "axios";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import CalendarTable from "../components/manager/CalendarTable";
 import CalendarHeader from "../components/manager/CalendarHeader";
-import BarChartDropdown from "../components/manager/BarChartDropdown";
-import BarChartDropdownFolgasFerias from "../components/manager/BarChartDropdownFolgasFerias";
 import KPIReport from "../components/manager/KPIReport";
 import BaseUrl from "../components/BaseUrl";
 import MetadataInfo from "../components/manager/MetadataInfo";
