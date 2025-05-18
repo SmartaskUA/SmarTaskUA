@@ -38,6 +38,7 @@ const Teams = () => {
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState(null);
 
+
   useEffect(() => {
     fetchTeams();
   }, []);
@@ -65,53 +66,30 @@ const Teams = () => {
     }
   };
 
-  const handleAddOrUpdateTeam = async () => {
-    if (typeof newTeamName !== "string" || newTeamName.trim() === "") {
-      console.error("Team name is invalid or empty");
+  const handleQuickAddTeam = async () => {
+    if (!newTeamName || typeof newTeamName !== "string" || newTeamName.trim() === "") {
+      console.error("Team name is required for quick add.");
       return;
     }
 
-    const employeeIds = employeeIdsInput
-      .split(",")
-      .map((id) => id.trim())
-      .filter((id) => id);
-
-    const payload = {
-      name: newTeamName.trim(),
-      employeeIds: employeeIds,
-    };
-
     try {
-      let response;
-      if (editTeamId) {
-        response = await fetch(`${BaseUrl}/api/v1/teams/${editTeamId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-      } else {
-        response = await fetch(`${BaseUrl}/api/v1/teams/`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-      }
+      const response = await fetch(`${BaseUrl}/api/v1/teams/${newTeamName.trim()}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      });
 
       if (response.ok) {
         handleCloseDialog();
         fetchTeams();
       } else {
         const errorData = await response.json();
-        console.error("Error adding or updating team:", errorData);
+        console.error("Error in quick add:", errorData);
       }
     } catch (error) {
-      console.error("Error adding or updating team:", error);
+      console.error("Error in quick add:", error);
     }
   };
 
@@ -136,7 +114,8 @@ const Teams = () => {
       console.error("Error deleting team:", error);
     }
   };
-
+  
+  
   const handleEditTeam = (team) => {
     setNewTeamName(team.name);
     setEmployeeIdsInput(team.employeeIds.join(","));
@@ -373,21 +352,15 @@ const Teams = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button variant="contained" color="success" onClick={handleAddOrUpdateTeam}>
-            {editTeamId ? "Update" : "Add"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Dialog open={openConfirmDialog} onClose={() => setOpenConfirmDialog(false)}>
-        <DialogTitle>Confirm Deletion</DialogTitle>
-        <DialogContent>
-          <Typography>Are you sure you want to delete this team?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenConfirmDialog(false)}>Cancel</Button>
-          <Button variant="contained" color="error" onClick={handleDeleteTeam}>
-            Confirm
-          </Button>
+          {!editTeamId && (
+            <Button
+              variant="contained"
+              color="success"
+              onClick={handleQuickAddTeam}
+            >
+              Add
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
       <Dialog open={openDetailsDialog} onClose={handleCloseDetailsDialog}>
@@ -498,8 +471,21 @@ const Teams = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </div>
-  );
-};
 
+      <Dialog open={openConfirmDialog} onClose={() => setOpenConfirmDialog(false)}>
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <Typography>Are you sure you want to delete this team?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenConfirmDialog(false)}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={handleDeleteTeam}>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </div>
+
+  );
+}
 export default Teams;
