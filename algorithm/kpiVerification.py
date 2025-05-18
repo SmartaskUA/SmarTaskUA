@@ -3,10 +3,17 @@ import pandas as pd
 import sys
 import json
 import holidays as hl
+import os
 
 def analyze(file, holidays, teams):
     print(f"Analyzing file: {file}")
     df = pd.read_csv(file, encoding='ISO-8859-1')
+
+    # Print the first few rows of the DataFrame for debugging
+    # print("DataFrame head:")
+    # print(df.head())
+    # print(df.columns)
+    # print(df)
 
     missed_work_days = 0
     missed_vacation_days = 0
@@ -19,7 +26,8 @@ def analyze(file, holidays, teams):
     single_team_violations = 0
     two_team_preference_violations = 0
 
-    mins = parse_requirements("minimuns.csv")
+    minimuns_file = os.path.join(os.path.dirname(__file__), "minimuns.csv")
+    mins = parse_requirements(minimuns_file)
     year = 2025
     sunday = []
     for day in pd.date_range(start=f'{year}-01-01', end=f'{year}-12-31'):

@@ -6,6 +6,7 @@ import csv
 import time
 import pandas as pd
 import numpy as np
+import os
 
 class GreedyRandomized:
     def __init__(self, employees, num_days, holidays, vacs, mins, ideals, teams, num_iter=10):
@@ -123,8 +124,10 @@ def schedule():
     num_days = 365  
     holiDays = holidays.country_holidays("PT", years=[2025])
 
-    vacs = parse_vacs("feriasA.csv")
-    mins, ideals = parse_requirements("minimuns.csv")
+    vacations_file = os.path.join(os.path.dirname(__file__), "feriasA.csv")
+    vacs = parse_vacs(vacations_file)
+    minimuns_file = os.path.join(os.path.dirname(__file__), "minimuns.csv")
+    mins, ideals = parse_requirements(minimuns_file)
 
     teams = {
         1: [1], 2: [1], 3: [1], 4: [1],

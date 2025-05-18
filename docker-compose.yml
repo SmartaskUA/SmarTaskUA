@@ -113,7 +113,7 @@ services:
         condition: service_started
     volumes:
       - ./api/application.properties:/app/application.properties
-      - shared_tmp:/shared_tmp
+      - ./shared_tmp:/shared_tmp
     networks:
       - rabbitmq_network
 
