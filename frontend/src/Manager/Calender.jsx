@@ -182,16 +182,6 @@ const Calendar = () => {
           checkVacationDays={checkVacationDays}
         />
 
-        <BarChartDropdown
-          data={data}
-          selectedMonth={selectedMonth}
-          daysInMonth={daysInMonth}
-        />
-        <BarChartDropdownFolgasFerias
-          data={data}
-          selectedMonth={selectedMonth}
-          daysInMonth={daysInMonth}
-        />
       </div>
     </div>
   );
