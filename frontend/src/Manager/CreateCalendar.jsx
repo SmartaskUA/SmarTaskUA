@@ -82,6 +82,32 @@ const CreateCalendar = () => {
     setMinimumTemplate("");
   };
 
+  const [titleError, setTitleError] = useState(false);
+  const [yearError, setYearError] = useState(false);
+  const [maxDurationError, setMaxDurationError] = useState(false);
+
+  // Validações ao digitar
+  const handleTitleChange = (e) => {
+    const value = e.target.value;
+    setTitle(value);
+    setTitleError(value.trim() === "");
+  };
+
+  const handleYearChange = (e) => {
+    const value = e.target.value;
+    const intValue = parseInt(value, 10);
+    setYear(value);
+    setYearError(!intValue || intValue <= 0 || !/^\d+$/.test(value));
+  };
+
+  const handleMaxDurationChange = (e) => {
+    const value = e.target.value;
+    const intValue = parseInt(value, 10);
+    setMaxDuration(value);
+    setMaxDurationError(!intValue || intValue <= 0 || !/^\d+$/.test(value));
+  };
+
+
   return (
     <div className="admin-container">
       <Sidebar_Manager />
@@ -107,24 +133,32 @@ const CreateCalendar = () => {
                 fullWidth
                 label="Title"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={handleTitleChange}
                 margin="normal"
+                error={titleError}
+                helperText={titleError ? "Title is required" : ""}
               />
+
               <TextField
                 fullWidth
                 type="number"
                 label="Year"
                 value={year}
-                onChange={(e) => setYear(e.target.value)}
+                onChange={handleYearChange}
                 margin="normal"
+                error={yearError}
+                helperText={yearError ? "Year must be a positive integer" : ""}
               />
+
               <TextField
                 fullWidth
                 type="number"
                 label="Max Duration (minutes)"
                 value={maxDuration}
-                onChange={(e) => setMaxDuration(e.target.value)}
+                onChange={handleMaxDurationChange}
                 margin="normal"
+                error={maxDurationError}
+                helperText={maxDurationError ? "Duration must be a positive integer" : ""}
               />
 
               <FormControl fullWidth margin="normal">
