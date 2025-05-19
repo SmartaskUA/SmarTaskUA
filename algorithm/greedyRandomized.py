@@ -152,10 +152,6 @@ def export_schedule_to_csv(scheduler, filename="schedule.csv"):
                     else:
                         row.append(f"T_{'A' if team == 1 else 'B'}")
                 else:
-131
-    networks:
-132
-      - rabbitmq_network
                     row.append("0")
 
             writer.writerow(row)
