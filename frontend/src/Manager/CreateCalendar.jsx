@@ -121,7 +121,7 @@ const CreateCalendar = () => {
           marginRight: "20px",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: "2%" }}>
+        <div style={{ display: "flex", justifyContent: "left",marginBottom: "2%" }}>
           <h1>Generate Schedule</h1>
         </div>
 
@@ -207,7 +207,7 @@ const CreateCalendar = () => {
           </Grid>
         </Grid>
 
-        <Box sx={{ display: "flex", justifyContent: "center", marginTop: 3, gap: 2 }}>
+        <Box sx={{ display: "flex", justifyContent: "left", marginTop: 3,marginLeft:"17%", gap: 2 }}>
           <Button variant="contained" color="success" onClick={handleSave}>Generate</Button>
           <Button variant="contained" color="error" onClick={handleClear}>Clear All</Button>
         </Box>
