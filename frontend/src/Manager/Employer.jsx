@@ -289,7 +289,7 @@ const Employer = () => {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenAddDialog(false)} color="secondary">
+            <Button onClick={() => setOpenAddDialog(false)} color="error">
               Cancel
             </Button>
             <Button
@@ -302,7 +302,7 @@ const Employer = () => {
                   })
                   .catch((error) => console.error("Erro ao adicionar employee:", error));
               }}
-              color="primary"
+              color="success"
             >
               Add
             </Button>
@@ -315,7 +315,7 @@ const Employer = () => {
             <Typography>Tem certeza que deseja remover este funcionário?</Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCancelDelete} color="secondary">
+            <Button onClick={handleCancelDelete} color="error">
               Cancel
             </Button>
             <Button onClick={handleConfirmDelete} color="primary">
@@ -410,7 +410,7 @@ const Employer = () => {
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenEditDialog(false)} color="secondary">
+            <Button onClick={() => setOpenEditDialog(false)} color="error">
               Cancel
             </Button>
             <Button
@@ -443,7 +443,7 @@ const Employer = () => {
                   console.error("Erro ao guardar alterações:", err);
                 }
               }}
-              color="primary"
+              color="success"
             >
               Save
             </Button>
