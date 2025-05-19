@@ -281,6 +281,6 @@ def solve(vacations, minimuns, employees):
     return output
 
 
-scheduler = schedule()
+#scheduler = schedule()
 # scheduler.check_holiday_violations()
-export_schedule_to_csv(scheduler)
+#export_schedule_to_csv(scheduler)
