@@ -145,7 +145,7 @@ const KPIReport = ({
 
               <Grid item xs={12}>
                 {renderSection(
-                  "More Than 22 Working Days on Weekends/Holidays",
+                  "More Than 22 Working Days on Sundays + Holidays",
                   underworkedEmployees,
                   "All employees are within limits.",
                   "Employees with excessive workload:"
