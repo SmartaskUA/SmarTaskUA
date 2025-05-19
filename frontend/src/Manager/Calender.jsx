@@ -94,18 +94,31 @@ const Calendar = () => {
   const kpiData = parseRawCSVData();
 
   const checkScheduleConflicts = () => {
-    const conflicts = [];
-    const shiftsByDay = {};
-    kpiData.forEach(({ day, shift }) => {
-      if (!shiftsByDay[day]) shiftsByDay[day] = new Set();
-      shiftsByDay[day].add(shift);
+    const conflictsByDay = {};
+
+    kpiData.forEach(({ day, employee, shift }) => {
+      if (!conflictsByDay[day]) conflictsByDay[day] = {};
+      if (!conflictsByDay[day][employee]) conflictsByDay[day][employee] = new Set();
+      conflictsByDay[day][employee].add(shift.toUpperCase());
     });
-    Object.entries(shiftsByDay).forEach(([day, shifts]) => {
-      if (shifts.has("T") && shifts.has("M")) {
-        conflicts.push({ day, motivo: "Turnos T e M no mesmo dia" });
+
+    const result = [];
+
+    Object.entries(conflictsByDay).forEach(([day, shiftsByEmp]) => {
+      const conflictEmployees = [];
+      Object.entries(shiftsByEmp).forEach(([employee, shifts]) => {
+        const hasTarde = [...shifts].some(s => s.startsWith("T"));
+        const hasManha = [...shifts].some(s => s.startsWith("M"));
+        if (hasTarde && hasManha) {
+          conflictEmployees.push(`Emp ${employee}`);
+        }
+      });
+      if (conflictEmployees.length > 0) {
+        result.push({ day, employee: conflictEmployees.join(", ") });
       }
     });
-    return conflicts;
+
+    return result;
   };
 
   const checkWorkloadConflicts = () => {
