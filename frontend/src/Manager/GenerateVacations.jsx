@@ -4,6 +4,8 @@ import baseurl from "../components/BaseUrl";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import VacationsTemplate from "../components/manager/VacationsTemplate";
 import NotificationSnackbar from "../components/manager/NotificationSnackbar";
+import EmptySVG from "../assets/images/Empty-pana.svg";
+
 import {
   Box,
   Button,
@@ -257,6 +259,26 @@ const GenerateVacations = () => {
             </Box>
           </Box>
         )}
+        {templates.length === 0 && (
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          height="50vh"
+          mt={6}
+        >
+          <img
+            src={EmptySVG}
+            alt="No templates"
+            style={{ width: 400, height: 400, marginBottom: 20 }}
+          />
+          <Typography variant="h6" color="textSecondary">
+            No templates created yet.
+          </Typography>
+        </Box>
+      )}
+
 
         {log && (
           <Box mt={6}>
