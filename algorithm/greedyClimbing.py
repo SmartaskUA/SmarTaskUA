@@ -128,17 +128,17 @@ class CombinedScheduler:
                         self.assignment[emp].append((d + 1, s + 1, t))
                         self.schedule_table[(d + 1, s + 1, t)].append(emp)
 
-    def hill_climbing(self, max_iterations=400000, max_no_improve=10000):
+    def hill_climbing(self, max_iterations=400000):
         horario = self.create_horario()
         best_score = self.score(horario)
-        no_improve = 0
         iteration = 0
+        perfect_solution = False
 
-        # and no_improve < max_no_improve
         while iteration < max_iterations:
             iteration += 1
             emp_idx = np.random.randint(len(self.employees))
             emp = self.employees[emp_idx]
+
             available_days = [d for d in range(self.num_days) if not self.vac_array[emp_idx, d]]
             if len(available_days) < 2:
                 continue
@@ -146,12 +146,28 @@ class CombinedScheduler:
             d1, d2 = np.random.choice(available_days, 2, replace=False)
             s1, s2 = np.random.choice([0, 1], 2, replace=False)
 
-            t1, t2 = horario[emp_idx, d1, s1], horario[emp_idx, d2, s2]
+            t1 = horario[emp_idx, d1, s1]
+            t2 = horario[emp_idx, d2, s2]
+
             if (t1 > 0 and t1 not in self.teams[emp]) or (t2 > 0 and t2 not in self.teams[emp]):
                 continue
 
             new_horario = horario.copy()
-            new_horario[emp_idx, d1, s1], new_horario[emp_idx, d2, s2] = t2, t1
+
+            can_work_team_A = 1 in self.teams[emp]
+            can_work_team_B = 2 in self.teams[emp]
+
+            if t1 != t2:
+                if can_work_team_A and can_work_team_B:
+                    new_horario[emp_idx, d1, s1], new_horario[emp_idx, d2, s2] = t2, t1
+                elif can_work_team_A:
+                    new_horario[emp_idx, d1, s1] = 1 
+                    new_horario[emp_idx, d2, s2] = 0 
+                elif can_work_team_B:
+                    new_horario[emp_idx, d1, s1] = 0 
+                    new_horario[emp_idx, d2, s2] = 2 
+                else:
+                    continue  
 
             if s1 == 1 and d1 + 1 < self.num_days and new_horario[emp_idx, d1 + 1, 0] > 0:
                 continue
@@ -162,28 +178,44 @@ class CombinedScheduler:
             if s2 == 0 and d2 > 0 and new_horario[emp_idx, d2 - 1, 1] > 0:
                 continue
 
-            score = self.score(new_horario)
-            # print(score)
+            new_score = self.score(new_horario)
+            c1, c2, c3, c4, c5 = (
+                self.criterio1(new_horario),
+                self.criterio2(new_horario),
+                self.criterio3(new_horario),
+                self.criterio4(new_horario),
+                self.criterio5(new_horario)
+            )
 
-            if score < best_score:
+            if c1 == 0 and c2 == 0 and c3 == 0 and c4 == 0 and c5 == 0:
                 horario = new_horario
-                best_score = score
-                no_improve = 0
+                best_score = new_score
+                self.update_from_horario(horario)
+                print(f"Iteration {iteration}: Perfect solution found with score = {best_score}")
+                perfect_solution = True
+                break
+
+            if new_score < best_score:
+                horario = new_horario
+                best_score = new_score
                 self.update_from_horario(horario)
                 print(f"Iteration {iteration}: Improved score = {best_score}")
-            else:
-                no_improve += 1
+            print(f"Iteration {iteration}: No improvement, score = {best_score}")
 
-        print(f"Hill Climbing completed after {iteration} iterations.")
-        return horario
+        print(f"Local Search Optimization completed after {iteration} iterations. Final score = {best_score}")
+        return horario, perfect_solution
 
     def score(self, horario):
-        c1 = self.criterio1(horario)
-        c2 = self.criterio2(horario)
-        c3 = self.criterio3(horario)
-        c4 = self.criterio4(horario)
-        c5 = self.criterio5(horario)
+        c1, c2, c3, c4, c5 = self.criterios(horario)
         return c1 + c2 + c3 + c4 + c5
+    
+    def criterios(self, horario):
+        f1 = self.criterio1(horario)
+        f2 = self.criterio2(horario)
+        f3 = self.criterio3(horario)
+        f4 = self.criterio4(horario)
+        f5 = self.criterio5(horario)
+        return f1, f2, f3, f4, f5
 
 
     def criterio1(self, horario, max_consec=5):
