@@ -155,11 +155,11 @@ const Calendar = () => {
     });
     return Object.entries(workDays)
       .filter(([_, days]) => days.length > 22)
-      .map(([employee, days]) => {
-        const year = metadata?.year || new Date().getFullYear();
-        const date = new Date(year, 0, days[22]);
-        return { employee, day: date.toLocaleDateString("pt-PT"), motivo: "Mais de 22 dias úteis trabalhados" };
-      });
+      .map(([employee, days]) => ({
+        employee,
+        day: `${days.length} dias`,
+        motivo: "Mais de 22 dias úteis trabalhados (domingos/feriados)"
+      }));
   };
 
   const checkVacationDays = () => {
@@ -171,7 +171,11 @@ const Calendar = () => {
     });
     return Object.entries(vacationCounts)
       .filter(([_, count]) => count !== 30)
-      .map(([employee]) => ({ employee, motivo: `Número de dias de férias incorreto: ${vacationCounts[employee]}` }));
+      .map(([employee, count]) => ({
+        employee,
+        day: `${count} dias`,
+        motivo: "Número de dias de férias incorreto"
+      }));
   };
 
   const downloadCSV = () => {
