@@ -2,6 +2,7 @@ import csv
 import pandas as pd
 import sys
 import json
+import holidays as hl
 
 def analyze(file, holidays, teams):
     print(f"Analyzing file: {file}")
@@ -18,20 +19,26 @@ def analyze(file, holidays, teams):
     single_team_violations = 0
     two_team_preference_violations = 0
 
-    holiday_cols = [f'Dia {d}' for d in holidays if f'Dia {d}' in df.columns]
+    mins = parse_requirements("minimuns.csv")
+    year = 2025
+    sunday = []
+    for day in pd.date_range(start=f'{year}-01-01', end=f'{year}-12-31'):
+        if day.weekday() == 6:
+            sunday.append(day.dayofyear)
+
     dia_cols = [col for col in df.columns if col.startswith("Dia ")]
+    all_special_cols = [f'Dia {d}' for d in set(holidays).union(sunday) if f'Dia {d}' in df.columns]
 
     for _, row in df.iterrows():
         worked_days = sum(row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] for col in dia_cols)
-        print(f"Worked days: {worked_days}")
         vacation_days = sum(row[col] == 'F' for col in dia_cols)
 
         missed_work_days += abs(223 - worked_days)
         missed_vacation_days += abs(30 - vacation_days)
 
-        numHolidays = sum(row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] for col in holiday_cols)
-        if numHolidays > 22:
-            workHolidays += numHolidays - 22
+        total_worked_holidays = sum(row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] for col in all_special_cols)
+        if total_worked_holidays > 22:
+            workHolidays += total_worked_holidays - 22
 
         work_sequence = [
             1 if row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] else 0
@@ -95,19 +102,20 @@ def analyze(file, holidays, teams):
 
     shift_balance = min(percentages) if percentages else 0
 
-    for col in dia_cols:
-        M_A = sum(row[col] == 'M_A' for _, row in df.iterrows())
-        T_A = sum(row[col] == 'T_A' for _, row in df.iterrows())
-        M_B = sum(row[col] == 'M_B' for _, row in df.iterrows())
-        T_B = sum(row[col] == 'T_B' for _, row in df.iterrows())
-        if M_A < 2:
-            missed_team_min += 1
-        if T_A < 2:
-            missed_team_min += 1
-        if M_B < 1:
-            missed_team_min += 1
-        if T_B < 1:
-            missed_team_min += 1
+    def givenShift(team_label, shift):
+        prefix = "M" if shift == 1 else "T"
+        return f"{prefix}_{team_label}"
+
+    for (day, team_label, shift), required in mins.items():
+        col = f"Dia {day}"
+        if col not in df.columns:
+            continue
+
+        code = givenShift(team_label, shift)
+        assigned = (df[col] == code).sum()
+
+        missing = max(0, required - assigned)
+        missed_team_min += int(missing)
 
     return {
         "missedWorkDays": missed_work_days,
@@ -121,11 +129,40 @@ def analyze(file, holidays, teams):
         "twoTeamPreferenceViolations": two_team_preference_violations,
     }
 
+def parse_requirements(file_path):
+    minimos = {}
+    with open(file_path, newline='', encoding='ISO-8859-1') as f:
+        reader = list(csv.reader(f))
+        dias_colunas = list(range(1, len(reader[0]) - 3 + 1)) 
+
+        linhas_requisitos = {
+            ("A", 1, "Minimo"): 1,
+            ("A", 2, "Minimo"): 3,
+            ("B", 1, "Minimo"): 5,
+            ("B", 2, "Minimo"): 7 
+        }
+
+        for (equipa, turno, tipo), linha_idx in linhas_requisitos.items():
+            valores = reader[linha_idx][3:]
+            for dia, valor in zip(dias_colunas, valores):
+                try:
+                    valor_int = int(valor)
+                    if tipo == "Minimo":
+                        minimos[(dia, equipa, turno)] = valor_int
+                except ValueError:
+                    continue 
+
+    return minimos
+
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: python kpiVerification.py <file>")
         sys.exit(1)
-    holidays = [1, 107, 109, 114, 121, 161, 170, 226, 276, 303, 333, 340, 357]
+    ano = 2025
+    holidays = hl.country_holidays("PT", years=[ano])
+    dias_ano = pd.date_range(start=f'{ano}-01-01', end=f'{ano}-12-31').to_list()
+    start_date = dias_ano[0].date()
+    holidays = {(d - start_date).days + 1 for d in holidays}
     file = sys.argv[1]
     teams = {
         1: [1], 2: [1], 3: [1], 4: [1],
@@ -133,5 +170,4 @@ if __name__ == "__main__":
         9: [1], 10: [2], 11: [2, 1], 12: [2]
     }
     data = analyze(file, holidays, teams)
-
     print(json.dumps(data, indent=4))

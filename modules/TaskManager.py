@@ -4,6 +4,8 @@ from algorithm.CSP_joao import employee_scheduling
 from algorithm.genetic_algorithm import solve as genetic_alg_solver
 from algorithm.heuristic_sol_gabi import solve as hill_clibing_alg_solver
 from algorithm.ILP import solve as ilp_solver
+from algorithm.greedyRandomized import solve as greedy_randomized_solver
+
 class TaskManager:
     def __init__(self):
         # No futuro, você pode adicionar suporte a múltiplos algoritmos aqui
@@ -12,7 +14,8 @@ class TaskManager:
             "CSP Scheduling": employee_scheduling,
             "genetic_algorithm": genetic_alg_solver,
             "hill climbing": hill_clibing_alg_solver,
-            "linear programming": ilp_solver
+            "linear programming": ilp_solver,
+            "Greedy Randomized": greedy_randomized_solver,
         }
 
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling",
@@ -22,7 +25,7 @@ class TaskManager:
                  maxTime=10):
         #print(f"\n[DEBUG] Current employee set:\n{employees}")
         print(f"\n[DEBUG] Vacations received:\n{vacations}")
-        #print(f"\n[DEBUG] Minimuns received:\n{minimuns}")
+        print(f"\n[DEBUG] Minimuns received:\n{minimuns}")
 
         if algorithm_name not in self.algorithms:
             raise ValueError(f"Algoritmo '{algorithm_name}' não encontrado.")
@@ -31,7 +34,7 @@ class TaskManager:
         algorithm = self.algorithms[algorithm_name]
 
         # Verifica assinatura e repassa os argumentos corretamente
-        if algorithm_name == "linear programming" or algorithm_name == "hill climbing":
+        if algorithm_name == "linear programming" or algorithm_name == "hill climbing" or algorithm_name == "Greedy Randomized":
             # Passa vacations, minimuns e employees explicitamente
             schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime)
         else:
