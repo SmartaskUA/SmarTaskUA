@@ -125,7 +125,13 @@ public class SchedulesController {
                 String fileName = file.getOriginalFilename();
                 Path filePath = Paths.get("/shared_tmp", fileName);
                 log.info("Saving file to: {}", filePath);
+                if (file.getBytes() == null) {
+                    log.error("File is empty: {}", fileName);
+                    return ResponseEntity.badRequest().body(Map.of("error", "File is empty"));
+                }
+                log.info("Uploaded file {} size(before)={} bytes", fileName, file.getSize());
                 Files.write(filePath, file.getBytes());
+                log.info("Saved file {} size(after)={} bytes", fileName, Files.size(filePath));
                 filePaths.add(filePath.toString());
             }
 
