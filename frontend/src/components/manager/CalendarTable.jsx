@@ -109,8 +109,8 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay, fir
               ></TableCell>
               {Array.from({ length: numDays }, (_, i) => {
                 const dayOfWeekIndex = (firstDayOfMonth + startDay + i - 1) % 7;
-                const isWeekend = dayOfWeekIndex === 0 || dayOfWeekIndex === 6;
-                const bgColor = isWeekend ? "#b0c4de" : "#6fa8dc";
+                const isSunday = dayOfWeekIndex === 0;
+                const bgColor = isSunday ? "#b0c4de" : "#6fa8dc";
                 return (
                   <TableCell
                     key={i}

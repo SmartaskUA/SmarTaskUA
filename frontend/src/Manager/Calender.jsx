@@ -7,6 +7,8 @@ import CalendarHeader from "../components/manager/CalendarHeader";
 import KPIReport from "../components/manager/KPIReport";
 import BaseUrl from "../components/BaseUrl";
 import MetadataInfo from "../components/manager/MetadataInfo";
+import { Box, Typography } from "@mui/material";
+
 const Calendar = () => {
   const [data, setData] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(1);
@@ -22,52 +24,34 @@ const Calendar = () => {
   ];
   const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
-  useEffect(() => {
-    setStartDay(1);
-    setEndDay(daysInMonth[selectedMonth - 1]);
-  }, [selectedMonth, daysInMonth]);
-  
-  const holidays = [31, 60, 120, 150, 200, 240, 300, 330];
-
-  const getDayOfYear = (date) => {
-    const start = new Date(date.getFullYear(), 0, 0);
-    const diff = date - start;
-    const oneDay = 1000 * 60 * 60 * 24;
-    return Math.floor(diff / oneDay);
-  };
-
-  const checkUnderworkedEmployees = () => {
-    const employeeWorkDays = {};
-    const getDayOfYear = (dateStr) => {
-      const date = new Date(dateStr);
+  const getFixedHolidaysAsDayOfYear = (year) => {
+    const fixedHolidays = [
+      [1, 1],    // 1 Jan
+      [4, 25],   // 25 Apr
+      [5, 1],    // 1 May
+      [6, 10],   // 10 Jun
+      [8, 15],   // 15 Aug
+      [10, 5],   // 5 Oct
+      [11, 1],   // 1 Nov
+      [12, 1],   // 1 Dec
+      [12, 8],   // 8 Dec
+      [12, 25],  // 25 Dec
+    ];
+    return fixedHolidays.map(([month, day]) => {
+      const date = new Date(year, month - 1, day);
       const start = new Date(date.getFullYear(), 0, 0);
       const diff = date - start;
       const oneDay = 1000 * 60 * 60 * 24;
       return Math.floor(diff / oneDay);
-    };
-
-    data.forEach(({ employee, day, shift }) => {
-      if (!employeeWorkDays[employee]) {
-        employeeWorkDays[employee] = new Set();
-      }
-
-      if (shift !== "F") {
-        const date = new Date(day);
-        const dayOfWeek = date.getDay(); // 0 = Domingo
-        const dayOfYear = getDayOfYear(day);
-        const isSunday = dayOfWeek === 0;
-        const isHoliday = holidays.includes(dayOfYear);
-
-        if (isSunday || isHoliday) {
-          employeeWorkDays[employee].add(day);
-        }
-      }
     });
-
-    return Object.keys(employeeWorkDays).filter(
-      (employee) => employeeWorkDays[employee].size > 22
-    );
   };
+
+  const [holidays, setHolidays] = useState([]);
+
+  useEffect(() => {
+    setStartDay(1);
+    setEndDay(daysInMonth[selectedMonth - 1]);
+  }, [selectedMonth]);
 
   useEffect(() => {
     const baseUrl = BaseUrl;
@@ -80,66 +64,114 @@ const Calendar = () => {
           const firstDay = new Date(`${year}-01-01`).getDay();
           setFirstDayOfYear(firstDay);
           setData(scheduleData);
+          setMetadata(responseData.metadata);
+          setHolidays(getFixedHolidaysAsDayOfYear(year));
         }
-        if (response.data) {
-          setData(response.data.data);
-          setMetadata(response.data.metadata);
-        }
-    
       })
       .catch(console.error);
   }, [calendarId]);
 
-  const groupByEmployee = () => {
-    const employeeDays = {};
-    data.forEach(({ employee, day }) => {
-      if (!employeeDays[employee]) employeeDays[employee] = new Set();
-      employeeDays[employee].add(day);
+  const parseRawCSVData = () => {
+    if (!Array.isArray(data) || data.length < 3) return [];
+    const header = data[0];
+    const teamIndex = header.length - 1;
+    const content = data.slice(1, -1);
+
+    const result = [];
+    content.forEach((row) => {
+      const id = row[0];
+      for (let i = 1; i < teamIndex; i++) {
+        result.push({
+          employee: id,
+          day: i,
+          shift: row[i]
+        });
+      }
     });
-    return employeeDays;
+    return result;
   };
 
-  const checkConflicts = (condition) => {
-    const dayShifts = data.reduce((acc, { day, shift }) => {
-      if (!acc[day]) acc[day] = new Set();
-      acc[day].add(shift);
-      return acc;
-    }, {});
-    return Object.keys(dayShifts).filter(day => condition(dayShifts[day]));
-  };
+  const kpiData = parseRawCSVData();
 
-  const checkScheduleConflicts = () => checkConflicts((shifts) => shifts.has("T") && shifts.has("M"));
+  const checkScheduleConflicts = () => {
+    const conflicts = [];
+    const shiftsByDay = {};
+    kpiData.forEach(({ day, shift }) => {
+      if (!shiftsByDay[day]) shiftsByDay[day] = new Set();
+      shiftsByDay[day].add(shift);
+    });
+    Object.entries(shiftsByDay).forEach(([day, shifts]) => {
+      if (shifts.has("T") && shifts.has("M")) {
+        conflicts.push({ day, motivo: "Turnos T e M no mesmo dia" });
+      }
+    });
+    return conflicts;
+  };
 
   const checkWorkloadConflicts = () => {
     const conflicts = [];
-    const grouped = groupByEmployee();
-    for (const employee in grouped) {
-      const days = Array.from(grouped[employee]).map(Number).sort((a, b) => a - b);
-      let consecutiveCount = 1;
-      for (let i = 1; i < days.length; i++) {
-        if (days[i] === days[i - 1] + 1) {
-          consecutiveCount++;
-          if (consecutiveCount > 5) {
-            conflicts.push(employee);
+    const byEmp = {};
+    kpiData.forEach(({ employee, day, shift }) => {
+      if (!byEmp[employee]) byEmp[employee] = [];
+      if (shift !== "F" && shift !== "0") byEmp[employee].push(day);
+    });
+
+    for (const [employee, days] of Object.entries(byEmp)) {
+      const sorted = days.sort((a, b) => a - b);
+      let count = 1;
+      for (let i = 1; i < sorted.length; i++) {
+        if (sorted[i] === sorted[i - 1] + 1) {
+          count++;
+          if (count > 5) {
+            const year = metadata?.year || new Date().getFullYear();
+            const dayNum = sorted[i];
+            const date = new Date(year, 0, dayNum);
+            conflicts.push({ employee, day: date.toLocaleDateString("pt-PT"), motivo: "Mais de 5 dias consecutivos de trabalho" });
             break;
           }
         } else {
-          consecutiveCount = 1;
+          count = 1;
         }
       }
     }
     return conflicts;
   };
 
-  const checkVacationDays = () => {
-    const employeeVacations = data.reduce((acc, { employee, shift }) => {
-      if (employee === "Employee") return acc;
-      if (shift === "F") {
-        acc[employee] = (acc[employee] || 0) + 1;
+  const checkUnderworkedEmployees = () => {
+    const workDays = {};
+    kpiData.forEach(({ employee, day, shift }) => {
+      if (!workDays[employee]) workDays[employee] = [];
+      if (shift !== "F" && shift !== "0") {
+        const year = metadata?.year || new Date().getFullYear();
+        const date = new Date(year, 0, day);
+        const dayOfWeek = date.getDay();
+        const dayOfYear = day;
+        const isSunday = dayOfWeek === 0;
+        const isHoliday = holidays.includes(dayOfYear);
+        if (isSunday || isHoliday) {
+          workDays[employee].push(day);
+        }
       }
-      return acc;
-    }, {});
-    return Object.keys(employeeVacations).filter(employee => employeeVacations[employee] !== 30);
+    });
+    return Object.entries(workDays)
+      .filter(([_, days]) => days.length > 22)
+      .map(([employee, days]) => {
+        const year = metadata?.year || new Date().getFullYear();
+        const date = new Date(year, 0, days[22]);
+        return { employee, day: date.toLocaleDateString("pt-PT"), motivo: "Mais de 22 dias úteis trabalhados" };
+      });
+  };
+
+  const checkVacationDays = () => {
+    const vacationCounts = {};
+    kpiData.forEach(({ employee, shift }) => {
+      if (shift === "F") {
+        vacationCounts[employee] = (vacationCounts[employee] || 0) + 1;
+      }
+    });
+    return Object.entries(vacationCounts)
+      .filter(([_, count]) => count !== 30)
+      .map(([employee]) => ({ employee, motivo: `Número de dias de férias incorreto: ${vacationCounts[employee]}` }));
   };
 
   const downloadCSV = () => {
@@ -172,7 +204,9 @@ const Calendar = () => {
           endDay={endDay}
           firstDayOfYear={firstDayOfYear}
         />
+
         <MetadataInfo metadata={metadata} />
+
         <KPIReport
           checkScheduleConflicts={checkScheduleConflicts}
           checkWorkloadConflicts={checkWorkloadConflicts}
@@ -180,6 +214,23 @@ const Calendar = () => {
           checkVacationDays={checkVacationDays}
         />
 
+        <Box
+          sx={{
+            mt: 4,
+            p: 2,
+            border: '1px solid #ccc',
+            borderRadius: 2,
+            backgroundColor: '#f9f9f9',
+            maxHeight: 400,
+            overflowY: 'auto',
+            fontSize: 12,
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+          }}
+        >
+          <Typography variant="h6" gutterBottom>Debug: Dados do Schedule (API)</Typography>
+          <pre>{JSON.stringify(data, null, 2)}</pre>
+        </Box>
       </div>
     </div>
   );

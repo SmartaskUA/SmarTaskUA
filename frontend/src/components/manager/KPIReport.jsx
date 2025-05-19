@@ -65,7 +65,13 @@ const KPIReport = ({
       <ul style={{ marginTop: 6, paddingLeft: 20 }}>
         {list.map((item, idx) => (
           <li key={idx}>
-            <Typography variant="body2">{item}</Typography>
+            <Typography variant="body2">
+              {typeof item === "string"
+                ? item
+                : `${item.employee ? `Emp ${item.employee}` : ""}${
+                    item.day ? ` — ${item.day}` : ""
+                  }`}
+            </Typography>
           </li>
         ))}
       </ul>
