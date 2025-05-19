@@ -117,6 +117,21 @@ services:
     networks:
       - rabbitmq_network
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    networks:
+      - rabbitmq_network
+    volumes:
+      - ./frontend:/app
+      - /frontend/node_modules
+
 
 networks:
   rabbitmq_network:

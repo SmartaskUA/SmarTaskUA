@@ -139,8 +139,10 @@ const Teams = () => {
   };
 
   const filteredTeams = teams.filter((team) =>
-    team.id.toLowerCase().includes(searchTerm.toLowerCase())
+    team.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  
+  
 
   const handleViewTeamDetails = async (teamId) => {
     try {
@@ -242,21 +244,53 @@ const Teams = () => {
       console.error("Error adding employees:", error);
     }
   };
-
+  const searchTeamsByName = async (name) => {
+    if (!name.trim()) {
+      fetchTeams(); // limpa busca
+      return;
+    }
+  
+    setLoading(true);
+    try {
+      const response = await fetch(`${BaseUrl}/api/v1/teams/name/${encodeURIComponent(name)}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      });
+  
+      const data = await response.json();
+      if (response.ok) {
+        // Se o backend retornar 1 equipe ou um array, normaliza:
+        const result = Array.isArray(data) ? data : [data];
+        setTeams(result);
+      } else {
+        console.error("Erro ao buscar por nome:", data);
+        setTeams([]);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar equipe por nome:", error);
+      setTeams([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   const handleUpdateTeam = async () => {
     if (!newTeamName || newTeamName.trim() === "") {
       console.error("Team name is required to update.");
       return;
     }
-
+  
     const employeeIds = employeeIdsInput
       .split(",")
       .map((id) => id.trim())
       .filter((id) => id);
-
+  
     try {
       const response = await fetch(`${BaseUrl}/api/v1/teams/${editTeamId}`, {
-        method: "PUT", 
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
@@ -266,7 +300,7 @@ const Teams = () => {
           employeeIds,
         }),
       });
-
+  
       if (response.ok) {
         handleCloseDialog();
         fetchTeams();
@@ -278,7 +312,7 @@ const Teams = () => {
       console.error("Error updating team:", error);
     }
   };
-
+  
 
   return (
     <div className="admin-container">
@@ -291,14 +325,20 @@ const Teams = () => {
             </Typography>
 
             <Grid container spacing={2} alignItems="flex-start">
-              <Grid item xs={12} sm={4} md={3}>
-                <TextField
-                  label="Search by Team ID"
-                  variant="outlined"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  fullWidth
-                />
+            <Grid item xs={12} sm={4} md={3}>
+            <TextField
+              label="Search by Team Name"
+              variant="outlined"
+              value={searchTerm}
+              onChange={(e) => {
+                const term = e.target.value;
+                setSearchTerm(term);
+                searchTeamsByName(term);
+              }}
+              
+              fullWidth
+            />
+
               </Grid>
               <Grid item xs={12} sm={4} md={3}>
                 <Button
