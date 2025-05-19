@@ -5,6 +5,7 @@ import baseurl from "../components/BaseUrl";
 import axios from "axios";
 import "../styles/Manager.css";
 import NotificationSnackbar from "../components/manager/NotificationSnackbar";
+import EmptySVG from "../assets/images/Empty-amico.svg";
 import {
   Autocomplete,
   TextField,
@@ -208,6 +209,25 @@ const ListCalendar = () => {
             )}
           />
         </div>
+        {calendars.length === 0 && !loading && !error && (
+              <div style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "80%", 
+                marginTop: "50px",
+              }}
+            >
+              <img
+                src={EmptySVG}
+                alt="No schedules"
+                style={{ width: 400, height: 400, marginBottom: 20 }}
+              />
+                <div style={{ fontSize: 18, color: "#666" }}>Nenhum schedule criado ainda.</div>
+              </div>
+            )}
+
 
         <div className="calendar-cards-container">
           {(suggestions.length > 0 ? suggestions : calendars).map((calendar) => (

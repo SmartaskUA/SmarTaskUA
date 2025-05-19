@@ -485,24 +485,6 @@ const Teams = () => {
                 </Paper>
               ))}
 
-              <TextField
-                label="Add Employee IDs"
-                fullWidth
-                margin="normal"
-                value={newEmployeeIds}
-                onChange={(e) => setNewEmployeeIds(e.target.value)}
-                helperText="Enter IDs separated by commas"
-                sx={{ mt: 2 }}
-              />
-              <Button
-                variant="contained"
-                color="success"
-                onClick={handleAddEmployeesToTeam}
-                sx={{ mt: 2 }}
-                fullWidth
-              >
-                Add Employees
-              </Button>
             </>
           ) : (
             <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
@@ -510,11 +492,7 @@ const Teams = () => {
             </Box>
           )}
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleCloseDetailsDialog} color="error" sx={{ fontWeight: "700" }} autoFocus>
-            Close
-          </Button>
-        </DialogActions>
+
       </Dialog>
 
       <Dialog open={openConfirmDialog} onClose={() => setOpenConfirmDialog(false)}>
