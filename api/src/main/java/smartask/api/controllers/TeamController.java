@@ -41,9 +41,17 @@ public class TeamController {
         return new ResponseEntity<>(team, HttpStatus.OK);
     }
 
+    @Operation(summary = "Get a team by name")
+    @GetMapping("/name/{name}")
+    public ResponseEntity<Team> getTeamByName(@PathVariable String name) {
+        Team team = teamService.getTeamByName(name);
+        return new ResponseEntity<>(team, HttpStatus.OK);
+    }
+
+
     @Operation(summary = "Add a new team")
-    @PostMapping("/")
-    public ResponseEntity<String> addTeam(@RequestBody String teamName) {
+    @PostMapping("/{teamName}")
+    public ResponseEntity<String> addTeam(@PathVariable String teamName) {
         teamService.addTeam(teamName);
         return ResponseEntity.ok("Team created successfully");
     }

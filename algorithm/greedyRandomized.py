@@ -152,6 +152,10 @@ def export_schedule_to_csv(scheduler, filename="schedule.csv"):
                     else:
                         row.append(f"T_{'A' if team == 1 else 'B'}")
                 else:
+131
+    networks:
+132
+      - rabbitmq_network
                     row.append("0")
 
             writer.writerow(row)
@@ -248,7 +252,6 @@ def solve(vacations, minimuns, employees, maxTime=10):
         output.append(row)
 
     return output
-
 
 def rows_to_vac_dict(vac_rows):
     vacs = {}

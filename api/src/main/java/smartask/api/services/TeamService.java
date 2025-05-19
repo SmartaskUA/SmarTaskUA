@@ -34,6 +34,12 @@ public class TeamService {
         return teamRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Team not found"));
     }
 
+    public Team getTeamByName(String name) {
+    return teamRepository.findByName(name)
+            .orElseThrow(() -> new IllegalArgumentException("Team with name '" + name + "' not found"));
+}
+
+
     public void updateTeam(String id, Team team) {
         Team teamToUpdate = getTeamById(id);
         teamToUpdate.setName(team.getName());

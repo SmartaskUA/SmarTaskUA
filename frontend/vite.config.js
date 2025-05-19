@@ -12,8 +12,16 @@ export default defineConfig({
         secure: false,
       },
     },
+    watch: {
+      usePolling: true,
+    },
+    hmr: {
+      overlay: true,
+    },
+    host: true,
+    strictPort: true,
   },
   define: {
     global: 'globalThis'
-  }
+  },
 })
