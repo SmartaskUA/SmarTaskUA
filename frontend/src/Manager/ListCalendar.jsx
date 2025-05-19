@@ -224,7 +224,7 @@ const ListCalendar = () => {
                 alt="No schedules"
                 style={{ width: 400, height: 400, marginBottom: 20 }}
               />
-                <div style={{ fontSize: 18, color: "#666" }}>Nenhum schedule criado ainda.</div>
+                <div style={{ fontSize: 18, color: "#666" }}>No schedules created yet</div>
               </div>
             )}
 
