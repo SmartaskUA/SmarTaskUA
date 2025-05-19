@@ -3,10 +3,17 @@ import pandas as pd
 import sys
 import json
 import holidays as hl
+import os
 
 def analyze(file, holidays, teams):
     print(f"Analyzing file: {file}")
     df = pd.read_csv(file, encoding='ISO-8859-1')
+
+    # Print the first few rows of the DataFrame for debugging
+    # print("DataFrame head:")
+    # print(df.head())
+    # print(df.columns)
+    # print(df)
 
     missed_work_days = 0
     missed_vacation_days = 0
@@ -19,7 +26,8 @@ def analyze(file, holidays, teams):
     single_team_violations = 0
     two_team_preference_violations = 0
 
-    mins = parse_requirements("minimuns.csv")
+    minimuns_file = os.path.join(os.path.dirname(__file__), "minimuns.csv")
+    mins = parse_requirements(minimuns_file)
     year = 2025
     sunday = []
     for day in pd.date_range(start=f'{year}-01-01', end=f'{year}-12-31'):
@@ -37,6 +45,7 @@ def analyze(file, holidays, teams):
         missed_vacation_days += abs(30 - vacation_days)
 
         total_worked_holidays = sum(row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] for col in all_special_cols)
+        print(f"Total worked holidays: {total_worked_holidays}")
         if total_worked_holidays > 22:
             workHolidays += total_worked_holidays - 22
 
@@ -93,6 +102,8 @@ def analyze(file, holidays, teams):
         total_morning += sum(row[col] in ['M_A', 'M_B'] for col in dia_cols)
         total_afternoon += sum(row[col] in ['T_A', 'T_B'] for col in dia_cols)
 
+    print("Morning shifts:", total_morning)
+    print("Afternoon shifts:", total_afternoon)
     total_shifts = total_morning + total_afternoon
     percentages = []
     if total_shifts > 0:
@@ -116,6 +127,8 @@ def analyze(file, holidays, teams):
 
         missing = max(0, required - assigned)
         missed_team_min += int(missing)
+        if missing > 0:
+            print(f"Expected {required} for {code} on {col}, found {assigned}, missing {missing}")
 
     return {
         "missedWorkDays": missed_work_days,
@@ -131,7 +144,7 @@ def analyze(file, holidays, teams):
 
 def parse_requirements(file_path):
     minimos = {}
-    with open(file_path, newline='', encoding='ISO-8859-1') as f:
+    with open(file_path, newline='') as f:
         reader = list(csv.reader(f))
         dias_colunas = list(range(1, len(reader[0]) - 3 + 1)) 
 

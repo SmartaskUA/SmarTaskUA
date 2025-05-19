@@ -5,8 +5,14 @@ from pymongo import MongoClient
 from algorithm.kpiComparison import analyze as compareKpis
 from algorithm.kpiVerification import analyze as verifyKpis
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+import pandas as pd
+import holidays as hl
 
-holidays = [1, 107, 109, 114, 121, 161, 170, 226, 276, 303, 333, 340, 357]
+ano = 2025
+holidays = hl.country_holidays("PT", years=[ano])
+dias_ano = pd.date_range(start=f'{ano}-01-01', end=f'{ano}-12-31').to_list()
+start_date = dias_ano[0].date()
+holidays = {(d - start_date).days + 1 for d in holidays}
 
 mongo = MongoClient("mongodb://admin:password@mongo:27017/")
 db = mongo["mydatabase"]

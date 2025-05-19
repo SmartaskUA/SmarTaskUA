@@ -44,7 +44,7 @@ public class SchedulesService {
             return "Schedule with the same title and algorithm exists!";
         }
 
-        // ⛔ Validação do VacationTemplate
+        // Validação do VacationTemplate
         Optional<VacationTemplate> optionalTemplate = vacationTemplateRepository.findByName(schedule.getVacationTemplate());
 
         if (optionalTemplate.isEmpty()) {
@@ -77,7 +77,7 @@ public class SchedulesService {
                     " employees, but the system has " + employeeNamesInDb.size() + " employees.";
         }
 
-        // ✅ Enviar a requisição se tudo estiver certo
+        // Enviar a requisição se tudo estiver certo
         final String res = producer.requestScheduleMessage(schedule);
         System.out.println("\n" + res);
         System.out.println(schedule);

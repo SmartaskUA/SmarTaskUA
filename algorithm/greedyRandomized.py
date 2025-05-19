@@ -6,6 +6,9 @@ import csv
 import time
 import pandas as pd
 import numpy as np
+import os
+
+TEAM_LETTER_TO_ID = {'A': 1, 'B': 2}
 
 class GreedyRandomized:
     def __init__(self, employees, num_days, holidays, vacs, mins, ideals, teams, num_iter=10):
@@ -62,12 +65,6 @@ class GreedyRandomized:
             return 2 + (current - ideal_required)
 
     def build_schedule(self):
-        # print("Mins:", self.mins)
-        # print("Ideals:", self.ideals)
-        # print("Vacs:", self.vacs)
-        # print("Teams:", self.teams)
-        # print("Employees:", self.employees)
-        # print("Holidays:", self.holidays)
         all_days = set(range(1, self.num_days + 1))
 
         while not self.is_complete():
@@ -102,20 +99,6 @@ class GreedyRandomized:
 
     def is_complete(self):
         return all(len(self.assignment[p]) >= 223 for p in self.employees)
-     
-    # def check_holiday_violations(self):
-    #     violations = []
-    #     for p in self.employees:
-    #         sunday_holiday_count = sum(1 for (day, _, _) in self.assignment[p] if day in self.holidays or day in self.sunday)
-    #         if sunday_holiday_count > 22:
-    #             violations.append((p, sunday_holiday_count))
-    #     if violations:
-    #         print("Holiday/Sunday violations found:")
-    #         for p, count in violations:
-    #             print(f"Employee {p}: {count} Sundays/holidays (>22)")
-    #     else:
-    #         print("No Holiday/Sunday violations.")
-    #     return violations
 
 def schedule():
     num_employees = 12
@@ -123,9 +106,15 @@ def schedule():
     num_days = 365  
     holiDays = holidays.country_holidays("PT", years=[2025])
 
-    vacs = parse_vacs("feriasA.csv")
-    mins, ideals = parse_requirements("minimuns.csv")
+    vacations_file = os.path.join(os.path.dirname(__file__), "feriasA.csv")
+    vacs = parse_vacs(vacations_file)
+    minimuns_file = os.path.join(os.path.dirname(__file__), "minimuns.csv")
+    mins, ideals = parse_requirements(minimuns_file)
 
+    print(f"Employees: {employees}")
+    print(f"Vacations: {vacs}")
+    print(f"Minimuns: {mins}")
+    print(f"Ideals: {ideals}")
     teams = {
         1: [1], 2: [1], 3: [1], 4: [1],
         5: [1, 2], 6: [1, 2], 7: [1], 8: [1],
@@ -163,6 +152,10 @@ def export_schedule_to_csv(scheduler, filename="schedule.csv"):
                     else:
                         row.append(f"T_{'A' if team == 1 else 'B'}")
                 else:
+131
+    networks:
+132
+      - rabbitmq_network
                     row.append("0")
 
             writer.writerow(row)
@@ -213,44 +206,24 @@ def parse_requirements(file_path):
     return minimos, ideais
 
 
-def solve(vacations, minimuns, employees):
+def solve(vacations, minimuns, employees, maxTime=10):
     print(f"[GreedyRandomized] Executando Greedy Randomized Scheduling")
     num_employees = len(employees)
     print(f"[GreedyRandomized] Número de funcionários: {num_employees}")
     num_days = 365
     feriados = holidays.country_holidays("PT", years=[2025])
 
-    team_map = {"Equipa A": 1, "Equipa B": 2}
-    teams = {i + 1: [team_map[team] for team in emp["teams"]] for i, emp in enumerate(employees)}
+    emp = [i + 1 for i in range(len(employees))]
+    vacs      = rows_to_vac_dict(vacations)
+    mins, ideals = rows_to_req_dicts(minimuns)
 
-    vacs = {}
-    for row in vacations:
-        if row[0].startswith("Employee"):
-            emp_id = int(row[0].split()[1])
-            vacs[emp_id] = [i + 1 for i, val in enumerate(row[1:]) if val.strip() == "1"]
-
-    mins = {}
-    ideals = {}
-    shift_map = {"M": 1, "T": 2}
-    for row in minimuns:
-        team = row[0]
-        if team not in team_map:
-            continue
-        team_id = team_map[team]
-        req_type = row[1]
-        shift = shift_map[row[2]]
-        for day, value in enumerate(row[3:], 1):
-            try:
-                value_int = int(value)
-                if req_type == "Minimo":
-                    mins[(day, team_id, shift)] = value_int
-                else:
-                    ideals[(day, team_id, shift)] = value_int
-            except ValueError:
-                continue
+    teams = {idx + 1: [TEAM_LETTER_TO_ID[t[-1]]  
+                       for t in e["teams"]]
+             for idx, e in enumerate(employees)}
+        
 
     scheduler = GreedyRandomized(
-        employees=list(range(1, num_employees + 1)),
+        employees=emp,
         num_days=num_days,
         holidays=feriados,
         vacs=vacs,
@@ -280,7 +253,33 @@ def solve(vacations, minimuns, employees):
 
     return output
 
+def rows_to_vac_dict(vac_rows):
+    vacs = {}
+    for row in vac_rows:
+        emp_id = int(row[0].split()[-1])
+        vacs[emp_id] = [
+            idx + 1  
+            for idx, bit in enumerate(row[1:])
+            if bit.strip() == '1'
+        ]
+    return vacs
 
-#scheduler = schedule()
-# scheduler.check_holiday_violations()
-#export_schedule_to_csv(scheduler)
+
+def rows_to_req_dicts(req_rows):
+    mins, ideals = {}, {}
+
+    for row in req_rows:
+        team_label, kind, shift_code, *counts = row
+
+        team_id  = TEAM_LETTER_TO_ID[team_label[-1]]
+        shift    = 1 if shift_code.strip().upper() == 'M' else 2
+        target   = mins if kind.lower().startswith('min') else ideals
+
+        for day, value in enumerate(counts, start=1):
+            if value.strip(): 
+                target[(day, shift, team_id)] = int(value)
+    return mins, ideals
+
+
+scheduler = schedule()
+export_schedule_to_csv(scheduler)

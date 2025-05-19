@@ -46,7 +46,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     volumes:
-      - shared_tmp:/shared_tmp
+      - ./shared_tmp:/shared_tmp
 
   analyzer:
     build:
@@ -65,7 +65,7 @@ services:
       - RABBITMQ_USERNAME=guest
       - RABBITMQ_PASSWORD=guest
     volumes:
-      - shared_tmp:/shared_tmp
+      - ./shared_tmp:/shared_tmp
 
 
   api:
@@ -113,7 +113,7 @@ services:
         condition: service_started
     volumes:
       - ./api/application.properties:/app/application.properties
-      - shared_tmp:/shared_tmp
+      - ./shared_tmp:/shared_tmp
     networks:
       - rabbitmq_network
 
@@ -124,14 +124,13 @@ services:
     container_name: frontend
     ports:
       - "5173:5173"
-    depends_on:
-      - api
     networks:
       - rabbitmq_network
+    depends_on:
+      - api
     volumes:
       - ./frontend:/app
       - /frontend/node_modules
-
 
 networks:
   rabbitmq_network:
