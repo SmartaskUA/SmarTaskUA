@@ -134,7 +134,7 @@ class CombinedScheduler:
         iteration = 0
         perfect_solution = False
 
-        while iteration < max_iterations:
+        while iteration < max_iterations and self.score(horario) > 0:
             iteration += 1
             emp_idx = np.random.randint(len(self.employees))
             emp = self.employees[emp_idx]
@@ -179,15 +179,8 @@ class CombinedScheduler:
                 continue
 
             new_score = self.score(new_horario)
-            c1, c2, c3, c4, c5 = (
-                self.criterio1(new_horario),
-                self.criterio2(new_horario),
-                self.criterio3(new_horario),
-                self.criterio4(new_horario),
-                self.criterio5(new_horario)
-            )
 
-            if c1 == 0 and c2 == 0 and c3 == 0 and c4 == 0 and c5 == 0:
+            if new_score == 0:
                 horario = new_horario
                 best_score = new_score
                 self.update_from_horario(horario)
