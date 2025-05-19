@@ -285,39 +285,51 @@ const Teams = () => {
       <Sidebar_Manager />
       <div className="main-content" style={{ flex: 1, padding: "20px", marginRight: 52 }}>
         <Box sx={{ padding: 4, flexGrow: 1 }}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h4" gutterBottom>
               Team List
             </Typography>
-            <Button sx={{ marginLeft: "30%" }} variant="contained" color="success" onClick={() => setOpenDialog(true)}>
-              + New Team
-            </Button>
-            <Box display="flex" gap={2} alignItems="center" sx={{ width: "50%" }}>
-              <TextField
-                label="Search by Team ID"
-                variant="outlined"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                margin="normal"
-                sx={{ flex: 1 }}
-              />
-              <FormControl sx={{ minWidth: 150 }}>
-                <InputLabel id="select-team-label">Select Team pra eliminar</InputLabel>
-                <Select
-                  labelId="select-team-label"
-                  value={editTeamId || ""}
-                  label="Select Team"
-                  onChange={(e) => setEditTeamId(e.target.value)}
-                >
-                  {teams.map((team) => (
-                    <MenuItem key={team.id} value={team.id}>
-                      {team.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
 
-              {editTeamId && (
+            <Grid container spacing={2} alignItems="flex-start">
+              <Grid item xs={12} sm={4} md={3}>
+                <TextField
+                  label="Search by Team ID"
+                  variant="outlined"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12} sm={4} md={3}>
+                <Button
+                  variant="contained"
+                  color="success"
+                  onClick={() => setOpenDialog(true)}
+                  fullWidth
+                  sx={{ height: "56px" }}
+                >
+                  + New Team
+                </Button>
+              </Grid>
+
+              <Grid item xs={12} sm={4} md={3}>
+                <FormControl fullWidth>
+                  <InputLabel id="select-team-label">Select Team to Delete</InputLabel>
+                  <Select
+                    labelId="select-team-label"
+                    value={editTeamId || ""}
+                    label="Select Team to Delete"
+                    onChange={(e) => setEditTeamId(e.target.value)}
+                  >
+                    {teams.map((team) => (
+                      <MenuItem key={team.id} value={team.id}>
+                        {team.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4} md={3}>
                 <Button
                   variant="outlined"
                   color="error"
@@ -325,11 +337,14 @@ const Teams = () => {
                     setTeamToDelete(editTeamId);
                     setOpenConfirmDialog(true);
                   }}
+                  fullWidth
+                  sx={{ height: "56px" }}
+                  disabled={!editTeamId}
                 >
-                  Delete
+                  Delete Team
                 </Button>
-              )}
-            </Box>
+              </Grid>
+            </Grid>
           </Box>
 
           {loading ? (
