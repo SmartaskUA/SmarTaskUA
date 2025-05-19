@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete';
 import BaseUrl from "../components/BaseUrl";
+import { ArrowUpward, ArrowDownward } from "@mui/icons-material";
 
 const teamOptions = ["A", "B"];
 
@@ -375,9 +376,9 @@ const Employer = () => {
                         <Box key={id} display="flex" alignItems="center" gap={1}>
                           <Typography>{index + 1}.</Typography>
                           <Typography>{teamsDict[id].replace(/^Equipa\s+/i, "")}</Typography>
-                          <Button
-                            variant="outlined"
+                          <IconButton
                             size="small"
+                            color="primary"
                             disabled={index === 0}
                             onClick={() => {
                               const newOrder = [...selectedEmployee.teamIds];
@@ -385,11 +386,12 @@ const Employer = () => {
                               setSelectedEmployee({ ...selectedEmployee, teamIds: newOrder });
                             }}
                           >
-                            ↑
-                          </Button>
-                          <Button 
-                            variant="outlined"
+                            <ArrowUpward />
+                          </IconButton>
+
+                          <IconButton
                             size="small"
+                            color="primary"
                             disabled={index === selectedEmployee.teamIds.length - 1}
                             onClick={() => {
                               const newOrder = [...selectedEmployee.teamIds];
@@ -397,8 +399,8 @@ const Employer = () => {
                               setSelectedEmployee({ ...selectedEmployee, teamIds: newOrder });
                             }}
                           >
-                            ↓
-                          </Button>
+                            <ArrowDownward />
+                          </IconButton>
                         </Box>
                       ))}
                     </Box>
