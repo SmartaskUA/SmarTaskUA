@@ -95,17 +95,24 @@ const Teams = () => {
 
   const handleDeleteTeam = async () => {
     try {
-      const response = await fetch(`${BaseUrl}/api/v1/teams/${teamToDelete}`, {
+      const team = teams.find((t) => t.id === teamToDelete);
+      if (!team) {
+        console.error("Team not found");
+        return;
+      }
+  
+      const response = await fetch(`${BaseUrl}/api/v1/teams/${encodeURIComponent(team.name)}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
       });
-
+  
       if (response.ok) {
         fetchTeams();
         setOpenConfirmDialog(false);
+        setEditTeamId(null);
       } else {
         const errorData = await response.json();
         console.error("Error deleting team:", errorData);
@@ -115,7 +122,8 @@ const Teams = () => {
     }
   };
   
-  
+
+
   const handleEditTeam = (team) => {
     setNewTeamName(team.name);
     setEmployeeIdsInput(team.employeeIds.join(","));
@@ -235,6 +243,43 @@ const Teams = () => {
     }
   };
 
+  const handleUpdateTeam = async () => {
+    if (!newTeamName || newTeamName.trim() === "") {
+      console.error("Team name is required to update.");
+      return;
+    }
+
+    const employeeIds = employeeIdsInput
+      .split(",")
+      .map((id) => id.trim())
+      .filter((id) => id);
+
+    try {
+      const response = await fetch(`${BaseUrl}/api/v1/teams/${editTeamId}`, {
+        method: "PUT", 
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          name: newTeamName.trim(),
+          employeeIds,
+        }),
+      });
+
+      if (response.ok) {
+        handleCloseDialog();
+        fetchTeams();
+      } else {
+        const errorData = await response.json();
+        console.error("Error updating team:", errorData);
+      }
+    } catch (error) {
+      console.error("Error updating team:", error);
+    }
+  };
+
+
   return (
     <div className="admin-container">
       <Sidebar_Manager />
@@ -332,6 +377,7 @@ const Teams = () => {
           )}
         </Box>
       </div>
+
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>{editTeamId ? "Edit Team" : "New Team"}</DialogTitle>
         <DialogContent>
@@ -352,17 +398,18 @@ const Teams = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          {!editTeamId && (
-            <Button
-              variant="contained"
-              color="success"
-              onClick={handleQuickAddTeam}
-            >
+          {editTeamId ? (
+            <Button variant="contained" color="primary" onClick={handleUpdateTeam}>
+              Update
+            </Button>
+          ) : (
+            <Button variant="contained" color="success" onClick={handleQuickAddTeam}>
               Add
             </Button>
           )}
         </DialogActions>
       </Dialog>
+
       <Dialog open={openDetailsDialog} onClose={handleCloseDetailsDialog}>
         <DialogTitle>
           Team Details
@@ -381,9 +428,7 @@ const Teams = () => {
               <Typography variant="h5" gutterBottom sx={{ fontWeight: "700", color: "#1976d2", mb: 3 }}>
                 {teamDetails.name}
               </Typography>
-
               <Divider sx={{ mb: 3 }} />
-
               <Typography variant="subtitle1" sx={{ fontWeight: "600", mb: 2 }}>
                 Employees ({teamDetails.employees.length})
               </Typography>
@@ -485,7 +530,7 @@ const Teams = () => {
         </DialogActions>
       </Dialog>
     </div>
-
   );
+
 }
 export default Teams;
