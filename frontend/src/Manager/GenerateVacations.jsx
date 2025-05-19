@@ -3,21 +3,24 @@ import axios from "axios";
 import baseurl from "../components/BaseUrl";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import VacationsTemplate from "../components/manager/VacationsTemplate";
+import NotificationSnackbar from "../components/manager/NotificationSnackbar";
+import EmptySVG from "../assets/images/Empty-pana.svg";
+
 import {
   Box,
   Button,
   Paper,
   TextField,
   Typography,
-  Snackbar,
-  Alert,
   Input,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
+  IconButton,
 } from "@mui/material";
+import { Close } from "@mui/icons-material";
 
 const GenerateVacations = () => {
   const [templateName, setTemplateName] = useState("");
@@ -29,6 +32,8 @@ const GenerateVacations = () => {
   const [log, setLog] = useState(null);
   const [templates, setTemplates] = useState([]);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState(null);
+  const [hoveredTemplateId, setHoveredTemplateId] = useState(null);
 
   const fetchTemplates = async () => {
     try {
@@ -58,8 +63,8 @@ const GenerateVacations = () => {
         headers: { "Content-Type": "multipart/form-data" },
       });
       await fetchTemplates();
-      await showTemplateDetails(templateName);
       setCsvFile(null);
+      setUploadedFileName("");
       setSuccessOpen(true);
       setNameError(false);
     } catch (err) {
@@ -78,6 +83,24 @@ const GenerateVacations = () => {
       console.error("Error deleting templates:", err);
       alert("Error deleting templates: " + (err.response?.data?.error || err.message));
       setErrorOpen(true);
+    }
+  };
+
+  const handleDeleteOneTemplate = async () => {
+    if (!templateToDelete) return;
+    try {
+      await axios.delete(`${baseurl}/vacation/${templateToDelete.id}`);
+      setTemplates((prev) => prev.filter((t) => t.id !== templateToDelete.id));
+      if (log?.name === templateToDelete.name) {
+        setLog(null);
+      }
+      setSuccessOpen(true);
+    } catch (err) {
+      console.error("Error deleting template:", err);
+      setErrorOpen(true);
+    } finally {
+      setConfirmDialogOpen(false);
+      setTemplateToDelete(null);
     }
   };
 
@@ -177,8 +200,6 @@ const GenerateVacations = () => {
           )}
         </Paper>
 
-        {log && <VacationsTemplate name={log.name} data={log.data} />}
-
         {templates.length > 0 && (
           <Box mt={4}>
             <Typography variant="h5" gutterBottom>Existing Templates</Typography>
@@ -186,14 +207,38 @@ const GenerateVacations = () => {
               {templates.map((template) => (
                 <Paper
                   key={template.id}
+                  onMouseEnter={() => setHoveredTemplateId(template.id)}
+                  onMouseLeave={() => setHoveredTemplateId(null)}
                   style={{
                     width: "250px",
                     padding: "16px",
                     borderRadius: "8px",
                     border: "1px solid #ccc",
                     boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+                    position: "relative",
                   }}
                 >
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      setTemplateToDelete(template);
+                      setConfirmDialogOpen(true);
+                    }}
+                    sx={{
+                      position: "absolute",
+                      top: 6,
+                      right: 6,
+                      backgroundColor: hoveredTemplateId === template.id ? "#ff5252" : "#e0e0e0",
+                      color: hoveredTemplateId === template.id ? "#fff" : "#555",
+                      "&:hover": { backgroundColor: "#ff1744" },
+                      width: "20px",
+                      height: "20px",
+                      padding: "2px",
+                    }}
+                  >
+                    <Close fontSize="10px" />
+                  </IconButton>
+
                   <Typography variant="h6" gutterBottom>
                     {template.name}
                   </Typography>
@@ -214,18 +259,46 @@ const GenerateVacations = () => {
             </Box>
           </Box>
         )}
+        {templates.length === 0 && (
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          height="50vh"
+          mt={6}
+        >
+          <img
+            src={EmptySVG}
+            alt="No templates"
+            style={{ width: 400, height: 400, marginBottom: 20 }}
+          />
+          <Typography variant="h6" color="textSecondary">
+            No templates created yet.
+          </Typography>
+        </Box>
+      )}
 
-        <Snackbar open={successOpen} autoHideDuration={3000} onClose={() => setSuccessOpen(false)}>
-          <Alert onClose={() => setSuccessOpen(false)} severity="success" sx={{ width: "100%" }}>
-            Operation completed successfully!
-          </Alert>
-        </Snackbar>
 
-        <Snackbar open={errorOpen} autoHideDuration={3000} onClose={() => setErrorOpen(false)}>
-          <Alert onClose={() => setErrorOpen(false)} severity="error" sx={{ width: "100%" }}>
-            An error occurred. Please check the CSV format.
-          </Alert>
-        </Snackbar>
+        {log && (
+          <Box mt={6}>
+            <VacationsTemplate name={log.name} data={log.data} />
+          </Box>
+        )}
+
+        <NotificationSnackbar
+          open={successOpen}
+          severity="success"
+          message="Task Requested Successfully!"
+          onClose={() => setSuccessOpen(false)}
+        />
+
+        <NotificationSnackbar
+          open={errorOpen}
+          severity="error"
+          message="An error occurred. Please check the CSV format."
+          onClose={() => setErrorOpen(false)}
+        />
 
         <Dialog
           open={confirmDialogOpen}
@@ -234,18 +307,25 @@ const GenerateVacations = () => {
           <DialogTitle>Confirm Deletion</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              Are you sure you want to delete all templates? This action cannot be undone.
+              {templateToDelete
+                ? `Are you sure you want to delete the template "${templateToDelete.name}"?`
+                : "Are you sure you want to delete all templates? This action cannot be undone."}
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setConfirmDialogOpen(false)} color="primary">
-              Cancel
-            </Button>
             <Button onClick={() => {
               setConfirmDialogOpen(false);
-              handleDeleteAllTemplates();
-            }} color="error">
-              Delete All
+              setTemplateToDelete(null);
+            }} color="primary">
+              Cancel
+            </Button>
+            <Button
+              onClick={() =>
+                templateToDelete ? handleDeleteOneTemplate() : handleDeleteAllTemplates()
+              }
+              color="error"
+            >
+              Delete
             </Button>
           </DialogActions>
         </Dialog>

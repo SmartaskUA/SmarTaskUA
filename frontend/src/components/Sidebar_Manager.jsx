@@ -28,7 +28,7 @@ const Sidebar_Manager = () => {
           <Home size={20} className="icon" /> Home
         </Link>
         <Link to="/manager/listcalendar" className={`nav-item ${isActive("/manager/listcalendar") ? "active" : ""}`}>
-          <CalendarDays size={20} className="icon"/> Calendar
+          <CalendarDays size={20} className="icon"/> Schedule
         </Link>
         <Link to="/manager/teams" className={`nav-item ${isActive("/manager/teams") ? "active" : ""}`}>
           <Users size={20} className="icon"/> Teams

@@ -38,6 +38,7 @@ const Teams = () => {
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState(null);
 
+
   useEffect(() => {
     fetchTeams();
   }, []);
@@ -65,60 +66,15 @@ const Teams = () => {
     }
   };
 
-  const handleAddOrUpdateTeam = async () => {
-    if (typeof newTeamName !== "string" || newTeamName.trim() === "") {
-      console.error("Team name is invalid or empty");
+  const handleQuickAddTeam = async () => {
+    if (!newTeamName || typeof newTeamName !== "string" || newTeamName.trim() === "") {
+      console.error("Team name is required for quick add.");
       return;
     }
 
-    const employeeIds = employeeIdsInput
-      .split(",")
-      .map((id) => id.trim())
-      .filter((id) => id);
-
-    const payload = {
-      name: newTeamName.trim(),
-      employeeIds: employeeIds,
-    };
-
     try {
-      let response;
-      if (editTeamId) {
-        response = await fetch(`${BaseUrl}/api/v1/teams/${editTeamId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-      } else {
-        response = await fetch(`${BaseUrl}/api/v1/teams/`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-      }
-
-      if (response.ok) {
-        handleCloseDialog();
-        fetchTeams();
-      } else {
-        const errorData = await response.json();
-        console.error("Error adding or updating team:", errorData);
-      }
-    } catch (error) {
-      console.error("Error adding or updating team:", error);
-    }
-  };
-
-  const handleDeleteTeam = async () => {
-    try {
-      const response = await fetch(`${BaseUrl}/api/v1/teams/${teamToDelete}`, {
-        method: "DELETE",
+      const response = await fetch(`${BaseUrl}/api/v1/teams/${newTeamName.trim()}`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
@@ -126,8 +82,37 @@ const Teams = () => {
       });
 
       if (response.ok) {
+        handleCloseDialog();
+        fetchTeams();
+      } else {
+        const errorData = await response.json();
+        console.error("Error in quick add:", errorData);
+      }
+    } catch (error) {
+      console.error("Error in quick add:", error);
+    }
+  };
+
+  const handleDeleteTeam = async () => {
+    try {
+      const team = teams.find((t) => t.id === teamToDelete);
+      if (!team) {
+        console.error("Team not found");
+        return;
+      }
+  
+      const response = await fetch(`${BaseUrl}/api/v1/teams/${encodeURIComponent(team.name)}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      });
+  
+      if (response.ok) {
         fetchTeams();
         setOpenConfirmDialog(false);
+        setEditTeamId(null);
       } else {
         const errorData = await response.json();
         console.error("Error deleting team:", errorData);
@@ -136,6 +121,8 @@ const Teams = () => {
       console.error("Error deleting team:", error);
     }
   };
+  
+
 
   const handleEditTeam = (team) => {
     setNewTeamName(team.name);
@@ -152,8 +139,10 @@ const Teams = () => {
   };
 
   const filteredTeams = teams.filter((team) =>
-    team.id.toLowerCase().includes(searchTerm.toLowerCase())
+    team.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  
+  
 
   const handleViewTeamDetails = async (teamId) => {
     try {
@@ -255,45 +244,132 @@ const Teams = () => {
       console.error("Error adding employees:", error);
     }
   };
+  const searchTeamsByName = async (name) => {
+    if (!name.trim()) {
+      fetchTeams(); // limpa busca
+      return;
+    }
+  
+    setLoading(true);
+    try {
+      const response = await fetch(`${BaseUrl}/api/v1/teams/name/${encodeURIComponent(name)}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      });
+  
+      const data = await response.json();
+      if (response.ok) {
+        // Se o backend retornar 1 equipe ou um array, normaliza:
+        const result = Array.isArray(data) ? data : [data];
+        setTeams(result);
+      } else {
+        console.error("Erro ao buscar por nome:", data);
+        setTeams([]);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar equipe por nome:", error);
+      setTeams([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleUpdateTeam = async () => {
+    if (!newTeamName || newTeamName.trim() === "") {
+      console.error("Team name is required to update.");
+      return;
+    }
+  
+    const employeeIds = employeeIdsInput
+      .split(",")
+      .map((id) => id.trim())
+      .filter((id) => id);
+  
+    try {
+      const response = await fetch(`${BaseUrl}/api/v1/teams/${editTeamId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          name: newTeamName.trim(),
+          employeeIds,
+        }),
+      });
+  
+      if (response.ok) {
+        handleCloseDialog();
+        fetchTeams();
+      } else {
+        const errorData = await response.json();
+        console.error("Error updating team:", errorData);
+      }
+    } catch (error) {
+      console.error("Error updating team:", error);
+    }
+  };
+  
 
   return (
     <div className="admin-container">
       <Sidebar_Manager />
       <div className="main-content" style={{ flex: 1, padding: "20px", marginRight: 52 }}>
         <Box sx={{ padding: 4, flexGrow: 1 }}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h4" gutterBottom>
               Team List
             </Typography>
-            <Button sx={{ marginLeft: "30%" }} variant="contained" color="success" onClick={() => setOpenDialog(true)}>
-              + New Team
-            </Button>
-            <Box display="flex" gap={2} alignItems="center" sx={{ width: "50%" }}>
-              <TextField
-                label="Search by Team ID"
-                variant="outlined"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                margin="normal"
-                sx={{ flex: 1 }}
-              />
-              <FormControl sx={{ minWidth: 150 }}>
-                <InputLabel id="select-team-label">Select Team pra eliminar</InputLabel>
-                <Select
-                  labelId="select-team-label"
-                  value={editTeamId || ""}
-                  label="Select Team"
-                  onChange={(e) => setEditTeamId(e.target.value)}
-                >
-                  {teams.map((team) => (
-                    <MenuItem key={team.id} value={team.id}>
-                      {team.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
 
-              {editTeamId && (
+            <Grid container spacing={2} alignItems="flex-start">
+            <Grid item xs={12} sm={4} md={3}>
+            <TextField
+              label="Search by Team Name"
+              variant="outlined"
+              value={searchTerm}
+              onChange={(e) => {
+                const term = e.target.value;
+                setSearchTerm(term);
+                searchTeamsByName(term);
+              }}
+              
+              fullWidth
+            />
+
+              </Grid>
+              <Grid item xs={12} sm={4} md={3}>
+                <Button
+                  variant="contained"
+                  color="success"
+                  onClick={() => setOpenDialog(true)}
+                  fullWidth
+                  sx={{ height: "56px" }}
+                >
+                  + New Team
+                </Button>
+              </Grid>
+
+              <Grid item xs={12} sm={4} md={3}>
+                <FormControl fullWidth>
+                  <InputLabel id="select-team-label">Select Team to Delete</InputLabel>
+                  <Select
+                    labelId="select-team-label"
+                    value={editTeamId || ""}
+                    label="Select Team to Delete"
+                    onChange={(e) => setEditTeamId(e.target.value)}
+                  >
+                    {teams.map((team) => (
+                      <MenuItem key={team.id} value={team.id}>
+                        {team.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4} md={3}>
                 <Button
                   variant="outlined"
                   color="error"
@@ -301,11 +377,14 @@ const Teams = () => {
                     setTeamToDelete(editTeamId);
                     setOpenConfirmDialog(true);
                   }}
+                  fullWidth
+                  sx={{ height: "56px" }}
+                  disabled={!editTeamId}
                 >
-                  Delete
+                  Delete Team
                 </Button>
-              )}
-            </Box>
+              </Grid>
+            </Grid>
           </Box>
 
           {loading ? (
@@ -374,26 +453,15 @@ const Teams = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button variant="contained" color="success" onClick={handleAddOrUpdateTeam}>
-            {editTeamId ? "Update" : "Add"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={openConfirmDialog} onClose={() => setOpenConfirmDialog(false)}>
-        <DialogTitle>Confirm Deletion</DialogTitle>
-        <DialogContent>
-          <Typography>Are you sure you want to delete this team?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenConfirmDialog(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleDeleteTeam}
-          >
-            Confirm
-          </Button>
+          {editTeamId ? (
+            <Button variant="contained" color="primary" onClick={handleUpdateTeam}>
+              Update
+            </Button>
+          ) : (
+            <Button variant="contained" color="success" onClick={handleQuickAddTeam}>
+              Add
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 
@@ -412,16 +480,10 @@ const Teams = () => {
         <DialogContent dividers sx={{ padding: 4, bgcolor: "#fafafa" }}>
           {teamDetails ? (
             <>
-              <Typography
-                variant="h5"
-                gutterBottom
-                sx={{ fontWeight: "700", color: "#1976d2", mb: 3, letterSpacing: 0.5 }}
-              >
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: "700", color: "#1976d2", mb: 3 }}>
                 {teamDetails.name}
               </Typography>
-
               <Divider sx={{ mb: 3 }} />
-
               <Typography variant="subtitle1" sx={{ fontWeight: "600", mb: 2 }}>
                 Employees ({teamDetails.employees.length})
               </Typography>
@@ -435,7 +497,6 @@ const Teams = () => {
                     mb: 2,
                     borderRadius: 3,
                     transition: "transform 0.15s ease-in-out",
-                    cursor: "default",
                     "&:hover": {
                       boxShadow: "0 4px 20px rgba(25, 118, 210, 0.3)",
                       transform: "translateY(-3px)",
@@ -449,54 +510,36 @@ const Teams = () => {
                     </Typography>
                   </Typography>
 
-                  {Object.entries(emp.restrictions).length > 0 && (
-                    <Box sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 1 }}>
-                      {Object.entries(emp.restrictions).map(([key, value]) => (
-                        <Box
-                          key={key}
-                          sx={{
-                            backgroundColor: "#e3f2fd",
-                            borderRadius: "16px",
-                            px: 2,
-                            py: 0.5,
-                            fontSize: "0.85rem",
-                            color: "#0d47a1",
-                            fontWeight: "500",
-                            boxShadow: "0 1px 3px rgba(13, 71, 161, 0.2)",
-                            cursor: "default",
-                            userSelect: "none",
-                            transition: "background-color 0.3s",
-                            "&:hover": {
-                              backgroundColor: "#bbdefb",
-                            },
-                          }}
-                        >
-                          {key}: {value}
-                        </Box>
-                      ))}
-                    </Box>
-                  )}
+                  {emp?.restrictions &&
+                    typeof emp.restrictions === "object" &&
+                    Object.entries(emp.restrictions).length > 0 && (
+                      <Box sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 1 }}>
+                        {Object.entries(emp.restrictions).map(([key, value]) => (
+                          <Box
+                            key={key}
+                            sx={{
+                              backgroundColor: "#e3f2fd",
+                              borderRadius: "16px",
+                              px: 2,
+                              py: 0.5,
+                              fontSize: "0.85rem",
+                              color: "#0d47a1",
+                              fontWeight: "500",
+                              boxShadow: "0 1px 3px rgba(13, 71, 161, 0.2)",
+                              userSelect: "none",
+                              "&:hover": {
+                                backgroundColor: "#bbdefb",
+                              },
+                            }}
+                          >
+                            {key}: {value}
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
                 </Paper>
               ))}
 
-              <TextField
-                label="Add Employee IDs"
-                fullWidth
-                margin="normal"
-                value={newEmployeeIds}
-                onChange={(e) => setNewEmployeeIds(e.target.value)}
-                helperText="Enter IDs separated by commas"
-                sx={{ mt: 2 }}
-              />
-              <Button
-                variant="contained"
-                color="success"
-                onClick={handleAddEmployeesToTeam}
-                sx={{ mt: 2, boxShadow: "0 4px 10px rgba(25, 118, 210, 0.3)" }}
-                fullWidth
-              >
-                Add Employees
-              </Button>
             </>
           ) : (
             <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
@@ -505,20 +548,22 @@ const Teams = () => {
           )}
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={handleCloseDetailsDialog}
-            color="error"
-            sx={{ fontWeight: "700" }}
-            autoFocus
-          >
-            Close
+      </Dialog>
+
+      <Dialog open={openConfirmDialog} onClose={() => setOpenConfirmDialog(false)}>
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <Typography>Are you sure you want to delete this team?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenConfirmDialog(false)}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={handleDeleteTeam}>
+            Confirm
           </Button>
         </DialogActions>
       </Dialog>
     </div>
-
   );
-};
 
+}
 export default Teams;

@@ -249,7 +249,6 @@ def solve(vacations, minimuns, employees, maxTime=10):
 
     return output
 
-
 def rows_to_vac_dict(vac_rows):
     vacs = {}
     for row in vac_rows:

@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete';
 import BaseUrl from "../components/BaseUrl";
+import { ArrowUpward, ArrowDownward } from "@mui/icons-material";
 
 const teamOptions = ["A", "B"];
 
@@ -281,13 +282,6 @@ const Employer = () => {
           <DialogContent>
             <TextField
               margin="dense"
-              label="ID"
-              fullWidth
-              value={newEmployee.id}
-              onChange={(e) => setNewEmployee({ ...newEmployee, id: e.target.value })}
-            />
-            <TextField
-              margin="dense"
               label="Nome"
               fullWidth
               value={newEmployee.name}
@@ -295,10 +289,21 @@ const Employer = () => {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenAddDialog(false)} color="secondary">
+            <Button onClick={() => setOpenAddDialog(false)} color="error">
               Cancel
             </Button>
-            <Button onClick={handleAddEmployee} color="primary">
+            <Button
+              onClick={() => {
+                axios.post(`${BaseUrl}/api/v1/employees/`, { name: newEmployee.name })
+                  .then(() => {
+                    setOpenAddDialog(false);
+                    setNewEmployee({ name: "" });
+                    fetchAll();
+                  })
+                  .catch((error) => console.error("Erro ao adicionar employee:", error));
+              }}
+              color="success"
+            >
               Add
             </Button>
           </DialogActions>
@@ -310,7 +315,7 @@ const Employer = () => {
             <Typography>Tem certeza que deseja remover este funcionário?</Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCancelDelete} color="secondary">
+            <Button onClick={handleCancelDelete} color="error">
               Cancel
             </Button>
             <Button onClick={handleConfirmDelete} color="primary">
@@ -371,9 +376,9 @@ const Employer = () => {
                         <Box key={id} display="flex" alignItems="center" gap={1}>
                           <Typography>{index + 1}.</Typography>
                           <Typography>{teamsDict[id].replace(/^Equipa\s+/i, "")}</Typography>
-                          <Button
-                            variant="outlined"
+                          <IconButton
                             size="small"
+                            color="primary"
                             disabled={index === 0}
                             onClick={() => {
                               const newOrder = [...selectedEmployee.teamIds];
@@ -381,11 +386,12 @@ const Employer = () => {
                               setSelectedEmployee({ ...selectedEmployee, teamIds: newOrder });
                             }}
                           >
-                            ↑
-                          </Button>
-                          <Button 
-                            variant="outlined"
+                            <ArrowUpward />
+                          </IconButton>
+
+                          <IconButton
                             size="small"
+                            color="primary"
                             disabled={index === selectedEmployee.teamIds.length - 1}
                             onClick={() => {
                               const newOrder = [...selectedEmployee.teamIds];
@@ -393,8 +399,8 @@ const Employer = () => {
                               setSelectedEmployee({ ...selectedEmployee, teamIds: newOrder });
                             }}
                           >
-                            ↓
-                          </Button>
+                            <ArrowDownward />
+                          </IconButton>
                         </Box>
                       ))}
                     </Box>
@@ -404,7 +410,7 @@ const Employer = () => {
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenEditDialog(false)} color="secondary">
+            <Button onClick={() => setOpenEditDialog(false)} color="error">
               Cancel
             </Button>
             <Button
@@ -437,7 +443,7 @@ const Employer = () => {
                   console.error("Erro ao guardar alterações:", err);
                 }
               }}
-              color="primary"
+              color="success"
             >
               Save
             </Button>
