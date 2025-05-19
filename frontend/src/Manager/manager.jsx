@@ -190,29 +190,34 @@ const LastProcessedSection = ({ refreshTrigger }) => {
     <>
       <h3 className="section-title" style={{ marginTop: "20px" }}>Last Processed</h3>
       <div className="calendar-cards-container" style={{ gap: "30px" }}>
-        {lastTasks.map((task) => {
-          const { status, taskId, scheduleRequest } = task;
-          const title = scheduleRequest?.title || "No Title";
-          const algorithm = scheduleRequest?.algorithm || "";
-          const isCompleted = status === "COMPLETED";
-          const isFailed = status === "FAILED";
+        {lastTasks.length === 0 ? (
+          <p style={{ color: "#777", fontStyle: "italic" }}>No processed calendars found.</p>
+        ) : (
+          lastTasks.map((task) => {
+            const { status, taskId, scheduleRequest } = task;
+            const title = scheduleRequest?.title || "No Title";
+            const algorithm = scheduleRequest?.algorithm || "";
+            const isCompleted = status === "COMPLETED";
+            const isFailed = status === "FAILED";
 
-          return (
-            <CalendarCard
-              key={taskId}
-              title={title}
-              algorithm={algorithm}
-              status={status.toLowerCase()}
-              buttonLabel={isCompleted ? "Open" : null}
-              buttonColor={isCompleted ? "#4CAF50" : null}
-              className={isFailed ? "failed-card" : ""}
-              showFailedTag={isFailed}
-              showCompletedTag={isCompleted}
-              onClick={isCompleted ? () => handleOpenCalendar(title) : null}
-            />
-          );
-        })}
+            return (
+              <CalendarCard
+                key={taskId}
+                title={title}
+                algorithm={algorithm}
+                status={status.toLowerCase()}
+                buttonLabel={isCompleted ? "Open" : null}
+                buttonColor={isCompleted ? "#4CAF50" : null}
+                className={isFailed ? "failed-card" : ""}
+                showFailedTag={isFailed}
+                showCompletedTag={isCompleted}
+                onClick={isCompleted ? () => handleOpenCalendar(title) : null}
+              />
+            );
+          })
+        )}
       </div>
+
     </>
   );
 };
@@ -288,7 +293,7 @@ const CalendarsInProcessSection = ({ setRefreshTrigger }) => {
             />
           ))
         ) : (
-          <p>No calendars in progress</p>
+          <p style={{ color: "#777", fontStyle: "italic" }}>No calendars in progress</p>
         )}
       </div>
     </>
