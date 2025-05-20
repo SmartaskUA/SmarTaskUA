@@ -14,6 +14,25 @@ services:
       - mongo_data:/data/db
     networks:
       - rabbitmq_network
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    restart: always
+    ports:
+      - "8083:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: mysecretpassword
+    depends_on:
+      - mongo
+    networks:
+      - rabbitmq_network
+
+
 
   rabbitmq:
     image: rabbitmq:3-management
