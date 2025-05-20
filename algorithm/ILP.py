@@ -204,10 +204,11 @@ def solve(vacations, minimuns, employees, maxTime):
     df = pd.DataFrame.from_dict(escala, orient="index")
     df.index.name = "funcionario"
     df.reset_index(inplace=True)
-    df['equipa'] = df['funcionario'].apply(lambda idx: funcionario_equipa.get(idx, ''))
+
+    # Removido: df['equipa'] = ...
+
     df.to_csv("calendario4.csv", index=False)
     print("Escala exportada para calendario4.csv")
-
 
     schedule = []
     with open('calendario4.csv', mode='r') as csvfile:
