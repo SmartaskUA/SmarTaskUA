@@ -3,25 +3,27 @@ Intelligent system for automatically generating schedules work
 
 # Lauching : 
 
-### in this project's root, run the below commands (you need to have docker compose installed locally in you system)
-#### Travel to api/ directory and create the jar file of the Spring Boot app:
+### in this project's root, execute one of these two scripts : 
+##### (you need to have docker compose installed locally in you system)
+
+#### 1st - the bash script
 ```
-cd api/
-mvn install
-```
-#### Then, in the root of the project, automatically build and deploy all containers
-```
-docker-compose up --build
+bash run-app.sh
 ```
 
-#### Shutdown the containers if not needed anymore
+#### 2nd - Makefile (need to have Make utility installed in your system)
 ```
-docker-compose down
+make all
 ```
 
 ### The running frontend application can be accessed via :
 ```
 http://localhost:5173/
+```
+
+#### After shutting down the application via command line, shutdown the containers if not needed anymore
+```
+docker-compose down
 ```
 
 # Requirements
