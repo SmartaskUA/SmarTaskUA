@@ -23,13 +23,14 @@ public class ComparisonNotifier {
 
     @Scheduled(fixedDelay = 2000)
     public void notifyComparisonResults() {
-        System.out.println("\n ===================================");
 
         Query query = new Query(Criteria.where("status").is("done"));
         List<Document> results = mongoTemplate.find(query, Document.class, "comparisons");
-        System.out.println("\n results : "+results);
 
         if (!results.isEmpty()) {
+        System.out.println("\n Comparison results : "+results);
+
+
             // Pode enviar os documentos inteiros, ou apenas os resultados
             List<Object> comparisonResults = results.stream()
                     .map(doc -> {
