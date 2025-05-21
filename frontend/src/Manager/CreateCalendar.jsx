@@ -77,7 +77,7 @@ const CreateCalendar = () => {
     setTitle("");
     setYear("");
     setMaxDuration("");
-    setSelectedAlgorithm("CSP Scheduling");
+    setSelectedAlgorithm("");
     setVacationTemplate("");
     setMinimumTemplate("");
   };

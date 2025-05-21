@@ -188,7 +188,7 @@ const LastProcessedSection = ({ refreshTrigger }) => {
 
   return (
     <>
-      <h3 className="section-title" style={{ marginTop: "20px" }}>Last Processed</h3>
+      <h3 className="section-title" style={{ marginTop: "20px" }}>Latest Results</h3>
       <div className="calendar-cards-container" style={{ gap: "30px" }}>
         {lastTasks.length === 0 ? (
           <p style={{ color: "#777", fontStyle: "italic" }}>No processed calendars found.</p>
@@ -224,10 +224,10 @@ const LastProcessedSection = ({ refreshTrigger }) => {
 
 const NewCalendarSection = () => (
   <>
-    <h3 className="section-title">New Calendar</h3>
+    <h3 className="section-title">Home</h3>
     <div className="cards-row" style={{ gap: "30px" }}>
       <CalendarCard
-        title="New Calendar"
+        title="New Schedule"
         status="blue"
         buttonLabel="Create"
         buttonColor="#007BFF"
@@ -276,7 +276,7 @@ const CalendarsInProcessSection = ({ setRefreshTrigger }) => {
 
   return (
     <>
-      <h3 className="section-title">Calendars in Process</h3>
+      <h3 className="section-title">Calendars in Progress</h3>
       <div className="calendar-cards-container" style={{ gap: "30px" }}>
         {errorMessage ? (
           <p style={{ color: "red" }}>{errorMessage}</p>
