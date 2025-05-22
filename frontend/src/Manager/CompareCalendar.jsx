@@ -14,6 +14,7 @@ import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import axios from "axios";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import BaseUrl from "../components/BaseUrl";
 
 const metricInfo = {
   missedWorkDays: {
@@ -89,7 +90,7 @@ export default function CompareCalendar() {
 
   useEffect(() => {
     axios
-      .get("/schedules/fetch")
+      .get(`${BaseUrl}/schedules/fetch`)
       .then((res) => setCalendars(res.data))
       .catch((e) => {
         console.error("Error fetching calendars:", e);
@@ -120,7 +121,7 @@ export default function CompareCalendar() {
       fd.append("files", blob1, `${cal1.id}.csv`);
       fd.append("files", blob2, `${cal2.id}.csv`);
 
-      await axios.post("/schedules/analyze", fd);
+      await axios.post(`${BaseUrl}/schedules/analyze`, fd);
       setError(null);
     } catch (e) {
       console.error("Error starting comparison:", e);
