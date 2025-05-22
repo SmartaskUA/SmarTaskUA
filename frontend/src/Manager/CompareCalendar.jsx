@@ -231,6 +231,12 @@ export default function CompareCalendar() {
                     const v1 = res[f1][metric];
                     const v2 = res[f2][metric];
                     const diff = v2 - v1;
+                    const formattedDiff =
+                    metric === "shiftBalance"
+                      ? diff.toFixed(2)
+                      : diff === 0
+                      ? "Equal"
+                      : `${diff > 0 ? "+" : ""}${diff}`;
                     return (
                       <tr
                         key={metric}
@@ -261,7 +267,7 @@ export default function CompareCalendar() {
                             color: diff === 0 ? "#1976D2" : "#f44336",
                           }}
                         >
-                          {diff === 0 ? "Equal" : `${diff > 0 ? "+" : ""}${diff}`}
+                          {formattedDiff}
                         </td>
                       </tr>
                     );
