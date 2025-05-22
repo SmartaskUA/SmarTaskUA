@@ -81,9 +81,6 @@ const ImportMinimums = () => {
   };
 
   const handleDeleteAllReferenceTemplates = async () => {
-    const confirmDelete = window.confirm("Are you sure you want to delete all reference templates?");
-    if (!confirmDelete) return;
-
     try {
       await axios.delete(`${baseurl}/clearnreset/clean-reference-templates`);
       await fetchTemplates();
@@ -91,8 +88,10 @@ const ImportMinimums = () => {
       setSuccessOpen(true);
     } catch (err) {
       console.error("Error deleting reference templates:", err);
-      alert("Error deleting templates: " + (err.response?.data?.error || err.message));
       setErrorOpen(true);
+    } finally {
+      setConfirmDialogOpen(false);
+      setTemplateToDelete(null);
     }
   };
 
@@ -168,7 +167,10 @@ const ImportMinimums = () => {
             <Button
               variant="contained"
               color="error"
-              onClick={handleDeleteAllReferenceTemplates}
+              onClick={() => {
+                setTemplateToDelete(null); 
+                setConfirmDialogOpen(true);
+              }}
               sx={{ ml: 21 }}
             >
               Delete All Templates
@@ -288,14 +290,26 @@ const ImportMinimums = () => {
           <DialogTitle>Confirm Deletion</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              Are you sure you want to delete the template "{templateToDelete?.name}"?
+              {templateToDelete
+                ? `Are you sure you want to delete the template "${templateToDelete.name}"?`
+                : "Are you sure you want to delete all templates? This action cannot be undone."}
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setConfirmDialogOpen(false)} color="primary">
+            <Button onClick={() => {
+              setConfirmDialogOpen(false);
+              setTemplateToDelete(null);
+            }} color="primary">
               Cancel
             </Button>
-            <Button onClick={handleDeleteOneTemplate} color="error">
+            <Button
+              onClick={() =>
+                templateToDelete
+                  ? handleDeleteOneTemplate()
+                  : handleDeleteAllReferenceTemplates()
+              }
+              color="error"
+            >
               Delete
             </Button>
           </DialogActions>

@@ -12,12 +12,12 @@ const SearchBar = ({ onSearch }) => {
   return (
     <Box mb={4}>
       <TextField
-        label="Pesquisar por ID"
+        label="Search by ID"
         variant="outlined"
         fullWidth
         value={searchQuery}
         onChange={handleSearchChange}
-        placeholder="Digite o ID do employee"
+        placeholder="Enter employee ID"
       />
     </Box>
   );

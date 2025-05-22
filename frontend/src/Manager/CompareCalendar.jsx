@@ -29,8 +29,8 @@ const metricInfo = {
     description: "Minutes when the team was below the minimum number of members.",
   },
   workHolidays: {
-    label: "Work on Holidays",
-    description: "How many times someone was scheduled to work on a holiday.",
+    label: "Work on Holidays and Sundays",
+    description: "How many times someone was scheduled to work on a holiday or Sunday.",
   },
   consecutiveDays: {
     label: "Consecutive Days Worked",
@@ -40,9 +40,9 @@ const metricInfo = {
     label: "Shift Balancing",
     description: "Difference in the number of shifts assigned to people.",
   },
-  tmFails: {
-    label: "TM Failures",
-    description: "Failures in following the shift model restrictions.",
+  emFails: {
+    label: "E->M Failures",
+    description: "An employee cannot be scheduled for an evening (E) shift followed by a morning (M) shift on the next day.",
   },
   singleTeamViolations: {
     label: "Single Team Violations",

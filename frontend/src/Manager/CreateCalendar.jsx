@@ -77,7 +77,7 @@ const CreateCalendar = () => {
     setTitle("");
     setYear("");
     setMaxDuration("");
-    setSelectedAlgorithm("CSP Scheduling");
+    setSelectedAlgorithm("");
     setVacationTemplate("");
     setMinimumTemplate("");
   };
@@ -173,6 +173,7 @@ const CreateCalendar = () => {
                   <MenuItem value="hill climbing">Hill Climbing</MenuItem>
                   <MenuItem value="genetic_algorithm">Genetic Algorithm</MenuItem>
                   <MenuItem value="linear programming">Integer Linear Programming</MenuItem>
+                  <MenuItem value="Greedy Randomized">Greedy Randomized</MenuItem>
                 </Select>
               </FormControl>
 
