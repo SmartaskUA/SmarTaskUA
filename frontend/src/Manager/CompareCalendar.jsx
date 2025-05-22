@@ -8,6 +8,12 @@ import {
   FormControl,
   InputLabel,
   Tooltip,
+  Collapse,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
 } from "@mui/material";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import SockJS from "sockjs-client";
@@ -41,9 +47,9 @@ const metricInfo = {
     label: "Shift Balancing",
     description: "Difference in the number of shifts assigned to people.",
   },
-  emFails: {
-    label: "E->M Failures",
-    description: "An employee cannot be scheduled for an evening (E) shift followed by a morning (M) shift on the next day.",
+  tmFails: {
+    label: "T→M Failures",
+    description: "An employee was scheduled for an evening shift followed by a morning shift.",
   },
   singleTeamViolations: {
     label: "Single Team Violations",
@@ -53,6 +59,10 @@ const metricInfo = {
     label: "Two-Team Preference Violations",
     description: "Break in the preference to work with a specific colleague.",
   },
+  twoTeamShiftDistribution: {
+    label: "Two-Team Shift Distribution",
+    description: "Breakdown of shifts between team A and B by employee.",
+  },
 };
 
 export default function CompareCalendar() {
@@ -61,6 +71,7 @@ export default function CompareCalendar() {
   const [selected2, setSelected2] = useState("");
   const [comparisonResults, setComparisonResults] = useState(null);
   const [error, setError] = useState(null);
+  const [rawComparisonData, setRawComparisonData] = useState(null);
 
   useEffect(() => {
     const socket = new SockJS("http://localhost:8081/ws");
@@ -129,7 +140,39 @@ export default function CompareCalendar() {
     }
   };
 
-  // render
+  const renderTwoTeamShiftTable = (dist1, dist2) => {
+    const employees = Array.from(new Set([...Object.keys(dist1), ...Object.keys(dist2)]));
+    return (
+      <Box mt={4}>
+        <Typography variant="h6" gutterBottom>
+          Two-Team Shift Distribution
+        </Typography>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Employee ID</TableCell>
+              <TableCell>Team A (Cal 1)</TableCell>
+              <TableCell>Team B (Cal 1)</TableCell>
+              <TableCell>Team A (Cal 2)</TableCell>
+              <TableCell>Team B (Cal 2)</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {employees.map((emp) => (
+              <TableRow key={emp}>
+                <TableCell>{emp}</TableCell>
+                <TableCell>{dist1[emp]?.teamA_shifts ?? 0}</TableCell>
+                <TableCell>{dist1[emp]?.teamB_shifts ?? 0}</TableCell>
+                <TableCell>{dist2[emp]?.teamA_shifts ?? 0}</TableCell>
+                <TableCell>{dist2[emp]?.teamB_shifts ?? 0}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Box>
+    );
+  };
+
   return (
     <div className="admin-container">
       <Sidebar_Manager />
@@ -228,7 +271,7 @@ export default function CompareCalendar() {
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.keys(res[f1]).map((metric, i) => {
+                  {Object.keys(res[f1]).filter(k => k !== "twoTeamShiftDistribution").map((metric, i) => {
                     const v1 = res[f1][metric];
                     const v2 = res[f2][metric];
                     const diff = v2 - v1;
@@ -243,8 +286,7 @@ export default function CompareCalendar() {
                         <td style={{ padding: 12, display: "flex", gap: 8 }}>
                           <Tooltip
                             title={
-                              metricInfo[metric]?.description ||
-                              "No description"
+                              metricInfo[metric]?.description || "No description"
                             }
                             arrow
                           >
@@ -269,6 +311,9 @@ export default function CompareCalendar() {
                   })}
                 </tbody>
               </table>
+
+              {res[f1].twoTeamShiftDistribution && res[f2].twoTeamShiftDistribution &&
+                renderTwoTeamShiftTable(res[f1].twoTeamShiftDistribution, res[f2].twoTeamShiftDistribution)}
             </Box>
           );
         })()}
