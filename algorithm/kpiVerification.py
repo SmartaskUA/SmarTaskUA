@@ -9,12 +9,6 @@ def analyze(file, holidays, teams):
     print(f"Analyzing file: {file}")
     df = pd.read_csv(file, encoding='ISO-8859-1')
 
-    # Print the first few rows of the DataFrame for debugging
-    # print("DataFrame head:")
-    # print(df.head())
-    # print(df.columns)
-    # print(df)
-
     missed_work_days = 0
     missed_vacation_days = 0
     missed_team_min = 0
@@ -45,7 +39,6 @@ def analyze(file, holidays, teams):
         missed_vacation_days += abs(30 - vacation_days)
 
         total_worked_holidays = sum(row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] for col in all_special_cols)
-        print(f"Total worked holidays: {total_worked_holidays}")
         if total_worked_holidays > 22:
             workHolidays += total_worked_holidays - 22
 
@@ -94,18 +87,16 @@ def analyze(file, holidays, teams):
             if team_counts[other_team] > 0:
                 single_team_violations += 1
         elif len(allowed_teams) == 2:
-            morning_shifts = sum(row[col] in ['M_A', 'M_B'] for col in dia_cols)
-            afternoon_shifts = sum(row[col] in ['T_A', 'T_B'] for col in dia_cols)
+            teamA_shifts = sum(row[col] in ['M_A', 'T_A'] for col in dia_cols)
+            teamB_shifts = sum(row[col] in ['M_B', 'T_B'] for col in dia_cols)
             two_team_shift_distribution[emp_id] = {
-                "morningShifts": morning_shifts,
-                "afternoonShifts": afternoon_shifts
+                "teamA_shifts": teamA_shifts,
+                "teamB_shifts": teamB_shifts,
             }
 
         total_morning += sum(row[col] in ['M_A', 'M_B'] for col in dia_cols)
         total_afternoon += sum(row[col] in ['T_A', 'T_B'] for col in dia_cols)
 
-    print("Morning shifts:", total_morning)
-    print("Afternoon shifts:", total_afternoon)
     total_shifts = total_morning + total_afternoon
     percentages = []
     if total_shifts > 0:
@@ -129,18 +120,16 @@ def analyze(file, holidays, teams):
 
         missing = max(0, required - assigned)
         missed_team_min += int(missing)
-        if missing > 0:
-            print(f"Expected {required} for {code} on {col}, found {assigned}, missing {missing}")
 
     return {
         "missedWorkDays": missed_work_days,
         "missedVacationDays": missed_vacation_days,
-        "missedTeamMin": missed_team_min,
         "workHolidays": workHolidays,
-        "consecutiveDays": consecutiveDays,
-        "shiftBalance": round(shift_balance, 2),
         "tmFails": total_tm_fails,
+        "consecutiveDays": consecutiveDays,
         "singleTeamViolations": single_team_violations,
+        "missedTeamMin": missed_team_min,
+        "shiftBalance": round(shift_balance, 2),
         "twoTeamShiftDistribution": two_team_shift_distribution,
     }
 

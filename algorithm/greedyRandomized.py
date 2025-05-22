@@ -11,7 +11,7 @@ import os
 TEAM_LETTER_TO_ID = {'A': 1, 'B': 2}
 
 class GreedyRandomized:
-    def __init__(self, employees, num_days, holidays, vacs, mins, ideals, teams, num_iter=10):
+    def __init__(self, employees, num_days, holidays, vacs, mins, ideals, teams, num_iter=10, maxTime=None):
         self.employees = employees   
         self.num_days = num_days     
         self.vacs = vacs   
@@ -26,6 +26,8 @@ class GreedyRandomized:
         start_date = self.dias_ano[0].date()
         self.holidays = {(d - start_date).days + 1 for d in holidays}
         self.sunday = [d.dayofyear for d in self.dias_ano if d.weekday() == 6]
+        self.maxTime = maxTime
+        self.start_time = time.time()
 
     def f1(self, p, d, s):
         assignments = self.assignment[p]
@@ -67,7 +69,7 @@ class GreedyRandomized:
     def build_schedule(self):
         all_days = set(range(1, self.num_days + 1))
 
-        while not self.is_complete():
+        while not self.is_complete() and (self.maxTime is None or time.time() - self.start_time < self.maxTime):
             P = [p for p in self.employees if len(self.assignment[p]) < 223 and len(self.teams[p]) == 1]
             if not P:
                 P = [p for p in self.employees if len(self.assignment[p]) < 223 and len(self.teams[p]) == 2]
@@ -202,7 +204,7 @@ def parse_requirements(file_path):
     return minimos, ideais
 
 
-def solve(vacations, minimuns, employees, maxTime=10):
+def solve(vacations, minimuns, employees, maxTime=None):
     print(f"[GreedyRandomized] Executando Greedy Randomized Scheduling")
     num_employees = len(employees)
     print(f"[GreedyRandomized] Número de funcionários: {num_employees}")
@@ -226,7 +228,8 @@ def solve(vacations, minimuns, employees, maxTime=10):
         mins=mins,
         ideals=ideals,
         teams=teams,
-        num_iter=10
+        num_iter=10,
+        maxTime=maxTime
     )
     scheduler.build_schedule()
 
