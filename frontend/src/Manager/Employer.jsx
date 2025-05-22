@@ -129,13 +129,13 @@ const Employer = () => {
       .join(", ");
   };
 
-  const handleResetEmployeesAndTeams = async () => {
-    const confirmReset = window.confirm("Tem a certeza que deseja repor os employees e equipas para o estado inicial?");
-    if (!confirmReset) return;
+  const [openResetDialog, setOpenResetDialog] = useState(false);
 
+  const handleResetEmployeesAndTeams = async () => {
     try {
       await axios.post(`${BaseUrl}/clearnreset/reset-employees-teams`);
       await fetchAll();
+      setOpenResetDialog(false);
     } catch (err) {
       console.error("Erro ao fazer reset dos employees e equipas:", err);
       alert("Erro ao fazer reset: " + (err.response?.data?.error || err.message));
@@ -147,7 +147,7 @@ const Employer = () => {
       <Sidebar_Manager />
       <div className="main-content" style={{ flex: 1, padding: "20px" , paddingRight: "6%"}}>
         <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h4">List of Employees</Typography>
+          <Typography variant="h4">Employee List</Typography>
           <Box>
             <Button variant="contained" color="success" onClick={() => setOpenAddDialog(true)}>
               Add Employee
@@ -158,15 +158,15 @@ const Employer = () => {
               onClick={toggleRemovalMode}
               style={{ marginLeft: "10px" }}
             >
-              {removalMode ? "Cancelar Remoção" : "Remover Employees"}
+              {removalMode ? "Cancel Removal" : "Remove Employees"}
             </Button>
             <Button
               variant="outlined"
               color="primary"
-              onClick={handleResetEmployeesAndTeams}
+              onClick={() => setOpenResetDialog(true)}
               style={{ marginLeft: "10px" }}
             >
-              Reset Equipas e Employees
+              Reset Teams and Employees
             </Button>
           </Box>
         </Box>
@@ -190,8 +190,8 @@ const Employer = () => {
                 <TableHead style={{ backgroundColor: "#1976d2", color: "#fff" }}>
                   <TableRow>
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}>ID</TableCell>
-                    <TableCell style={{ color: "#fff", fontWeight: "bold" }}>Nome</TableCell>
-                    <TableCell style={{ color: "#fff", fontWeight: "bold" }}>Preferências</TableCell>
+                    <TableCell style={{ color: "#fff", fontWeight: "bold" }}>Name</TableCell>
+                    <TableCell style={{ color: "#fff", fontWeight: "bold" }}>Preferences</TableCell>
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}></TableCell>
                     <TableCell style={{ color: "#fff", fontWeight: "bold" }}></TableCell>
                   </TableRow>
@@ -282,7 +282,7 @@ const Employer = () => {
           <DialogContent>
             <TextField
               margin="dense"
-              label="Nome"
+              label="Name"
               fullWidth
               value={newEmployee.name}
               onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
@@ -309,16 +309,18 @@ const Employer = () => {
           </DialogActions>
         </Dialog>
 
-        <Dialog open={openConfirmDialog} onClose={handleCancelDelete}>
-          <DialogTitle>Confirmar Remoção</DialogTitle>
+        <Dialog open={openResetDialog} onClose={() => setOpenResetDialog(false)}>
+          <DialogTitle>Confirm Reset</DialogTitle>
           <DialogContent>
-            <Typography>Tem certeza que deseja remover este funcionário?</Typography>
+            <Typography>
+              Are you sure you want to reset all employees and teams to their initial state?
+            </Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCancelDelete} color="error">
+            <Button onClick={() => setOpenResetDialog(false)} color="error">
               Cancel
             </Button>
-            <Button onClick={handleConfirmDelete} color="primary">
+            <Button onClick={handleResetEmployeesAndTeams} color="primary">
               Confirm
             </Button>
           </DialogActions>
@@ -338,7 +340,7 @@ const Employer = () => {
                 />
                 <TextField
                   margin="dense"
-                  label="Nome"
+                  label="Name"
                   fullWidth
                   value={selectedEmployee.name}
                   onChange={(e) =>
@@ -346,7 +348,7 @@ const Employer = () => {
                   }
                 />
                 <FormControl fullWidth margin="normal">
-                  <InputLabel id="team-select-label">Equipas</InputLabel>
+                  <InputLabel id="team-select-label">Teams</InputLabel>
                   <Select
                     labelId="team-select-label"
                     multiple
@@ -369,7 +371,7 @@ const Employer = () => {
                 {selectedEmployee.teamIds?.length > 0 && (
                   <Box mt={2}>
                     <Typography variant="subtitle1" gutterBottom>
-                      Ordem de Preferência
+                      Preference Order
                     </Typography>
                     <Box display="flex" flexDirection="column" gap={1}>
                       {selectedEmployee.teamIds.map((id, index) => (
@@ -449,6 +451,24 @@ const Employer = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+        <Dialog open={openConfirmDialog} onClose={handleCancelDelete}>
+          <DialogTitle>Confirm Deletion</DialogTitle>
+          <DialogContent>
+            <Typography>
+              Are you sure you want to delete this employee?
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCancelDelete} color="error">
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmDelete} color="primary">
+              Confirm
+            </Button>
+          </DialogActions>
+        </Dialog>
+
       </div>
     </div>
   );

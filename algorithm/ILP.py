@@ -190,7 +190,7 @@ def solve(vacations, minimuns, employees, maxTime):
         return f"{turno_str}_{equipe_suffix}"
 
     escala = {
-        f: {
+        f"Empregado{f + 1}": {
             dias_str[d]: get_turno_com_equipa(
                 f,
                 d,
@@ -204,10 +204,9 @@ def solve(vacations, minimuns, employees, maxTime):
     df = pd.DataFrame.from_dict(escala, orient="index")
     df.index.name = "funcionario"
     df.reset_index(inplace=True)
-    df['equipa'] = df['funcionario'].apply(lambda idx: funcionario_equipa.get(idx, ''))
+
     df.to_csv("calendario4.csv", index=False)
     print("Escala exportada para calendario4.csv")
-
 
     schedule = []
     with open('calendario4.csv', mode='r') as csvfile:
