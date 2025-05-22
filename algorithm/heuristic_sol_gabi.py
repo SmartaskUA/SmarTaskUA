@@ -77,7 +77,6 @@ def ler_ferias_csv(vacations, nDias):
     
     return Ferias
 
-import numpy as np
 def atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos, nDias, fds_feriados, maxFDS=22):
     nTrabs = len(Prefs)
     horario = np.zeros((nTrabs, nDias, nTurnos), dtype=int)
@@ -142,6 +141,22 @@ def atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos, nDias, fds_
 
     return horario
 
+def criterio2(horario, fds_mask, nDiasTrabalhoFDS, feriados_idx):
+
+    nTrabs, nDias, _ = horario.shape
+
+    mascara_fds_feriados = fds_mask.copy()  # domingos
+    mascara_fds_feriados[:, feriados_idx] = True  # adiciona feriados
+
+    trabalhou_nesse_dia = (horario.sum(axis=2) > 0)  # soma dos turnos > 0
+    trabalhos_em_fds_feriados = trabalhou_nesse_dia & mascara_fds_feriados
+
+    dias_fds_por_trab = trabalhos_em_fds_feriados.sum(axis=1)
+
+    excesso = np.maximum(dias_fds_por_trab - nDiasTrabalhoFDS, 0)
+
+    return excesso
+
 def criterio1(horario, nDiasSeguidos):
     f1 = np.zeros(horario.shape[0], dtype=int)                                               
     dias_trabalhados = np.sum(horario, axis=2) > 0                                           
@@ -156,7 +171,6 @@ def criterio1(horario, nDiasSeguidos):
 
     return f1
 
-# Função para verificar o número máximo de folgas (máximo 142)
 def criterio4(horario, nMaxFolga, Ferias):
     dias_trabalhados_por_trabalhador = []
 
