@@ -128,19 +128,28 @@ class CombinedScheduler:
                         self.assignment[emp].append((d + 1, s + 1, t))
                         self.schedule_table[(d + 1, s + 1, t)].append(emp)
 
-    def hill_climbing(self, max_iterations=400000):
+    def hill_climbing(self, max_iterations=400000, maxTime=60):
+        maxTime = maxTime * 60  # Convert minutes to seconds
+        start_time = time.time()
         horario = self.create_horario()
-        best_score = self.score(horario)
+        f1_opt, f2_opt, f3_opt, f4_opt, f5_opt = self.criterios(horario)
+        best_score = f1_opt + f2_opt + f3_opt + f4_opt + f5_opt
         iteration = 0
+        cont = 0  # Track actual iterations with swap attempts
         perfect_solution = False
 
-        while iteration < max_iterations and self.score(horario) > 0:
-            iteration += 1
+        while iteration < max_iterations and best_score > 0:
+            cont += 1
+            if time.time() - start_time > maxTime:
+                print("Tempo máximo atingido, parando a otimização.")
+                break
+
             emp_idx = np.random.randint(len(self.employees))
             emp = self.employees[emp_idx]
 
             available_days = [d for d in range(self.num_days) if not self.vac_array[emp_idx, d]]
             if len(available_days) < 2:
+                iteration += 1
                 continue
 
             d1, d2 = np.random.choice(available_days, 2, replace=False)
@@ -149,53 +158,63 @@ class CombinedScheduler:
             t1 = horario[emp_idx, d1, s1]
             t2 = horario[emp_idx, d2, s2]
 
-            if (t1 > 0 and t1 not in self.teams[emp]) or (t2 > 0 and t2 not in self.teams[emp]):
-                continue
-
-            new_horario = horario.copy()
-
             can_work_team_A = 1 in self.teams[emp]
             can_work_team_B = 2 in self.teams[emp]
 
             if t1 != t2:
+                new_horario = horario.copy()
                 if can_work_team_A and can_work_team_B:
                     new_horario[emp_idx, d1, s1], new_horario[emp_idx, d2, s2] = t2, t1
                 elif can_work_team_A:
-                    new_horario[emp_idx, d1, s1] = 1 
-                    new_horario[emp_idx, d2, s2] = 0 
+                    new_horario[emp_idx, d1, s1] = 1
+                    new_horario[emp_idx, d2, s2] = 0
                 elif can_work_team_B:
-                    new_horario[emp_idx, d1, s1] = 0 
-                    new_horario[emp_idx, d2, s2] = 2 
+                    new_horario[emp_idx, d1, s1] = 0
+                    new_horario[emp_idx, d2, s2] = 2
                 else:
-                    continue  
+                    iteration += 1
+                    continue
 
-            if s1 == 1 and d1 + 1 < self.num_days and new_horario[emp_idx, d1 + 1, 0] > 0:
-                continue
-            if s2 == 1 and d2 + 1 < self.num_days and new_horario[emp_idx, d2 + 1, 0] > 0:
-                continue
-            if s1 == 0 and d1 > 0 and new_horario[emp_idx, d1 - 1, 1] > 0:
-                continue
-            if s2 == 0 and d2 > 0 and new_horario[emp_idx, d2 - 1, 1] > 0:
-                continue
+                # Check forbidden shift sequences
+                if s1 == 1 and d1 + 1 < self.num_days and new_horario[emp_idx, d1 + 1, 0] > 0:
+                    iteration += 1
+                    continue
+                if s2 == 1 and d2 + 1 < self.num_days and new_horario[emp_idx, d2 + 1, 0] > 0:
+                    iteration += 1
+                    continue
+                if s1 == 0 and d1 > 0 and new_horario[emp_idx, d1 - 1, 1] > 0:
+                    iteration += 1
+                    continue
+                if s2 == 0 and d2 > 0 and new_horario[emp_idx, d2 - 1, 1] > 0:
+                    iteration += 1
+                    continue
 
-            new_score = self.score(new_horario)
+                f1, f2, f3, f4, f5 = self.criterios(new_horario)
+                new_score = f1 + f2 + f3 + f4 + f5
 
-            if new_score == 0:
-                horario = new_horario
-                best_score = new_score
-                self.update_from_horario(horario)
-                print(f"Iteration {iteration}: Perfect solution found with score = {best_score}")
-                perfect_solution = True
-                break
+                if f1 == 0 and f2 == 0 and f3 == 0 and f4 == 0 and f5 == 0:
+                    horario = new_horario
+                    f1_opt, f2_opt, f3_opt, f4_opt, f5_opt= f1, f2, f3, f4, f5
+                    best_score = new_score
+                    self.update_from_horario(horario)
+                    print(f"Iteration {cont}: Perfect solution found with score = {best_score}")
+                    perfect_solution = True
+                    break
 
-            if new_score < best_score:
-                horario = new_horario
-                best_score = new_score
-                self.update_from_horario(horario)
-                print(f"Iteration {iteration}: Improved score = {best_score}")
-            print(f"Iteration {iteration}: No improvement, score = {best_score}")
+                if new_score < best_score:
+                    horario = new_horario
+                    f1_opt, f2_opt, f3_opt, f4_opt, f5_opt = f1, f2, f3, f4, f5
+                    best_score = new_score
+                    self.update_from_horario(horario)
+                    print(f"Iteration {cont}: Improved score = {best_score}")
+                else:
+                    print(f"Iteration {cont}: No improvement, score = {best_score}")
 
-        print(f"Local Search Optimization completed after {iteration} iterations. Final score = {best_score}")
+            iteration += 1
+
+        execution_time = time.time() - start_time
+        print(f"Local Search Optimization completed after {cont} iterations. Final score = {best_score}")
+        print(f"Execution time: {execution_time:.2f} seconds")
         return horario, perfect_solution
 
     def score(self, horario):
@@ -208,8 +227,8 @@ class CombinedScheduler:
         f3 = self.criterio3(horario)
         f4 = self.criterio4(horario)
         f5 = self.criterio5(horario)
+        print(f"f1: {f1}, f2: {f2}, f3: {f3}, f4: {f4}, f5: {f5}")
         return f1, f2, f3, f4, f5
-
 
     def criterio1(self, horario, max_consec=5):
         worked = (horario.sum(axis=2) > 0).astype(int)
@@ -274,6 +293,12 @@ class CombinedScheduler:
                 if horario[i, d, 1] > 0 and horario[i, d+1, 0] > 0:
                     violations += 1
         return violations
+    
+    def identificar_equipes(self):
+        equipe_A = [emp - 1 for emp in self.employees if 1 in self.teams[emp] and 2 not in self.teams[emp]]
+        equipe_B = [emp - 1 for emp in self.employees if 2 in self.teams[emp] and 1 not in self.teams[emp]]
+        ambas = [emp - 1 for emp in self.employees if 1 in self.teams[emp] and 2 in self.teams[emp]]
+        return equipe_A, equipe_B, ambas
 
 def parse_vacs(file_path):
     vacs = {}
@@ -314,7 +339,7 @@ def parse_requirements(file_path):
                     continue
     return minimos, ideais
 
-def generate_schedule():
+def generate_schedule(maxTime=60):
     num_employees = 12
     employees = list(range(1, num_employees + 1))
     num_days = 365
@@ -333,11 +358,10 @@ def generate_schedule():
     scheduler = CombinedScheduler(employees, num_days, holidays, vacs, mins, ideals, teams)
     scheduler.build_schedule()
     export_schedule_to_csv(scheduler, "schedule1.csv")
-    scheduler.create_horario()
     score = scheduler.score(scheduler.create_horario())
     print("Initial solution criteria:")
     print(f"Score: {score}")
-    scheduler.hill_climbing()
+    horario, perfect_solution = scheduler.hill_climbing(maxTime=maxTime)
     end_time = time.time()
 
     print(f"Execution time: {end_time - start_time:.2f} seconds")
@@ -364,6 +388,6 @@ def export_schedule_to_csv(scheduler, filename="schedule.csv"):
     print(f"Schedule exported to {filename}")
 
 if __name__ == "__main__":
-    scheduler = generate_schedule()
+    scheduler = generate_schedule(maxTime=60)
     export_schedule_to_csv(scheduler, "schedule_hybrid.csv")
     print("Schedule generation complete.")
