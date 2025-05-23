@@ -18,7 +18,9 @@ def analyze(file, holidays, teams):
     total_afternoon = 0
     total_tm_fails = 0
     single_team_violations = 0
-    two_team_shift_distribution = {}
+    two_team_preference_level = {}
+    balance = []
+    var = 0
 
     minimuns_file = os.path.join(os.path.dirname(__file__), "minimuns.csv")
     mins = parse_requirements(minimuns_file)
@@ -89,13 +91,17 @@ def analyze(file, holidays, teams):
         elif len(allowed_teams) == 2:
             teamA_shifts = sum(row[col] in ['M_A', 'T_A'] for col in dia_cols)
             teamB_shifts = sum(row[col] in ['M_B', 'T_B'] for col in dia_cols)
-            two_team_shift_distribution[emp_id] = {
-                "teamA_shifts": teamA_shifts,
-                "teamB_shifts": teamB_shifts,
-            }
+            if (allowed_teams[0] == 1):
+                balance.append(round(teamA_shifts / (teamB_shifts + teamA_shifts), 4)*100)
+            else:
+                balance.append(round(teamB_shifts / (teamB_shifts + teamA_shifts), 4)*100)
 
         total_morning += sum(row[col] in ['M_A', 'M_B'] for col in dia_cols)
         total_afternoon += sum(row[col] in ['T_A', 'T_B'] for col in dia_cols)
+
+    for i in range(len(balance)):
+        var += balance[i]
+    two_team_preference_level = round(var / len(balance), 2)
 
     total_shifts = total_morning + total_afternoon
     percentages = []
@@ -130,7 +136,7 @@ def analyze(file, holidays, teams):
         "singleTeamViolations": single_team_violations,
         "missedTeamMin": missed_team_min,
         "shiftBalance": round(shift_balance, 2),
-        "twoTeamShiftDistribution": two_team_shift_distribution,
+        "twoTeamPreferenceLevel": two_team_preference_level,
     }
 
 def parse_requirements(file_path):
