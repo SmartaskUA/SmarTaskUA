@@ -129,93 +129,77 @@ class CombinedScheduler:
                         self.schedule_table[(d + 1, s + 1, t)].append(emp)
 
     def hill_climbing(self, max_iterations=400000, maxTime=60):
-        maxTime = maxTime * 60  # Convert minutes to seconds
+        maxTime = maxTime * 60  # minutes to seconds
         start_time = time.time()
         horario = self.create_horario()
         f1_opt, f2_opt, f3_opt, f4_opt, f5_opt = self.criterios(horario)
         best_score = f1_opt + f2_opt + f3_opt + f4_opt + f5_opt
         iteration = 0
-        cont = 0  # Track actual iterations with swap attempts
-        perfect_solution = False
+        no_improve = 0
 
         while iteration < max_iterations and best_score > 0:
-            cont += 1
             if time.time() - start_time > maxTime:
-                print("Tempo máximo atingido, parando a otimização.")
+                print("Max time reached, stopping optimization.")
                 break
 
-            emp_idx = np.random.randint(len(self.employees))
-            emp = self.employees[emp_idx]
+            # Choose move type: intra-employee swap or inter-employee swap
+            if random.random() < 0.7:
+                # intra-employee: swap two days within same employee
+                emp_idx = random.randint(0, len(self.employees)-1)
+                emp = self.employees[emp_idx]
+                days = [d for d in range(self.num_days) if not self.vac_array[emp_idx, d]]
+                if len(days) < 2:
+                    iteration += 1
+                    continue
+                d1, d2 = random.sample(days, 2)
+                s1, s2 = random.sample([0,1], 2)
+                new_horario = horario.copy()
+                new_horario[emp_idx, d1, s1], new_horario[emp_idx, d2, s2] = horario[emp_idx, d2, s2], horario[emp_idx, d1, s1]
+            else:
+                # inter-employee: swap assignments between two employees on same day and shift
+                d = random.randint(0, self.num_days-1)
+                s = random.choice([0,1])
+                emp_idx, emp2_idx = random.sample(range(len(self.employees)), 2)
+                new_horario = horario.copy()
+                new_horario[emp_idx, d, s], new_horario[emp2_idx, d, s] = horario[emp2_idx, d, s], horario[emp_idx, d, s]
 
-            available_days = [d for d in range(self.num_days) if not self.vac_array[emp_idx, d]]
-            if len(available_days) < 2:
+            # Check basic constraints: no forbidden shift sequences
+            def valid_sequence(h):
+                for i in [emp_idx, 'emp2_idx'] if 'emp2_idx' in locals() else [emp_idx]:
+                    for day in range(self.num_days-1):
+                        if h[i, day, 1] > 0 and h[i, day+1, 0] > 0:
+                            return False
+                return True
+
+            if not valid_sequence(new_horario):
                 iteration += 1
                 continue
 
-            d1, d2 = np.random.choice(available_days, 2, replace=False)
-            s1, s2 = np.random.choice([0, 1], 2, replace=False)
+            f1, f2, f3, f4, f5 = self.criterios(new_horario)
+            new_score = f1 + f2 + f3 + f4 + f5
 
-            t1 = horario[emp_idx, d1, s1]
-            t2 = horario[emp_idx, d2, s2]
-
-            can_work_team_A = 1 in self.teams[emp]
-            can_work_team_B = 2 in self.teams[emp]
-
-            if t1 != t2:
-                new_horario = horario.copy()
-                if can_work_team_A and can_work_team_B:
-                    new_horario[emp_idx, d1, s1], new_horario[emp_idx, d2, s2] = t2, t1
-                elif can_work_team_A:
-                    new_horario[emp_idx, d1, s1] = 1
-                    new_horario[emp_idx, d2, s2] = 0
-                elif can_work_team_B:
-                    new_horario[emp_idx, d1, s1] = 0
-                    new_horario[emp_idx, d2, s2] = 2
-                else:
-                    iteration += 1
-                    continue
-
-                # Check forbidden shift sequences
-                if s1 == 1 and d1 + 1 < self.num_days and new_horario[emp_idx, d1 + 1, 0] > 0:
-                    iteration += 1
-                    continue
-                if s2 == 1 and d2 + 1 < self.num_days and new_horario[emp_idx, d2 + 1, 0] > 0:
-                    iteration += 1
-                    continue
-                if s1 == 0 and d1 > 0 and new_horario[emp_idx, d1 - 1, 1] > 0:
-                    iteration += 1
-                    continue
-                if s2 == 0 and d2 > 0 and new_horario[emp_idx, d2 - 1, 1] > 0:
-                    iteration += 1
-                    continue
-
-                f1, f2, f3, f4, f5 = self.criterios(new_horario)
-                new_score = f1 + f2 + f3 + f4 + f5
-
-                if f1 == 0 and f2 == 0 and f3 == 0 and f4 == 0 and f5 == 0:
-                    horario = new_horario
-                    f1_opt, f2_opt, f3_opt, f4_opt, f5_opt= f1, f2, f3, f4, f5
-                    best_score = new_score
-                    self.update_from_horario(horario)
-                    print(f"Iteration {cont}: Perfect solution found with score = {best_score}")
-                    perfect_solution = True
-                    break
-
+            # Accept if improved or equal (to escape plateaus)
+            if new_score <= best_score:
+                horario = new_horario
+                f1_opt, f2_opt, f3_opt, f4_opt, f5_opt = f1, f2, f3, f4, f5
                 if new_score < best_score:
-                    horario = new_horario
-                    f1_opt, f2_opt, f3_opt, f4_opt, f5_opt = f1, f2, f3, f4, f5
                     best_score = new_score
+                    no_improve = 0
                     self.update_from_horario(horario)
-                    print(f"Iteration {cont}: Improved score = {best_score}")
+                    print(f"Iteration {iteration}: Improved score = {best_score}")
                 else:
-                    print(f"Iteration {cont}: No improvement, score = {best_score}")
+                    # plateau move
+                    no_improve += 1
+                if best_score == 0:
+                    print(f"Perfect solution at iteration {iteration}")
+                    break
+            else:
+                no_improve += 1
 
             iteration += 1
 
-        execution_time = time.time() - start_time
-        print(f"Local Search Optimization completed after {cont} iterations. Final score = {best_score}")
-        print(f"Execution time: {execution_time:.2f} seconds")
-        return horario, perfect_solution
+        print(f"Final score = {best_score} after {iteration} iterations and {time.time()-start_time:.2f}s")
+        return horario, (best_score==0)
 
     def score(self, horario):
         c1, c2, c3, c4, c5 = self.criterios(horario)
