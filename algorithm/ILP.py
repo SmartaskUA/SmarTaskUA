@@ -8,13 +8,13 @@ import pandas as pd
 import pulp
 import holidays
 
-def solve(vacations, minimuns, employees, maxTime):
+def solve(vacations, minimuns, employees, maxTime, year=2025):
     #print(f"[ILP] Minimuns '{minimuns}' ")
     print(f"[ILP] MaxTime '{maxTime}' ")
 
-    ano = 2025
+    # year = 2025
     num_funcionarios = len(employees)
-    dias_ano = pd.date_range(start=f'{ano}-01-01', end=f'{ano}-12-31').to_list()
+    dias_ano = pd.date_range(start=f'{year}-01-01', end=f'{year}-12-31').to_list()
     funcionarios = list(range(num_funcionarios))
     turnos = [0, 1, 2]  # 0 = folga, 1 = manhã, 2 = tarde
 
@@ -38,7 +38,7 @@ def solve(vacations, minimuns, employees, maxTime):
     print(f"[ILP] Equipas identificadas: {list(equipas.keys())}")
 
     # Feriados nacionais + domingos
-    feriados = holidays.country_holidays("PT", years=[ano])
+    feriados = holidays.country_holidays("PT", years=[year])
     domingos_feriados = [d for d in dias_ano if d.weekday() == 6 or d in feriados]
 
     # Férias do CSV

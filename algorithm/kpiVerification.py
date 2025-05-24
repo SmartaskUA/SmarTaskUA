@@ -5,7 +5,7 @@ import json
 import holidays as hl
 import os
 
-def analyze(file, holidays, teams):
+def analyze(file, holidays, teams, year=2025):
     print(f"Analyzing file: {file}")
     df = pd.read_csv(file, encoding='ISO-8859-1')
 
@@ -24,7 +24,6 @@ def analyze(file, holidays, teams):
 
     minimuns_file = os.path.join(os.path.dirname(__file__), "minimuns.csv")
     mins = parse_requirements(minimuns_file)
-    year = 2025
     sunday = []
     for day in pd.date_range(start=f'{year}-01-01', end=f'{year}-12-31'):
         if day.weekday() == 6:
@@ -168,7 +167,7 @@ if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: python kpiVerification.py <file>")
         sys.exit(1)
-    ano = 2025
+    ano = 2026
     holidays = hl.country_holidays("PT", years=[ano])
     dias_ano = pd.date_range(start=f'{ano}-01-01', end=f'{ano}-12-31').to_list()
     start_date = dias_ano[0].date()
@@ -179,5 +178,5 @@ if __name__ == "__main__":
         5: [1, 2], 6: [1, 2], 7: [1], 8: [1],
         9: [1], 10: [2], 11: [2, 1], 12: [2]
     }
-    data = analyze(file, holidays, teams)
+    data = analyze(file, holidays, teams, ano)
     print(json.dumps(data, indent=4))

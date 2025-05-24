@@ -11,7 +11,7 @@ import holidays
 TEAM_LETTER_TO_ID = {'A': 1, 'B': 2}
 
 class GreedyClimbing:
-    def __init__(self, employees, num_days, holidays, vacs, mins, ideals, teams, num_iter=10):
+    def __init__(self, employees, num_days, holidays, vacs, mins, ideals, teams, num_iter=10, maxTime=None, year=2025):
         self.employees = employees   
         self.num_days = num_days     
         self.vacs = vacs   
@@ -21,8 +21,8 @@ class GreedyClimbing:
         self.num_iter = num_iter
         self.assignment = defaultdict(list)    
         self.schedule_table = defaultdict(list)
-        self.ano = 2025
-        self.dias_ano = pd.date_range(start=f'{self.ano}-01-01', end=f'{self.ano}-12-31').to_list()
+        self.year = year
+        self.dias_ano = pd.date_range(start=f'{self.year}-01-01', end=f'{self.year}-12-31').to_list()
         start_date = self.dias_ano[0].date()
         self.holidays = {(d - start_date).days + 1 for d in holidays}
         self.sunday = [d.dayofyear for d in self.dias_ano if d.weekday() == 6]
@@ -30,6 +30,8 @@ class GreedyClimbing:
         self.fds = np.zeros_like(self.vac_array)
         for day in self.sunday:
             self.fds[:, day-1] = True
+        self.maxTime = maxTime
+        self.start_time = time.time()
 
     def _create_vacation_array(self):
         vac_array = np.zeros((len(self.employees), self.num_days), dtype=bool)
@@ -79,6 +81,9 @@ class GreedyClimbing:
         all_days = set(range(1, self.num_days + 1))
 
         while not self.is_complete():
+            if self.maxTime is not None and time.time() - self.start_time >= self.maxTime:
+                print("Maximum time reached, stopping generation.")
+                break
             P = [p for p in self.employees if len(self.assignment[p]) < 223 and len(self.teams[p]) == 1]
             if not P:
                 P = [p for p in self.employees if len(self.assignment[p]) < 223 and len(self.teams[p]) == 2]
@@ -133,18 +138,16 @@ class GreedyClimbing:
 
     def hill_climbing(self, max_iterations=400000, maxTime=60):
         maxTime = maxTime * 60  # Convert minutes to seconds
-        start_time = time.time()
         horario = self.create_horario()
         f1_opt, f2_opt, f3_opt, f4_opt, f5_opt = self.criterios(horario)
         best_score = f1_opt + f2_opt + f3_opt + f4_opt + f5_opt
         iteration = 0
-        cont = 0  # Track actual iterations with swap attempts
-        perfect_solution = False
+        cont = 0
 
         while iteration < max_iterations and best_score > 0:
             cont += 1
-            if time.time() - start_time > maxTime:
-                print("Tempo máximo atingido, parando a otimização.")
+            if maxTime is not None and (time.time() - self.start_time) >= maxTime:
+                print("Maximum time reached, stopping generation.")
                 break
 
             emp_idx = np.random.randint(len(self.employees))
@@ -178,7 +181,6 @@ class GreedyClimbing:
                     iteration += 1
                     continue
 
-                # Check forbidden shift sequences
                 if s1 == 1 and d1 + 1 < self.num_days and new_horario[emp_idx, d1 + 1, 0] > 0:
                     iteration += 1
                     continue
@@ -201,7 +203,6 @@ class GreedyClimbing:
                     best_score = new_score
                     self.update_from_horario(horario)
                     print(f"Iteration {cont}: Perfect solution found with score = {best_score}")
-                    perfect_solution = True
                     break
 
                 if new_score < best_score:
@@ -210,12 +211,12 @@ class GreedyClimbing:
                     best_score = new_score
                     self.update_from_horario(horario)
                     print(f"Iteration {cont}: Improved score = {best_score}")
-                else:
-                    print(f"Iteration {cont}: No improvement, score = {best_score}")
+                # else:
+                    # print(f"Iteration {cont}: No improvement, score = {best_score}")
 
             iteration += 1
 
-        execution_time = time.time() - start_time
+        execution_time = time.time() - self.start_time
         print(f"Local Search Optimization completed after {cont} iterations. Final score = {best_score}")
         print(f"Execution time: {execution_time:.2f} seconds")
 
@@ -229,7 +230,7 @@ class GreedyClimbing:
         f3 = self.criterio3(horario)
         f4 = self.criterio4(horario)
         f5 = self.criterio5(horario)
-        print(f"f1: {f1}, f2: {f2}, f3: {f3}, f4: {f4}, f5: {f5}")
+        # print(f"f1: {f1}, f2: {f2}, f3: {f3}, f4: {f4}, f5: {f5}")
         return f1, f2, f3, f4, f5
 
     def criterio1(self, horario, max_consec=5):
@@ -389,12 +390,12 @@ def export_schedule_to_csv(scheduler, filename="schedule.csv"):
             writer.writerow(row)
     print(f"Schedule exported to {filename}")
 
-def solve(vacations, minimuns, employees, maxTime=None):
+def solve(vacations, minimuns, employees, maxTime=None, year=2025):
     print(f"[GreedyRandomized] Executando Greedy Randomized Scheduling")
     num_employees = len(employees)
     print(f"[GreedyRandomized] Número de funcionários: {num_employees}")
     num_days = 365
-    feriados = holidays.country_holidays("PT", years=[2025])
+    feriados = holidays.country_holidays("PT", years=[year])
 
     emp = [i + 1 for i in range(len(employees))]
     vacs      = rows_to_vac_dict(vacations)
@@ -404,6 +405,7 @@ def solve(vacations, minimuns, employees, maxTime=None):
                        for t in e["teams"]]
              for idx, e in enumerate(employees)}
         
+    maxTime = int(maxTime) if maxTime else None
 
     scheduler = GreedyClimbing(
         employees=emp,

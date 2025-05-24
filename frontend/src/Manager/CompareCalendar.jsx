@@ -232,7 +232,7 @@ export default function CompareCalendar() {
                     const v2 = res[f2][metric];
                     const diff = v2 - v1;
                     const formattedDiff =
-                    metric === "shiftBalance"
+                    metric === "shiftBalance" || metric === "twoTeamPreferenceLevel"
                       ? diff.toFixed(2)
                       : diff === 0
                       ? "Equal"
