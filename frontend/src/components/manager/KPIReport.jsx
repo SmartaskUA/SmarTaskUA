@@ -7,7 +7,6 @@ import {
   Typography,
   Box,
   Paper,
-  Divider,
   Chip,
   Grid,
 } from "@mui/material";
@@ -17,13 +16,27 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 const KPIReport = ({ metrics = {} }) => {
   const {
-    emFails = 0,
+    tmFails = 0,
     consecutiveDays = 0,
     workHolidays = 0,
     missedVacationDays = 0,
+    missedWorkDays = 0,
+    missedTeamMin = 0,
+    shiftBalance = 0,
+    singleTeamViolations = 0,
+    twoTeamPreferenceViolations = 0,
   } = metrics;
 
-  const totalIssues = [emFails, consecutiveDays, workHolidays, missedVacationDays].filter(v => v > 0).length;
+  // Só contam para "Issues Found" as métricas de contagem (não percentuais)
+  const totalIssues = [
+    tmFails,
+    consecutiveDays,
+    workHolidays,
+    missedVacationDays,
+    missedWorkDays,
+    missedTeamMin,
+    singleTeamViolations,
+  ].filter(v => v > 0).length;
 
   const getStatusChip = () => {
     if (totalIssues === 0) {
@@ -32,8 +45,8 @@ const KPIReport = ({ metrics = {} }) => {
     return <Chip label="Issues Found" color="error" icon={<ErrorIcon />} />;
   };
 
-  const renderMetric = (label, value, isViolation) => (
-    <Box mb={3}>
+  const renderMetric = (label, value, isViolation, isPercentage = false) => (
+    <Box>
       <Typography
         variant="subtitle1"
         fontWeight="bold"
@@ -43,10 +56,15 @@ const KPIReport = ({ metrics = {} }) => {
         {label}
       </Typography>
       <Typography
-        sx={{ mb: 0.5 }}
-        color={isViolation ? "error.main" : "success.main"}
+        color={
+          isPercentage
+            ? "text.primary"
+            : isViolation
+              ? "error.main"
+              : "success.main"
+        }
       >
-        {isViolation ? "Not compliant" : "Compliant"}
+        {value}
       </Typography>
     </Box>
   );
@@ -63,34 +81,42 @@ const KPIReport = ({ metrics = {} }) => {
 
         <AccordionDetails>
           <Paper elevation={0} sx={{ p: 3 }}>
+            {/* Linha 1 */}
             <Grid container spacing={3}>
-              <Grid item xs={12}>
-                {renderMetric(
-                  "Invalid T-M Shift Sequence",
-                  emFails,
-                  emFails > 0
-                )}
+              <Grid item xs={12} sm={6} md={3}>
+                {renderMetric("Afternoon-Morning Sequence", tmFails, tmFails > 0)}
               </Grid>
-              <Grid item xs={12}>
-                {renderMetric(
-                  "More Than 5 Consecutive Working Days",
-                  consecutiveDays,
-                  consecutiveDays > 0
-                )}
+              <Grid item xs={12} sm={6} md={3}>
+                {renderMetric("Consecutive Work-Day Violations", consecutiveDays, consecutiveDays > 0)}
               </Grid>
-              <Grid item xs={12}>
-                {renderMetric(
-                  "More Than 22 Working Days on Sundays + Holidays",
-                  workHolidays,
-                  workHolidays > 0
-                )}
+              <Grid item xs={12} sm={6} md={3}>
+                {renderMetric("Holidays and Sundays Work Days", workHolidays, workHolidays > 0)}
               </Grid>
-              <Grid item xs={12}>
-                {renderMetric(
-                  "30 Vacation Days Per Year",
-                  missedVacationDays,
-                  missedVacationDays > 0
-                )}
+              <Grid item xs={12} sm={6} md={3}>
+                {renderMetric("Missed Vacation Days", missedVacationDays, missedVacationDays > 0)}
+              </Grid>
+            </Grid>
+
+            {/* Linha 2 */}
+            <Grid container spacing={3} sx={{ mt: 2 }}>
+              <Grid item xs={12} sm={6} md={4}>
+                {renderMetric("Missed Working Days", missedWorkDays, missedWorkDays > 0)}
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                {renderMetric("Missed Minimums", missedTeamMin, missedTeamMin > 0)}
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                {renderMetric("Single Team Violations", singleTeamViolations, singleTeamViolations > 0)}
+              </Grid>
+            </Grid>
+
+            {/* Linha 3 – Percentagens */}
+            <Grid container spacing={3} sx={{ mt: 2 }}>
+              <Grid item xs={12} sm={6} md={4}>
+                {renderMetric("Shift Balance", `${shiftBalance}%`, false, true)}
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                {renderMetric("Two Team Preference Level", `${twoTeamPreferenceViolations}%`, false, true)}
               </Grid>
             </Grid>
           </Paper>

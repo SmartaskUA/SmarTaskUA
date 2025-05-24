@@ -8,6 +8,8 @@ import KPIReport from "../components/manager/KPIReport";
 import BaseUrl from "../components/BaseUrl";
 import MetadataInfo from "../components/manager/MetadataInfo";
 import { Box, Typography } from "@mui/material";
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
 
 const Calendar = () => {
   const [data, setData] = useState([]);
@@ -30,27 +32,6 @@ const Calendar = () => {
     setEndDay(daysInMonth[selectedMonth - 1]);
   }, [selectedMonth]);
 
-  const analyzeScheduleViaAPI = async (csvData) => {
-    try {
-      const toCsvString = (rows) => rows.map((row) => row.join(",")).join("\n");
-      const blob = new Blob([toCsvString(csvData)], {
-        type: "text/csv;charset=utf-8",
-      });
-
-      const formData = new FormData();
-      formData.append("files", blob, `${calendarId}.csv`);
-
-      const response = await axios.post(`${BaseUrl}/schedules/analyze`, formData);
-      const result = response.data?.[0]?.result;
-      if (result) {
-        const thisResult = Object.values(result)?.[0];
-        setKpiSummary(thisResult);
-      }
-    } catch (error) {
-      console.error("Erro ao analisar calendário via API:", error);
-    }
-  };
-
   useEffect(() => {
     const baseUrl = BaseUrl;
     axios.get(`${baseUrl}/schedules/fetch/${calendarId}`)
@@ -63,11 +44,53 @@ const Calendar = () => {
           setFirstDayOfYear(firstDay);
           setData(scheduleData);
           setMetadata(responseData.metadata);
-          analyzeScheduleViaAPI(scheduleData); // API KPI analysis
+          analyzeScheduleViaWebSocket(scheduleData); // nova função com WebSocket
         }
       })
       .catch(console.error);
   }, [calendarId]);
+
+  const analyzeScheduleViaWebSocket = (csvData) => {
+    const socket = new SockJS(`${BaseUrl}/ws`);
+    const stompClient = new Client({
+      webSocketFactory: () => socket,
+      onConnect: () => {
+        stompClient.subscribe("/topic/comparison/all", (msg) => {
+          try {
+            const data = JSON.parse(msg.body);
+            if (Array.isArray(data) && data.length > 0) {
+              const result = data[0]?.result;
+              if (result) {
+                const firstFile = Object.keys(result)[0];
+                const thisResult = result[firstFile];
+                setKpiSummary(thisResult);
+              }
+            }
+          } catch (e) {
+            console.error("Erro a processar resultado via WebSocket:", e);
+          }
+        });
+
+        const toCsvString = (rows) => rows.map((row) => row.join(",")).join("\n");
+        const csvString = toCsvString(csvData);
+        const blob1 = new Blob([csvString], { type: "text/csv;charset=utf-8" });
+        const blob2 = new Blob([csvString], { type: "text/csv;charset=utf-8" });
+
+        const fd = new FormData();
+        fd.append("files", blob1, `${calendarId}-A.csv`);
+        fd.append("files", blob2, `${calendarId}-B.csv`);
+
+        axios.post(`${BaseUrl}/schedules/analyze`, fd).catch((e) => {
+          console.error("Erro ao enviar CSV para análise:", e);
+        });
+      },
+      onStompError: (frame) => {
+        console.error("Erro STOMP:", frame);
+      },
+    });
+
+    stompClient.activate();
+  };
 
   const downloadCSV = () => {
     const csvContent = data.map(row => row.join(",")).join("\n");
@@ -104,23 +127,6 @@ const Calendar = () => {
 
         <KPIReport metrics={kpiSummary || {}} />
 
-        <Box
-          sx={{
-            mt: 4,
-            p: 2,
-            border: '1px solid #ccc',
-            borderRadius: 2,
-            backgroundColor: '#f9f9f9',
-            maxHeight: 400,
-            overflowY: 'auto',
-            fontSize: 12,
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-          }}
-        >
-          <Typography variant="h6" gutterBottom>Debug: Dados do Schedule (API)</Typography>
-          <pre>{JSON.stringify(data, null, 2)}</pre>
-        </Box>
       </div>
     </div>
   );

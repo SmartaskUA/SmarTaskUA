@@ -23,45 +23,55 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import BaseUrl from "../components/BaseUrl";
 
 const metricInfo = {
-  missedWorkDays: {
-    label: "Missed Work Days",
-    description: "Number of workdays that were missed.",
+  tmFails: {
+    label: "Afternoon-Morning Sequence",
+    description:
+      "Number of times an employee works in an afternoon shift followed by a morning shift in the day after.",
+  },
+  consecutiveDays: {
+    label: "Consecutive Work-Day Violations",
+    description:
+      "Number of times employees exceeded the maximum allowed run of five consecutive working days.",
+  },
+  workHolidays: {
+    label: "Holidays and Sundays Work Days",
+    description:
+      "Number of work days falling on holidays and Sundays that exceed the predefined threshold.",
   },
   missedVacationDays: {
     label: "Missed Vacation Days",
-    description: "Days of vacation that were not used as planned.",
+    description:
+      "Total variance between actual and target vacation days for all employees, expressed as the number of days above or below the target.",
+  },
+  missedWorkDays: {
+    label: "Missed Working Days",
+    description:
+      "Total variance between actual and target working days for all employees, expressed as the number of days above or below the target.",
   },
   missedTeamMin: {
-    label: "Missed Team Minimum Time",
-    description: "Minutes when the team was below the minimum number of members.",
-  },
-  workHolidays: {
-    label: "Work on Holidays and Sundays",
-    description: "How many times someone was scheduled to work on a holiday or Sunday.",
-  },
-  consecutiveDays: {
-    label: "Consecutive Days Worked",
-    description: "How many times a person worked multiple consecutive days without a break.",
-  },
-  shiftBalance: {
-    label: "Shift Balancing",
-    description: "Difference in the number of shifts assigned to people.",
-  },
-  tmFails: {
-    label: "T→M Failures",
-    description: "An employee was scheduled for an evening shift followed by a morning shift.",
+    label: "Missed Minimums",
+    description:
+      "Each team, shift, and day, the count of employees below the required minimum staffing level.",
   },
   singleTeamViolations: {
     label: "Single Team Violations",
-    description: "Cases where members of a team were scheduled alone.",
+    description:
+      "Number of employees that are allowed to work for only one team and end up working for more than one.",
+  },
+  shiftBalance: {
+    label: "Shift Balance",
+    description:
+      "Percentage deviation of the most unbalanced shift distribution exhibited by any employee.",
   },
   twoTeamPreferenceViolations: {
-    label: "Two-Team Preference Violations",
-    description: "Break in the preference to work with a specific colleague.",
+    label: "Two Team Preference Level",
+    description:
+      "Among employees assigned to exactly two teams, the median distribution of work between their primary (preferred) team and their secondary team.",
   },
   twoTeamShiftDistribution: {
     label: "Two-Team Shift Distribution",
-    description: "Breakdown of shifts between team A and B by employee.",
+    description:
+      "Breakdown of shifts between team A and B by employee.",
   },
 };
 
@@ -108,6 +118,8 @@ export default function CompareCalendar() {
         setError("Error fetching calendars.");
       });
   }, []);
+
+  
 
   const handleCompare = async () => {
     try {
@@ -172,6 +184,20 @@ export default function CompareCalendar() {
       </Box>
     );
   };
+
+  // antes do return
+  const orderedMetrics = [
+    "missedWorkDays",
+    "missedVacationDays",
+    "workHolidays",
+    "tmFails",
+    "consecutiveDays",
+    "singleTeamViolations",
+    "missedTeamMin",
+    "shiftBalance",
+    "twoTeamPreferenceViolations",
+  ];
+
 
   return (
     <div className="admin-container">
@@ -254,7 +280,7 @@ export default function CompareCalendar() {
               >
                 <thead style={{ background: "#1976D2", color: "#fff" }}>
                   <tr>
-                    {["Metric", "Calendar 1", "Calendar 2", "Difference"].map(
+                    {["KPIs", "Calendar 1", "Calendar 2", "Difference"].map(
                       (h) => (
                         <th
                           key={h}
@@ -271,7 +297,7 @@ export default function CompareCalendar() {
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.keys(res[f1]).filter(k => k !== "twoTeamShiftDistribution").map((metric, i) => {
+                  {orderedMetrics.map((metric, i) => {
                     const v1 = res[f1][metric];
                     const v2 = res[f2][metric];
                     const diff = v2 - v1;
@@ -285,9 +311,7 @@ export default function CompareCalendar() {
                       >
                         <td style={{ padding: 12, display: "flex", gap: 8 }}>
                           <Tooltip
-                            title={
-                              metricInfo[metric]?.description || "No description"
-                            }
+                            title={metricInfo[metric]?.description || "No description"}
                             arrow
                           >
                             <span style={{ display: "flex", gap: 4 }}>
@@ -311,7 +335,6 @@ export default function CompareCalendar() {
                   })}
                 </tbody>
               </table>
-
               {res[f1].twoTeamShiftDistribution && res[f2].twoTeamShiftDistribution &&
                 renderTwoTeamShiftTable(res[f1].twoTeamShiftDistribution, res[f2].twoTeamShiftDistribution)}
             </Box>
