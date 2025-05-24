@@ -6,8 +6,11 @@ import holidays as hl
 from collections import defaultdict
 import csv
 import io
+import holidays
 
-class CombinedScheduler:
+TEAM_LETTER_TO_ID = {'A': 1, 'B': 2}
+
+class GreedyClimbing:
     def __init__(self, employees, num_days, holidays, vacs, mins, ideals, teams, num_iter=10):
         self.employees = employees   
         self.num_days = num_days     
@@ -215,7 +218,6 @@ class CombinedScheduler:
         execution_time = time.time() - start_time
         print(f"Local Search Optimization completed after {cont} iterations. Final score = {best_score}")
         print(f"Execution time: {execution_time:.2f} seconds")
-        return horario, perfect_solution
 
     def score(self, horario):
         c1, c2, c3, c4, c5 = self.criterios(horario)
@@ -355,13 +357,13 @@ def generate_schedule(maxTime=60):
     }
 
     start_time = time.time()
-    scheduler = CombinedScheduler(employees, num_days, holidays, vacs, mins, ideals, teams)
+    scheduler = GreedyClimbing(employees, num_days, holidays, vacs, mins, ideals, teams)
     scheduler.build_schedule()
     export_schedule_to_csv(scheduler, "schedule1.csv")
     score = scheduler.score(scheduler.create_horario())
     print("Initial solution criteria:")
     print(f"Score: {score}")
-    horario, perfect_solution = scheduler.hill_climbing(maxTime=maxTime)
+    scheduler.hill_climbing(maxTime=maxTime)
     end_time = time.time()
 
     print(f"Execution time: {end_time - start_time:.2f} seconds")
@@ -386,6 +388,86 @@ def export_schedule_to_csv(scheduler, filename="schedule.csv"):
                     row.append("0")
             writer.writerow(row)
     print(f"Schedule exported to {filename}")
+
+def solve(vacations, minimuns, employees, maxTime=None):
+    print(f"[GreedyRandomized] Executando Greedy Randomized Scheduling")
+    num_employees = len(employees)
+    print(f"[GreedyRandomized] Número de funcionários: {num_employees}")
+    num_days = 365
+    feriados = holidays.country_holidays("PT", years=[2025])
+
+    emp = [i + 1 for i in range(len(employees))]
+    vacs      = rows_to_vac_dict(vacations)
+    mins, ideals = rows_to_req_dicts(minimuns)
+
+    teams = {idx + 1: [TEAM_LETTER_TO_ID[t[-1]]  
+                       for t in e["teams"]]
+             for idx, e in enumerate(employees)}
+        
+
+    scheduler = GreedyClimbing(
+        employees=emp,
+        num_days=num_days,
+        holidays=feriados,
+        vacs=vacs,
+        mins=mins,
+        ideals=ideals,
+        teams=teams,
+        num_iter=10,
+        maxTime=maxTime
+    )
+    scheduler.build_schedule()
+    score = scheduler.score(scheduler.create_horario())
+    print("Initial solution criteria:")
+    print(f"Score: {score}")
+    scheduler.hill_climbing(maxTime=maxTime)
+    export_schedule_to_csv(scheduler, "schedule_hybrid.csv")
+
+    header = ["funcionario"] + [f"Dia {d}" for d in range(1, num_days + 1)]
+    output = [header]
+    for p in scheduler.employees:
+        row = [p]
+        assign = {day: (s, t) for (day, s, t) in scheduler.assignment[p]}
+        vacation_days = set(vacs.get(p, []))
+        for d in range(1, num_days + 1):
+            if d in vacation_days:
+                row.append("F")
+            elif d in assign:
+                s, t = assign[d]
+                suffix = "A" if t == 1 else "B"
+                row.append(("M_" if s == 1 else "T_") + suffix)
+            else:
+                row.append("0")
+        output.append(row)
+
+    return output
+
+def rows_to_vac_dict(vac_rows):
+    vacs = {}
+    for row in vac_rows:
+        emp_id = int(row[0].split()[-1])
+        vacs[emp_id] = [
+            idx + 1  
+            for idx, bit in enumerate(row[1:])
+            if bit.strip() == '1'
+        ]
+    return vacs
+
+
+def rows_to_req_dicts(req_rows):
+    mins, ideals = {}, {}
+
+    for row in req_rows:
+        team_label, kind, shift_code, *counts = row
+
+        team_id  = TEAM_LETTER_TO_ID[team_label[-1]]
+        shift    = 1 if shift_code.strip().upper() == 'M' else 2
+        target   = mins if kind.lower().startswith('min') else ideals
+
+        for day, value in enumerate(counts, start=1):
+            if value.strip(): 
+                target[(day, shift, team_id)] = int(value)
+    return mins, ideals
 
 if __name__ == "__main__":
     scheduler = generate_schedule(maxTime=60)
