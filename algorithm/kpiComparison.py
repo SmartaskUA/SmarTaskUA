@@ -21,8 +21,8 @@ def check_files(file_paths):
         print("Wrong header format")
         sys.exit(1)
 
-def analyze(file_path, holidays, teams):
-    return singleVerification(file_path, holidays, teams)
+def analyze(file_path, holidays, teams, vacs, minus, employees, year=2025):
+    return singleVerification(file_path, holidays, teams, vacs, minus, employees, year)
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:

@@ -5,7 +5,7 @@ import json
 import holidays as hl
 import os
 
-def analyze(file, holidays, teams, year=2025):
+def analyze(file, holidays, teams, vacs, minus, employees, year=2025):
     print(f"Analyzing file: {file}")
     df = pd.read_csv(file, encoding='ISO-8859-1')
 
