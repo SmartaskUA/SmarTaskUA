@@ -120,6 +120,11 @@ export default function CompareCalendar() {
       fd.append("files", blob1, `${cal1.id}.csv`);
       fd.append("files", blob2, `${cal2.id}.csv`);
 
+      fd.append("vacationTemplate", cal1.metadata.vacationTemplateData);
+      fd.append("minimunsTemplate", cal1.metadata.minimunsTemplateData);
+      fd.append("employees", JSON.stringify(cal1.metadata.employeesTeamInfo));
+      fd.append("year", String(cal1.metadata.year));
+
       await axios.post("/schedules/analyze", fd);
       setError(null);
     } catch (e) {
