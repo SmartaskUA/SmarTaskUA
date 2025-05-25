@@ -28,6 +28,7 @@ const CreateCalendar = () => {
 
   const [successOpen, setSuccessOpen] = useState(false);
   const [errorOpen, setErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     fetchVacationTemplates();
@@ -69,6 +70,11 @@ const CreateCalendar = () => {
       setSuccessOpen(true);
     } catch (error) {
       console.error("Error sending data:", error);
+      if (error.response?.data?.message) {
+        setErrorMessage(error.response.data.message);
+      } else {
+        setErrorMessage("Failed to create calendar. Try again.");
+      }
       setErrorOpen(true);
     }
   };
@@ -86,7 +92,6 @@ const CreateCalendar = () => {
   const [yearError, setYearError] = useState(false);
   const [maxDurationError, setMaxDurationError] = useState(false);
 
-  // Validações ao digitar
   const handleTitleChange = (e) => {
     const value = e.target.value;
     setTitle(value);
@@ -107,7 +112,6 @@ const CreateCalendar = () => {
     setMaxDurationError(!intValue || intValue <= 0 || !/^\d+$/.test(value));
   };
 
-
   return (
     <div className="admin-container">
       <Sidebar_Manager />
@@ -121,7 +125,7 @@ const CreateCalendar = () => {
           marginRight: "20px",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "left",marginBottom: "2%" }}>
+        <div style={{ display: "flex", justifyContent: "left", marginBottom: "2%" }}>
           <h1>Generate Schedule</h1>
         </div>
 
@@ -138,7 +142,6 @@ const CreateCalendar = () => {
                 error={titleError}
                 helperText={titleError ? "Title is required" : ""}
               />
-
               <TextField
                 fullWidth
                 type="number"
@@ -149,7 +152,6 @@ const CreateCalendar = () => {
                 error={yearError}
                 helperText={yearError ? "Year must be a positive integer" : ""}
               />
-
               <TextField
                 fullWidth
                 type="number"
@@ -208,7 +210,7 @@ const CreateCalendar = () => {
           </Grid>
         </Grid>
 
-        <Box sx={{ display: "flex", justifyContent: "left", marginTop: 3,marginLeft:"17%", gap: 2 }}>
+        <Box sx={{ display: "flex", justifyContent: "left", marginTop: 3, marginLeft: "17%", gap: 2 }}>
           <Button variant="contained" color="success" onClick={handleSave}>Generate</Button>
           <Button variant="contained" color="error" onClick={handleClear}>Clear All</Button>
         </Box>
@@ -223,7 +225,7 @@ const CreateCalendar = () => {
         <NotificationSnackbar
           open={errorOpen}
           severity="error"
-          message="Failed to create calendar. Try again."
+          message={errorMessage}
           onClose={() => setErrorOpen(false)}
         />
       </div>
