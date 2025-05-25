@@ -5,7 +5,7 @@ import json
 import holidays as hl
 import os
 
-def analyze(file, holidays, teams, vacs, minus, employees, year=2025):
+def analyze(file, holidays, vacs, mins, employees, year=2025):
     print(f"Analyzing file: {file}")
     df = pd.read_csv(file, encoding='ISO-8859-1')
 
@@ -23,8 +23,12 @@ def analyze(file, holidays, teams, vacs, minus, employees, year=2025):
     var = 0
     percentages = []
 
-    minimuns_file = os.path.join(os.path.dirname(__file__), "minimuns.csv")
-    mins = parse_requirements(minimuns_file)
+    print(f"Year: {year}")
+    print(f"Holidays: {holidays}")
+
+    # minimuns_file = os.path.join(os.path.dirname(__file__), "minimuns.csv")
+    mins = parse_minimuns(mins)
+    teams = parse_employees(employees)
     sunday = []
     for day in pd.date_range(start=f'{year}-01-01', end=f'{year}-12-31'):
         if day.weekday() == 6:
@@ -147,30 +151,45 @@ def analyze(file, holidays, teams, vacs, minus, employees, year=2025):
         "twoTeamPreferenceLevel": two_team_preference_level,
     }
 
-def parse_requirements(file_path):
+def parse_minimuns(minimums):
     minimos = {}
-    with open(file_path, newline='') as f:
-        reader = list(csv.reader(f))
-        dias_colunas = list(range(1, len(reader[0]) - 3 + 1)) 
+    team_map = {"Equipa A": "A", "Equipa B": "B"}
+    shift_map = {"M": 1, "T": 2}
 
-        linhas_requisitos = {
-            ("A", 1, "Minimo"): 1,
-            ("A", 2, "Minimo"): 3,
-            ("B", 1, "Minimo"): 5,
-            ("B", 2, "Minimo"): 7 
-        }
-
-        for (equipa, turno, tipo), linha_idx in linhas_requisitos.items():
-            valores = reader[linha_idx][3:]
-            for dia, valor in zip(dias_colunas, valores):
-                try:
-                    valor_int = int(valor)
-                    if tipo == "Minimo":
-                        minimos[(dia, equipa, turno)] = valor_int
-                except ValueError:
-                    continue 
-
+    lines = minimums.strip().split('\n')
+    for line in lines:
+        parts = line.split(',')
+        if len(parts) < 4:
+            continue
+        team, req_type, shift = parts[0], parts[1], parts[2]
+        if req_type != "Minimo":
+            continue
+        values = parts[3:]
+        if len(values) != 365:
+            continue 
+        team_label = team_map.get(team)
+        shift_num = shift_map.get(shift)
+        if not team_label or not shift_num:
+            continue
+        for day, value in enumerate(values, 1):
+            try:
+                minimos[(day, team_label, shift_num)] = int(value)
+            except ValueError:
+                continue
     return minimos
+
+def parse_employees(employees):
+    teams = {}
+    team_map = {"Equipa A": 1, "Equipa B": 2}
+    if isinstance(employees, str):
+        employees = json.loads(employees)
+
+    for emp in employees:
+        emp_name = emp["name"]
+        emp_id = int(emp_name.split(' ')[1])
+        emp_teams = [team_map[team] for team in emp["teams"] if team in team_map]
+        teams[emp_id] = emp_teams
+    return teams
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

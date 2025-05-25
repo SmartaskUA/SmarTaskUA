@@ -7,6 +7,8 @@ from algorithm.kpiVerification import analyze as verifyKpis
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 import pandas as pd
 import holidays as hl
+import csv
+import io
 
 mongo = MongoClient("mongodb://admin:password@mongo:27017/")
 db = mongo["mydatabase"]
@@ -40,12 +42,6 @@ def callback(ch, method, properties, body):
         print(f"[Comparison] Processing requestId={request_id}")
         print(f"[DEBUG] Files = {files}")
 
-        teams = {
-            1: [1], 2: [1], 3: [1], 4: [1],
-            5: [1, 2], 6: [1, 2], 7: [1], 8: [1],
-            9: [1], 10: [2], 11: [2, 1], 12: [2]
-        }
-
         holidays = hl.country_holidays("PT", years=[year])
         dias_ano = pd.date_range(start=f'{year}-01-01', end=f'{year}-12-31').to_list()
         start_date = dias_ano[0].date()
@@ -53,7 +49,7 @@ def callback(ch, method, properties, body):
 
         if len(files) == 1:
             print("[DEBUG] Running verifyKpis for file:", files[0])
-            result = verifyKpis(files[0], holidays, teams, vacs, mins, employees, year)
+            result = verifyKpis(files[0], holidays, vacs, mins, employees, year)
             print("[DEBUG] verifyKpis result:", result)
             try:
                 verification_results.insert_one({
@@ -71,7 +67,7 @@ def callback(ch, method, properties, body):
             results = {}
             for f in files:
                 print("[DEBUG] Running compareKpis for file:", f)
-                results[f] = compareKpis(f, holidays, teams, vacs, mins, employees, year)
+                results[f] = compareKpis(f, holidays, vacs, mins, employees, year)
             print("[DEBUG] compareKpis results:", results)
             try:
                 comparison_results.insert_one({
