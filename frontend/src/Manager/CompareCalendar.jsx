@@ -301,6 +301,11 @@ export default function CompareCalendar() {
                     const v1 = res[f1][metric];
                     const v2 = res[f2][metric];
                     const diff = v2 - v1;
+
+                    const isPercentage = metric === "shiftBalance" || metric === "twoTeamPreferenceViolations";
+                    const getColor = (val) =>
+                      isPercentage ? "#212121" : val > 0 ? "#d32f2f" : "#2e7d32";
+
                     return (
                       <tr
                         key={metric}
@@ -310,24 +315,20 @@ export default function CompareCalendar() {
                         }}
                       >
                         <td style={{ padding: 12, display: "flex", gap: 8 }}>
-                          <Tooltip
-                            title={metricInfo[metric]?.description || "No description"}
-                            arrow
-                          >
+                          <Tooltip title={metricInfo[metric]?.description || "No description"} arrow>
                             <span style={{ display: "flex", gap: 4 }}>
                               {metricInfo[metric]?.label || metric}
                               <HelpOutlineIcon fontSize="small" />
                             </span>
                           </Tooltip>
                         </td>
-                        <td style={{ padding: 12 }}>{v1}</td>
-                        <td style={{ padding: 12 }}>{v2}</td>
-                        <td
-                          style={{
-                            padding: 12,
-                            color: diff === 0 ? "#1976D2" : "#f44336",
-                          }}
-                        >
+                        <td style={{ padding: 12, color: getColor(v1) }}>
+                          {isPercentage ? `${v1}%` : v1}
+                        </td>
+                        <td style={{ padding: 12, color: getColor(v2) }}>
+                          {isPercentage ? `${v2}%` : v2}
+                        </td>
+                        <td style={{ padding: 12, color: "#1976D2" }}>
                           {diff === 0 ? "Equal" : `${diff > 0 ? "+" : ""}${diff}`}
                         </td>
                       </tr>
