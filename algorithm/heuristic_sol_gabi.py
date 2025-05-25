@@ -120,7 +120,6 @@ def salvar_csv(horario, Ferias, nTurnos, nDias, Prefs):
         f.write(output.getvalue())
 
     return output.getvalue()
-
 def atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos, feriados):
     nTrabs = len(Prefs)
     nDias = Ferias.shape[1]
@@ -129,109 +128,75 @@ def atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos, feriados):
     turnos_cobertura = np.zeros((nDias, nTurnos), dtype=int)
     carga_trabalho = np.zeros(nTrabs, dtype=int)
     
+    feriados_set = set(feriados)
+    domingos = set(range(4, nDias, 7))  # domingos baseados na sua máscara
+    
+    dias_trabalho_preferidos = [d for d in range(nDias) if d not in feriados_set and d not in domingos]
+    
     for i in range(nTrabs):
         dias_disponiveis = np.where(~Ferias[i])[0]
-        dias_disponiveis = sorted(dias_disponiveis, key=lambda d: sum(turnos_cobertura[d]))
+        
+        # Priorizar dias que não são feriados nem domingos
+        dias_normais = [d for d in dias_disponiveis if d in dias_trabalho_preferidos]
+        dias_eventuais = [d for d in dias_disponiveis if d not in dias_trabalho_preferidos]
         
         turnos_assigned = 0
-        d = 0
         
-        while turnos_assigned < nDiasTrabalho and d < len(dias_disponiveis):
-            dia = dias_disponiveis[d]
-            turnos_possiveis = []
+        # Primeiro, tenta preencher com dias normais (sem feriados e domingos)
+        for dia in sorted(dias_normais, key=lambda d: sum(turnos_cobertura[d])):
+            if turnos_assigned >= nDiasTrabalho:
+                break
             
             preferencia = Prefs[i]
+            
+            # Verifica turnos possíveis 
+            turnos_possiveis = []
             for turno in preferencia:
-                if turno == 1:
+                if turno == 1:  # Tarde
                     if dia + 1 >= nDias or horario[i, dia + 1, 0] == 0:
                         turnos_possiveis.append(turno)
-                elif turno == 0:
+                elif turno == 0:  # Manhã
                     if dia - 1 < 0 or horario[i, dia - 1, 1] == 0:
                         turnos_possiveis.append(turno)
                 else:
                     turnos_possiveis.append(turno)
             
             if turnos_possiveis:
-                chance_pular = 0.3
-                if len(preferencia) == 1:
-                    chance_pular = 0.1  # menos chance de pular dia
-                if dia in feriados or dia % 7 in [5, 6]:
-                    if np.random.rand() < chance_pular:
-                        d += 1
-                        continue
-                
-                turno = np.random.choice(turnos_possiveis)
+                # Escolhe o turno com menor cobertura naquele dia (para balancear)
+                turno = min(turnos_possiveis, key=lambda t: turnos_cobertura[dia, t])
                 horario[i, dia, turno] = 1
                 turnos_assigned += 1
                 carga_trabalho[i] += 1
                 turnos_cobertura[dia, turno] += 1
-                
-                d += 2 if turno == 1 else 1
-            else:
-                d += 1
         
-        # Preencher forçando se necessário, mas sempre priorizando turnos preferidos
+        # Se não atingiu o mínimo de dias, tenta preencher com dias que são feriados/domingo
         if turnos_assigned < nDiasTrabalho:
-            for dia in dias_disponiveis:
+            for dia in sorted(dias_eventuais, key=lambda d: sum(turnos_cobertura[d])):
                 if turnos_assigned >= nDiasTrabalho:
                     break
+                
+                preferencia = Prefs[i]
+                
+                turnos_possiveis = []
                 for turno in preferencia:
-                    if horario[i, dia, turno] == 0:
-                        horario[i, dia, turno] = 1
-                        turnos_assigned += 1
-                        carga_trabalho[i] += 1
-                        turnos_cobertura[dia, turno] += 1
-                        break
-    
+                    if turno == 1:
+                        if dia + 1 >= nDias or horario[i, dia + 1, 0] == 0:
+                            turnos_possiveis.append(turno)
+                    elif turno == 0:
+                        if dia - 1 < 0 or horario[i, dia - 1, 1] == 0:
+                            turnos_possiveis.append(turno)
+                    else:
+                        turnos_possiveis.append(turno)
+                
+                if turnos_possiveis:
+                    turno = min(turnos_possiveis, key=lambda t: turnos_cobertura[dia, t])
+                    horario[i, dia, turno] = 1
+                    turnos_assigned += 1
+                    carga_trabalho[i] += 1
+                    turnos_cobertura[dia, turno] += 1
+                    
     return horario
 
-# def atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos):
-
-#     nTrabs = len(Prefs)
-#     nDias = Ferias.shape[1] 
-#     horario = np.zeros((nTrabs, nDias, nTurnos), dtype=int) 
-
-#     for i in range(nTrabs): 
-#         dias_disponiveis = np.where(~Ferias[i])[0]
-#         np.random.shuffle(dias_disponiveis)  
-
-#         turnos_assigned = 0
-#         d = 0
-
-#         while turnos_assigned < nDiasTrabalho and d < len(dias_disponiveis):
-#             dia = dias_disponiveis[d]
-#             turnos_possiveis = []
-
-#             for turno in Prefs[i]: 
-#                 if turno == 1:  # Tarde
-#                     if dia + 1 >= nDias or horario[i, dia + 1, 0] == 0:
-#                         turnos_possiveis.append(turno)
-#                 elif turno == 0:  # Manhã
-#                     if dia - 1 < 0 or horario[i, dia - 1, 1] == 0:
-#                         turnos_possiveis.append(turno)
-#                 else: 
-#                     turnos_possiveis.append(turno)
-
-#             if turnos_possiveis:
-#                 turno = np.random.choice(turnos_possiveis)
-#                 horario[i, dia, turno] = 1
-#                 turnos_assigned += 1
-#                 d += 2 if turno == 1 else 1  # Pula dia extra se for tarde
-#             else:
-#                 d += 1  
-
-#         # Caso não tenha conseguido atingir a meta, tenta preencher à força
-#         if turnos_assigned < nDiasTrabalho:
-#             for dia in dias_disponiveis:
-#                 if turnos_assigned >= nDiasTrabalho:
-#                     break
-#                 for turno in Prefs[i]:
-#                     if horario[i, dia, turno] == 0:
-#                         horario[i, dia, turno] = 1
-#                         turnos_assigned += 1
-#                         break
-
-#     return horario
 def criterio1(horario, nDiasSeguidos):
     nTrabs, nDias, _ = horario.shape
     f1 = np.zeros(nTrabs, dtype=int)  
@@ -253,12 +218,12 @@ def criterio1(horario, nDiasSeguidos):
 
     return f1
 
-def criterio2(horario, fds_mask, nDiasTrabalhoFDS, feriados_idx):
+def criterio2(horario, fds_mask, nDiasTrabalhoFDS, feriados):
 
     nTrabs, nDias, _ = horario.shape
 
     mascara_fds_feriados = fds_mask.copy()  
-    mascara_fds_feriados[:, feriados_idx] = True  
+    mascara_fds_feriados[:, feriados] = True  
 
     trabalhou_nesse_dia = (horario.sum(axis=2) > 0)  
     trabalhos_em_fds_feriados = trabalhou_nesse_dia & mascara_fds_feriados
