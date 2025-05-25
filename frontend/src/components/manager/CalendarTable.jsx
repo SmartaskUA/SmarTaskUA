@@ -11,21 +11,23 @@ import {
 import LegendBox from "./LegendBox";
 
 const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay, firstDayOfYear }) => {
-  const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const abbreviateValue = (value) => {
     const normalized = value.toUpperCase();
     if (normalized === "0") return "";
-    if (normalized === "F") return "Fe";
+    if (normalized === "F") return "V"; 
+    if (normalized === "T_A") return "A_A"; 
+    if (normalized === "T_B") return "A_B"; 
     return value;
   };
 
   const getCellStyle = (value) => {
     const normalized = value.toUpperCase();
     if (normalized === "0") return { backgroundColor: "#ffffff", color: "#000" };
-    if (normalized === "F") return { backgroundColor: "#ffcccb", color: "#000" };
-    if (["T", "T_A", "T_B"].includes(normalized)) return { backgroundColor: "#f9e79f", color: "#000" };
-    if (["M", "M_A", "M_B"].includes(normalized)) return { backgroundColor: "#d4edda", color: "#000" };
+    if (normalized === "F") return { backgroundColor: "#ffcccb", color: "#000" }; // Vacation
+    if (["T", "T_A", "T_B", "A_A", "A_B"].includes(normalized)) return { backgroundColor: "#f9e79f", color: "#000" }; // Afternoon
+    if (["M", "M_A", "M_B"].includes(normalized)) return { backgroundColor: "#d4edda", color: "#000" }; // Morning
     return {};
   };
 
@@ -71,7 +73,7 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay, fir
                   verticalAlign: "middle",
                 }}
               >
-                Funcionário
+                Employee
               </TableCell>
               {Array.from({ length: numDays }, (_, index) => {
                 const currentDay = startDay + index;
@@ -90,7 +92,7 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay, fir
                       fontWeight: isHoliday ? "bold" : undefined,
                     }}
                   >
-                    Dia {currentDay}
+                    Day {currentDay}
                   </TableCell>
                 );
               })}
@@ -155,7 +157,7 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay, fir
                           color: "white",
                         }}
                       >
-                        Funcionário {rowIndex + 1}
+                        Employee {rowIndex + 1}
                       </TableCell>
                     );
                   }

@@ -21,10 +21,8 @@ const Calendar = () => {
   const [metadata, setMetadata] = useState(null);
   const [kpiSummary, setKpiSummary] = useState(null);
 
-  const months = [
-    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-  ];
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
   const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
   useEffect(() => {
