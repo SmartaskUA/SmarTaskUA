@@ -21,6 +21,7 @@ def analyze(file, holidays, teams, year=2025):
     two_team_preference_level = {}
     balance = []
     var = 0
+    percentages = []
 
     minimuns_file = os.path.join(os.path.dirname(__file__), "minimuns.csv")
     mins = parse_requirements(minimuns_file)
@@ -91,24 +92,32 @@ def analyze(file, holidays, teams, year=2025):
             teamA_shifts = sum(row[col] in ['M_A', 'T_A'] for col in dia_cols)
             teamB_shifts = sum(row[col] in ['M_B', 'T_B'] for col in dia_cols)
             if (allowed_teams[0] == 1):
+                print(f"Team A shifts: {teamA_shifts}, Team B shifts: {teamB_shifts}")
                 balance.append(round(teamA_shifts / (teamB_shifts + teamA_shifts), 4)*100)
             else:
+                print(f"Team B shifts: {teamB_shifts}, Team A shifts: {teamA_shifts}")
                 balance.append(round(teamB_shifts / (teamB_shifts + teamA_shifts), 4)*100)
 
         total_morning += sum(row[col] in ['M_A', 'M_B'] for col in dia_cols)
         total_afternoon += sum(row[col] in ['T_A', 'T_B'] for col in dia_cols)
 
+        total_shifts = total_morning + total_afternoon
+        if total_shifts > 0:
+            morning_percentage = (total_morning / total_shifts) * 100
+            afternoon_percentage = (total_afternoon / total_shifts) * 100
+            print(f"Morning percentage: {morning_percentage:.2f}%, Afternoon percentage: {afternoon_percentage:.2f}%")
+            print(min(morning_percentage, afternoon_percentage))
+            percentages.append(min(morning_percentage, afternoon_percentage))
+
+
     for i in range(len(balance)):
         var += balance[i]
-    two_team_preference_level = round(var / len(balance), 2)
+    if balance:
+        two_team_preference_level = round(var / len(balance), 2)
+    else:
+        two_team_preference_level = 0
 
-    total_shifts = total_morning + total_afternoon
-    percentages = []
-    if total_shifts > 0:
-        morning_percentage = (total_morning / total_shifts) * 100
-        afternoon_percentage = (total_afternoon / total_shifts) * 100
-        percentages.append(min(morning_percentage, afternoon_percentage))
-
+    print(percentages)
     shift_balance = min(percentages) if percentages else 0
 
     def givenShift(team_label, shift):

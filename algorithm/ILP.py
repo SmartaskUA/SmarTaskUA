@@ -42,7 +42,7 @@ def solve(vacations, minimuns, employees, maxTime, year=2025):
     domingos_feriados = [d for d in dias_ano if d.weekday() == 6 or d in feriados]
 
     # Férias do CSV
-    datas_do_ano = pd.date_range(start="2025-01-01", periods=365)
+    datas_do_ano = pd.date_range(start=f"{year}-01-01", periods=365)
     ferias = {
         f_idx: {
             datas_do_ano[i]
@@ -190,7 +190,7 @@ def solve(vacations, minimuns, employees, maxTime, year=2025):
         return f"{turno_str}_{equipe_suffix}"
 
     escala = {
-        f"Empregado{f + 1}": {
+        f"{f + 1}": {
             dias_str[d]: get_turno_com_equipa(
                 f,
                 d,
