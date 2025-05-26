@@ -10,7 +10,15 @@ import {
 } from "@mui/material";
 import LegendBox from "./LegendBox";
 
-const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay, firstDayOfYear }) => {
+const CalendarTable = ({
+  data,
+  selectedMonth,
+  daysInMonth,
+  startDay,
+  endDay,
+  firstDayOfYear,
+  holidayMap = {},
+}) => {
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const abbreviateValue = (value) => {
@@ -39,17 +47,7 @@ const CalendarTable = ({ data, selectedMonth, daysInMonth, startDay, endDay, fir
   };
 
   const isFixedHoliday = (month, day) => {
-    const holidays = {
-      1: [1],
-      4: [25],
-      5: [1],
-      6: [10],
-      8: [15],
-      10: [5],
-      11: [1],
-      12: [1, 8, 25],
-    };
-    return holidays[month]?.includes(day);
+    return holidayMap[month]?.includes(day);
   };
 
   const displayedData = getDisplayedData();

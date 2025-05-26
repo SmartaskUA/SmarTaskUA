@@ -20,9 +20,9 @@ const Calendar = () => {
   const { calendarId } = useParams();
   const [metadata, setMetadata] = useState(null);
   const [kpiSummary, setKpiSummary] = useState(null);
+  const [holidayMap, setHolidayMap] = useState({});
 
   const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
   const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
   useEffect(() => {
@@ -42,11 +42,31 @@ const Calendar = () => {
           setFirstDayOfYear(firstDay);
           setData(scheduleData);
           setMetadata(responseData.metadata);
-          analyzeScheduleViaWebSocket(scheduleData); // nova função com WebSocket
+          fetchNationalHolidays(year);
+          analyzeScheduleViaWebSocket(scheduleData);
         }
       })
       .catch(console.error);
   }, [calendarId]);
+
+  const fetchNationalHolidays = async (year) => {
+    try {
+      const res = await axios.get(`https://date.nager.at/api/v3/PublicHolidays/${year}/PT`);
+      const holidays = {};
+      res.data
+        .filter((h) => h.counties === null) // apenas feriados nacionais
+        .forEach((holiday) => {
+          const date = new Date(holiday.date);
+          const month = date.getMonth() + 1;
+          const day = date.getDate();
+          if (!holidays[month]) holidays[month] = [];
+          holidays[month].push(day);
+        });
+      setHolidayMap(holidays);
+    } catch (err) {
+      console.error("Failed to fetch national holidays:", err);
+    }
+  };
 
   const analyzeScheduleViaWebSocket = (csvData) => {
     const socket = new SockJS(`${BaseUrl}/ws`);
@@ -119,12 +139,11 @@ const Calendar = () => {
           startDay={startDay}
           endDay={endDay}
           firstDayOfYear={firstDayOfYear}
+          holidayMap={holidayMap}
         />
 
         <MetadataInfo metadata={metadata} />
-
         <KPIReport metrics={kpiSummary || {}} />
-
       </div>
     </div>
   );
