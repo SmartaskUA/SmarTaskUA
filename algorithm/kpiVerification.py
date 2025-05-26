@@ -25,8 +25,9 @@ def analyze(file, holidays, vacs, mins, employees, year=2025):
 
     print(f"Year: {year}")
     print(f"Holidays: {holidays}")
+    print(f"Minimuns: {mins}")
+    print(f"Employees: {employees}")
 
-    # minimuns_file = os.path.join(os.path.dirname(__file__), "minimuns.csv")
     mins = parse_minimuns(mins)
     teams = parse_employees(employees)
     sunday = []
@@ -156,8 +157,20 @@ def parse_minimuns(minimums):
     team_map = {"Equipa A": "A", "Equipa B": "B"}
     shift_map = {"M": 1, "T": 2}
 
-    lines = minimums.strip().split('\n')
-    for line in lines:
+    minimums = minimums.replace('\r\n', '\n').replace('\r', '\n').strip()
+    lines = minimums.split('\n')
+    print(f"Raw input (first 100 chars): {minimums[:100]}")
+    print(f"Total lines after split: {len(lines)}")
+
+    if len(lines) == 1 and ',' in lines[0]:
+        parts = lines[0].split(',')
+        if len(parts) >= 368:
+            lines = [','.join(parts[i:i+368]) for i in range(0, len(parts), 368)]
+
+    for line_num, line in enumerate(lines, 1):
+        line = line.strip()
+        if not line:
+            continue
         parts = line.split(',')
         if len(parts) < 4:
             continue
@@ -165,13 +178,13 @@ def parse_minimuns(minimums):
         if req_type != "Minimo":
             continue
         values = parts[3:]
-        if len(values) != 365:
-            continue 
+        if len(values) < 365:
+            continue
         team_label = team_map.get(team)
         shift_num = shift_map.get(shift)
         if not team_label or not shift_num:
             continue
-        for day, value in enumerate(values, 1):
+        for day, value in enumerate(values[:365], 1):  # Use only first 365 values
             try:
                 minimos[(day, team_label, shift_num)] = int(value)
             except ValueError:

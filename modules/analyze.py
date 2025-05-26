@@ -32,7 +32,6 @@ def callback(ch, method, properties, body):
         employees = message.get("employees", "[]")
         year = int(message.get("year", 2025))
         employees = json.loads(employees)
-        print(employees)
 
         if not files:
             print("[ERROR] No files received.")
