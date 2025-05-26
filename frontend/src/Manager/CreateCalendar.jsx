@@ -3,6 +3,7 @@ import axios from "axios";
 import baseurl from "../components/BaseUrl";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import NotificationSnackbar from "../components/manager/NotificationSnackbar";
+import { useNavigate } from "react-router-dom";
 import {
   Typography,
   Grid,
@@ -29,6 +30,8 @@ const CreateCalendar = () => {
   const [successOpen, setSuccessOpen] = useState(false);
   const [errorOpen, setErrorOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchVacationTemplates();
@@ -68,13 +71,20 @@ const CreateCalendar = () => {
       const response = await axios.post(`${baseurl}/schedules/generate`, data);
       console.log("API Response:", response.data);
       setSuccessOpen(true);
+      setTimeout(() => {
+        navigate("/manager");
+      }, 0);
     } catch (error) {
       console.error("Error sending data:", error);
-      if (error.response?.data?.message) {
-        setErrorMessage(error.response.data.message);
-      } else {
-        setErrorMessage("Failed to create calendar. Try again.");
+      const rawMsg = error.response?.data?.message || error.response?.data;
+      let displayMsg = rawMsg || "Failed to create calendar. Try again.";
+
+      if (typeof displayMsg === "string" && displayMsg.includes("Caused by:")) {
+        const [, cause] = displayMsg.split("Caused by:");
+        displayMsg = cause?.trim() || displayMsg;
       }
+
+      setErrorMessage(displayMsg);
       setErrorOpen(true);
     }
   };
