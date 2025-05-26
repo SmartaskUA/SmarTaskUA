@@ -25,7 +25,7 @@ public class ComparisonNotifier {
     public void notifyComparisonResults() {
 
         Query query = new Query(Criteria.where("status").is("done"));
-        List<Document> results = mongoTemplate.find(query, Document.class, "comparisons");
+        List<Document> results = mongoTemplate.find(query, Document.class, "verifications");
 
         if (!results.isEmpty()) {
         System.out.println("\n Comparison results : "+results);
@@ -44,7 +44,7 @@ public class ComparisonNotifier {
             messagingTemplate.convertAndSend("/topic/comparison/all", comparisonResults);
 
             // Remove todos os documentos enviados
-            mongoTemplate.remove(query, "comparisons");
+            mongoTemplate.remove(query, "verifications");
         }
     }
 }

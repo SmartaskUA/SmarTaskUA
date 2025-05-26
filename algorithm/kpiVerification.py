@@ -5,15 +5,9 @@ import json
 import holidays as hl
 import os
 
-def analyze(file, holidays, teams):
+def analyze(file, holidays, vacs, mins, employees, year=2025):
     print(f"Analyzing file: {file}")
     df = pd.read_csv(file, encoding='ISO-8859-1')
-
-    # Print the first few rows of the DataFrame for debugging
-    # print("DataFrame head:")
-    # print(df.head())
-    # print(df.columns)
-    # print(df)
 
     missed_work_days = 0
     missed_vacation_days = 0
@@ -24,11 +18,18 @@ def analyze(file, holidays, teams):
     total_afternoon = 0
     total_tm_fails = 0
     single_team_violations = 0
-    two_team_preference_violations = 0
+    two_team_preference_level = {}
+    balance = []
+    var = 0
+    percentages = []
 
-    minimuns_file = os.path.join(os.path.dirname(__file__), "minimuns.csv")
-    mins = parse_requirements(minimuns_file)
-    year = 2025
+    print(f"Year: {year}")
+    print(f"Holidays: {holidays}")
+    print(f"Minimuns: {mins}")
+    print(f"Employees: {employees}")
+
+    mins = parse_minimuns(mins)
+    teams = parse_employees(employees)
     sunday = []
     for day in pd.date_range(start=f'{year}-01-01', end=f'{year}-12-31'):
         if day.weekday() == 6:
@@ -45,7 +46,6 @@ def analyze(file, holidays, teams):
         missed_vacation_days += abs(30 - vacation_days)
 
         total_worked_holidays = sum(row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] for col in all_special_cols)
-        print(f"Total worked holidays: {total_worked_holidays}")
         if total_worked_holidays > 22:
             workHolidays += total_worked_holidays - 22
 
@@ -94,23 +94,35 @@ def analyze(file, holidays, teams):
             if team_counts[other_team] > 0:
                 single_team_violations += 1
         elif len(allowed_teams) == 2:
-            preferred_team = allowed_teams[0]
-            other_team = 2 if preferred_team == 1 else 1
-            if team_counts[preferred_team] < team_counts[other_team]:
-                two_team_preference_violations += 1
+            teamA_shifts = sum(row[col] in ['M_A', 'T_A'] for col in dia_cols)
+            teamB_shifts = sum(row[col] in ['M_B', 'T_B'] for col in dia_cols)
+            if (allowed_teams[0] == 1):
+                print(f"Team A shifts: {teamA_shifts}, Team B shifts: {teamB_shifts}")
+                balance.append(round(teamA_shifts / (teamB_shifts + teamA_shifts), 4)*100)
+            else:
+                print(f"Team B shifts: {teamB_shifts}, Team A shifts: {teamA_shifts}")
+                balance.append(round(teamB_shifts / (teamB_shifts + teamA_shifts), 4)*100)
 
         total_morning += sum(row[col] in ['M_A', 'M_B'] for col in dia_cols)
         total_afternoon += sum(row[col] in ['T_A', 'T_B'] for col in dia_cols)
 
-    print("Morning shifts:", total_morning)
-    print("Afternoon shifts:", total_afternoon)
-    total_shifts = total_morning + total_afternoon
-    percentages = []
-    if total_shifts > 0:
-        morning_percentage = (total_morning / total_shifts) * 100
-        afternoon_percentage = (total_afternoon / total_shifts) * 100
-        percentages.append(min(morning_percentage, afternoon_percentage))
+        total_shifts = total_morning + total_afternoon
+        if total_shifts > 0:
+            morning_percentage = (total_morning / total_shifts) * 100
+            afternoon_percentage = (total_afternoon / total_shifts) * 100
+            print(f"Morning percentage: {morning_percentage:.2f}%, Afternoon percentage: {afternoon_percentage:.2f}%")
+            print(min(morning_percentage, afternoon_percentage))
+            percentages.append(min(morning_percentage, afternoon_percentage))
 
+
+    for i in range(len(balance)):
+        var += balance[i]
+    if balance:
+        two_team_preference_level = round(var / len(balance), 2)
+    else:
+        two_team_preference_level = 0
+
+    print(percentages)
     shift_balance = min(percentages) if percentages else 0
 
     def givenShift(team_label, shift):
@@ -127,51 +139,76 @@ def analyze(file, holidays, teams):
 
         missing = max(0, required - assigned)
         missed_team_min += int(missing)
-        if missing > 0:
-            print(f"Expected {required} for {code} on {col}, found {assigned}, missing {missing}")
 
     return {
         "missedWorkDays": missed_work_days,
         "missedVacationDays": missed_vacation_days,
-        "missedTeamMin": missed_team_min,
         "workHolidays": workHolidays,
-        "consecutiveDays": consecutiveDays,
-        "shiftBalance": round(shift_balance, 2),
         "tmFails": total_tm_fails,
+        "consecutiveDays": consecutiveDays,
         "singleTeamViolations": single_team_violations,
-        "twoTeamPreferenceViolations": two_team_preference_violations,
+        "missedTeamMin": missed_team_min,
+        "shiftBalance": round(shift_balance, 2),
+        "twoTeamPreferenceLevel": two_team_preference_level,
     }
 
-def parse_requirements(file_path):
+def parse_minimuns(minimums):
     minimos = {}
-    with open(file_path, newline='') as f:
-        reader = list(csv.reader(f))
-        dias_colunas = list(range(1, len(reader[0]) - 3 + 1)) 
+    team_map = {"Equipa A": "A", "Equipa B": "B"}
+    shift_map = {"M": 1, "T": 2}
 
-        linhas_requisitos = {
-            ("A", 1, "Minimo"): 1,
-            ("A", 2, "Minimo"): 3,
-            ("B", 1, "Minimo"): 5,
-            ("B", 2, "Minimo"): 7 
-        }
+    minimums = minimums.replace('\r\n', '\n').replace('\r', '\n').strip()
+    lines = minimums.split('\n')
+    print(f"Raw input (first 100 chars): {minimums[:100]}")
+    print(f"Total lines after split: {len(lines)}")
 
-        for (equipa, turno, tipo), linha_idx in linhas_requisitos.items():
-            valores = reader[linha_idx][3:]
-            for dia, valor in zip(dias_colunas, valores):
-                try:
-                    valor_int = int(valor)
-                    if tipo == "Minimo":
-                        minimos[(dia, equipa, turno)] = valor_int
-                except ValueError:
-                    continue 
+    if len(lines) == 1 and ',' in lines[0]:
+        parts = lines[0].split(',')
+        if len(parts) >= 368:
+            lines = [','.join(parts[i:i+368]) for i in range(0, len(parts), 368)]
 
+    for line_num, line in enumerate(lines, 1):
+        line = line.strip()
+        if not line:
+            continue
+        parts = line.split(',')
+        if len(parts) < 4:
+            continue
+        team, req_type, shift = parts[0], parts[1], parts[2]
+        if req_type != "Minimo":
+            continue
+        values = parts[3:]
+        if len(values) < 365:
+            continue
+        team_label = team_map.get(team)
+        shift_num = shift_map.get(shift)
+        if not team_label or not shift_num:
+            continue
+        for day, value in enumerate(values[:365], 1):  # Use only first 365 values
+            try:
+                minimos[(day, team_label, shift_num)] = int(value)
+            except ValueError:
+                continue
     return minimos
+
+def parse_employees(employees):
+    teams = {}
+    team_map = {"Equipa A": 1, "Equipa B": 2}
+    if isinstance(employees, str):
+        employees = json.loads(employees)
+
+    for emp in employees:
+        emp_name = emp["name"]
+        emp_id = int(emp_name.split(' ')[1])
+        emp_teams = [team_map[team] for team in emp["teams"] if team in team_map]
+        teams[emp_id] = emp_teams
+    return teams
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: python kpiVerification.py <file>")
         sys.exit(1)
-    ano = 2025
+    ano = 2026
     holidays = hl.country_holidays("PT", years=[ano])
     dias_ano = pd.date_range(start=f'{ano}-01-01', end=f'{ano}-12-31').to_list()
     start_date = dias_ano[0].date()
@@ -182,5 +219,5 @@ if __name__ == "__main__":
         5: [1, 2], 6: [1, 2], 7: [1], 8: [1],
         9: [1], 10: [2], 11: [2, 1], 12: [2]
     }
-    data = analyze(file, holidays, teams)
+    data = analyze(file, holidays, teams, ano)
     print(json.dumps(data, indent=4))

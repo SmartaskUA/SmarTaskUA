@@ -111,7 +111,11 @@ public class SchedulesController {
 
 
     @PostMapping("/analyze")
-    public ResponseEntity<?> analyzeSchedules(@RequestParam("files") List<MultipartFile> files) {
+    public ResponseEntity<?> analyzeSchedules(@RequestParam("files") List<MultipartFile> files,
+                                              @RequestParam("vacationTemplate") String vacationTemplate,
+                                              @RequestParam("minimunsTemplate") String minimunsTemplate,
+                                              @RequestParam("employees") String employees,
+                                              @RequestParam("year") String year) {
         try {
             log.info("Received request to analyze {} files", files.size());
             String requestId = UUID.randomUUID().toString();
@@ -138,7 +142,15 @@ public class SchedulesController {
             Map<String, Object> message = new HashMap<>();
             message.put("requestId", requestId);
             message.put("files", filePaths);
+            message.put("vacationTemplate", vacationTemplate);
+            message.put("minimunsTemplate", minimunsTemplate);
+            message.put("employees", employees);
+            message.put("year", year);
             log.info("Publishing message to comparison-exchange: {}", message);
+            log.info("Year: {}", year);
+            log.info("Vacation Template: {}", vacationTemplate);
+            log.info("Minimuns Template: {}", minimunsTemplate);
+            log.info("Employees: {}", employees);
             rabbitTemplate.convertAndSend("comparison-exchange", "comparison-queue", message);
 
             return ResponseEntity.accepted().body(Map.of("requestId", requestId, "status", "Processing"));

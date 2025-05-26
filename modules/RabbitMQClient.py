@@ -144,7 +144,8 @@ class RabbitMQClient:
                 vacations=vacations_data,
                 minimuns=minimuns_data,
                 employees=employees_data,
-                maxTime=maxTime
+                maxTime=maxTime,
+                year=year
             )
 
             metadata = {

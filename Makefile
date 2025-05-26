@@ -4,9 +4,9 @@ build:
 	cd api && mvn clean install
 
 stop:
-	docker-compose down --remove-orphans
+	docker compose down --remove-orphans
 
 start:
-	docker-compose up --build
+	docker compose up --build
 
 all: build stop start

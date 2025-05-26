@@ -11,7 +11,7 @@ import os
 TEAM_LETTER_TO_ID = {'A': 1, 'B': 2}
 
 class GreedyRandomized:
-    def __init__(self, employees, num_days, holidays, vacs, mins, ideals, teams, num_iter=10):
+    def __init__(self, employees, num_days, holidays, vacs, mins, ideals, teams, num_iter=10, maxTime=None, year=2025):
         self.employees = employees   
         self.num_days = num_days     
         self.vacs = vacs   
@@ -21,11 +21,13 @@ class GreedyRandomized:
         self.num_iter = num_iter
         self.assignment = defaultdict(list)    
         self.schedule_table = defaultdict(list)
-        self.ano = 2025
-        self.dias_ano = pd.date_range(start=f'{self.ano}-01-01', end=f'{self.ano}-12-31').to_list()
+        self.year = year
+        self.dias_ano = pd.date_range(start=f'{self.year}-01-01', end=f'{self.year}-12-31').to_list()
         start_date = self.dias_ano[0].date()
         self.holidays = {(d - start_date).days + 1 for d in holidays}
         self.sunday = [d.dayofyear for d in self.dias_ano if d.weekday() == 6]
+        self.maxTime = maxTime
+        self.start_time = time.time()
 
     def f1(self, p, d, s):
         assignments = self.assignment[p]
@@ -67,7 +69,7 @@ class GreedyRandomized:
     def build_schedule(self):
         all_days = set(range(1, self.num_days + 1))
 
-        while not self.is_complete():
+        while not self.is_complete() and (self.maxTime is None or time.time() - self.start_time < self.maxTime):
             P = [p for p in self.employees if len(self.assignment[p]) < 223 and len(self.teams[p]) == 1]
             if not P:
                 P = [p for p in self.employees if len(self.assignment[p]) < 223 and len(self.teams[p]) == 2]
@@ -202,12 +204,12 @@ def parse_requirements(file_path):
     return minimos, ideais
 
 
-def solve(vacations, minimuns, employees, maxTime=10):
+def solve(vacations, minimuns, employees, maxTime=None, year=2025):
     print(f"[GreedyRandomized] Executando Greedy Randomized Scheduling")
     num_employees = len(employees)
     print(f"[GreedyRandomized] Número de funcionários: {num_employees}")
     num_days = 365
-    feriados = holidays.country_holidays("PT", years=[2025])
+    feriados = holidays.country_holidays("PT", years=[year])
 
     emp = [i + 1 for i in range(len(employees))]
     vacs      = rows_to_vac_dict(vacations)
@@ -217,6 +219,7 @@ def solve(vacations, minimuns, employees, maxTime=10):
                        for t in e["teams"]]
              for idx, e in enumerate(employees)}
         
+    maxTime = int(maxTime)
 
     scheduler = GreedyRandomized(
         employees=emp,
@@ -226,7 +229,9 @@ def solve(vacations, minimuns, employees, maxTime=10):
         mins=mins,
         ideals=ideals,
         teams=teams,
-        num_iter=10
+        num_iter=10,
+        maxTime=maxTime,
+        year=year
     )
     scheduler.build_schedule()
 

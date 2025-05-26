@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Box,
   Typography,
@@ -41,7 +41,7 @@ const metricInfo = {
     description: "Difference in the number of shifts assigned to people.",
   },
   emFails: {
-    label: "E->M Failures",
+    label: "E→M Failures",
     description: "An employee cannot be scheduled for an evening (E) shift followed by a morning (M) shift on the next day.",
   },
   singleTeamViolations: {
@@ -58,30 +58,46 @@ export default function CompareCalendar() {
   const [calendars, setCalendars] = useState([]);
   const [selected1, setSelected1] = useState("");
   const [selected2, setSelected2] = useState("");
-  const [comparisonResults, setComparisonResults] = useState(null);
+  const [comparisonResults, setComparisonResults] = useState({ result: {} });
   const [error, setError] = useState(null);
+  const reqToCalRef = useRef({});
 
   useEffect(() => {
     const socket = new SockJS("http://localhost:8081/ws");
     const stompClient = new Client({
       webSocketFactory: () => socket,
+      debug: (str) => console.log("STOMP debug:", str),
       onConnect: () => {
+        console.log("WebSocket connected");
         stompClient.subscribe("/topic/comparison/all", (msg) => {
+          let data;
           try {
-            const data = JSON.parse(msg.body);
-            if (Array.isArray(data) && data.length > 0) {
-              setComparisonResults(data[0]);
-            }
-          } catch (e) {
-            console.error("Error processing result:", e);
-            setError("Error processing comparison result.");
+            data = JSON.parse(msg.body);
+          } catch {
+            setError("Invalid data format");
+            return;
           }
+          const newResults = {};
+          data.forEach((item) => {
+            const calId = reqToCalRef.current[item.requestId];
+            if (calId) {
+              newResults[calId] = item.result;
+            }
+          });
+          setComparisonResults((prev) => ({
+            result: { ...prev.result, ...newResults },
+          }));
         });
       },
       onStompError: (frame) => {
-        console.error("STOMP error:", frame);
-        setError("WebSocket error.");
+        console.error(frame);
+        setError("WebSocket error: " + (frame.body || frame));
       },
+      onWebSocketError: (err) => {
+        console.error(err);
+        setError("Failed to connect to WebSocket.");
+      },
+      onDisconnect: () => console.log("WebSocket disconnected"),
     });
     stompClient.activate();
     return () => stompClient.deactivate();
@@ -92,43 +108,58 @@ export default function CompareCalendar() {
       .get("/schedules/fetch")
       .then((res) => setCalendars(res.data))
       .catch((e) => {
-        console.error("Error fetching calendars:", e);
+        console.error(e);
         setError("Error fetching calendars.");
       });
   }, []);
 
   const handleCompare = async () => {
-    try {
-      const cal1 = calendars.find((c) => c.id === selected1);
-      const cal2 = calendars.find((c) => c.id === selected2);
-      if (!cal1 || !cal2) {
-        setError("Please select two calendars.");
-        return;
-      }
+    if (!selected1 || !selected2) {
+      setError("Please select two calendars.");
+      return;
+    }
+    const cal1 = calendars.find((c) => c.id === selected1);
+    const cal2 = calendars.find((c) => c.id === selected2);
+    if (!cal1 || !cal2) {
+      setError("Please select two valid calendars.");
+      return;
+    }
 
-      const toCsvString = (rows) =>
-        rows.map((row) => row.join(",")).join("\n");
+    const toCsvString = (rows) =>
+      rows.map((row) => row.join(",")).join("\n");
 
-      const blob1 = new Blob([toCsvString(cal1.data)], {
+    const buildFd = (cal) => {
+      const blob = new Blob([toCsvString(cal.data)], {
         type: "text/csv;charset=utf-8",
       });
-      const blob2 = new Blob([toCsvString(cal2.data)], {
-        type: "text/csv;charset=utf-8",
-      });
-
       const fd = new FormData();
-      fd.append("files", blob1, `${cal1.id}.csv`);
-      fd.append("files", blob2, `${cal2.id}.csv`);
+      fd.append("files", blob, `${cal.id}.csv`);
+      fd.append("vacationTemplate", cal.metadata.vacationTemplateData);
+      fd.append("minimunsTemplate", cal.metadata.minimunsTemplateData);
+      fd.append("employees", JSON.stringify(cal.metadata.employeesTeamInfo));
+      fd.append("year", String(cal.metadata.year));
+      return fd;
+    };
 
-      await axios.post("/schedules/analyze", fd);
+    try {
+      const [res1, res2] = await Promise.all([
+        axios.post("/schedules/analyze", buildFd(cal1)),
+        axios.post("/schedules/analyze", buildFd(cal2)),
+      ]);
+      const id1 = res1.data.requestId;
+      const id2 = res2.data.requestId;
+      reqToCalRef.current[id1] = cal1.id;
+      reqToCalRef.current[id2] = cal2.id;
       setError(null);
     } catch (e) {
-      console.error("Error starting comparison:", e);
+      console.error(e);
       setError("Error starting comparison: " + e.message);
     }
   };
 
-  // render
+  const r1 = comparisonResults.result[selected1];
+  const r2 = comparisonResults.result[selected2];
+
   return (
     <div className="admin-container">
       <Sidebar_Manager />
@@ -187,90 +218,90 @@ export default function CompareCalendar() {
           </Button>
         </Box>
 
-        {comparisonResults?.result && (() => {
-          const res = comparisonResults.result;
-          const files = Object.keys(res);
-          if (files.length < 2) return null;
-          const [f1, f2] = files;
+        {r1 && r2 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Comparison Results
+            </Typography>
 
-          return (
-            <Box>
-              <Typography variant="h5" gutterBottom>
-                Comparison Results
-              </Typography>
-
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  background: "#f4f4f4",
-                  borderRadius: 8,
-                  overflow: "hidden",
-                }}
-              >
-                <thead style={{ background: "#1976D2", color: "#fff" }}>
-                  <tr>
-                    {["Metric", "Calendar 1", "Calendar 2", "Difference"].map(
-                      (h) => (
-                        <th
-                          key={h}
-                          style={{
-                            padding: 12,
-                            textAlign: "left",
-                            borderBottom: "2px solid #ddd",
-                          }}
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                background: "#f4f4f4",
+                borderRadius: 8,
+                overflow: "hidden",
+              }}
+            >
+              <thead style={{ background: "#1976D2", color: "#fff" }}>
+                <tr>
+                  {["Metric", "Calendar 1", "Calendar 2", "Difference"].map(
+                    (h) => (
+                      <th
+                        key={h}
+                        style={{ padding: 12, textAlign: "left" }}
+                      >
+                        {h}
+                      </th>
+                    )
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {Object.keys(r1).map((metric, i) => {
+                  const v1 = r1[metric];
+                  const v2 = r2[metric];
+                  const diff = v2 - v1;
+                  const formattedDiff =
+                    metric === "shiftBalance" ||
+                    metric === "twoTeamPreferenceLevel"
+                      ? diff.toFixed(2)
+                      : diff === 0
+                      ? "Equal"
+                      : `${diff > 0 ? "+" : ""}${diff}`;
+                  return (
+                    <tr
+                      key={metric}
+                      style={{
+                        background: i % 2 ? "#fff" : "#f9f9f9",
+                        borderBottom: "1px solid #ddd",
+                      }}
+                    >
+                      <td
+                        style={{ padding: 12, display: "flex", gap: 8 }}
+                      >
+                        <Tooltip
+                          title={
+                            metricInfo[metric]?.description ||
+                            "No description"
+                          }
+                          arrow
                         >
-                          {h}
-                        </th>
-                      )
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.keys(res[f1]).map((metric, i) => {
-                    const v1 = res[f1][metric];
-                    const v2 = res[f2][metric];
-                    const diff = v2 - v1;
-                    return (
-                      <tr
-                        key={metric}
+                          <span
+                            style={{ display: "flex", gap: 4 }}
+                          >
+                            {metricInfo[metric]?.label || metric}
+                            <HelpOutlineIcon fontSize="small" />
+                          </span>
+                        </Tooltip>
+                      </td>
+                      <td style={{ padding: 12 }}>{v1}</td>
+                      <td style={{ padding: 12 }}>{v2}</td>
+                      <td
                         style={{
-                          background: i % 2 ? "#fff" : "#f9f9f9",
-                          borderBottom: "1px solid #ddd",
+                          padding: 12,
+                          color: diff === 0 ? "#1976D2" : "#f44336",
                         }}
                       >
-                        <td style={{ padding: 12, display: "flex", gap: 8 }}>
-                          <Tooltip
-                            title={
-                              metricInfo[metric]?.description ||
-                              "No description"
-                            }
-                            arrow
-                          >
-                            <span style={{ display: "flex", gap: 4 }}>
-                              {metricInfo[metric]?.label || metric}
-                              <HelpOutlineIcon fontSize="small" />
-                            </span>
-                          </Tooltip>
-                        </td>
-                        <td style={{ padding: 12 }}>{v1}</td>
-                        <td style={{ padding: 12 }}>{v2}</td>
-                        <td
-                          style={{
-                            padding: 12,
-                            color: diff === 0 ? "#1976D2" : "#f44336",
-                          }}
-                        >
-                          {diff === 0 ? "Equal" : `${diff > 0 ? "+" : ""}${diff}`}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </Box>
-          );
-        })()}
+                        {formattedDiff}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </Box>
+        )}
       </div>
     </div>
   );
