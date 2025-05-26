@@ -72,7 +72,13 @@ const GenerateVacations = () => {
       setNameError(false);
     } catch (err) {
       console.error("Error uploading CSV:", err);
-      setErrorMessage(err.response?.data?.message || "An error occurred. Please check the CSV format.");
+      const rawMsg = err.response?.data?.message || err.response?.data;
+      let displayMsg = rawMsg || "An error occurred. Please check the CSV format.";
+      if (typeof displayMsg === "string" && displayMsg.includes("Caused by:")) {
+        const [, cause] = displayMsg.split("Caused by:");
+        displayMsg = cause?.trim() || displayMsg;
+      }
+      setErrorMessage(displayMsg);
       setErrorOpen(true);
     }
   };
