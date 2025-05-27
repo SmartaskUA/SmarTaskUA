@@ -2,11 +2,11 @@ import React from "react";
 
 const LegendBox = () => {
   const legends = [
-    { label: "Folga", color: "#ffffff" }, 
-    { label: "Feriado", color: "#800080" }, 
-    { label: "Férias", color: "#ffcccb" },
-    { label: "Manhã", color: "#d4edda" },
-    { label: "Tarde", color: "#f9e79f" },
+    { label: "Break", color: "#ffffff" }, 
+    { label: "Holiday", color: "#800080" }, 
+    { label: "Vacation", color: "#ffcccb" },
+    { label: "Morning", color: "#d4edda" },
+    { label: "Afternoon", color: "#f9e79f" },
   ];
 
   return (

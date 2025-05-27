@@ -28,6 +28,7 @@ const GenerateVacations = () => {
   const [uploadedFileName, setUploadedFileName] = useState("");
   const [successOpen, setSuccessOpen] = useState(false);
   const [errorOpen, setErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("An error occurred.");
   const [nameError, setNameError] = useState(false);
   const [log, setLog] = useState(null);
   const [templates, setTemplates] = useState([]);
@@ -41,6 +42,8 @@ const GenerateVacations = () => {
       setTemplates(response.data);
     } catch (error) {
       console.error("Error fetching templates:", error);
+      setErrorMessage(error.response?.data?.message || "Error fetching templates.");
+      setErrorOpen(true);
     }
   };
 
@@ -69,6 +72,13 @@ const GenerateVacations = () => {
       setNameError(false);
     } catch (err) {
       console.error("Error uploading CSV:", err);
+      const rawMsg = err.response?.data?.message || err.response?.data;
+      let displayMsg = rawMsg || "An error occurred. Please check the CSV format.";
+      if (typeof displayMsg === "string" && displayMsg.includes("Caused by:")) {
+        const [, cause] = displayMsg.split("Caused by:");
+        displayMsg = cause?.trim() || displayMsg;
+      }
+      setErrorMessage(displayMsg);
       setErrorOpen(true);
     }
   };
@@ -81,7 +91,7 @@ const GenerateVacations = () => {
       setSuccessOpen(true);
     } catch (err) {
       console.error("Error deleting templates:", err);
-      alert("Error deleting templates: " + (err.response?.data?.error || err.message));
+      setErrorMessage(err.response?.data?.message || "Failed to delete templates.");
       setErrorOpen(true);
     }
   };
@@ -97,6 +107,7 @@ const GenerateVacations = () => {
       setSuccessOpen(true);
     } catch (err) {
       console.error("Error deleting template:", err);
+      setErrorMessage(err.response?.data?.message || "Failed to delete template.");
       setErrorOpen(true);
     } finally {
       setConfirmDialogOpen(false);
@@ -123,6 +134,8 @@ const GenerateVacations = () => {
       }
     } catch (err) {
       console.error("Error fetching template details:", err);
+      setErrorMessage(err.response?.data?.message || "Failed to fetch template details.");
+      setErrorOpen(true);
     }
   };
 
@@ -259,26 +272,19 @@ const GenerateVacations = () => {
             </Box>
           </Box>
         )}
-        {templates.length === 0 && (
-        <Box
-          display="flex"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          height="50vh"
-          mt={6}
-        >
-          <img
-            src={EmptySVG}
-            alt="No templates"
-            style={{ width: 400, height: 400, marginBottom: 20 }}
-          />
-          <Typography variant="h6" color="textSecondary">
-            No templates created yet.
-          </Typography>
-        </Box>
-      )}
 
+        {templates.length === 0 && (
+          <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="50vh" mt={6}>
+            <img
+              src={EmptySVG}
+              alt="No templates"
+              style={{ width: 400, height: 400, marginBottom: 20 }}
+            />
+            <Typography variant="h6" color="textSecondary">
+              No templates created yet.
+            </Typography>
+          </Box>
+        )}
 
         {log && (
           <Box mt={6}>
@@ -296,14 +302,11 @@ const GenerateVacations = () => {
         <NotificationSnackbar
           open={errorOpen}
           severity="error"
-          message="An error occurred. Please check the CSV format."
+          message={errorMessage}
           onClose={() => setErrorOpen(false)}
         />
 
-        <Dialog
-          open={confirmDialogOpen}
-          onClose={() => setConfirmDialogOpen(false)}
-        >
+        <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
           <DialogTitle>Confirm Deletion</DialogTitle>
           <DialogContent>
             <DialogContentText>

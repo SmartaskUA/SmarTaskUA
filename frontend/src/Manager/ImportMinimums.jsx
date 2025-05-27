@@ -27,6 +27,7 @@ const ImportMinimums = () => {
   const [uploadedFileName, setUploadedFileName] = useState("");
   const [successOpen, setSuccessOpen] = useState(false);
   const [errorOpen, setErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("An error occurred.");
   const [nameError, setNameError] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
@@ -44,6 +45,8 @@ const ImportMinimums = () => {
       setTemplates(response.data);
     } catch (err) {
       console.error("Error fetching templates:", err);
+      setErrorMessage(err.response?.data?.message || "Error fetching templates.");
+      setErrorOpen(true);
     }
   };
 
@@ -76,6 +79,7 @@ const ImportMinimums = () => {
       fetchTemplates();
     } catch (err) {
       console.error("Error uploading minimums CSV:", err);
+      setErrorMessage(err.response?.data?.message || "An error occurred while uploading.");
       setErrorOpen(true);
     }
   };
@@ -88,6 +92,7 @@ const ImportMinimums = () => {
       setSuccessOpen(true);
     } catch (err) {
       console.error("Error deleting reference templates:", err);
+      setErrorMessage(err.response?.data?.message || "Failed to delete reference templates.");
       setErrorOpen(true);
     } finally {
       setConfirmDialogOpen(false);
@@ -106,6 +111,7 @@ const ImportMinimums = () => {
       setSuccessOpen(true);
     } catch (err) {
       console.error("Error deleting template:", err);
+      setErrorMessage(err.response?.data?.message || "Failed to delete template.");
       setErrorOpen(true);
     } finally {
       setTemplateToDelete(null);
@@ -119,6 +125,8 @@ const ImportMinimums = () => {
       setSelectedTemplate(response.data);
     } catch (err) {
       console.error("Error loading template details:", err);
+      setErrorMessage(err.response?.data?.message || "Failed to load template details.");
+      setErrorOpen(true);
     }
   };
 
@@ -282,7 +290,7 @@ const ImportMinimums = () => {
         <NotificationSnackbar
           open={errorOpen}
           severity="error"
-          message="An error occurred. Please check the CSV format."
+          message={errorMessage}
           onClose={() => setErrorOpen(false)}
         />
 

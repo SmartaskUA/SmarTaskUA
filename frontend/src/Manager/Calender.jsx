@@ -8,6 +8,8 @@ import KPIReport from "../components/manager/KPIReport";
 import BaseUrl from "../components/BaseUrl";
 import MetadataInfo from "../components/manager/MetadataInfo";
 import { Box, Typography } from "@mui/material";
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
 
 const Calendar = () => {
   const [data, setData] = useState([]);
@@ -17,36 +19,11 @@ const Calendar = () => {
   const [firstDayOfYear, setFirstDayOfYear] = useState(0);
   const { calendarId } = useParams();
   const [metadata, setMetadata] = useState(null);
+  const [kpiSummary, setKpiSummary] = useState(null);
+  const [holidayMap, setHolidayMap] = useState({});
 
-  const months = [
-    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-  ];
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-
-  const getFixedHolidaysAsDayOfYear = (year) => {
-    const fixedHolidays = [
-      [1, 1],    // 1 Jan
-      [4, 25],   // 25 Apr
-      [5, 1],    // 1 May
-      [6, 10],   // 10 Jun
-      [8, 15],   // 15 Aug
-      [10, 5],   // 5 Oct
-      [11, 1],   // 1 Nov
-      [12, 1],   // 1 Dec
-      [12, 8],   // 8 Dec
-      [12, 25],  // 25 Dec
-    ];
-    return fixedHolidays.map(([month, day]) => {
-      const date = new Date(year, month - 1, day);
-      const start = new Date(date.getFullYear(), 0, 0);
-      const diff = date - start;
-      const oneDay = 1000 * 60 * 60 * 24;
-      return Math.floor(diff / oneDay);
-    });
-  };
-
-  const [holidays, setHolidays] = useState([]);
 
   useEffect(() => {
     setStartDay(1);
@@ -65,130 +42,72 @@ const Calendar = () => {
           setFirstDayOfYear(firstDay);
           setData(scheduleData);
           setMetadata(responseData.metadata);
-          setHolidays(getFixedHolidaysAsDayOfYear(year));
+          fetchNationalHolidays(year);
+          analyzeScheduleViaWebSocket(scheduleData);
         }
       })
       .catch(console.error);
   }, [calendarId]);
 
-  const parseRawCSVData = () => {
-    if (!Array.isArray(data) || data.length < 3) return [];
-    const header = data[0];
-    const teamIndex = header.length - 1;
-    const content = data.slice(1, -1);
-
-    const result = [];
-    content.forEach((row) => {
-      const id = row[0];
-      for (let i = 1; i < teamIndex; i++) {
-        result.push({
-          employee: id,
-          day: i,
-          shift: row[i]
+  const fetchNationalHolidays = async (year) => {
+    try {
+      const res = await axios.get(`https://date.nager.at/api/v3/PublicHolidays/${year}/PT`);
+      const holidays = {};
+      res.data
+        .filter((h) => h.counties === null) // apenas feriados nacionais
+        .forEach((holiday) => {
+          const date = new Date(holiday.date);
+          const month = date.getMonth() + 1;
+          const day = date.getDate();
+          if (!holidays[month]) holidays[month] = [];
+          holidays[month].push(day);
         });
-      }
-    });
-    return result;
-  };
-
-  const kpiData = parseRawCSVData();
-
-  const checkScheduleConflicts = () => {
-    const conflictsByDay = {};
-
-    kpiData.forEach(({ day, employee, shift }) => {
-      if (!conflictsByDay[day]) conflictsByDay[day] = {};
-      if (!conflictsByDay[day][employee]) conflictsByDay[day][employee] = new Set();
-      conflictsByDay[day][employee].add(shift.toUpperCase());
-    });
-
-    const result = [];
-
-    Object.entries(conflictsByDay).forEach(([day, shiftsByEmp]) => {
-      const conflictEmployees = [];
-      Object.entries(shiftsByEmp).forEach(([employee, shifts]) => {
-        const hasTarde = [...shifts].some(s => s.startsWith("T"));
-        const hasManha = [...shifts].some(s => s.startsWith("M"));
-        if (hasTarde && hasManha) {
-          conflictEmployees.push(`Emp ${employee}`);
-        }
-      });
-      if (conflictEmployees.length > 0) {
-        result.push({ day, employee: conflictEmployees.join(", ") });
-      }
-    });
-
-    return result;
-  };
-
-  const checkWorkloadConflicts = () => {
-    const conflicts = [];
-    const byEmp = {};
-    kpiData.forEach(({ employee, day, shift }) => {
-      if (!byEmp[employee]) byEmp[employee] = [];
-      if (shift !== "F" && shift !== "0") byEmp[employee].push(day);
-    });
-
-    for (const [employee, days] of Object.entries(byEmp)) {
-      const sorted = days.sort((a, b) => a - b);
-      let count = 1;
-      for (let i = 1; i < sorted.length; i++) {
-        if (sorted[i] === sorted[i - 1] + 1) {
-          count++;
-          if (count > 5) {
-            const year = metadata?.year || new Date().getFullYear();
-            const dayNum = sorted[i];
-            const date = new Date(year, 0, dayNum);
-            conflicts.push({ employee, day: date.toLocaleDateString("pt-PT"), motivo: "Mais de 5 dias consecutivos de trabalho" });
-            break;
-          }
-        } else {
-          count = 1;
-        }
-      }
+      setHolidayMap(holidays);
+    } catch (err) {
+      console.error("Failed to fetch national holidays:", err);
     }
-    return conflicts;
   };
 
-  const checkUnderworkedEmployees = () => {
-    const workDays = {};
-    kpiData.forEach(({ employee, day, shift }) => {
-      if (!workDays[employee]) workDays[employee] = [];
-      if (shift !== "F" && shift !== "0") {
-        const year = metadata?.year || new Date().getFullYear();
-        const date = new Date(year, 0, day);
-        const dayOfWeek = date.getDay();
-        const dayOfYear = day;
-        const isSunday = dayOfWeek === 0;
-        const isHoliday = holidays.includes(dayOfYear);
-        if (isSunday || isHoliday) {
-          workDays[employee].push(day);
-        }
-      }
-    });
-    return Object.entries(workDays)
-      .filter(([_, days]) => days.length > 22)
-      .map(([employee, days]) => ({
-        employee,
-        day: `${days.length} dias`,
-        motivo: "Mais de 22 dias úteis trabalhados (domingos/feriados)"
-      }));
-  };
+  const analyzeScheduleViaWebSocket = (csvData) => {
+    const socket = new SockJS(`${BaseUrl}/ws`);
+    const stompClient = new Client({
+      webSocketFactory: () => socket,
+      onConnect: () => {
+        stompClient.subscribe("/topic/comparison/all", (msg) => {
+          try {
+            const data = JSON.parse(msg.body);
+            if (Array.isArray(data) && data.length > 0) {
+              const result = data[0]?.result;
+              if (result) {
+                const firstFile = Object.keys(result)[0];
+                const thisResult = result[firstFile];
+                setKpiSummary(thisResult);
+              }
+            }
+          } catch (e) {
+            console.error("Erro a processar resultado via WebSocket:", e);
+          }
+        });
 
-  const checkVacationDays = () => {
-    const vacationCounts = {};
-    kpiData.forEach(({ employee, shift }) => {
-      if (shift === "F") {
-        vacationCounts[employee] = (vacationCounts[employee] || 0) + 1;
-      }
+        const toCsvString = (rows) => rows.map((row) => row.join(",")).join("\n");
+        const csvString = toCsvString(csvData);
+        const blob1 = new Blob([csvString], { type: "text/csv;charset=utf-8" });
+        const blob2 = new Blob([csvString], { type: "text/csv;charset=utf-8" });
+
+        const fd = new FormData();
+        fd.append("files", blob1, `${calendarId}-A.csv`);
+        fd.append("files", blob2, `${calendarId}-B.csv`);
+
+        axios.post(`${BaseUrl}/schedules/analyze`, fd).catch((e) => {
+          console.error("Erro ao enviar CSV para análise:", e);
+        });
+      },
+      onStompError: (frame) => {
+        console.error("Erro STOMP:", frame);
+      },
     });
-    return Object.entries(vacationCounts)
-      .filter(([_, count]) => count !== 30)
-      .map(([employee, count]) => ({
-        employee,
-        day: `${count} dias`,
-        motivo: "Número de dias de férias incorreto"
-      }));
+
+    stompClient.activate();
   };
 
   const downloadCSV = () => {
@@ -220,34 +139,11 @@ const Calendar = () => {
           startDay={startDay}
           endDay={endDay}
           firstDayOfYear={firstDayOfYear}
+          holidayMap={holidayMap}
         />
 
         <MetadataInfo metadata={metadata} />
-
-        <KPIReport
-          checkScheduleConflicts={checkScheduleConflicts}
-          checkWorkloadConflicts={checkWorkloadConflicts}
-          checkUnderworkedEmployees={checkUnderworkedEmployees}
-          checkVacationDays={checkVacationDays}
-        />
-
-        <Box
-          sx={{
-            mt: 4,
-            p: 2,
-            border: '1px solid #ccc',
-            borderRadius: 2,
-            backgroundColor: '#f9f9f9',
-            maxHeight: 400,
-            overflowY: 'auto',
-            fontSize: 12,
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-          }}
-        >
-          <Typography variant="h6" gutterBottom>Debug: Dados do Schedule (API)</Typography>
-          <pre>{JSON.stringify(data, null, 2)}</pre>
-        </Box>
+        <KPIReport metrics={kpiSummary || {}} />
       </div>
     </div>
   );

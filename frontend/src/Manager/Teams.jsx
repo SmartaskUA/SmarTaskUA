@@ -353,7 +353,7 @@ const Teams = () => {
               </Grid>
 
               <Grid item xs={12} sm={4} md={3}>
-                <FormControl fullWidth>
+                <FormControl fullWidth sx={{ minWidth: 300 }}>
                   <InputLabel id="select-team-label">Select Team to Delete</InputLabel>
                   <Select
                     labelId="select-team-label"

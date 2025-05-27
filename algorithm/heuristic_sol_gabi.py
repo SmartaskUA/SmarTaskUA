@@ -3,7 +3,7 @@ import numpy as np
 import time
 import csv
 import io
-import datetime
+
 
 nDias = 365                     # Número de dias no ano
 nDiasFerias = 30                # Número de dias de férias por trabalhador
@@ -77,192 +77,6 @@ def ler_ferias_csv(vacations, nDias):
     
     return Ferias
 
-# Função para validar o número max de dias seguidos trabalhados (5 máximo)
-def criterio1(horario, nDiasSeguidos):
-    dias_trabalhados = np.sum(horario, axis=2) > 0
-    janela = np.ones(nDiasSeguidos, dtype=int)
-    sequencias = np.apply_along_axis(lambda x: np.convolve(x.astype(int), janela, mode='valid'), 1, dias_trabalhados)
-    return np.sum(sequencias == nDiasSeguidos, axis=1)
-
-# Função por validar nº de dias de trabalho em domingos e Feriados (maximo 22)
-
-def criterio2(horario, fds, nDiasTrabalhoFDS, feriados):
-    
-    nTrabs, nDias, _ = horario.shape
-
-    # Criar vetor booleano de dias proibidos (fds ou feriados)
-    dias_fds_feriados = np.zeros(nDias, dtype=bool)
-    dias_fds_feriados[fds] = True
-    dias_fds_feriados[feriados] = True
-    total_trabalhado = np.sum(horario[:, dias_fds_feriados, :], axis=(1, 2))
-    
-    # Cálculo de dias trabalhados em domingos e feriados
-    total_trabalhado = np.sum(horario[:, fds, :], axis=(1, 2)) + np.sum(horario[:, feriados, :], axis=(1, 2))
-
-
-    # Cálculo de violações: excedentes ao limite permitido
-    violacoes = np.maximum(0, total_trabalhado - nDiasTrabalhoFDS)
-
-    return violacoes
-
-
-
-# Função para vereficar nº de trabalhadores abaixo do mínimo necessário 
-def criterio3(horario, nMinTrabs):
-
-    trabalhadores_por_dia = np.sum(horario, axis=1)                                   
-    dias_com_menos_trabalhadores = np.sum(trabalhadores_por_dia < nMinTrabs, axis=1)  
-
-    return np.sum(dias_com_menos_trabalhadores)
-
-# Função para verificar o número máximo de folgas (máximo 142)
-def criterio4(horario, Ferias, nMaxFolga):
-
-    dias_trabalhados = np.sum(horario > 0, axis=2)
-    dias_ativos = dias_trabalhados & ~Ferias
-    dias_trabalhados_por_trabalhador = np.sum(dias_ativos, axis=1)
-    folgas = nDias - dias_trabalhados_por_trabalhador
-    excesso_folga = np.maximum(folgas - nMaxFolga, 0)
-
-    return excesso_folga
-
-# Função para verificar se o trabalhador não pode trabalhar em turnos consecutivos (Proibição -> T_A,M_A ou T_B,M_B)
-def criterio5(horario):
-    f5 = np.zeros(horario.shape[0], dtype=int)  
-
-    for i in range(horario.shape[0]):  
-        for d in range(horario.shape[1] - 1):  
-            if horario[i, d, 1] == 1 and horario[i, d + 1, 0] == 1:
-                f5[i] += 1  
-
-    return f5
-
-# Função para verificar o número mínimo de trabalhadores por turno
-def criterio6(horario, minimuns, Prefs):
-
-    nTrabs, nDias, _ = horario.shape
-    violacoes_por_trab = np.zeros(nTrabs, dtype=int)
-    equipe_A, equipe_B, ambas = identificar_equipes(Prefs)
-
-    # Converte as listas de equipes em conjuntos para busca mais rápida
-    equipe_A_set = set(equipe_A)
-    equipe_B_set = set(equipe_B)
-    ambas_set = set(ambas)
-
-    # Totais de trabalhadores por turno para cada equipe
-    A_manha_totais = np.sum(horario[equipe_A, :, 0], axis=0) + np.sum(horario[ambas, :, 0], axis=0)
-    A_tarde_totais = np.sum(horario[equipe_A, :, 1], axis=0) + np.sum(horario[ambas, :, 1], axis=0)
-    B_manha_totais = np.sum(horario[equipe_B, :, 0], axis=0) + np.sum(horario[ambas, :, 0], axis=0)
-    B_tarde_totais = np.sum(horario[equipe_B, :, 1], axis=0) + np.sum(horario[ambas, :, 1], axis=0)
-
-    for d in range(nDias):
-        for i in range(nTrabs):
-            prefs = Prefs[i]
-
-            # Verificando se o trabalhador deve trabalhar no turno da manhã
-            if 0 in prefs:
-                if i in equipe_A_set or i in ambas_set:
-                    if horario[i, d, 0] == 1 and A_manha_totais[d] < minimuns[0][d]:
-                        violacoes_por_trab[i] += 1
-                if i in equipe_B_set or i in ambas_set:
-                    if horario[i, d, 0] == 1 and B_manha_totais[d] < minimuns[2][d]:
-                        violacoes_por_trab[i] += 1
-
-            # Verificando se o trabalhador deve trabalhar no turno da tarde
-            if 1 in prefs:
-                if i in equipe_A_set or i in ambas_set:
-                    if horario[i, d, 1] == 1 and A_tarde_totais[d] < minimuns[1][d]:
-                        violacoes_por_trab[i] += 1
-                if i in equipe_B_set or i in ambas_set:
-                    if horario[i, d, 1] == 1 and B_tarde_totais[d] < minimuns[3][d]:
-                        violacoes_por_trab[i] += 1
-
-    return violacoes_por_trab
-
-
-# esta bem isso 42 ferias e feriasdos
-def atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos, nDias, fds_feriados, maxFDS=22):
-    nTrabs = len(Prefs)
-    horario = np.zeros((nTrabs, nDias, nTurnos), dtype=int)
-
-    for i in range(nTrabs): 
-        dias_disponiveis = np.where(~Ferias[i])[0]  
-        np.random.shuffle(dias_disponiveis)
-
-        turnos_assigned = 0
-        dias_fds_usados = 0
-        dias_usados = set()
-        d = 0
-
-        while turnos_assigned < nDiasTrabalho and d < len(dias_disponiveis):
-            dia = dias_disponiveis[d]
-            if dia in dias_usados:
-                d += 1
-                continue
-            
-            eh_fds = dia in fds_feriados
-            if eh_fds and dias_fds_usados >= maxFDS:
-                d += 1
-                continue
-
-            turnos_possiveis = []
-            for turno in Prefs[i]:
-                if turno == 1:  # Tarde
-                    if dia + 1 >= nDias or horario[i, dia + 1, 0] == 0:
-                        turnos_possiveis.append(turno)
-                elif turno == 0:  # Manhã
-                    if dia - 1 < 0 or horario[i, dia - 1, 1] == 0:
-                        turnos_possiveis.append(turno)
-
-            if turnos_possiveis:
-                turno = np.random.choice(turnos_possiveis)
-                horario[i, dia, turno] = 1
-                dias_usados.add(dia)
-                turnos_assigned += 1
-                if eh_fds:
-                    dias_fds_usados += 1
-                d += 2 if turno == 1 else 1
-            else:
-                d += 1
-
-        # Segunda etapa: mais flexível, mas pula fds de forma definitiva
-        for dia in dias_disponiveis:
-            if turnos_assigned >= nDiasTrabalho:
-                break
-            if dia in dias_usados:
-                continue
-            if dia in fds_feriados:
-                continue  # Não permite mais turnos em feriados nessa etapa
-
-            for turno in Prefs[i]:
-                if horario[i, dia, turno] == 0:
-                    horario[i, dia, turno] = 1
-                    dias_usados.add(dia)
-                    turnos_assigned += 1
-                    break
-
-    return horario
-
-
-
-# Função para calcular os critérios
-
-def calcular_criterios(
-        horario, fds, nDiasSeguidos, nDiasTrabalhoFDS,
-        nMinTrabs, nMaxFolga, feriados,
-        vacations, minimuns, Prefs, nDias
-    ):
-
-    Ferias = ler_ferias_csv(vacations, nDias)
-
-    f1 = criterio1(horario, nDiasSeguidos)
-    f2 = criterio2(horario, fds, nDiasTrabalhoFDS, feriados)
-    f3 = criterio3(horario, nMinTrabs)
-    f4 = criterio4(horario, Ferias, nMaxFolga)
-    f5 = criterio5(horario)
-    #f6 = criterio6(horario, minimuns, Prefs)
-
-    return f1, f2, f3, f4, f5
 
 # Função para identificar as equipes
 def identificar_equipes(Prefs):
@@ -306,49 +120,227 @@ def salvar_csv(horario, Ferias, nTurnos, nDias, Prefs):
         f.write(output.getvalue())
 
     return output.getvalue()
-def identificar_domingos(nDias, ano=2025):
-    domingos = []
+def atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos, feriados):
+    nTrabs = len(Prefs)
+    nDias = Ferias.shape[1]
+    horario = np.zeros((nTrabs, nDias, nTurnos), dtype=int)
+    
+    turnos_cobertura = np.zeros((nDias, nTurnos), dtype=int)
+    carga_trabalho = np.zeros(nTrabs, dtype=int)
+    
+    feriados_set = set(feriados)
+    domingos = set(range(4, nDias, 7))  # domingos baseados na sua máscara
+    
+    dias_trabalho_preferidos = [d for d in range(nDias) if d not in feriados_set and d not in domingos]
+    
+    for i in range(nTrabs):
+        dias_disponiveis = np.where(~Ferias[i])[0]
+        
+        # Priorizar dias que não são feriados nem domingos
+        dias_normais = [d for d in dias_disponiveis if d in dias_trabalho_preferidos]
+        dias_eventuais = [d for d in dias_disponiveis if d not in dias_trabalho_preferidos]
+        
+        turnos_assigned = 0
+        
+        # Primeiro, tenta preencher com dias normais (sem feriados e domingos)
+        for dia in sorted(dias_normais, key=lambda d: sum(turnos_cobertura[d])):
+            if turnos_assigned >= nDiasTrabalho:
+                break
+            
+            preferencia = Prefs[i]
+            
+            # Verifica turnos possíveis 
+            turnos_possiveis = []
+            for turno in preferencia:
+                if turno == 1:  # Tarde
+                    if dia + 1 >= nDias or horario[i, dia + 1, 0] == 0:
+                        turnos_possiveis.append(turno)
+                elif turno == 0:  # Manhã
+                    if dia - 1 < 0 or horario[i, dia - 1, 1] == 0:
+                        turnos_possiveis.append(turno)
+                else:
+                    turnos_possiveis.append(turno)
+            
+            if turnos_possiveis:
+                # Escolhe o turno com menor cobertura naquele dia (para balancear)
+                turno = min(turnos_possiveis, key=lambda t: turnos_cobertura[dia, t])
+                horario[i, dia, turno] = 1
+                turnos_assigned += 1
+                carga_trabalho[i] += 1
+                turnos_cobertura[dia, turno] += 1
+        
+        # Se não atingiu o mínimo de dias, tenta preencher com dias que são feriados/domingo
+        if turnos_assigned < nDiasTrabalho:
+            for dia in sorted(dias_eventuais, key=lambda d: sum(turnos_cobertura[d])):
+                if turnos_assigned >= nDiasTrabalho:
+                    break
+                
+                preferencia = Prefs[i]
+                
+                turnos_possiveis = []
+                for turno in preferencia:
+                    if turno == 1:
+                        if dia + 1 >= nDias or horario[i, dia + 1, 0] == 0:
+                            turnos_possiveis.append(turno)
+                    elif turno == 0:
+                        if dia - 1 < 0 or horario[i, dia - 1, 1] == 0:
+                            turnos_possiveis.append(turno)
+                    else:
+                        turnos_possiveis.append(turno)
+                
+                if turnos_possiveis:
+                    turno = min(turnos_possiveis, key=lambda t: turnos_cobertura[dia, t])
+                    horario[i, dia, turno] = 1
+                    turnos_assigned += 1
+                    carga_trabalho[i] += 1
+                    turnos_cobertura[dia, turno] += 1
+                    
+    return horario
+
+def criterio1(horario, nDiasSeguidos):
+    nTrabs, nDias, _ = horario.shape
+    f1 = np.zeros(nTrabs, dtype=int)  
+
+    for i in range(nTrabs):
+        dias_trabalhados = np.sum(horario[i, :, :] > 0, axis=1)  
+        dias_seguidos = 0
+
+        for j in range(nDias):
+            if dias_trabalhados[j] > 0:
+                dias_seguidos += 1
+            else:
+                if dias_seguidos > nDiasSeguidos:
+                    f1[i] += dias_seguidos - nDiasSeguidos
+                dias_seguidos = 0
+
+        if dias_seguidos > nDiasSeguidos:
+            f1[i] += dias_seguidos - nDiasSeguidos
+
+    return f1
+
+def criterio2(horario, fds_mask, nDiasTrabalhoFDS, feriados):
+
+    nTrabs, nDias, _ = horario.shape
+
+    mascara_fds_feriados = fds_mask.copy()  
+    mascara_fds_feriados[:, feriados] = True  
+
+    trabalhou_nesse_dia = (horario.sum(axis=2) > 0)  
+    trabalhos_em_fds_feriados = trabalhou_nesse_dia & mascara_fds_feriados
+
+    dias_fds_por_trab = trabalhos_em_fds_feriados.sum(axis=1)
+
+    excesso = np.maximum(dias_fds_por_trab - nDiasTrabalhoFDS, 0)
+
+    return excesso
+
+# Função para verificar o número máximo de folgas (máximo 142)
+def criterio3(horario, nMinTrabs):
+
+    trabalhadores_por_dia = np.sum(horario, axis=1)                                   
+    dias_com_menos_trabalhadores = np.sum(trabalhadores_por_dia < nMinTrabs, axis=1)  
+
+    return np.sum(dias_com_menos_trabalhadores)
+
+
+def criterio4(horario, nMaxFolga, Ferias):
+    dias_trabalhados_por_trabalhador = []
+
+    for i in range(horario.shape[0]): 
+        dias_trabalhados = 0
+        
+        # Contar os dias trabalhados
+        dias_trabalhados = np.sum(np.sum(horario[i, :] > 0, axis=1) & ~Ferias[i, :])
+        
+        dias_trabalhados_por_trabalhador.append(dias_trabalhados)
+
+    dias_diferenca = np.abs(np.array(dias_trabalhados_por_trabalhador) - nDiasTrabalho)
+    
+    return dias_diferenca
+
+# Função para verificar se o trabalhador não pode trabalhar em turnos consecutivos (Proibição -> T_A,M_A ou T_B,M_B)
+def criterio5(horario):
+    f5 = np.zeros(horario.shape[0], dtype=int)  
+    for i in range(horario.shape[0]):  
+        for d in range(horario.shape[1] - 1):  
+            if horario[i, d, 1] == 1 and horario[i, d + 1, 0] == 1:
+                f5[i] += 1  
+
+    return f5
+
+# Função para verificar se o número mínimo de trabalhadores por turno é respeitado
+def criterio6(horario, minimuns, Prefs):
+    nTrabs, nDias, _ = horario.shape
+    violacoes = 0
+
+    equipe_A, equipe_B, ambas = identificar_equipes(Prefs)
+
+    # Totais de trabalhadores por turno para cada equipe
+    A_manha_totais = np.sum(horario[equipe_A + ambas, :, 0], axis=0)
+    A_tarde_totais = np.sum(horario[equipe_A + ambas, :, 1], axis=0)
+    B_manha_totais = np.sum(horario[equipe_B + ambas, :, 0], axis=0)
+    B_tarde_totais = np.sum(horario[equipe_B + ambas, :, 1], axis=0)
+
+    # Comparar com os mínimos
     for d in range(nDias):
-        dia = datetime.date(ano, 1, 1) + datetime.timedelta(days=d)
-        if dia.weekday() == 6:  # 6 = Domingo
-            domingos.append(d)
-    return domingos
+        if A_manha_totais[d] < minimuns[0][d]:
+            violacoes += minimuns[0][d] - A_manha_totais[d]
+        if A_tarde_totais[d] < minimuns[1][d]:
+            violacoes += minimuns[1][d] - A_tarde_totais[d]
+        if B_manha_totais[d] < minimuns[2][d]:
+            violacoes += minimuns[2][d] - B_manha_totais[d]
+        if B_tarde_totais[d] < minimuns[3][d]:
+            violacoes += minimuns[3][d] - B_tarde_totais[d]
+
+    return violacoes
+
+
+# Função para calcular os critérios
+def calcular_criterios(
+        horario, fds, nDiasSeguidos, nDiasTrabalhoFDS,
+        nMinTrabs, nMaxFolga, feriados,
+        vacations, minimuns, Prefs, nDias
+    ):
+
+    Ferias = ler_ferias_csv(vacations, nDias)
+
+    f1 = criterio1(horario, nDiasSeguidos)
+    f2 = criterio2(horario, fds, nDiasTrabalhoFDS, feriados)
+    f3 = criterio3(horario, nMinTrabs )
+    f4 = criterio4(horario, nMaxFolga, Ferias)
+    f5 = criterio5(horario)
+    f6 = criterio6(horario, minimuns, Prefs)
+
+    return f1, f2, f3, f4, f5, f6
+
 # Função principal para resolver o problema
 def solve(vacations, minimuns, employees, maxTime):
-    maxTime = int(maxTime)  * 60 
-
+    maxTime = int(maxTime) * 60  
     start_time = time.time()
 
     # Ferias
     Ferias = ler_ferias_csv(vacations, nDias)
-    dias = np.where(~Ferias) 
+    dias = np.where(~Ferias)  
 
     # Preferências
     Prefs = gerar_preferencias_automatica(employees)
     nTrabs = len(Prefs) 
-    
-    # Feriados (exemplo para domingos)
-    fds = np.zeros(nDias, dtype=bool)
-    domingos = identificar_domingos(nDias, ano=2025)
-    fds[domingos] = True
 
+    # Feriados e finais de semana
+    fds = np.zeros((nTrabs, nDias), dtype=bool)
+    fds[:, 4::7] = True  # domingos
 
-    Prefs = [np.array([0, 1]) for _ in range(nTrabs)]
+    fds_mask = np.zeros((nTrabs, nDias), dtype=bool)
+    fds_mask[:, 6::7] = True  # sábados #fds[:, 4::7]
 
-    # Vetor de férias por trabalhador: Ferias[i][d] == True se o trabalhador i está de férias no dia d
-
-    # Junta fds + feriados
-    fds_feriados = list(set(fds) | set(feriados))
-    fds_feriados = np.array(fds_feriados)
-    fds_feriados = np.sort(fds_feriados)
-    
-    global horario
-
-    horario = atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos, nDias, fds_feriados)
-
+    # Leitura dos mínimos
     minimuns = ler_minimos_csv(minimuns, nDias)
-      
-    f1_opt, f2_opt, f3_opt, f4_opt, f5_opt = calcular_criterios(
+
+    # Criação inicial do horário
+    horario = atribuir_turnos_eficiente(Prefs, nDiasTrabalho, Ferias, nTurnos, feriados)
+
+    # Cálculo dos critérios
+    f1_opt, f2_opt, f3_opt, f4_opt, f5_opt, f6_opt = calcular_criterios(
         horario, fds, nDiasSeguidos, nDiasTrabalhoFDS,
         nMinTrabs, nMaxFolga, feriados,
         vacations, minimuns, Prefs, nDias
@@ -356,9 +348,8 @@ def solve(vacations, minimuns, employees, maxTime):
 
     t, cont = 0, 0
     max_iter = 400000
-    nTrabs = len(Prefs)
 
-    while t < max_iter and (np.any(f1_opt) or np.any(f2_opt) or np.any(f4_opt) or np.any(f5_opt)):
+    while t < max_iter and (np.any(f1_opt) or np.any(f2_opt) or np.any(f4_opt) or np.any(f5_opt) or f6_opt > 0):
         cont += 1
 
         if time.time() - start_time > maxTime:
@@ -375,35 +366,24 @@ def solve(vacations, minimuns, employees, maxTime):
         dia1, dia2 = np.random.choice(dias_trabalhados, 2, replace=False)
         turno1, turno2 = np.random.choice(nTurnos, 2, replace=False)
 
-        pode_trabalhar_A = 0 in Prefs[i]
-        pode_trabalhar_B = 1 in Prefs[i]
-
         if horario[i, dia1, turno1] != horario[i, dia2, turno2]:
             hor = horario.copy()
+            hor[i, dia1, turno1], hor[i, dia2, turno2] = hor[i, dia2, turno2], hor[i, dia1, turno1]
 
-            if pode_trabalhar_A and pode_trabalhar_B:
-                hor[i, dia1, turno1], hor[i, dia2, turno2] = hor[i, dia2, turno2], hor[i, dia1, turno1]
-            elif pode_trabalhar_A:
-                hor[i, dia1, turno1] = 1
-                hor[i, dia2, turno2] = 0
-            elif pode_trabalhar_B:
-                hor[i, dia1, turno1] = 0
-                hor[i, dia2, turno2] = 1
-
-            f1, f2, f3, f4, f5 = calcular_criterios(
+            f1, f2, f3, f4, f5, f6 = calcular_criterios(
                 hor, fds, nDiasSeguidos, nDiasTrabalhoFDS,
                 nMinTrabs, nMaxFolga, feriados,
                 vacations, minimuns, Prefs, nDias
             )
 
-            if np.all(f1 == 0) and np.all(f2 == 0) and f3 == 0 and np.all(f4 == 0) and np.all(f5 == 0):
+            peso = lambda f1, f2, f3, f4, f5, f6: (
+                2*np.sum(f1) + 3*np.sum(f2) + 2*f3 + 1*np.sum(f4) + 3*np.sum(f5) + 4*f6
+            )
+            if peso(f1, f2, f3, f4, f5, f6) < peso(f1_opt, f2_opt, f3_opt, f4_opt, f5_opt, f6_opt):
 
-                f1_opt, f2_opt, f3_opt, f4_opt, f5_opt, horario = f1, f2, f3, f4, f5, hor
-                print("\nSolução perfeita encontrada!")
-                break
+                horario = hor
+                f1_opt, f2_opt, f3_opt, f4_opt, f5_opt, f6_opt = f1, f2, f3, f4, f5, f6
 
-            if np.sum(f1) + np.sum(f2) + f3 + np.sum(f4) + np.sum(f5)  < np.sum(f1_opt) + np.sum(f2_opt) + f3_opt + np.sum(f4_opt) + np.sum(f5_opt):
-                f1_opt, f2_opt, f3_opt, f4_opt, f5_opt, horario = f1, f2, f3, f4, f5, hor
         t += 1
 
     execution_time = time.time() - start_time
