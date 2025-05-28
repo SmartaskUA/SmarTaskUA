@@ -49,7 +49,7 @@ const metricInfo = {
     label: "Shift Balance",
     description: "Percentage deviation of the most unbalanced shift distribution exhibited by any employee.",
   },
-  twoTeamPreferenceViolations: {
+  twoTeamPreferenceLevel: {
     label: "Two Team Preference Level",
     description: "Median distribution of work between primary and secondary team for employees assigned to two teams.",
   },
@@ -65,7 +65,7 @@ const KPIReport = ({ metrics = {} }) => {
     missedTeamMin = 0,
     shiftBalance = 0,
     singleTeamViolations = 0,
-    twoTeamPreferenceViolations = 0,
+    twoTeamPreferenceLevel = 0,
   } = metrics;
 
   const totalIssues = [
@@ -76,6 +76,7 @@ const KPIReport = ({ metrics = {} }) => {
     missedWorkDays,
     missedTeamMin,
     singleTeamViolations,
+    twoTeamPreferenceLevel,
   ].filter((v) => v > 0).length;
 
   const getStatusChip = () =>
@@ -156,7 +157,7 @@ const KPIReport = ({ metrics = {} }) => {
                 {renderMetric("shiftBalance", `${shiftBalance}%`, false, true)}
               </Grid>
               <Grid item xs={12} sm={6} md={4}>
-                {renderMetric("twoTeamPreferenceViolations", `${twoTeamPreferenceViolations}%`, false, true)}
+                {renderMetric("twoTeamPreferenceLevel", `${twoTeamPreferenceLevel}%`, false, true)}
               </Grid>
             </Grid>
           </Paper>
