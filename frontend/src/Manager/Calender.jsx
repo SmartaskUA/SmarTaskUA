@@ -7,7 +7,6 @@ import CalendarHeader from "../components/manager/CalendarHeader";
 import KPIReport from "../components/manager/KPIReport";
 import BaseUrl from "../components/BaseUrl";
 import MetadataInfo from "../components/manager/MetadataInfo";
-import { Box, Typography } from "@mui/material";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 
@@ -27,7 +26,6 @@ const Calendar = () => {
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
   ];
-
   const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
   useEffect(() => {
@@ -62,23 +60,13 @@ const Calendar = () => {
         stompClient.subscribe("/topic/comparison/all", (msg) => {
           try {
             const data = JSON.parse(msg.body);
-            const newResults = {};
             data.forEach((item) => {
-              const calId = reqToCalRef.current[item.requestId];
-              if (calId) {
-                newResults[calId] = item.result;
+              const mappedCalId = reqToCalRef.current[item.requestId];
+              if (mappedCalId === calendarId) {
+                console.log("✅ KPI recebido:", item.result);
+                setKpiSummary(item.result);
               }
             });
-            const calResult = Object.values(newResults)[0];
-            if (calResult) {
-              const keys = Object.keys(calResult);
-              if (keys.length === 1 || keys.every(k => JSON.stringify(calResult[k]) === JSON.stringify(calResult[keys[0]]))) {
-                setKpiSummary(calResult[keys[0]]);
-              } else {
-                console.warn("Different results in duplicated input. Using the first.");
-                setKpiSummary(calResult[keys[0]]);
-              }
-            }
           } catch (e) {
             console.error("Erro a processar resultado via WebSocket:", e);
           }
@@ -90,7 +78,7 @@ const Calendar = () => {
     });
     stompClient.activate();
     return () => stompClient.deactivate();
-  }, []);
+  }, [calendarId]);
 
   const analyzeScheduleViaWebSocket = async (scheduleData, metadata) => {
     try {
@@ -100,14 +88,14 @@ const Calendar = () => {
       });
 
       const fd = new FormData();
-      fd.append("files", blob, `${calendarId}-A.csv`);
-      fd.append("files", blob, `${calendarId}-B.csv`);
+      fd.append("files", blob, `${calendarId}.csv`); 
       fd.append("vacationTemplate", metadata?.vacationTemplateData || "");
       fd.append("minimunsTemplate", metadata?.minimunsTemplateData || "");
       fd.append("employees", JSON.stringify(metadata?.employeesTeamInfo || []));
       fd.append("year", String(metadata?.year || new Date().getFullYear()));
 
       const res = await axios.post(`${BaseUrl}/schedules/analyze`, fd);
+      console.log("🛰️ Enviado para análise com requestId:", res.data.requestId);
       reqToCalRef.current[res.data.requestId] = calendarId;
     } catch (e) {
       console.error("Erro ao enviar CSV para análise:", e);
