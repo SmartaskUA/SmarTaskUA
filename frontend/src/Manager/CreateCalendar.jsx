@@ -181,11 +181,10 @@ const CreateCalendar = () => {
                   label="Algorithm"
                   onChange={(e) => setSelectedAlgorithm(e.target.value)}
                 >
-                  <MenuItem value="CSP Scheduling">Constrain Propagation Search</MenuItem>
                   <MenuItem value="hill climbing">Hill Climbing</MenuItem>
-                  <MenuItem value="genetic_algorithm">Genetic Algorithm</MenuItem>
                   <MenuItem value="linear programming">Integer Linear Programming</MenuItem>
                   <MenuItem value="Greedy Randomized">Greedy Randomized</MenuItem>
+                  <MenuItem value="Greedy Randomized + Hill Climbing">Greedy Randomized + Hill Climbing</MenuItem>
                 </Select>
               </FormControl>
 

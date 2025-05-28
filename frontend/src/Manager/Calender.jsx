@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import Sidebar_Manager from "../components/Sidebar_Manager";
@@ -21,8 +21,13 @@ const Calendar = () => {
   const [metadata, setMetadata] = useState(null);
   const [kpiSummary, setKpiSummary] = useState(null);
   const [holidayMap, setHolidayMap] = useState({});
+  const reqToCalRef = useRef({});
 
-  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
   const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
   useEffect(() => {
@@ -43,18 +48,78 @@ const Calendar = () => {
           setData(scheduleData);
           setMetadata(responseData.metadata);
           fetchNationalHolidays(year);
-          analyzeScheduleViaWebSocket(scheduleData);
+          analyzeScheduleViaWebSocket(scheduleData, responseData.metadata);
         }
       })
       .catch(console.error);
   }, [calendarId]);
+
+  useEffect(() => {
+    const socket = new SockJS(`${BaseUrl}/ws`);
+    const stompClient = new Client({
+      webSocketFactory: () => socket,
+      onConnect: () => {
+        stompClient.subscribe("/topic/comparison/all", (msg) => {
+          try {
+            const data = JSON.parse(msg.body);
+            const newResults = {};
+            data.forEach((item) => {
+              const calId = reqToCalRef.current[item.requestId];
+              if (calId) {
+                newResults[calId] = item.result;
+              }
+            });
+            const calResult = Object.values(newResults)[0];
+            if (calResult) {
+              const keys = Object.keys(calResult);
+              if (keys.length === 1 || keys.every(k => JSON.stringify(calResult[k]) === JSON.stringify(calResult[keys[0]]))) {
+                setKpiSummary(calResult[keys[0]]);
+              } else {
+                console.warn("Different results in duplicated input. Using the first.");
+                setKpiSummary(calResult[keys[0]]);
+              }
+            }
+          } catch (e) {
+            console.error("Erro a processar resultado via WebSocket:", e);
+          }
+        });
+      },
+      onStompError: (frame) => {
+        console.error("Erro STOMP:", frame);
+      },
+    });
+    stompClient.activate();
+    return () => stompClient.deactivate();
+  }, []);
+
+  const analyzeScheduleViaWebSocket = async (scheduleData, metadata) => {
+    try {
+      const toCsvString = (rows) => rows.map((row) => row.join(",")).join("\n");
+      const blob = new Blob([toCsvString(scheduleData)], {
+        type: "text/csv;charset=utf-8",
+      });
+
+      const fd = new FormData();
+      fd.append("files", blob, `${calendarId}-A.csv`);
+      fd.append("files", blob, `${calendarId}-B.csv`);
+      fd.append("vacationTemplate", metadata?.vacationTemplateData || "");
+      fd.append("minimunsTemplate", metadata?.minimunsTemplateData || "");
+      fd.append("employees", JSON.stringify(metadata?.employeesTeamInfo || []));
+      fd.append("year", String(metadata?.year || new Date().getFullYear()));
+
+      const res = await axios.post(`${BaseUrl}/schedules/analyze`, fd);
+      reqToCalRef.current[res.data.requestId] = calendarId;
+    } catch (e) {
+      console.error("Erro ao enviar CSV para análise:", e);
+    }
+  };
 
   const fetchNationalHolidays = async (year) => {
     try {
       const res = await axios.get(`https://date.nager.at/api/v3/PublicHolidays/${year}/PT`);
       const holidays = {};
       res.data
-        .filter((h) => h.counties === null) // apenas feriados nacionais
+        .filter((h) => h.counties === null)
         .forEach((holiday) => {
           const date = new Date(holiday.date);
           const month = date.getMonth() + 1;
@@ -68,50 +133,8 @@ const Calendar = () => {
     }
   };
 
-  const analyzeScheduleViaWebSocket = (csvData) => {
-    const socket = new SockJS(`${BaseUrl}/ws`);
-    const stompClient = new Client({
-      webSocketFactory: () => socket,
-      onConnect: () => {
-        stompClient.subscribe("/topic/comparison/all", (msg) => {
-          try {
-            const data = JSON.parse(msg.body);
-            if (Array.isArray(data) && data.length > 0) {
-              const result = data[0]?.result;
-              if (result) {
-                const firstFile = Object.keys(result)[0];
-                const thisResult = result[firstFile];
-                setKpiSummary(thisResult);
-              }
-            }
-          } catch (e) {
-            console.error("Erro a processar resultado via WebSocket:", e);
-          }
-        });
-
-        const toCsvString = (rows) => rows.map((row) => row.join(",")).join("\n");
-        const csvString = toCsvString(csvData);
-        const blob1 = new Blob([csvString], { type: "text/csv;charset=utf-8" });
-        const blob2 = new Blob([csvString], { type: "text/csv;charset=utf-8" });
-
-        const fd = new FormData();
-        fd.append("files", blob1, `${calendarId}-A.csv`);
-        fd.append("files", blob2, `${calendarId}-B.csv`);
-
-        axios.post(`${BaseUrl}/schedules/analyze`, fd).catch((e) => {
-          console.error("Erro ao enviar CSV para análise:", e);
-        });
-      },
-      onStompError: (frame) => {
-        console.error("Erro STOMP:", frame);
-      },
-    });
-
-    stompClient.activate();
-  };
-
   const downloadCSV = () => {
-    const csvContent = data.map(row => row.join(",")).join("\n");
+    const csvContent = data.map((row) => row.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
