@@ -314,7 +314,7 @@ def calcular_criterios(
     return f1, f2, f3, f4, f5, f6
 
 # Função principal para resolver o problema
-def solve(vacations, minimuns, employees, maxTime):
+def solve(vacations, minimuns, employees, maxTime , year=2025):
     maxTime = int(maxTime) * 60  
     start_time = time.time()
 
