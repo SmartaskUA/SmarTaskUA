@@ -56,7 +56,7 @@ const metricInfo = {
     description:
       "Percentage deviation of the most unbalanced shift distribution exhibited by any employee.",
   },
-  twoTeamPreferenceViolations: {
+  twoTeamPreferenceLevel: {
     label: "Two Team Preference Level",
     description:
       "Among employees assigned to exactly two teams, the median distribution of work between their primary (preferred) team and their secondary team.",
@@ -161,7 +161,7 @@ export default function CompareCalendar() {
     "singleTeamViolations",
     "missedTeamMin",
     "shiftBalance",
-    "twoTeamPreferenceViolations"
+    "twoTeamPreferenceLevel"
   ];
 
   return (
@@ -216,7 +216,7 @@ export default function CompareCalendar() {
                   const val1 = r1[metric] ?? 0;
                   const val2 = r2[metric] ?? 0;
                   const diff = val2 - val1;
-                  const isPercentage = metric === "shiftBalance" || metric === "twoTeamPreferenceViolations";
+                  const isPercentage = metric === "shiftBalance" || metric === "twoTeamPreferenceLevel";
 
                   const displayVal = (v) => isPercentage ? `${parseFloat(v).toFixed(2)}%` : v;
                   const diffDisplay = diff === 0 ? "Equal" :
