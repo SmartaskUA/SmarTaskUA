@@ -169,7 +169,7 @@ export default function CompareCalendar() {
       <Sidebar_Manager />
       <div className="main-content" style={{ marginRight: 24 }}>
         <Typography variant="h4" gutterBottom>
-          Compare Calendars
+          Compare Schedules
         </Typography>
 
         {error && (
@@ -177,8 +177,8 @@ export default function CompareCalendar() {
         )}
 
         <Box display="flex" alignItems="center" gap={2} mb={4}>
-          {[{ label: "Calendar 1", value: selected1, set: setSelected1 },
-            { label: "Calendar 2", value: selected2, set: setSelected2 }]
+          {[{ label: "Schedule 1", value: selected1, set: setSelected1 },
+            { label: "Schedule 2", value: selected2, set: setSelected2 }]
             .map(({ label, value, set }, idx) => (
               <FormControl sx={{ minWidth: 300 }} key={idx}>
                 <InputLabel>{label}</InputLabel>
@@ -206,8 +206,8 @@ export default function CompareCalendar() {
               <thead style={{ background: "#1976D2", color: "#fff" }}>
                 <tr>
                   <th style={{ padding: 12, textAlign: "left" }}>KPIs</th>
-                  <th style={{ padding: 12, textAlign: "left" }}>Calendar 1</th>
-                  <th style={{ padding: 12, textAlign: "left" }}>Calendar 2</th>
+                  <th style={{ padding: 12, textAlign: "left" }}>Schedule 1</th>
+                  <th style={{ padding: 12, textAlign: "left" }}>Schedule 2</th>
                   <th style={{ padding: 12, textAlign: "left" }}>Difference</th>
                 </tr>
               </thead>

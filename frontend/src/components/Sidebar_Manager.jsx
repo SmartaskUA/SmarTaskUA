@@ -37,7 +37,7 @@ const Sidebar_Manager = () => {
           <Briefcase size={20} className="icon"/> Employees
         </Link>
         <Link to="/manager/compareCalendar" className={`nav-item ${isActive("/manager/compareCalendar") ? "active" : ""}`}>
-          <Code2 size={20} className="icon"/> Compare Algorithms
+          <Code2 size={20} className="icon"/> Compare Schedules
         </Link>
         <Link to="/manager/generatevacations" className={`nav-item ${isActive("/manager/generatevacations") ? "active" : ""}`}>
           <Sun size={20} className="icon"/> Vacation Generation
