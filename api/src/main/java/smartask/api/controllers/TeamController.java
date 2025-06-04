@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import smartask.api.models.Team;
+import smartask.api.models.requests.AddEmployeesToTeamRequest;
+import smartask.api.services.EmployeeService;
 import smartask.api.services.TeamService;
 import java.util.List;
 
@@ -16,6 +18,10 @@ import java.util.List;
 public class TeamController {
     @Autowired
     private TeamService teamService;
+
+    @Autowired
+    EmployeeService employeeService;
+
 
     public TeamController(TeamService teamService) {
         this.teamService = teamService;
@@ -35,12 +41,21 @@ public class TeamController {
         return new ResponseEntity<>(team, HttpStatus.OK);
     }
 
+    @Operation(summary = "Get a team by name")
+    @GetMapping("/name/{name}")
+    public ResponseEntity<Team> getTeamByName(@PathVariable String name) {
+        Team team = teamService.getTeamByName(name);
+        return new ResponseEntity<>(team, HttpStatus.OK);
+    }
+
+
     @Operation(summary = "Add a new team")
-    @PostMapping("/")
-    public ResponseEntity<String> addTeam(@RequestBody Team team) {
-        teamService.addTeam(team);
+    @PostMapping("/{teamName}")
+    public ResponseEntity<String> addTeam(@PathVariable String teamName) {
+        teamService.addTeam(teamName);
         return ResponseEntity.ok("Team created successfully");
     }
+
 
     @Operation(summary = "Update a team")
     @PutMapping("/{id}")
@@ -49,5 +64,53 @@ public class TeamController {
         return ResponseEntity.ok("Team updated successfully");
     }
 
-    
+    @Operation(summary = "Add employees to a team")
+    @PostMapping("/{teamName}/add-employees")
+    public ResponseEntity<String> addEmployeesToTeam(
+            @PathVariable String teamName,
+            @RequestBody AddEmployeesToTeamRequest request
+    ) {
+        teamService.addEmployeesToTeam(teamName, request.getEmployeeIds());
+        return ResponseEntity.ok("Employees added to team successfully");
+    }
+
+    @Operation(summary = "Set first preference team for an employee")
+    @PutMapping("/{employeeId}/set-first-preference/{teamName}")
+    public ResponseEntity<String> setEmployeeFirstPreference(
+            @PathVariable String employeeId,
+            @PathVariable String teamName
+    ) {
+        teamService.setEmployeeFirstPreference(employeeId, teamName);
+        return ResponseEntity.ok("First preference set successfully");
+    }
+
+    @Operation(summary = "Set team at specific position for an employee")
+    @PutMapping("/{employeeId}/set-team-preference-index/{teamName}/{position}")
+    public ResponseEntity<String> setEmployeeTeamAtPosition(
+            @PathVariable String employeeId,
+            @PathVariable String teamName,
+            @PathVariable int position
+    ) {
+        teamService.setEmployeeTeamAtPosition(employeeId, teamName, position);
+        return ResponseEntity.ok("Team position set successfully");
+    }
+
+    @Operation(summary = "Remove an employee from a team by name")
+    @DeleteMapping("/{teamName}/remove-employee/{employeeId}")
+    public ResponseEntity<String> removeEmployeeFromTeam(
+            @PathVariable String teamName,
+            @PathVariable String employeeId) {
+        teamService.removeEmployeeFromTeam(employeeId, teamName);
+        return ResponseEntity.ok("Employee removed from team successfully");
+    }
+
+    @Operation(summary = "Delete a team by Name and remove it from all employees")
+    @DeleteMapping("/{teamName}")
+    public ResponseEntity<String> deleteTeam(@PathVariable String teamName) {
+        teamService.deleteTeam(teamName);
+        return ResponseEntity.ok("Team deleted successfully");
+    }
+
+
+
 }

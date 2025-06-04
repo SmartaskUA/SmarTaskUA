@@ -3,10 +3,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import smartask.api.models.ReferenceTemplate;
 import smartask.api.models.TaskStatus;
 import smartask.api.models.VacationTemplate;
 import smartask.api.models.requests.ScheduleRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import smartask.api.repositories.ReferenceTemplateRepository;
 import smartask.api.repositories.TaskStatusRepository;
 import smartask.api.repositories.VacationTemplateRepository;
 
@@ -32,13 +34,21 @@ public class RabbitMqProducer {
     @Autowired
     private VacationTemplateRepository vacationTemplateRepository;
 
+    @Autowired
+    private ReferenceTemplateRepository referenceTemplateRepository;
+
     public String requestScheduleMessage(ScheduleRequest schedule) {
         //Verify the existence of the vacationTemplate
-            String res ;
-            final Optional<VacationTemplate> vactemp = vacationTemplateRepository.findByName(schedule.getVacationTemplate());
-            if (vactemp.isEmpty()){
-                return res= "Vacation template not found";
-            }
+        String res ;
+        final Optional<VacationTemplate> vactemp = vacationTemplateRepository.findByName(schedule.getVacationTemplate());
+        if (vactemp.isEmpty()){
+            return res = "Vacation template not found";
+        }
+
+        final Optional<ReferenceTemplate> mins = referenceTemplateRepository.findByName(schedule.getMinimuns());
+        if (mins.isEmpty()){
+            return res = "minimuns template not found";
+        }
         try {
 
             // Generate a unique task ID
@@ -59,7 +69,7 @@ public class RabbitMqProducer {
             String jsonMessage = objectMapper.writeValueAsString(schedule);
 
             // Send message to RabbitMQ
-            rabbitTemplate.convertAndSend(EXCHANGE_NAME, ROUTING_KEY, jsonMessage);
+            rabbitTemplate.convertAndSend(EXCHANGE_NAME, ROUTING_KEY, schedule);
             System.out.println("Sent task request: " + jsonMessage);
             return res ="Sent task request";
 

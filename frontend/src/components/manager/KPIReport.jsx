@@ -6,77 +6,161 @@ import {
   CardContent,
   Typography,
   Box,
+  Paper,
+  Chip,
+  Grid,
+  Tooltip
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ErrorIcon from "@mui/icons-material/Error";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 
-const KPIReport = ({
-  checkScheduleConflicts,
-  checkWorkloadConflicts,
-  checkUnderworkedEmployees,
-  checkVacationDays,
-}) => {
-  const scheduleConflicts = checkScheduleConflicts() || [];
-  const workloadConflicts = checkWorkloadConflicts() || [];
-  const underworkedEmployees = checkUnderworkedEmployees() || [];
-  const vacationIssues = checkVacationDays() || [];
+const metricInfo = {
+  tmFails: {
+    label: "Afternoon-Morning Sequence",
+    description: "Number of times an employee works in an afternoon shift followed by a morning shift in the day after.",
+  },
+  consecutiveDays: {
+    label: "Consecutive Work-Day Violations",
+    description: "Number of times employees exceeded the maximum allowed run of five consecutive working days.",
+  },
+  workHolidays: {
+    label: "Holidays and Sundays Work Days",
+    description: "Number of work days falling on holidays and Sundays that exceed the predefined threshold.",
+  },
+  missedVacationDays: {
+    label: "Missed Vacation Days",
+    description: "Total variance between actual and target vacation days for all employees.",
+  },
+  missedWorkDays: {
+    label: "Missed Working Days",
+    description: "Total variance between actual and target working days for all employees.",
+  },
+  missedTeamMin: {
+    label: "Missed Minimums",
+    description: "Each team, shift, and day, the count of employees below the required minimum staffing level.",
+  },
+  singleTeamViolations: {
+    label: "Single Team Violations",
+    description: "Number of employees allowed to work only one team but worked in more than one.",
+  },
+  shiftBalance: {
+    label: "Shift Balance",
+    description: "Percentage deviation of the most unbalanced shift distribution exhibited by any employee.",
+  },
+  twoTeamPreferenceLevel: {
+    label: "Two Team Preference Level",
+    description: "Median distribution of work between primary and secondary team for employees assigned to two teams.",
+  },
+};
 
-  const getStatusColor = () => {
-    const totalIssues = [
-      scheduleConflicts,
-      workloadConflicts,
-      underworkedEmployees,
-      vacationIssues,
-    ].reduce((acc, curr) => acc + (curr.length > 0 ? 1 : 0), 0);
+const KPIReport = ({ metrics = {} }) => {
+  const {
+    tmFails = 0,
+    consecutiveDays = 0,
+    workHolidays = 0,
+    missedVacationDays = 0,
+    missedWorkDays = 0,
+    missedTeamMin = 0,
+    shiftBalance = 0,
+    singleTeamViolations = 0,
+    twoTeamPreferenceLevel = 0,
+  } = metrics;
 
-    if (totalIssues === 0) return "success.main";
-    if (totalIssues <= 2) return "warning.main";
-    return "error.main";
+  const totalIssues = [
+    tmFails,
+    consecutiveDays,
+    workHolidays,
+    missedVacationDays,
+    missedWorkDays,
+    missedTeamMin,
+    singleTeamViolations,
+    twoTeamPreferenceLevel,
+  ].filter((v) => v > 0).length;
+
+  const getStatusChip = () =>
+    totalIssues === 0 ? (
+      <Chip label="No Issues" color="success" icon={<CheckCircleIcon />} />
+    ) : (
+      <Chip label="Issues Found" color="error" icon={<ErrorIcon />} />
+    );
+
+  const renderMetric = (key, value, isViolation, isPercentage = false) => {
+    const { label, description } = metricInfo[key] || {};
+    return (
+      <Box>
+        <Typography variant="subtitle1" fontWeight="bold" color="primary" gutterBottom>
+          <Tooltip title={description || ""} arrow>
+            <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              {label || key}
+              <HelpOutlineIcon fontSize="small" />
+            </span>
+          </Tooltip>
+        </Typography>
+        <Typography
+          color={
+            isPercentage
+              ? "text.primary"
+              : isViolation
+              ? "error.main"
+              : "success.main"
+          }
+        >
+          {value}
+        </Typography>
+      </Box>
+    );
   };
 
   return (
-    <CardContent sx={{ display: "flex", flexDirection: "column", padding: 2, marginRight: 0 }}>
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" id="panel1a-header">
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Performance Indicators (KPIs)
+    <CardContent sx={{ px: 0, mt: 2 }}>
+      <Accordion elevation={3} sx={{ borderRadius: 2 }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 2 }}>
+          <Typography variant="h6" fontWeight="bold" sx={{ flexGrow: 1 }}>
+            Key Performance Indicators (KPIs)
           </Typography>
-          <Box sx={{ marginLeft: 2, fontSize: "2rem", color: getStatusColor() }}>
-            •
-          </Box>
+          {getStatusChip()}
         </AccordionSummary>
 
         <AccordionDetails>
-          <Typography variant="body2" color="textSecondary" paragraph>
-            These indicators help to monitor possible conflicts, overloads, and vacation periods in the work schedule.
-          </Typography>
+          <Paper elevation={0} sx={{ p: 3 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6} md={3}>
+                {renderMetric("tmFails", tmFails, tmFails > 0)}
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                {renderMetric("consecutiveDays", consecutiveDays, consecutiveDays > 0)}
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                {renderMetric("workHolidays", workHolidays, workHolidays > 0)}
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                {renderMetric("missedVacationDays", missedVacationDays, missedVacationDays > 0)}
+              </Grid>
+            </Grid>
 
-          <Typography variant="h6" color="primary">
-            Invalid T-M sequence
-          </Typography>
-          <Typography color={scheduleConflicts.length > 0 ? "error" : "success.main"}>
-            {scheduleConflicts.length > 0 ? "Conflict found" : "No conflict found."}
-          </Typography>
+            <Grid container spacing={3} sx={{ mt: 2 }}>
+              <Grid item xs={12} sm={6} md={4}>
+                {renderMetric("missedWorkDays", missedWorkDays, missedWorkDays > 0)}
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                {renderMetric("missedTeamMin", missedTeamMin, missedTeamMin > 0)}
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                {renderMetric("singleTeamViolations", singleTeamViolations, singleTeamViolations > 0)}
+              </Grid>
+            </Grid>
 
-          <Typography variant="h6" color="primary" sx={{ marginTop: 2 }}>
-            No more than 5 consecutive workdays
-          </Typography>
-          <Typography color={workloadConflicts.length > 0 ? "error" : "success.main"}>
-            {workloadConflicts.length > 0 ? "Overload found" : "No work overload detected."}
-          </Typography>
-
-          <Typography variant="h6" color="primary" sx={{ marginTop: 2 }}>
-            Max 22 workdays (Sundays and holidays) per year
-          </Typography>
-          <Typography color={underworkedEmployees.length > 0 ? "error" : "success.main"}>
-            {underworkedEmployees.length > 0 ? "Employees with more than 22 workdays" : "All employees worked less than 22 days."}
-          </Typography>
-
-          <Typography variant="h6" color="primary" sx={{ marginTop: 2 }}>
-            30 days of vacation per year
-          </Typography>
-          <Typography color={vacationIssues.length > 0 ? "error" : "success.main"}>
-            {vacationIssues.length > 0 ? "Vacation issues found" : "Vacation days correctly recorded."}
-          </Typography>
+            <Grid container spacing={3} sx={{ mt: 2 }}>
+              <Grid item xs={12} sm={6} md={4}>
+                {renderMetric("shiftBalance", `${shiftBalance}%`, false, true)}
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                {renderMetric("twoTeamPreferenceLevel", `${twoTeamPreferenceLevel}%`, false, true)}
+              </Grid>
+            </Grid>
+          </Paper>
         </AccordionDetails>
       </Accordion>
     </CardContent>

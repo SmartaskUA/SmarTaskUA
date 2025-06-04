@@ -70,7 +70,7 @@ def generate_initial_calendar():
             csvwriter.writerow(row)
     print("Full initial calendar saved to 'initial_calendar.csv'")
 
-    return variables, domains, employees, num_days, num_employees, holidays
+    return variables, domains, employees, num_days, holidays
 
 if __name__ == "__main__":
     generate_initial_calendar()

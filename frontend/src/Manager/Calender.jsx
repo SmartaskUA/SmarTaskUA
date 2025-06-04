@@ -1,139 +1,128 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import CalendarTable from "../components/manager/CalendarTable";
 import CalendarHeader from "../components/manager/CalendarHeader";
-import BarChartDropdown from "../components/manager/BarChartDropdown";
-import BarChartDropdownFolgasFerias from "../components/manager/BarChartDropdownFolgasFerias";
 import KPIReport from "../components/manager/KPIReport";
 import BaseUrl from "../components/BaseUrl";
+import MetadataInfo from "../components/manager/MetadataInfo";
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
 
 const Calendar = () => {
   const [data, setData] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(1);
   const [startDay, setStartDay] = useState(1);
   const [endDay, setEndDay] = useState(31);
+  const [firstDayOfYear, setFirstDayOfYear] = useState(0);
   const { calendarId } = useParams();
+  const [metadata, setMetadata] = useState(null);
+  const [kpiSummary, setKpiSummary] = useState(null);
+  const [holidayMap, setHolidayMap] = useState({});
+  const reqToCalRef = useRef({});
 
-  const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
   const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-  // Lista de feriados representados por números de dias no ano
-const holidays = [31, 60, 120, 150, 200, 240, 300, 330]; 
 
-const getDayOfYear = (date) => {
-  const start = new Date(date.getFullYear(), 0, 0);
-  const diff = date - start;
-  const oneDay = 1000 * 60 * 60 * 24;
-  return Math.floor(diff / oneDay);
-};
-
-const checkUnderworkedEmployees = () => {
-  const employeeDays = groupByEmployee();
-  const underworkedEmployees = [];
-
-  Object.keys(employeeDays).forEach(employee => {
-    const daysWorked = employeeDays[employee];
-    let totalWorkedDays = 0;
-
-    daysWorked.forEach(day => {
-      const date = new Date(day); 
-
-      const dayOfYear = getDayOfYear(date);
-
-      const isWeekend = date.getDay() === 6 || date.getDay() === 0; 
-      const isHoliday = holidays.includes(dayOfYear);
-
-      // Se for um dia útil ou feriado, conta como dia trabalhado
-      if (isWeekend || isHoliday) {
-        totalWorkedDays++;
-      }
-    });
-
-    // Se o funcionário tem 22 ou menos dias de trabalho, ele está subtrabalhado
-    if (totalWorkedDays <= 22) {
-      underworkedEmployees.push(employee);
-    }
-  });
-
-  return underworkedEmployees;
-};
+  useEffect(() => {
+    setStartDay(1);
+    setEndDay(daysInMonth[selectedMonth - 1]);
+  }, [selectedMonth]);
 
   useEffect(() => {
     const baseUrl = BaseUrl;
     axios.get(`${baseUrl}/schedules/fetch/${calendarId}`)
       .then((response) => {
-        if (response.data) setData(response.data.data);
+        const responseData = response.data;
+        if (responseData) {
+          const scheduleData = responseData.data;
+          const year = responseData.metadata?.year || new Date().getFullYear();
+          const firstDay = new Date(`${year}-01-01`).getDay();
+          setFirstDayOfYear(firstDay);
+          setData(scheduleData);
+          setMetadata(responseData.metadata);
+          fetchNationalHolidays(year);
+          analyzeScheduleViaWebSocket(scheduleData, responseData.metadata);
+        }
       })
       .catch(console.error);
   }, [calendarId]);
 
-  const groupByEmployee = () => {
-    const employeeDays = {};
-    data.forEach(({ employee, day }) => {
-      if (!employeeDays[employee]) employeeDays[employee] = new Set();
-      employeeDays[employee].add(day);
-    });
-    return employeeDays;
-  };
-
-  const checkConflicts = (condition) => {
-    const dayShifts = data.reduce((acc, { day, shift }) => {
-      if (!acc[day]) acc[day] = new Set();
-      acc[day].add(shift);
-      return acc;
-    }, {});
-    return Object.keys(dayShifts).filter(day => condition(dayShifts[day]));
-  };
-
-  // Funções para verificar conflitos  
-  const checkScheduleConflicts = () => checkConflicts((shifts) => shifts.has("T") && shifts.has("M"));
-  //const checkWorkloadConflicts = () => Object.keys(groupByEmployee()).filter(employee => groupByEmployee()[employee].size > 5); 
-  //const checkUnderworkedEmployees = () => Object.keys(groupByEmployee()).filter(employee => groupByEmployee()[employee].size  <= 22);
-
-  const checkWorkloadConflicts = () => {
-    const conflicts = [];
-  
-    const grouped = groupByEmployee();
-    for (const employee in grouped) {
-      const days = Array.from(grouped[employee]).map(Number).sort((a, b) => a - b);
-  
-      let consecutiveCount = 1;
-      for (let i = 1; i < days.length; i++) {
-        if (days[i] === days[i - 1] + 1) {
-          consecutiveCount++;
-          if (consecutiveCount > 5) {
-            conflicts.push(employee);
-            break;
+  useEffect(() => {
+    const socket = new SockJS(`${BaseUrl}/ws`);
+    const stompClient = new Client({
+      webSocketFactory: () => socket,
+      onConnect: () => {
+        stompClient.subscribe("/topic/comparison/all", (msg) => {
+          try {
+            const data = JSON.parse(msg.body);
+            data.forEach((item) => {
+              const mappedCalId = reqToCalRef.current[item.requestId];
+              if (mappedCalId === calendarId) {
+                console.log("✅ KPI recebido:", item.result);
+                setKpiSummary(item.result);
+              }
+            });
+          } catch (e) {
+            console.error("Erro a processar resultado via WebSocket:", e);
           }
-        } else {
-          consecutiveCount = 1;
-        }
-      }
+        });
+      },
+      onStompError: (frame) => {
+        console.error("Erro STOMP:", frame);
+      },
+    });
+    stompClient.activate();
+    return () => stompClient.deactivate();
+  }, [calendarId]);
+
+  const analyzeScheduleViaWebSocket = async (scheduleData, metadata) => {
+    try {
+      const toCsvString = (rows) => rows.map((row) => row.join(",")).join("\n");
+      const blob = new Blob([toCsvString(scheduleData)], {
+        type: "text/csv;charset=utf-8",
+      });
+
+      const fd = new FormData();
+      fd.append("files", blob, `${calendarId}.csv`); 
+      fd.append("vacationTemplate", metadata?.vacationTemplateData || "");
+      fd.append("minimunsTemplate", metadata?.minimunsTemplateData || "");
+      fd.append("employees", JSON.stringify(metadata?.employeesTeamInfo || []));
+      fd.append("year", String(metadata?.year || new Date().getFullYear()));
+
+      const res = await axios.post(`${BaseUrl}/schedules/analyze`, fd);
+      console.log("🛰️ Enviado para análise com requestId:", res.data.requestId);
+      reqToCalRef.current[res.data.requestId] = calendarId;
+    } catch (e) {
+      console.error("Erro ao enviar CSV para análise:", e);
     }
-  
-    return conflicts;
   };
-  
-  const checkVacationDays = () => {
-    const employeeVacations = data.reduce((acc, { employee, shift }) => {
-      if (employee === "Employee") return acc;
-      if (shift === "F") {
-        acc[employee] = (acc[employee] || 0) + 1;
-      }
-      return acc;
-    }, {});
 
-    console.log("data:",data);
-    console.log("employeeVACTIONS",employeeVacations);
-  
-    return Object.keys(employeeVacations).filter(employee => employeeVacations[employee] !== 30);
+  const fetchNationalHolidays = async (year) => {
+    try {
+      const res = await axios.get(`https://date.nager.at/api/v3/PublicHolidays/${year}/PT`);
+      const holidays = {};
+      res.data
+        .filter((h) => h.counties === null)
+        .forEach((holiday) => {
+          const date = new Date(holiday.date);
+          const month = date.getMonth() + 1;
+          const day = date.getDate();
+          if (!holidays[month]) holidays[month] = [];
+          holidays[month].push(day);
+        });
+      setHolidayMap(holidays);
+    } catch (err) {
+      console.error("Failed to fetch national holidays:", err);
+    }
   };
-  
-
 
   const downloadCSV = () => {
-    const csvContent = data.map(row => row.join(",")).join("\n");
+    const csvContent = data.map((row) => row.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -150,6 +139,8 @@ const checkUnderworkedEmployees = () => {
           selectedMonth={selectedMonth}
           setSelectedMonth={setSelectedMonth}
           downloadCSV={downloadCSV}
+          calendarTitle={metadata?.scheduleName || "Work Calendar"}
+          algorithmName={metadata?.algorithmType}
         />
 
         <CalendarTable
@@ -158,28 +149,12 @@ const checkUnderworkedEmployees = () => {
           daysInMonth={daysInMonth}
           startDay={startDay}
           endDay={endDay}
+          firstDayOfYear={firstDayOfYear}
+          holidayMap={holidayMap}
         />
 
-        <KPIReport
-          checkScheduleConflicts={checkScheduleConflicts} // sequencia inválida T-M
-          checkWorkloadConflicts={checkWorkloadConflicts} // não pode ter masi do 5 dias em sequencia de trabalho
-          checkUnderworkedEmployees={checkUnderworkedEmployees} // funcionários com mais de 22 Dias de Trabalho no ano feriados e domingos
-          checkVacationDays={checkVacationDays}  // 30 dias de trabalho máximo (feriados) durante todo ano
-      
-        />
-
-        <BarChartDropdown
-          data={data}
-          selectedMonth={selectedMonth}
-          daysInMonth={daysInMonth}
-        />
-        <BarChartDropdownFolgasFerias
-          data={data}
-          selectedMonth={selectedMonth}
-          daysInMonth={daysInMonth}
-        />
-
-
+        <MetadataInfo metadata={metadata} />
+        <KPIReport metrics={kpiSummary || {}} />
       </div>
     </div>
   );

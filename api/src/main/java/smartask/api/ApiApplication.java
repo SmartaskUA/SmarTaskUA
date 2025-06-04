@@ -4,20 +4,18 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import smartask.api.event.RabbitMqProducer;
 import smartask.api.models.Employee;
 import smartask.api.models.Team;
-import smartask.api.models.requests.ScheduleRequest;
-import smartask.api.repositories.EmployeesRepository;
 import smartask.api.repositories.SchedulesRepository;
-import smartask.api.repositories.TeamRepository;
 import smartask.api.services.EmployeeService;
 import smartask.api.services.SchedulesService;
 import smartask.api.services.TeamService;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.List;
 
+@EnableScheduling
 @SpringBootApplication
 public class ApiApplication {
 
@@ -29,50 +27,52 @@ public class ApiApplication {
 	CommandLineRunner initDatabase(TeamService teamService, EmployeeService employeeService,
 								   SchedulesRepository schedulesRepository, SchedulesService schedulesService, RabbitMqProducer producer) {
 		return args -> {
-			// Check if Team A exists, if not create and save it
+			Team teamA = teamService.getTeams().stream().filter(team -> "Equipa A".equals(team.getName())).findFirst().orElse(null);
+			if (teamA == null) {
+				teamService.addTeam("Equipa A");
 
-			if (teamService.getTeams().isEmpty() || teamService.getTeams().stream().noneMatch(team -> "A".equals(team.getName()))) {
-				Team teamA = new Team("A");
-				teamService.addTeam(teamA);
-
-				// Create and add 9 employees to Team A
 				for (int i = 1; i <= 9; i++) {
-					Employee employee = new Employee("Employee " + i, teamA);
+					Employee employee = new Employee("Employee " + i);
 					employeeService.addEmployee(employee);
 				}
+				var aEmployees = employeeService.getEmployees().stream()
+						.filter(e -> e.getName().startsWith("Employee ") && Integer.parseInt(e.getName().split(" ")[1]) <= 9)
+						.map(Employee::getId)
+						.toList();
+				teamService.addEmployeesToTeam("Equipa A", aEmployees);
 			}
 
-			// Check if Team B exists, if not create and save it
-			if (teamService.getTeams().isEmpty() || teamService.getTeams().stream().noneMatch(team -> "B".equals(team.getName()))) {
-				Team teamB = new Team("B");
-				teamService.addTeam(teamB);
+			Team teamB = teamService.getTeams().stream().filter(team -> "Equipa B".equals(team.getName())).findFirst().orElse(null);
+			if (teamB == null) {
+				teamService.addTeam("Equipa B");
 
-				// Create and add 3 employees to Team B
 				for (int i = 10; i <= 12; i++) {
-					Employee employee = new Employee("Employee " + i, teamB);
+					Employee employee = new Employee("Employee " + i);
 					employeeService.addEmployee(employee);
 				}
+				var bEmployees = employeeService.getEmployees().stream()
+						.filter(e -> e.getName().startsWith("Employee ") && Integer.parseInt(e.getName().split(" ")[1]) >= 10)
+						.map(Employee::getId)
+						.toList();
+				teamService.addEmployeesToTeam("Equipa B", bEmployees);
 			}
 
-			if (!schedulesRepository.existsByTitle("Sample")) {
-				schedulesService.readex1();
-				System.out.println("Sample schedule created at startup.");
-			} else {
-				System.out.println("Sample schedule already exists.");
+			// Add Employee 5 and 6 to team B (they're already in A)
+			var employee5 = employeeService.getEmployees().stream().filter(e -> e.getName().equals("Employee 5")).findFirst().orElse(null);
+			var employee6 = employeeService.getEmployees().stream().filter(e -> e.getName().equals("Employee 6")).findFirst().orElse(null);
+			if (employee5 != null && employee6 != null) {
+				teamService.addEmployeesToTeam("Equipa B",
+						List.of(employee5.getId(), employee6.getId()));
 			}
-/*
-			ScheduleRequest mockRequest = new ScheduleRequest(
-					"string",                               // taskId
-					LocalDate.parse("2025-03-30"),           // init
-					LocalDate.parse("2025-03-30"),           // end
-					"string",                               // algorithm
-					"startconn",                                     // title
-					"string",                               // maxTime
-					LocalDateTime.parse("2025-03-30T15:57:23.796")  // requestedAt
-			);
-			producer.requestScheduleMessage(mockRequest);
 
-			 */
+			// Add Employee 11 to team A (he's already in B)
+			var employee11 = employeeService.getEmployees().stream().filter(e -> e.getName().equals("Employee 11")).findFirst().orElse(null);
+			if (employee11 != null) {
+				teamService.addEmployeesToTeam("Equipa A", List.of(employee11.getId()));
+			}
 		};
 	}
+
+
+
 }

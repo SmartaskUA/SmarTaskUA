@@ -13,6 +13,7 @@ import smartask.api.repositories.VacationTemplateRepository;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class VacationService {
@@ -33,7 +34,7 @@ public class VacationService {
 
         final VacationTemplate vact = VacationTemplate.builder()
                 .name(name)
-                .vacations(vacations)
+                .vacations((List<List<String>>) vacations)
                 .build();
 
         this.vacationTemplateRepository.save(vact);
@@ -46,7 +47,7 @@ public class VacationService {
     public void newRandomTemplate(String name){
         final VacationTemplate template = VacationTemplate.builder()
                 .name(name)
-                .vacations(generateRandomVacationTemplate()).build();
+                .vacations((List<List<String>>) generateRandomVacationTemplate()).build();
         vacationTemplateRepository.save(template);
     }
 
@@ -74,45 +75,59 @@ public class VacationService {
     }
 
     public void processCsvFileAndGenerateTemplate(String name, String filePath) throws IOException {
-        Map<String, List<String>> vacations = new HashMap<>();
+        List<List<String>> vacations = new ArrayList<>();
+        Set<String> employeesInCsv = new HashSet<>();
 
-        // Ler o CSV
         try (FileReader reader = new FileReader(filePath);
-             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withHeader())) {
+             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT)) {
 
             for (CSVRecord record : csvParser) {
-                String employeeName = record.get(0); // Nome do funcionário
-                Employee employee = employeeRepository.findByName(employeeName)
-                        .orElseThrow(() -> new IllegalArgumentException("Employee " + employeeName + " not found in the database."));
+                if (record.size() < 2) continue;
 
+                // Remove BOM (\uFEFF), trim e normaliza espaços
+                String employeeName = record.get(0).replace("\uFEFF", "").trim();
 
-                List<String> vacationDays = new ArrayList<>();
-                // Para cada coluna (exceto a primeira), verifica se é 1 (férias)
-                for (int i = 1; i < record.size(); i++) {
-                    String dayStatus = record.get(i);
-                    if (dayStatus.equals("1")) {
-                        vacationDays.add(String.valueOf(i)); // O dia de férias será o número da coluna
-                    }
+                if (!employeeName.isEmpty()) {
+                    employeesInCsv.add(employeeName);
                 }
 
-                // Verifica se o funcionário tem férias válidas (30 dias)
-                if (vacationDays.size() != 30) {
-                    throw new IllegalArgumentException("Employee " + employeeName + " must have exactly 30 vacation days.");
+                List<String> row = new ArrayList<>();
+                for (String value : record) {
+                    row.add(value.replace("\uFEFF", "").trim());
                 }
-
-                vacations.put(employeeName, vacationDays);
+                vacations.add(row);
             }
         }
 
-        // Criar o template de férias
+        // Validação: checa se todos os funcionários existem no sistema
+        List<Employee> existingEmployees = employeeRepository.findAll();
+        Set<String> existingNames = existingEmployees.stream()
+                .map(emp -> emp.getName().trim())
+                .collect(Collectors.toSet());
+
+        // Checa se todos os nomes do CSV existem no banco
+        for (String nameInCsv : employeesInCsv) {
+            if (!existingNames.contains(nameInCsv)) {
+                throw new IllegalArgumentException("Funcionário inexistente no banco de dados: " + nameInCsv);
+            }
+        }
+
+        // Checa se o número total de funcionários no CSV é igual ao do banco
+        if (employeesInCsv.size() != existingNames.size()) {
+            throw new IllegalArgumentException("Número de funcionários no CSV (" + employeesInCsv.size() +
+                    ") difere do número de funcionários no banco de dados (" + existingNames.size() + ").");
+        }
+
         VacationTemplate template = VacationTemplate.builder()
                 .name(name)
                 .vacations(vacations)
                 .build();
 
-        // Salvar o template de férias no banco de dados
         vacationTemplateRepository.save(template);
     }
+
+
+
 
     public boolean validateVacationTemplateFormat(Map<String, List<String>> vacations) {
         if (vacations == null || vacations.isEmpty()) return false;
@@ -140,4 +155,15 @@ public class VacationService {
 
         return true;
     }
+
+    public void deleteTemplateById(String id) {
+        vacationTemplateRepository.deleteById(id);
+    }
+
+    public void deleteTemplateByName(String name) {
+        VacationTemplate template = vacationTemplateRepository.findByName(name)
+                .orElseThrow(() -> new NoSuchElementException("Template não encontrado com nome: " + name));
+        vacationTemplateRepository.delete(template);
+    }
+
 }

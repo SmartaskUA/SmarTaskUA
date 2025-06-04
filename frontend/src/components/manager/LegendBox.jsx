@@ -2,10 +2,11 @@ import React from "react";
 
 const LegendBox = () => {
   const legends = [
-    { label: "Folga", color: "#a0d8ef" },
-    { label: "Férias", color: "#ffcccb" },
-    { label: "Manhã", color: "#d4edda" },
-    { label: "Tarde", color: "#f9e79f" },
+    { label: "Break", color: "#ffffff" }, 
+    { label: "Holiday", color: "#800080" }, 
+    { label: "Vacation", color: "#ffcccb" },
+    { label: "Morning", color: "#d4edda" },
+    { label: "Afternoon", color: "#f9e79f" },
   ];
 
   return (
@@ -33,6 +34,7 @@ const LegendBox = () => {
               height: "25px",
               backgroundColor: item.color,
               marginLeft: "5px",
+              border: "1px solid #ccc",
             }}
           ></span>
         </div>

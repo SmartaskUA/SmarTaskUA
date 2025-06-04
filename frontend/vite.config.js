@@ -6,10 +6,22 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/schedules': {
-        target: 'http://localhost:8081',
+      "/schedules": {
+        target: "http://api:8081",
         changeOrigin: true,
+        secure: false,
       },
     },
+    watch: {
+      usePolling: true,
+    },
+    hmr: {
+      overlay: true,
+    },
+    host: true,
+    strictPort: true,
+  },
+  define: {
+    global: 'globalThis'
   },
 })
