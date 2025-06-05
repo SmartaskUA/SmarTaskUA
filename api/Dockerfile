@@ -1,14 +1,28 @@
-# Usando uma imagem base do Java 17
+# Etapa 1: Build com Maven e cache de dependências
+FROM maven:3.9.6-eclipse-temurin-17 AS build
+
+WORKDIR /app
+
+# Copie apenas o pom.xml primeiro
+COPY pom.xml .
+
+# Baixe dependências (isso usa o cache se o pom.xml não mudar)
+RUN mvn dependency:go-offline
+
+# Agora copie o restante do código
+COPY src ./src
+
+# Compile o projeto
+RUN mvn clean install
+
+
+# Etapa 2: Imagem final
 FROM openjdk:17-jdk-slim
 
-# Copie o arquivo .jar do diretório atual para o container
+WORKDIR /app
 
-COPY ./target/api-0.0.1-SNAPSHOT.jar api.jar
+COPY --from=build /app/target/api-0.0.1-SNAPSHOT.jar api.jar
 
-# Define o diretório de trabalho dentro do container
-
-# Expõe a porta que a aplicação Spring Boot irá usar
 EXPOSE 8081
 
-# Comando para executar o jar da aplicação Spring Boot
 CMD ["java", "-jar", "api.jar"]
