@@ -2,7 +2,7 @@
 Intelligent system for test automatically generating schedules work and evaluate them
 
 # Lauching : 
-##### Technical note: This project was developed and tested in operative systems from the Unix family (specifically Ubuntu and Arch Linux).
+#### Technical note: This project was developed and tested in operating systems from the Unix family (specifically Ubuntu and Arch Linux). No system test was performed in other operating systems (such as Windows or MacOS). If any troubleshooting problem is noticed in other environments, further investigation might be needed to adapt the system to be used in these environments.
 
 ### in this project's root, execute the following commands : 
 ##### (You need to have Docker Compose installed locally in your system; the commands might change from system to system.)
