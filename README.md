@@ -1,32 +1,34 @@
 # SmartTask
-Intelligent system for automatically generating schedules work
+Intelligent system for test automatically generating schedules work and evaluate them
 
 # Lauching : 
+#### Technical note: This project was developed and tested in operating systems from the Unix family (specifically Ubuntu and Arch Linux). No system test was performed in other operating systems (such as Windows or MacOS). If any troubleshooting problem is noticed in other environments, further investigation might be needed to adapt the system to be used in these environments.
 
-### in this project's root, execute one of these two scripts : 
-##### (you need to have docker compose installed locally in you system)
+### in this project's root, execute the following commands : 
+##### (You need to have Docker Compose installed locally in your system; the commands might change from system to system.)
 
-#### 1st - the bash script
+#### Build images and set for development.
 ```
-bash run-app.sh
+docker-compose up --build
 ```
 
-#### 2nd - Makefile (need to have Make utility installed in your system)
-```
-make all
-```
 
 ### The running frontend application can be accessed via :
 ```
 http://localhost:5173/
 ```
 
-#### After shutting down the application via command line, shutdown the containers if not needed anymore
+#### After shutting down the application via command line, shut down the containers if not needed anymore.
 ```
 docker-compose down
 ```
 
-# Requirements
+#### To debug a specific container/service that is running with the docker compose : 
+```
+docker compose logs [service name]
+```
+
+# System Requirements
 
 ### Functional Requirements
 
