@@ -11,7 +11,7 @@ else
   exit 1
 fi
 
-docker-compose down --remove-orphans
+docker compose down --remove-orphans
 
 echo "🐳 Subindo containers com rebuild"
-docker-compose up --build
+docker compose up --build -d
