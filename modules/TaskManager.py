@@ -25,7 +25,8 @@ class TaskManager:
                  minimuns=None,
                  employees=None,
                  maxTime=10,
-                 year=None):
+                 year=None,
+                 shifts=2):
         #print(f"\n[DEBUG] Current employee set:\n{employees}")
         print(f"\n[DEBUG] Vacations received:\n{vacations}")
         print(f"\n[DEBUG] Minimuns received:\n{minimuns}")
@@ -39,7 +40,7 @@ class TaskManager:
         # Verifica assinatura e repassa os argumentos corretamente
         if algorithm_name == "linear programming" or algorithm_name == "hill climbing" or algorithm_name == "Greedy Randomized" or algorithm_name == "Greedy Randomized + Hill Climbing":
             # Passa vacations, minimuns e employees explicitamente
-            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year)
+            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts)
         else:
             # Algoritmos que ainda não usam os argumentos extras
             schedule_data = algorithm()

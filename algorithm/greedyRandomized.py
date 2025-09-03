@@ -25,7 +25,7 @@ class GreedyRandomized:
       - Time-boxed outer loop (maxTime in seconds, if provided)
     """
     def __init__(self, employees, num_days, holidays_set, vacs, mins, ideals, teams,
-                 num_iter=10, maxTime=None, year=2025):
+                 num_iter=10, maxTime=None, year=2025, shifts=2):
         self.employees = employees
         self.num_days = num_days
         self.vacs = vacs
@@ -36,6 +36,7 @@ class GreedyRandomized:
         self.assignment = defaultdict(list)      # p -> [(day, shift, team)]
         self.schedule_table = defaultdict(list)  # (day, shift, team) -> [p,...]
         self.year = year
+        self.shifts = int(shifts)  # Number of shifts
 
         # Calendar
         self.dias_ano, self.sunday = build_calendar(self.year)
@@ -79,9 +80,9 @@ class GreedyRandomized:
 
         # No T -> next-day M (and symmetric check)
         for (day, shift, _) in assignments:
-            if shift == 2 and day + 1 == d and s == 1:
+            if day + 1 == d and s < shift:  # today is the next day after a worked day
                 return False
-            if shift == 1 and day - 1 == d and s == 2:
+            if day - 1 == d and shift < s:  # today is the previous day before a worked day
                 return False
 
         # If you want to forbid double shift same day, uncomment:
@@ -135,7 +136,7 @@ class GreedyRandomized:
 
             while f_value > 0 and count < self.num_iter and available_days:
                 d = random.choice(available_days)
-                s = random.choice([1, 2])
+                s = random.choice(list(range(1, self.shifts + 1)))
 
                 if self.f1(p, d, s):
                     count += 1
@@ -153,7 +154,7 @@ class GreedyRandomized:
     def is_complete(self):
         return all(len(self.assignment[p]) >= 223 for p in self.employees)
 
-def solve(vacations, minimuns, employees, maxTime=None, year=2025):
+def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2):
     """
     Library-style API:
       vacations_rows: list of rows like ['Employee 1', '0','1','0',...]
@@ -186,11 +187,13 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025):
         teams=teams,
         num_iter=10,
         maxTime=(int(maxTime) if maxTime is not None else None),
-        year=year
+        year=year,
+        shifts=shifts, 
     )
     scheduler.build_schedule()
 
     header = ["funcionario"] + [f"Dia {d}" for d in range(1, num_days + 1)]
+    label = {1: "M_", 2: "T_", 3: "N_"}  # <-- add night
     output = [header]
     for p in scheduler.employees:
         row = [p]
@@ -201,7 +204,7 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025):
                 row.append("F")
             elif d in assign:
                 s, t = assign[d]
-                row.append(("M_" if s == 1 else "T_") + ("A" if t == 1 else "B"))
+                row.append(label.get(s, "") + ("A" if t == 1 else "B"))
             else:
                 row.append("0")
         row and output.append(row)

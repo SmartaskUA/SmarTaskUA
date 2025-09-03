@@ -24,9 +24,10 @@ class GreedyClimbing:
     """
 
     def __init__(self, employees, num_days, holidays_set, vacs, mins, ideals, teams,
-                 num_iter=10, maxTime=None, year=2025):
+                 num_iter=10, maxTime=None, year=2025, shifts=2):
         self.employees = employees
         self.num_days = num_days
+        self.shifts = int(shifts) 
         self.vacs = vacs
         self.mins = mins
         self.ideals = ideals
@@ -88,9 +89,9 @@ class GreedyClimbing:
 
         # No T -> next-day M (and symmetric)
         for (day, shift, _) in assignments:
-            if shift == 2 and day + 1 == d and s == 1:
+            if day + 1 == d and s < shift:
                 return False
-            if shift == 1 and day - 1 == d and s == 2:
+            if day - 1 == d and shift < s:
                 return False
         return True
 
@@ -144,7 +145,7 @@ class GreedyClimbing:
 
             while best_val > 0 and count < self.num_iter and available_days:
                 d = random.choice(available_days)
-                s = random.choice([1, 2])
+                s = random.choice(list(range(1, self.shifts + 1)))
 
                 if self.f1(p, d, s):
                     count += 1
@@ -163,10 +164,10 @@ class GreedyClimbing:
         return all(len(self.assignment[p]) >= 223 for p in self.employees)
 
     def create_horario(self):
-        horario = np.zeros((len(self.employees), self.num_days, 2), dtype=int)
+        horario = np.zeros((len(self.employees), self.num_days, self.shifts), dtype=int)
         for p in self.employees:
             for d, s, t in self.assignment[p]:
-                horario[p - 1, d - 1, s - 1] = t    # shift 1 -> morning (0), shift 2 -> afternoon (1)
+                horario[p - 1, d - 1, s - 1] = t    # shift 1 -> morning (0), shift 2 -> afternoon (1), shift 3 -> night (2)
         return horario
 
     def update_from_horario(self, horario):
@@ -174,7 +175,7 @@ class GreedyClimbing:
         self.schedule_table.clear()
         for p_idx, emp in enumerate(self.employees):
             for d in range(self.num_days):
-                for s in range(2):
+                for s in range(self.shifts):
                     t = horario[p_idx, d, s]
                     if t > 0:
                         self.assignment[emp].append((d + 1, s + 1, t))
@@ -207,7 +208,7 @@ class GreedyClimbing:
                 continue
 
             d1, d2 = np.random.choice(available_days, 2, replace=False)
-            s1, s2 = np.random.choice([0, 1], 2, replace=False)
+            s1, s2 = np.random.choice(list(range(self.shifts)), 2, replace=False)
 
             t1 = horario[emp_idx, d1, s1]
             t2 = horario[emp_idx, d2, s2]
@@ -230,18 +231,29 @@ class GreedyClimbing:
                     continue
 
                 # guard against T -> next-day M
-                if s1 == 1 and d1 + 1 < self.num_days and new_h[emp_idx, d1 + 1, 0] > 0:
-                    iteration += 1
-                    continue
-                if s2 == 1 and d2 + 1 < self.num_days and new_h[emp_idx, d2 + 1, 0] > 0:
-                    iteration += 1
-                    continue
-                if s1 == 0 and d1 > 0 and new_h[emp_idx, d1 - 1, 1] > 0:
-                    iteration += 1
-                    continue
-                if s2 == 0 and d2 > 0 and new_h[emp_idx, d2 - 1, 1] > 0:
-                    iteration += 1
-                    continue
+                if d1 + 1 < self.num_days:
+                    next_slots = [s for s in range(self.shifts) if new_h[emp_idx, d1 + 1, s] > 0]
+                    if next_slots and next_slots[0] < s1:
+                        iteration += 1
+                        continue
+                if d1 - 1 >= 0:
+                    prev_slots = [s for s in range(self.shifts) if new_h[emp_idx, d1 - 1, s] > 0]
+                    if prev_slots and s1 < prev_slots[0]:
+                        iteration += 1
+                        continue
+
+                # same for d2
+                if d2 + 1 < self.num_days:
+                    next_slots = [s for s in range(self.shifts) if new_h[emp_idx, d2 + 1, s] > 0]
+                    if next_slots and next_slots[0] < s2:
+                        iteration += 1
+                        continue
+                if d2 - 1 >= 0:
+                    prev_slots = [s for s in range(self.shifts) if new_h[emp_idx, d2 - 1, s] > 0]
+                    if prev_slots and s2 < prev_slots[0]:
+                        iteration += 1
+                        continue
+
 
                 c1, c2, c3, c4, c5 = self.criterios(new_h)
                 new_score = c1 + c2 + c3 + c4 + c5
@@ -315,7 +327,7 @@ class GreedyClimbing:
         n_emps = horario.shape[0]
         for p in range(n_emps):
             for d in range(self.num_days):
-                for s in (0, 1):
+                for s in range(self.shifts):
                     t = horario[p, d, s]
                     if t > 0:
                         counts[d, s, t - 1] += 1
@@ -336,7 +348,9 @@ class GreedyClimbing:
         violations = 0
         for i in range(horario.shape[0]):
             for d in range(self.num_days - 1):
-                if horario[i, d, 1] > 0 and horario[i, d + 1, 0] > 0:
+                s_today = next((s for s in range(self.shifts) if horario[i, d, s] > 0), None)
+                s_next  = next((s for s in range(self.shifts) if horario[i, d + 1, s] > 0), None)
+                if s_today is not None and s_next is not None and s_next < s_today:
                     violations += 1
         return violations
 
@@ -392,6 +406,7 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025):
     # Return table for TaskManager
     header = ["funcionario"] + [f"Dia {d}" for d in range(1, num_days + 1)]
     output = [header]
+    label = {1: "M_", 2: "T_", 3: "N_"}
     for p in scheduler.employees:
         row = [p]
         assign = {day: (s, t) for (day, s, t) in scheduler.assignment[p]}
@@ -401,7 +416,7 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025):
                 row.append("F")
             elif d in assign:
                 s, t = assign[d]
-                row.append(("M_" if s == 1 else "T_") + ("A" if t == 1 else "B"))
+                row.append(label.get(s, "") + ("A" if t == 1 else "B"))
             else:
                 row.append("0")
         output.append(row)

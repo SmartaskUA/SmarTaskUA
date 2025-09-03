@@ -98,44 +98,48 @@ def parse_requirements_file(file_path: str):
 
 def rows_to_req_dicts(req_rows):
     """
-    req_rows: iterable of rows like:
-      ['Team_A', 'Minimum', 'M', <day1>, <day2>, ...]
-      ['Team_B', 'Ideal',   'T', <day1>, <day2>, ...]
-    Returns:
-      mins, ideals where keys are (day, shift, team_id).
+    req_rows: rows like ['Equipa A','Minimo','M', <day1>, ...]
+    Returns: mins, ideals with keys (day, shift, team_id).
     """
     mins, ideals = {}, {}
     for row in req_rows:
         team_label, kind, shift_code, *counts = row
-        team_id = TEAM_LETTER_TO_ID[team_label[-1]]  # 'Team_A' or 'A' => 'A' is last
-        shift = 1 if shift_code.strip().upper() == 'M' else 2
-        target = mins if kind.lower().startswith('min') else ideals
+        team_id = TEAM_LETTER_TO_ID[team_label.strip()[-1].upper()]  # '...A' or '...B'
+        code = shift_code.strip().upper()
+        if code.startswith('M'): # Manhã
+            shift = 1
+        elif code.startswith('T') or code.startswith('A'):  # Tarde
+            shift = 2
+        elif code.startswith('N'):  # Noite
+            shift = 3
+        else:
+            # Unknown shift label -> skip row (or raise)
+            continue
+
+        target = mins if kind.strip().lower().startswith('min') else ideals
         for day, value in enumerate(counts, start=1):
-            if value.strip():
-                target[(day, shift, team_id)] = int(value)
+            v = value.strip()
+            if v:
+                target[(day, shift, team_id)] = int(v)
     return mins, ideals
 
+
 def export_schedule_to_csv(scheduler, filename="schedule.csv", num_days=365):
-    """
-    Writes a wide CSV: one row per employee, one column per day.
-    Values: 'F', 'M_A'/'M_B', 'T_A'/'T_B', or '0'
-    """
     header = ["funcionario"] + [f"Dia {i+1}" for i in range(num_days)]
+    label = {1: "M_", 2: "T_", 3: "N_"}
     with open(filename, mode="w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(header)
-
         for emp in scheduler.employees:
             row = [emp]
             day_assignments = {day: (shift, team) for (day, shift, team) in scheduler.assignment[emp]}
-            vacation_days = set(scheduler.vacs.get(emp, []))
-
+            vacation_days = set(getattr(scheduler, "vacs", {}).get(emp, []))
             for day_num in range(1, num_days + 1):
                 if day_num in vacation_days:
                     row.append("F")
                 elif day_num in day_assignments:
                     shift, team = day_assignments[day_num]
-                    row.append(("M_" if shift == 1 else "T_") + ("A" if team == 1 else "B"))
+                    row.append(label.get(shift, "") + ("A" if team == 1 else "B"))
                 else:
                     row.append("0")
             writer.writerow(row)

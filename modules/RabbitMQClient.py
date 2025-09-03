@@ -81,6 +81,9 @@ class RabbitMQClient:
                 year = message.get("year")
                 print(f"\nyear : {year}")
 
+                shifts = message.get("shifts", [])
+                print(f"\nshifts : {shifts}")
+
                 maxTime =  message.get("maxTime")
                 print(f"\nmaxTime : {maxTime}")
 
@@ -99,7 +102,8 @@ class RabbitMQClient:
                     vacation_template_name,
                     minimuns,
                     year,
-                    maxTime
+                    maxTime,
+                    shifts
                 )
 
                 ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -131,7 +135,8 @@ class RabbitMQClient:
             vacation_template_name,
             minimuns_template_name,
             year,
-            maxTime
+            maxTime,
+            shifts
     ):
 
         self.send_task_status(task_id, "IN_PROGRESS")
@@ -145,7 +150,8 @@ class RabbitMQClient:
                 minimuns=minimuns_data,
                 employees=employees_data,
                 maxTime=maxTime,
-                year=year
+                year=year,
+                shifts=shifts
             )
 
             metadata = {
@@ -157,7 +163,8 @@ class RabbitMQClient:
                 "minimunsTemplateName": minimuns_template_name,
                 "employeesTeamInfo": employees_data,
                 "vacationTemplateData": vacations_data,
-                "minimunsTemplateData": minimuns_data
+                "minimunsTemplateData": minimuns_data,
+                "shifts": shifts
             }
 
             self.mongodb_client.insert_schedule(

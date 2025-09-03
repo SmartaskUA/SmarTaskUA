@@ -13,7 +13,7 @@ from algorithm.utils import (
     export_schedule_to_csv,  # exporter expects scheduler-like object
 )
 
-class HeuristicSolGabi:
+class HeuristicSol:
 
     def __init__(
         self,
@@ -55,10 +55,9 @@ class HeuristicSolGabi:
         self.Prefs = self._gerar_preferencias_automatica(employees)
 
         # Minimum requirements by team/shift/day as four arrays (A_M, A_T, B_M, B_T)
-        self.minA_M, self.minA_T, self.minB_M, self.minB_T = self._min_arrays_from_req_rows(minimuns_rows)
-
-        # schedule tensor: [emp, day, shift], values 0/1 (no team dimension here)
-        self.horario = np.zeros((self.nTrabs, self.nDias, 2), dtype=int)
+        self.minA_M, self.minA_T, self.minB_M, self.minB_T, self.minA_N, self.minB_N = self._min_arrays_from_req_rows(minimuns_rows)
+        # schedule tensor: [emp, day, shift], values 0/1/2
+        self.horario = np.zeros((self.nTrabs, self.nDias, 3), dtype=int)
 
         # Weekend mask (both Sat & Sun marked True)
         self.fds_mask = np.zeros((self.nTrabs, self.nDias), dtype=bool)
@@ -94,38 +93,36 @@ class HeuristicSolGabi:
             hasA = self._emp_has_team(emp, 'A')
             hasB = self._emp_has_team(emp, 'B')
             if hasA and hasB:
-                Prefs.append([0, 1])
+                Prefs.append([0, 1, 2])       # M, T, N
             elif hasA:
-                Prefs.append([0])
+                Prefs.append([0, 2])          # M, N
             elif hasB:
-                Prefs.append([1])
+                Prefs.append([1, 2])          # T, N
             else:
                 raise ValueError(f"Empregado sem equipa A/B reconhecida: {emp}")
         return Prefs
 
+
     def _min_arrays_from_req_rows(self, minimuns_rows):
-        """
-        Use utils.rows_to_req_dicts to normalize, then emit 4 arrays (len=nDias):
-          A_manha, A_tarde, B_manha, B_tarde
-        """
         mins, _ideals = rows_to_req_dicts(minimuns_rows)
         A_M = np.zeros(self.nDias, dtype=int)
         A_T = np.zeros(self.nDias, dtype=int)
+        A_N = np.zeros(self.nDias, dtype=int)  
         B_M = np.zeros(self.nDias, dtype=int)
         B_T = np.zeros(self.nDias, dtype=int)
+        B_N = np.zeros(self.nDias, dtype=int)  
         for (day, shift, team), val in mins.items():
             d = day - 1
             if d < 0 or d >= self.nDias:
                 continue
-            if team == 1 and shift == 1:
-                A_M[d] = val
-            elif team == 1 and shift == 2:
-                A_T[d] = val
-            elif team == 2 and shift == 1:
-                B_M[d] = val
-            elif team == 2 and shift == 2:
-                B_T[d] = val
-        return A_M, A_T, B_M, B_T
+            if team == 1 and shift == 1: A_M[d] = val
+            elif team == 1 and shift == 2: A_T[d] = val
+            elif team == 1 and shift == 3: A_N[d] = val 
+            elif team == 2 and shift == 1: B_M[d] = val
+            elif team == 2 and shift == 2: B_T[d] = val
+            elif team == 2 and shift == 3: B_N[d] = val   
+        return A_M, A_T, B_M, B_T, A_N, B_N
+
 
     # ---------- construction ----------
 
@@ -135,7 +132,7 @@ class HeuristicSolGabi:
         coverage per day/shift and avoid weekends/holidays when possible.
         """
         nTrabs, nDias = self.nTrabs, self.nDias
-        turnos_cobertura = np.zeros((nDias, 2), dtype=int)
+        turnos_cobertura = np.zeros((nDias, 3), dtype=int)
 
         # preferred work days (avoid weekends+holidays first)
         feriados_set = set(self.feriados_0based.tolist())
@@ -170,23 +167,25 @@ class HeuristicSolGabi:
                     turnos_cobertura[dia, turno] += 1
 
     def _choose_turno(self, i, dia, turnos_cobertura):
-        """
-        From allowed Prefs[i], pick a shift that doesn't create T->M violation
-        and that has lower coverage for balancing.
-        """
         poss = []
-        for turno in self.Prefs[i]:
-            if turno == 1:  # Tarde
-                if dia + 1 >= self.nDias or self.horario[i, dia + 1, 0] == 0:
-                    poss.append(turno)
-            elif turno == 0:  # Manhã
-                if dia - 1 < 0 or self.horario[i, dia - 1, 1] == 0:
-                    poss.append(turno)
-            else:
+        # what was assigned yesterday/tomorrow (as shift index), or None
+        prev = None
+        if dia - 1 >= 0:
+            if self.horario[i, dia - 1, 0] == 1: prev = 0
+            elif self.horario[i, dia - 1, 1] == 1: prev = 1
+            elif self.horario[i, dia - 1, 2] == 1: prev = 2
+        nxt = None
+        if dia + 1 < self.nDias:
+            if self.horario[i, dia + 1, 0] == 1: nxt = 0
+            elif self.horario[i, dia + 1, 1] == 1: nxt = 1
+            elif self.horario[i, dia + 1, 2] == 1: nxt = 2
+
+        for turno in self.Prefs[i]:  # turno in {0,1,2}
+            if (prev is None or turno >= prev) and (nxt is None or nxt >= turno):
                 poss.append(turno)
+
         if not poss:
             return None
-        # balance coverage on that day
         return min(poss, key=lambda t: turnos_cobertura[dia, t])
 
     # ---------- criteria ----------
@@ -235,28 +234,33 @@ class HeuristicSolGabi:
         return np.abs(np.array(dias_trab) - self.nDiasTrabalho)
 
     def criterio5(self):
-        """Violação Tarde(d) -> Manhã(d+1)."""
+        """Violação de ordem: turno(d+1) < turno(d)."""
         f5 = np.zeros(self.nTrabs, dtype=int)
         for i in range(self.nTrabs):
             for d in range(self.nDias - 1):
-                if self.horario[i, d, 1] == 1 and self.horario[i, d + 1, 0] == 1:
+                td = 0 if self.horario[i, d, 0] == 1 else (1 if self.horario[i, d, 1] == 1 else (2 if self.horario[i, d, 2] == 1 else -1))
+                tn = 0 if self.horario[i, d + 1, 0] == 1 else (1 if self.horario[i, d + 1, 1] == 1 else (2 if self.horario[i, d + 1, 2] == 1 else -1))
+                if td != -1 and tn != -1 and tn < td:
                     f5[i] += 1
         return f5
 
     def criterio6(self):
-        """Falta de cobertura mínima por equipa/turno (A_M, A_T, B_M, B_T)."""
         A_idx, B_idx, both_idx = self._indices_equipes()
-        # Sum over employees belonging to A (and both) for M/T; same for B
+
         A_M_tot = np.sum(self.horario[A_idx + both_idx, :, 0], axis=0) if (A_idx or both_idx) else np.zeros(self.nDias, int)
         A_T_tot = np.sum(self.horario[A_idx + both_idx, :, 1], axis=0) if (A_idx or both_idx) else np.zeros(self.nDias, int)
+        A_N_tot = np.sum(self.horario[A_idx + both_idx, :, 2], axis=0) if (A_idx or both_idx) else np.zeros(self.nDias, int)
         B_M_tot = np.sum(self.horario[B_idx + both_idx, :, 0], axis=0) if (B_idx or both_idx) else np.zeros(self.nDias, int)
         B_T_tot = np.sum(self.horario[B_idx + both_idx, :, 1], axis=0) if (B_idx or both_idx) else np.zeros(self.nDias, int)
+        B_N_tot = np.sum(self.horario[B_idx + both_idx, :, 2], axis=0) if (B_idx or both_idx) else np.zeros(self.nDias, int)
 
         viol = 0
         viol += np.sum(np.maximum(self.minA_M - A_M_tot, 0))
         viol += np.sum(np.maximum(self.minA_T - A_T_tot, 0))
+        viol += np.sum(np.maximum(self.minA_N - A_N_tot, 0))  
         viol += np.sum(np.maximum(self.minB_M - B_M_tot, 0))
         viol += np.sum(np.maximum(self.minB_T - B_T_tot, 0))
+        viol += np.sum(np.maximum(self.minB_N - B_N_tot, 0))
         return int(viol)
 
     def _indices_equipes(self):
@@ -364,6 +368,8 @@ class HeuristicSolGabi:
                     assignment[i + 1].append((d + 1, 1, team_id))
                 if self.horario[i, d, 1] == 1:
                     assignment[i + 1].append((d + 1, 2, team_id))
+                if self.horario[i, d, 2] == 1:                     
+                    assignment[i + 1].append((d + 1, 3, team_id))
 
         class SchedView: pass
         sv = SchedView()
@@ -389,6 +395,8 @@ class HeuristicSolGabi:
                     line.append(f"M_{equipe}")
                 elif self.horario[e, d, 1] == 1:
                     line.append(f"T_{equipe}")
+                elif self.horario[e, d, 2] == 1:                 
+                    line.append(f"N_{equipe}")
                 else:
                     line.append("0")
             rows.append(line)

@@ -39,18 +39,18 @@ def analyze(file, holidays, vacs, mins, employees, year=2025):
     all_special_cols = [f'Dia {d}' for d in set(holidays).union(sunday) if f'Dia {d}' in df.columns]
 
     for _, row in df.iterrows():
-        worked_days = sum(row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] for col in dia_cols)
+        worked_days = sum(row[col] in ['M_A', 'T_A', 'N_A', 'M_B', 'T_B', 'N_B'] for col in dia_cols)
         vacation_days = sum(row[col] == 'F' for col in dia_cols)
 
         missed_work_days += abs(223 - worked_days)
         missed_vacation_days += abs(30 - vacation_days)
 
-        total_worked_holidays = sum(row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] for col in all_special_cols)
+        total_worked_holidays = sum(row[col] in ['M_A', 'T_A', 'N_A', 'M_B', 'T_B', 'N_B'] for col in all_special_cols)
         if total_worked_holidays > 22:
             workHolidays += total_worked_holidays - 22
 
         work_sequence = [
-            1 if row[col] in ['M_A', 'T_A', 'M_B', 'T_B'] else 0
+            1 if row[col] in ['M_A', 'T_A', 'N_A', 'M_B', 'T_B', 'N_B'] else 0
             for col in dia_cols
         ]
 
@@ -66,10 +66,20 @@ def analyze(file, holidays, vacs, mins, employees, year=2025):
         consecutiveDays += fails
 
         tm_fails = 0
+        order = {
+            'M_A': 1, 'M_B': 1,
+            'T_A': 2, 'T_B': 2,
+            'N_A': 3, 'N_B': 3,
+        }
         for i in range(len(dia_cols) - 1):
             today = row[dia_cols[i]]
             tomorrow = row[dia_cols[i + 1]]
-            if today in ['T_A', 'T_B'] and tomorrow in ['M_A', 'M_B']:
+
+            t_ord = order.get(today)
+            n_ord = order.get(tomorrow)
+
+            # Count a fail if both are working shifts and tomorrow is "earlier" than today
+            if t_ord is not None and n_ord is not None and n_ord < t_ord:
                 tm_fails += 1
 
         total_tm_fails += tm_fails
@@ -80,9 +90,9 @@ def analyze(file, holidays, vacs, mins, employees, year=2025):
 
         for col in dia_cols:
             shift_val = row[col]
-            if shift_val in ['M_A', 'T_A']:
+            if shift_val in ['M_A', 'T_A', 'N_A']:
                 team = 1
-            elif shift_val in ['M_B', 'T_B']:
+            elif shift_val in ['M_B', 'T_B', 'N_B']:
                 team = 2
             else:
                 continue
@@ -126,7 +136,14 @@ def analyze(file, holidays, vacs, mins, employees, year=2025):
     shift_balance = min(percentages) if percentages else 0
 
     def givenShift(team_label, shift):
-        prefix = "M" if shift == 1 else "T"
+        if shift == 1:
+            prefix = "M"
+        elif shift == 2:
+            prefix = "T"
+        elif shift == 3:
+            prefix = "N"
+        else:
+            return None  # unknown shift; skip
         return f"{prefix}_{team_label}"
 
     for (day, team_label, shift), required in mins.items():
@@ -155,7 +172,7 @@ def analyze(file, holidays, vacs, mins, employees, year=2025):
 def parse_minimuns(minimums):
     minimos = {}
     team_map = {"Equipa A": "A", "Equipa B": "B"}
-    shift_map = {"M": 1, "T": 2}
+    shift_map = {"M": 1, "T": 2, "N": 3}
 
     minimums = minimums.replace('\r\n', '\n').replace('\r', '\n').strip()
     lines = minimums.split('\n')

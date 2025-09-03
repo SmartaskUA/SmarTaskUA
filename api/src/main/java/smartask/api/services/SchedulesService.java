@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import smartask.api.event.RabbitMqProducer;
 import smartask.api.models.Schedule;
 import smartask.api.models.VacationTemplate;
+import smartask.api.models.ReferenceTemplate;
 import smartask.api.models.requests.ScheduleRequest;
 import smartask.api.repositories.*;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.text.Normalizer;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +37,9 @@ public class SchedulesService {
 
     @Autowired
     private RabbitMqProducer producer;
+
+    @Autowired 
+    private ReferenceTemplateRepository referenceTemplateRepository;
 
     public String requestScheduleGeneration(ScheduleRequest schedule) {
 
@@ -77,17 +82,71 @@ public class SchedulesService {
                     " employees, but the system has " + employeeNamesInDb.size() + " employees.";
         }
 
-        // Enviar a requisição se tudo estiver certo
-        final String res = producer.requestScheduleMessage(schedule);
-        System.out.println("\n" + res);
-        System.out.println(schedule);
-
-        if (res.equals("Sent task request")) {
-            return "Sent task request";
+        if (schedule.getShifts() == null || (schedule.getShifts() != 2 && schedule.getShifts() != 3)) {
+            return "Invalid 'shifts' value. Expected 2 or 3.";
         }
-        return res;
+
+        Optional<ReferenceTemplate> refOpt =
+                referenceTemplateRepository.findByName(schedule.getMinimuns());
+        if (refOpt.isEmpty()) {
+            return "Minimums template '" + schedule.getMinimuns() + "' not found.";
+        }
+
+        List<List<String>> minRows = refOpt.get().getMinimuns();
+        Integer inferredShiftCount = inferShiftCount(minRows);
+        if (inferredShiftCount == null) {
+            return "Unable to infer shifts from minimums template '" + schedule.getMinimuns() + "'. " +
+                   "Make sure the CSV has a 'Turno' column with values like M/T/N.";
+        }
+
+        if (!inferredShiftCount.equals(schedule.getShifts())) {
+            return "Selected shifts (" + schedule.getShifts() + ") does not match minimums template '" +
+                   schedule.getMinimuns() + "' (found " + inferredShiftCount + ").";
+        }
+
+        final String res = producer.requestScheduleMessage(schedule);
+        return res.equals("Sent task request") ? "Sent task request" : res;
     }
 
+    /**
+     * Look at the CSV-like table and compute how many distinct shifts it defines.
+     * Accepts Portuguese header 'Turno' and robustly maps values:
+     *   - 'M'/'Manhã' -> M
+     *   - 'T'/'Tarde' -> T
+     *   - 'N'/'Noite'/'Night' -> N
+     */
+    private Integer inferShiftCount(List<List<String>> rows) {
+        if (rows == null || rows.isEmpty()) return null;
+
+        boolean hasM = false, hasT = false, hasN = false;
+
+        for (List<String> r : rows) {
+            if (r == null || r.size() < 3) continue;        // precisa pelo menos de 3 colunas
+            String raw = (r.get(2) == null ? "" : r.get(2)).trim();
+            String token = normalizeShiftToken(raw);         // "M" | "T" | "N" | ""
+
+            if ("M".equals(token)) hasM = true;
+            else if ("T".equals(token)) hasT = true;
+            else if ("N".equals(token)) hasN = true;
+
+            if (hasM && hasT && hasN) break; // já sabemos que são 3 turnos
+        }
+
+        int count = (hasM ? 1 : 0) + (hasT ? 1 : 0) + (hasN ? 1 : 0);
+        return count == 0 ? null : count;
+    }
+
+    /** Normaliza o valor do campo 'Turno' para M/T/N (tolerante a acentos e palavras completas). */
+    private String normalizeShiftToken(String s) {
+        if (s == null) return "";
+        String u = s.toUpperCase().trim();
+
+        if (u.startsWith("M") || u.contains("MANH")) return "M";   // M, Manha/Manhã
+        if (u.startsWith("T") || u.contains("TARD")) return "T";   // T, Tarde
+        if (u.startsWith("N") || u.contains("NOIT") || u.contains("NIGH")) return "N"; // N, Noite, Night
+
+        return "";
+    }
 
     public Optional<Schedule> getByTitle(String title) {
         return schedulerepository.findByTitle(title);
