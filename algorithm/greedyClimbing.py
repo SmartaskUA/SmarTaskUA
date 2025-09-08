@@ -323,7 +323,10 @@ class GreedyClimbing:
         return total_violation
 
     def criterio3(self, horario):
-        counts = np.zeros((self.num_days, 2, 2), dtype=int)
+        # days x shifts x teams
+        num_teams = 2  # A,B — adjust if you ever support more
+        counts = np.zeros((self.num_days, self.shifts, num_teams), dtype=int)
+
         n_emps = horario.shape[0]
         for p in range(n_emps):
             for d in range(self.num_days):
@@ -360,7 +363,7 @@ class GreedyClimbing:
         ambas = [emp - 1 for emp in self.employees if 1 in self.teams[emp] and 2 in self.teams[emp]]
         return equipe_A, equipe_B, ambas
 
-def solve(vacations, minimuns, employees, maxTime=None, year=2025):
+def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2):
     """
     vacations: rows like ['Employee 1','0','1',...]
     minimuns:  rows like ['Team_A','Minimum','M', ...]
@@ -392,6 +395,7 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025):
         num_iter=10,
         maxTime=(int(maxTime) if maxTime else None),
         year=year,
+        shifts=shifts,
     )
 
     # Build + evaluate + hill climb

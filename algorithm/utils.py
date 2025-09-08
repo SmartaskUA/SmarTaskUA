@@ -126,7 +126,8 @@ def rows_to_req_dicts(req_rows):
 
 def export_schedule_to_csv(scheduler, filename="schedule.csv", num_days=365):
     header = ["funcionario"] + [f"Dia {i+1}" for i in range(num_days)]
-    label = {1: "M_", 2: "T_", 3: "N_"}
+    label_all = {1: "M_", 2: "T_", 3: "N_"}
+    label = {k: v for k, v in label_all.items() if k <= getattr(scheduler, "shifts", 2)}
     with open(filename, mode="w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(header)

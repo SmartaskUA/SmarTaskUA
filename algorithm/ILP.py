@@ -177,20 +177,24 @@ class ILPScheduler:
         # Next-day transition rules
         for f in funcionarios:
             for i in range(len(dias) - 1):
-                d = dias[i]
+                d_today = dias[i]
                 d_next = dias[i + 1]
-                for s_prev in range(1, self.shifts + 1):          # today's working shift
-                    for s_next in range(1, self.shifts + 1):      # tomorrow's working shift
+                for s_prev in range(1, self.shifts + 1):
+                    for s_next in range(1, self.shifts + 1):
                         if s_next < s_prev:
                             model += (
-                                self.x[f][d][s_prev] + self.x[f][d_next][s_next] <= 1,
-                                f"forbid_{s_prev}_to_{s_next}_f{f}_{d.strftime('%Y%m%d')}"
+                                self.x[f][d_today][s_prev] + self.x[f][d_next][s_next] <= 1,
+                                f"forbid_{s_prev}_to_{s_next}_f{f}_{d_today.strftime('%Y%m%d')}"
                             )
 
-                # Vacations -> Off
-                for f in funcionarios:
-                    for d in self.vacations_dates[f]:
-                        model += (self.x[f][d][0] == 1, f"vacation_off_f{f}_{d.strftime('%Y%m%d')}")
+        # Vacations -> Off  (moved OUTSIDE the loop above, and no shadowing)
+        for f_emp in funcionarios:
+            for vac_day in self.vacations_dates[f_emp]:
+                model += (
+                    self.x[f_emp][vac_day][0] == 1,
+                    f"vacation_off_f{f_emp}_{vac_day.strftime('%Y%m%d')}"
+                )
+
 
         # Global daily floor (keep if you want it):
         # (If you don't want a global floor, remove these 3 constraints.)

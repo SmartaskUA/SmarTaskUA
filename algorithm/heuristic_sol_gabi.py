@@ -13,7 +13,7 @@ from algorithm.utils import (
     export_schedule_to_csv,  # exporter expects scheduler-like object
 )
 
-class HeuristicSol:
+class HeuristicSolGabi:
 
     def __init__(
         self,
@@ -27,7 +27,8 @@ class HeuristicSol:
         nDiasSeguidos=5,
         nMinTrabs=2,
         nMaxFolga=142,
-        feriados=None     # list of day-of-year (1-based) ints
+        feriados=None,    # list of day-of-year (1-based) ints
+        shifts=2          # number of shifts (2 or 3)
     ):
         self.year = year
         self.nDias = nDias
@@ -44,6 +45,9 @@ class HeuristicSol:
         # Holidays: convert to 0-based day indices for array masking
         feriados = feriados or []
         self.feriados_0based = np.array([d - 1 for d in feriados if 1 <= d <= self.nDias], dtype=int)
+
+        # Number of shifts (2 or 3)
+        self.shifts = int(shifts)
 
         # Vacations: rows -> dict -> boolean matrix
         vacs_dict = rows_to_vac_dict(vacations_rows)
@@ -403,13 +407,14 @@ class HeuristicSol:
         return rows
 
 
-def solve(vacations, minimuns, employees, maxTime, year=2025):
+def solve(vacations, minimuns, employees, maxTime, year=2025, shifts=2):
     scheduler = HeuristicSolGabi(
         vacations_rows=vacations,
         minimuns_rows=minimuns,
         employees=employees,
         year=year,
         feriados=[1, 108, 110, 115, 121, 161, 170, 227, 278, 305, 335, 342, 359],
+        shifts=shifts
     )
 
     # Build + optimize (maxTime in minutes → seconds)
