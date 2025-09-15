@@ -19,10 +19,10 @@ TIMEOUT = object()
 
 class ConstraintSearchScheduler:
     """
-    Backtracking + forward-checking scheduler.
-
-    Phase 1: meet all minimums (Minimos) with true constraint search.
-    Phase 2: greedily fill employees up to 223 days respecting all constraints.
+    CSP-style scheduler with:
+      - Phase 1: anytime branch-and-bound that MINIMIZES the number of unmet minimum slots,
+                 using 'slack tokens' when a min slot has no feasible candidate.
+      - Phase 2: greedy fill to take employees up to 223 days while respecting hard constraints.
 
     Representation:
       - Employees are 1-based externally. Internally we keep 0-based arrays and map back on export.
@@ -43,14 +43,29 @@ class ConstraintSearchScheduler:
         except Exception:
             return default
 
+    # --- time helpers (monotonic + per-phase deadlines) ---
+    @staticmethod
+    def _now():
+        return time.monotonic()
+
+    @staticmethod
+    def _deadline(secs):
+        # None -> huge deadline
+        return ConstraintSearchScheduler._now() + (secs if secs is not None else 10**9)
+
+    @staticmethod
+    def _time_left(deadline):
+        return (deadline - ConstraintSearchScheduler._now()) > 0
+
     def __init__(self, vacations_rows, minimuns_rows, employees, maxTime=None, year=2025, shifts=2, debug=True):
         self.debug = bool(debug)
         self.year = int(year) if year is not None else 2025
-        self.maxTime_sec = int(maxTime) * 60 if maxTime is not None else None
+        # External maxTime is in MINUTES; convert to seconds (can be None)
+        self.total_time_sec = int(maxTime) * 60 if maxTime is not None else None
         self.shifts = int(shifts)  # 2 or 3
 
         if self.debug:
-            print(f"[INIT] year={self.year}, shifts={self.shifts}, maxTime_sec={self.maxTime_sec}")
+            print(f"[INIT] year={self.year}, shifts={self.shifts}, total_time_sec={self.total_time_sec}")
 
         # Calendar / dates
         self.dates = pd.date_range(start=f"{self.year}-01-01", end=f"{self.year}-12-31").to_list()
@@ -60,9 +75,9 @@ class ConstraintSearchScheduler:
 
         # Holidays (PT) as 1-based DOY
         hol = hl.country_holidays("PT", years=[self.year])
-        start_date = self.dates[0].date()  
-        self.holidays = { (d - start_date).days + 1 for d in hol }  
-        
+        start_date = self.dates[0].date()
+        self.holidays = {(d - start_date).days + 1 for d in hol}
+
         # Special days (Sundays + holidays) as 1-based DOY
         self.special_days = set(self.holidays) | set(self.sundays)
 
@@ -139,12 +154,17 @@ class ConstraintSearchScheduler:
         self.coverage = defaultdict(int)  # (day, shift, team_id) -> count
         self.emp_day_team = np.zeros((self.n_emp, self.num_days), dtype=int)  # store team_id per assignment
 
+        # For best-incumbent snapshots (anytime)
+        self.best_unmet = float("inf")
+        self._best_remaining = None
+        self.best_snapshot = None
+        self.slack = defaultdict(int)  # (day, shift, team_id) -> slack units used
+
         # For export:
         self.assignment = defaultdict(list)  # 1-based emp_id -> [(day, shift, team_id)]
         self.vacs_1based = {i + 1: [d + 1 for d in np.where(self.vac_mask[i])[0]] for i in range(self.n_emp)}
 
     # ---------- helpers / checks ----------
-
     def _is_special(self, day1):
         """day1 is 1-based."""
         return day1 in self.special_days
@@ -250,7 +270,7 @@ class ConstraintSearchScheduler:
         if self.debug:
             print(f"[REVERT] Emp {i+1} <- day {d0+1}, shift {s}, team {team_id} | workdays={self.emp_workdays[i]}, special={self.emp_special[i]}")
 
-    # ---------- Phase 1: satisfy minimums (true backtracking) ----------
+    # ---------- Phase 1: minimize unmet minimums (anytime branch-and-bound) ----------
 
     def _slot_deficit(self, d1, s, team_id):
         """How many more employees needed to reach minimum at (d1, s, team)?"""
@@ -281,69 +301,121 @@ class ConstraintSearchScheduler:
             if self.debug:
                 print(f"[NEXT] Slot (d={d1}, s={s}, team={team_id}) deficit={deficit} candidates={len(cand)}")
 
-            # still allow empty candidate set to signal a dead end
             key = (d0, -deficit, len(cand))
             if best is None or key < best[0]:
                 best = (key, (d0, s, team_id, cand))
         return None if best is None else best[1]
 
-    def _search_minimums(self, start_time):
-        """
-        Recursive backtracking to satisfy all minimums.
-        Returns True when all minimums are met, else False.
-        """
-        if self.maxTime_sec is not None and (time.time() - start_time) >= self.maxTime_sec:
+    # --- slack helpers ---
+    def _apply_slack(self, d1, s, team_id):
+        self.coverage[(d1, s, team_id)] += 1
+        self.slack[(d1, s, team_id)] += 1
+
+    def _revert_slack(self, d1, s, team_id):
+        self.coverage[(d1, s, team_id)] -= 1
+        self.slack[(d1, s, team_id)] -= 1
+        if self.slack[(d1, s, team_id)] == 0:
+            del self.slack[(d1, s, team_id)]
+
+    # --- incumbent management ---
+    def _remaining_min_units(self):
+        total = 0
+        for (d1, s, t), req in self.mins.items():
+            have = int(self.coverage.get((d1, s, t), 0))
+            if have < req:
+                total += (req - have)
+        return total
+
+    def _snapshot(self):
+        return (
+            self.emp_day_shift.copy(),
+            self.emp_day_team.copy(),
+            self.emp_workdays.copy(),
+            self.emp_special.copy(),
+            dict(self.coverage),
+            dict(self.slack),
+        )
+
+    def _restore(self, snap):
+        (self.emp_day_shift,
+         self.emp_day_team,
+         self.emp_workdays,
+         self.emp_special,
+         cov,
+         slack) = snap
+        self.coverage.clear()
+        self.coverage.update(cov)
+        self.slack = defaultdict(int, slack)
+
+    def _update_incumbent(self, current_unmet):
+        rem = self._remaining_min_units()
+        if self._best_remaining is None:
+            better = True
+        else:
+            better = (current_unmet, rem) < (self.best_unmet, self._best_remaining)
+        if better:
+            self.best_unmet = current_unmet
+            self._best_remaining = rem
+            self.best_snapshot = self._snapshot()
             if self.debug:
-                print("[SEARCH] Time limit reached during minimums search.")
+                print(f"[INCUMBENT] unmet={self.best_unmet}, remaining={self._best_remaining}")
+
+    def _search_minimums_min_unmet(self, deadline, current_unmet=0):
+        # timeout
+        if not self._time_left(deadline):
             return TIMEOUT
-        nxt = self._next_min_slot()
-        if nxt is None:
-            if self.debug:
-                print("[SEARCH] All minimums satisfied.")
-            return True  # all minimums satisfied
 
-        d0, s, team_id, candidates = nxt
-
-        if not candidates:
-            if self.debug:
-                print(f"[SEARCH] Dead end at (day={d0+1}, shift={s}, team={team_id}) – no candidates.")
+        # poda por incumbente
+        if current_unmet >= self.best_unmet:
             return False
 
-        # Heuristic: prefer employees with lower special count and lower workdays
-        candidates.sort(key=lambda i: (self.emp_special[i], self.emp_workdays[i]))
+        nxt = self._next_min_slot()
+        if nxt is None:
+            # com pessoas/slack não há défice directo
+            self._update_incumbent(current_unmet)
+            return True
 
+        d0, s, team_id, candidates = nxt
+        d1 = d0 + 1
+
+        # tentar pessoas reais (heurística: especiais→workdays)
+        candidates.sort(key=lambda i: (self.emp_special[i], self.emp_workdays[i]))
         for i in candidates:
+            if not self._time_left(deadline):
+                return TIMEOUT
             self._apply(i, d0, s, team_id)
-            res = self._search_minimums(start_time)
-            if res is True:
-                return True
+            self._update_incumbent(current_unmet)  # pode melhorar 'remaining'
+            res = self._search_minimums_min_unmet(deadline, current_unmet)
+            self._revert(i, d0, s, team_id)
             if res is TIMEOUT:
                 return TIMEOUT
-            self._revert(i, d0, s, team_id)
 
+        # ramo slack (consome uma falta)
+        if not self._time_left(deadline):
+            return TIMEOUT
+        self._apply_slack(d1, s, team_id)
+        self._update_incumbent(current_unmet + 1)
+        res = self._search_minimums_min_unmet(deadline, current_unmet + 1)
+        self._revert_slack(d1, s, team_id)
+        if res is TIMEOUT:
+            return TIMEOUT
 
-        if self.debug:
-            print(f"[SEARCH] Backtracking from (day={d0+1}, shift={s}, team={team_id}).")
-        return False
+        return res
 
     # ---------- Phase 2: fill employees up to 223 (greedy feasibility) ----------
 
-    def _fill_to_targets(self, start_time):
+    def _fill_to_targets(self, deadline):
         def desirability(d1, s, team_id):
             have = int(self.coverage.get((d1, s, team_id), 0))
             min_req = int(self.mins.get((d1, s, team_id), 0))
             ideal = int(self.ideals.get((d1, s, team_id), 0))
 
-            # Highest priority: still under minimum
             if have < min_req:
                 return (0, min_req - have)
-            # Next: below ideal
             if have < ideal:
                 return (1, ideal - have)
-            # Then: exactly at ideal
             if have == ideal:
                 return (2, 0)
-            # Lowest: beyond ideal (overstaffed)
             return (3, have - ideal)
 
         slots = []
@@ -351,7 +423,6 @@ class ConstraintSearchScheduler:
             for s in range(1, self.shifts + 1):
                 for team_id in self.all_teams:
                     slots.append((d1, s, team_id))
-        # keep earliest day first, but bias by desirability inside the day
         slots.sort(key=lambda x: (x[0], desirability(*x)))
 
         if self.debug:
@@ -359,70 +430,136 @@ class ConstraintSearchScheduler:
 
         progress = True
         loops = 0
-        while progress:
+        while progress and self._time_left(deadline):
             loops += 1
-            if self.maxTime_sec is not None and (time.time() - start_time) >= self.maxTime_sec:
-                if self.debug:
-                    print("[FILL] Time limit reached; stopping fill.")
-                break
             progress = False
 
             for i in range(self.n_emp):
+                if not self._time_left(deadline):
+                    break
                 if self.emp_workdays[i] >= 223:
                     continue
 
-                placed = False
                 for (d1, s, team_id) in slots:
+                    if not self._time_left(deadline):
+                        break
                     d0 = d1 - 1
                     if team_id not in self.allowed_teams[i]:
                         continue
                     if self._can_assign(i, d0, s, team_id):
                         self._apply(i, d0, s, team_id)
-                        placed = True
                         progress = True
-                        if self.emp_workdays[i] % 25 == 0 and self.debug:
-                            print(f"[FILL] Emp {i+1} reached {self.emp_workdays[i]} days")
                         if self.emp_workdays[i] >= 223:
                             break
-                if self.maxTime_sec is not None and (time.time() - start_time) >= self.maxTime_sec:
-                    break
 
             if self.debug:
                 remaining = [223 - int(x) for x in self.emp_workdays]
                 print(f"[FILL] Loop {loops} done. Remaining (first 10): {remaining[:10]}. Progress={progress}")
 
-    def build(self):
-        start = time.time()
+    # ---------- Greedy cover mínimos (best-effort) ----------
+    def _remaining_min_deficits(self):
+        """
+        Return list of (deficit, day1, shift, team_id) for all min slots still underfilled
+        given current self.coverage.
+        """
+        deficits = []
+        for (d1, s, team_id), req in self.mins.items():
+            have = int(self.coverage.get((d1, s, team_id), 0))
+            if have < req:
+                deficits.append((req - have, d1, s, team_id))
+        return deficits
 
-        # Soft minimums: skip exact backtracking entirely
-        print("[ConstraintSearch] Treating minimums as SOFT; running best-effort cover only.")
-        self._greedy_cover_minimos(start)
+    def _greedy_cover_minimos(self, deadline):
+        """
+        Best-effort pass: while there are underfilled min slots, try to add people
+        without violating any HARD constraints. No backtracking — if a slot can't
+        be improved right now, we skip it and continue.
+        """
+        improved = True
+        loops = 0
+        while improved and self._time_left(deadline):
+            loops += 1
+            improved = False
+            deficits = self._remaining_min_deficits()
+            if not deficits:
+                if self.debug:
+                    print("[SOFT-MIN] All minimums satisfied during greedy pass.")
+                break
 
-        # Report any remaining min deficits (informational)
-        remaining = self._remaining_min_deficits()
-        remaining_units = sum(deficit for (deficit, _d1, _s, _team) in remaining)
-        if remaining_units > 0:
-            print(f"[ConstraintSearch] WARNING: {remaining_units} minimum 'units' remained unmet after best-effort pass.")
+            # Sort: largest deficit first, then earliest day
+            deficits.sort(key=lambda tup: (-tup[0], tup[1]))
+
+            for deficit, d1, s, team_id in deficits:
+                if not self._time_left(deadline):
+                    break
+                if deficit <= 0:
+                    continue
+                d0 = d1 - 1
+
+                # Build feasible candidates (HARD constraints via _can_assign)
+                cands = [i for i in range(self.n_emp) if self._can_assign(i, d0, s, team_id)]
+                if not cands:
+                    if self.debug:
+                        print(f"[SOFT-MIN] Slot (d={d1}, s={s}, team={team_id}) has no feasible candidates now.")
+                    continue
+
+                cands.sort(key=lambda i: (self.emp_special[i], self.emp_workdays[i]))
+                chosen = cands[0]
+                self._apply(chosen, d0, s, team_id)
+                improved = True
+
             if self.debug:
-                toughest = sorted(remaining, key=lambda x: (-x[0], x[1], x[2], x[3]))[:10]
-                for deficit, d1, s, team in toughest:
-                    have = int(self.coverage.get((d1, s, team), 0))
-                    req = int(self.mins.get((d1, s, team), 0))
-                    print(f"   - Day {d1}, Shift {s}, Team {team}: have={have}, req={req}, deficit={deficit}")
+                left = sum(defi for (defi, *_rest) in self._remaining_min_deficits())
+                print(f"[SOFT-MIN] Loop {loops} complete. Remaining min units to cover: {left}")
+                if not improved:
+                    print("[SOFT-MIN] No further improvement possible without breaking hard constraints.")
+                    break
 
-        # Phase 2: fill employees up to 223 days (still respects hard rules)
-        self._fill_to_targets(start)
+    # ---------- BUILD ----------
+    def build(self):
+        t0 = self._now()
+        total = self.total_time_sec or 300  # default 5 min if none provided
+
+        # Split time budget (adjust as you see fit)
+        t_search = int(total * 0.60)
+        t_greedy = int(total * 0.25)
+        t_fill   = max(0, total - t_search - t_greedy)
+
+        # Phase 1: search (anytime) minimize unmet mins
+        if self.debug:
+            print(f"[TIME] Budgets: search={t_search}s, greedy={t_greedy}s, fill={t_fill}s")
+
+        dl_search = self._deadline(t_search)
+        # Seed incumbente com o estado vazio (para garantir snapshot sempre)
+        self._update_incumbent(current_unmet=10**9)
+
+        res = self._search_minimums_min_unmet(deadline=dl_search, current_unmet=0)
+
+        # Restore best partial found (if any improved incumbente)
+        if self.best_snapshot is not None:
+            self._restore(self.best_snapshot)
+
+        if self.debug:
+            print(f"[SEARCH] Done. best_unmet={self.best_unmet}, remaining={self._best_remaining}")
+
+        # Phase Greedy cover (extra tentativa best-effort)
+        dl_greedy = self._deadline(t_greedy)
+        self._greedy_cover_minimos(dl_greedy)
+
+        # Phase 2: fill to 223 within remaining time
+        dl_fill = self._deadline(t_fill)
+        self._fill_to_targets(dl_fill)
 
         # Materialize for export
         self._materialize_assignment()
 
-        elapsed = time.time() - start
-        print(f"[ConstraintSearch] Build finished in {elapsed:.2f}s")
+        elapsed = self._now() - t0
+        print(f"[ConstraintSearch] Build finished in {elapsed:.2f}s; best_unmet={self.best_unmet if self.best_unmet!=float('inf') else 'n/a'}")
         if self.debug:
             print(f"[RESULT] Final workdays per employee (first 20): {self.emp_workdays[:20]}")
             print(f"[RESULT] Final special-days per employee (first 20): {self.emp_special[:20]}")
 
-
+    # ---------- export / view ----------
     def _materialize_assignment(self):
         self.assignment.clear()
         for i in range(self.n_emp):
@@ -467,83 +604,6 @@ class ConstraintSearchScheduler:
             rows.append(line)
         return rows
 
-    def _remaining_min_deficits(self):
-        """
-        Return list of (deficit, day1, shift, team_id) for all min slots still underfilled
-        given current self.coverage.
-        """
-        deficits = []
-        for (d1, s, team_id), req in self.mins.items():
-            have = int(self.coverage.get((d1, s, team_id), 0))
-            if have < req:
-                deficits.append((req - have, d1, s, team_id))
-        return deficits
-
-    def _greedy_cover_minimos(self, start_time):
-        """
-        Best-effort pass: while there are underfilled min slots, try to add people
-        without violating any HARD constraints. No backtracking — if a slot can't
-        be improved right now, we skip it and continue.
-
-        Strategy:
-          1) Recompute deficits; sort by largest deficit, then earliest day.
-          2) For each slot, build candidate list of employees feasible by _can_assign.
-          3) Pick a candidate by (fewest special-days so far, fewest workdays so far)
-             to spread the load and keep room for others.
-          4) Apply; repeat until no changes or time runs out.
-        """
-        improved = True
-        loops = 0
-        while improved:
-            loops += 1
-            if self.maxTime_sec is not None and (time.time() - start_time) >= self.maxTime_sec:
-                if self.debug:
-                    print("[SOFT-MIN] Time limit reached during greedy cover.")
-                break
-
-            improved = False
-            deficits = self._remaining_min_deficits()
-            if not deficits:
-                if self.debug:
-                    print("[SOFT-MIN] All minimums satisfied during greedy pass.")
-                break
-
-            # Sort: largest deficit first, then earliest day
-            deficits.sort(key=lambda tup: (-tup[0], tup[1]))
-
-            for deficit, d1, s, team_id in deficits:
-                if deficit <= 0:
-                    continue
-                d0 = d1 - 1
-
-                # Build feasible candidates (HARD constraints via _can_assign)
-                cands = [i for i in range(self.n_emp) if self._can_assign(i, d0, s, team_id)]
-                if not cands:
-                    if self.debug:
-                        print(f"[SOFT-MIN] Slot (d={d1}, s={s}, team={team_id}) has no feasible candidates now.")
-                    continue
-
-                # Choose the "cheapest" candidate to keep slack for others
-                cands.sort(key=lambda i: (self.emp_special[i], self.emp_workdays[i]))
-
-                chosen = cands[0]
-                self._apply(chosen, d0, s, team_id)
-                improved = True
-
-                # quick exit if time
-                if self.maxTime_sec is not None and (time.time() - start_time) >= self.maxTime_sec:
-                    if self.debug:
-                        print("[SOFT-MIN] Time limit reached mid-iteration.")
-                    break
-
-            if self.debug:
-                left = sum(defi for (defi, *_rest) in self._remaining_min_deficits())
-                print(f"[SOFT-MIN] Loop {loops} complete. Remaining min units to cover: {left}")
-                # If a full pass produced no improvement, we’re done.
-                if not improved:
-                    print("[SOFT-MIN] No further improvement possible without breaking hard constraints.")
-                    break
-
 
 # --------- convenience wrapper (same shape as your other solvers) ---------
 
@@ -552,6 +612,7 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2):
     vacations: rows like ['Employee 1','0','1',...]
     minimuns:  rows like ['Equipa A','Minimo','M', ...] / any team label the utils can parse
     employees: [{'teams': ['Equipa A','Equipa B','Equipa C', ...]}, ...]
+    maxTime: minutes (int/str), time budget for the WHOLE build.
     """
     csp = ConstraintSearchScheduler(
         vacations_rows=vacations,
@@ -560,7 +621,7 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2):
         maxTime=maxTime,
         year=year,
         shifts=shifts,
-        debug=True,  
+        debug=True,
     )
     csp.build()
     csp.export_csv("calendario_csp.csv")
