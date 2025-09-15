@@ -116,7 +116,7 @@ public class ApiApplication {
 				teamService.addTeam("Equipa C");
 
 				// Create extra employees 13..20 if they don't exist yet
-				for (int i = 13; i <= 20; i++) {
+				for (int i = 13; i <= 17; i++) {
 					String name = "Employee " + i;
 					boolean exists = employeeService.getEmployees().stream()
 							.anyMatch(e -> name.equals(e.getName()));

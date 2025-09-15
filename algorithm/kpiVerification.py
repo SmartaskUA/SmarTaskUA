@@ -4,24 +4,37 @@ import sys
 import json
 import holidays as hl
 import os
+import re
 
-def analyze(file, holidays, vacs, mins, employees, year=2025):
+def analyze(file, holidays, mins, employees, year=2025):
     print(f"Analyzing file: {file}")
     df = pd.read_csv(file, encoding='ISO-8859-1')
+
+    # --- helpers -------------------------------------------------------------
+    def parse_shift(val):
+        """Return (prefix, team) if val matches 'M_X'/'T_X'/'N_X', else (None, None)."""
+        if not isinstance(val, str):
+            return (None, None)
+        m = re.match(r'^\s*([MTN])\s*_\s*([A-Za-z])\s*$', val)
+        if m:
+            return (m.group(1), m.group(2).upper())
+        return (None, None)
+
+    def is_work_shift(val):
+        p, _ = parse_shift(val)
+        return p in {'M', 'T', 'N'}
+
+    # ------------------------------------------------------------------------
 
     missed_work_days = 0
     missed_vacation_days = 0
     missed_team_min = 0
     workHolidays = 0
     consecutiveDays = 0
-    total_morning = 0
-    total_afternoon = 0
     total_tm_fails = 0
     single_team_violations = 0
-    two_team_preference_level = {}
-    balance = []
-    var = 0
-    percentages = []
+    two_team_balance_values = []   # keeps % on first of two allowed teams (legacy metric)
+    per_employee_shift_balance = []  # min(M%, T%) per employee
 
     print(f"Year: {year}")
     print(f"Holidays: {holidays}")
@@ -30,6 +43,8 @@ def analyze(file, holidays, vacs, mins, employees, year=2025):
 
     mins = parse_minimuns(mins)
     teams = parse_employees(employees)
+
+    # Sundays of the given year (day-of-year numbers)
     sunday = []
     for day in pd.date_range(start=f'{year}-01-01', end=f'{year}-12-31'):
         if day.weekday() == 6:
@@ -38,22 +53,24 @@ def analyze(file, holidays, vacs, mins, employees, year=2025):
     dia_cols = [col for col in df.columns if col.startswith("Dia ")]
     all_special_cols = [f'Dia {d}' for d in set(holidays).union(sunday) if f'Dia {d}' in df.columns]
 
+    # order of shifts during a day for TM fail detection
+    shift_order = {'M': 1, 'T': 2, 'N': 3}
+
     for _, row in df.iterrows():
-        worked_days = sum(row[col] in ['M_A', 'T_A', 'N_A', 'M_B', 'T_B', 'N_B'] for col in dia_cols)
-        vacation_days = sum(row[col] == 'F' for col in dia_cols)
+        # Work/vacation counting (generic)
+        worked_days = sum(is_work_shift(row[col]) for col in dia_cols)
+        vacation_days = sum(str(row[col]).strip() == 'F' for col in dia_cols)
 
         missed_work_days += abs(223 - worked_days)
         missed_vacation_days += abs(30 - vacation_days)
 
-        total_worked_holidays = sum(row[col] in ['M_A', 'T_A', 'N_A', 'M_B', 'T_B', 'N_B'] for col in all_special_cols)
+        # Worked holidays/sundays (generic)
+        total_worked_holidays = sum(is_work_shift(row[col]) for col in all_special_cols)
         if total_worked_holidays > 22:
             workHolidays += total_worked_holidays - 22
 
-        work_sequence = [
-            1 if row[col] in ['M_A', 'T_A', 'N_A', 'M_B', 'T_B', 'N_B'] else 0
-            for col in dia_cols
-        ]
-
+        # 6+ consecutive days worked
+        work_sequence = [1 if is_work_shift(row[col]) else 0 for col in dia_cols]
         streak = 0
         fails = 0
         for day in work_sequence:
@@ -65,37 +82,26 @@ def analyze(file, holidays, vacs, mins, employees, year=2025):
                 streak = 0
         consecutiveDays += fails
 
+        # Tomorrow earlier than today (TM fails) — compare by M<T<N
         tm_fails = 0
-        order = {
-            'M_A': 1, 'M_B': 1,
-            'T_A': 2, 'T_B': 2,
-            'N_A': 3, 'N_B': 3,
-        }
         for i in range(len(dia_cols) - 1):
-            today = row[dia_cols[i]]
-            tomorrow = row[dia_cols[i + 1]]
-
-            t_ord = order.get(today)
-            n_ord = order.get(tomorrow)
-
-            # Count a fail if both are working shifts and tomorrow is "earlier" than today
-            if t_ord is not None and n_ord is not None and n_ord < t_ord:
-                tm_fails += 1
-
+            p_today, _ = parse_shift(row[dia_cols[i]])
+            p_tomorrow, _ = parse_shift(row[dia_cols[i + 1]])
+            if p_today in shift_order and p_tomorrow in shift_order:
+                if shift_order[p_tomorrow] < shift_order[p_today]:
+                    tm_fails += 1
         total_tm_fails += tm_fails
 
+        # Allowed teams for employee
         emp_id = row['funcionario']
-        allowed_codes = teams.get(emp_id, [])  # e.g. ["A"], ["A","B"], ["B","C"], ...
+        allowed_codes = teams.get(emp_id, [])  # e.g. ["A"], ["A","B"], ["B","C","D"], ...
 
-        # Count assignments per team code actually present in the row
+        # Count assignments per team actually present in the row
         team_counts = {}
         for col in dia_cols:
-            val = str(row[col])
-            if "_" in val:
-                _, code = val.split("_", 1)
-                code = code.strip()
-                if code:
-                    team_counts[code] = team_counts.get(code, 0) + 1
+            pfx, code = parse_shift(row[col])
+            if pfx and code:
+                team_counts[code] = team_counts.get(code, 0) + 1
 
         # Single-team violation: employee allowed only 1 code but worked others
         if len(allowed_codes) == 1:
@@ -105,7 +111,7 @@ def analyze(file, holidays, vacs, mins, employees, year=2025):
             if other_work:
                 single_team_violations += 1
 
-        # Simple 2-team balance metric if exactly 2 allowed teams
+        # Legacy metric: when exactly 2 allowed teams, compute % on the first team
         elif len(allowed_codes) == 2:
             c1, c2 = allowed_codes
             c1_count = team_counts.get(c1, 0)
@@ -114,29 +120,26 @@ def analyze(file, holidays, vacs, mins, employees, year=2025):
             if denom > 0:
                 pref = round((c1_count / denom) * 100, 2)
                 print(f"{emp_id}: {c1} shifts: {c1_count}, {c2} shifts: {c2_count} → {pref}% on {c1}")
-                balance.append(pref)
+                two_team_balance_values.append(pref)
 
-        total_morning += sum(row[col] in ['M_A', 'M_B'] for col in dia_cols)
-        total_afternoon += sum(row[col] in ['T_A', 'T_B'] for col in dia_cols)
-
-        total_shifts = total_morning + total_afternoon
-        if total_shifts > 0:
-            morning_percentage = (total_morning / total_shifts) * 100
-            afternoon_percentage = (total_afternoon / total_shifts) * 100
+        # Per-employee morning/afternoon split (generic)
+        emp_morning = sum(parse_shift(row[col])[0] == 'M' for col in dia_cols)
+        emp_afternoon = sum(parse_shift(row[col])[0] == 'T' for col in dia_cols)
+        total_emp_shifts = emp_morning + emp_afternoon
+        if total_emp_shifts > 0:
+            morning_percentage = (emp_morning / total_emp_shifts) * 100
+            afternoon_percentage = (emp_afternoon / total_emp_shifts) * 100
             print(f"Morning percentage: {morning_percentage:.2f}%, Afternoon percentage: {afternoon_percentage:.2f}%")
-            print(min(morning_percentage, afternoon_percentage))
-            percentages.append(min(morning_percentage, afternoon_percentage))
+            per_employee_shift_balance.append(min(morning_percentage, afternoon_percentage))
 
-
-    for i in range(len(balance)):
-        var += balance[i]
-    if balance:
-        two_team_preference_level = round(var / len(balance), 2)
+    # Aggregate legacy two-team balance metric
+    if two_team_balance_values:
+        two_team_preference_level = round(sum(two_team_balance_values) / len(two_team_balance_values), 2)
     else:
         two_team_preference_level = 0
 
-    print(percentages)
-    shift_balance = min(percentages) if percentages else 0
+    print(per_employee_shift_balance)
+    shift_balance = round(min(per_employee_shift_balance), 2) if per_employee_shift_balance else 0
 
     def givenShift(team_label, shift):
         if shift == 1:
@@ -149,14 +152,15 @@ def analyze(file, holidays, vacs, mins, employees, year=2025):
             return None  # unknown shift; skip
         return f"{prefix}_{team_label}"
 
+    # Minimums compliance (generic for any team code)
     for (day, team_label, shift), required in mins.items():
         col = f"Dia {day}"
         if col not in df.columns:
             continue
-
         code = givenShift(team_label, shift)
-        assigned = (df[col] == code).sum()
-
+        if not code:
+            continue
+        assigned = sum(str(v).strip().upper() == code for v in df[col])
         missing = max(0, required - assigned)
         missed_team_min += int(missing)
 
@@ -168,8 +172,8 @@ def analyze(file, holidays, vacs, mins, employees, year=2025):
         "consecutiveDays": consecutiveDays,
         "singleTeamViolations": single_team_violations,
         "missedTeamMin": missed_team_min,
-        "shiftBalance": round(shift_balance, 2),
-        "twoTeamPreferenceLevel": two_team_preference_level,
+        "shiftBalance": shift_balance,
+        "twoTeamPreferenceLevel": two_team_preference_level,  # kept for backward compatibility
     }
 
 def parse_minimuns(minimums):
@@ -269,5 +273,5 @@ if __name__ == "__main__":
         5: [1, 2], 6: [1, 2], 7: [1], 8: [1],
         9: [1], 10: [2], 11: [2, 1], 12: [2]
     }
-    data = analyze(file, holidays, teams, ano)
+    data = analyze(file=file, holidays=holidays, mins=minimums_text, employees=employees_json, year=ano)
     print(json.dumps(data, indent=4))

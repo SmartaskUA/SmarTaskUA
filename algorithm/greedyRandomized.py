@@ -119,12 +119,15 @@ class GreedyRandomized:
         all_days = set(range(1, self.num_days + 1))
 
         while (not self.is_complete()) and (self.maxTime is None or time.time() - self.start_time < self.maxTime):
-            # Prefer employees constrained to one team first
+            # Prefer employees constrained to one team first; then two; then ANY (including 3+ teams)
             P = [p for p in self.employees if len(self.assignment[p]) < 223 and len(self.teams[p]) == 1]
             if not P:
                 P = [p for p in self.employees if len(self.assignment[p]) < 223 and len(self.teams[p]) == 2]
             if not P:
-                break
+                # allow employees with 3 or more teams to be chosen 
+                P = [p for p in self.employees if len(self.assignment[p]) < 223 and len(self.teams[p]) >= 1]
+            if not P:
+                break  # nobody left who can take more work
 
             p = random.choice(P)
             f_value = float('inf')
@@ -165,8 +168,6 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2):
       employees_list: [{'teams': ['Team_A','Team_B']}, ...] (order -> employee id)
     Returns: table with header + per-employee day values.
     """
-    if year is None:
-        year = 2025  # guard for TaskManager passing None
 
     num_days = 365
     holi = holidays.country_holidays("PT", years=[year])
@@ -200,7 +201,7 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2):
     scheduler.build_schedule()
 
     header = ["funcionario"] + [f"Dia {d}" for d in range(1, num_days + 1)]
-    label = {1: "M_", 2: "T_", 3: "N_"}  # <-- add night
+    label = {1: "M_", 2: "T_", 3: "N_"} 
     output = [header]
     for p in scheduler.employees:
         row = [p]

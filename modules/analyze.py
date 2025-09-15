@@ -48,7 +48,7 @@ def callback(ch, method, properties, body):
 
         if len(files) == 1:
             print("[DEBUG] Running verifyKpis for file:", files[0])
-            result = verifyKpis(files[0], holidays, vacs, mins, employees, year)
+            result = verifyKpis(files[0], holidays, mins, employees, year)
             print("[DEBUG] verifyKpis result:", result)
             try:
                 verification_results.insert_one({

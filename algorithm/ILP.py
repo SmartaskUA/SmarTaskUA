@@ -17,6 +17,7 @@ from algorithm.utils import (
     get_team_code       
 )
 
+
 class ILPScheduler:
     def __init__(self, vacations_rows, minimuns_rows, employees, maxTime, year=2025, shifts=2):
         self.year = year

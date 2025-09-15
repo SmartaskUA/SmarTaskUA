@@ -67,7 +67,7 @@ class GreedyClimbing:
         Rules:
           - no >5 consecutive days
           - <=22 Sundays+holidays
-          - forbid T (day X) -> M (day X+1) and M (day X) -> T (day X-1)
+          - forbid next-day earlier shift (non-decreasing across days)
         """
         assignments = self.assignment[p]
 
@@ -90,7 +90,7 @@ class GreedyClimbing:
         if sundays_and_holidays > 22:
             return False
 
-        # No T -> next-day M (and symmetric)
+        # No earlier shift the next/previous day (e.g., T->M, N->T/M)
         for (day, shift, _) in assignments:
             if day + 1 == d and s < shift:
                 return False
@@ -128,10 +128,14 @@ class GreedyClimbing:
                 print("Maximum time reached, stopping generation.")
                 break
 
-            # Prefer employees with a single allowed team
+            # Prefer employees with fewer allowed teams (1, then 2, then >=3)
             P = [p for p in self.employees if len(self.assignment[p]) < 223 and len(self.teams[p]) == 1]
             if not P:
                 P = [p for p in self.employees if len(self.assignment[p]) < 223 and len(self.teams[p]) == 2]
+            if not P:
+                P = [p for p in self.employees if len(self.assignment[p]) < 223 and len(self.teams[p]) >= 3]
+            if not P:
+                P = [p for p in self.employees if len(self.assignment[p]) < 223 and len(self.teams[p]) > 0]
             if not P:
                 break
 
@@ -228,8 +232,7 @@ class GreedyClimbing:
                     new_h[emp_idx, d1, s1] = t2 if t2 in allowed else 0
                     new_h[emp_idx, d2, s2] = t1 if t1 in allowed else 0
 
-
-                # guard against T -> next-day M
+                # guard against earlier next-day shift
                 if d1 + 1 < self.num_days:
                     next_slots = [s for s in range(self.shifts) if new_h[emp_idx, d1 + 1, s] > 0]
                     if next_slots and next_slots[0] < s1:
@@ -252,7 +255,6 @@ class GreedyClimbing:
                     if prev_slots and s2 < prev_slots[0]:
                         iteration += 1
                         continue
-
 
                 c1, c2, c3, c4, c5 = self.criterios(new_h)
                 new_score = c1 + c2 + c3 + c4 + c5
@@ -318,7 +320,7 @@ class GreedyClimbing:
                 if worked[i, d] and (d + 1) in special_days:
                     num += 1
             if num > allowed:
-                total_violation += (num - allowed)  # <-- fix
+                total_violation += (num - allowed)
         return total_violation
 
     def criterio3(self, horario):
