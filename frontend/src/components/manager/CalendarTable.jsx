@@ -36,9 +36,9 @@ const CalendarTable = ({
     const normalized = value.toUpperCase();
     if (normalized === "0") return { backgroundColor: "#ffffff", color: "#000" };
     if (normalized === "F") return { backgroundColor: "#ffcccb", color: "#000" }; // Vacation
-    if (["T", "T_A", "T_B", "A_A", "A_B"].includes(normalized)) return { backgroundColor: "#f9e79f", color: "#000" }; // Afternoon
-    if (["M", "M_A", "M_B"].includes(normalized)) return { backgroundColor: "#d4edda", color: "#000" }; // Morning
-    if (["N", "N_A", "N_B"].includes(normalized)) return { backgroundColor: "#9eb3caff", color: "#000" }; // Night
+    if (normalized.includes("M")) return { backgroundColor: "#f9e79f", color: "#000" }; // Afternoon
+    if (normalized.includes("T")) return { backgroundColor: "#d4edda", color: "#000" }; // Morning
+    if (normalized.includes("N")) return { backgroundColor: "#9eb3caff", color: "#000" }; // Night
     return {};
   };
 

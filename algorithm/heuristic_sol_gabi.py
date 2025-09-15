@@ -11,6 +11,9 @@ from algorithm.utils import (
     rows_to_vac_dict,        # vacations rows -> {emp_id: [1-based days]}
     rows_to_req_dicts,       # minimuns rows -> mins/ideals dicts
     export_schedule_to_csv,  # exporter expects scheduler-like object
+    TEAM_ID_TO_CODE,
+    get_team_id,
+    get_team_code,
 )
 
 class HeuristicSolGabi:
@@ -54,10 +57,10 @@ class HeuristicSolGabi:
         self.nTrabs = len(employees)
         self.Ferias = self._vac_dict_to_matrix(vacs_dict, self.nTrabs, self.nDias)
 
-        # Preferences from teams (0 = morning -> "A"; 1 = afternoon -> "B")
-        # We only need A/B membership; we infer by the last character of the team string.
-        self.Prefs = self._gerar_preferencias_automatica(employees)
-
+        # Shift preferences (independent of team). Default: allow all available shifts.
+        # Allowed teams per employee (list of team_ids) derived from labels using utils.
+        self.Prefs = self._shift_prefs(employees)              # e.g., [ [0,1] ] or [0,1,2]
+        self.allowed_teams = self._allowed_teams(employees)    # list[list[int]] 
         # Minimum requirements by team/shift/day as four arrays (A_M, A_T, B_M, B_T)
         self.minA_M, self.minA_T, self.minB_M, self.minB_T, self.minA_N, self.minB_N = self._min_arrays_from_req_rows(minimuns_rows)
         # schedule tensor: [emp, day, shift], values 0/1/2
@@ -127,6 +130,34 @@ class HeuristicSolGabi:
             elif team == 2 and shift == 3: B_N[d] = val   
         return A_M, A_T, B_M, B_T, A_N, B_N
 
+    def _pick_team_for(self, emp_idx, dia_idx, turno_idx):
+        """Pick a team_id from employee's allowed teams that most reduces shortage at (day, shift)."""
+        candidates = self.allowed_teams[emp_idx]
+        if not candidates:
+            return None
+
+        # Build current counts per team for this (day, shift)
+        counts = defaultdict(int)
+        for e in range(self.nTrabs):
+            t = int(self.horario[e, dia_idx, turno_idx])
+            if t > 0:
+                counts[t] += 1
+
+        day1 = dia_idx + 1
+        shift1 = turno_idx + 1
+        # Score teams: bigger gap (mins - assigned) first; tie-breaker: lower current count
+        def score(team_id):
+            req = self._min_required(day1, shift1, team_id)
+            have = counts.get(team_id, 0)
+            gap = max(req - have, 0)
+            return (-gap, have)  # sort by largest gap (more negative), then fewer assigned
+
+        best = sorted(candidates, key=score)[0]
+        return best
+
+    def _min_required(self, day, shift, team_id):
+        # mins from rows_to_req_dicts: keys are (day, shift, team_id)
+        return int(self.mins.get((day, shift, team_id), 0))
 
     # ---------- construction ----------
 
@@ -156,9 +187,11 @@ class HeuristicSolGabi:
                     break
                 turno = self._choose_turno(i, dia, turnos_cobertura)
                 if turno is not None:
-                    self.horario[i, dia, turno] = 1
-                    turnos_assigned += 1
-                    turnos_cobertura[dia, turno] += 1
+                    team_id = self._pick_team_for(i, dia, turno)
+                    if team_id is not None:
+                        self.horario[i, dia, turno] = team_id
+                        turnos_assigned += 1
+                        turnos_cobertura[dia, turno] += 1
 
             # fallback: fill weekends/holidays if needed
             for dia in sorted(dias_eventuais, key=lambda d: turnos_cobertura[d].sum()):
@@ -166,9 +199,11 @@ class HeuristicSolGabi:
                     break
                 turno = self._choose_turno(i, dia, turnos_cobertura)
                 if turno is not None:
-                    self.horario[i, dia, turno] = 1
-                    turnos_assigned += 1
-                    turnos_cobertura[dia, turno] += 1
+                    team_id = self._pick_team_for(i, dia, turno)
+                    if team_id is not None:
+                        self.horario[i, dia, turno] = team_id
+                        turnos_assigned += 1
+                        turnos_cobertura[dia, turno] += 1
 
     def _choose_turno(self, i, dia, turnos_cobertura):
         poss = []
@@ -184,13 +219,29 @@ class HeuristicSolGabi:
             elif self.horario[i, dia + 1, 1] == 1: nxt = 1
             elif self.horario[i, dia + 1, 2] == 1: nxt = 2
 
-        for turno in self.Prefs[i]:  # turno in {0,1,2}
+        for turno in self.Prefs[i]:  # turno in [0..self.shifts-1], e.g. {0,1} or {0,1,2}
             if (prev is None or turno >= prev) and (nxt is None or nxt >= turno):
                 poss.append(turno)
 
         if not poss:
             return None
         return min(poss, key=lambda t: turnos_cobertura[dia, t])
+
+    def _shift_prefs(self, employees):
+        # If you later add per-employee shift prefs, plug them here.
+        # For now: everyone may work any shift up to self.shifts.
+        allowed = list(range(self.shifts))
+        return [allowed[:] for _ in employees]
+
+    def _allowed_teams(self, employees):
+        allowed = []
+        for emp in employees:
+            codes = [get_team_code(t) for t in emp.get("teams", []) if t]
+            ids = [get_team_id(c) for c in codes if c]
+            if not ids:
+                ids = [get_team_id("A")]  # sensible default
+            allowed.append(ids)
+        return allowed
 
     # ---------- criteria ----------
 
@@ -249,34 +300,23 @@ class HeuristicSolGabi:
         return f5
 
     def criterio6(self):
-        A_idx, B_idx, both_idx = self._indices_equipes()
-
-        A_M_tot = np.sum(self.horario[A_idx + both_idx, :, 0], axis=0) if (A_idx or both_idx) else np.zeros(self.nDias, int)
-        A_T_tot = np.sum(self.horario[A_idx + both_idx, :, 1], axis=0) if (A_idx or both_idx) else np.zeros(self.nDias, int)
-        A_N_tot = np.sum(self.horario[A_idx + both_idx, :, 2], axis=0) if (A_idx or both_idx) else np.zeros(self.nDias, int)
-        B_M_tot = np.sum(self.horario[B_idx + both_idx, :, 0], axis=0) if (B_idx or both_idx) else np.zeros(self.nDias, int)
-        B_T_tot = np.sum(self.horario[B_idx + both_idx, :, 1], axis=0) if (B_idx or both_idx) else np.zeros(self.nDias, int)
-        B_N_tot = np.sum(self.horario[B_idx + both_idx, :, 2], axis=0) if (B_idx or both_idx) else np.zeros(self.nDias, int)
+        """Shortage vs mins for ALL teams and ALL shifts, per day."""
+        # Build counts[day, shift, team_id]
+        counts = defaultdict(int)
+        for e in range(self.nTrabs):
+            for d in range(self.nDias):
+                for s in range(self.shifts):
+                    t = int(self.horario[e, d, s])
+                    if t > 0:
+                        counts[(d + 1, s + 1, t)] += 1
 
         viol = 0
-        viol += np.sum(np.maximum(self.minA_M - A_M_tot, 0))
-        viol += np.sum(np.maximum(self.minA_T - A_T_tot, 0))
-        viol += np.sum(np.maximum(self.minA_N - A_N_tot, 0))  
-        viol += np.sum(np.maximum(self.minB_M - B_M_tot, 0))
-        viol += np.sum(np.maximum(self.minB_T - B_T_tot, 0))
-        viol += np.sum(np.maximum(self.minB_N - B_N_tot, 0))
+        for (day, shift, team_id), req in self.mins.items():
+            if 1 <= day <= self.nDias and 1 <= shift <= self.shifts:
+                have = counts.get((day, shift, team_id), 0)
+                if have < req:
+                    viol += (req - have)
         return int(viol)
-
-    def _indices_equipes(self):
-        A, B, both = [], [], []
-        for i, pref in enumerate(self.Prefs):
-            if 0 in pref and 1 in pref:
-                both.append(i)
-            elif 0 in pref:
-                A.append(i)
-            elif 1 in pref:
-                B.append(i)
-        return A, B, both
 
     def calcular_criterios(self):
         return (
@@ -344,16 +384,6 @@ class HeuristicSolGabi:
             "f1": f1o, "f2": f2o, "f3": f3o, "f4": f4o, "f5": f5o, "f6": f6o
         }
 
-    # ---------- export via utils ----------
-
-    def _infer_emp_team_letter(self, i):
-        # morning-only -> 'A'; afternoon-only -> 'B'; both -> 'A' (arbitrary)
-        pref = self.Prefs[i]
-        if 0 in pref and 1 not in pref:
-            return 'A'
-        if 1 in pref and 0 not in pref:
-            return 'B'
-        return 'A'
 
     def _to_scheduler_like(self):
         """
@@ -365,15 +395,10 @@ class HeuristicSolGabi:
 
         assignment = defaultdict(list)
         for i in range(self.nTrabs):
-            team_letter = self._infer_emp_team_letter(i)
-            team_id = 1 if team_letter == 'A' else 2
-            for d in range(self.nDias):
-                if self.horario[i, d, 0] == 1:
-                    assignment[i + 1].append((d + 1, 1, team_id))
-                if self.horario[i, d, 1] == 1:
-                    assignment[i + 1].append((d + 1, 2, team_id))
-                if self.horario[i, d, 2] == 1:                     
-                    assignment[i + 1].append((d + 1, 3, team_id))
+            for s in range(self.shifts):
+                t = int(self.horario[i, d, s])
+                if t > 0:
+                    assignment[i + 1].append((d + 1, s + 1, t))
 
         class SchedView: pass
         sv = SchedView()
@@ -387,25 +412,31 @@ class HeuristicSolGabi:
         export_schedule_to_csv(sv, filename=filename, num_days=self.nDias)
 
     def to_table(self):
-        header = ["funcionario"] + [f"Dia {d+1}" for d in range(self.nDias)]
+        """
+        Build a table with one row per employee and one column per day.
+        Each worked cell shows "<Shift>_<TeamCode>", e.g., "M_A", "T_C", "N_D".
+        Vacations are "F" and empty days are "0".
+        """
+        header = ["funcionario"] + [f"Dia {d + 1}" for d in range(self.nDias)]
         rows = [header]
+        # Shift labels: indices 0,1,2 -> M_, T_, N_
+        label = {0: "M_", 1: "T_", 2: "N_"}
         for e in range(self.nTrabs):
-            equipe = self._infer_emp_team_letter(e)
             line = [f"Empregado{e + 1}"]
             for d in range(self.nDias):
                 if self.Ferias[e, d]:
                     line.append("F")
-                elif self.horario[e, d, 0] == 1:
-                    line.append(f"M_{equipe}")
-                elif self.horario[e, d, 1] == 1:
-                    line.append(f"T_{equipe}")
-                elif self.horario[e, d, 2] == 1:                 
-                    line.append(f"N_{equipe}")
-                else:
-                    line.append("0")
+                    continue
+                cell = "0"
+                for s in range(self.shifts):
+                    team_id = int(self.horario[e, d, s])
+                    if team_id > 0:
+                        team_code = TEAM_ID_TO_CODE.get(team_id, str(team_id))
+                        cell = f"{label.get(s, '')}{team_code}"
+                        break
+                line.append(cell)
             rows.append(line)
         return rows
-
 
 def solve(vacations, minimuns, employees, maxTime, year=2025, shifts=2):
     scheduler = HeuristicSolGabi(

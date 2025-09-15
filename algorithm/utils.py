@@ -3,7 +3,23 @@ import os
 from datetime import date
 import pandas as pd
 
-TEAM_LETTER_TO_ID = {'A': 1, 'B': 2}
+TEAM_CODE_TO_ID = {'A': 1, 'B': 2} # will be updated if there are more teams
+TEAM_ID_TO_CODE = {v: k for k, v in TEAM_CODE_TO_ID.items()}
+
+def get_team_code(s: str) -> str:
+    """Extract a team code from labels like 'Equipa C', 'Team_D', 'C'."""
+    if not s:
+        return ""
+    return s.strip().split()[-1].upper()
+
+def get_team_id(code: str) -> int:
+    """Return an id for a team code (A, B, C, ...), creating one if new."""
+    code = code.strip().upper()
+    if code not in TEAM_CODE_TO_ID:
+        TEAM_CODE_TO_ID[code] = (max(TEAM_CODE_TO_ID.values(), default=0) + 1)
+        TEAM_ID_TO_CODE[TEAM_CODE_TO_ID[code]] = code
+    return TEAM_CODE_TO_ID[code]
+
 
 def build_calendar(year: int):
     """
@@ -99,26 +115,29 @@ def parse_requirements_file(file_path: str):
 def rows_to_req_dicts(req_rows):
     """
     req_rows: rows like ['Equipa A','Minimo','M', <day1>, ...]
-    Returns: mins, ideals with keys (day, shift, team_id).
+    Supports 'Equipa C', 'Team D', or just 'C' as the last token.
     """
     mins, ideals = {}, {}
     for row in req_rows:
         team_label, kind, shift_code, *counts = row
-        team_id = TEAM_LETTER_TO_ID[team_label.strip()[-1].upper()]  # '...A' or '...B'
+
+        # robust final token as team code (A, B, C, D, ...):
+        team_code = team_label.strip().split()[-1].upper()
+        team_id = get_team_id(team_code)
+
         code = shift_code.strip().upper()
-        if code.startswith('M'): # Manhã
+        if code.startswith('M'):
             shift = 1
-        elif code.startswith('T') or code.startswith('A'):  # Tarde
+        elif code.startswith('T') or code.startswith('A'):
             shift = 2
-        elif code.startswith('N'):  # Noite
+        elif code.startswith('N'):
             shift = 3
         else:
-            # Unknown shift label -> skip row (or raise)
             continue
 
         target = mins if kind.strip().lower().startswith('min') else ideals
         for day, value in enumerate(counts, start=1):
-            v = value.strip()
+            v = str(value).strip()
             if v:
                 target[(day, shift, team_id)] = int(v)
     return mins, ideals
@@ -128,19 +147,23 @@ def export_schedule_to_csv(scheduler, filename="schedule.csv", num_days=365):
     header = ["funcionario"] + [f"Dia {i+1}" for i in range(num_days)]
     label_all = {1: "M_", 2: "T_", 3: "N_"}
     label = {k: v for k, v in label_all.items() if k <= getattr(scheduler, "shifts", 2)}
+
     with open(filename, mode="w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(header)
+
         for emp in scheduler.employees:
             row = [emp]
             day_assignments = {day: (shift, team) for (day, shift, team) in scheduler.assignment[emp]}
             vacation_days = set(getattr(scheduler, "vacs", {}).get(emp, []))
+
             for day_num in range(1, num_days + 1):
                 if day_num in vacation_days:
                     row.append("F")
                 elif day_num in day_assignments:
-                    shift, team = day_assignments[day_num]
-                    row.append(label.get(shift, "") + ("A" if team == 1 else "B"))
+                    shift, team_id = day_assignments[day_num]
+                    team_code = TEAM_ID_TO_CODE.get(team_id, str(team_id))  # <- no A/B assumption
+                    row.append(label.get(shift, "") + team_code)
                 else:
                     row.append("0")
             writer.writerow(row)

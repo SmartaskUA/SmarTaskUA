@@ -8,21 +8,14 @@ import holidays
 
 from algorithm.utils import (
     build_calendar,
-    rows_to_vac_dict,      
-    rows_to_req_dicts,     
-    export_schedule_to_csv 
+    rows_to_vac_dict,
+    rows_to_req_dicts,
+    export_schedule_to_csv,
+    TEAM_CODE_TO_ID,      
+    TEAM_ID_TO_CODE,      
+    get_team_id,   
+    get_team_code       
 )
-
-TEAM_ID_TO_LETTER = {1: "A", 2: "B"}
-LETTER_TO_TEAM_ID = {"A": 1, "B": 2}
-
-
-def _last_letter_ab(s: str) -> str:
-    """Extract final A/B letter from strings like 'Equipa A', 'Team_B', 'A', 'B'."""
-    if not s:
-        return ""
-    return s.strip()[-1].upper()
-
 
 class ILPScheduler:
     def __init__(self, vacations_rows, minimuns_rows, employees, maxTime, year=2025, shifts=2):
@@ -42,21 +35,18 @@ class ILPScheduler:
         self.shifts = int(shifts)  
 
         # Normalize team of each employee: use the first team listed, map to A/B letter.
-        self.emp_team_letter = {}
+        self.emp_team_code = {}
         for idx, emp in enumerate(employees):
             teams = emp.get("teams", [])
-            if not teams:
-                # default to A if missing, or raise—your original code warned only
-                self.emp_team_letter[idx] = "A"
-                continue
-            self.emp_team_letter[idx] = _last_letter_ab(teams[0])
+            code = get_team_code(teams[0]) if teams else "A"  # choose your own default
+            self.emp_team_code[idx] = code
+            # ensure an id exists for this code (creates if new)
+            get_team_id(code)
 
-        # Build team -> set(employees) mapping, only for teams present
+        # Build team -> set(employees) for ALL present codes
         self.teams = {}
-        for idx, letter in self.emp_team_letter.items():
-            if letter not in ("A", "B"):
-                continue
-            self.teams.setdefault(letter, set()).add(idx)
+        for idx, code in self.emp_team_code.items():
+            self.teams.setdefault(code, set()).add(idx)
 
         # Holidays (PT) + Sundays
         feriados_pt = holidays.country_holidays("PT", years=[year])
@@ -80,9 +70,9 @@ class ILPScheduler:
         for (day, shift, team_id), val in mins.items():
             if 1 <= day <= self.num_days:
                 date_key = self.dates[day - 1]
-                team_letter = TEAM_ID_TO_LETTER.get(team_id)
-                if team_letter:
-                    self.minimos[(date_key, team_letter, shift)] = int(val)
+                team_code = TEAM_ID_TO_CODE.get(team_id)
+                if team_code:
+                    self.minimos[(date_key, team_code, shift)] = int(val)
 
         # ILP containers
         self.x = None
@@ -113,13 +103,13 @@ class ILPScheduler:
         }
 
         # --- Count vars per team/day/shift (covers all shifts present) ---
+        # y vars
         self.y = {
-            d: {
-                s: {team: pulp.LpVariable(f"y_{d.strftime('%Y%m%d')}_{s}_{team}",
-                                        lowBound=0, cat="Integer")
-                    for team in self.teams.keys()}
-                for s in t_range
-            } for d in dias
+            d: {s: {team_code: pulp.LpVariable(f"y_{d.strftime('%Y%m%d')}_{s}_{team_code}",
+                                            lowBound=0, cat="Integer")
+                    for team_code in self.teams.keys()}
+                for s in t_range}
+            for d in dias
         }
 
         model = pulp.LpProblem("Escala_Trabalho_ILP", pulp.LpMinimize)
@@ -127,22 +117,22 @@ class ILPScheduler:
         # Link y with x per team
         for d in dias:
             for s in t_range:
-                for team_letter, members in self.teams.items():
+                for team_code, members in self.teams.items():
                     model += (
-                        self.y[d][s][team_letter] == pulp.lpSum(self.x[f][d][s] for f in members),
-                        f"count_{team_letter}_{d.strftime('%Y%m%d')}_S{s}"
+                        self.y[d][s][team_code] == pulp.lpSum(self.x[f][d][s] for f in members),
+                        f"count_{team_code}_{d.strftime('%Y%m%d')}_S{s}"
                     )
 
         # Penalize shortages against minimos
         penalties = []
         for d in dias:
             for s in t_range:
-                for team_letter in self.teams.keys():
-                    minimo = self.minimos.get((d, team_letter, s), 0)
-                    penal = pulp.LpVariable(f"penal_{d.strftime('%Y%m%d')}_S{s}_{team_letter}",
+                for team_code in self.teams.keys():
+                    minimo = self.minimos.get((d, team_code, s), 0)
+                    penal = pulp.LpVariable(f"penal_{d.strftime('%Y%m%d')}_S{s}_{team_code}",
                                             lowBound=0, cat="Continuous")
-                    model += (penal >= minimo - self.y[d][s][team_letter],
-                            f"shortage_{d.strftime('%Y%m%d')}_S{s}_{team_letter}")
+                    model += (penal >= minimo - self.y[d][s][team_code],
+                            f"shortage_{d.strftime('%Y%m%d')}_S{s}_{team_code}")
                     penalties.append(penal)
 
         model += pulp.lpSum(penalties), "Minimize_shortage_below_minimos"
@@ -236,8 +226,8 @@ class ILPScheduler:
             return
         for f in self.employees:
             emp_id = f + 1
-            team_letter = self.emp_team_letter.get(f, "A")
-            team_id = LETTER_TO_TEAM_ID.get(team_letter, 1)
+            team_code = self.emp_team_code.get(f, "A")
+            team_id = get_team_id(team_code)
 
             for day_idx, d in enumerate(self.dates, start=1):
                 # consider OFF (0) + all working shifts [1..self.shifts]
@@ -271,7 +261,7 @@ class ILPScheduler:
                     line.append("F")
                 elif d in day_to_st:
                     s, team_id = day_to_st[d]
-                    line.append(label.get(s, "") + TEAM_ID_TO_LETTER.get(team_id, "A"))
+                    line.append(label.get(s, "") + TEAM_ID_TO_CODE.get(team_id, "A"))
                 else:
                     line.append("0")
             rows.append(line)

@@ -7,13 +7,16 @@ import pandas as pd
 import os
 
 from algorithm.utils import (
-    TEAM_LETTER_TO_ID,
+    TEAM_CODE_TO_ID,    
+    TEAM_ID_TO_CODE,
+    get_team_id,        
     build_calendar,
     parse_vacs_file,
     parse_requirements_file,
     rows_to_vac_dict,
     rows_to_req_dicts,
     export_schedule_to_csv,
+    get_team_code
 )
 
 class GreedyRandomized:
@@ -172,10 +175,14 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2):
     vacs    = rows_to_vac_dict(vacations)
     mins, ideals = rows_to_req_dicts(minimuns)
 
-    teams = {
-        idx + 1: [TEAM_LETTER_TO_ID[t[-1]] for t in e["teams"]]
-        for idx, e in enumerate(employees)
-    }
+    teams = {}
+    for idx, e in enumerate(employees):
+        emp_id = idx + 1
+        codes = [ get_team_code(t) for t in e.get("teams", []) ]
+        ids = [ get_team_id(c) for c in codes if c ]
+        if not ids:
+            ids = [ get_team_id("A") ]
+        teams[emp_id] = ids
 
     scheduler = GreedyRandomized(
         employees=emp_ids,
@@ -204,7 +211,7 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2):
                 row.append("F")
             elif d in assign:
                 s, t = assign[d]
-                row.append(label.get(s, "") + ("A" if t == 1 else "B"))
+                row.append(label.get(s, "") + TEAM_ID_TO_CODE.get(t, str(t)))
             else:
                 row.append("0")
         row and output.append(row)

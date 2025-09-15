@@ -8,13 +8,16 @@ import holidays as hl
 import holidays
 
 from algorithm.utils import (
-    TEAM_LETTER_TO_ID,
+    TEAM_CODE_TO_ID,
+    TEAM_ID_TO_CODE,
+    get_team_id,       
     build_calendar,
     parse_vacs_file,
     parse_requirements_file,
     rows_to_vac_dict,
     rows_to_req_dicts,
     export_schedule_to_csv,
+    get_team_code
 )
 
 class GreedyClimbing:
@@ -213,22 +216,18 @@ class GreedyClimbing:
             t1 = horario[emp_idx, d1, s1]
             t2 = horario[emp_idx, d2, s2]
 
-            can_A = 1 in self.teams[emp]
-            can_B = 2 in self.teams[emp]
-
             if t1 != t2:
                 new_h = horario.copy()
-                if can_A and can_B:
+                allowed = set(self.teams[emp])
+
+                # try swapping if both targets are allowed
+                if (t2 in allowed) and (t1 in allowed):
                     new_h[emp_idx, d1, s1], new_h[emp_idx, d2, s2] = t2, t1
-                elif can_A:
-                    new_h[emp_idx, d1, s1] = 1
-                    new_h[emp_idx, d2, s2] = 0
-                elif can_B:
-                    new_h[emp_idx, d1, s1] = 0
-                    new_h[emp_idx, d2, s2] = 2
                 else:
-                    iteration += 1
-                    continue
+                    # fallbacks: keep only allowed teams, drop others to 0 (off)
+                    new_h[emp_idx, d1, s1] = t2 if t2 in allowed else 0
+                    new_h[emp_idx, d2, s2] = t1 if t1 in allowed else 0
+
 
                 # guard against T -> next-day M
                 if d1 + 1 < self.num_days:
@@ -324,14 +323,19 @@ class GreedyClimbing:
 
     def criterio3(self, horario):
         # days x shifts x teams
-        num_teams = 2  # A,B — adjust if you ever support more
+        team_ids = set()
+        for ids in self.teams.values():
+            team_ids.update(ids)
+        team_ids.update(t for (_d, _s, t) in self.mins.keys())
+        num_teams = (max(team_ids) if team_ids else 0)
+
         counts = np.zeros((self.num_days, self.shifts, num_teams), dtype=int)
 
         n_emps = horario.shape[0]
         for p in range(n_emps):
             for d in range(self.num_days):
                 for s in range(self.shifts):
-                    t = horario[p, d, s]
+                    t = horario[p, d, s]  # this stores team_id or 0
                     if t > 0:
                         counts[d, s, t - 1] += 1
 
@@ -358,10 +362,14 @@ class GreedyClimbing:
         return violations
 
     def identificar_equipes(self):
-        equipe_A = [emp - 1 for emp in self.employees if 1 in self.teams[emp] and 2 not in self.teams[emp]]
-        equipe_B = [emp - 1 for emp in self.employees if 2 in self.teams[emp] and 1 not in self.teams[emp]]
-        ambas = [emp - 1 for emp in self.employees if 1 in self.teams[emp] and 2 in self.teams[emp]]
-        return equipe_A, equipe_B, ambas
+        # map team_id -> list of employee indices (0-based) who can work that team
+        all_team_ids = sorted({tid for ids in self.teams.values() for tid in ids})
+        team_to_emps = {
+            tid: [emp - 1 for emp in self.employees if tid in self.teams[emp]]
+            for tid in all_team_ids
+        }
+        multi_team = [emp - 1 for emp in self.employees if len(self.teams[emp]) > 1]
+        return team_to_emps, multi_team
 
 def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2):
     """
@@ -382,8 +390,14 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2):
     emp_ids = [i + 1 for i in range(len(employees))]
     vacs = rows_to_vac_dict(vacations)
     mins, ideals = rows_to_req_dicts(minimuns)
-    teams = {idx + 1: [TEAM_LETTER_TO_ID[t[-1]] for t in e["teams"]] for idx, e in enumerate(employees)}
-
+    teams = {}
+    for idx, e in enumerate(employees):
+        emp_id = idx + 1
+        codes = [get_team_code(t) for t in e.get("teams", [])]
+        ids = [get_team_id(c) for c in codes if c]
+        if not ids:
+            ids = [get_team_id("A")]
+        teams[emp_id] = ids
     scheduler = GreedyClimbing(
         employees=emp_ids,
         num_days=num_days,
@@ -420,7 +434,7 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2):
                 row.append("F")
             elif d in assign:
                 s, t = assign[d]
-                row.append(label.get(s, "") + ("A" if t == 1 else "B"))
+                row.append(label.get(s, "") + TEAM_ID_TO_CODE.get(t, str(t)))
             else:
                 row.append("0")
         output.append(row)
