@@ -19,9 +19,10 @@ public class ScheduleRequest {
     private LocalDateTime requestedAt;
     private String vacationTemplate;
     private String minimuns;
+    private Integer shifts;    
 
     // Construtor explícito
-    public ScheduleRequest(String taskId, String year, String algorithm, String title, String maxTime, LocalDateTime requestedAt, String vacationTemplate, String minimuns) {
+    public ScheduleRequest(String taskId, String year, String algorithm, String title, String maxTime, LocalDateTime requestedAt, String vacationTemplate, String minimuns, Integer shifts) {
         this.taskId = taskId;
         this.year =  year;
         this.algorithm = algorithm;
@@ -30,6 +31,7 @@ public class ScheduleRequest {
         this.requestedAt = requestedAt;
         this.vacationTemplate = vacationTemplate;
         this.minimuns = minimuns;
+        this.shifts = shifts;
     }
 
     // Getters and setters

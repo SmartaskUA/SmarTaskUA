@@ -22,6 +22,7 @@ const CreateCalendar = () => {
   const [year, setYear] = useState("");
   const [maxDuration, setMaxDuration] = useState("");
   const [selectedAlgorithm, setSelectedAlgorithm] = useState("");
+  const [shifts, setShifts] = useState("");
   const [vacationTemplate, setVacationTemplate] = useState("");
   const [minimumTemplate, setMinimumTemplate] = useState("");
   const [templateOptions, setTemplateOptions] = useState([]);
@@ -66,6 +67,7 @@ const CreateCalendar = () => {
         requestedAt: new Date().toISOString(),
         vacationTemplate: vacationTemplate,
         minimuns: minimumTemplate,
+        shifts: shifts,
       };
 
       const response = await axios.post(`${baseurl}/schedules/generate`, data);
@@ -185,6 +187,20 @@ const CreateCalendar = () => {
                   <MenuItem value="linear programming">Integer Linear Programming</MenuItem>
                   <MenuItem value="Greedy Randomized">Greedy Randomized</MenuItem>
                   <MenuItem value="Greedy Randomized + Hill Climbing">Greedy Randomized + Hill Climbing</MenuItem>
+                  <MenuItem value="CSP">CSP</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="shifts-select-label">Shifts</InputLabel>
+                <Select
+                  labelId="shifts-select-label"
+                  value={shifts}
+                  label="Shifts"
+                  onChange={(e) => setShifts(e.target.value)}
+                >
+                  <MenuItem value={2}>2 shifts</MenuItem>
+                  <MenuItem value={3}>3 shifts</MenuItem>
                 </Select>
               </FormControl>
 

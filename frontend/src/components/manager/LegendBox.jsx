@@ -7,6 +7,7 @@ const LegendBox = () => {
     { label: "Vacation", color: "#ffcccb" },
     { label: "Morning", color: "#d4edda" },
     { label: "Afternoon", color: "#f9e79f" },
+    { label: "Night", color: "#9eb3caff" },
   ];
 
   return (

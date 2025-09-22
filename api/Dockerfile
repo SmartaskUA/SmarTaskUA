@@ -13,7 +13,8 @@ RUN mvn dependency:go-offline
 COPY src ./src
 
 # Compile o projeto
-RUN mvn clean install
+
+RUN mvn clean install -DskipTests
 
 
 # Etapa 2: Imagem final

@@ -4,21 +4,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import smartask.api.models.Employee;
 import smartask.api.models.requests.UpdateEmployee;
+import smartask.api.models.Team;
 import smartask.api.repositories.EmployeesRepository;
+import org.springframework.transaction.annotation.Transactional; 
+import smartask.api.repositories.TeamRepository;
 
 import java.util.*;
 
 @Service
 public class EmployeeService {
-    @Autowired
-    private EmployeesRepository repository;
 
-    public EmployeeService(EmployeesRepository repository) {
-        this.repository = repository;
+    private final EmployeesRepository employeesRepository;
+    private final TeamRepository teamsRepository;
+
+    public EmployeeService(EmployeesRepository employeesRepository, TeamRepository teamsRepository) {
+        this.employeesRepository = employeesRepository;
+        this.teamsRepository = teamsRepository;
     }
 
+
     public List<Employee> getEmployees() {
-        return repository.findAll();
+        return employeesRepository.findAll();
     }
 
     public void addEmployee(Employee employee) {
@@ -26,7 +32,7 @@ public class EmployeeService {
     }
 
     public Employee getEmployeeById(String id) {
-        return repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+        return employeesRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Employee not found"));
     }
 
 
@@ -40,23 +46,43 @@ public class EmployeeService {
 
 
     public void saveEmployee(Employee employee) {
-        repository.save(employee);
+        employeesRepository.save(employee);
     }
 
 
+    @Transactional
     public void deleteEmployeeById(String id) {
-        if (!repository.existsById(id)) {
+        if (!employeesRepository.existsById(id)) {
             throw new IllegalArgumentException("Employee with ID " + id + " not found.");
         }
-        repository.deleteById(id);
+
+        // Deletes employeeId from every team that contains it
+        List<Team> teams = teamsRepository.findByEmployeeIdsContains(id);
+        for (Team t : teams) {
+            t.getEmployeeIds().removeIf(empId -> empId.equals(id));
+        }
+        teamsRepository.saveAll(teams);
+
+        employeesRepository.deleteById(id);
     }
 
+    @Transactional
     public void deleteEmployeeByName(String name) {
-        Optional<Employee> optional = repository.findByName(name);
+        Optional<Employee> optional = employeesRepository.findByName(name);
         if (optional.isEmpty()) {
             throw new IllegalArgumentException("Employee with name '" + name + "' not found.");
         }
-        repository.delete(optional.get());
+
+        String employeeId = optional.get().getId();
+
+        // Deletes employeeId from every team that contains it
+        List<Team> teams = teamsRepository.findByEmployeeIdsContains(employeeId);
+        for (Team t : teams) {
+            t.getEmployeeIds().removeIf(empId -> empId.equals(employeeId));
+        }
+        teamsRepository.saveAll(teams);
+
+        employeesRepository.delete(optional.get());
     }
 
 }

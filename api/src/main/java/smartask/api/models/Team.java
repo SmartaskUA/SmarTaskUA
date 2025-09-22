@@ -19,6 +19,8 @@ public class Team {
     // Armazena apenas os IDs dos funcionários
     private List<String> employeeIds = new ArrayList<>();
 
+    public Team() { }
+
     public Team(String name) {
         this.name = name;
     }

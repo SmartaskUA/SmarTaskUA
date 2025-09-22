@@ -1,25 +1,26 @@
 package smartask.api.models;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Document(collection = "reference")
-@Builder
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ReferenceTemplate {
+
     @Id
     private String id;
 
     @NotBlank
+    @Indexed(unique = true)        
     private String name;
 
-    private ArrayList<List<String>> minimuns;
-
+    private List<List<String>> minimuns; 
 }

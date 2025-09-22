@@ -1,0 +1,72 @@
+{
+  "rules": [
+    {
+      "id": "team-eligibility",
+      "type": "team_eligibility",
+      "kind": "hard",
+      "scope": "per-employee-day",
+      "description": "An employee can only be assigned to teams listed in their profile.",
+      "params": {
+        "source_field": "teams"
+      }
+    },
+    {
+      "id": "max-consecutive-days",
+      "type": "max_consecutive_days",
+      "kind": "hard",
+      "scope": "per-employee-window",
+      "description": "No employee may work more than 5 days in any 6-day window.",
+      "params": {
+        "window": 6,
+        "max_worked": 5
+      }
+    },
+    {
+      "id": "special-days-cap",
+      "type": "cap_count_on_days",
+      "kind": "hard",
+      "scope": "per-employee-global",
+      "description": "Each employee can work at most 22 Sundays or holidays in a year.",
+      "params": {
+        "tag": "special_day",
+        "cap": 22
+      }
+    },
+    {
+      "id": "no-earlier-shift-next-day",
+      "type": "no_earlier_shift_next_day",
+      "kind": "hard",
+      "scope": "per-employee-adjacent-days",
+      "description": "Forbid backward transitions: no T->M, N->M, N->T between consecutive days.",
+      "params": {}
+    },
+    {
+      "id": "max-workdays-per-year",
+      "type": "max_total_workdays",
+      "kind": "hard",
+      "scope": "per-employee-global",
+      "description": "Cap each employee at 223 total assigned workdays per year.",
+      "params": {
+        "max": 223
+      }
+    },
+    {
+      "id": "vacation-days",
+      "type": "vacation_block",
+      "kind": "hard",
+      "scope": "per-employee-day",
+      "description": "Vacation days marked 'F' cannot be scheduled for work.",
+      "params": {}
+    },
+    {
+      "id": "min-coverage",
+      "type": "min_coverage",
+      "kind": "soft",
+      "scope": "per-day-shift-team",
+      "description": "Try to meet minimum coverage requirements for each day/shift/team but allow deficits if no exact solution exists.",
+      "params": {
+        "penalty_per_missing": 1000
+      }
+    }
+  ]
+}
