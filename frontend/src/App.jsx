@@ -14,6 +14,7 @@ import ImportMinimums from "./Manager/ImportMinimums";
 import { AuthProvider } from "./context/AuthContext";
 import NotFound from "./components/NotFound";
 import CompareCalendar from "./Manager/CompareCalendar";
+import RuleSets from "./Manager/RuleSets";
 
 const App = () => {
   return (
@@ -33,6 +34,7 @@ const App = () => {
           <Route path="/manager/generatevacations" element={<GenerateVacations />} />
           <Route path="/manager/importminimus" element={<ImportMinimums />} />
           <Route path="/manager/teams" element={<Teams />} />
+          <Route path="/manager/rulesets" element={<RuleSets />} />
 
           <Route path="/manager/*" element={<NotFound />} />
           <Route path="/admin/*" element={<NotFound />} />

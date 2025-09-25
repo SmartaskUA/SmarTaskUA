@@ -1,5 +1,6 @@
 # modules/TaskManager.py
 
+import json
 from algorithm.CSP_joao import employee_scheduling
 from algorithm.genetic_algorithm import solve as genetic_alg_solver
 from algorithm.heuristic_sol_gabi import solve as hill_clibing_alg_solver
@@ -7,6 +8,7 @@ from algorithm.ILP import solve as ilp_solver
 from algorithm.greedyRandomized import solve as greedy_randomized_solver
 from algorithm.greedyClimbing import solve as greedy_climbing_solver
 from algorithm.CSP import solve as csp_solver
+from algorithm.greedyClimbingEngine import solve as grhc_engine_solver
 
 class TaskManager:
     def __init__(self):
@@ -19,7 +21,8 @@ class TaskManager:
             "linear programming": ilp_solver,
             "Greedy Randomized": greedy_randomized_solver,
             "Greedy Randomized + Hill Climbing": greedy_climbing_solver,
-            "CSP": csp_solver
+            "CSP": csp_solver,
+            "GRHC_ENGINE": grhc_engine_solver
         }
 
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling",
@@ -40,9 +43,15 @@ class TaskManager:
         algorithm = self.algorithms[algorithm_name]
 
         # Verifica assinatura e repassa os argumentos corretamente
-        if algorithm_name == "linear programming" or algorithm_name == "hill climbing" or algorithm_name == "Greedy Randomized" or algorithm_name == "Greedy Randomized + Hill Climbing" or algorithm_name == "CSP":
+        if algorithm_name == "linear programming" or algorithm_name == "hill climbing" or algorithm_name == "Greedy Randomized" or algorithm_name == "Greedy Randomized + Hill Climbing" or algorithm_name == "CSP" or algorithm_name == "GRHC_ENGINE":
             # Passa vacations, minimuns e employees explicitamente
-            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts)
+            from pathlib import Path
+            current_dir = Path(__file__).parent
+            rules_path = current_dir / "rules.json"       
+            with open(rules_path) as f:
+                rules_json = json.load(f)
+            rules_list = rules_json.get("rules", [])
+            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, rules=rules_list)
         else:
             # Algoritmos que ainda não usam os argumentos extras
             schedule_data = algorithm()
