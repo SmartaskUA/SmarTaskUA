@@ -374,7 +374,7 @@ class HeuristicSolGabi:
             rows.append(line)
         return rows
 
-def solve(vacations, minimuns, employees, maxTime, year=2025, shifts=2):
+def solve(vacations, minimuns, employees, maxTime, year=2025, shifts=2, rules=None):
     scheduler = HeuristicSolGabi(
         vacations_rows=vacations,
         minimuns_rows=minimuns,

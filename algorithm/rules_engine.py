@@ -1,190 +1,153 @@
-from collections import defaultdict
+# rules_engine.py
+from dataclasses import dataclass
+from typing import Dict, List, Tuple, Any, Set, Optional
 import numpy as np
+
+@dataclass
+class Rule:
+    id: str
+    type: str
+    kind: str          # "hard" | "soft"
+    description: str
+    scope: str
+    params: Dict[str, Any]
 
 class RuleEngine:
     """
-    Stateless, callback-free rule engine:
-    - Hard constraints via can_assign(p, d, s, t, assignment) -> bool
-    - Optional soft penalties via score_horario(horario, assignment) -> int
+    Interpreta o JSON de regras e fornece checagens reutilizáveis
+    para os algoritmos (greedy/ILP).
     """
-
-    def __init__(self, rules, employees, num_days, shifts, teams, vacation_array, holidays_set, sunday_set):
-        self.rules = rules or []  # list of rule dicts
-        self.employees = employees            # [1..N]
-        self.num_days = int(num_days)
+    def __init__(
+        self,
+        rules_config: Dict[str, Any],
+        *,
+        num_days: int,
+        shifts: int,
+        employees: List[int],                              # 1-based ids para greedy
+        teams_map: Dict[int, List[int]],                  # emp_id -> [team_ids permitidos]
+        vacations_1based: Dict[int, List[int]],           # emp_id -> [dias 1..N]
+        special_days_1based: Set[int],                    # {dias 1..N} domingos+feriados
+        target_workdays: int = 223
+    ):
+        self.rules: List[Rule] = [Rule(**r) for r in rules_config.get("rules", [])]
+        self.num_days = num_days
         self.shifts = int(shifts)
-        self.teams = teams                    # {emp_id: [team_id,...]}
-        self.vacation_array = vacation_array  # shape [N, D] -> True if on vacation
-        self.holidays_set = set(holidays_set)
-        self.sunday_set = set(sunday_set)
-        self.special_days = self.holidays_set | self.sunday_set
+        self.employees = employees
+        self.teams_map = teams_map
+        self.vac_1b = vacations_1based
+        self.special = set(special_days_1based)
+        self.target_workdays = target_workdays
 
-        # containers
-        self.hard_per_employee_day = []      # fn(p,d,s,t,ctx) -> bool
-        self.hard_per_employee_window = []   # fn(p,assignment_list,ctx) -> bool
-        self.hard_per_employee_global = []   # fn(p,assignment_list,ctx) -> bool
-        self.hard_adjacent = []              # fn(p,d,s,t,ctx) -> bool
-        self.soft_slot_penalties = []        # fn(horario, assignment) -> int
+        # índices úteis
+        self.has_team_elig = any(r.type == "team_eligibility" for r in self.rules)
+        self.has_max_consec = any(r.type == "max_consecutive_days" for r in self.rules)
+        self.has_special_cap = any(r.type == "max_special_days" for r in self.rules)
+        self.has_no_earlier_next = any(r.type == "no_earlier_shift_next_day" for r in self.rules)
+        self.has_max_total = any(r.type == "max_total_workdays" for r in self.rules)
+        self.has_vac_block = any(r.type == "vacation_block" for r in self.rules)
+        self.soft_min_cov = next((r for r in self.rules if r.type == "min_coverage" and r.kind == "soft"), None)
 
-        # mins map used by min_coverage soft rule
-        self.rules_mins = {}
+        # parâmetros (com defaults iguais ao código atual)
+        self.window = next((int(r.params.get("window", 6)) for r in self.rules if r.type=="max_consecutive_days"), 6)
+        self.max_in_window = next((int(r.params.get("max_worked", 5)) for r in self.rules if r.type=="max_consecutive_days"), 5)
+        self.special_cap = next((int(r.params.get("cap", 22)) for r in self.rules if r.type=="max_special_days"), 22)
+        self.max_total = next((int(r.params.get("max", 223)) for r in self.rules if r.type=="max_total_workdays"), 223)
+        self.penalty_per_missing = int(self.soft_min_cov.params.get("penalty_per_missing", 1000)) if self.soft_min_cov else 1000
 
-        self.compile_rules()
+    # ---------- helpers sobre estado ----------
+    @staticmethod
+    def _worked_days_for_emp(assign_list: List[Tuple[int,int,int]]) -> List[int]:
+        # assignment p -> [(day, shift, team)]
+        return sorted({d for (d, _s, _t) in assign_list})
 
-    # ---------- public API ----------
+    def _shift_on_day(self, assign_list: List[Tuple[int,int,int]], d: int) -> Optional[int]:
+        for (day, s, _t) in assign_list:
+            if day == d:
+                return s
+        return None
 
-    def can_assign(self, employee_id, day, shift, team_id, assignment):
+    def _count_special(self, assign_list: List[Tuple[int,int,int]]) -> int:
+        return sum(1 for (d, _s, _t) in assign_list if d in self.special)
+
+    # ---------- API principal para greedy ----------
+    def is_feasible(
+        self,
+        p: int, d: int, s: int, t: int,
+        assignment: Dict[int, List[Tuple[int,int,int]]]
+    ) -> bool:
         """
-        employee_id: 1-based
-        day:         1-based
-        shift:       1..S
-        team_id:     int
-        assignment:  dict p -> list[(day,shift,team)]
+        Verifica todas as regras 'hard' aplicáveis antes de atribuir (p,d,s,t).
         """
-        # hard per-day (fast guards)
-        if self.vacation_array[employee_id - 1, day - 1]:
-            return False
+        emp_assign = assignment[p]
 
-        ctx = {
-            "assignment": assignment,
-            "employee_id": employee_id,
-            "day": day,
-            "shift": shift,
-            "team_id": team_id,
-        }
-
-        for fn in self.hard_per_employee_day:
-            if not fn(employee_id, day, shift, team_id, ctx):
+        # 1) Team eligibility
+        if self.has_team_elig:
+            if t not in set(self.teams_map.get(p, [])):
                 return False
 
-        # adjacency (prev/next day dependent)
-        for fn in self.hard_adjacent:
-            if not fn(employee_id, day, shift, team_id, ctx):
+        # 2) Vacation block
+        if self.has_vac_block:
+            if d in set(self.vac_1b.get(p, [])):
                 return False
 
-        # Build augmented assignment list for window/global checks
-        employee_assign = list(assignment.get(employee_id, []))
-        # ensure tentative (day,shift,team) is considered exactly once
-        if (day, shift, team_id) not in employee_assign:
-            employee_assign.append((day, shift, team_id))
-
-        # window-based and global checks
-        for fn in self.hard_per_employee_window:
-            if not fn(employee_id, employee_assign, ctx):
+        # 3) Max total workdays (cap de 223)
+        if self.has_max_total:
+            # considerar esta atribuição
+            already = len(self._worked_days_for_emp(emp_assign))
+            if d not in self._worked_days_for_emp(emp_assign) and already + 1 > self.max_total:
                 return False
 
-        for fn in self.hard_per_employee_global:
-            if not fn(employee_id, employee_assign, ctx):
+        # 4) Janelas de consecutivos (no máximo 5 em qualquer janela de 6)
+        if self.has_max_consec:
+            days = self._worked_days_for_emp(emp_assign)
+            # incluir d
+            if d not in days:
+                days = sorted(days + [d])
+            # verificar todas as janelas de tamanho 'window'
+            # forma simples: contar presença por janela deslizante
+            # (equivalente ao comportamento anterior)
+            arr = np.zeros(self.num_days+1, dtype=int)  # 1-based
+            for dx in days:
+                arr[dx] = 1
+            # soma em cada janela
+            for i in range(1, self.num_days - self.window + 2):
+                if arr[i:i+self.window].sum() > self.max_in_window:
+                    return False
+
+        # 5) Cap de Domingos/Feriados
+        if self.has_special_cap:
+            cnt = self._count_special(emp_assign)
+            if d in self.special:
+                cnt += 1 if all(existing_d != d for (existing_d, _, _) in emp_assign) else 0
+            if cnt > self.special_cap:
+                return False
+
+        # 6) Proibir transição para turno mais cedo no dia seguinte (e simétrico anterior)
+        if self.has_no_earlier_next:
+            # ontem/amanhã
+            s_prev = self._shift_on_day(emp_assign, d-1)
+            s_next = self._shift_on_day(emp_assign, d+1)
+            if s_prev is not None and s < s_prev:
+                return False
+            if s_next is not None and s_next < s:
                 return False
 
         return True
 
-    def score_horario(self, horario, assignment):
+    # ---------- “soft min coverage” (greedy) ----------
+    def min_coverage_score(self, d: int, s: int, t: int, counts_func) -> int:
         """
-        horario: numpy array [N, D, S] storing team_id (0=off)
-        assignment: dict p -> list[(d,s,t)]
-        Returns total soft penalty (lower is better)
+        Interface genérica para a heurística f2 do greedy.
+        `counts_func(d,s,t)` deve devolver (current, min_required, ideal_required).
+        Retorna exatamente a escala usada no código antigo: 0, 1, 2+k.
+        Só é usada se a regra 'min_coverage' existir; caso contrário mantemos 1.
         """
-        total = 0
-        for fn in self.soft_slot_penalties:
-            total += fn(horario, assignment)
-        return total
-
-    def set_mins_map(self, mins_map):
-        self.rules_mins = mins_map or {}
-
-    # ---------- rule compilation ----------
-
-    def compile_rules(self):
-        for rule in self.rules:
-            rtype = rule.get("type")
-            params = rule.get("params", {})
-
-            if rtype == "vacation_block":
-                def not_vacation():
-                    def check(employee_id, day, shift, team_id, ctx):
-                        return not self.vacation_array[employee_id - 1, day - 1]
-                    return check
-                self.hard_per_employee_day.append(not_vacation())
-
-            elif rtype == "team_eligibility":
-                def belongs_to_team():
-                    def check(employee_id, day, shift, team_id, ctx):
-                        return team_id in self.teams.get(employee_id, [])
-                    return check
-                self.hard_per_employee_day.append(belongs_to_team())
-
-            elif rtype == "max_consecutive_days":
-                window = params.get("window", 6)
-                max_worked = params.get("max_worked", 5)
-
-                def make_max_consecutive_days(window=window, max_worked=max_worked):
-                    def check(p, assignment_list, ctx):
-                        days = sorted(d for (d, _, _) in assignment_list)
-                        # detect any run of > max_worked consecutive days
-                        run = 1
-                        for i in range(1, len(days)):
-                            if days[i] == days[i - 1] + 1:
-                                run += 1
-                                if run > max_worked:
-                                    return False
-                            else:
-                                run = 1
-                        # enforce at most `max_worked` workdays in any `window`-day span
-                        if window and window > 0:
-                            for i in range(len(days)):
-                                end = days[i] + window
-                                worked_in_span = sum(1 for d in days if days[i] <= d < end)
-                                if worked_in_span > max_worked:
-                                    return False
-                        return True
-                    return check
-                self.hard_per_employee_window.append(make_max_consecutive_days())
-
-            elif rtype == "max_special_days":
-                cap = params.get("cap", 22)
-                def make_max_special_days(cap=cap):
-                    def check(p, assignment_list, ctx):
-                        cnt = sum(1 for (d, _, _) in assignment_list if d in self.special_days)
-                        return cnt <= cap
-                    return check
-                self.hard_per_employee_global.append(make_max_special_days())
-
-            elif rtype == "no_earlier_shift_next_day":
-                def no_earlier_shift():
-                    def check(employee_id, day, shift, team_id, ctx):
-                        assignments = ctx.get("assignment", {}).get(employee_id, [])
-                        for (d, s, _) in assignments:
-                            if d + 1 == day and shift < s:
-                                return False
-                            if d - 1 == day and s < shift:
-                                return False
-                        return True
-                    return check
-                self.hard_adjacent.append(no_earlier_shift())
-
-            elif rtype == "max_total_workdays":
-                max_workdays = params.get("max")
-                def max_days_worked():
-                    def check(employee_id, assignment_list, ctx):
-                        existing_days = {d for (d, _, _) in assignment_list}
-                        return len(existing_days) <= max_workdays
-                    return check
-                self.hard_per_employee_global.append(max_days_worked())
-
-            elif rtype == "min_coverage":
-                # Soft penalty; you can include this in the HC objective if desired
-                penalty = params.get("penalty_per_missing", 1000)
-                def minimum_coverage():
-                    def score(horario, assignment):
-                        total_penalization = 0
-                        for (day, shift, team), req in self.rules_mins.items():
-                            assigned = np.sum(horario[:, day - 1, shift - 1] == team)
-                            if assigned < req:
-                                total_penalization += (req - assigned) * penalty
-                        return total_penalization
-                    return score
-                self.soft_slot_penalties.append(minimum_coverage())
-
-            else:
-                print(f"[RuleEngine] Unknown rule type: {rtype} (ignored)")
+        if not self.soft_min_cov:
+            return 1  # neutro
+        current, min_req, ideal_req = counts_func(d, s, t)
+        if current < min_req:
+            return 0
+        elif current < ideal_req:
+            return 1
+        else:
+            return 2 + (current - ideal_req)

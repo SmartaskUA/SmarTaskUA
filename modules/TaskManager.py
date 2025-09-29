@@ -51,7 +51,7 @@ class TaskManager:
             with open(rules_path) as f:
                 rules_json = json.load(f)
             rules_list = rules_json.get("rules", [])
-            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, rules=rules_list)
+            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, rules=rules_json)
         else:
             # Algoritmos que ainda não usam os argumentos extras
             schedule_data = algorithm()

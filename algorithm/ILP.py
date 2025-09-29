@@ -269,7 +269,7 @@ class ILPScheduler:
         return rows
 
 
-def solve(vacations, minimuns, employees, maxTime, year=2025, shifts=2):
+def solve(vacations, minimuns, employees, maxTime, year=2025, shifts=2, rules=None):
     ilp = ILPScheduler(
         vacations_rows=vacations,
         minimuns_rows=minimuns,

@@ -372,7 +372,99 @@ class GreedyClimbing:
         }
         multi_team = [emp - 1 for emp in self.employees if len(self.teams[emp]) > 1]
         return team_to_emps, multi_team
+    def audit_schedule(self):
+        """
+        Scans the built schedule and reports violations:
+          - team eligibility (employee assigned to a team they can't work)
+          - vacation blocks (worked on vacation day)
+          - >5 consecutive days
+          - backward shift transitions (earlier shift next day)
+          - cap of 22 Sundays+holidays
+          - cap of 223 total workdays
+        Returns a dict with lists of issues; also prints a short report.
+        """
+        issues = {
+            "team_eligibility": [],   # (emp, day, shift, team_id)
+            "vacation_block": [],     # (emp, day)
+            "max_consecutive_days": [],  # (emp, start_day, length)
+            "backward_transition": [],   # (emp, day, shift_today, shift_next)
+            "special_days_cap": [],      # (emp, count)
+            "max_total_workdays": [],    # (emp, count)
+        }
 
+        # --- fast helpers ---
+        special_days = set(self.holidays).union(self.sunday)  # 1-based days
+        vacs = self.vacs                                      # {emp -> [days]}
+        team_map = self.teams                                  # {emp -> [team_ids]}
+
+        # Build easy lookup: first working shift per day for each emp
+        worked_shift = {p: {} for p in self.employees}  # p -> {day: shift}
+        for p in self.employees:
+            for (d, s, t) in self.assignment[p]:
+                worked_shift[p][d] = s
+
+        # 1) team eligibility + vacation block
+        for p in self.employees:
+            allowed = set(team_map.get(p, []))
+            vac_days = set(vacs.get(p, []))
+            for (d, s, t) in self.assignment[p]:
+                if t not in allowed:
+                    issues["team_eligibility"].append((p, d, s, t))
+                if d in vac_days:
+                    issues["vacation_block"].append((p, d))
+
+        # 2) >5 consecutive days
+        for p in self.employees:
+            days = sorted(set(d for (d, _s, _t) in self.assignment[p]))
+            if not days:
+                continue
+            run_len = 1
+            for i in range(1, len(days)):
+                if days[i] == days[i-1] + 1:
+                    run_len += 1
+                else:
+                    if run_len > 5:
+                        issues["max_consecutive_days"].append((p, days[i-run_len], run_len))
+                    run_len = 1
+            if run_len > 5:
+                issues["max_consecutive_days"].append((p, days[-run_len], run_len))
+
+        # 3) backward shift transitions (earlier next day)
+        for p in self.employees:
+            for d in range(1, self.num_days):
+                s_today = worked_shift[p].get(d)
+                s_next  = worked_shift[p].get(d+1)
+                if s_today is not None and s_next is not None and s_next < s_today:
+                    issues["backward_transition"].append((p, d, s_today, s_next))
+
+        # 4) caps: special days (22) and total workdays (223)
+        for p in self.employees:
+            worked_days = sorted(set(d for (d, _s, _t) in self.assignment[p]))
+            total = len(worked_days)
+            special = sum(1 for d in worked_days if d in special_days)
+            if special > 22:
+                issues["special_days_cap"].append((p, special))
+            if total > 223:
+                issues["max_total_workdays"].append((p, total))
+
+        # --- pretty print summary ---
+        def pr(label, items):
+            print(f"[AUDIT] {label}: {len(items)}")
+            for x in items[:20]:
+                print("   ", x)
+            if len(items) > 20:
+                print("    ... (truncated)")
+
+        print("\n=== SCHEDULE AUDIT ===")
+        pr("Team eligibility violations (emp, day, shift, team_id)", issues["team_eligibility"])
+        pr("Vacation day assignments (emp, day)", issues["vacation_block"])
+        pr(">5 consecutive day runs (emp, start_day, run_length)", issues["max_consecutive_days"])
+        pr("Backward shift transitions (emp, day, shift_today, shift_next)", issues["backward_transition"])
+        pr("Special-days cap >22 (emp, count)", issues["special_days_cap"])
+        pr("Total workdays >223 (emp, count)", issues["max_total_workdays"])
+        print("======================\n")
+
+        return issues
 def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, rules=None):
     """
     vacations: rows like ['Employee 1','0','1',...]
@@ -416,11 +508,14 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, rul
 
     # Build + evaluate + hill climb
     scheduler.build_schedule()
+
     initial_score = scheduler.score(scheduler.create_horario())
     print(f"{tag} Initial score: {initial_score}")
     scheduler.hill_climbing(maxTime=(int(maxTime) if maxTime else None))
 
     # Optional artifact
+    audit = scheduler.audit_schedule()
+
     export_schedule_to_csv(scheduler, "schedule_hybrid.csv", num_days=num_days)
 
     # Return table for TaskManager

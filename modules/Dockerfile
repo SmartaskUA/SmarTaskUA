@@ -7,7 +7,7 @@ COPY algorithm/ ./algorithm/
 COPY modules/   ./modules/
 
 # Instala dependências
-RUN pip install pika pymongo pytz numpy pandas deap pulp holidays tabulate tenacity
+RUN pip install pika pymongo pytz numpy pandas deap pulp holidays tabulate tenacity ortools
 
 # Comando de entrada
 CMD ["python3", "-u", "-m", "modules.RabbitMQClient"]
