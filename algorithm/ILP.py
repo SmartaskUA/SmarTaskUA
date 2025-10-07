@@ -14,9 +14,9 @@ from algorithm.utils import (
     TEAM_CODE_TO_ID,      
     TEAM_ID_TO_CODE,      
     get_team_id,   
-    get_team_code       
+    get_team_code,
+    schedule_to_table
 )
-
 
 class ILPScheduler:
     def __init__(self, vacations_rows, minimuns_rows, employees, maxTime, year=2025, shifts=2):
@@ -26,25 +26,24 @@ class ILPScheduler:
         # Calendar
         self.dates = pd.date_range(start=f"{year}-01-01", end=f"{year}-12-31").to_list()
         self.num_days = len(self.dates)
-        self.dias_ano, _sundays = build_calendar(self.year)  # (not strictly needed here, but consistent)
+        self.dias_ano, _sundays = build_calendar(self.year) 
 
         # Employees
-        self.employees = list(range(len(employees)))  # indices 0..n-1
+        self.employees = list(range(len(employees))) 
         self.num_employees = len(self.employees)
 
         # Number of shifts
         self.shifts = int(shifts)  
 
-        # Normalize team of each employee: use the first team listed, map to A/B letter.
+        # For each employee, store their primary team code
         self.emp_team_code = {}
         for idx, emp in enumerate(employees):
             teams = emp.get("teams", [])
-            code = get_team_code(teams[0]) if teams else "A"  # choose your own default
+            code = get_team_code(teams[0])
             self.emp_team_code[idx] = code
-            # ensure an id exists for this code (creates if new)
             get_team_id(code)
 
-        # Build team -> set(employees) for ALL present codes
+        # build teams dict: team_code -> set of employee indices
         self.teams = {}
         for idx, code in self.emp_team_code.items():
             self.teams.setdefault(code, set()).add(idx)
@@ -86,8 +85,7 @@ class ILPScheduler:
         self.vacs_1based = {i + 1: sorted([self.dates.index(d) + 1 for d in self.vacations_dates[i]])
                             for i in self.employees}
 
-    # ------------ model building ------------
-
+    # ------------ build model ------------
     def build_model(self):
         funcionarios = self.employees
         dias = self.dates
@@ -186,8 +184,7 @@ class ILPScheduler:
                     f"vacation_off_f{f_emp}_{vac_day.strftime('%Y%m%d')}"
                 )
 
-
-        # Global daily floor (keep if you want it):
+        # Global daily floor:
         # (If you don't want a global floor, remove these 3 constraints.)
         for d in dias:
             model += (
@@ -204,7 +201,6 @@ class ILPScheduler:
         self.model = model
 
     # ------------ solve + extract ------------
-
     def solve(self, gap_rel=0.005):
         if self.model is None:
             self.build_model()
@@ -219,10 +215,6 @@ class ILPScheduler:
         self._extract_assignments()
 
     def _extract_assignments(self):
-        """
-        Fill self.assignment as: emp_id(1-based) -> [(day, shift, team_id)]
-        Also keeps self.vacs_1based already prepared at __init__.
-        """
         if self.x is None:
             return
         for f in self.employees:
@@ -239,8 +231,6 @@ class ILPScheduler:
                     self.assignment[emp_id].append((day_idx, t_sel, team_id))
 
 
-    # ------------ export / table ------------
-
     def export_csv(self, filename="calendario4.csv"):
         class View: pass
         v = View()
@@ -248,26 +238,6 @@ class ILPScheduler:
         v.vacs = self.vacs_1based
         v.assignment = self.assignment
         export_schedule_to_csv(v, filename=filename, num_days=self.num_days)
-
-    def to_table(self):
-        header = ["funcionario"] + [f"Dia {i}" for i in range(1, self.num_days + 1)]
-        rows = [header]
-        label = {1: "M_", 2: "T_", 3: "N_"}
-        for emp_id in [i + 1 for i in self.employees]:
-            vac_days = set(self.vacs_1based.get(emp_id, []))
-            day_to_st = {d: (s, t) for (d, s, t) in self.assignment.get(emp_id, [])}
-            line = [str(emp_id)]
-            for d in range(1, self.num_days + 1):
-                if d in vac_days:
-                    line.append("F")
-                elif d in day_to_st:
-                    s, team_id = day_to_st[d]
-                    line.append(label.get(s, "") + TEAM_ID_TO_CODE.get(team_id, "A"))
-                else:
-                    line.append("0")
-            rows.append(line)
-        return rows
-
 
 def solve(vacations, minimuns, employees, maxTime, year=2025, shifts=2, rules=None):
     ilp = ILPScheduler(
@@ -281,4 +251,10 @@ def solve(vacations, minimuns, employees, maxTime, year=2025, shifts=2, rules=No
     ilp.build_model()
     ilp.solve(gap_rel=0.005)
     ilp.export_csv("calendario4.csv")
-    return ilp.to_table()
+    return schedule_to_table(
+        employees=ilp.employees,
+        vacs=ilp.vacs,
+        assignment=ilp.assignment,
+        num_days=365,
+        shifts=ilp.shifts
+    )

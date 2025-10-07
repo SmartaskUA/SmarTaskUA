@@ -88,9 +88,6 @@ class GreedyRandomized:
             if day - 1 == d and shift < s:  # today is the previous day before a worked day
                 return False
 
-        # If you want to forbid double shift same day, uncomment:
-        # if any(day == d for (day, _, _) in assignments):
-        #     return False
 
         return True
 

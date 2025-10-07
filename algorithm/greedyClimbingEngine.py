@@ -4,7 +4,6 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
-import holidays as hl
 import holidays
 from algorithm.rules_engine import RuleEngine
 
@@ -13,12 +12,11 @@ from algorithm.utils import (
     TEAM_ID_TO_CODE,
     get_team_id,       
     build_calendar,
-    parse_vacs_file,
-    parse_requirements_file,
     rows_to_vac_dict,
     rows_to_req_dicts,
     export_schedule_to_csv,
-    get_team_code
+    get_team_code,
+    schedule_to_table
 )
 
 class GreedyClimbing:
@@ -63,7 +61,6 @@ class GreedyClimbing:
         )
 
     # ---------- helpers ----------
-
     def _create_vacation_array(self):
         vac_array = np.zeros((len(self.employees), self.num_days), dtype=bool)
         for emp in self.employees:
@@ -72,22 +69,18 @@ class GreedyClimbing:
         return vac_array
 
     # ---------- feasibility ----------
-
     def f1(self, p, d, s, t) -> bool:
-        # agora inclui elegibilidade de equipa e todas as regras "hard"
-        return self.rule_engine.is_feasible(p, d, s, t, self.assignment)
+        return self.rule_engine.greedy_is_feasible(p, d, s, t, self.assignment)
 
     def f2(self, d, s, t):
-        # preserva a semântica anterior de 0/1/2+k e usa os mesmos mins/ideals
         def counts_func(day, shift, team):
             current = len(self.schedule_table[(day, shift, team)])
             min_required = self.mins.get((day, shift, team), 0)
             ideal_required = self.ideals.get((day, shift, team), min_required)
             return current, min_required, ideal_required
-        return self.rule_engine.min_coverage_score(d, s, t, counts_func)
+        return self.rule_engine.greedy_min_coverage_score(d, s, t, counts_func)
 
     # ---------- greedy construction ----------
-
     def build_schedule(self):
         all_days = set(range(1, self.num_days + 1))
 
@@ -245,7 +238,6 @@ class GreedyClimbing:
         print(f"Execution time (hill climbing): {time.time() - start_hc:.2f} seconds")
 
     # ---------- scoring ----------
-
     def score(self, horario):
         c1, c2, c3, c4, c5 = self.criterios(horario)
         return c1 + c2 + c3 + c4 + c5
@@ -349,11 +341,11 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, rul
     minimuns:  rows like ['Team_A','Minimum','M', ...]
     employees: list of dicts like {'teams': ['Team_A','Team_B']} in order → employee id
     """
+
     tag = "[Greedy Randomized + Hill Climbing]"
     print(f"{tag} Executando algoritmo")
     print(f"{tag} Número de funcionários: {len(employees)}")
 
-    # guard year (TaskManager may pass None)
     year = int(year) if year is not None else 2025
 
     num_days = 365
@@ -370,6 +362,7 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, rul
         if not ids:
             ids = [get_team_id("A")]
         teams[emp_id] = ids
+
     scheduler = GreedyClimbing(
         employees=emp_ids,
         num_days=num_days,
@@ -385,31 +378,20 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, rul
         rules=rules
     )
 
-    # Build + evaluate + hill climb
     scheduler.build_schedule()
     initial_score = scheduler.score(scheduler.create_horario())
     print(f"{tag} Initial score: {initial_score}")
     scheduler.hill_climbing(maxTime=(int(maxTime) if maxTime else None))
 
-    # Optional artifact
     export_schedule_to_csv(scheduler, "schedule_hybrid.csv", num_days=num_days)
 
     # Return table for TaskManager
-    header = ["funcionario"] + [f"Dia {d}" for d in range(1, num_days + 1)]
-    output = [header]
-    label = {1: "M_", 2: "T_", 3: "N_"}
-    for p in scheduler.employees:
-        row = [p]
-        assign = {day: (s, t) for (day, s, t) in scheduler.assignment[p]}
-        vacation_days = set(vacs.get(p, []))
-        for d in range(1, num_days + 1):
-            if d in vacation_days:
-                row.append("F")
-            elif d in assign:
-                s, t = assign[d]
-                row.append(label.get(s, "") + TEAM_ID_TO_CODE.get(t, str(t)))
-            else:
-                row.append("0")
-        output.append(row)
+    output = schedule_to_table(
+        employees=scheduler.employees,
+        vacs=vacs,
+        assignment=scheduler.assignment,
+        num_days=num_days,
+        shifts=shifts
+    )
 
     return output

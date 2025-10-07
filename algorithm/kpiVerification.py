@@ -112,25 +112,48 @@ def analyze(file, holidays, mins, employees, year=2025):
                 single_team_violations += 1
 
         # Legacy metric: when exactly 2 allowed teams, compute % on the first team
-        elif len(allowed_codes) == 2:
-            c1, c2 = allowed_codes
-            c1_count = team_counts.get(c1, 0)
-            c2_count = team_counts.get(c2, 0)
-            denom = c1_count + c2_count
+        elif len(allowed_codes) >= 2:
+            # count only shifts worked on allowed codes
+            denom = sum(team_counts.get(code, 0) for code in allowed_codes)
             if denom > 0:
-                pref = round((c1_count / denom) * 100, 2)
-                print(f"{emp_id}: {c1} shifts: {c1_count}, {c2} shifts: {c2_count} → {pref}% on {c1}")
-                two_team_balance_values.append(pref)
+                percs = {
+                    code: round((team_counts.get(code, 0) / denom) * 100.0, 2)
+                    for code in allowed_codes
+                }
 
-        # Per-employee morning/afternoon split (generic)
-        emp_morning = sum(parse_shift(row[col])[0] == 'M' for col in dia_cols)
-        emp_afternoon = sum(parse_shift(row[col])[0] == 'T' for col in dia_cols)
-        total_emp_shifts = emp_morning + emp_afternoon
-        if total_emp_shifts > 0:
-            morning_percentage = (emp_morning / total_emp_shifts) * 100
-            afternoon_percentage = (emp_afternoon / total_emp_shifts) * 100
-            print(f"Morning percentage: {morning_percentage:.2f}%, Afternoon percentage: {afternoon_percentage:.2f}%")
-            per_employee_shift_balance.append(min(morning_percentage, afternoon_percentage))
+                # Back-compat: keep pushing the % on the *first* allowed team
+                primary = allowed_codes[0]
+                two_team_balance_values.append(percs.get(primary, 0.0))
+
+                # Optional: print a compact breakdown for diagnostics
+                breakdown = ", ".join(f"{code}={percs[code]}%" for code in allowed_codes)
+                print(f"{emp_id}: {breakdown}")
+
+    # Per-employee shift balance (adapts to 2 or 3 shifts; best possible = 50)
+    emp_morning  = sum(parse_shift(row[col])[0] == 'M' for col in dia_cols)
+    emp_afternoon = sum(parse_shift(row[col])[0] == 'T' for col in dia_cols)
+    emp_night    = sum(parse_shift(row[col])[0] == 'N' for col in dia_cols)
+
+    total_emp_shifts_all = emp_morning + emp_afternoon + emp_night
+    if total_emp_shifts_all > 0:
+        morning_pct_all   = (emp_morning  / total_emp_shifts_all) * 100.0
+        afternoon_pct_all = (emp_afternoon / total_emp_shifts_all) * 100.0
+        night_pct_all     = (emp_night    / total_emp_shifts_all) * 100.0
+
+        # Only consider shifts the employee actually worked (non-zero).
+        pcts = [p for p in [morning_pct_all, afternoon_pct_all, night_pct_all] if p > 0]
+        active_shifts = len(pcts)
+
+        if active_shifts >= 2:
+            min_pct = min(pcts)
+            ideal_min = 100.0 / active_shifts        # 50.0 for 2 shifts, 33.333... for 3 shifts
+            scale = 50.0 / ideal_min                 # maps ideal_min -> 50
+            balanced_score = min(50.0, min_pct * scale)
+        else:
+            balanced_score = 0.0
+
+        per_employee_shift_balance.append(balanced_score)
+
 
     # Aggregate legacy two-team balance metric
     if two_team_balance_values:

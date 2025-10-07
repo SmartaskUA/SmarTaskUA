@@ -8,6 +8,7 @@ from algorithm.ILP import solve as ilp_solver
 from algorithm.greedyRandomized import solve as greedy_randomized_solver
 from algorithm.greedyClimbing import solve as greedy_climbing_solver
 from algorithm.CSP import solve as csp_solver
+from algorithm.CSP_Engine import solve as csp_engine_solver
 from algorithm.greedyClimbingEngine import solve as grhc_engine_solver
 
 class TaskManager:
@@ -22,6 +23,7 @@ class TaskManager:
             "Greedy Randomized": greedy_randomized_solver,
             "Greedy Randomized + Hill Climbing": greedy_climbing_solver,
             "CSP": csp_solver,
+            "CSP_ENGINE": csp_engine_solver,
             "GRHC_ENGINE": grhc_engine_solver
         }
 
@@ -43,7 +45,7 @@ class TaskManager:
         algorithm = self.algorithms[algorithm_name]
 
         # Verifica assinatura e repassa os argumentos corretamente
-        if algorithm_name == "linear programming" or algorithm_name == "hill climbing" or algorithm_name == "Greedy Randomized" or algorithm_name == "Greedy Randomized + Hill Climbing" or algorithm_name == "CSP" or algorithm_name == "GRHC_ENGINE":
+        if algorithm_name == "linear programming" or algorithm_name == "hill climbing" or algorithm_name == "Greedy Randomized" or algorithm_name == "Greedy Randomized + Hill Climbing" or algorithm_name == "CSP" or algorithm_name == "GRHC_ENGINE" or algorithm_name == "CSP_ENGINE":
             # Passa vacations, minimuns e employees explicitamente
             from pathlib import Path
             current_dir = Path(__file__).parent

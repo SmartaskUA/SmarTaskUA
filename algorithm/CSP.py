@@ -1,4 +1,3 @@
-# algorithm/cpsat_solver.py
 from ortools.sat.python import cp_model
 import numpy as np
 from collections import defaultdict
@@ -12,6 +11,7 @@ from algorithm.utils import (
     get_team_code,
     export_schedule_to_csv,
     build_calendar,
+    schedule_to_table
 )
 
 def _build_allowed_teams(employees):
@@ -27,29 +27,6 @@ def _build_allowed_teams(employees):
             ids = [get_team_id("A")]
         allowed.append(ids)
     return allowed
-
-def _to_table(assign, num_days, vacs_dict=None):
-    """
-    Build the TaskManager-compatible table, marking F on vacations.
-    """
-    header = ["funcionario"] + [f"Dia {d}" for d in range(1, num_days + 1)]
-    rows = [header]
-    label = {1: "M_", 2: "T_", 3: "N_"}
-    all_emp_ids = set(assign.keys()) | set(vacs_dict.keys() if vacs_dict else [])
-    for emp_id in sorted(all_emp_ids):
-        day_to = {d: (s, t) for (d, s, t) in assign.get(emp_id, [])}
-        vac_days = set(vacs_dict.get(emp_id, [])) if vacs_dict else set()
-        line = [str(emp_id)]
-        for d in range(1, num_days + 1):
-            if d in vac_days:
-                line.append("F")
-            elif d in day_to:
-                s, t = day_to[d]
-                line.append(label.get(s, "") + TEAM_ID_TO_CODE.get(t, str(t)))
-            else:
-                line.append("0")
-        rows.append(line)
-    return rows
 
 def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, rules=None):
 
@@ -92,6 +69,10 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
 
     # variables
     y, off, shift_id = {}, {}, {}
+    # Iterate over all employees and days to create the variables
+    # variable y[e,d,s,t] = 1 if employee e works shift s in team t on day d (binary)
+    # variable off[employee,day] = 1 if employee e is off on day d (binary)
+    # variable shift_id[employee,day] = s if employee e works shift s on day d (0 if off) (integer)
     for employee in Employees:
         for day in D:
             off[(employee, day)] = m.NewBoolVar(f"off_{employee}_{day}")
@@ -104,31 +85,32 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
     # exactly one of: OFF or exactly one (s, t) (vacation days forced OFF)
     for employee in Employees:
         for day in D:
-            lits = [off[(employee, day)]]
+            choices = [off[(employee, day)]] 
             if not vac_mask[(employee, day)]:
-                lits += [y[(employee, day, s, t)] for s in S for t in allowed_teams_per_emp[employee]]
-            m.Add(sum(lits) == 1)
+                choices += [y[(employee, day, s, t)] for s in S for t in allowed_teams_per_emp[employee]]
+            m.Add(sum(choices) == 1)
 
-
+    # No earlier shift on the next day (if not off)
     for employee in Employees:
         for day in range(1, num_days):
             m.Add(shift_id[(employee, day + 1)] >= shift_id[(employee, day)]).OnlyEnforceIf(
                 [off[(employee, day)].Not(), off[(employee, day + 1)].Not()]
             )
 
-    # link shift_id to assignment
+    # Keep shift_id consistent with off and y
+    # (off -> shift_id=0, assigned to (s,t) -> shift_id=s)
     for employee in Employees:
         for day in D:
-            m.Add(shift_id[(employee, day)] == 0).OnlyEnforceIf(off[(employee, day)])
-            if not vac_mask[(employee, day)]:
-                for s in S:
-                    for t in allowed_teams_per_emp[employee]:
-                        m.Add(shift_id[(employee, day)] == s).OnlyEnforceIf(y[(employee, day, s, t)])
+            m.Add(shift_id[(employee, day)] == 0).OnlyEnforceIf(off[(employee, day)]) # if the employee is off, shift_id is 0 (does not work)
+            if not vac_mask[(employee, day)]: # if not on vacation, can work
+                for s in S: # iterate over possible shifts
+                    for t in allowed_teams_per_emp[employee]: # iterate over possible teams
+                        m.Add(shift_id[(employee, day)] == s).OnlyEnforceIf(y[(employee, day, s, t)]) # if y is 1 it means the employee works shift s
 
     # Max 5 worked days in any 6-day window
     window, max_in_window = 6, 5
     for employee in Employees:
-        for start in range(1, num_days - window + 2):
+        for start in range(1, num_days - window + 2):  # + 2 because range is exclusive at the end
             days = range(start, start + window)
             m.Add(sum(1 - off[(employee, day)] for day in days) <= max_in_window)
 
@@ -138,13 +120,6 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
         sp_terms = [1 - off[(employee, day)] for day in D if day in special_days]
         if sp_terms:
             m.Add(sum(sp_terms) <= special_cap)
-
-    # No earlier shift on the next day
-    for employee in Employees:
-        for day in range(1, num_days):
-            both = m.NewBoolVar(f"both_{employee}_{day}")
-            m.AddBoolAnd([off[(employee, day)].Not(), off[(employee, day + 1)].Not()]).OnlyEnforceIf(both)
-            m.Add(shift_id[(employee, day + 1)] >= shift_id[(employee, day)]).OnlyEnforceIf(both)
 
     # Cover Minimum Requirements
     unmet = {}
@@ -172,12 +147,11 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
     obj += [w_workday_dev * (dev_under[employee] + dev_over[employee]) for employee in Employees]
     m.Minimize(sum(obj))
 
-    # ----- solve -----
+    # Solve model
     solver = cp_model.CpSolver()
     if maxTime is not None:
-        # maxTime is in minutes → convert to seconds
+        # maxTime is in minutes converted to seconds
         solver.parameters.max_time_in_seconds = float(int(maxTime) * 60)
-    # parallel workers (tune as desired)
     solver.parameters.num_search_workers = 8
 
     status = solver.Solve(m)
@@ -206,4 +180,10 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
     v.assignment = assign
     export_schedule_to_csv(v, "schedule_cpsat.csv", num_days=num_days)
 
-    return _to_table(assign, num_days, vacs_dict=vacs_dict)
+    return schedule_to_table(
+        employees=v.employees,
+        vacs=v.vacs,
+        assignment=v.assignment,
+        num_days=num_days,
+        shifts=int(shifts),
+    )

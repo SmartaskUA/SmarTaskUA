@@ -1,6 +1,8 @@
 package smartask.api.services;
 
 import org.springframework.stereotype.Service;
+
+import smartask.api.models.Rule;
 import smartask.api.models.RuleSet;
 import smartask.api.repositories.RuleSetRepository;
 
@@ -50,4 +52,16 @@ public class RuleSetService {
     public void deleteRuleSet(String name) {
         ruleSetRepository.findByName(name).ifPresent(ruleSetRepository::delete);
     }
+
+    public List<Rule> getAvailableRules() {
+        // Try the "default" catalog first, then fall back to "_catalog"
+        for (String catalogName : List.of("default", "_catalog")) {
+            Optional<RuleSet> rs = ruleSetRepository.findByName(catalogName);
+            if (rs.isPresent() && rs.get().getRules() != null) {
+                return rs.get().getRules(); // full Rule JSON
+            }
+        }
+        return List.of();
+    }
+
 }

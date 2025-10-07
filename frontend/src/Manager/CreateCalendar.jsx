@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import baseurl from "../components/BaseUrl";
 import Sidebar_Manager from "../components/Sidebar_Manager";
@@ -25,6 +25,15 @@ const CreateCalendar = () => {
   const [shifts, setShifts] = useState("");
   const [vacationTemplate, setVacationTemplate] = useState("");
   const [minimumTemplate, setMinimumTemplate] = useState("");
+
+  // NEW: ruleset selection
+  const [ruleSets, setRuleSets] = useState([]); // [{name, description, ...}]
+  const [ruleSetName, setRuleSetName] = useState("");
+  const selectedRuleSet = useMemo(
+    () => ruleSets.find((r) => r.name === ruleSetName),
+    [ruleSets, ruleSetName]
+  );
+
   const [templateOptions, setTemplateOptions] = useState([]);
   const [minimumOptions, setMinimumOptions] = useState([]);
 
@@ -37,12 +46,13 @@ const CreateCalendar = () => {
   useEffect(() => {
     fetchVacationTemplates();
     fetchMinimumTemplates();
+    fetchRuleSets();
   }, []);
 
   const fetchVacationTemplates = async () => {
     try {
       const response = await axios.get(`${baseurl}/vacation/`);
-      setTemplateOptions(response.data);
+      setTemplateOptions(response.data || []);
     } catch (error) {
       console.error("Erro ao buscar templates de férias:", error);
     }
@@ -51,23 +61,37 @@ const CreateCalendar = () => {
   const fetchMinimumTemplates = async () => {
     try {
       const response = await axios.get(`${baseurl}/reference/`);
-      setMinimumOptions(response.data);
+      setMinimumOptions(response.data || []);
     } catch (error) {
       console.error("Erro ao buscar templates de mínimos:", error);
     }
   };
 
-  const handleSave = async () => {
+  const fetchRuleSets = async () => {
     try {
+      const response = await axios.get(`${baseurl}/rulesets`);
+      const list = Array.isArray(response.data) ? response.data : [];
+      setRuleSets(list);
+    } catch (error) {
+      console.error("Erro ao buscar rulesets:", error);
+      setRuleSets([]);
+    }
+  };
+
+  const handleSave = async () => {
+
+    try {
+      console.log("Minimum Template:", minimumTemplate);
       const data = {
         year: year,
         algorithm: selectedAlgorithm,
-        title: title,
+        title: title.trim(),
         maxTime: maxDuration,
         requestedAt: new Date().toISOString(),
         vacationTemplate: vacationTemplate,
         minimuns: minimumTemplate,
         shifts: shifts,
+        ruleSetName: ruleSetName, 
       };
 
       const response = await axios.post(`${baseurl}/schedules/generate`, data);
@@ -98,8 +122,8 @@ const CreateCalendar = () => {
     setSelectedAlgorithm("");
     setVacationTemplate("");
     setMinimumTemplate("");
+    setRuleSetName("");
   };
-
   const [titleError, setTitleError] = useState(false);
   const [yearError, setYearError] = useState(false);
   const [maxDurationError, setMaxDurationError] = useState(false);
@@ -123,6 +147,20 @@ const CreateCalendar = () => {
     setMaxDuration(value);
     setMaxDurationError(!intValue || intValue <= 0 || !/^\d+$/.test(value));
   };
+
+  // disable Generate if core required fields invalid
+  const canGenerate = useMemo(() => {
+    const y = parseInt(year, 10);
+    const d = parseInt(maxDuration, 10);
+    return (
+      title.trim() &&
+      y > 0 &&
+      /^\d+$/.test(String(year)) &&
+      d > 0 &&
+      /^\d+$/.test(String(maxDuration)) &&
+      !!ruleSetName
+    );
+  }, [title, year, maxDuration, ruleSetName]);
 
   return (
     <div className="admin-container">
@@ -188,7 +226,27 @@ const CreateCalendar = () => {
                   <MenuItem value="Greedy Randomized">Greedy Randomized</MenuItem>
                   <MenuItem value="Greedy Randomized + Hill Climbing">Greedy Randomized + Hill Climbing</MenuItem>
                   <MenuItem value="CSP">CSP</MenuItem>
+                  <MenuItem value="CSP_ENGINE">CSP Engine</MenuItem>
                   <MenuItem value="GRHC_ENGINE">Greedy Randomized + Hill Climbing Engine</MenuItem>
+                </Select>
+              </FormControl>
+
+              {/* NEW: Rule Set Select */}
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="ruleset-select-label">Rule Set</InputLabel>
+                <Select
+                  labelId="ruleset-select-label"
+                  value={ruleSetName}
+                  label="Rule Set"
+                  onChange={(e) => {
+                    setRuleSetName(e.target.value);
+                  }}
+                >
+                  {ruleSets.map((rs) => (
+                    <MenuItem key={rs.name} value={rs.name}>
+                      {rs.name}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
 
@@ -214,7 +272,9 @@ const CreateCalendar = () => {
                   onChange={(e) => setVacationTemplate(e.target.value)}
                 >
                   {templateOptions.map((option) => (
-                    <MenuItem key={option.id} value={option.name}>{option.name}</MenuItem>
+                    <MenuItem key={option.id ?? option.name} value={option.name}>
+                      {option.name}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -228,7 +288,9 @@ const CreateCalendar = () => {
                   onChange={(e) => setMinimumTemplate(e.target.value)}
                 >
                   {minimumOptions.map((option) => (
-                    <MenuItem key={option.id} value={option.name}>{option.name}</MenuItem>
+                    <MenuItem key={option.id ?? option.name} value={option.name}>
+                      {option.name}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -237,8 +299,12 @@ const CreateCalendar = () => {
         </Grid>
 
         <Box sx={{ display: "flex", justifyContent: "left", marginTop: 3, marginLeft: "17%", gap: 2 }}>
-          <Button variant="contained" color="success" onClick={handleSave}>Generate</Button>
-          <Button variant="contained" color="error" onClick={handleClear}>Clear All</Button>
+          <Button variant="contained" color="success" onClick={handleSave} disabled={!canGenerate}>
+            Generate
+          </Button>
+          <Button variant="contained" color="error" onClick={handleClear}>
+            Clear All
+          </Button>
         </Box>
 
         <NotificationSnackbar

@@ -2,6 +2,8 @@ package smartask.api.controllers;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import smartask.api.models.Rule;
 import smartask.api.models.RuleSet;
 import smartask.api.services.RuleSetService;
 
@@ -45,5 +47,10 @@ public class RuleSetsController {
     public ResponseEntity<Void> deleteRuleSet(@PathVariable String name) {
         ruleSetService.deleteRuleSet(name);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/rules/available")
+    public ResponseEntity<List<Rule>> getAvailableRules() {
+        return ResponseEntity.ok(ruleSetService.getAvailableRules());
     }
 }
