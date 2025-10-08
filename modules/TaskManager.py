@@ -6,7 +6,6 @@ from algorithm.heuristic_sol_gabi import solve as hill_clibing_alg_solver
 from algorithm.ILP import solve as ilp_solver
 from algorithm.greedyRandomized import solve as greedy_randomized_solver
 from algorithm.greedyClimbing import solve as greedy_climbing_solver
-from algorithm.CSP import solve as csp_solver
 
 class TaskManager:
     def __init__(self):
@@ -18,8 +17,7 @@ class TaskManager:
             "hill climbing": hill_clibing_alg_solver,
             "linear programming": ilp_solver,
             "Greedy Randomized": greedy_randomized_solver,
-            "Greedy Randomized + Hill Climbing": greedy_climbing_solver,
-            "CSP": csp_solver
+            "Greedy Randomized + Hill Climbing": greedy_climbing_solver
         }
 
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling",

@@ -187,7 +187,6 @@ const CreateCalendar = () => {
                   <MenuItem value="linear programming">Integer Linear Programming</MenuItem>
                   <MenuItem value="Greedy Randomized">Greedy Randomized</MenuItem>
                   <MenuItem value="Greedy Randomized + Hill Climbing">Greedy Randomized + Hill Climbing</MenuItem>
-                  <MenuItem value="CSP">CSP</MenuItem>
                 </Select>
               </FormControl>
 
