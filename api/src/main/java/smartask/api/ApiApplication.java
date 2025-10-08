@@ -139,49 +139,49 @@ public class ApiApplication {
 				teamService.addEmployeesToTeam("Equipa A", List.of(employee11.getId()));
 			}
 
-			// ---- Equipa C (with extra employees) -----------------------------
-			Team teamC = teamService.getTeams().stream()
-					.filter(team -> "Equipa C".equals(team.getName()))
-					.findFirst()
-					.orElse(null);
-
-			if (teamC == null) {
-				teamService.addTeam("Equipa C");
-
-				// Create extra employees 13..20 if they don't exist yet
-				for (int i = 13; i <= 17; i++) {
-					String name = "Employee " + i;
-					boolean exists = employeeService.getEmployees().stream()
-							.anyMatch(e -> name.equals(e.getName()));
-					if (!exists) {
-						employeeService.addEmployee(new Employee(name));
-					}
-				}
-
-				// New employees for C: 13..20
-				var newCEmployees = employeeService.getEmployees().stream()
-						.filter(e -> e.getName().startsWith("Employee "))
-						.filter(e -> {
-							try {
-								int n = Integer.parseInt(e.getName().split(" ")[1]);
-								return n >= 13 && n <= 20;
-							} catch (NumberFormatException ex) {
-								return false;
-							}
-						})
-						.map(Employee::getId)
-						.toList();
-
-				// Reuse some existing employees too (example: 3, 6, 11)
-				var reusedEmployees = employeeService.getEmployees().stream()
-						.filter(e -> List.of("Employee 3", "Employee 6", "Employee 11").contains(e.getName()))
-						.map(Employee::getId)
-						.toList();
-
-				// Combine and add to Equipa C
-				var cEmployees = Stream.concat(newCEmployees.stream(), reusedEmployees.stream()).toList();
-				teamService.addEmployeesToTeam("Equipa C", cEmployees);
-			}
+			// // ---- Equipa C (with extra employees) -----------------------------
+			// Team teamC = teamService.getTeams().stream()
+			// 		.filter(team -> "Equipa C".equals(team.getName()))
+			// 		.findFirst()
+			// 		.orElse(null);
+// 
+			// if (teamC == null) {
+			// 	teamService.addTeam("Equipa C");
+// 
+			// 	// Create extra employees 13..20 if they don't exist yet
+			// 	for (int i = 13; i <= 17; i++) {
+			// 		String name = "Employee " + i;
+			// 		boolean exists = employeeService.getEmployees().stream()
+			// 				.anyMatch(e -> name.equals(e.getName()));
+			// 		if (!exists) {
+			// 			employeeService.addEmployee(new Employee(name));
+			// 		}
+			// 	}
+// 
+			// 	// New employees for C: 13..20
+			// 	var newCEmployees = employeeService.getEmployees().stream()
+			// 			.filter(e -> e.getName().startsWith("Employee "))
+			// 			.filter(e -> {
+			// 				try {
+			// 					int n = Integer.parseInt(e.getName().split(" ")[1]);
+			// 					return n >= 13 && n <= 20;
+			// 				} catch (NumberFormatException ex) {
+			// 					return false;
+			// 				}
+			// 			})
+			// 			.map(Employee::getId)
+			// 			.toList();
+// 
+			// 	// Reuse some existing employees too (example: 3, 6, 11)
+			// 	var reusedEmployees = employeeService.getEmployees().stream()
+			// 			.filter(e -> List.of("Employee 3", "Employee 6", "Employee 11").contains(e.getName()))
+			// 			.map(Employee::getId)
+			// 			.toList();
+// 
+			// 	// Combine and add to Equipa C
+			// 	var cEmployees = Stream.concat(newCEmployees.stream(), reusedEmployees.stream()).toList();
+			// 	teamService.addEmployeesToTeam("Equipa C", cEmployees);
+			// }
 		};
 	}
 }

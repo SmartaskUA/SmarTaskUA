@@ -16,7 +16,6 @@ public class Team {
     @NotBlank
     private String name;
 
-    // Armazena apenas os IDs dos funcionários
     private List<String> employeeIds = new ArrayList<>();
 
     public Team() { }

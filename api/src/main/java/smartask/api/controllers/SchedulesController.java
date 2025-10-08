@@ -52,7 +52,6 @@ public class SchedulesController {
     )
     @PostMapping("/generate")
     public ResponseEntity<String> generateNewSchedule(@RequestBody ScheduleRequest scheduleRequest) {
-        // ToDo : Should also verify if the request with the same configuration was already generated
         final String res= service.requestScheduleGeneration(scheduleRequest) ;
         if (res.equals("Sent task request")) {
             return ResponseEntity.ok("Schedule generation started for: " + scheduleRequest);

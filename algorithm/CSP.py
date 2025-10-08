@@ -96,7 +96,7 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
             m.Add(shift_id[(employee, day + 1)] >= shift_id[(employee, day)]).OnlyEnforceIf(
                 [off[(employee, day)].Not(), off[(employee, day + 1)].Not()]
             )
-
+            
     # Keep shift_id consistent with off and y
     # (off -> shift_id=0, assigned to (s,t) -> shift_id=s)
     for employee in Employees:

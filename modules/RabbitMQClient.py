@@ -71,12 +71,19 @@ class RabbitMQClient:
                 title = message.get("title")
                 vacation_template_name = message.get("vacationTemplate")
                 fetched_vacation = self.mongodb_client.fetch_vacation_by_name(vacation_template_name)
-                vacations_data = fetched_vacation.get("vacations", {})
-
+                if fetched_vacation is None:
+                    print(f"[WARN] Vacation template '{vacation_template_name}' not found in MongoDB.")
+                    vacations_data = {}
+                else:
+                    vacations_data = fetched_vacation.get("vacations", {})
 
                 minimuns = message.get("minimuns")
                 fetched_reference = self.mongodb_client.fetch_reference_by_name(minimuns)
-                minimuns_data = fetched_reference.get("minimuns", {})
+                if fetched_reference is None:
+                    print(f"[WARN] Reference template '{minimuns}' not found in MongoDB.")
+                    minimuns_data = {}
+                else:
+                    minimuns_data = fetched_reference.get("minimuns", {})
 
                 year = message.get("year")
                 print(f"\nyear : {year}")
@@ -91,6 +98,8 @@ class RabbitMQClient:
                 employees_data = self.mongodb_client.fetch_employees()
                 print(f"\n[Received Task] Task ID: {task_id}")
 
+                rules = message.get("rules")
+
                 self.executor.submit(
                     self.handle_task_processing,
                     task_id,
@@ -103,7 +112,8 @@ class RabbitMQClient:
                     minimuns,
                     year,
                     maxTime,
-                    shifts
+                    shifts,
+                    rules
                 )
 
                 ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -136,7 +146,8 @@ class RabbitMQClient:
             minimuns_template_name,
             year,
             maxTime,
-            shifts
+            shifts,
+            rules
     ):
 
         self.send_task_status(task_id, "IN_PROGRESS")
@@ -151,7 +162,8 @@ class RabbitMQClient:
                 employees=employees_data,
                 maxTime=maxTime,
                 year=year,
-                shifts=shifts
+                shifts=shifts,
+                rules=rules
             )
 
             metadata = {
@@ -164,7 +176,8 @@ class RabbitMQClient:
                 "employeesTeamInfo": employees_data,
                 "vacationTemplateData": vacations_data,
                 "minimunsTemplateData": minimuns_data,
-                "shifts": shifts
+                "shifts": shifts,
+                "rules": rules
             }
 
             self.mongodb_client.insert_schedule(
