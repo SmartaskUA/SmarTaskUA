@@ -191,6 +191,10 @@ class RabbitMQClient:
             self.send_task_status(task_id, "COMPLETED")
 
         except Exception as e:
+            import traceback
+            print("======== TRACEBACK ========")
+            traceback.print_exc()
+            print("======== END TRACE ========")
             print(f"Error during schedule execution: {e}")
             self.send_task_status(task_id, "FAILED")
 

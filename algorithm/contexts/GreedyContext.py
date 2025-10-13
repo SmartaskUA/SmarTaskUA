@@ -5,38 +5,42 @@ import numpy as np
 
 @dataclass
 class GreedyContext:
-    # static/problem data
-    num_days: int
-    shifts: int
-    employees: List[int]                         # 1-based
-    teams_map: Dict[int, List[int]]             # emp_id -> [team_ids allowed]
-    vacations_1b: Dict[int, List[int]]          # emp_id -> [days 1..N]
-    special_days_1b: Set[int]                   # Sundays+holidays
-    mins: Dict[Tuple[int,int,int], int]         # (day, shift, team_id) -> min
-    ideals: Dict[Tuple[int,int,int], int]       # (day, shift, team_id) -> ideal
+    """
+    Shared greedy scheduling state for rule handlers.
+    Mirrors CPSatContext but for iterative feasibility checks.
+    """
+    def __init__(self, *, Employees, num_days, shifts,
+                 vacations, allowed_teams_per_emp,
+                 min_required, ideal_required,
+                 special_days, cover_count,
+                 e=None, d=None, s=None, t=None,
+                 assignment=None):
+        self.Employees = Employees
+        self.num_days = num_days
+        self.shifts = shifts
+        self.vacations = vacations
+        self.allowed_teams_per_emp = allowed_teams_per_emp
+        self.min_required = min_required
+        self.ideal_required = ideal_required
+        self.special_days = special_days
+        self.cover_count = cover_count
+        self.assignment = assignment or {}
 
-    # dynamic/reference state (mutates during greedy)
-    assignment: Dict[int, List[Tuple[int,int,int]]]      # emp_id -> [(day, shift, team_id)]
-    schedule_table: Dict[Tuple[int,int,int], List[int]]  # (day, shift, team_id) -> [emp_id]
+        # current proposed decision (employee/day/shift/team)
+        self.e, self.d, self.s, self.t = e, d, s, t
 
-    # helper for min_coverage scoring
-    def counts_for(self, d: int, s: int, t: int) -> Tuple[int, int, int]:
-        current = len(self.schedule_table.get((d, s, t), []))
-        min_req  = int(self.mins.get((d, s, t), 0))
-        ideal_req = int(self.ideals.get((d, s, t), min_req))
-        return current, min_req, ideal_req
+        # heuristic scoring
+        self.score = 0
 
-    # small utilities reused by handlers
-    @staticmethod
-    def _worked_days(assign_list: List[Tuple[int,int,int]]) -> List[int]:
-        return sorted({d for (d, _s, _t) in assign_list})
+    # ------------------- helper methods -------------------
+    def get_days_worked(self, e):
+        return [day for (day, _s, _t) in self.assignment.get(e, [])]
 
-    @staticmethod
-    def _shift_on_day(assign_list: List[Tuple[int,int,int]], d: int) -> Optional[int]:
-        for (day, s, _t) in assign_list:
-            if day == d:
+    def get_shift(self, e, day):
+        for (d, s, _t) in self.assignment.get(e, []):
+            if d == day:
                 return s
         return None
 
-    def _count_special(self, assign_list: List[Tuple[int,int,int]]) -> int:
-        return sum(1 for (d, _s, _t) in assign_list if d in self.special_days_1b)
+    def add_score(self, value):
+        self.score += value

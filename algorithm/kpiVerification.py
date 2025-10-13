@@ -58,7 +58,7 @@ def analyze(file, holidays, mins, employees, year=2025):
 
     for _, row in df.iterrows():
         # Work/vacation counting (generic)
-        worked_days = sum(is_work_shift(row[col]) for col in dia_cols)
+        worked_days  = sum(is_work_shift(row[col]) for col in dia_cols)
         vacation_days = sum(str(row[col]).strip() == 'F' for col in dia_cols)
 
         missed_work_days += abs(223 - worked_days)

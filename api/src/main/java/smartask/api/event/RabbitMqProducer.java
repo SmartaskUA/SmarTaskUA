@@ -91,8 +91,8 @@ public class RabbitMqProducer {
             payload.put("algorithm", schedule.getAlgorithm());
             payload.put("year", schedule.getYear());
             payload.put("maxTime", schedule.getMaxTime());
-            payload.put("vacationTemplate", vactemp.get().getVacations());
-            payload.put("minimuns", mins.get().getMinimuns());
+            payload.put("vacationTemplate", vactemp.get().getName());
+            payload.put("minimuns", mins.get().getName());
             payload.put("shifts", schedule.getShifts());
 
             // ✅ Add RuleSet if available

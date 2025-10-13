@@ -46,7 +46,8 @@
       "scope": "per-employee-global",
       "description": "Cap each employee at 223 total assigned workdays per year.",
       "params": {
-        "total": 223
+        "max": 300,
+        "min": 300
       }
     },
     {

@@ -42,12 +42,13 @@
     },
     {
       "id": "max-workdays-per-year",
-      "type": "max_total_workdays",
+      "type": "total_workdays",
       "kind": "hard",
       "scope": "per-employee-global",
       "description": "Cap each employee at 223 total assigned workdays per year.",
       "params": {
-        "max": 223
+        "max": 223,
+        "min": 223
       }
     },
     {
