@@ -5,5 +5,8 @@ numpy
 pandas
 deap
 pika
+pulp
+holidays
+tabulate
 tenacity
 ortools

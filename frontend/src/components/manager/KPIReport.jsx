@@ -41,6 +41,10 @@ const metricInfo = {
     label: "Missed Minimums",
     description: "Each team, shift, and day, the count of employees below the required minimum staffing level.",
   },
+  missedTeamIdeal: {
+    label: "Missed Ideals",
+    description: "Each team, shift, and day, the count of employees below the ideal staffing level.",
+  },
   singleTeamViolations: {
     label: "Single Team Violations",
     description: "Number of employees allowed to work only one team but worked in more than one.",
@@ -49,13 +53,14 @@ const metricInfo = {
     label: "Shift Balance",
     description: "Percentage deviation of the most unbalanced shift distribution exhibited by any employee.",
   },
-  twoTeamPreferenceLevel: {
-    label: "Two Team Preference Level",
+  teamSatisfactionLevel: {
+    label: "Team Satisfaction Level",
     description: "Median distribution of work between primary and secondary team for employees assigned to two teams.",
   },
 };
 
 const KPIReport = ({ metrics = {} }) => {
+  console.log("KPI Metrics:", metrics);
   const {
     tmFails = 0,
     consecutiveDays = 0,
@@ -63,9 +68,10 @@ const KPIReport = ({ metrics = {} }) => {
     missedVacationDays = 0,
     missedWorkDays = 0,
     missedTeamMin = 0,
+    missedTeamIdeal = 0,
     shiftBalance = 0,
     singleTeamViolations = 0,
-    twoTeamPreferenceLevel = 0,
+    teamSatisfactionLevel = 0,
   } = metrics;
 
   const totalIssues = [
@@ -75,8 +81,9 @@ const KPIReport = ({ metrics = {} }) => {
     missedVacationDays,
     missedWorkDays,
     missedTeamMin,
+    missedTeamIdeal,
     singleTeamViolations,
-    twoTeamPreferenceLevel,
+    teamSatisfactionLevel,
   ].filter((v) => v > 0).length;
 
   const getStatusChip = () =>
@@ -148,6 +155,9 @@ const KPIReport = ({ metrics = {} }) => {
                 {renderMetric("missedTeamMin", missedTeamMin, missedTeamMin > 0)}
               </Grid>
               <Grid item xs={12} sm={6} md={4}>
+                {renderMetric("missedTeamIdeal", missedTeamIdeal, missedTeamIdeal > 0)}
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
                 {renderMetric("singleTeamViolations", singleTeamViolations, singleTeamViolations > 0)}
               </Grid>
             </Grid>
@@ -157,7 +167,7 @@ const KPIReport = ({ metrics = {} }) => {
                 {renderMetric("shiftBalance", `${shiftBalance}%`, false, true)}
               </Grid>
               <Grid item xs={12} sm={6} md={4}>
-                {renderMetric("twoTeamPreferenceLevel", `${twoTeamPreferenceLevel}%`, false, true)}
+                {renderMetric("teamSatisfactionLevel", `${teamSatisfactionLevel}%`, false, true)}
               </Grid>
             </Grid>
           </Paper>

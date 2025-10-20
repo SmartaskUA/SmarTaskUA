@@ -12,6 +12,7 @@ from algorithm.CSP_Engine import solve as csp_engine_solver
 from algorithm.greedyClimbingEngine import solve as grhc_engine_solver
 from algorithm.greedyRandomizedEngine import solve as greedy_randomized_engine_solver
 from algorithm.ILPEngine import solve as ilp_solver_engine
+from algorithm.ILP2 import solve as ilp_solver_2
 
 class TaskManager:
     def __init__(self):
@@ -22,6 +23,7 @@ class TaskManager:
             "genetic_algorithm": genetic_alg_solver,
             "hill climbing": hill_clibing_alg_solver,
             "linear programming": ilp_solver,
+            "linear programming 2": ilp_solver_2,
             "ILP Engine": ilp_solver_engine,
             "Greedy Randomized": greedy_randomized_solver,
             "Greedy Randomized Engine": greedy_randomized_engine_solver,
@@ -54,7 +56,8 @@ class TaskManager:
         else:
             rules_json = {"rules": rules}
 
-        if algorithm_name in ["linear programming", "hill climbing", "Greedy Randomized", "Greedy Randomized + Hill Climbing", "CSP", "GRHC_ENGINE", "CSP_ENGINE", "Greedy Randomized Engine", "ILP Engine"]:
+        if algorithm_name in ["linear programming", "hill climbing", "Greedy Randomized", "Greedy Randomized + Hill Climbing", "CSP", "GRHC_ENGINE", "CSP_ENGINE", "Greedy Randomized Engine", "ILP Engine", "linear programming 2"]:
+        
             schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, rules=rules_json,
             )
         else:

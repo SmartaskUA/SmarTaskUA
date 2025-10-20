@@ -26,13 +26,10 @@ class GreedyContext:
         self.cover_count = cover_count
         self.assignment = assignment or {}
 
-        # current proposed decision (employee/day/shift/team)
         self.e, self.d, self.s, self.t = e, d, s, t
 
-        # heuristic scoring
         self.score = 0
 
-    # ------------------- helper methods -------------------
     def get_days_worked(self, e):
         return [day for (day, _s, _t) in self.assignment.get(e, [])]
 

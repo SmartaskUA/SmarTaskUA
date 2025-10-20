@@ -2,12 +2,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copia diretórios e arquivos necessários
+# Install deps first (copy only requirements, not source)
+COPY ./modules/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Then copy the code
 COPY algorithm/ ./algorithm/
 COPY modules/   ./modules/
 
-# Instala dependências
-RUN pip install pika pymongo pytz numpy pandas deap pulp holidays tabulate tenacity ortools
-
-# Comando de entrada
 CMD ["python3", "-u", "-m", "modules.RabbitMQClient"]

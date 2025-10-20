@@ -223,6 +223,7 @@ const CreateCalendar = () => {
                 >
                   <MenuItem value="hill climbing">Hill Climbing</MenuItem>
                   <MenuItem value="linear programming">Integer Linear Programming</MenuItem>
+                  <MenuItem value="linear programming 2">Integer Linear Programming 2</MenuItem>
                   <MenuItem value="ILP Engine">ILP Engine</MenuItem>
                   <MenuItem value="Greedy Randomized">Greedy Randomized</MenuItem>
                   <MenuItem value="Greedy Randomized Engine">Greedy Randomized Engine</MenuItem>
