@@ -21,6 +21,7 @@ const CreateCalendar = () => {
   const [title, setTitle] = useState("");
   const [year, setYear] = useState("");
   const [maxDuration, setMaxDuration] = useState("");
+  const [scheduleType, setScheduleType] = useState(""); // "Turno" ou "Horas"
   const [selectedAlgorithm, setSelectedAlgorithm] = useState("");
   const [shifts, setShifts] = useState("");
   const [vacationTemplate, setVacationTemplate] = useState("");
@@ -124,6 +125,20 @@ const CreateCalendar = () => {
     setMaxDurationError(!intValue || intValue <= 0 || !/^\d+$/.test(value));
   };
 
+  // Algoritmos separados
+  const turnoAlgorithms = [
+    { value: "hill climbing", label: "Hill Climbing" },
+    { value: "Greedy Randomized", label: "Greedy Randomized" },
+    { value: "Greedy Randomized + Hill Climbing", label: "Greedy Randomized + Hill Climbing" },
+    { value: "genetic_algorithm", label: "Genetic Algorithm" },
+    { value: "CSP Scheduling", label: "CSP Scheduling" },
+    { value: "linear programming", label: "Integer Linear Programming" },
+  ];
+  const horasAlgorithms = [
+    { value: "linear programming", label: "Integer Linear Programming" },
+    // Adicione outros algoritmos de horas aqui se existirem
+  ];
+
   return (
     <div className="admin-container">
       <Sidebar_Manager />
@@ -175,33 +190,69 @@ const CreateCalendar = () => {
                 helperText={maxDurationError ? "Duration must be a positive integer" : ""}
               />
 
+              {/* Novo input para tipo de horário */}
               <FormControl fullWidth margin="normal">
-                <InputLabel id="algorithm-select-label">Algorithm</InputLabel>
+                <InputLabel id="schedule-type-label">Tipo de Horário</InputLabel>
                 <Select
-                  labelId="algorithm-select-label"
-                  value={selectedAlgorithm}
-                  label="Algorithm"
-                  onChange={(e) => setSelectedAlgorithm(e.target.value)}
+                  labelId="schedule-type-label"
+                  value={scheduleType}
+                  label="Tipo de Horário"
+                  onChange={(e) => {
+                    setScheduleType(e.target.value);
+                    setShifts("");
+                    setSelectedAlgorithm("");
+                  }}
                 >
-                  <MenuItem value="hill climbing">Hill Climbing</MenuItem>
-                  <MenuItem value="linear programming">Integer Linear Programming</MenuItem>
-                  <MenuItem value="Greedy Randomized">Greedy Randomized</MenuItem>
-                  <MenuItem value="Greedy Randomized + Hill Climbing">Greedy Randomized + Hill Climbing</MenuItem>
+                  <MenuItem value="Turno">Turnos</MenuItem>
+                  <MenuItem value="Horas">Horas</MenuItem>
                 </Select>
               </FormControl>
 
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="shifts-select-label">Shifts</InputLabel>
-                <Select
-                  labelId="shifts-select-label"
-                  value={shifts}
-                  label="Shifts"
-                  onChange={(e) => setShifts(e.target.value)}
-                >
-                  <MenuItem value={2}>2 shifts</MenuItem>
-                  <MenuItem value={3}>3 shifts</MenuItem>
-                </Select>
-              </FormControl>
+              {/* Select condicional para turnos ou horas */}
+              {scheduleType === "Turno" && (
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="shifts-select-label">Turnos</InputLabel>
+                  <Select
+                    labelId="shifts-select-label"
+                    value={shifts}
+                    label="Turnos"
+                    onChange={(e) => setShifts(e.target.value)}
+                  >
+                    <MenuItem value={2}>2 turnos</MenuItem>
+                    <MenuItem value={3}>3 turnos</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
+              {scheduleType === "Horas" && (
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="hours-select-label">Horas</InputLabel>
+                  <Select
+                    labelId="hours-select-label"
+                    value={shifts}
+                    label="Horas"
+                    onChange={(e) => setShifts(e.target.value)}
+                  >
+                    <MenuItem value={13}>13 Horas</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
+
+              {/* Select de algoritmo filtrado */}
+              {scheduleType && (
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="algorithm-select-label">Algoritmo</InputLabel>
+                  <Select
+                    labelId="algorithm-select-label"
+                    value={selectedAlgorithm}
+                    label="Algoritmo"
+                    onChange={(e) => setSelectedAlgorithm(e.target.value)}
+                  >
+                    {(scheduleType === "Turno" ? turnoAlgorithms : horasAlgorithms).map((alg) => (
+                      <MenuItem key={alg.value} value={alg.value}>{alg.label}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
 
               <FormControl fullWidth margin="normal">
                 <InputLabel id="vacation-template-label">Vacation Template</InputLabel>

@@ -34,11 +34,19 @@ const monthLabels = [
   { name: "December", days: 31 },
 ];
 
-const monthBoundaries = monthLabels.reduce((acc, month, idx) => {
+const startMonth = "November"; // Add
+const startIndex = monthLabels.findIndex((m) => m.name === startMonth);
+const rotatedMonths = [
+  ...monthLabels.slice(startIndex),
+  ...monthLabels.slice(0, startIndex),
+];
+
+const monthBoundaries = rotatedMonths.reduce((acc, month, idx) => {
   const start = acc.length === 0 ? 0 : acc[idx - 1].end;
   acc.push({ start, end: start + month.days });
   return acc;
 }, []);
+
 
 const MinimumsTemplate = ({ name, data }) => {
   if (!data || data.length === 0) return null;
@@ -61,9 +69,8 @@ const MinimumsTemplate = ({ name, data }) => {
     const cells = [
       <TableCell key="empty-1" />,
       <TableCell key="empty-2" />,
-      <TableCell key="empty-3" />,
     ];
-    monthLabels.forEach((month, i) => {
+    rotatedMonths.forEach((month, i) => { // Month labels
       cells.push(
         <TableCell
           key={`month-${i}`}
@@ -85,12 +92,25 @@ const MinimumsTemplate = ({ name, data }) => {
   const getDayNumbersRow = () => {
     const cells = [
       <TableCell key="empty-1" />,
-      <TableCell key="empty-2" />,
-      <TableCell key="empty-3" />,
+      <TableCell key="empty-2" />, // Removed extra header
     ];
-    monthLabels.forEach((month) => {
+  
+    rotatedMonths.forEach((month, monthIndex) => {
       for (let i = 1; i <= month.days; i++) {
+
+        const originalIndex = monthLabels.findIndex(m => m.name === month.name);
+        // 👉 Define o ano correto consoante o mês
+        const year =
+          month.name === "November" || month.name === "December" ? 2021 : 2022;
+      
+        // 👉 Usa o índice correto (monthIndex) e o ano definido
+        const date = new Date(year, originalIndex, i);
+        const weekday = date
+          .toLocaleDateString("pt-PT", { weekday: "short" })
+          .replace(".", ""); // remove o ponto final
+      
         const isLastDay = i === month.days;
+      
         cells.push(
           <TableCell
             key={`day-${month.name}-${i}`}
@@ -100,13 +120,22 @@ const MinimumsTemplate = ({ name, data }) => {
               borderRight: isLastDay ? "2px solid #000" : undefined,
             }}
           >
-            {i}
+            <Box>
+              <Typography variant="body2">{i}</Typography>
+              <Typography variant="caption" color="text.secondary">
+                {weekday.charAt(0).toUpperCase() + weekday.slice(1)}
+              </Typography>
+            </Box>
           </TableCell>
         );
       }
     });
+  
     return <TableRow>{cells}</TableRow>;
   };
+  
+
+  
 
   const isMonthEndIndex = (index) => {
     return monthBoundaries.some((boundary) => index === boundary.end - 1);
@@ -139,7 +168,7 @@ const MinimumsTemplate = ({ name, data }) => {
                         key={i}
                         align="center"
                         sx={{
-                          borderRight: isMonthEndIndex(i) ? "2px solid #000" : undefined,
+                          borderLeft: isMonthEndIndex(i) ? "2px solid #000" : undefined, // alterei a borda
                         }}
                       >
                         {val}

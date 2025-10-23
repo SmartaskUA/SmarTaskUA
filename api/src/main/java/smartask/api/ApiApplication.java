@@ -35,7 +35,7 @@ public class ApiApplication {
 			if (teamA == null) {
 				teamService.addTeam("Equipa A");
 
-				for (int i = 1; i <= 9; i++) {
+				for (int i = 0; i <= 9; i++) {
 					String name = "Employee " + i;
 					boolean exists = employeeService.getEmployees().stream()
 							.anyMatch(e -> name.equals(e.getName()));
@@ -67,7 +67,7 @@ public class ApiApplication {
 			if (teamB == null) {
 				teamService.addTeam("Equipa B");
 
-				for (int i = 10; i <= 12; i++) {
+				for (int i = 10; i <= 20; i++) {
 					String name = "Employee " + i;
 					boolean exists = employeeService.getEmployees().stream()
 							.anyMatch(e -> name.equals(e.getName()));

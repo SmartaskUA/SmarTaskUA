@@ -82,9 +82,9 @@ public class SchedulesService {
                     " employees, but the system has " + employeeNamesInDb.size() + " employees.";
         }
 
-        if (schedule.getShifts() == null || (schedule.getShifts() != 2 && schedule.getShifts() != 3)) {
-            return "Invalid 'shifts' value. Expected 2 or 3.";
-        }
+        //if (schedule.getShifts() == null || (schedule.getShifts() != 2 && schedule.getShifts() != 3)) {
+        //    return "Invalid 'shifts' value. Expected 2 or 3.";
+        //}
 
         Optional<ReferenceTemplate> refOpt =
                 referenceTemplateRepository.findByName(schedule.getMinimuns());
@@ -94,10 +94,31 @@ public class SchedulesService {
 
         List<List<String>> minRows = refOpt.get().getMinimuns();
         Integer inferredShiftCount = inferShiftCount(minRows);
-        if (inferredShiftCount == null) {
-            return "Unable to infer shifts from minimums template '" + schedule.getMinimuns() + "'. " +
-                   "Make sure the CSV has a 'Turno' column with values like M/T/N.";
+        // Detectar se o template é por turnos (M/T/N) ou por horas (09-10, etc.)
+        boolean isHourly = hasHourColumn(minRows);
+        Integer inferredHourCount = inferHourCount(minRows);
+        
+        if (isHourly) {
+            if (inferredHourCount == null || inferredHourCount == 0) {
+                return "Unable to infer hourly minimums from template '" + schedule.getMinimuns() +
+                       "'. Make sure the CSV has a 'Hora' column (e.g., 09-10, 10-11, ...).";
+            }
+        
+            System.out.println("[INFO] Detetado template de mínimos por HORA com " + inferredHourCount + " intervalos.");
+        } else {
+            if (inferredShiftCount == null) {
+                return "Unable to infer shifts from minimums template '" + schedule.getMinimuns() + "'. " +
+                       "Make sure the CSV has a 'Turno' column with values like M/T/N.";
+            }
+        
+            if (!inferredShiftCount.equals(schedule.getShifts())) {
+                return "Selected shifts (" + schedule.getShifts() + ") do not match minimums template '" +
+                       schedule.getMinimuns() + "' (found " + inferredShiftCount + ").";
+            }
+        
+            System.out.println("[INFO] Detetado template de mínimos por TURNO (" + inferredShiftCount + ").");
         }
+
 
         if (!inferredShiftCount.equals(schedule.getShifts())) {
             return "Selected shifts (" + schedule.getShifts() + ") does not match minimums template '" +
@@ -107,6 +128,33 @@ public class SchedulesService {
         final String res = producer.requestScheduleMessage(schedule);
         return res.equals("Sent task request") ? "Sent task request" : res;
     }
+
+    /** Verifica se o ficheiro tem uma coluna 'Hora' (indicando um template horário). */
+    private boolean hasHourColumn(List<List<String>> rows) {
+        if (rows == null || rows.isEmpty()) return false;
+
+        List<String> header = rows.get(0).stream()
+                .map(s -> s == null ? "" : s.trim().toLowerCase())
+                .collect(Collectors.toList());
+
+        // Procura uma coluna chamada "hora" ou que contenha intervalos tipo "09-10"
+        return header.contains("hora") || rows.stream()
+                .anyMatch(r -> r.size() > 1 && r.get(1).matches(".*\\d{2}-\\d{2}.*"));
+    }
+
+    /** Conta o número de intervalos horários únicos definidos (09-10, 10-11, etc.) */
+    private Integer inferHourCount(List<List<String>> rows) {
+        if (rows == null || rows.isEmpty()) return null;
+
+        Set<String> horas = rows.stream()
+                .filter(r -> r.size() > 1)
+                .map(r -> r.get(1).trim())
+                .filter(s -> s.matches("\\d{2}-\\d{2}"))
+                .collect(Collectors.toSet());
+
+        return horas.size();
+    }
+
 
     /**
      * Look at the CSV-like table and compute how many distinct shifts it defines.

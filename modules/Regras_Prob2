@@ -1,0 +1,23 @@
+22 dias de trabalho máximo (Domingos e feriados) durante todo ano 2025
+223 dias de trabalho no ano
+5 dias de trabalho máximo consecutivo
+Sequencia validas M->M;T->T;M->T, Turno por dia)
+Sequencia inválida T->M
+Cobrir os alarmes o melhor possível
+30 dias de férias
+365 dias por ano (Loja Aberta)
+Turno (09:00-22:00)
+142 = Férias + Folgas
+8 horas de trabalho diárias
+Horário de pausa (4º-6º) hora
+Se possivel alternar semana Manhã/Semana Tarde
+
+
+Aos domingos nao trabalham
+Aos feriados so trabalham de manha
+
+
+Amarelo - Supostos Feriados
+Laranja - Supostos Feriados e não estavam no ficheiro com os dados originais
+Verde - Nao ha trabalhadores, nao sei porque
+Azul - Talvez seja um feriado
