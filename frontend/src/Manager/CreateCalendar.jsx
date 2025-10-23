@@ -229,6 +229,7 @@ const CreateCalendar = () => {
                   <MenuItem value="Greedy Randomized Engine">Greedy Randomized Engine</MenuItem>
                   <MenuItem value="Greedy Randomized + Hill Climbing">Greedy Randomized + Hill Climbing</MenuItem>
                   <MenuItem value="CSP">CSP</MenuItem>
+                  <MenuItem value="CSPv2">CSPv2</MenuItem>
                   <MenuItem value="CSP_ENGINE">CSP Engine</MenuItem>
                   <MenuItem value="GRHC_ENGINE">Greedy Randomized + Hill Climbing Engine</MenuItem>
                 </Select>

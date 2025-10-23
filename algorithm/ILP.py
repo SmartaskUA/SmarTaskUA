@@ -37,12 +37,16 @@ class ILPScheduler:
 
         # FIXED HERE
         # BEFORE (it was only mapping to one team (the first one))
-        #self.emp_team_code = {}
-        #for idx, emp in enumerate(employees):
-        #    teams = emp.get("teams", [])
-        #    code = get_team_code(teams[0]) if teams else "A"
-        #    self.emp_team_code[idx] = code
-        #    get_team_id(code)
+        # self.emp_team_code = {}
+        # for idx, emp in enumerate(employees):
+        #     teams = emp.get("teams", [])
+        #     code = get_team_code(teams[0]) if teams else "A"
+        #     self.emp_team_code[idx] = code
+        #     get_team_id(code)
+
+        # self.teams = {}
+        # for idx, code in self.emp_team_code.items():
+        #       self.teams.setdefault(code, set()).add(idx)
 
         # AFTER EDIT: map to ALL declared teams (or "A" if none)
         self.emp_allowed_teams = {}

@@ -13,6 +13,7 @@ from algorithm.greedyClimbingEngine import solve as grhc_engine_solver
 from algorithm.greedyRandomizedEngine import solve as greedy_randomized_engine_solver
 from algorithm.ILPEngine import solve as ilp_solver_engine
 from algorithm.ILP2 import solve as ilp_solver_2
+from algorithm.CSPv2 import solve as cspv2_solver
 
 class TaskManager:
     def __init__(self):
@@ -30,7 +31,8 @@ class TaskManager:
             "Greedy Randomized + Hill Climbing": greedy_climbing_solver,
             "CSP": csp_solver,
             "CSP_ENGINE": csp_engine_solver,
-            "GRHC_ENGINE": grhc_engine_solver
+            "GRHC_ENGINE": grhc_engine_solver,
+            "CSPv2": cspv2_solver,
         }
 
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None):
@@ -56,7 +58,7 @@ class TaskManager:
         else:
             rules_json = {"rules": rules}
 
-        if algorithm_name in ["linear programming", "hill climbing", "Greedy Randomized", "Greedy Randomized + Hill Climbing", "CSP", "GRHC_ENGINE", "CSP_ENGINE", "Greedy Randomized Engine", "ILP Engine", "linear programming 2"]:
+        if algorithm_name in ["linear programming", "hill climbing", "Greedy Randomized", "Greedy Randomized + Hill Climbing", "CSP", "GRHC_ENGINE", "CSP_ENGINE", "Greedy Randomized Engine", "ILP Engine", "linear programming 2", "CSPv2"]:
         
             schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, rules=rules_json,
             )

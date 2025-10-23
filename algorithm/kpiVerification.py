@@ -138,8 +138,8 @@ def analyze(file, holidays, mins, employees, year=2025):
 
         if active_shifts >= 2:
             min_pct = min(pcts)
-            ideal_min = 100.0 / active_shifts        # 50.0 for 2 shifts, 33.333... for 3 shifts
-            scale = 50.0 / ideal_min                 # maps ideal_min -> 50
+            ideal_min = 100.0 / active_shifts       
+            scale = 50.0 / ideal_min                
             balanced_score = min(50.0, min_pct * scale)
         else:
             balanced_score = 0.0
