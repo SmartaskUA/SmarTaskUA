@@ -17,6 +17,7 @@
       "scope": "per-employee-window",
       "description": "No employee may work more than 5 days in any 6-day window.",
       "params": {
+        "window": 6,
         "max_worked": 5
       }
     },
@@ -40,14 +41,14 @@
       "params": {}
     },
     {
-      "id": "total-workdays-per-year",
+      "id": "max-workdays-per-year",
       "type": "total_workdays",
       "kind": "hard",
       "scope": "per-employee-global",
       "description": "Cap each employee at 223 total assigned workdays per year.",
       "params": {
-        "max": 300,
-        "min": 300
+        "max": 223,
+        "min": 223
       }
     },
     {

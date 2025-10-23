@@ -4,16 +4,14 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
-import holidays as hl
 import holidays
+from algorithm.rules_engine import RuleEngine
 
 from algorithm.utils import (
     TEAM_CODE_TO_ID,
     TEAM_ID_TO_CODE,
     get_team_id,       
     build_calendar,
-    parse_vacs_file,
-    parse_requirements_file,
     rows_to_vac_dict,
     rows_to_req_dicts,
     export_schedule_to_csv,
@@ -49,8 +47,20 @@ class GreedyClimbing:
             self.fds[:, day - 1] = True
         # timing: maxTime in seconds for greedy phase
         self.maxTime = maxTime
+        self.maxTime_sec = int(maxTime) * 60 if maxTime is not None else None
         self.start_time = time.time()
+        self.rule_engine = RuleEngine(
+            rules_config=(rules or {"rules": []}),
+            num_days=self.num_days,
+            shifts=self.shifts,
+            employees=self.employees,             # 1-based
+            teams_map=self.teams,                 # emp_id -> [team_ids]
+            vacations_1based=self.vacs,           # emp_id -> [dias 1..N]
+            special_days_1based=set(self.holidays).union(self.sunday),
+            target_workdays=223
+        )
 
+    # ---------- helpers ----------
     def _create_vacation_array(self):
         vac_array = np.zeros((len(self.employees), self.num_days), dtype=bool)
         for emp in self.employees:
@@ -58,71 +68,25 @@ class GreedyClimbing:
                 vac_array[emp - 1, day - 1] = True
         return vac_array
 
-    def f1(self, p, d, s):
-        """
-        Feasibility for assigning employee p on day d to shift s.
-        Rules:
-          - no >5 consecutive days
-          - <=22 Sundays+holidays
-          - forbid next-day earlier shift (non-decreasing across days)
-        """
-        assignments = self.assignment[p]
-
-        # Max 5 consecutive days
-        days = sorted([day for (day, _, _) in assignments] + [d])
-        run = 1
-        for i in range(1, len(days)):
-            if days[i] == days[i - 1] + 1:
-                run += 1
-                if run > 5:
-                    return False
-            else:
-                run = 1
-
-        # Sundays & holidays cap (<=22)
-        special_days = set(self.holidays).union(self.sunday)
-        sundays_and_holidays = sum(1 for (day, _, _) in assignments if day in special_days)
-        if d in special_days:
-            sundays_and_holidays += 1
-        if sundays_and_holidays > 22:
-            return False
-
-        # No earlier shift the next/previous day (e.g., T->M, N->T/M)
-        for (day, shift, _) in assignments:
-            if day + 1 == d and s < shift:
-                return False
-            if day - 1 == d and shift < s:
-                return False
-        return True
-
+    # ---------- feasibility ----------
+    def f1(self, p, d, s, t) -> bool:
+        return self.rule_engine.greedy_is_feasible(p, d, s, t, self.assignment)
 
     def f2(self, d, s, t):
-        """
-        Lower is better.
-          0 -> below minimum
-          1 -> between min and ideal
-          2+k -> at/above ideal by k
-        Keys must be (day, shift, team_id)
-        """
-        current = len(self.schedule_table[(d, s, t)])
-        min_required = self.mins.get((d, s, t), 0)
-        ideal_required = self.ideals.get((d, s, t), min_required)
-
-        if current < min_required:
-            return 0
-        elif current < ideal_required:
-            return 1
-        else:
-            return 2 + (current - ideal_required)
+        def counts_func(day, shift, team):
+            current = len(self.schedule_table[(day, shift, team)])
+            min_required = self.mins.get((day, shift, team), 0)
+            ideal_required = self.ideals.get((day, shift, team), min_required)
+            return current, min_required, ideal_required
+        return self.rule_engine.greedy_min_coverage_score(d, s, t, counts_func)
 
     # ---------- greedy construction ----------
-
     def build_schedule(self):
         all_days = set(range(1, self.num_days + 1))
 
         while not self.is_complete():
-            if self.maxTime is not None and time.time() - self.start_time >= self.maxTime:
-                print("Maximum time reached, stopping generation.")
+            if self.maxTime_sec is not None and time.time() - self.start_time >= self.maxTime_sec:
+                print("Maximum time reached, stopping generation.11")
                 break
 
             # Prefer employees with fewer allowed teams (1, then 2, then >=3)
@@ -151,13 +115,15 @@ class GreedyClimbing:
                 d = random.choice(available_days)
                 s = random.choice(list(range(1, self.shifts + 1)))
 
-                if self.f1(p, d, s):
-                    count += 1
-                    for t in self.teams[p]:
+                count += 1
+
+                for t in self.teams[p]:
+                    if self.f1(p, d, s, t):
                         val = self.f2(d, s, t)
                         if val < best_val:
                             best_val = val
                             best = (d, s, t)
+
 
             if best:
                 d, s, t = best
@@ -271,6 +237,7 @@ class GreedyClimbing:
         print(f"Local Search Optimization completed after {steps} iterations. Final score = {best_score}")
         print(f"Execution time (hill climbing): {time.time() - start_hc:.2f} seconds")
 
+    # ---------- scoring ----------
     def score(self, horario):
         c1, c2, c3, c4, c5 = self.criterios(horario)
         return c1 + c2 + c3 + c4 + c5
@@ -374,6 +341,7 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, rul
     minimuns:  rows like ['Team_A','Minimum','M', ...]
     employees: list of dicts like {'teams': ['Team_A','Team_B']} in order → employee id
     """
+
     tag = "[Greedy Randomized + Hill Climbing]"
     print(f"{tag} Executando algoritmo")
     print(f"{tag} Número de funcionários: {len(employees)}")
@@ -407,19 +375,23 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, rul
         maxTime=(int(maxTime) if maxTime else None),
         year=year,
         shifts=shifts,
+        rules=rules
     )
 
     scheduler.build_schedule()
-
     initial_score = scheduler.score(scheduler.create_horario())
     print(f"{tag} Initial score: {initial_score}")
     scheduler.hill_climbing(maxTime=(int(maxTime) if maxTime else None))
 
     export_schedule_to_csv(scheduler, "schedule_hybrid.csv", num_days=num_days)
-    return schedule_to_table(
-        employees=scheduler.employees,   
-        vacs=vacs,                       
-        assignment=scheduler.assignment, 
+
+    # Return table for TaskManager
+    output = schedule_to_table(
+        employees=scheduler.employees,
+        vacs=vacs,
+        assignment=scheduler.assignment,
         num_days=num_days,
-        shifts=int(shifts),
+        shifts=shifts
     )
+
+    return output

@@ -50,6 +50,16 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
             if req > 0:
                 min_required[(d, s, t)] = req
 
+    ideal_required = {}
+    for (d, s, t), v in ideals_raw.items():
+        if 1 <= d <= num_days and 1 <= s <= int(shifts):
+            try:
+                req = int(v)
+            except Exception:
+                continue
+            if req > 0:
+                ideal_required[(d, s, t)] = req
+
     year = int(year) if year is not None else 2025
     dias_ano, sundays_1based = build_calendar(year)
     pt_holidays = hl.country_holidays("PT", years=[year])
@@ -132,6 +142,16 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
         unmet[(day, s, t)] = u
         m.Add(sum(cover) + u >= req)
 
+    unmet_ideal = {}
+    for (day, s, t), ideal in ideal_required.items():
+        cover = []
+        for employee in Employees:
+            if not vac_mask[(employee, day)] and t in allowed_teams_per_emp[employee]:
+                cover.append(y[(employee, day, s, t)])
+        z = m.NewIntVar(0, ideal, f"unmet_ideal_{day}_{s}_{t}")
+        unmet_ideal[(day, s, t)] = z
+        m.Add(sum(cover) + z >= ideal)
+
     # Workdays should be 223
     target_workdays = 223
     workdays = {employee: m.NewIntVar(0, target_workdays, f"work_{employee}") for employee in Employees}
@@ -142,9 +162,11 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
         m.Add(workdays[employee] + dev_under[employee] - dev_over[employee] == target_workdays)
 
     w_unmet_min, w_workday_dev = 1000, 1
+    w_unmet_ideal = 1
     obj = []
     obj += [w_unmet_min * unmet[k] for k in unmet]
     obj += [w_workday_dev * (dev_under[employee] + dev_over[employee]) for employee in Employees]
+    obj += [w_unmet_ideal * unmet_ideal[k] for k in unmet_ideal]
     m.Minimize(sum(obj))
 
     # Solve model
