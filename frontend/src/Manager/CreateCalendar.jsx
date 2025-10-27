@@ -25,8 +25,9 @@ const CreateCalendar = () => {
   const [shifts, setShifts] = useState("");
   const [vacationTemplate, setVacationTemplate] = useState("");
   const [minimumTemplate, setMinimumTemplate] = useState("");
+  const [groupNames, setGroupNames] = useState([]); 
+  const [selectedGroup, setSelectedGroup] = useState("");
 
-  // NEW: ruleset selection
   const [ruleSets, setRuleSets] = useState([]); // [{name, description, ...}]
   const [ruleSetName, setRuleSetName] = useState("");
   const selectedRuleSet = useMemo(
@@ -47,7 +48,19 @@ const CreateCalendar = () => {
     fetchVacationTemplates();
     fetchMinimumTemplates();
     fetchRuleSets();
+    fetchGroupNames();
   }, []);
+
+  const fetchGroupNames = async () => {
+  try {
+    const response = await axios.get(`${baseurl}/api/v1/teams/groups`); 
+    setGroupNames(response.data || []);
+  } catch (error) {
+    console.error("Erro ao buscar grupos de equipes:", error);
+    setGroupNames([]);
+  }
+};
+
 
   const fetchVacationTemplates = async () => {
     try {
@@ -92,6 +105,7 @@ const CreateCalendar = () => {
         minimuns: minimumTemplate,
         shifts: shifts,
         ruleSetName: ruleSetName, 
+        groupName: selectedGroup,
       };
 
       const response = await axios.post(`${baseurl}/schedules/generate`, data);
@@ -212,6 +226,22 @@ const CreateCalendar = () => {
                 error={maxDurationError}
                 helperText={maxDurationError ? "Duration must be a positive integer" : ""}
               />
+
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="group-select-label">Group</InputLabel>
+                <Select
+                  labelId="group-select-label"
+                  value={selectedGroup}
+                  label="Group"
+                  onChange={(e) => setSelectedGroup(e.target.value)}
+                >
+                  {groupNames.map((g) => (
+                    <MenuItem key={g} value={g}>
+                      {g}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
               <FormControl fullWidth margin="normal">
                 <InputLabel id="algorithm-select-label">Algorithm</InputLabel>

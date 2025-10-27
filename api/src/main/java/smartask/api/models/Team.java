@@ -18,10 +18,17 @@ public class Team {
 
     private List<String> employeeIds = new ArrayList<>();
 
+    private String groupName;
+
     public Team() { }
 
     public Team(String name) {
         this.name = name;
+    }
+
+    public Team(String name, String groupName) {
+        this.name = name;
+        this.groupName = groupName;
     }
 
     public String getId() { return id; }
@@ -32,4 +39,7 @@ public class Team {
 
     public List<String> getEmployeeIds() { return employeeIds; }
     public void setEmployeeIds(List<String> employeeIds) { this.employeeIds = employeeIds; }
+
+    public String getGroupName() { return groupName; }
+    public void setGroupName(String groupName) { this.groupName = groupName; }
 }

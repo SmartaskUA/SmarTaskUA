@@ -26,7 +26,14 @@ public class TeamService {
 
     public void addTeam(String teamName) {
         Team team = new Team(teamName);
-        team.setEmployeeIds(new ArrayList<>());  // começa vazio, por segurança
+        team.setEmployeeIds(new ArrayList<>());  
+        saveTeam(team);
+    }
+
+    public void addTeam(Team team) {
+        if (team.getEmployeeIds() == null) {
+            team.setEmployeeIds(new ArrayList<>());
+        }
         saveTeam(team);
     }
 
@@ -72,6 +79,33 @@ public class TeamService {
         team.setEmployeeIds(currentEmployeeIds);
         saveTeam(team);
     }
+
+    public void addEmployeesToTeam(String teamName, List<String> employeeIds, String groupName) {
+        Team team = teamRepository.findAll().stream()
+                .filter(t -> t.getName().equals(teamName) && groupName.equals(t.getGroupName()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Team with name '" + teamName + "' and group '" + groupName + "' not found"));
+
+        String teamId = team.getId();
+        List<String> currentEmployeeIds = team.getEmployeeIds() != null ? team.getEmployeeIds() : new ArrayList<>();
+
+        for (String empId : employeeIds) {
+            Employee employee = employeeService.getEmployeeById(empId);
+
+            // Adiciona o ID do time ao funcionário (evitando duplicados)
+            employee.getTeamIds().add(teamId);
+            employeeService.saveEmployee(employee);
+
+            // Adiciona o ID do funcionário ao time (evitando duplicados)
+            if (!currentEmployeeIds.contains(empId)) {
+                currentEmployeeIds.add(empId);
+            }
+        }
+
+        team.setEmployeeIds(currentEmployeeIds);
+        saveTeam(team);
+    }
+
 
 
     public void setEmployeeFirstPreference(String employeeId, String teamName) {

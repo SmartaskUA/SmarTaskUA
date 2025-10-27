@@ -43,7 +43,8 @@ public class SchedulesService {
 
     public String requestScheduleGeneration(ScheduleRequest schedule) {
 
-        boolean exists = schedulerepository.existsByTitleAndAlgorithm(schedule.getTitle(), schedule.getAlgorithm());
+        boolean exists = schedulerepository.existsByTitleAndAlgorithm(schedule.getTitle(), schedule.getAlgorithm());    
+
 
         if (exists) {
             return "Schedule with the same title and algorithm exists!";
@@ -74,12 +75,6 @@ public class SchedulesService {
             if (!employeeNamesInDb.contains(name)) {
                 return "Vacation template contains employee '" + name + "' who does not exist in the system.";
             }
-        }
-
-        // Verificar se quantidade de funcionários do template é igual ao do banco
-        if (namesInTemplate.size() != employeeNamesInDb.size()) {
-            return "Vacation template contains " + namesInTemplate.size() +
-                    " employees, but the system has " + employeeNamesInDb.size() + " employees.";
         }
 
         if (schedule.getShifts() == null || (schedule.getShifts() != 2 && schedule.getShifts() != 3)) {
@@ -221,4 +216,8 @@ public class SchedulesService {
         return false;
     }
 
+
+    public TaskStatusRepository getTaskStatusRepository() {
+        return taskStatusRepository;
+    }
 }

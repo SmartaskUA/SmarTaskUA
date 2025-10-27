@@ -6,11 +6,21 @@ import "../styles/Manager.css";
 import BaseUrl from "../components/BaseUrl";
 import { CircularProgress } from "@mui/material";
 
+/* =========================
+   🧱 Calendar Card Component
+   ========================= */
 const CalendarCard = ({
-  title, algorithm, status, time,
-  onClick, buttonLabel, className,
-  showLoader, buttonColor,
-  showFailedTag, showCompletedTag
+  title,
+  algorithm,
+  status,
+  time,
+  onClick,
+  buttonLabel,
+  className,
+  showLoader,
+  buttonColor,
+  showFailedTag,
+  showCompletedTag,
 }) => {
   const getBorderStyle = () => {
     if (showFailedTag) return "1px solid #dc3545";
@@ -26,70 +36,88 @@ const CalendarCard = ({
   };
 
   return (
-    <div className={`calendar-card ${className || ""}`} style={{
-      width: "300px",
-      height: "165px",
-      padding: "20px",
-      position: "relative",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "space-between",
-      border: getBorderStyle(),
-      borderRadius: "8px",
-      boxShadow: "0 2px 5px rgba(0,0,0,0.1)"
-    }}>
+    <div
+      className={`calendar-card ${className || ""}`}
+      style={{
+        width: "300px",
+        height: "165px",
+        padding: "20px",
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        border: getBorderStyle(),
+        borderRadius: "8px",
+        boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+      }}
+    >
+      {/* Tags */}
       {showFailedTag && (
-        <div style={{
-          position: "absolute",
-          top: "8px",
-          right: "10px",
-          backgroundColor: "#dc3545",
-          color: "white",
-          padding: "2px 8px",
-          borderRadius: "5px",
-          fontSize: "0.75rem",
-          fontWeight: "bold"
-        }}>
+        <div
+          style={{
+            position: "absolute",
+            top: "8px",
+            right: "10px",
+            backgroundColor: "#dc3545",
+            color: "white",
+            padding: "2px 8px",
+            borderRadius: "5px",
+            fontSize: "0.75rem",
+            fontWeight: "bold",
+          }}
+        >
           FAILED
         </div>
       )}
 
       {showCompletedTag && (
-        <div style={{
-          position: "absolute",
-          top: "8px",
-          right: "10px",
-          backgroundColor: "#28a745",
-          color: "white",
-          padding: "2px 8px",
-          borderRadius: "5px",
-          fontSize: "0.75rem",
-          fontWeight: "bold"
-        }}>
+        <div
+          style={{
+            position: "absolute",
+            top: "8px",
+            right: "10px",
+            backgroundColor: "#28a745",
+            color: "white",
+            padding: "2px 8px",
+            borderRadius: "5px",
+            fontSize: "0.75rem",
+            fontWeight: "bold",
+          }}
+        >
           COMPLETED
         </div>
       )}
 
+      {/* Card Header */}
       <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
-        <span className="status-dot" style={{
-          marginTop: "4%",
-          backgroundColor: getDotColor()
-        }} />
+        <span
+          className="status-dot"
+          style={{
+            marginTop: "4%",
+            backgroundColor: getDotColor(),
+          }}
+        />
         <div style={{ marginLeft: "10px" }}>
-          <div className="calendar-card-title" style={{
-            fontSize: "1.3rem",
-            fontWeight: "600",
-            color: "#333"
-          }}>
+          <div
+            className="calendar-card-title"
+            style={{
+              fontSize: "1.3rem",
+              fontWeight: "600",
+              color: "#333",
+            }}
+          >
             {title}
           </div>
           {algorithm && (
-            <div className="calendar-card-algorithm" style={{
-              fontSize: "1rem",
-              color: "#777",
-              marginTop: "5%",
-              marginLeft: "3%"
-            }}>
+            <div
+              className="calendar-card-algorithm"
+              style={{
+                fontSize: "1rem",
+                color: "#777",
+                marginTop: "5%",
+                marginLeft: "3%",
+              }}
+            >
               {algorithm}
             </div>
           )}
@@ -98,6 +126,7 @@ const CalendarCard = ({
 
       {time && <span className="draft-time" style={{ fontSize: "14px" }}>{time}</span>}
 
+      {/* Button */}
       {!showFailedTag && buttonLabel && (
         <button
           className="open-button"
@@ -110,7 +139,7 @@ const CalendarCard = ({
             borderRadius: "8px",
             fontWeight: "bold",
             fontSize: "1rem",
-            cursor: "pointer"
+            cursor: "pointer",
           }}
           onClick={onClick}
         >
@@ -118,13 +147,16 @@ const CalendarCard = ({
         </button>
       )}
 
+      {/* Loader */}
       {showLoader && (
-        <div style={{
-          position: "absolute",
-          top: "60%",
-          left: "50%",
-          transform: "translate(-50%, -50%)"
-        }}>
+        <div
+          style={{
+            position: "absolute",
+            top: "60%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+          }}
+        >
           <CircularProgress color="warning" />
         </div>
       )}
@@ -132,54 +164,69 @@ const CalendarCard = ({
   );
 };
 
+/* ===============================
+   🧩 Last Processed Section (3s poll)
+   =============================== */
 const LastProcessedSection = ({ refreshTrigger }) => {
   const [lastTasks, setLastTasks] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
+    let isMounted = true;
+    let inFlight = false;
+    const controller = new AbortController();
+
     const fetchLastTasks = async () => {
+      if (inFlight) return;
+      inFlight = true;
       try {
-        const response = await axios.get(`${BaseUrl}/tasks`);
+        const response = await axios.get(`${BaseUrl}/tasks`, { signal: controller.signal });
         const tasks = response.data;
 
         const recent = tasks
-          .filter(task => task.status === "COMPLETED" || task.status === "FAILED")
+          .filter((t) => t.status === "COMPLETED" || t.status === "FAILED")
           .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
           .slice(0, 6);
 
         const validTasks = await Promise.all(
           recent.map(async (task) => {
             if (task.status === "FAILED") return task;
-
             const title = task.scheduleRequest?.title;
             try {
-              const res = await axios.get(`${BaseUrl}/schedules/${title}`);
-              if (res.data?.id) return task;
+              const res = await axios.get(`${BaseUrl}/schedules/${title}`, { signal: controller.signal });
+              return res.data?.id ? task : null;
             } catch {
               return null;
             }
           })
         );
 
-        const filtered = validTasks.filter(Boolean).slice(0, 3);
-        setLastTasks(filtered);
+        if (isMounted) setLastTasks(validTasks.filter(Boolean).slice(0, 3));
       } catch (err) {
-        console.error("Erro ao buscar últimas tarefas:", err);
+        if (err.name !== "CanceledError") {
+          console.error("Erro ao buscar últimas tarefas:", err);
+        }
+      } finally {
+        inFlight = false;
       }
     };
 
     fetchLastTasks();
+    const id = setInterval(fetchLastTasks, 3000);
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+      clearInterval(id);
+    };
   }, [refreshTrigger]);
 
   const handleOpenCalendar = async (title) => {
     try {
       const response = await axios.get(`${BaseUrl}/schedules/${title}`);
       const calendarId = response.data?.id;
-      if (calendarId) {
-        navigate(`/manager/calendar/${calendarId}`);
-      } else {
-        alert("Calendário não encontrado.");
-      }
+      if (calendarId) navigate(`/manager/calendar/${calendarId}`);
+      else alert("Calendário não encontrado.");
     } catch (error) {
       console.error("Erro ao abrir calendário:", error);
       alert("Erro ao abrir calendário.");
@@ -188,7 +235,9 @@ const LastProcessedSection = ({ refreshTrigger }) => {
 
   return (
     <>
-      <h3 className="section-title" style={{ marginTop: "20px" }}>Latest Results</h3>
+      <h3 className="section-title" style={{ marginTop: "20px" }}>
+        Latest Results
+      </h3>
       <div className="calendar-cards-container" style={{ gap: "30px" }}>
         {lastTasks.length === 0 ? (
           <p style={{ color: "#777", fontStyle: "italic" }}>No processed calendars found.</p>
@@ -217,62 +266,67 @@ const LastProcessedSection = ({ refreshTrigger }) => {
           })
         )}
       </div>
-
     </>
   );
 };
 
-const NewCalendarSection = () => (
-  <>
-    <h3 className="section-title">Home</h3>
-    <div className="cards-row" style={{ gap: "30px" }}>
-      <CalendarCard
-        title="New Schedule"
-        status="blue"
-        buttonLabel="Create"
-        buttonColor="#007BFF"
-        onClick={() => window.location.href = "/manager/createCalendar"}
-        className="new-calendar-card"
-      />
-    </div>
-  </>
-);
-
+/* ============================
+   🧠 Calendars In Progress
+   ============================ */
 const CalendarsInProcessSection = ({ setRefreshTrigger }) => {
   const [processingCalendars, setProcessingCalendars] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchCalendars = async () => {
       try {
         const response = await axios.get(`${BaseUrl}/tasks`);
         const data = response.data;
 
-        const stillProcessing = data.filter(task => {
+        const stillProcessing = data.filter((task) => {
           const s = task.status?.toLowerCase();
           return s === "in_progress" || s === "pending";
         });
 
-        const justFinished = processingCalendars.filter(old =>
-          !stillProcessing.find(newT => newT.taskId === old.taskId)
+        if (!isMounted) return;
+
+        // detect finished ones
+        const justFinished = processingCalendars.filter(
+          (old) => !stillProcessing.find((newT) => newT.taskId === old.taskId)
         );
 
         if (justFinished.length > 0) {
-          setRefreshTrigger(prev => prev + 1);
+          setRefreshTrigger((prev) => prev + 1);
         }
 
-        setProcessingCalendars(stillProcessing);
+        // only update if different
+        const same =
+          JSON.stringify(stillProcessing.map((t) => t.taskId).sort()) ===
+          JSON.stringify(processingCalendars.map((t) => t.taskId).sort());
+
+        if (!same) {
+          setProcessingCalendars(stillProcessing);
+        }
+
         setErrorMessage("");
       } catch (err) {
-        console.error("Erro ao atualizar tarefas em progresso:", err);
-        setErrorMessage("Erro ao atualizar tarefas em progresso.");
+        if (isMounted) {
+          console.error("Erro ao atualizar tarefas em progresso:", err);
+          setErrorMessage("Erro ao atualizar tarefas em progresso.");
+        }
       }
     };
 
     fetchCalendars();
     const interval = setInterval(fetchCalendars, 3000);
-    return () => clearInterval(interval);
-  }, [processingCalendars, setRefreshTrigger]);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [setRefreshTrigger]);
 
   return (
     <>
@@ -300,6 +354,28 @@ const CalendarsInProcessSection = ({ setRefreshTrigger }) => {
   );
 };
 
+/* ===============================
+   🏠 New Calendar Section
+   =============================== */
+const NewCalendarSection = () => (
+  <>
+    <h3 className="section-title">Home</h3>
+    <div className="cards-row" style={{ gap: "30px" }}>
+      <CalendarCard
+        title="New Schedule"
+        status="blue"
+        buttonLabel="Create"
+        buttonColor="#007BFF"
+        onClick={() => (window.location.href = "/manager/createCalendar")}
+        className="new-calendar-card"
+      />
+    </div>
+  </>
+);
+
+/* ==========================
+   🧭 Manager Main Component
+   ========================== */
 const Manager = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 

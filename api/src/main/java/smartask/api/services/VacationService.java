@@ -112,11 +112,6 @@ public class VacationService {
             }
         }
 
-        // Checa se o número total de funcionários no CSV é igual ao do banco
-        if (employeesInCsv.size() != existingNames.size()) {
-            throw new IllegalArgumentException("Número de funcionários no CSV (" + employeesInCsv.size() +
-                    ") difere do número de funcionários no banco de dados (" + existingNames.size() + ").");
-        }
 
         VacationTemplate template = VacationTemplate.builder()
                 .name(name)

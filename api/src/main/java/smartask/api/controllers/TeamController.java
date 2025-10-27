@@ -111,6 +111,21 @@ public class TeamController {
         return ResponseEntity.ok("Team deleted successfully");
     }
 
+    @Operation(summary = "Get all unique group names from teams")
+    @GetMapping("/groups")
+    public ResponseEntity<List<String>> getAllGroupNames() {
+        List<Team> teams = teamService.getTeams();
+
+        List<String> uniqueGroups = teams.stream()
+                .map(Team::getGroupName)
+                .filter(g -> g != null && !g.isBlank())
+                .distinct()
+                .sorted()
+                .toList();
+
+        return new ResponseEntity<>(uniqueGroups, HttpStatus.OK);
+    }
+
 
 
 }

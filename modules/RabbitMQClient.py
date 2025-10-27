@@ -60,6 +60,7 @@ class RabbitMQClient:
         channel = connection.channel()
         return connection, channel
 
+
     def consume_messages(self):
         def callback(ch, method, properties, body):
             try:
@@ -69,37 +70,71 @@ class RabbitMQClient:
 
                 task_id = message.get("taskId", "No Task ID")
                 title = message.get("title")
+
+                # -------- Vacation template --------
                 vacation_template_name = message.get("vacationTemplate")
                 fetched_vacation = self.mongodb_client.fetch_vacation_by_name(vacation_template_name)
-                if fetched_vacation is None:
-                    print(f"[WARN] Vacation template '{vacation_template_name}' not found in MongoDB.")
-                    vacations_data = {}
-                else:
-                    vacations_data = fetched_vacation.get("vacations", {})
+                vacations_data = fetched_vacation.get("vacations", {}) if fetched_vacation else {}
 
+                # Names in vacation template (first column of each row)
+                vacation_rows = vacations_data if isinstance(vacations_data, list) else []
+                employee_names_in_template = set()
+                for row in vacation_rows:
+                    if isinstance(row, list) and row:
+                        name = str(row[0]).replace("\uFEFF", "").strip()
+                        if name:
+                            employee_names_in_template.add(name)
+                print(f"[INFO] Employees in vacation template: {employee_names_in_template}")
+
+                # -------- Minimums --------
                 minimuns = message.get("minimuns")
                 fetched_reference = self.mongodb_client.fetch_reference_by_name(minimuns)
-                if fetched_reference is None:
-                    print(f"[WARN] Reference template '{minimuns}' not found in MongoDB.")
-                    minimuns_data = {}
+                minimuns_data = fetched_reference.get("minimuns", {}) if fetched_reference else {}
+
+                # -------- Group filtering (NEW) --------
+                group_name = message.get("groupName")  # <-- comes from your producer
+                print(f"[INFO] groupName in message: {group_name}")
+
+                all_employees = self.mongodb_client.fetch_employees()
+
+                if group_name:
+                    # 1) get all teams in the group
+                    teams_in_group = self.mongodb_client.fetch_teams_by_group(group_name)
+                    team_emp_ids = set()
+                    for t in teams_in_group:
+                        for eid in t.get("employeeIds", []):
+                            team_emp_ids.add(eid)
+
+                    # 2) restrict employees to that group
+                    employees_in_group = [
+                        e for e in all_employees if str(e.get("_id")) in {str(eid) for eid in team_emp_ids}
+                    ]
+                    print(f"[INFO] Found {len(employees_in_group)} employees in group '{group_name}'.")
+
+                    # 3) finally intersect with the vacation template names
+                    employees_data = [
+                        e for e in employees_in_group
+                        if e.get("name", "").strip() in employee_names_in_template
+                    ]
+
+                    print(f"[INFO] Using {len(employees_data)} employees from group '{group_name}' (intersected with vacation template).")
                 else:
-                    minimuns_data = fetched_reference.get("minimuns", {})
+                    employees_data = [
+                        emp for emp in all_employees
+                        if emp.get("name", "").strip() in employee_names_in_template
+                    ]
+                    print(f"[INFO] Using {len(employees_data)} employees (no groupName provided; filtered only by template).")
 
                 year = message.get("year")
-                print(f"\nyear : {year}")
-
                 shifts = message.get("shifts", [])
-                print(f"\nshifts : {shifts}")
-
-                maxTime =  message.get("maxTime")
-                print(f"\nmaxTime : {maxTime}")
-
+                maxTime = message.get("maxTime")
                 algorithm_name = message.get("algorithm", "CSP Scheduling")
-                employees_data = self.mongodb_client.fetch_employees()
-                print(f"\n[Received Task] Task ID: {task_id}")
-
                 rules = message.get("rules")
 
+                print(f"\n[Received Task] Task ID: {task_id}")
+                print(f"Algorithm: {algorithm_name}, Shifts: {shifts}, Year: {year}")
+
+                # --- Submit task to executor ---
                 self.executor.submit(
                     self.handle_task_processing,
                     task_id,
@@ -107,7 +142,7 @@ class RabbitMQClient:
                     algorithm_name,
                     vacations_data,
                     minimuns_data,
-                    employees_data,
+                    employees_data, 
                     vacation_template_name,
                     minimuns,
                     year,
@@ -117,10 +152,10 @@ class RabbitMQClient:
                 )
 
                 ch.basic_ack(delivery_tag=method.delivery_tag)
+
             except Exception as e:
                 print(f"Error processing message: {e}")
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
-
         while True:
             try:
                 print("Waiting for messages. To exit, press CTRL+C.")
@@ -153,7 +188,7 @@ class RabbitMQClient:
         self.send_task_status(task_id, "IN_PROGRESS")
         try:
             print(f"[RabbitMQClient] Delegando execução da task {task_id} para TaskManager...")
-            schedule_data = self.task_manager.run_task(
+            schedule_data, elapsed_time = self.task_manager.run_task(
                 task_id=task_id,
                 title=title,
                 algorithm_name=algorithm_name,
@@ -165,6 +200,8 @@ class RabbitMQClient:
                 shifts=shifts,
                 rules=rules
             )
+
+            print("ELAPSED TIME:", elapsed_time)
 
             metadata = {
                 "scheduleName": title,
@@ -184,7 +221,8 @@ class RabbitMQClient:
                 data=schedule_data,
                 title=title,
                 algorithm=algorithm_name,
-                metadata=metadata
+                metadata=metadata,
+                elapsed_time=elapsed_time
             )
 
             print(f"[RabbitMQClient] Schedule complete for Task ID: {task_id}")
