@@ -133,19 +133,16 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
         m.Add(sum(cover) + u >= req)
 
     # Workdays should be 223
+    # --- Definitive Workday Rule: exactly 223 worked days per employee ---
     target_workdays = 223
-    workdays = {employee: m.NewIntVar(0, target_workdays, f"work_{employee}") for employee in Employees}
-    dev_under = {employee: m.NewIntVar(0, target_workdays, f"dev_under_{employee}") for employee in Employees}
-    dev_over  = {employee: m.NewIntVar(0, target_workdays, f"dev_over_{employee}") for employee in Employees}
+    workdays = {}
     for employee in Employees:
-        m.Add(workdays[employee] == sum(1 - off[(employee, d)] for d in D))
-        m.Add(workdays[employee] + dev_under[employee] - dev_over[employee] == target_workdays)
+        workdays[employee] = sum(1 - off[(employee, d)] for d in D)
+        m.Add(workdays[employee] == target_workdays)
 
-    w_unmet_min, w_workday_dev = 1000, 1
-    obj = []
-    obj += [w_unmet_min * unmet[k] for k in unmet]
-    obj += [w_workday_dev * (dev_under[employee] + dev_over[employee]) for employee in Employees]
-    m.Minimize(sum(obj))
+    # --- Objective: minimize unmet minimums only ---
+    w_unmet_min = 1000
+    m.Minimize(sum(w_unmet_min * unmet[k] for k in unmet))
 
     # Solve model
     solver = cp_model.CpSolver()

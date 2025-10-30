@@ -20,10 +20,10 @@ VacationData/{employee_count}_employees/
           └── ...
 
 Cases:
-  1️⃣ Sequential 30-day rotation across the year
-  2️⃣ Two random 15-day blocks per employee (non-overlapping)
-  3️⃣ Same as Case 2, but biased around Tue/Thu holidays (long weekends)
-  4️⃣ Summer-focused (June–August), still 30 days per employee
+  1st case: Sequential 30-day rotation across the year
+  2nd case: Two random 15-day blocks per employee (non-overlapping)
+  3rd case: Same as Case 2, but biased around Tue/Thu holidays (long weekends)
+  4th case: Summer-focused (June–August)
 """
 
 import os
@@ -169,43 +169,76 @@ def generate_case2(employee_count, days_per_year=365, seed=42):
 # =========================================================
 # 🧩 CASE 3 – Long-weekend bias (Tue/Thu holidays)
 # =========================================================
+# =========================================================
+# 🧩 CASE 3 – Long-weekend bias (improved realism)
+# =========================================================
 def generate_case3(employee_count, days_per_year=365, year=2025, seed=1337):
     """
-    Similar to Case 2, but we bias some 15-day blocks
-    so that they include Tue/Thu holidays → long weekends.
+    Case 3: Two 15-day vacation blocks per employee,
+    but ~60% of employees get one block biased around
+    real Tue/Thu holidays or long weekends.
+
+    Improvements:
+      ✅ Limited % of employees per holiday (avoids everyone picking same week)
+      ✅ Better spread across seasons
+      ✅ Keeps variety and non-overlap
     """
     rng = np.random.default_rng(seed)
     vacation_data, vacation_stats = {}, {}
 
-    # Collect all Tue/Thu Portuguese holidays for the year
+    # --- Step 1: Identify real Tue/Thu holidays in Portugal ---
     pt_holidays = holidays.Portugal(years=year)
     tuth_holidays = sorted([d for d in pt_holidays if d.weekday() in (1, 3)])  # Tue=1, Thu=3
 
-    # Randomly assign ~50% of employees per relevant holiday
-    holiday_targets = {d.timetuple().tm_yday: set() for d in tuth_holidays}
-    for d in tuth_holidays:
-        doy = d.timetuple().tm_yday
-        chosen = rng.choice(np.arange(1, employee_count + 1),
-                            size=max(1, employee_count // 2),
-                            replace=False)
-        holiday_targets[doy] = set(int(x) for x in chosen)
+    # Convert to day-of-year indexes
+    holiday_days = [d.timetuple().tm_yday for d in tuth_holidays]
+    if not holiday_days:
+        print("⚠️ No Tue/Thu holidays found for this year; falling back to random blocks.")
+        return generate_case2(employee_count, days_per_year, seed)
 
-    # Build schedules
+    # --- Step 2: Build holiday "clusters" (±7 days around each holiday) ---
+    clusters = []
+    for hday in holiday_days:
+        start = _wrap_day(hday - 7, days_per_year)
+        end = _wrap_day(hday + 7, days_per_year)
+        clusters.append(set(_block_days(start, 15, days_per_year)))
+
+    # --- Step 3: Randomly assign ~60% of employees to one of the clusters ---
+    biased_emps = set(rng.choice(np.arange(1, employee_count + 1),
+                                 size=int(0.6 * employee_count),
+                                 replace=False))
+
+    # Each cluster gets at most ~15% of all employees
+    max_per_cluster = max(1, int(employee_count * 0.15))
+    cluster_assignments = {i: [] for i in range(len(clusters))}
+    for emp_id in biased_emps:
+        chosen_cluster = rng.integers(0, len(clusters))
+        if len(cluster_assignments[chosen_cluster]) < max_per_cluster:
+            cluster_assignments[chosen_cluster].append(emp_id)
+        else:
+            # fallback to next available cluster
+            for alt_idx in range(len(clusters)):
+                if len(cluster_assignments[alt_idx]) < max_per_cluster:
+                    cluster_assignments[alt_idx].append(emp_id)
+                    break
+
+    # --- Step 4: Generate two non-overlapping blocks per employee ---
     for emp_id in range(1, employee_count + 1):
         s1, s2 = _non_overlapping_two_blocks(days_per_year, rng)
 
-        # If employee is assigned to a holiday, center one 15-day block on it
-        for doy, bucket in holiday_targets.items():
-            if emp_id in bucket:
-                start = _wrap_day(doy - 7, days_per_year)
-                if rng.integers(1, 3) == 1:
-                    s1 = start
-                else:
-                    s2 = start
+        # If employee is biased → replace one block with cluster-based window
+        for cluster_idx, members in cluster_assignments.items():
+            if emp_id in members:
+                cluster_days = sorted(clusters[cluster_idx])
+                # Center first block around cluster (e.g., 15-day block covering that period)
+                s1 = cluster_days[0]
+                # Ensure the second block is far away (at least 60 days apart)
+                while abs(s2 - s1) < 60:
+                    s2 = rng.integers(1, days_per_year - 14)
+                break  # assigned once only
 
-        # Merge both 15-day blocks → 30 vacation days total
+        # Combine blocks and repair if any overlap
         days = set(_block_days(s1, 15, days_per_year)) | set(_block_days(s2, 15, days_per_year))
-        # Handle rare overlaps by adding extra days
         while len(days) < 30:
             days.add(_wrap_day(max(days) + 1, days_per_year))
 
@@ -220,12 +253,10 @@ def generate_case3(employee_count, days_per_year=365, year=2025, seed=1337):
             "vacation_per_week": per_week,
         }
 
+    print(f"Case 3 complete: {len(biased_emps)} employees biased toward long weekends.")
     return vacation_data, vacation_stats
 
-
-# =========================================================
-# 🧩 CASE 4 – Summer-focused (June–August)
-# =========================================================
+# CASE 4 – Summer-focused (June–August)
 def generate_case4(employee_count, days_per_year=365, year=2025):
     """
     All vacations fall between June 1 and August 31,
@@ -266,9 +297,7 @@ def generate_case4(employee_count, days_per_year=365, year=2025):
     return vacation_data, vacation_stats
 
 
-# =========================================================
-# 🧠 MASTER FUNCTION – Generate and save all cases
-# =========================================================
+# Main Function
 def create_vacation_cases(employee_count=21, days_per_year=365, year=2025, output_base="VacationData"):
     """
     Create all 4 vacation distributions for a given number of employees
@@ -279,7 +308,7 @@ def create_vacation_cases(employee_count=21, days_per_year=365, year=2025, outpu
     print(f"\n=== Generating vacation templates for {employee_count} employees ===")
 
     # Case 1 – Sequential 30-day block
-    print("📘 Case 1: Sequential rotation...")
+    print("Case 1: Sequential rotation...")
     case1, stats1 = generate_case1(employee_count, days_per_year)
     pd.DataFrame(case1).T.reset_index().to_csv(os.path.join(templates_dir, f"VacationTemplate_Case1_{employee_count}.csv"),
                                                header=False, index=False)
@@ -287,7 +316,7 @@ def create_vacation_cases(employee_count=21, days_per_year=365, year=2025, outpu
                                                           header=True, index=False)
 
     # Case 2 – Two random 15-day blocks
-    print("📗 Case 2: Two random 15-day blocks...")
+    print("Case 2: Two random 15-day blocks...")
     case2, stats2 = generate_case2(employee_count, days_per_year)
     pd.DataFrame(case2).T.reset_index().to_csv(os.path.join(templates_dir, f"VacationTemplate_Case2_{employee_count}.csv"),
                                                header=False, index=False)
@@ -295,7 +324,7 @@ def create_vacation_cases(employee_count=21, days_per_year=365, year=2025, outpu
                                                           header=True, index=False)
 
     # Case 3 – Long-weekend bias
-    print("📙 Case 3: Long-weekend bias (Tue/Thu holidays)...")
+    print("Case 3: Long-weekend bias (Tue/Thu holidays)...")
     case3, stats3 = generate_case3(employee_count, days_per_year, year)
     pd.DataFrame(case3).T.reset_index().to_csv(os.path.join(templates_dir, f"VacationTemplate_Case3_{employee_count}.csv"),
                                                header=False, index=False)
@@ -303,21 +332,17 @@ def create_vacation_cases(employee_count=21, days_per_year=365, year=2025, outpu
                                                           header=True, index=False)
 
     # Case 4 – Summer-focused
-    print("📕 Case 4: Summer-focused staggered vacations...")
+    print("Case 4: Summer-focused staggered vacations...")
     case4, stats4 = generate_case4(employee_count, days_per_year, year)
     pd.DataFrame(case4).T.reset_index().to_csv(os.path.join(templates_dir, f"VacationTemplate_Case4_{employee_count}.csv"),
                                                header=False, index=False)
     pd.DataFrame.from_dict(stats4, orient="index").to_csv(os.path.join(stats_dir, f"VacationStatistics_Case4_{employee_count}.csv"),
                                                           header=True, index=False)
 
-    print(f"\n✅ All 4 vacation templates generated for {employee_count} employees!")
-    print(f"📂 Saved in: {templates_dir}")
-    print(f"📊 Stats in: {stats_dir}")
+    print(f"\nAll 4 vacation templates generated for {employee_count} employees!")
+    print(f"Saved in: {templates_dir}")
+    print(f"Stats in: {stats_dir}")
 
 
-# =========================================================
-# 🚀 Script entrypoint
-# =========================================================
 if __name__ == "__main__":
-    # Example: generate data for 96 employees for year 2025
     create_vacation_cases(employee_count=96, year=2025)

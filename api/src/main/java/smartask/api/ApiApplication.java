@@ -46,9 +46,13 @@ public class ApiApplication {
                                    VacationService vacationService,
                                    ReferenceService referenceService) {
         return args -> {
-            // ----------------------------------------------------
-            // Load default RuleSet (unchanged)
-            // ----------------------------------------------------
+
+            if (!teamService.getTeams().isEmpty()) {
+                System.out.println("⚠️ Database already initialized — skipping setup.");
+            return;
+            }
+
+
             ObjectMapper mapper = new ObjectMapper();
             InputStream inputStream = new ClassPathResource("rules.json").getInputStream();
             if (inputStream != null) {
@@ -60,22 +64,23 @@ public class ApiApplication {
                     defaultSet.setDescription("Default rule set loaded from JSON");
                 }
                 ruleSetService.saveRuleSet(defaultSet);
-                System.out.println("✅ Default rule set loaded successfully!");
+                System.out.println("Default rule set loaded successfully!");
             } else {
-                System.err.println("⚠️ Could not find rules.json in resources folder!");
+                System.err.println("Could not find rules.json in resources folder!");
             }
 
             // ----------------------------------------------------
             // Create all 4 scenarios
             // ----------------------------------------------------
-            createBaseScenario_2Teams12Employees(teamService, employeeService);      // exact structure requested
+            createBaseScenario_2Teams12Employees(teamService, employeeService);    
             createScenarioWithCrossing(teamService, employeeService, 4, 24, 0.20);
             createScenarioWithCrossing(teamService, employeeService, 8, 48, 0.20);
             createScenarioWithCrossing(teamService, employeeService, 16, 96, 0.20);
             loadTemplatesIntoDatabase(vacationService, referenceService);
-            runLinearProgrammingScenarios(schedulesService);
+            runLinearProgrammingScenarios(schedulesService, "CSPv2");
+            runLinearProgrammingScenarios(schedulesService, "linear programming 2");
 
-            System.out.println("\n✅ All team scenarios successfully initialized!");
+            System.out.println("\nAll team scenarios successfully initialized!");
         };
     }
 
@@ -89,7 +94,7 @@ public class ApiApplication {
     private void createBaseScenario_2Teams12Employees(TeamService teamService, EmployeeService employeeService) {
         final String groupName = "Scenario_2Teams";
 
-        System.out.println("\n🧱 Initializing " + groupName + " → 2 teams, 12 employees");
+        System.out.println("\nInitializing " + groupName + " → 2 teams, 12 employees");
 
         Team teamA = createOrGetTeam(teamService, "Equipa A", groupName);
         Team teamB = createOrGetTeam(teamService, "Equipa B", groupName);
@@ -113,7 +118,7 @@ public class ApiApplication {
         bIds.addAll(ids(all, 11, 12));    // unique 2
         teamService.addEmployeesToTeam(teamB.getName(), bIds, groupName);
 
-        System.out.printf("✅ %s ready. A=%d (with 3 shared), B=%d, unique=%d%n",
+        System.out.printf("%s ready. A=%d (with 3 shared), B=%d, unique=%d%n",
                 groupName, aPrimIds.size(), bIds.size(), 12);
     }
 
@@ -183,7 +188,7 @@ public class ApiApplication {
             System.out.printf("  • %s: primary≈%d, +cross≈%d%n",
                     teams.get(t).getName(), prim, crossAdded);
         }
-        System.out.printf("✅ %s initialized with primary distribution and cross-memberships.%n", groupName);
+        System.out.printf("%s initialized with primary distribution and cross-memberships.%n", groupName);
     }
 
     // ----------------------------------------------------------------
@@ -212,10 +217,9 @@ public class ApiApplication {
     private void loadTemplatesIntoDatabase(VacationService vacationService,
                                        ReferenceService referenceService) {
         try {
-            System.out.println("\n📥 Loading vacation and minimun templates from /resources...");
+            System.out.println("\nLoading vacation and minimun templates from /resources...");
 
             // === Vacation Templates ===
-            // Each folder: vacationData/{employees}_employees/templates/VacationTemplate_Case1_xx.csv ...
             String[] employeeFolders = {"12", "24", "48", "96"};
             for (String empCount : employeeFolders) {
                 String basePath = "vacationData/" + empCount + "_employees/templates/";
@@ -230,10 +234,10 @@ public class ApiApplication {
                             Files.copy(is, temp.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                             vacationService.processCsvFileAndGenerateTemplate(name, temp.getAbsolutePath());
                             temp.delete();
-                            System.out.println("✅ Vacation template loaded: " + name);
+                            System.out.println("Vacation template loaded: " + name);
                         }
                     } catch (Exception e) {
-                        System.err.println("⚠️ Could not load vacation template: " + name + " — " + e.getMessage());
+                        System.err.println("Could not load vacation template: " + name + " — " + e.getMessage());
                     }
                 }
             }
@@ -253,21 +257,21 @@ public class ApiApplication {
                         String name = file.replace(".csv", "");
                         MultipartFile mf = new MockMultipartFile(name, file, "text/csv", is.readAllBytes());
                         referenceService.createTemplateFromCsv(name, mf);
-                        System.out.println("✅ Reference template loaded: " + name);
+                        System.out.println("Reference template loaded: " + name);
                     }
                 } catch (Exception e) {
-                    System.err.println("⚠️ Could not load reference template " + file + " — " + e.getMessage());
+                    System.err.println("Could not load reference template " + file + " — " + e.getMessage());
                 }
             }
 
         } catch (Exception e) {
-            System.err.println("❌ Error while loading templates: " + e.getMessage());
+            System.err.println(" Error while loading templates: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-private void runLinearProgrammingScenarios(SchedulesService schedulesService) {
-    System.out.println("\n🚀 Starting sequential Linear Programming 2 runs for all scenarios...");
+private void runLinearProgrammingScenarios(SchedulesService schedulesService, String algorithmName) {
+    System.out.println("\n Starting sequential " + algorithmName + " runs for all scenarios...");
 
     // Ordered map: smallest scenario first
     Map<String, String> minimunToGroup = new LinkedHashMap<>();
@@ -280,18 +284,24 @@ private void runLinearProgrammingScenarios(SchedulesService schedulesService) {
         String minimunName = entry.getKey();
         String groupName = entry.getValue();
 
-        // ✅ Extract only the last numeric part before "emp"
         String employeeCount = minimunName.replaceAll(".*_(\\d+)emp$", "$1");
 
         for (int caseNum = 1; caseNum <= 4; caseNum++) {
             String vacationTemplate = "VacationTemplate_Case" + caseNum + "_" + employeeCount;
-            String title = "ILP_" + groupName + "_Case" + caseNum;
+            String title;
+            if (algorithmName.equals("linear programming 2")) {
+               title = "ILPv2_";
+            } else {
+               title = "CSPv2_" + groupName + "_Case" + caseNum;
+            }
+
+            title = title + groupName + "_Case" + caseNum;
             String taskId = UUID.randomUUID().toString();
 
             ScheduleRequest req = new ScheduleRequest(
                 taskId,
                 "2025",                      // year
-                "linear programming 2",      // algorithm
+                algorithmName,               // algorithm
                 title,                       // title
                 "5",                         // maxTime (minutes)
                 java.time.LocalDateTime.now(),
@@ -302,23 +312,23 @@ private void runLinearProgrammingScenarios(SchedulesService schedulesService) {
                 groupName                    // group name
             );
 
-            System.out.printf("\n📦 Submitting [%s] with VacationTemplate '%s'%n", title, vacationTemplate);
+            System.out.printf("\nSubmitting [%s] with VacationTemplate '%s'%n", title, vacationTemplate);
             try {
                 String res = schedulesService.requestScheduleGeneration(req);
-                System.out.printf("🧩 [%s vs %s] → %s%n", minimunName, vacationTemplate, res);
+                System.out.printf("[%s vs %s] → %s%n", minimunName, vacationTemplate, res);
 
                 waitForTaskCompletion(taskId, title, schedulesService, 5);
             } catch (Exception e) {
-                System.err.printf("❌ Failed for %s x %s → %s%n", minimunName, vacationTemplate, e.getMessage());
+                System.err.printf("Failed for %s x %s → %s%n", minimunName, vacationTemplate, e.getMessage());
             }
         }
     }
 
-    System.out.println("\n✅ All ILP-2 scheduling tasks completed sequentially!");
+    System.out.println("\nAll ILP-2 scheduling tasks completed sequentially!");
 }
 
 private void waitForTaskCompletion(String taskId, String title, SchedulesService schedulesService, int maxMinutes) {
-    System.out.printf("⏳ Waiting for completion of task '%s'...%n", title);
+    System.out.printf("Waiting for completion of task '%s'...%n", title);
     long start = System.currentTimeMillis();
     long timeout = maxMinutes * 60 * 1000L; // Convert minutes to milliseconds
 
