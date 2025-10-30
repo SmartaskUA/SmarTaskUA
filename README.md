@@ -33,12 +33,12 @@ docker compose logs [service name]
 ```
 
 SmarTaskUA/
-├── algorithm/                          # Python Optimization Algorithms
+├── algorithm/                          # All the developed algorithms
 │   ├── CSP.py, CSPv2.py
 │   ├── ILP.py, ILPv2.py
 │   ├── greedyClimbing.py
-│   ├── greedyRandomized.py             #
-│   ├── heuristicAlgorithm.py           # Heuristic algorithm
+│   ├── greedyRandomized.py             
+│   ├── hillClimbing.py                 
 │   ├── kpiComparison.py
 │   ├── kpiVerification.py              # For veryfying defined KPI's
 │   ├── utils.py
@@ -77,10 +77,10 @@ SmarTaskUA/
 │   └── node_modules/
 │
 ├── modules/                            # Python Task Management
-│   ├── TaskManager.py
+│   ├── TaskManager.py                  # Where the algorithms are defined 
 │   ├── MongoDBClient.py
 │   ├── RabbitMQClient.py
-│   ├── analyze.py, send_task.py
+│   ├── analyze.py                      # Receives KPI analyse requests 
 │   ├── requirements.txt
 │   └── rules.json
 │
