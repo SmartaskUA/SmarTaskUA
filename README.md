@@ -28,6 +28,75 @@ docker-compose down
 docker compose logs [service name]
 ```
 
+# Project Structure
+
+```
+
+SmarTaskUA/
+├── algorithm/                          # Python Optimization Algorithms
+│   ├── CSP.py, CSPv2.py
+│   ├── ILP.py, ILPv2.py
+│   ├── greedyClimbing.py
+│   ├── greedyRandomized.py             #
+│   ├── heuristicAlgorithm.py           # Heuristic algorithm
+│   ├── kpiComparison.py
+│   ├── kpiVerification.py              # For veryfying defined KPI's
+│   ├── utils.py
+│   ├── contexts/                       # Custom schedule generation (IN_PROGRESS)
+│   ├── engines/                        # Custom schedule generation (IN_PROGRESS)
+│   ├── handlers/                       # Custom schedule generation (IN_PROGRESS)
+│   └── rules/                          # Custom schedule generation (IN_PROGRESS)
+│
+├── api/                                # Java Spring Boot Backend
+│   ├── src/main/java/smartask/api/
+│   │   ├── config/                     # (RabbitMqConfig, SecurityConfig, WebSocketConfig)
+│   │   ├── controllers/                # (REST controllers)
+│   │   ├── models/                     # (Employee, Schedule, Rule, Team, etc.)
+│   │   ├── repositories/               # (Database access)
+│   │   ├── services/                   # (Business logic)
+│   │   └── event/                      # (RabbitMQ producer/consumer)
+│   ├── src/main/resources/
+│   ├── pom.xml
+│   ├── Dockerfile
+│   └── target/
+│
+├── frontend/                           # React + Vite Frontend
+│   ├── src/
+│   │   ├── Admin/                      # Admin pages
+│   │   ├── Manager/                    # Manager pages & components
+│   │   ├── components/                 # Reusable components
+│   │   ├── context/                    # AuthContext
+│   │   ├── login/
+│   │   ├── assets/
+│   │   └── styles/
+│   ├── public/
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── tailwind.config.js
+│   ├── Dockerfile / Dockerfile.dev
+│   └── node_modules/
+│
+├── modules/                            # Python Task Management
+│   ├── TaskManager.py
+│   ├── MongoDBClient.py
+│   ├── RabbitMQClient.py
+│   ├── analyze.py, send_task.py
+│   ├── requirements.txt
+│   └── rules.json
+│
+├── data/                               # Data Templates (CSV files)
+│   ├── minimuns.csv                    # General minimuns template file
+│   ├── VacationTemplate.csv            # General Vacation template file
+│   └── (other template variants)
+│
+├── shared_tmp/                         
+├── docker-compose.yml
+├── run-app.sh
+└── README.md
+
+```
+
+
 # System Requirements
 
 ### Functional Requirements

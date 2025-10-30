@@ -1,7 +1,7 @@
 # modules/TaskManager.py
 
 import json
-from algorithm.heuristicAlgorithm import solve as hill_clibing_alg_solver
+from algorithm.hillClimbing import solve as hill_clibing_alg_solver
 from algorithm.ILP import solve as ilp_solver
 from algorithm.greedyRandomized import solve as greedy_randomized_solver
 from algorithm.greedyClimbing import solve as greedy_climbing_solver
