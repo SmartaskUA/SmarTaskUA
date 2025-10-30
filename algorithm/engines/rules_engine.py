@@ -113,7 +113,7 @@ class RuleEngine:
 # --------------------------
 def register_default_handlers(engine: RuleEngine):
     """Register built-in CP-SAT rule handlers."""
-    from .rules_handlers_cpsat import (
+    from ..rules.handlers.rules_handlers_cpsat import (
         h_no_earlier_shift_next_day,
         h_max_consecutive_days,
         h_max_special_days,
@@ -135,7 +135,7 @@ def register_default_handlers(engine: RuleEngine):
 
 def register_default_greedy_handlers(engine: RuleEngine):
     """Register built-in Greedy rule handlers."""
-    from .rules_handlers_greedy import (
+    from ..rules.handlers.rules_handlers_greedy import (
         g_no_earlier_shift_next_day,
         g_max_consecutive_days,
         g_max_special_days,
@@ -155,7 +155,7 @@ def register_default_greedy_handlers(engine: RuleEngine):
     engine.register_greedy("target_workdays_balancing", g_target_workdays_balancing)
 
 def register_default_ilp_handlers(engine: RuleEngine):
-    from .rules_handlers_ilp import (
+    from ..rules.handlers.rules_handlers_ilp import (
         i_one_shift_per_day,
         i_total_workdays,
         i_max_consecutive_days,

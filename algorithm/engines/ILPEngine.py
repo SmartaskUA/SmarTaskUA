@@ -1,7 +1,7 @@
 import pulp
 import pandas as pd
 import holidays
-from algorithm.rules_engine import RuleEngine, register_default_ilp_handlers
+from algorithm.engines.rules_engine import RuleEngine, register_default_ilp_handlers
 from algorithm.contexts.ILPContext import ILPContext
 from algorithm.utils import (
     rows_to_req_dicts,
@@ -73,7 +73,7 @@ class ILPEngine:
             min_required=self.min_required,
         )
 
-        from algorithm.rules_handlers_ilp import i_one_shift_per_day
+        from algorithm.rules.handlers.rules_handlers_ilp import i_one_shift_per_day
         i_one_shift_per_day(None, ctx) 
         self.engine.apply_ilp(ctx)
 

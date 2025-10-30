@@ -15,7 +15,7 @@ from algorithm.utils import (
     schedule_to_table
 )
 
-class HeuristicSolGabi:
+class HeuristicAlgorithm:
 
     def __init__(
         self,
@@ -354,7 +354,7 @@ class HeuristicSolGabi:
         export_schedule_to_csv(sv, filename=filename, num_days=self.nDias)
 
 def solve(vacations, minimuns, employees, maxTime, year=2025, shifts=2, rules=None):
-    scheduler = HeuristicSolGabi(
+    scheduler = HeuristicAlgorithm(
         vacations_rows=vacations,
         minimuns_rows=minimuns,
         employees=employees,

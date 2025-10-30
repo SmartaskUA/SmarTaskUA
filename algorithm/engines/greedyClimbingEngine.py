@@ -5,7 +5,7 @@ from collections import defaultdict
 import numpy as np
 import pandas as pd
 import holidays
-from algorithm.rules_engine import RuleEngine
+from algorithm.engines.rules_engine import RuleEngine
 
 from algorithm.utils import (
     TEAM_CODE_TO_ID,

@@ -12,7 +12,7 @@ from algorithm.utils import (
     TEAM_ID_TO_CODE,
 )
 
-from algorithm.rules_engine import RuleEngine, register_default_greedy_handlers
+from algorithm.engines.rules_engine import RuleEngine, register_default_greedy_handlers
 from algorithm.contexts.GreedyContext import GreedyContext
 
 

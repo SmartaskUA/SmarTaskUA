@@ -1,4 +1,4 @@
-from algorithm.rules_engine import Rule
+from algorithm.engines.rules_engine import Rule
 from algorithm.contexts.GreedyContext import GreedyContext
 
 def g_no_earlier_shift_next_day(r: Rule, ctx: GreedyContext):

@@ -13,7 +13,7 @@ from algorithm.utils import (
     schedule_to_table,
 )
 
-from algorithm.rules_engine import RuleEngine, register_default_handlers
+from algorithm.engines.rules_engine import RuleEngine, register_default_handlers
 from algorithm.contexts.CPSatContext import CPSatContext
 
 def _build_allowed_teams(employees):

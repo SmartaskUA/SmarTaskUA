@@ -1,4 +1,4 @@
-from algorithm.rules_engine import Rule
+from algorithm.engines.rules_engine import Rule
 from algorithm.contexts.CPSatContext import CPSatContext
 
 
