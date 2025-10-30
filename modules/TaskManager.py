@@ -2,18 +2,16 @@
 
 import json
 import time
-from algorithm.CSP_joao import employee_scheduling
-from algorithm.genetic_algorithm import solve as genetic_alg_solver
-from algorithm.heuristic_sol_gabi import solve as hill_clibing_alg_solver
+from algorithm.hillClimbing import solve as hill_clibing_alg_solver
 from algorithm.ILP import solve as ilp_solver
 from algorithm.greedyRandomized import solve as greedy_randomized_solver
 from algorithm.greedyClimbing import solve as greedy_climbing_solver
 from algorithm.CSP import solve as csp_solver
-from algorithm.CSP_Engine import solve as csp_engine_solver
-from algorithm.greedyClimbingEngine import solve as grhc_engine_solver
-from algorithm.greedyRandomizedEngine import solve as greedy_randomized_engine_solver
-from algorithm.ILPEngine import solve as ilp_solver_engine
-from algorithm.ILP2 import solve as ilp_solver_2
+from algorithm.engines.CSP_Engine import solve as csp_engine_solver
+from algorithm.engines.greedyClimbingEngine import solve as grhc_engine_solver
+from algorithm.engines.greedyRandomizedEngine import solve as greedy_randomized_engine_solver
+from algorithm.engines.ILPEngine import solve as ilp_solver_engine
+from algorithm.ILPv2 import solve as ilp_solver_2
 from algorithm.CSPv2 import solve as cspv2_solver
 
 class TaskManager:
@@ -21,8 +19,6 @@ class TaskManager:
         # No futuro, você pode adicionar suporte a múltiplos algoritmos aqui
         # ToDo: this must be converted to a json file that can be dynamically modified
         self.algorithms = {
-            "CSP Scheduling": employee_scheduling,
-            "genetic_algorithm": genetic_alg_solver,
             "hill climbing": hill_clibing_alg_solver,
             "linear programming": ilp_solver,
             "linear programming 2": ilp_solver_2,
@@ -47,7 +43,7 @@ class TaskManager:
         if not rules:
             from pathlib import Path
             current_dir = Path(__file__).parent
-            rules_path = current_dir / "rules.json"
+            rules_path = current_dir /  "rules.json"
             with open(rules_path) as f:
                 rules = json.load(f)
                 
