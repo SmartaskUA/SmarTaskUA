@@ -9,7 +9,7 @@ It outputs:
 - One CSV per case with per-month, per-week, and per-weekday statistics
 
 Output structure:
-VacationData/{employee_count}_employees/
+vacationData/{employee_count}_employees/
     ├── templates/
     │     ├── VacationTemplate_Case1_X.csv
     │     ├── VacationTemplate_Case2_X.csv
@@ -32,17 +32,13 @@ import numpy as np
 import holidays
 
 
-# =========================================================
-# 📦 Utility Functions
-# =========================================================
-
 def ensure_dirs(base_dir, employee_count):
     """
     Ensure the folder structure exists for saving templates and stats.
 
     Example output path:
-      VacationData/96_employees/templates/
-      VacationData/96_employees/statistics/
+      vacationData/96_employees/templates/
+      vacationData/96_employees/statistics/
     """
     base = os.path.join(base_dir, f"{employee_count}_employees")
     templates_dir = os.path.join(base, "templates")
@@ -298,7 +294,7 @@ def generate_case4(employee_count, days_per_year=365, year=2025):
 
 
 # Main Function
-def create_vacation_cases(employee_count=21, days_per_year=365, year=2025, output_base="VacationData"):
+def create_vacation_cases(employee_count=21, days_per_year=365, year=2025, output_base="data/vacationData"):
     """
     Create all 4 vacation distributions for a given number of employees
     and export them as CSV files.

@@ -6,9 +6,13 @@ import os
 # === CONFIGURATION ===
 # Match all generated minimuns CSVs
 file_pattern = "minimuns_*teams_*emp.csv"
-base_file = "minimuns.csv"
-output_file = "Minimuns_Summary_Statistics.csv"
-global_output = "Minimuns_Global_Averages.csv"
+base_file = "data/base_files/minimuns.csv"
+output_file = "data/minimunsData/minimuns_Summary_Statistics.csv"
+global_output = "data/minimunsData/Minimuns_Global_Averages.csv"
+
+# === ENSURE DIRECTORIES EXIST ===
+os.makedirs(os.path.dirname(output_file), exist_ok=True)
+os.makedirs(os.path.dirname(global_output), exist_ok=True)
 
 # === FUNCTION: analyze a single file ===
 def analyze_minimum_file(file_path):

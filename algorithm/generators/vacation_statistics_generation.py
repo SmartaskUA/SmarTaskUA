@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import os
 
 def compute_vacation_statistics_from_file(file_path, days_per_year=None):
     """
@@ -64,6 +65,8 @@ def compute_vacation_statistics_from_file(file_path, days_per_year=None):
     return stats_df
 
 
-# --- Run the function ---
-stats = compute_vacation_statistics_from_file("VacationTemplate.csv")
-stats.to_csv("VacationStatistics_FromFile.csv", index=True)
+# ensure directory exists
+os.makedirs("data/vacationData", exist_ok=True)
+
+stats = compute_vacation_statistics_from_file("data/base_files/VacationTemplate.csv")
+stats.to_csv("data/vacationData/VacationStatistics_FromFile.csv", index=True)
