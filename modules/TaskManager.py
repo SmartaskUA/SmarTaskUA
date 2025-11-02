@@ -12,6 +12,7 @@ from algorithm.engines.greedyClimbingEngine import solve as grhc_engine_solver
 from algorithm.engines.greedyRandomizedEngine import solve as greedy_randomized_engine_solver
 from algorithm.engines.ILPEngine import solve as ilp_solver_engine
 from algorithm.ILPv2 import solve as ilp_solver_2
+from algorithm.ILPv3 import solve as ilp_solver_3
 from algorithm.CSPv2 import solve as cspv2_solver
 
 class TaskManager:
@@ -21,7 +22,7 @@ class TaskManager:
         self.algorithms = {
             "hill climbing": hill_clibing_alg_solver,
             "linear programming": ilp_solver,
-            "linear programming 2": ilp_solver_2,
+            "linear programming 2": ilp_solver_3,
             "ILP Engine": ilp_solver_engine,
             "Greedy Randomized": greedy_randomized_solver,
             "Greedy Randomized Engine": greedy_randomized_engine_solver,

@@ -161,7 +161,7 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
         m.Add(workdays[employee] == sum(1 - off[(employee, d)] for d in D))
         m.Add(workdays[employee] + dev_under[employee] - dev_over[employee] == target_workdays)
 
-    w_unmet_min, w_workday_dev = 1000, 1
+    w_unmet_min, w_workday_dev = 100, 1
     w_unmet_ideal = 1
     obj = []
     obj += [w_unmet_min * unmet[k] for k in unmet]
