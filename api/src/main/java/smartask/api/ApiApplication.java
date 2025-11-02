@@ -303,7 +303,7 @@ private void runLinearProgrammingScenarios(SchedulesService schedulesService, St
                 "2025",                      // year
                 algorithmName,               // algorithm
                 title,                       // title
-                "5",                         // maxTime (minutes)
+                "45",                         // maxTime (minutes)
                 java.time.LocalDateTime.now(),
                 vacationTemplate,
                 minimunName,
