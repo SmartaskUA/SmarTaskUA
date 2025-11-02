@@ -1,0 +1,5 @@
+File,Mean_Value_minimo,Mean_Value_ideal,Ratio_Ideal_to_Minimo,Teams
+minimuns.csv,1.4287671232876713,1.7136986301369863,1.1862771244999393,2
+minimuns_16teams_96emp.csv,1.0,2.0,2.0,16
+minimuns_4teams_24emp.csv,1.0,2.0,2.0,4
+minimuns_8teams_48emp.csv,1.0,2.0,2.0,8

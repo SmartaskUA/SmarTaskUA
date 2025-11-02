@@ -5,7 +5,7 @@ import os
 
 # === CONFIGURATION ===
 # Match all generated minimuns CSVs
-file_pattern = "minimuns_*teams_*emp.csv"
+file_pattern = "data/minimunsData/minimuns_*teams_*emp.csv"
 base_file = "data/base_files/minimuns.csv"
 output_file = "data/minimunsData/minimuns_Summary_Statistics.csv"
 global_output = "data/minimunsData/Minimuns_Global_Averages.csv"
