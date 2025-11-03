@@ -161,18 +161,16 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
         m.Add(workdays[employee] == sum(1 - off[(employee, d)] for d in D))
         m.Add(workdays[employee] + dev_under[employee] - dev_over[employee] == target_workdays)
 
-    w_unmet_min, w_workday_dev = 100, 1
+    w_unmet_min = 100
     w_unmet_ideal = 1
     obj = []
     obj += [w_unmet_min * unmet[k] for k in unmet]
-    obj += [w_workday_dev * (dev_under[employee] + dev_over[employee]) for employee in Employees]
     obj += [w_unmet_ideal * unmet_ideal[k] for k in unmet_ideal]
     m.Minimize(sum(obj))
 
     # Solve model
     solver = cp_model.CpSolver()
     if maxTime is not None:
-        # maxTime is in minutes converted to seconds
         solver.parameters.max_time_in_seconds = float(int(maxTime) * 60)
     solver.parameters.num_search_workers = 8
 

@@ -49,8 +49,7 @@ enable_variation = True
 # Ideal upper bound: Ideal ≤ Minimo × (1 + 0.40)
 max_increase_pct = 0.40
 
-# Each employee can only work one shift per day
-# (If you want to model absences, use < 1.0)
+
 daily_capacity_utilization = 1.0
 
 
@@ -183,22 +182,3 @@ for teams, employees in targets:
     df_new.to_csv(out_file, index=False)
     print(f"✅ Saved: {out_file}")
 
-
-"""
-------------------------------------------------------------
-📈 QUICK SUMMARY (how to explain)
-------------------------------------------------------------
-- The base minimuns.csv has 2 teams:
-    Equipa A (10 employees)
-    Equipa B (5 employees)
-- We extract A’s staffing pattern and treat it as a “model team”.
-- For each new scenario:
-    • The per-team size shrinks (e.g., 10 → 6 employees)
-    • We scale down all daily staffing requirements proportionally.
-- The Ideal lines are automatically adjusted so that:
-    Ideal ≤ Minimo × 1.4  (40% max increase)
-- Finally, the script ensures that the total daily "Minimo" load
-  never exceeds the available employee count for that scenario.
-- The result is exported as new CSVs for 4, 8, and 16 teams.
-------------------------------------------------------------
-"""
