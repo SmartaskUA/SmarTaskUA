@@ -255,7 +255,7 @@ class ILPSchedulerWeighted:
     
 def solve(vacations, minimuns, employees, maxTime, year=2025, shifts=2):
     ilp = ILPSchedulerWeighted(vacations, minimuns, employees, maxTime, year, shifts,
-                               w_min=1000, w_ideal=1)
+                               w_min=100, w_ideal=1)
     ilp.build_model()
     ilp.solve(gap_rel=0.001)
     ilp.export_csv("schedule_weighted.csv")
