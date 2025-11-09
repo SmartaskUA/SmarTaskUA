@@ -77,7 +77,7 @@ public class ApiApplication {
             createScenarioWithCrossing(teamService, employeeService, 8, 48, 0.20);
             createScenarioWithCrossing(teamService, employeeService, 16, 96, 0.20);
             loadTemplatesIntoDatabase(vacationService, referenceService);
-            runLinearProgrammingScenarios(schedulesService, "CSPv2");
+            //runLinearProgrammingScenarios(schedulesService, "CSPv2");
 
             runLinearProgrammingScenarios(schedulesService, "linear programming 2");
 
