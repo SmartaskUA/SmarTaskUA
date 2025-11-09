@@ -48,7 +48,7 @@ public class ApiApplication {
         return args -> {
 
             if (!teamService.getTeams().isEmpty()) {
-                System.out.println("⚠️ Database already initialized — skipping setup.");
+                System.out.println("Database already initialized — skipping setup.");
             return;
             }
 
@@ -78,6 +78,7 @@ public class ApiApplication {
             createScenarioWithCrossing(teamService, employeeService, 16, 96, 0.20);
             loadTemplatesIntoDatabase(vacationService, referenceService);
             runLinearProgrammingScenarios(schedulesService, "CSPv2");
+
             runLinearProgrammingScenarios(schedulesService, "linear programming 2");
 
             System.out.println("\nAll team scenarios successfully initialized!");
@@ -290,12 +291,11 @@ private void runLinearProgrammingScenarios(SchedulesService schedulesService, St
             String vacationTemplate = "VacationTemplate_Case" + caseNum + "_" + employeeCount;
             String title;
             if (algorithmName.equals("linear programming 2")) {
-               title = "ILPv2_";
+               title = "ILPv2_" + groupName + "_Case" + caseNum;
             } else {
                title = "CSPv2_" + groupName + "_Case" + caseNum;
             }
 
-            title = title + groupName + "_Case" + caseNum;
             String taskId = UUID.randomUUID().toString();
 
             ScheduleRequest req = new ScheduleRequest(
@@ -317,7 +317,7 @@ private void runLinearProgrammingScenarios(SchedulesService schedulesService, St
                 String res = schedulesService.requestScheduleGeneration(req);
                 System.out.printf("[%s vs %s] → %s%n", minimunName, vacationTemplate, res);
 
-                waitForTaskCompletion(taskId, title, schedulesService, 5);
+                waitForTaskCompletion(taskId, title, schedulesService, 45);
             } catch (Exception e) {
                 System.err.printf("Failed for %s x %s → %s%n", minimunName, vacationTemplate, e.getMessage());
             }

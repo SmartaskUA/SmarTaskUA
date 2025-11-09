@@ -152,14 +152,11 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
         unmet_ideal[(day, s, t)] = z
         m.Add(sum(cover) + z >= ideal)
 
-    # Workdays should be 223
     target_workdays = 223
-    workdays = {employee: m.NewIntVar(0, target_workdays, f"work_{employee}") for employee in Employees}
-    dev_under = {employee: m.NewIntVar(0, target_workdays, f"dev_under_{employee}") for employee in Employees}
-    dev_over  = {employee: m.NewIntVar(0, target_workdays, f"dev_over_{employee}") for employee in Employees}
     for employee in Employees:
-        m.Add(workdays[employee] == sum(1 - off[(employee, d)] for d in D))
-        m.Add(workdays[employee] + dev_under[employee] - dev_over[employee] == target_workdays)
+        total_work = sum(1 - off[(employee, d)] for d in D)
+        m.Add(total_work == target_workdays)
+
 
     w_unmet_min = 100
     w_unmet_ideal = 1
@@ -172,6 +169,7 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
     solver = cp_model.CpSolver()
     if maxTime is not None:
         solver.parameters.max_time_in_seconds = float(int(maxTime) * 60)
+    solver.parameters.relative_gap_limit = 0.001
     solver.parameters.num_search_workers = 8
 
     status = solver.Solve(m)
