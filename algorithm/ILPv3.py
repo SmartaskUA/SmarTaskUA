@@ -74,9 +74,7 @@ class ILPSchedulerWeighted:
                 teams.setdefault(t, set()).add(i)
         return teams
 
-    # ------------------------------------------------------------
     # MODEL CREATION
-    # ------------------------------------------------------------
     def build_model(self):
         funcionarios = self.employees
         dias = self.dates
@@ -143,9 +141,9 @@ class ILPSchedulerWeighted:
                         )
                     )
 
-        # === Hard rules (same as ILP1) ===
+        # Hard Rules
 
-        # 1️⃣ Each employee/day: exactly one status (OFF or one shift)
+        # (1) Each employee/day: exactly one status (OFF or one shift)
         for f in funcionarios:
             for d in dias:
                 model += (
@@ -153,7 +151,7 @@ class ILPSchedulerWeighted:
                                for t in turnos for team in self.emp_allowed_teams[f]) == 1
                 )
 
-        # 2️⃣ Vacations → must be OFF
+        # (2) Vacations → must be OFF
         for f in funcionarios:
             for d in dias:
                 if d in self.vacations_dates[f]:
@@ -167,14 +165,14 @@ class ILPSchedulerWeighted:
                                    for t in t_range for team in self.emp_allowed_teams[f]) == 0
                     )
 
-        # 3️⃣ Exactly 223 total working days
+        # (3) Exactly 223 total working days
         for f in funcionarios:
             model += (
                 pulp.lpSum(self.x[f][d][s][team]
                            for d in dias for s in t_range for team in self.emp_allowed_teams[f]) == 223
             )
 
-        # 4️⃣ Max 22 Sundays/holidays
+        # (4)  Max 22 Sundays/holidays
         for f in funcionarios:
             model += (
                 pulp.lpSum(self.x[f][d][s][team]
@@ -182,7 +180,7 @@ class ILPSchedulerWeighted:
                            for s in t_range for team in self.emp_allowed_teams[f]) <= 22
             )
 
-        # 5️⃣ No more than 5 consecutive working days
+        # (5) No more than 5 consecutive working days
         for f in funcionarios:
             for i in range(len(dias) - 5):
                 window = dias[i:i + 6]
@@ -191,7 +189,7 @@ class ILPSchedulerWeighted:
                                for d in window for s in t_range for team in self.emp_allowed_teams[f]) <= 5
                 )
 
-        # 6️⃣ Forbid backward transitions (Afternoon → Morning)
+        # 6 Forbid backward transitions (Afternoon → Morning)
         for f in funcionarios:
             for i in range(len(dias) - 1):
                 d_today = dias[i]
