@@ -19,6 +19,43 @@ from algorithm.utils import (
 )
 
 
+# depois de m foi escrito para "model_proto.txt"
+def find_empty_bool_or(proto_path="/home/hugo/Desktop/SmarTaskUA/algorithm/model_proto.txt"):
+    """
+    Analisa o arquivo model_proto.txt procurando por blocos bool_or vazios.
+    Esta função deve ser chamada apenas após solve() ser executado e gerar o arquivo.
+    """
+    import os
+    import re
+    
+    # Verificar se o arquivo existe antes de tentar abrir
+    if not os.path.exists(proto_path):
+        print(f"[INFO] Arquivo {proto_path} não existe ainda (será criado após solve())")
+        return
+    
+    with open(proto_path, "r") as f:
+        text = f.read()
+    # procura instâncias de bool_or { ... } e captura se o bloco está vazio
+    # encontra todos os blocos "bool_or { ... }"
+    blocks = re.finditer(r"bool_or\s*\{\s*(.*?)\s*\}", text, re.DOTALL)
+    empties = []
+    for i, b in enumerate(blocks, start=1):
+        inner = b.group(1).strip()
+        if inner == "":  # bloco vazio
+            empties.append(i)
+    print(f"[INFO] bool_or blocks found with empty body: {len(empties)}")
+    if len(empties) > 0:
+        # mostra o contexto para as primeiras ocorrências
+        for match in re.finditer(r"(.{0,200}bool_or\s*\{\s*(.*?)\s*\}.{0,200})", text, re.DOTALL):
+            inner = match.group(2).strip()
+            if inner == "":
+                print("---- context ----")
+                print(match.group(1))
+                print("-----------------")
+                break
+
+
+
 def _build_allowed_teams(employees):
     """
     Convert employee 'teams' labels to internal numeric team IDs.
@@ -157,6 +194,7 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2021, hours=13, 
     for (day, hour, team_id), val in mins_raw.items():
         if 1 <= day <= num_days:
             team_code = TEAM_ID_TO_CODE.get(team_id)
+            print(f"Processing minimum requirement for day {day}, hour {hour}, team ID {team_id} ({team_code}): {val}")
             if team_code:
                 try:
                     req_val = int(val)
@@ -233,6 +271,16 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2021, hours=13, 
 
     print("Variables created.")
 
+    print("\n[DEBUG] Checking employees with no valid working hours on non-off days...")
+    for e in Employees:
+        for d in D:
+            if vac_mask[(e,d)] or d in special_days:
+                continue
+            ys = [(e,d,h,t) for h in H for t in allowed_teams_per_emp[e] if (e,d,h,t) in y]
+            if len(ys) == 0:
+                print(f"  [ERROR] Employee {e+1} has NO available y variables on day {d} (not vac, not holiday)")
+
+
     for e in Employees:
         if all(vac_mask[(e,d)] for d in D):
             print(f"[WARNING] Employee {e+1} has EVERY DAY marked as vacation/off")
@@ -295,7 +343,6 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2021, hours=13, 
     # ---------------------------------------------------------------
     for e in Employees:
         for d in D:
-
             # recolhe todas as y existentes para este dia/funcionário
             active_hours = [
                 y[(e, d, h, t)]
@@ -303,11 +350,9 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2021, hours=13, 
                 for t in allowed_teams_per_emp[e]
                 if (e, d, h, t) in y
             ]
-
             if active_hours:
                 # off == 1 → todos y = 0
                 m.Add(sum(active_hours) <= (1 - off[(e, d)]) * len(active_hours))
-
                 # off == 0 → pelo menos um y = 1
                 m.Add(sum(active_hours) >= 1 * (1 - off[(e, d)]))
             else:
@@ -317,9 +362,15 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2021, hours=13, 
 
 
 
-    # Nos dias especiais, todos devem estar off
+    # Nos dias especiais SEM requisitos, todos devem estar off
+    # Dias especiais COM requisitos permitem trabalho
+    special_with_req = {d for d in special_days 
+                        if any((d, _, _) in min_required and min_required[(d, _, _)] > 0
+                              for _ in range(365))}
+    special_no_req = special_days - special_with_req
+    
     for e in Employees:
-        for d in special_days:
+        for d in special_no_req:
             m.Add(off[e, d] == 1)
             for h in H:
                 for t in allowed_teams_per_emp[e]:
@@ -335,6 +386,26 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2021, hours=13, 
                     for t in allowed_teams_per_emp[e]:
                         if (e, d, h, t) in y:  # só adiciona restrição se a variável existir
                             m.Add(y[e, d, h, t] == 0)
+
+    
+    # Cada funcionário trabalha entre 200-250 dias (flexível, não exatamente 223)
+    for e in Employees:
+        m.Add(sum(1 - off[(e,d)] for d in D) >= 200)
+        m.Add(sum(1 - off[(e,d)] for d in D) <= 250)
+
+
+
+
+    # # Cada funcionário deve trabalhar no máximo 223 dias no ano
+    # for e in Employees:
+    #     # Contar quantos dias este funcionário trabalha (não está off)
+    #     # Um dia é "trabalhado" se off[e, d] = 0, ou seja, (1 - off[e, d]) = 1
+    #     total_work_days = 0
+    #     for d in D:  # Iterar sobre cada dia do ano
+    #         is_working = 1 - off[(e, d)]  # 1 se trabalhando, 0 se off
+    #         total_work_days += is_working  # Acumular dias trabalhados
+    #     
+    #     m.Add(total_work_days <= 223)
 
 
     # Cada funcionário tem no máximo um bloco de trabalho por dia:
@@ -355,45 +426,146 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2021, hours=13, 
                         m.Add(hvar <= block_var)
                     valid_blocks.append(block_var)
     
+    
+
+
+
+            # m.add(sum(y[e,d,s,t] for s in S for t in allowed_teams_per_emp[e]) <= len(S))
+    
+    # On special days, no work assigned
+    # for e in Employees:
+    #     for d in special_days:
+    #         for h in H:
+    #             for t in allowed_teams_per_emp[e]:
+    #                 if (e, d, h, t) in y:
+    #                     m.Add(y[e, d, h, t] == 0)
+    
+
+    print("\n[DEBUG] Checking impossible min_required:")
+    for (day, hour, team), req in min_required.items():
+        if day in special_days and req > 0:
+            print(f"  [IMPOSSIBLE] Day {day} is holiday but requires {req} workers at {hour} in team {team}")
+
+
 
     # Cover Minimum Requirements hard constraints
     for (day, hour_str, team), min_val in min_required.items():
         if min_val <= 0:
             continue
-            # day is already an integer (1-365), hour_str is '09-10', team is 'A' or 'B'
+        # day is already an integer (1-365), hour_str is '09-10', team is 'A' or 'B'
         hour_num = int(hour_str.split('-')[0])
         team_id = get_team_id(team)
-        print(f"[TEAM_ID] team {team} -> {team_id}")
-        cover = [y[e,day,hour_num,team_id] for e in Employees if (e,day,hour_num,team_id) in y]
+        # FIX: Use hour_num and team_id, NOT h and team!
+        cover = []
+        for e in Employees:
+            if (e, day, hour_num, team_id) in y:
+                cover.append(y[e, day, hour_num, team_id])
 
         if not cover:
-            print("Not cover variables for min_required:", (day, hour_num, team_id, min_val, e))
+            print(f"[WARNING] No cover for day {day}, hour {hour_str}, team {team}, req {min_val}")
             continue
         
         m.Add(sum(cover) >= min_val)
         
+    # Max 5 worked days in any week, plus holidays
+    # for e in Employees:
+    #     for w_start in range(1, num_days, 7):
+    #         week_days = list(range(w_start, min(w_start + 7, num_days + 1)))
+    #         num_holidays = sum(1 for d in week_days if d in special_days)
+    #         allowed_days = 5 + num_holidays
+    #         m.Add(sum(1 - off[e, d] for d in week_days) <= allowed_days)
+
+
+    # ---------------------------- Max days per week with another approach ---------------------------- #
+
+            # Contar quantos dias trabalhados nesta semana
+            # (trabalhado = não off, ou seja, 1 - off[(e, d)])
+            # worked_days_in_week = 0
+            # for d in days_in_week:  # Iterar sobre cada dia da semana
+            #     worked_days_in_week += (1 - off[(e, d)])  # Adicionar 1 se trabalhado, 0 se off
+            # 
+            # # Máximo de dias trabalhados não deve exceder (5 + feriados da semana)
+            # m.Add(worked_days_in_week <= allowed_days)
+
+
+    # exactly one of: OFF or exactly one (s, t) (vacation days forced OFF)
+    # for employee in Employees:
+    #     for day in D:
+    #         choices = [off[(employee, day)]] 
+    #         if not vac_mask[(employee, day)]:
+    #             choices += [y[(employee, day, s, t)] for s in S for t in allowed_teams_per_emp[employee]]
+    #         m.Add(sum(choices) == 1)
+
+    # No earlier shift on the next day (if not off)
+    # for employee in Employees:
+    #     for day in range(1, num_days):
+    #         m.Add(hour_id[(employee, day + 1)] >= hour_id[(employee, day)]).OnlyEnforceIf(
+    #             [off[(employee, day)].Not(), off[(employee, day + 1)].Not()]
+    #         )
+            
+    # Keep hour_id consistent with off and y
+    # (off -> hour_id=0, assigned to (s,t) -> hour_id=s)
+    # for employee in Employees:
+    #     for day in D:
+    #         m.Add(hour_id[(employee, day)] == 0).OnlyEnforceIf(off[(employee, day)]) # if the employee is off, hour_id is 0 (does not work)
+    #         if not vac_mask[(employee, day)]: # if not on vacation, can work
+    #             for s in S: # iterate over possible hours
+    #                 for t in allowed_teams_per_emp[employee]: # iterate over possible teams
+    #                     m.Add(hour_id[(employee, day)] == s).OnlyEnforceIf(y[(employee, day, s, t)]) # if y is 1 it means the employee works hour s
+
+    # Max 5 worked days in any 6-day window
+    # window, max_in_window = 6, 5
+    # for employee in Employees:
+    #     for start in range(1, num_days - window + 2):  # + 2 because range is exclusive at the end
+    #         days = range(start, start + window)
+    #         m.Add(sum(1 - off[(employee, day)] for day in days) <= max_in_window)
+
+    # # No special-days cap (22) per employee
+    # special_cap = 22
+    # for employee in Employees:
+    #     sp_terms = [1 - off[(employee, day)] for day in D if day in special_days]
+    #     if sp_terms:
+    #         m.Add(sum(sp_terms) <= special_cap)
+
+    # Cover Minimum Requirements
+    # unmet = {}
+    # for (day, s, t), req in min_required.items():
+    #     cover = []
+    #     for employee in Employees:
+    #         if not vac_mask[(employee, day)] and t in allowed_teams_per_emp[employee]:
+    #             cover.append(y[(employee, day, s, t)])
+    #     u = m.NewIntVar(0, req, f"unmet_{day}_{s}_{t}")
+    #     unmet[(day, s, t)] = u
+    #     m.Add(sum(cover) + u >= req)
+
     # Workdays should be 223
-    target_workdays = 223
-    workdays = {employee: m.NewIntVar(0, target_workdays, f"work_{employee}") for employee in Employees}
-    dev_under = {employee: m.NewIntVar(0, target_workdays, f"dev_under_{employee}") for employee in Employees}
-    dev_over  = {employee: m.NewIntVar(0, target_workdays, f"dev_over_{employee}") for employee in Employees}
-    for employee in Employees:
-        m.Add(workdays[employee] == sum(1 - off[(employee, d)] for d in D))
-        m.Add(workdays[employee] + dev_under[employee] - dev_over[employee] == target_workdays)
+    # target_workdays = 223
+    # workdays = {employee: m.NewIntVar(0, target_workdays, f"work_{employee}") for employee in Employees}
+    # dev_under = {employee: m.NewIntVar(0, target_workdays, f"dev_under_{employee}") for employee in Employees}
+    # dev_over  = {employee: m.NewIntVar(0, target_workdays, f"dev_over_{employee}") for employee in Employees}
+    # for employee in Employees:
+    #     m.Add(workdays[employee] == sum(1 - off[(employee, d)] for d in D))
+    #     m.Add(workdays[employee] + dev_under[employee] - dev_over[employee] == target_workdays)
 
 # ---------------------------- Função objetivo ---------------------------- #
+
+    # w_unmet_min, w_workday_dev = 1000, 1
+    # obj = []
+    # obj += [w_unmet_min * unmet[k] for k in unmet]
+    # obj += [w_workday_dev * (dev_under[employee] + dev_over[employee]) for employee in Employees]
+    # m.Minimize(sum(obj))
 
     missed = []
     for (day, hour_str, team), min_val in min_required.items():
         if min_val > 0:
             hour_num = int(hour_str.split('-')[0])
             team_id = get_team_id(team)
-            cover = [y[e, day, hour_num, team_id] for e in Employees if (e, day, hour_num, team_id) in y]
+            cover = [y[e, day, hour_num, team] for e in Employees if (e, day, hour_num, team) in y]
             if not cover:
                 continue  # ignora se não há ninguém elegível
-            covered = m.NewIntVar(0, n_employees, f"covered_{day}_{hour_num}_{team}")
+            covered = m.NewIntVar(0, n_employees, f"covered_{day}_{hour_num}_{team_id}")
             m.Add(covered == sum(cover))
-            miss = m.NewIntVar(0, n_employees, f"miss_{day}_{hour_num}_{team}")
+            miss = m.NewIntVar(0, n_employees, f"miss_{day}_{hour_num}_{team_id}")
             m.Add(miss >= min_val - covered)
             missed.append(miss)
     # penaliza falhas de mínimos
@@ -403,6 +575,34 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2021, hours=13, 
     off_cost = sum(off[e, d] for e in Employees for d in D)
 
     m.Minimize(1000 * sum(missed) + 1 * off_cost)
+
+
+    print("Teams do employee 21:", allowed_teams_per_emp[20])
+    print("Férias do employee 21:", vacs_dict.get(21))
+    print("Min-required totais da equipa B (somatório):", 
+          sum(v for (d, h, t), v in min_required.items() if t == "B" and v > 0))
+    print("Teams appearing in min_required:", set(t for (_,_,t) in min_required.keys()))
+
+
+
+
+    # # hour_id consistency: 0 if off, else working start hour
+    # for e in Employees:
+    #     for d in D:
+    #         m.Add(hour_id[(e, d)] == 0).OnlyEnforceIf(off[(e, d)])
+    #         if not vac_mask[(e, d)]:
+    #             for h in H:
+    #                 for t in allowed_teams_per_emp[e]:
+    #                     if (e, d, h, t) in y:
+    #                         m.Add(hour_id[(e, d)] == h).OnlyEnforceIf(y[(e, d, h, t)])
+
+
+    print("\n[DEBUG] Missed minimums the solver could not satisfy:")
+    for miss in missed:
+        if solver.Value(miss) > 0:
+            print("   failed:", miss.Name(), "=", solver.Value(miss))
+
+
 
 
 # ---------------------------- Resolver modelo ---------------------------- #
@@ -419,34 +619,98 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2021, hours=13, 
 
     status = solver.Solve(m)
 
+    print("\n[DEBUG] Workdays per employee:")
+    for e in Employees:
+        worked = sum(1 - solver.Value(off[(e,d)]) for d in D)
+        print(f"  Emp {e+1}: {worked}")
+
+    # assert all(isinstance(v, cp_model.IntVar) or isinstance(v, cp_model.BoolVar) for v in y.values())
+
+
+    # with open("model_proto.txt", "w") as f:
+    #     f.write(str(m))
+    # 
+    # Analisar o arquivo do modelo para encontrar blocos bool_or vazios
+    # find_empty_bool_or("model_proto.txt")
+
+
+    print("=== DEBUG OFF VALUES ===")
+    for e in Employees:
+        print("Emp", e+1)
+        for d in range(1,10):  # primeiros 10 dias
+            print(f"  Day {d}: off={solver.Value(off[(e,d)])}")
+
+
+    print("=== DEBUG Y VALUES ===")
+    for e in Employees:
+        print("Emp", e+1)
+        for d in range(1,10):
+            hrs = sum(solver.Value(y[(e,d,h,t)]) 
+                      for h in H for t in allowed_teams_per_emp[e] if (e,d,h,t) in y)
+            print(f"  Day {d}: hours={hrs}")
+
+    # 1) quantas y-variables por empregado por equipa
+    from collections import Counter
+    count_by_emp_team = {(e+1, TEAM_ID_TO_CODE.get(t)): 0 for e in Employees for t in [1,2]}
+    for (e,d,h,t) in y.keys():
+        count_by_emp_team[(e+1, TEAM_ID_TO_CODE.get(t))] += 1
+    print("y-variables por empregado/ equipa (ex.: (emp,team):count):")
+    for k,v in sorted(count_by_emp_team.items()):
+        print(" ", k, v)
+
+    # 2) verificar se existem y-variáveis para T=2 (B) em dias importantes (ex: primeiros 10 dias)
+    has_B = False
+    for e in Employees:
+        for d in range(1,11):
+            if any((e,d,h,2) in y for h in H):
+                has_B = True
+                break
+    print("Existe ao menos uma variável y para team B nos primeiros 10 dias? ", has_B)
+
+    # 3) quantos y-variables totais por equipa (para ver distribuição A vs B)
+    team_counter = Counter()
+    for (e,d,h,t) in y.keys():
+        team_counter[TEAM_ID_TO_CODE.get(t)] += 1
+    print("Totais de variáveis y por equipa:", team_counter)
+
+
 # ---------------------------- Extrair solução ---------------------------- #
 
     assign = defaultdict(list)
-    if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-        for employee in Employees:
-            emp_id = employee + 1  # Convert 0-based index to 1-based employee ID
-            for day in D:
-                if solver.Value(off[(employee, day)]) == 0:
-                    hour_val = solver.Value(hour_id[(employee, day)])
-                    if hour_val > 0:
-                        team_val = None
-                        for t in allowed_teams_per_emp[employee]:
-                            v = y.get((employee, day, hour_val, t))
-                            if v is not None and solver.Value(v) == 1:
-                                team_val = t
-                                break
-                        if team_val is not None:
-                            # Find which block contains this hour
-                            block_idx = None
-                            for idx, (start, break_start, end) in enumerate(work_blocks):
-                                working_hours = set(range(start, break_start))
-                                working_hours.update(range(break_start + 1, end))
-                                if hour_val in working_hours:
-                                    block_idx = idx
-                                    break
-                            
-                            if block_idx is not None:
-                                assign[emp_id].append((day, block_idx, team_val))
+
+    for e in Employees:
+        emp_id = e+1
+
+        for d in D:
+            if solver.Value(off[(e,d)]) == 1:
+                continue
+            
+            # Para cada bloco
+            for block_idx, (start, break_start, end) in enumerate(work_blocks):
+
+                # lista das horas que constituem o bloco
+                working_hours = (
+                    list(range(start, break_start)) +
+                    list(range(break_start+1, end))
+                )
+
+                # Ver se alguma hora do bloco foi ativada (verificar TODAS as teams)
+                block_hours_active = {}  # h -> list of teams
+                
+                for h in working_hours:
+                    for t in allowed_teams_per_emp[e]:
+                        # FIX: Verificar se a variável existe antes de acessar
+                        if (e, d, h, t) in y and solver.Value(y[(e,d,h,t)]) == 1:
+                            if h not in block_hours_active:
+                                block_hours_active[h] = []
+                            block_hours_active[h].append(t)
+
+                if block_hours_active:
+                    # Pegue a primeira hora ativa e a primeira team dessa hora
+                    h_first = min(block_hours_active.keys())
+                    team_val = block_hours_active[h_first][0]
+                    assign[emp_id].append((d, block_idx, team_val))
+
 
 
 # ---------------------------- Exportar e retornar tabela ---------------------------- #
@@ -458,7 +722,34 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2021, hours=13, 
     v.employees = list(range(1, n_employees + 1))
     v.vacs = {emp_id: vacs_dict.get(emp_id, []) for emp_id in v.employees}
     v.assignment = assign
+
+    # debug_export_assignments.py  (colar logo antes de export_schedule_to_csv)
+    from collections import Counter
+
+    rows = []
+    for emp, assigns in assign.items():
+        for (d, block_idx, team_val) in assigns:
+            rows.append({
+                "employee": emp,
+                "day": d,
+                "block_idx": block_idx,
+                "team_id": team_val,
+                "team_code": TEAM_ID_TO_CODE.get(team_val, None)
+            })
+
+    df_debug = pd.DataFrame(rows)
+    df_debug.to_csv("debug_assign.csv", index=False)
+    print("DEBUG assign head:")
+    print(df_debug.head(20))
+    print("Counts per team_id:")
+    print(df_debug['team_id'].value_counts(dropna=False))
+    print("Counts per team_code:")
+    print(df_debug['team_code'].value_counts(dropna=False))
+
     export_schedule_to_csv(v, "schedule_cpsat.csv", num_days=num_days)
+
+    print(pd.read_csv("schedule_cpsat.csv").head(30))
+
 
     return to_table(
         employees=v.employees,
