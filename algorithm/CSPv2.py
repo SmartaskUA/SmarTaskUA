@@ -2,6 +2,7 @@ from ortools.sat.python import cp_model
 import numpy as np
 from collections import defaultdict
 import holidays as hl
+import os 
 
 from algorithm.utils import (
     rows_to_vac_dict,
@@ -166,14 +167,57 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
     m.Minimize(sum(obj))
 
     # Solve model
+    # --- SOLVING ---
     solver = cp_model.CpSolver()
     if maxTime is not None:
         solver.parameters.max_time_in_seconds = float(int(maxTime) * 60)
     solver.parameters.relative_gap_limit = 0.001
     solver.parameters.num_search_workers = 8
+    solver.parameters.log_search_progress = True 
 
-    status = solver.Solve(m)
+    # Attach the tracker
+    tracker = SolutionTracker()
+    status = solver.Solve(m, solution_callback=tracker)
 
+    # --- GENERATE LOG FILE ---
+    # 1. Find the correct filename (Scenario increment)
+    base_name = f"logs_{n_employees}_employees_scenario"
+    scenario_id = 1
+    while True:
+        filename = f"{base_name}_{scenario_id}.txt"
+        if not os.path.exists(filename):
+            break
+        scenario_id += 1
+    
+    # 2. Write data to file
+    final_gap = 0.0
+    if tracker.best_objective != 0 and tracker.best_objective != float('inf'):
+        final_gap = abs(tracker.best_objective - tracker.best_bound) / abs(tracker.best_objective)
+
+    with open(filename, "w") as f:
+        f.write(f"SOLVER REPORT\n")
+        f.write(f"=============\n")
+        f.write(f"Employees: {n_employees}\n")
+        f.write(f"Max Time Allowed: {maxTime if maxTime else 'Unlimited'} mins\n")
+        f.write(f"Final Status: {solver.StatusName(status)}\n")
+        f.write(f"Total Solutions Found: {tracker.solution_count}\n")
+        f.write(f"\n--- PROGRESS LOG ---\n")
+        f.write(f"{'Count':<8} | {'Time (s)':<12} | {'Objective':<15} | {'Gap':<10}\n")
+        f.write("-" * 55 + "\n")
+        
+        for entry in tracker.history:
+            f.write(f"{entry['count']:<8} | {entry['time']:<12.4f} | {entry['obj']:<15} | {entry['gap']:.4%}\n")
+            
+        f.write("-" * 55 + "\n")
+        f.write(f"FINAL RESULTS:\n")
+        f.write(f"Best Solution Time: {tracker.best_solution_time:.4f}s\n")
+        f.write(f"Objective Value:    {tracker.best_objective}\n")
+        f.write(f"Lower Bound:        {tracker.best_bound}\n")
+        f.write(f"Final Gap:          {final_gap:.4%}\n")
+
+    print(f"\nLog file saved to: {filename}")
+
+    # --- EXPORT SCHEDULE ---
     assign = defaultdict(list)
     if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
         for employee in Employees:
@@ -205,3 +249,36 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
         num_days=num_days,
         shifts=int(shifts),
     )
+
+
+class SolutionTracker(cp_model.CpSolverSolutionCallback):
+    def __init__(self):
+        super().__init__()
+        self.best_solution_time = 0.0
+        self.best_objective = float('inf')
+        self.best_bound = float('-inf')
+        self.solution_count = 0
+        self.history = []  
+
+    def on_solution_callback(self):
+        self.solution_count += 1
+        self.best_solution_time = self.WallTime()
+        self.best_objective = self.ObjectiveValue()
+        self.best_bound = self.BestObjectiveBound()
+        
+        # Calculate gap
+        gap = 0.0
+        if self.best_objective != 0:
+            gap = abs(self.best_objective - self.best_bound) / abs(self.best_objective)
+            
+        # Store data for file writing later
+        self.history.append({
+            "count": self.solution_count,
+            "time": self.best_solution_time,
+            "obj": self.best_objective,
+            "bound": self.best_bound,
+            "gap": gap
+        })
+
+        print(f"Solution #{self.solution_count} found at {self.best_solution_time:.2f}s "
+              f"| Obj: {self.best_objective} | Gap: {gap:.2%}")
