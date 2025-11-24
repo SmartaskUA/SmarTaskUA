@@ -1,3 +1,0 @@
- docker compose build python-modules
- docker compose stop python-modules
- docker compose up -d python-modules

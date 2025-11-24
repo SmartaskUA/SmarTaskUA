@@ -1,0 +1,166 @@
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - rabbitmq_network
+    healthcheck:
+      test: ["CMD", "mongo", "--username", "admin", "--password", "password", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - rabbitmq_network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  scheduler:
+    build:
+      context: ../src/scheduler
+      dockerfile: ../../infra/docker/scheduler/Dockerfile
+    container_name: scheduler
+    command: python3 RabbitMQClient.py
+    depends_on:
+      - rabbitmq
+      - mongo
+    networks:
+      - rabbitmq_network
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - shared_tmp:/shared_tmp
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "RabbitMQClient"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  analyzer:
+    build:
+      context: ../src/analyzer
+      dockerfile: ../../infra/docker/analyzer/Dockerfile
+    container_name: analyzer
+    command: python3 analyze.py
+    depends_on:
+      - rabbitmq
+      - mongo
+    networks:
+      - rabbitmq_network
+    environment:
+      - PYTHONUNBUFFERED=1
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
+    volumes:
+      - shared_tmp:/shared_tmp
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "analyze"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ../src/api
+      dockerfile: ../../infra/docker/api/Dockerfile
+    container_name: api
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_APPLICATION_NAME: api
+      SPRING_SERVER_PORT: 8081
+
+      # MongoDB
+      SPRING_DATA_MONGODB_HOST: mongodb
+      SPRING_DATA_MONGODB_PORT: 27017
+      SPRING_DATA_MONGODB_USERNAME: admin
+      SPRING_DATA_MONGODB_PASSWORD: password
+      SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE: admin
+      SPRING_DATA_MONGODB_DATABASE: mydatabase
+
+      # RabbitMQ
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+
+      # Retry config (resiliência)
+      SPRING_RABBITMQ_LISTENER_SIMPLE_RETRY_ENABLED: "true"
+      SPRING_RABBITMQ_LISTENER_SIMPLE_RETRY_MAX_ATTEMPTS: "10"
+      SPRING_RABBITMQ_LISTENER_SIMPLE_RETRY_INITIAL_INTERVAL: "2000"
+      SPRING_RABBITMQ_LISTENER_SIMPLE_RETRY_MULTIPLIER: "2.0"
+      SPRING_RABBITMQ_LISTENER_SIMPLE_RETRY_MAX_INTERVAL: "10000"
+
+      # Upload config
+      SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE: 10MB
+      SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE: 10MB
+
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      scheduler:
+        condition: service_started
+      mongo:
+        condition: service_started
+    volumes:
+      - ../src/api/src/main/resources/application.properties:/app/application.properties
+      - shared_tmp:/shared_tmp
+    networks:
+      - rabbitmq_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    container_name: frontend
+    build:
+      context: ../src/frontend
+      dockerfile: ../../infra/docker/frontend/Dockerfile
+    depends_on:
+      - api
+    ports:
+      - "5173:5173"
+    networks:
+      - rabbitmq_network
+    environment:
+      - CHOKIDAR_USEPOLLING=1
+    volumes:
+      - ../src/frontend:/app
+      - /app/node_modules
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:5173/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+networks:
+  rabbitmq_network:
+    driver: bridge
+
+volumes:
+  mongo_data:
+  shared_tmp:
