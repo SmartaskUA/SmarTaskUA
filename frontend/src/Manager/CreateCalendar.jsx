@@ -149,19 +149,6 @@ const CreateCalendar = () => {
     setMaxDurationError(!intValue || intValue <= 0 || !/^\d+$/.test(value));
   };
 
-  // disable Generate if core required fields invalid
-  const canGenerate = useMemo(() => {
-    const y = parseInt(year, 10);
-    const d = parseInt(maxDuration, 10);
-    return (
-      title.trim() &&
-      y > 0 &&
-      /^\d+$/.test(String(year)) &&
-      d > 0 &&
-      /^\d+$/.test(String(maxDuration)) &&
-      !!ruleSetName
-    );
-  }, [title, year, maxDuration, ruleSetName]);
 
   // Algoritmos separados
   const turnoAlgorithms = [
@@ -171,9 +158,11 @@ const CreateCalendar = () => {
     { value: "genetic_algorithm", label: "Genetic Algorithm" },
     { value: "CSP Scheduling", label: "CSP Scheduling" },
     { value: "linear programming", label: "Integer Linear Programming" },
-  ];
+    { value: "linear programming 2", label: "Integer Linear Programming 2" },
+    ];
   const horasAlgorithms = [
-    { value: "linear programming", label: "Integer Linear Programming" },
+    { value: "ILP_13Hours", label: "Integer Linear Programming 13 Hours" },
+    { value: "CSP_13Hours", label: "CSP 13 Hours" },
     // Adicione outros algoritmos de horas aqui se existirem
   ];
 
@@ -328,7 +317,7 @@ const CreateCalendar = () => {
         </Grid>
 
         <Box sx={{ display: "flex", justifyContent: "left", marginTop: 3, marginLeft: "17%", gap: 2 }}>
-          <Button variant="contained" color="success" onClick={handleSave} disabled={!canGenerate}>
+          <Button variant="contained" color="success" onClick={handleSave} >
             Generate
           </Button>
           <Button variant="contained" color="error" onClick={handleClear}>

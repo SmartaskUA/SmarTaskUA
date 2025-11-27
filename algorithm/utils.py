@@ -1,6 +1,6 @@
 import csv
 import os
-from datetime import date
+from datetime import date, time
 import pandas as pd
 
 TEAM_CODE_TO_ID = {'A': 1, 'B': 2} # will be updated if there are more teams
@@ -142,6 +142,74 @@ def rows_to_req_dicts(req_rows):
                 target[(day, shift, team_id)] = int(v)
     return mins, ideals
 
+def rows_to_req_dicts(req_rows):
+    """
+    Aceita ficheiros de requisitos (mínimos/ideais) tanto por turnos como por horas.
+    Formatos suportados:
+      - Equipa A, Minimo, M, <dia1>, <dia2>, ...
+      - Equipa A, 09-10, <dia1>, <dia2>, ...
+    Retorna dois dicionários:
+      mins[(day, hora_ou_turno, team_id)] e ideals[(day, hora_ou_turno, team_id)]
+    """
+    mins, ideals = {}, {}
+    for row in req_rows:
+        if not row or not row[0].strip():
+            continue
+        
+        #print(f"Processing row: {row}, from")
+        team_label = row[0].strip()
+        #print(f"team_label: {team_label}")
+        kind = row[1].strip().lower()
+        #print(f"kind: {kind}")
+
+        # Detecta se é por hora (ex: '09-10') ou por turno ('M', 'T', 'N')
+        thirdShifts = row[2].strip()
+        thirdHours = row[1].strip()
+        #print(f"third_Shifts: {thirdShifts}")
+        #print(f"third_Hours: {thirdHours}")
+        countsHours = row[2:]
+        countsShifts = row[3:]
+        #print(f"counts: {counts}")
+
+        team_code = get_team_code(team_label)
+        team_id = get_team_id(team_code)
+        #print(f"team_code: {team_code}, team_id: {team_id}")
+        #time.sleep(15)  # para debug sequencial
+
+        # → modo por turno
+        if thirdShifts.upper().startswith(("M", "T", "N")):
+            code = thirdShifts.upper()
+            if code.startswith('M'):
+                shift = 1
+            elif code.startswith('T') or code.startswith('A'):
+                shift = 2
+            elif code.startswith('N'):
+                shift = 3
+            else:
+                continue
+            target = mins if kind.startswith('min') else ideals
+            for day, val in enumerate(countsShifts, start=1):
+                v = str(val).strip()
+                if v:
+                    target[(day, shift, team_id)] = int(v)
+
+        # → modo por hora
+        elif "-" in thirdHours:
+            hour_label = thirdHours
+            #print(f"hour_label: {hour_label}")
+            target = ideals if kind.startswith('min') else mins
+            for day, val in enumerate(countsHours, start=1):
+                v = str(val).strip()
+                if v:
+                    target[(day, hour_label, team_id)] = int(v)
+
+        #print(f"Current mins: {mins}")
+        #print(f"Current ideals: {ideals}")
+        #time.sleep(15)  # para debug sequencial
+
+    return mins, ideals
+
+
 
 def export_schedule_to_csv(scheduler, filename="schedule.csv", num_days=365):
     header = ["funcionario"] + [f"Dia {i+1}" for i in range(num_days)]
@@ -191,3 +259,28 @@ def schedule_to_table(*, employees: list, vacs: dict, assignment: dict, num_days
                 line.append("0")
         rows.append(line)
     return rows
+
+def to_table(*, employees: list, vacs: dict, assignment: dict, num_days: int, work_blocks: list):
+        """Return schedule as table for display."""
+        header = ["Employee"] + [f"Day{i}" for i in range(1, num_days + 1)]
+        rows = [header]
+        
+        for emp_id in sorted([i + 1 for i in employees]):
+            vac_days = set(vacs.get(emp_id, []))
+            day_to_block = {d: (b, t) for (d, b, t) in assignment.get(emp_id, [])}
+            
+            line = [f"Emp{emp_id}"]
+            for d in range(1, num_days + 1):
+                if d in vac_days:
+                    line.append("F")
+                elif d in day_to_block:
+                    block_idx, team_id = day_to_block[d]
+                    block = work_blocks[block_idx]
+                    team_code = TEAM_ID_TO_CODE.get(team_id, 'A')
+                    line.append(f"{block[0]}-{block[1]}-{block[2]}_{team_code}")
+                else:
+                    line.append("OFF")
+            
+            rows.append(line)
+        
+        return rows

@@ -18,7 +18,7 @@ RUN mvn clean install -DskipTests
 
 
 # Etapa 2: Imagem final
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jdk-jammy
 
 WORKDIR /app
 

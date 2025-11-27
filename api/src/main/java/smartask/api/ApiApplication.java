@@ -62,13 +62,19 @@ public class ApiApplication {
 				System.err.println("Could not find rules.json in resources folder!");
 			}
 			// ---- Equipa A ----------------------------------------------------
+			Team teamB = teamService.getTeams().stream()
+					.filter(team -> "Equipa B".equals(team.getName()))
+					.findFirst().orElse(null);
+			if (teamB == null) {
+				teamService.addTeam("Equipa B");
+			}
 			Team teamA = teamService.getTeams().stream()
 					.filter(team -> "Equipa A".equals(team.getName()))
 					.findFirst().orElse(null);
 			if (teamA == null) {
 				teamService.addTeam("Equipa A");
 
-				for (int i = 0; i <= 9; i++) {
+				for (int i = 1; i <= 21; i++) {
 					String name = "Employee " + i;
 					boolean exists = employeeService.getEmployees().stream()
 							.anyMatch(e -> name.equals(e.getName()));
@@ -82,7 +88,7 @@ public class ApiApplication {
 						.filter(e -> {
 							try {
 								int n = Integer.parseInt(e.getName().split(" ")[1]);
-								return n >= 1 && n <= 9;
+								return n >= 1 && n <= 21;
 							} catch (NumberFormatException ex) {
 								return false;
 							}
@@ -91,53 +97,55 @@ public class ApiApplication {
 						.toList();
 
 				teamService.addEmployeesToTeam("Equipa A", aEmployees);
+				teamService.addEmployeesToTeam("Equipa B", aEmployees);
 			}
 
 			// ---- Equipa B ----------------------------------------------------
-			Team teamB = teamService.getTeams().stream()
-					.filter(team -> "Equipa B".equals(team.getName()))
-					.findFirst().orElse(null);
-			if (teamB == null) {
-				teamService.addTeam("Equipa B");
-
-				for (int i = 10; i <= 20; i++) {
-					String name = "Employee " + i;
-					boolean exists = employeeService.getEmployees().stream()
-							.anyMatch(e -> name.equals(e.getName()));
-					if (!exists) {
-						employeeService.addEmployee(new Employee(name));
-					}
-				}
-
-				var bEmployees = employeeService.getEmployees().stream()
-						.filter(e -> e.getName().startsWith("Employee "))
-						.filter(e -> {
-							try {
-								int n = Integer.parseInt(e.getName().split(" ")[1]);
-								return n >= 10;
-							} catch (NumberFormatException ex) {
-								return false;
-							}
-						})
-						.map(Employee::getId)
-						.toList();
-
-				teamService.addEmployeesToTeam("Equipa B", bEmployees);
-			}
+			//Team teamB = teamService.getTeams().stream()
+			//		.filter(team -> "Equipa B".equals(team.getName()))
+			//		.findFirst().orElse(null);
+			//if (teamB == null) {
+			//	teamService.addTeam("Equipa B");
+//
+			//	for (int i = 11; i <= 21; i++) {
+			//		String name = "Employee " + i;
+			//		boolean exists = employeeService.getEmployees().stream()
+			//				.anyMatch(e -> name.equals(e.getName()));
+			//		if (!exists) {
+			//			employeeService.addEmployee(new Employee(name));
+			//		}
+			//	}
+//
+			//	var bEmployees = employeeService.getEmployees().stream()
+			//			.filter(e -> e.getName().startsWith("Employee "))
+			//			.filter(e -> {
+			//				try {
+			//					int n = Integer.parseInt(e.getName().split(" ")[1]);
+			//					return n >= 10;
+			//				} catch (NumberFormatException ex) {
+			//					return false;
+			//				}
+			//			})
+			//			.map(Employee::getId)
+			//			.toList();
+//
+			//	teamService.addEmployeesToTeam("Equipa B", bEmployees);
+			//}
 
 			// Cross-memberships: add Employee 5 & 6 to B; Employee 11 to A
-			var employee5 = employeeService.getEmployees().stream()
-					.filter(e -> e.getName().equals("Employee 5")).findFirst().orElse(null);
-			var employee6 = employeeService.getEmployees().stream()
-					.filter(e -> e.getName().equals("Employee 6")).findFirst().orElse(null);
-			if (employee5 != null && employee6 != null) {
-				teamService.addEmployeesToTeam("Equipa B", List.of(employee5.getId(), employee6.getId()));
-			}
-			var employee11 = employeeService.getEmployees().stream()
-					.filter(e -> e.getName().equals("Employee 11")).findFirst().orElse(null);
-			if (employee11 != null) {
-				teamService.addEmployeesToTeam("Equipa A", List.of(employee11.getId()));
-			}
+			//var employee5 = employeeService.getEmployees().stream()
+			//		.filter(e -> e.getName().equals("Employee 5")).findFirst().orElse(null);
+			//var employee6 = employeeService.getEmployees().stream()
+			//		.filter(e -> e.getName().equals("Employee 6")).findFirst().orElse(null);
+			//if (employee5 != null && employee6 != null) {
+			//	teamService.addEmployeesToTeam("Equipa B", List.of(employee5.getId(), employee6.getId()));
+			//}
+			//var employee11 = employeeService.getEmployees().stream()
+			//		.filter(e -> e.getName().equals("Employee 11")).findFirst().orElse(null);
+			//if (employee11 != null) {
+			//	teamService.addEmployeesToTeam("Equipa A", List.of(employee11.getId()));
+			//}
+
 
 			// // ---- Equipa C (with extra employees) -----------------------------
 			// Team teamC = teamService.getTeams().stream()
@@ -182,6 +190,9 @@ public class ApiApplication {
 			// 	var cEmployees = Stream.concat(newCEmployees.stream(), reusedEmployees.stream()).toList();
 			// 	teamService.addEmployeesToTeam("Equipa C", cEmployees);
 			// }
+
+			// Sync members between teams A and B
+			
 		};
 	}
 }

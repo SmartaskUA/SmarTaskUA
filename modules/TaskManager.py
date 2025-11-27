@@ -14,6 +14,8 @@ from algorithm.greedyRandomizedEngine import solve as greedy_randomized_engine_s
 from algorithm.ILPEngine import solve as ilp_solver_engine
 from algorithm.ILP2 import solve as ilp_solver_2
 from algorithm.CSPv2 import solve as cspv2_solver
+from algorithm.ILP_H import solve as ILP_13Hours_solver
+from algorithm.CSP_H import solve as CSP_13Hours_solver
 
 class TaskManager:
     def __init__(self):
@@ -33,9 +35,11 @@ class TaskManager:
             "CSP_ENGINE": csp_engine_solver,
             "GRHC_ENGINE": grhc_engine_solver,
             "CSPv2": cspv2_solver,
+            "ILP_13Hours": ILP_13Hours_solver,
+            "CSP_13Hours": CSP_13Hours_solver,
         }
 
-    def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None):
+    def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13):
         print(f"\n[DEBUG] Vacations received:\n{vacations}")
         print(f"[DEBUG] Minimuns received:\n{minimuns}")
         print(f"[DEBUG] Rules received:\n{json.dumps(rules, indent=2) if rules else 'None'}")
@@ -59,9 +63,10 @@ class TaskManager:
             rules_json = {"rules": rules}
 
         if algorithm_name in ["linear programming", "hill climbing", "Greedy Randomized", "Greedy Randomized + Hill Climbing", "CSP", "GRHC_ENGINE", "CSP_ENGINE", "Greedy Randomized Engine", "ILP Engine", "linear programming 2", "CSPv2"]:
-        
-            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, rules=rules_json,
-            )
+
+            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, rules=rules_json)
+        elif algorithm_name in ["ILP_13Hours", "CSP_13Hours"]:
+            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, rules=rules_json)
         else:
             schedule_data = algorithm()
 

@@ -147,8 +147,8 @@ public class SchedulesController {
             message.put("year", year);
             log.info("Publishing message to comparison-exchange: {}", message);
             log.info("Year: {}", year);
-            log.info("Vacation Template: {}", vacationTemplate);
-            log.info("Minimuns Template: {}", minimunsTemplate);
+            //log.info("Vacation Template: {}", vacationTemplate);
+            //log.info("Minimuns Template: {}", minimunsTemplate);
             log.info("Employees: {}", employees);
             rabbitTemplate.convertAndSend("comparison-exchange", "comparison-queue", message);
 
