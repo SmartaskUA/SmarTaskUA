@@ -88,9 +88,6 @@ class GreedyRandomized:
             if day - 1 == d and shift < s:  # today is the previous day before a worked day
                 return False
 
-        # If you want to forbid double shift same day, uncomment:
-        # if any(day == d for (day, _, _) in assignments):
-        #     return False
 
         return True
 
@@ -160,7 +157,7 @@ class GreedyRandomized:
     def is_complete(self):
         return all(len(self.assignment[p]) >= 223 for p in self.employees)
 
-def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2):
+def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2,rules=None):
     """
     Library-style API:
       vacations_rows: list of rows like ['Employee 1', '0','1','0',...]

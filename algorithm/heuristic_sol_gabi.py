@@ -12,6 +12,7 @@ from algorithm.utils import (
     TEAM_ID_TO_CODE,
     get_team_id,
     get_team_code,
+    schedule_to_table
 )
 
 class HeuristicSolGabi:
@@ -42,9 +43,11 @@ class HeuristicSolGabi:
         # Calendar (robust Sundays via utils)
         self.dias_ano, sundays = build_calendar(self.year)
         self.sundays_0based = np.array(sundays) - 1
-        # Holidays: convert to 0-based day indices for array masking
+
+        # Holidays
         feriados = feriados or []
         self.feriados_0based = np.array([d - 1 for d in feriados if 1 <= d <= self.nDias], dtype=int)
+
         # Number of shifts (2 or 3)
         self.shifts = int(shifts)
 
@@ -52,12 +55,13 @@ class HeuristicSolGabi:
         vacs_dict = rows_to_vac_dict(vacations_rows)
         self.nTrabs = len(employees)
         self.Ferias = self._vac_dict_to_matrix(vacs_dict, self.nTrabs, self.nDias)
+        
         # Shift preferences (independent of team). Default: allow all available shifts.
         # Allowed teams per employee (list of team_ids) derived from labels using utils.
         self.Prefs = self._shift_prefs(employees)
         self.allowed_teams = self._allowed_teams(employees)
 
-        # Read mins/ideals directly; keys: (day, shift, team_id)
+        # Minimums and ideals
         self.mins, self.ideals = rows_to_req_dicts(minimuns_rows)
 
         # schedule tensor: [emp, day, shift] with team_id or 0
@@ -276,8 +280,7 @@ class HeuristicSolGabi:
             self.criterio5(),
             self.criterio6(),
         )
-
-
+    
     # ---------- hill climbing ----------
     def optimize(self, maxTime_sec=600, max_iter=400_000):
         start = time.time()
@@ -327,7 +330,7 @@ class HeuristicSolGabi:
             "f1": f1o, "f2": f2o, "f3": f3o, "f4": f4o, "f5": f5o, "f6": f6o
         }
 
-    def _to_scheduler_like(self):
+    def to_scheduler_like(self):
         employees = list(range(1, self.nTrabs + 1))
         vacs = {i + 1: (np.nonzero(self.Ferias[i])[0] + 1).tolist() for i in range(self.nTrabs)}
 
@@ -347,34 +350,10 @@ class HeuristicSolGabi:
         return sv
 
     def export_csv(self, filename="calendario.csv"):
-        sv = self._to_scheduler_like()
+        sv = self.to_scheduler_like()
         export_schedule_to_csv(sv, filename=filename, num_days=self.nDias)
 
-    def to_table(self):
-        """
-        One row per employee; each cell "<Shift>_<TeamCode>", "F" for vacation, "0" if off.
-        """
-        header = ["funcionario"] + [f"Dia {d + 1}" for d in range(self.nDias)]
-        rows = [header]
-        label = {0: "M_", 1: "T_", 2: "N_"}
-        for e in range(self.nTrabs):
-            line = [f"Empregado{e + 1}"]
-            for d in range(self.nDias):
-                if self.Ferias[e, d]:
-                    line.append("F")
-                    continue
-                cell = "0"
-                for s in range(self.shifts):
-                    team_id = int(self.horario[e, d, s])
-                    if team_id > 0:
-                        team_code = TEAM_ID_TO_CODE.get(team_id, str(team_id))
-                        cell = f"{label.get(s, '')}{team_code}"
-                        break
-                line.append(cell)
-            rows.append(line)
-        return rows
-
-def solve(vacations, minimuns, employees, maxTime, year=2025, shifts=2):
+def solve(vacations, minimuns, employees, maxTime, year=2025, shifts=2, rules=None):
     scheduler = HeuristicSolGabi(
         vacations_rows=vacations,
         minimuns_rows=minimuns,
@@ -387,6 +366,12 @@ def solve(vacations, minimuns, employees, maxTime, year=2025, shifts=2):
     scheduler.atribuir_turnos_eficiente()
     scheduler.optimize(maxTime_sec=int(maxTime) * 60)
 
-    scheduler.export_csv("calendario.csv")
+    sv = scheduler.to_scheduler_like()  
+    return schedule_to_table(
+        employees=sv.employees,
+        vacs=sv.vacs,
+        assignment=sv.assignment,
+        num_days=scheduler.nDias,
+        shifts=int(shifts),
+    )
 
-    return scheduler.to_table()

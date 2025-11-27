@@ -168,3 +168,26 @@ def export_schedule_to_csv(scheduler, filename="schedule.csv", num_days=365):
                     row.append("0")
             writer.writerow(row)
     print(f"Schedule exported to {filename}")
+
+def schedule_to_table(*, employees: list, vacs: dict, assignment: dict, num_days: int, shifts: int = 2):
+    """Builds the schedule table as a list of rows."""
+    header = ["funcionario"] + [f"Dia {d}" for d in range(1, num_days + 1)]
+    rows = [header]
+    label_all = {1: "M_", 2: "T_", 3: "N_"}
+    label = {k: v for k, v in label_all.items() if k <= shifts}
+
+    all_emp_ids = sorted(set(employees) | set(vacs.keys()) | set(assignment.keys()))
+    for emp_id in all_emp_ids:
+        vac_days = set(vacs.get(emp_id, []))
+        day_to = {d: (s, t) for (d, s, t) in assignment.get(emp_id, [])}
+        line = [str(emp_id)]
+        for d in range(1, num_days + 1):
+            if d in vac_days:
+                line.append("F")
+            elif d in day_to:
+                s, t = day_to[d]
+                line.append(label.get(s, "") + TEAM_ID_TO_CODE.get(t, str(t)))
+            else:
+                line.append("0")
+        rows.append(line)
+    return rows

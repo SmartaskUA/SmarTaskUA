@@ -35,19 +35,33 @@ class ILPScheduler:
         # Number of shifts
         self.shifts = int(shifts)  
 
-        # Normalize team of each employee: use the first team listed, map to A/B letter.
-        self.emp_team_code = {}
+        # FIXED HERE
+        # BEFORE (it was only mapping to one team (the first one))
+        # self.emp_team_code = {}
+        # for idx, emp in enumerate(employees):
+        #     teams = emp.get("teams", [])
+        #     code = get_team_code(teams[0]) if teams else "A"
+        #     self.emp_team_code[idx] = code
+        #     get_team_id(code)
+
+        # self.teams = {}
+        # for idx, code in self.emp_team_code.items():
+        #       self.teams.setdefault(code, set()).add(idx)
+
+        # AFTER EDIT: map to ALL declared teams (or "A" if none)
+        self.emp_allowed_teams = {}
         for idx, emp in enumerate(employees):
             teams = emp.get("teams", [])
-            code = get_team_code(teams[0]) if teams else "A"  # choose your own default
-            self.emp_team_code[idx] = code
-            # ensure an id exists for this code (creates if new)
-            get_team_id(code)
+            codes = [get_team_code(t) for t in teams] 
+            self.emp_allowed_teams[idx] = codes
+            for c in codes:
+                get_team_id(c)
 
         # Build team -> set(employees) for ALL present codes
         self.teams = {}
-        for idx, code in self.emp_team_code.items():
-            self.teams.setdefault(code, set()).add(idx)
+        for idx, codes in self.emp_allowed_teams.items():
+            for code in codes:
+                self.teams.setdefault(code, set()).add(idx)
 
         # Holidays (PT) + Sundays
         feriados_pt = holidays.country_holidays("PT", years=[year])
@@ -64,16 +78,26 @@ class ILPScheduler:
             for e_idx in self.employees
         }
 
-        # Minimum requirements: normalize via utils
-        mins, _ideals = rows_to_req_dicts(minimuns_rows)
-        # Convert (day, shift, team_id) -> by (date, team_letter, shift)
+        # Minimum + Ideal requirements
+        mins, ideals = rows_to_req_dicts(minimuns_rows)
+
+        # Convert both into (date, team_code, shift)
         self.minimos = {}
+        self.ideais = {}
         for (day, shift, team_id), val in mins.items():
             if 1 <= day <= self.num_days:
                 date_key = self.dates[day - 1]
                 team_code = TEAM_ID_TO_CODE.get(team_id)
                 if team_code:
                     self.minimos[(date_key, team_code, shift)] = int(val)
+
+        for (day, shift, team_id), val in ideals.items():
+            if 1 <= day <= self.num_days:
+                date_key = self.dates[day - 1]
+                team_code = TEAM_ID_TO_CODE.get(team_id)
+                if team_code:
+                    self.ideais[(date_key, team_code, shift)] = int(val)
+
 
         # ILP containers
         self.x = None
@@ -97,63 +121,80 @@ class ILPScheduler:
         # --- Decision variables ---
         self.x = {
             f: {
-                d: {t: pulp.LpVariable(f"x_{f}_{d.strftime('%Y%m%d')}_{t}", cat="Binary")
-                    for t in turnos}
+                d: {
+                    t: {
+                        team: pulp.LpVariable(f"x_{f}_{d.strftime('%Y%m%d')}_{t}_{team}", cat="Binary")
+                        for team in self.emp_allowed_teams[f]
+                    }
+                    for t in turnos  # 0=OFF + working shifts
+                }
                 for d in dias
-            } for f in funcionarios
+            }
+            for f in funcionarios
         }
 
         # --- Count vars per team/day/shift (covers all shifts present) ---
         # y vars
         self.y = {
-            d: {s: {team_code: pulp.LpVariable(f"y_{d.strftime('%Y%m%d')}_{s}_{team_code}",
-                                            lowBound=0, cat="Integer")
-                    for team_code in self.teams.keys()}
+            d: {s: {team_code: pulp.LpVariable(
+                f"y_{d.strftime('%Y%m%d')}_{s}_{team_code}",
+                lowBound=0, cat="Continuous")  # shortage variable
+                for team_code in self.teams.keys()}
                 for s in t_range}
             for d in dias
         }
 
         model = pulp.LpProblem("Escala_Trabalho_ILP", pulp.LpMinimize)
-
-        # Link y with x per team
-        for d in dias:
-            for s in t_range:
-                for team_code, members in self.teams.items():
-                    model += (
-                        self.y[d][s][team_code] == pulp.lpSum(self.x[f][d][s] for f in members),
-                        f"count_{team_code}_{d.strftime('%Y%m%d')}_S{s}"
-                    )
-
-        # Penalize shortages against minimos
+        
+        # shortages + objective
         penalties = []
         for d in dias:
             for s in t_range:
                 for team_code in self.teams.keys():
                     minimo = self.minimos.get((d, team_code, s), 0)
-                    penal = pulp.LpVariable(f"penal_{d.strftime('%Y%m%d')}_S{s}_{team_code}",
-                                            lowBound=0, cat="Continuous")
-                    model += (penal >= minimo - self.y[d][s][team_code],
-                            f"shortage_{d.strftime('%Y%m%d')}_S{s}_{team_code}")
-                    penalties.append(penal)
+                    # link y to coverage shortfall
+                    model += (
+                        self.y[d][s][team_code] >= minimo - pulp.lpSum(
+                            self.x[f][d][s][team_code]
+                            for f in self.teams.get(team_code, set())
+                            if team_code in self.x[f][d][s]
+                        ),
+                        f"shortage_{team_code}_{d.strftime('%Y%m%d')}_S{s}"
+                    )
+                    penalties.append(self.y[d][s][team_code])
 
         model += pulp.lpSum(penalties), "Minimize_shortage_below_minimos"
+
+
 
         # --- Constraints ---
 
         # one shift per day
         for f in funcionarios:
             for d in dias:
-                model += (pulp.lpSum(self.x[f][d][t] for t in turnos) == 1,
-                        f"one_shift_per_day_f{f}_{d.strftime('%Y%m%d')}")
+                model += (
+                    pulp.lpSum(self.x[f][d][t][team]
+                            for t in turnos
+                            for team in self.emp_allowed_teams[f]) == 1,
+                    f"one_shift_per_day_f{f}_{d.strftime('%Y%m%d')}")
+
+
+        for f in funcionarios:
+            for d in dias:
+                for t in t_range:
+                    model += (
+                        pulp.lpSum(self.x[f][d][t][team] for team in self.emp_allowed_teams[f]) <= 1,
+                        f"one_team_per_shift_f{f}_{d.strftime('%Y%m%d')}_S{t}"
+                    )
 
         # Total working days = 223 (count ALL working shifts, including Night)
         for f in funcionarios:
-            model += (pulp.lpSum(self.x[f][d][s] for d in dias for s in t_range) == 223,
+            model += (pulp.lpSum(self.x[f][d][s][team] for d in dias for s in t_range for team in self.emp_allowed_teams[f]) == 223,
                     f"total_working_days_f{f}")
 
         # Sundays+holidays <= 22 (count all shifts)
         for f in funcionarios:
-            model += (pulp.lpSum(self.x[f][d][s] for d in self.sundays_holidays for s in t_range) <= 22,
+            model += (pulp.lpSum(self.x[f][d][s][team] for d in self.sundays_holidays for s in t_range for team in self.emp_allowed_teams[f]) <= 22,
                     f"weekend_holiday_cap_f{f}")
 
         # No more than 5 consecutive working days (sliding window of 6) — count all shifts
@@ -161,7 +202,7 @@ class ILPScheduler:
             for i in range(len(dias) - 5):
                 window = dias[i:i + 6]
                 model += (
-                    pulp.lpSum(self.x[f][d][s] for d in window for s in t_range) <= 5,
+                    pulp.lpSum(self.x[f][d][s][team] for d in window for s in t_range for team in self.emp_allowed_teams[f]) <= 5,
                     f"max_5_consecutive_f{f}_{dias[i].strftime('%Y%m%d')}"
                 )
 
@@ -174,32 +215,21 @@ class ILPScheduler:
                     for s_next in range(1, self.shifts + 1):
                         if s_next < s_prev:
                             model += (
-                                self.x[f][d_today][s_prev] + self.x[f][d_next][s_next] <= 1,
+                                pulp.lpSum(self.x[f][d_today][s_prev][team] for team in self.emp_allowed_teams[f]) +
+                                pulp.lpSum(self.x[f][d_next][s_next][team] for team in self.emp_allowed_teams[f])
+                                <= 1,
                                 f"forbid_{s_prev}_to_{s_next}_f{f}_{d_today.strftime('%Y%m%d')}"
                             )
 
-        # Vacations -> Off  (moved OUTSIDE the loop above, and no shadowing)
+
+        # Vacations -> Off 
         for f_emp in funcionarios:
             for vac_day in self.vacations_dates[f_emp]:
                 model += (
-                    self.x[f_emp][vac_day][0] == 1,
+                    pulp.lpSum(self.x[f_emp][vac_day][0][team]
+                            for team in self.emp_allowed_teams[f_emp]) == 1,
                     f"vacation_off_f{f_emp}_{vac_day.strftime('%Y%m%d')}"
                 )
-
-
-        # Global daily floor (keep if you want it):
-        # (If you don't want a global floor, remove these 3 constraints.)
-        for d in dias:
-            model += (
-                pulp.lpSum(self.x[f][d][s] for f in funcionarios for s in t_range) >= 2,
-                f"min_total_{d.strftime('%Y%m%d')}"
-            )
-            if self.shifts == 2:
-                # Legacy per-shift floors only for 2 shifts
-                model += (pulp.lpSum(self.x[f][d][1] for f in funcionarios) >= 2,
-                        f"min_morning_{d.strftime('%Y%m%d')}")
-                model += (pulp.lpSum(self.x[f][d][2] for f in funcionarios) >= 2,
-                        f"min_afternoon_{d.strftime('%Y%m%d')}")
 
         self.model = model
 
@@ -221,22 +251,33 @@ class ILPScheduler:
     def _extract_assignments(self):
         """
         Fill self.assignment as: emp_id(1-based) -> [(day, shift, team_id)]
-        Also keeps self.vacs_1based already prepared at __init__.
+        Supports multiple possible teams per employee.
         """
         if self.x is None:
             return
+
         for f in self.employees:
             emp_id = f + 1
-            team_code = self.emp_team_code.get(f, "A")
-            team_id = get_team_id(team_code)
 
             for day_idx, d in enumerate(self.dates, start=1):
-                # consider OFF (0) + all working shifts [1..self.shifts]
-                vals = [(t, pulp.value(self.x[f][d][t]) or 0.0)
-                        for t in range(0, self.shifts + 1)]
-                t_sel = max(vals, key=lambda kv: kv[1])[0]
-                if 1 <= t_sel <= self.shifts:          # keep M/T/N
-                    self.assignment[emp_id].append((day_idx, t_sel, team_id))
+                best_val = 0
+                best_shift = None
+                best_team = None
+
+                # check all shifts and all allowed teams
+                for t in range(1, self.shifts + 1):
+                    for team_code in self.emp_allowed_teams[f]:
+                        val = pulp.value(self.x[f][d][t][team_code]) or 0.0
+                        if val > best_val:
+                            best_val = val
+                            best_shift = t
+                            best_team = team_code
+
+                # save assignment if worked
+                if best_shift is not None and best_val > 0.5:
+                    team_id = get_team_id(best_team)
+                    self.assignment[emp_id].append((day_idx, best_shift, team_id))
+
 
 
     # ------------ export / table ------------
@@ -269,7 +310,7 @@ class ILPScheduler:
         return rows
 
 
-def solve(vacations, minimuns, employees, maxTime, year=2025, shifts=2):
+def solve(vacations, minimuns, employees, maxTime, year=2025, shifts=2, rules=None):
     ilp = ILPScheduler(
         vacations_rows=vacations,
         minimuns_rows=minimuns,

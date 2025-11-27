@@ -27,8 +27,7 @@ const CalendarTable = ({
     if (normalized === "F") return "V"; 
     if (normalized === "T_A") return "A_A";
     if (normalized === "T_B") return "A_B";
-    if (normalized === "N_A") return "A_N";
-    if (normalized === "N_B") return "A_N";
+    if (normalized === "T_C") return "A_C";
     return value;
   };
 

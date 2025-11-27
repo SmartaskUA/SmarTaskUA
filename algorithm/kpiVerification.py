@@ -33,7 +33,7 @@ def analyze(file, holidays, mins, employees, year=2025):
     consecutiveDays = 0
     total_tm_fails = 0
     single_team_violations = 0
-    two_team_balance_values = []   # keeps % on first of two allowed teams (legacy metric)
+    team_satisfaction_values = []    # % of total shifts worked in the preferred (first) team
     per_employee_shift_balance = []  # min(M%, T%) per employee
 
     print(f"Year: {year}")
@@ -41,7 +41,7 @@ def analyze(file, holidays, mins, employees, year=2025):
     print(f"Minimuns: {mins}")
     print(f"Employees: {employees}")
 
-    mins = parse_minimuns(mins)
+    mins, ideals = parse_requirements(mins)
     teams = parse_employees(employees)
 
     # Sundays of the given year (day-of-year numbers)
@@ -58,7 +58,7 @@ def analyze(file, holidays, mins, employees, year=2025):
 
     for _, row in df.iterrows():
         # Work/vacation counting (generic)
-        worked_days = sum(is_work_shift(row[col]) for col in dia_cols)
+        worked_days  = sum(is_work_shift(row[col]) for col in dia_cols)
         vacation_days = sum(str(row[col]).strip() == 'F' for col in dia_cols)
 
         missed_work_days += abs(223 - worked_days)
@@ -112,31 +112,45 @@ def analyze(file, holidays, mins, employees, year=2025):
                 single_team_violations += 1
 
         # Legacy metric: when exactly 2 allowed teams, compute % on the first team
-        elif len(allowed_codes) == 2:
-            c1, c2 = allowed_codes
-            c1_count = team_counts.get(c1, 0)
-            c2_count = team_counts.get(c2, 0)
-            denom = c1_count + c2_count
-            if denom > 0:
-                pref = round((c1_count / denom) * 100, 2)
-                print(f"{emp_id}: {c1} shifts: {c1_count}, {c2} shifts: {c2_count} → {pref}% on {c1}")
-                two_team_balance_values.append(pref)
+        if len(allowed_codes) >= 1:
+            total_worked = sum(team_counts.get(code, 0) for code in allowed_codes)
+            if total_worked > 0:
+                preferred = allowed_codes[0]
+                preferred_count = team_counts.get(preferred, 0)
+                satisfaction_pct = round((preferred_count / total_worked) * 100.0, 2)
+                team_satisfaction_values.append(satisfaction_pct)
 
-        # Per-employee morning/afternoon split (generic)
-        emp_morning = sum(parse_shift(row[col])[0] == 'M' for col in dia_cols)
-        emp_afternoon = sum(parse_shift(row[col])[0] == 'T' for col in dia_cols)
-        total_emp_shifts = emp_morning + emp_afternoon
-        if total_emp_shifts > 0:
-            morning_percentage = (emp_morning / total_emp_shifts) * 100
-            afternoon_percentage = (emp_afternoon / total_emp_shifts) * 100
-            print(f"Morning percentage: {morning_percentage:.2f}%, Afternoon percentage: {afternoon_percentage:.2f}%")
-            per_employee_shift_balance.append(min(morning_percentage, afternoon_percentage))
 
-    # Aggregate legacy two-team balance metric
-    if two_team_balance_values:
-        two_team_preference_level = round(sum(two_team_balance_values) / len(two_team_balance_values), 2)
+    # Per-employee shift balance (adapts to 2 or 3 shifts; best possible = 50)
+    emp_morning  = sum(parse_shift(row[col])[0] == 'M' for col in dia_cols)
+    emp_afternoon = sum(parse_shift(row[col])[0] == 'T' for col in dia_cols)
+    emp_night    = sum(parse_shift(row[col])[0] == 'N' for col in dia_cols)
+
+    total_emp_shifts_all = emp_morning + emp_afternoon + emp_night
+    if total_emp_shifts_all > 0:
+        morning_pct_all   = (emp_morning  / total_emp_shifts_all) * 100.0
+        afternoon_pct_all = (emp_afternoon / total_emp_shifts_all) * 100.0
+        night_pct_all     = (emp_night    / total_emp_shifts_all) * 100.0
+
+        # Only consider shifts the employee actually worked (non-zero).
+        pcts = [p for p in [morning_pct_all, afternoon_pct_all, night_pct_all] if p > 0]
+        active_shifts = len(pcts)
+
+        if active_shifts >= 2:
+            min_pct = min(pcts)
+            ideal_min = 100.0 / active_shifts       
+            scale = 50.0 / ideal_min                
+            balanced_score = min(50.0, min_pct * scale)
+        else:
+            balanced_score = 0.0
+
+        per_employee_shift_balance.append(balanced_score)
+
+
+    if team_satisfaction_values:
+        team_satisfaction = round(sum(team_satisfaction_values) / len(team_satisfaction_values), 2)
     else:
-        two_team_preference_level = 0
+        team_satisfaction = 0
 
     print(per_employee_shift_balance)
     shift_balance = round(min(per_employee_shift_balance), 2) if per_employee_shift_balance else 0
@@ -164,6 +178,21 @@ def analyze(file, holidays, mins, employees, year=2025):
         missing = max(0, required - assigned)
         missed_team_min += int(missing)
 
+
+    # Ideals compliance (generic for any team code)
+    missed_team_ideal = 0
+    for (day, team_label, shift), target in ideals.items():
+        col = f"Dia {day}"
+        if col not in df.columns:
+            continue
+        code = givenShift(team_label, shift)
+        if not code:
+            continue
+        assigned = sum(str(v).strip().upper() == code for v in df[col])
+        missing = max(0, target - assigned)
+        missed_team_ideal += int(missing)
+
+
     return {
         "missedWorkDays": missed_work_days,
         "missedVacationDays": missed_vacation_days,
@@ -172,65 +201,52 @@ def analyze(file, holidays, mins, employees, year=2025):
         "consecutiveDays": consecutiveDays,
         "singleTeamViolations": single_team_violations,
         "missedTeamMin": missed_team_min,
+        "missedTeamIdeal": missed_team_ideal,
         "shiftBalance": shift_balance,
-        "twoTeamPreferenceLevel": two_team_preference_level,  # kept for backward compatibility
+        "teamSatisfactionLevel": team_satisfaction
     }
 
-def parse_minimuns(minimums):
+def parse_requirements(requirements_text):
     """
-    Returns dict[(day:int, team_code:str, shift:int) -> int]
-    team_code is 'A','B','C',...
-    shift: 1=M, 2=T, 3=N
+    Parses both Minimo and Ideal rows from the requirements CSV text.
+    Returns:
+        mins  -> dict[(day:int, team_code:str, shift:int) -> int]
+        ideals -> dict[(day:int, team_code:str, shift:int) -> int]
     """
-    minimos = {}
+    mins, ideals = {}, {}
     shift_map = {"M": 1, "T": 2, "N": 3}
 
-    minimums = minimums.replace('\r\n', '\n').replace('\r', '\n').strip()
-    lines = minimums.split('\n')
-    print(f"Raw input (first 100 chars): {minimums[:100]}")
-    print(f"Total lines after split: {len(lines)}")
+    requirements_text = requirements_text.replace('\r\n', '\n').replace('\r', '\n').strip()
+    lines = requirements_text.split('\n')
 
-    # If a single huge CSV line slipped in, re-chunk by 368 cols (header+365 days+meta)
     if len(lines) == 1 and ',' in lines[0]:
         parts = lines[0].split(',')
         if len(parts) >= 368:
             lines = [','.join(parts[i:i+368]) for i in range(0, len(parts), 368)]
 
     for line_num, line in enumerate(lines, 1):
-        line = line.strip()
-        if not line:
-            continue
-        parts = line.split(',')
+        parts = line.strip().split(',')
         if len(parts) < 4:
             continue
 
         team_label_raw, req_type, shift_code = parts[0].strip(), parts[1].strip(), parts[2].strip().upper()
-        if req_type != "Minimo":
-            continue
-
-        # 'Equipa X' -> 'X' (last char)
-        if not team_label_raw:
-            continue
-        team_code = team_label_raw.strip()[-1].upper()
-        if not team_code.isalpha():
-            continue
-
         shift_num = shift_map.get(shift_code)
         if not shift_num:
             continue
 
+        team_code = team_label_raw.strip()[-1].upper()
         values = parts[3:]
-        if len(values) < 365:
-            continue
+        target = mins if req_type.lower() == "minimo" else ideals
 
         for day, value in enumerate(values[:365], 1):
             v = value.strip()
             if v:
                 try:
-                    minimos[(day, team_code, shift_num)] = int(v)
+                    target[(day, team_code, shift_num)] = int(v)
                 except ValueError:
                     pass
-    return minimos
+    return mins, ideals
+
 
 def parse_employees(employees):
     """

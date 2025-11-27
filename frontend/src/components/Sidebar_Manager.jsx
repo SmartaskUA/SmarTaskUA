@@ -45,6 +45,9 @@ const Sidebar_Manager = () => {
         <Link to="/manager/importminimus" className={`nav-item ${isActive("/manager/importminimus") ? "active" : ""}`}>
           <FileText size={20} className="icon"/> Import Minimums
         </Link>
+        <Link to="/manager/rulesets" className={`nav-item ${isActive("/manager/rulesets") ? "active" : ""}`}>
+          <Briefcase size={20} className="icon"/> Rule Sets
+        </Link>
       </nav>
       <div className="manager-btn">
         <Link>

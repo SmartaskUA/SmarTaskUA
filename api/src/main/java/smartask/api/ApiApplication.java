@@ -4,15 +4,24 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import smartask.api.event.RabbitMqProducer;
 import smartask.api.models.Employee;
+import smartask.api.models.Rule;
+import smartask.api.models.RuleSet;
 import smartask.api.models.Team;
 import smartask.api.repositories.SchedulesRepository;
 import smartask.api.services.EmployeeService;
+import smartask.api.services.RuleSetService;
 import smartask.api.services.SchedulesService;
 import smartask.api.services.TeamService;
 
+import java.io.InputStream;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -26,8 +35,32 @@ public class ApiApplication {
 
 	@Bean
 	CommandLineRunner initDatabase(TeamService teamService, EmployeeService employeeService,
-								   SchedulesRepository schedulesRepository, SchedulesService schedulesService, RabbitMqProducer producer) {
+								   SchedulesRepository schedulesRepository, SchedulesService schedulesService, RabbitMqProducer producer, RuleSetService ruleSetService) {
 		return args -> {
+			ObjectMapper mapper = new ObjectMapper();
+
+			// Load the JSON file from resources
+			InputStream inputStream = new ClassPathResource("rules.json").getInputStream();
+
+			if (inputStream != null) {
+				// Deserialize JSON directly into a RuleSet
+				RuleSet defaultSet = mapper.readValue(inputStream, RuleSet.class);
+
+				// If your JSON doesn't have name/description fields, set them manually
+				if (defaultSet.getName() == null || defaultSet.getName().isBlank()) {
+					defaultSet.setName("default");
+				}
+				if (defaultSet.getDescription() == null || defaultSet.getDescription().isBlank()) {
+					defaultSet.setDescription("Default rule set loaded from JSON");
+				}
+
+				// Save to DB
+				ruleSetService.saveRuleSet(defaultSet);
+
+				System.out.println("Default rule set loaded successfully!");
+			} else {
+				System.err.println("Could not find rules.json in resources folder!");
+			}
 			// ---- Equipa A ----------------------------------------------------
 			Team teamA = teamService.getTeams().stream()
 					.filter(team -> "Equipa A".equals(team.getName()))
