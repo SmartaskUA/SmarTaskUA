@@ -17,6 +17,12 @@ Objective:
 """
 
 import pulp
+import io
+import re
+import os
+import time
+import contextlib
+
 from algorithm.utils import (
     TEAM_ID_TO_CODE,
     build_calendar,
@@ -26,6 +32,76 @@ from algorithm.utils import (
     get_team_code,
     get_team_id
 )
+
+
+def parse_cbc_log(log_text):
+    """
+    Parse CBC solver output to extract progress (time, obj, bound, iterations, nodes).
+
+    Returns:
+      history: list of dicts with keys:
+          count, time, obj, bound, nodes, iters, gap
+      final_obj, final_bound, final_gap
+    """
+    history = []
+    final_obj = None
+    final_bound = None
+    final_gap = None
+
+    # Example progress line:
+    # Cbc0010I After 0 nodes, 0 on tree, 0 iterations, 0 seconds, objective 0, best possible 0
+    prog_re = re.compile(
+        r"After\s+(?P<nodes>\d+)\s+nodes.*?,\s+"
+        r"(?P<iters>\d+)\s+iterations,\s+"
+        r"(?P<time>[0-9.]+)\s+seconds.*?"
+        r"objective\s+(?P<obj>-?[0-9.]+)"
+        r"(?:.*?best possible\s+(?P<bound>-?[0-9.]+))?",
+        re.IGNORECASE,
+    )
+
+    # Example final line:
+    # Cbc0038I ... best objective 123.45, best possible 120.00 (gap 2.80%)
+    final_re = re.compile(
+        r"best objective\s+(-?[0-9.]+),\s+best possible\s+(-?[0-9.]+)\s+\(gap\s+([0-9.]+)%",
+        re.IGNORECASE,
+    )
+
+    for line in log_text.splitlines():
+        m = prog_re.search(line)
+        if m:
+            nodes = int(m.group("nodes"))
+            iters = int(m.group("iters"))
+            t = float(m.group("time"))
+            obj = float(m.group("obj"))
+            bound_raw = m.group("bound")
+            bound = float(bound_raw) if bound_raw is not None else None
+            history.append(
+                {
+                    "nodes": nodes,
+                    "iters": iters,
+                    "time": t,
+                    "obj": obj,
+                    "bound": bound,
+                    "gap": None,  # filled later if possible
+                }
+            )
+
+        m2 = final_re.search(line)
+        if m2:
+            final_obj = float(m2.group(1))
+            final_bound = float(m2.group(2))
+            final_gap = float(m2.group(3)) / 100.0
+
+    # If we know final_bound, fill per-step gaps
+    if final_bound is not None:
+        for h in history:
+            obj = h["obj"]
+            if obj != 0:
+                h["gap"] = abs(obj - final_bound) / abs(obj)
+            else:
+                h["gap"] = 0.0
+
+    return history, final_obj, final_bound, final_gap
 
 
 class ILPSchedulerWeighted:
@@ -216,12 +292,102 @@ class ILPSchedulerWeighted:
         self.model = model
 
     # ------------------------------------------------------------
-    # SOLVE
+    # SOLVE (with logging, no change to model logic)
     # ------------------------------------------------------------
-    def solve(self):
-        solver = pulp.PULP_CBC_CMD(msg=True, timeLimit=int(self.maxTime) * 60 if self.maxTime else None)
-        self.model.solve(solver)
-        print(f"✅ Solver status: {pulp.LpStatus[self.model.status]}")
+    def solve(self, gap_rel=None, log_to_file=True, log_dir="."):
+        """
+        Solve the model using CBC, capturing solver logs and writing them
+        to a text file. Model structure and objective are unchanged.
+        """
+        time_limit = int(self.maxTime) * 60 if self.maxTime else None
+
+        solver = pulp.PULP_CBC_CMD(
+            msg=True,
+            timeLimit=time_limit,
+            gapRel=gap_rel if gap_rel is not None else None,
+        )
+
+        start = time.time()
+
+        # Capture CBC log from stdout
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            self.model.solve(solver)
+        solver_output = buf.getvalue()
+
+        # Re-print the solver log so behavior stays similar to before
+        print(solver_output, end="")
+
+        wall_time = time.time() - start
+        status_str = pulp.LpStatus[self.model.status]
+        print(f"✅ Solver status: {status_str} | wall time: {wall_time:.2f}s")
+
+        # Parse solver log
+        history, final_obj, final_bound, final_gap = parse_cbc_log(solver_output)
+
+        # Fallback for final_obj if not detected
+        if final_obj is None:
+            try:
+                final_obj = pulp.value(self.model.objective)
+            except Exception:
+                final_obj = None
+
+        # Compute final_gap if missing and we have bound + obj
+        if final_gap is None and final_obj is not None and final_bound is not None:
+            if final_obj != 0:
+                final_gap = abs(final_obj - final_bound) / abs(final_obj)
+            else:
+                final_gap = 0.0
+
+        # Write log file similar to CSP tracker
+        if log_to_file:
+            n_employees = len(self.employees)
+            base_name = f"logs_ilp_{n_employees}_employees_scenario"
+            scenario_id = 1
+            while True:
+                filename = os.path.join(log_dir, f"{base_name}_{scenario_id}.txt")
+                if not os.path.exists(filename):
+                    break
+                scenario_id += 1
+
+            with open(filename, "w") as f:
+                f.write("SOLVER REPORT (ILP / CBC)\n")
+                f.write("=========================\n")
+                f.write(f"Employees: {n_employees}\n")
+                f.write(f"Max Time Allowed: {self.maxTime if self.maxTime else 'Unlimited'} mins\n")
+                f.write(f"Final Status: {status_str}\n")
+                f.write(f"Wall Time: {wall_time:.4f}s\n")
+                f.write(f"Final Objective: {final_obj if final_obj is not None else 'N/A'}\n")
+                f.write(f"Final Bound: {final_bound if final_bound is not None else 'N/A'}\n")
+                if final_gap is not None:
+                    f.write(f"Final Gap: {final_gap:.4%}\n")
+                else:
+                    f.write("Final Gap: N/A\n")
+
+                f.write("\n--- PROGRESS LOG ---\n")
+                f.write(
+                    f"{'Count':<8} | {'Time (s)':<10} | "
+                    f"{'Objective':<15} | {'Bound':<15} | "
+                    f"{'Gap':<10} | {'Iters':<8} | {'Nodes':<8}\n"
+                )
+                f.write("-" * 98 + "\n")
+
+                for idx, h in enumerate(history, start=1):
+                    gap_str = f"{h['gap']:.4%}" if h["gap"] is not None else "N/A"
+                    bound_str = f"{h['bound']:.4f}" if h["bound"] is not None else "N/A"
+                    f.write(
+                        f"{idx:<8} | {h['time']:<10.4f} | "
+                        f"{h['obj']:<15.4f} | {bound_str:<15} | "
+                        f"{gap_str:<10} | {h['iters']:<8} | {h['nodes']:<8}\n"
+                    )
+
+            print(f"Log file saved to: {filename}")
+
+        # Store for programmatic inspection if needed
+        self.log_history = history
+        self.final_obj = final_obj
+        self.final_bound = final_bound
+        self.final_gap = final_gap
 
     # ------------------------------------------------------------
     # EXPORT
@@ -250,11 +416,21 @@ class ILPSchedulerWeighted:
                     line.append("0")
             rows.append(line)
         return rows
-    
+
+
 def solve(vacations, minimuns, employees, maxTime, year=2025, shifts=2, rules=None):
-    ilp = ILPSchedulerWeighted(vacations, minimuns, employees, maxTime, year, shifts,
-                               w_min=100, w_ideal=1)
+    ilp = ILPSchedulerWeighted(
+        vacations,
+        minimuns,
+        employees,
+        maxTime,
+        year,
+        shifts,
+        w_min=100,
+        w_ideal=1,
+    )
     ilp.build_model()
-    ilp.solve(gap_rel=0.001)
+    # Optional relative gap, like CSP version
+    ilp.solve(gap_rel=0.001, log_to_file=True)
     ilp.export_csv("schedule_weighted.csv")
     return ilp.to_table()

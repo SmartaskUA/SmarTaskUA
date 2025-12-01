@@ -1,374 +1,472 @@
-import time
-import math
 import random
-import numpy as np
 from collections import defaultdict
 import holidays as hl
 
-# Import your existing utilities
 from algorithm.utils import (
     rows_to_vac_dict,
     rows_to_req_dicts,
+    TEAM_ID_TO_CODE,
     get_team_id,
     get_team_code,
     export_schedule_to_csv,
     build_calendar,
-    schedule_to_table
+    schedule_to_table,
 )
 
-# --- CONFIGURATION ---
-WEIGHT_UNMET_MIN = 100       # High penalty for missing minimum staff
-WEIGHT_UNMET_IDEAL = 1       # Low penalty for missing ideal staff
-WEIGHT_CONSTRAINT_HARD = 500 # Penalty for breaking rules (5-in-6, rotation)
-WEIGHT_SPECIAL_CAP = 200     # Penalty for exceeding special days
 
-class HeuristicScheduler:
-    def __init__(self, employees, vac_dict, min_reqs, ideal_reqs, allowed_teams, 
-                 num_days, shifts, special_days):
-        self.n_employees = len(employees)
-        self.num_days = num_days
-        self.n_shifts = shifts
-        self.employees = list(range(self.n_employees))
-        self.vac_dict = vac_dict
-        self.min_reqs = min_reqs     # Dict: (day, shift, team) -> count
-        self.ideal_reqs = ideal_reqs
-        self.allowed_teams = allowed_teams # List of lists [[1,2], [1], ...]
-        self.special_days = special_days
-        
-        # State: 0 = OFF, 1..S = Shift ID
-        self.schedule = np.zeros((self.n_employees, self.num_days + 1), dtype=int)
-        
-        # Precompute simple demand lookup for speed: (day, shift) -> total_needed
-        # (We simplify team matching in the inner loop to pure capacity)
-        self.daily_demand_min = np.zeros((num_days + 1, shifts + 1), dtype=int)
-        for (d, s, t), count in min_reqs.items():
-            self.daily_demand_min[d, s] += count
-
-    def initialize_solution(self):
-        """
-        Create a random schedule that satisfies:
-        1. Vacation days are OFF
-        2. Exactly 223 work days per year
-        """
-        target_work = 223
-        
-        for emp in self.employees:
-            # 1. Identify valid days (not vacation)
-            vacations = self.vac_dict.get(emp + 1, [])
-            valid_days = [d for d in range(1, self.num_days + 1) if d not in vacations]
-            
-            # 2. If valid days < target, work all valid days (rare edge case)
-            if len(valid_days) <= target_work:
-                days_to_work = valid_days
-            else:
-                # 3. Randomly pick exactly 223 days to work
-                days_to_work = np.random.choice(valid_days, target_work, replace=False)
-            
-            # 4. Assign random shifts to those days
-            for d in days_to_work:
-                self.schedule[emp, d] = np.random.randint(1, self.n_shifts + 1)
-
-    def calculate_cost(self, schedule_snapshot=None):
-        """
-        Calculates the 'Energy' (Badness) of the schedule.
-        Lower is better. 0 is perfect.
-        """
-        sched = schedule_snapshot if schedule_snapshot is not None else self.schedule
-        cost = 0
-        
-        # --- 1. CONSTRAINT VIOLATIONS (Per Employee) ---
-        for emp in self.employees:
-            emp_sched = sched[emp] # Array of shifts for this emp
-            
-            # A. 5 worked days in 6-day window
-            # Rolling sum of (sched > 0)
-            is_working = (emp_sched > 0).astype(int)
-            # Create a simple convolution or loop for the window
-            # (Loop is safer for variable window logic)
-            for start in range(1, self.num_days - 6 + 2):
-                if np.sum(is_working[start : start+6]) > 5:
-                    cost += WEIGHT_CONSTRAINT_HARD
-            
-            # B. Rotation: Cannot work Shift X then Shift Y if Y < X (unless Off in between)
-            # We iterate 1 to num_days-1
-            # Logic: If Worked(d) and Worked(d+1), require Shift(d+1) >= Shift(d)
-            # Vectorized approach:
-            mask_consecutive = (emp_sched[1:-1] > 0) & (emp_sched[2:] > 0)
-            mask_violation = emp_sched[2:] < emp_sched[1:-1]
-            violations = np.sum(mask_consecutive & mask_violation)
-            cost += violations * WEIGHT_CONSTRAINT_HARD
-
-            # C. Special Days Cap (Max 22)
-            # We only check if the employee worked on special days
-            special_worked = sum(1 for d in self.special_days if emp_sched[d] > 0)
-            if special_worked > 22:
-                cost += (special_worked - 22) * WEIGHT_SPECIAL_CAP
-
-        # --- 2. DEMAND COVERAGE (Per Day) ---
-        # We approximate team coverage here. 
-        # Ideally, we solve a Min-Cost-Flow, but for speed, we check aggregate capacity.
-        
-        for d in range(1, self.num_days + 1):
-            for s in range(1, self.n_shifts + 1):
-                needed = self.daily_demand_min[d, s]
-                if needed > 0:
-                    # Count how many people are working this shift
-                    # (Refinement: Only count people who CAN do the teams required? 
-                    # For simplicity/speed in heuristic, we count raw bodies on shift s)
-                    actual = np.count_nonzero(sched[:, d] == s)
-                    if actual < needed:
-                        cost += (needed - actual) * WEIGHT_UNMET_MIN
-
-        return cost
-
-    def solve_simulated_annealing(self, max_time_mins=5):
-        current_cost = self.calculate_cost()
-        best_schedule = self.schedule.copy()
-        best_cost = current_cost
-        
-        t_start = time.time()
-        time_limit = max_time_mins * 60 if max_time_mins else 600
-        
-        # SA Parameters
-        temperature = 1000.0
-        alpha = 0.995 # Cooling rate
-        iteration = 0
-        
-        print(f"Initial Cost: {current_cost}")
-        
-        while True:
-            iteration += 1
-            elapsed = time.time() - t_start
-            if elapsed > time_limit:
-                break
-                
-            if best_cost == 0:
-                break # Perfect score
-                
-            # --- GENERATE NEIGHBOR (MOVE) ---
-            # We operate on a copy or modify-restore basis
-            # Type 1: Swap Work Day with Off Day (Preserves 223 count)
-            # Type 2: Change Shift on a Work Day
-            
-            emp = np.random.randint(0, self.n_employees)
-            move_type = np.random.random()
-            
-            # Store old values to revert if rejected
-            prev_d1_val = None
-            prev_d2_val = None
-            d1, d2 = 0, 0
-            
-            performed_move = False
-            
-            if move_type < 0.7: # 70% chance: Swap Days for 1 employee
-                # Find a work day and an off day
-                # Only look at non-vacation days
-                valid_indices = [d for d in range(1, self.num_days+1) 
-                                 if d not in self.vac_dict.get(emp+1, [])]
-                if len(valid_indices) < 2: continue
-                
-                d1, d2 = np.random.choice(valid_indices, 2, replace=False)
-                val1, val2 = self.schedule[emp, d1], self.schedule[emp, d2]
-                
-                # We only care if one is work and one is off, or different shifts
-                if val1 != val2:
-                    prev_d1_val, prev_d2_val = val1, val2
-                    self.schedule[emp, d1] = val2
-                    self.schedule[emp, d2] = val1
-                    performed_move = True
-                    
-            else: # 30% chance: Change Shift
-                # Pick a random day
-                d1 = np.random.randint(1, self.num_days + 1)
-                # If working, change shift
-                if self.schedule[emp, d1] > 0:
-                    prev_d1_val = self.schedule[emp, d1]
-                    # Pick different shift
-                    choices = [s for s in range(1, self.n_shifts+1) if s != prev_d1_val]
-                    if choices:
-                        new_s = np.random.choice(choices)
-                        self.schedule[emp, d1] = new_s
-                        performed_move = True
-
-            if not performed_move:
-                continue
-
-            # --- EVALUATE ---
-            # Optimization: In a full production code, we would calculate Delta Cost.
-            # Here, we recalculate full cost for safety/clarity.
-            new_cost = self.calculate_cost()
-            
-            delta = new_cost - current_cost
-            
-            # Acceptance Probability (Metropolis Criterion)
-            accept = False
-            if delta < 0:
-                accept = True
-            else:
-                if random.random() < math.exp(-delta / temperature):
-                    accept = True
-            
-            if accept:
-                current_cost = new_cost
-                if current_cost < best_cost:
-                    best_cost = current_cost
-                    best_schedule = self.schedule.copy()
-                    print(f"Iter {iteration} | Time {elapsed:.1f}s | Temp {temperature:.1f} | New Best: {best_cost}")
-            else:
-                # Revert move
-                if prev_d1_val is not None:
-                    self.schedule[emp, d1] = prev_d1_val
-                if prev_d2_val is not None:
-                    self.schedule[emp, d2] = prev_d2_val
-            
-            # Cool down
-            if iteration % 100 == 0:
-                temperature *= alpha
-                if temperature < 0.1: 
-                    temperature = 0.1 # Floor
-
-        self.schedule = best_schedule
-        return best_cost
-
-    def assign_teams_greedily(self):
-        """
-        The heuristic solved (Employee, Day) -> Shift.
-        Now we must determine (Employee, Day) -> Team.
-        We do this Greedily day by day.
-        """
-        final_assignment = defaultdict(list) # emp_id -> [(day, shift, team), ...]
-        
-        for d in range(1, self.num_days + 1):
-            # 1. Gather all requirements for this day
-            # reqs: list of (shift, team, count)
-            day_reqs = []
-            for (dd, ss, tt), count in self.min_reqs.items():
-                if dd == d:
-                    day_reqs.append({'s': ss, 't': tt, 'needed': count, 'filled': 0})
-            
-            # Sort requirements: Rare teams first (hardest to fill)
-            # (We estimate rarity by looking at how many employees allow that team)
-            # For now, just simplistic sort
-            day_reqs.sort(key=lambda x: x['needed'], reverse=True)
-            
-            # 2. Identify who is working what shift
-            workers_on_day = [] # (emp_idx, shift)
-            for emp in self.employees:
-                s = self.schedule[emp, d]
-                if s > 0:
-                    workers_on_day.append((emp, s))
-            
-            # 3. Match Workers to Requirements
-            # Keep track of who is assigned a team
-            assigned_workers = set()
-            
-            # Pass 1: Fill Mandatory Requirements
-            for req in day_reqs:
-                needed = req['needed']
-                shift = req['s']
-                team = req['t']
-                
-                # Find available workers for this shift who allow this team
-                candidates = []
-                for emp, s in workers_on_day:
-                    if emp not in assigned_workers and s == shift:
-                        # Check if emp allows this team
-                        allowed = self.allowed_teams[emp]
-                        if team in allowed:
-                            candidates.append(emp)
-                
-                # Assign up to 'needed'
-                take = candidates[:needed]
-                for emp in take:
-                    final_assignment[emp + 1].append((d, shift, team))
-                    assigned_workers.add(emp)
-                    req['filled'] += 1
-            
-            # Pass 2: Assign remaining workers to their "primary" or "first allowed" team
-            # (They are working the shift, so they must be assigned a team even if not "needed")
-            for emp, s in workers_on_day:
-                if emp not in assigned_workers:
-                    # Just pick the first allowed team
-                    # (In a real scenario, you'd pick the one with Ideal demand)
-                    allowed = self.allowed_teams[emp]
-                    if allowed:
-                        t = allowed[0]
-                        final_assignment[emp + 1].append((d, s, t))
-        
-        return final_assignment
-
-# --- MAIN WRAPPER FUNCTION ---
+# ============================================================
+# Helpers
+# ============================================================
 
 def _build_allowed_teams(employees):
+    """
+    Convert employee 'teams' labels to internal numeric team IDs.
+    Fallback to team 'A' when none provided.
+    """
     allowed = []
-    for Employees in employees:
-        codes = [get_team_code(t) for t in Employees.get("teams", []) if t]
+    for emp in employees:
+        codes = [get_team_code(t) for t in emp.get("teams", []) if t]
         ids = [get_team_id(c) for c in codes if c]
         if not ids:
             ids = [get_team_id("A")]
         allowed.append(ids)
     return allowed
 
-def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, rules=None):
-    
-    num_days = 365
-    n_employees = len(employees)
-    
-    # 1. Process Data
-    allowed_teams = _build_allowed_teams(employees)
-    vacs_dict = rows_to_vac_dict(vacations)
-    mins_raw, ideals_raw = rows_to_req_dicts(minimuns)
-    
-    min_reqs = {}
-    for (d, s, t), v in mins_raw.items():
-        if 1 <= d <= num_days and 1 <= s <= int(shifts) and int(v) > 0:
-            min_reqs[(d, s, t)] = int(v)
 
-    ideal_reqs = {}
-    for (d, s, t), v in ideals_raw.items():
-        if 1 <= d <= num_days and 1 <= s <= int(shifts) and int(v) > 0:
-            ideal_reqs[(d, s, t)] = int(v)
-            
-    # Calendar & Special Days
-    year = int(year) if year is not None else 2025
+def _build_special_days(year, num_days=365):
+    """
+    Build set of 1-based day indices that are PT holidays or Sundays.
+    Assumes build_calendar(year) returns (list_of_datetimes, list_of_sundays_1based).
+    """
     dias_ano, sundays_1based = build_calendar(year)
     pt_holidays = hl.country_holidays("PT", years=[year])
-    start_date = dias_ano[0].date()
-    special_days = {(d - start_date).days + 1 for d in pt_holidays}
-    special_days |= set(sundays_1based)
 
-    # 2. Instantiate Heuristic Solver
-    print("--- Starting Heuristic Solver (Simulated Annealing) ---")
-    scheduler = HeuristicScheduler(
-        employees=employees,
-        vac_dict=vacs_dict,
-        min_reqs=min_reqs,
-        ideal_reqs=ideal_reqs,
-        allowed_teams=allowed_teams,
-        num_days=num_days,
-        shifts=int(shifts),
-        special_days=special_days
-    )
-    
-    # 3. Initialize Random Valid Solution
-    scheduler.initialize_solution()
-    
-    # 4. Run Optimization
-    final_cost = scheduler.solve_simulated_annealing(max_time_mins=maxTime)
-    
-    print(f"--- Optimization Finished ---")
-    print(f"Final Heuristic Cost: {final_cost}")
-    
-    # 5. Assign Teams (Post-processing)
-    assignment_dict = scheduler.assign_teams_greedily()
-    
-    # 6. Export Results
-    class View: pass
+    if not dias_ano:
+        return set()
+
+    start_date = dias_ano[0].date()
+
+    holiday_days = set()
+    for h_date in pt_holidays:
+        d = (h_date - start_date).days + 1
+        if 1 <= d <= num_days:
+            holiday_days.add(d)
+
+    special_days = set(sundays_1based) | holiday_days
+    return special_days
+
+
+def _violates_consecutive_work(e, d, work, max_consec=5):
+    """
+    Check if assigning work to (e, d) would create more than max_consec
+    consecutive working days (i.e. forbid 6th consecutive day if max_consec=5).
+
+    This checks both backwards and forwards around day d, so we also catch
+    inserting work in the middle of an existing run.
+    """
+    n_days = len(work[e]) - 1  # because we index 1..num_days
+
+    # count consecutive working days to the left of d
+    run_left = 0
+    dd = d - 1
+    while dd >= 1 and work[e][dd] == 1:
+        run_left += 1
+        dd -= 1
+
+    # count consecutive working days to the right of d
+    run_right = 0
+    dd = d + 1
+    while dd <= n_days and work[e][dd] == 1:
+        run_right += 1
+        dd += 1
+
+    # full run length including day d (if we assign it)
+    full_run = run_left + 1 + run_right
+    return full_run > max_consec
+
+
+def _is_feasible_assignment(
+    e,
+    d,
+    s,
+    t,
+    work,
+    shift,
+    total_work,
+    total_special,
+    vac_mask,
+    special_days,
+    target_workdays,
+    special_cap,
+):
+    """
+    Check if assigning employee e to (d,s,t) is feasible w.r.t. all hard constraints:
+      - Vacation
+      - Only one shift per day
+      - No Afternoon→Morning (or more generally later→earlier) on consecutive work days
+        i.e. for any pair of consecutive worked days d, d+1 we require shift[d+1] >= shift[d]
+      - At most 5 consecutive working days
+      - Max target_workdays total working days
+      - Max special_cap special (Sunday/holiday) days
+    """
+
+    n_days = len(work[e]) - 1
+
+    # Vacation
+    if vac_mask[(e, d)]:
+        return False
+
+    # Already working that day
+    if work[e][d] == 1:
+        return False
+
+    # No backward shift on consecutive work days:
+    # previous day worked => its shift must be <= s
+    if d > 1 and work[e][d - 1] == 1:
+        prev_shift = shift[e][d - 1]
+        if prev_shift > s:
+            return False
+
+    # Also check relation with next day (if already worked):
+    # next day worked => its shift must be >= s
+    if d < n_days and work[e][d + 1] == 1:
+        next_shift = shift[e][d + 1]
+        if next_shift < s:
+            return False
+
+    # No more than 5 consecutive working days (check both sides)
+    if _violates_consecutive_work(e, d, work, max_consec=5):
+        return False
+
+    # Total work upper bound
+    if total_work[e] + 1 > target_workdays:
+        return False
+
+    # Special days cap
+    if d in special_days and total_special[e] + 1 > special_cap:
+        return False
+
+    return True
+
+
+def _employee_score(e, d, is_special, total_work, total_special, target_workdays):
+    """
+    Lower score = more desirable to assign.
+    Tunable heuristic.
+    """
+    w_work = 1.0
+    w_special = 3.0
+    w_under_target = 0.1
+    w_random = 0.01
+
+    score = 0.0
+    score += w_work * total_work[e]
+    score += w_special * total_special[e]
+
+    # Slightly favor under-scheduled employees
+    delta = target_workdays - total_work[e]
+    if delta > 0:
+        score -= w_under_target * delta
+
+    score += w_random * random.random()
+    return score
+
+
+# ============================================================
+# Main heuristic solver
+# ============================================================
+
+def solve_heuristic(
+    vacations,
+    minimuns,
+    employees,
+    maxTime=None,
+    year=2025,
+    shifts=2,
+    rules=None,
+    target_workdays=223,
+    special_cap=22,
+):
+    """
+    Heuristic schedule generator.
+
+    Arguments:
+        vacations: rows used by rows_to_vac_dict
+        minimuns: rows used by rows_to_req_dicts
+        employees: list of dicts (with "teams" field)
+        maxTime: unused (kept for API compatibility)
+        year: int
+        shifts: number of shifts per day (1..S)
+        rules: unused (placeholder)
+        target_workdays: desired working days per employee
+        special_cap: max special (Sunday+holiday) days per employee
+
+    Returns:
+        Table format compatible with schedule_to_table.
+    """
+
+    num_days = 365
+    n_employees = len(employees)
+    S = range(1, int(shifts) + 1)
+    Employees = list(range(n_employees))
+    D = list(range(1, num_days + 1))
+
+    # Allowed teams per employee
+    allowed_teams_per_emp = _build_allowed_teams(employees)
+
+    # Vacations mask
+    vacs_dict = rows_to_vac_dict(vacations)
+    vac_mask = {(i, d): False for i in Employees for d in D}
+    for emp_id, days in vacs_dict.items():
+        e = emp_id - 1
+        if 0 <= e < n_employees:
+            for d in days:
+                if 1 <= d <= num_days:
+                    vac_mask[(e, d)] = True
+
+    # Requirements
+    mins_raw, ideals_raw = rows_to_req_dicts(minimuns)
+
+    min_required = {}
+    for (d, s, t), v in mins_raw.items():
+        if 1 <= d <= num_days and 1 <= s <= int(shifts):
+            try:
+                req = int(v)
+            except Exception:
+                continue
+            if req > 0:
+                min_required[(d, s, t)] = req
+
+    ideal_required = {}
+    for (d, s, t), v in ideals_raw.items():
+        if 1 <= d <= num_days and 1 <= s <= int(shifts):
+            try:
+                req = int(v)
+            except Exception:
+                continue
+            if req > 0:
+                ideal_required[(d, s, t)] = req
+
+    # Special days (Sundays + holidays)
+    special_days = _build_special_days(year, num_days=num_days)
+
+    # State variables
+    work = [[0] * (num_days + 1) for _ in Employees]   # work[e][d] ∈ {0,1}
+    shift = [[0] * (num_days + 1) for _ in Employees]  # shift[e][d] ∈ {0..S}
+    team = [[None] * (num_days + 1) for _ in Employees]  # team[e][d] ∈ team_id or None
+
+    total_work = [0] * n_employees
+    total_special = [0] * n_employees
+
+    # Coverage tracking
+    assigned_min = defaultdict(int)  # (d,s,t) -> count assigned for min-coverage phase
+    assigned = defaultdict(int)      # (d,s,t) -> overall coverage
+
+    # =====================================================
+    # PASS 1: Satisfy minimum coverage greedily
+    # =====================================================
+
+    for d in D:
+        for s in S:
+            # Determine teams that require coverage on this (d,s)
+            teams_here = [
+                t for (dd, ss, t) in min_required.keys() if dd == d and ss == s
+            ]
+            for t in teams_here:
+                req = min_required[(d, s, t)]
+                while assigned_min[(d, s, t)] < req:
+                    candidates = []
+                    for e in Employees:
+                        if t not in allowed_teams_per_emp[e]:
+                            continue
+                        if not _is_feasible_assignment(
+                            e,
+                            d,
+                            s,
+                            t,
+                            work,
+                            shift,
+                            total_work,
+                            total_special,
+                            vac_mask,
+                            special_days,
+                            target_workdays,
+                            special_cap,
+                        ):
+                            continue
+                        candidates.append(e)
+
+                    if not candidates:
+                        # Cannot meet this minimum; leave shortage here
+                        break
+
+                    best_e = min(
+                        candidates,
+                        key=lambda e: _employee_score(
+                            e, d, d in special_days, total_work, total_special, target_workdays
+                        ),
+                    )
+
+                    work[best_e][d] = 1
+                    shift[best_e][d] = s
+                    team[best_e][d] = t
+                    total_work[best_e] += 1
+                    if d in special_days:
+                        total_special[best_e] += 1
+                    assigned_min[(d, s, t)] += 1
+                    assigned[(d, s, t)] += 1
+
+    # =====================================================
+    # PASS 2: Move toward ideal coverage and 223 workdays
+    # =====================================================
+
+    for e in Employees:
+        deficit = target_workdays - total_work[e]
+        if deficit <= 0:
+            continue
+
+        # Two rounds:
+        # 1) Assign only where coverage < ideal (if ideal defined) or < minimum if no ideal
+        # 2) Assign anywhere feasible (even if over ideal / no requirement)
+        for round_idx in (1, 2):
+            if deficit <= 0:
+                break
+
+            for d in D:
+                if deficit <= 0:
+                    break
+                if work[e][d] == 1:
+                    continue
+                if vac_mask[(e, d)]:
+                    continue
+
+                # Build candidate slots for this day
+                slots = []
+                for s in S:
+                    for t in allowed_teams_per_emp[e]:
+                        key = (d, s, t)
+                        slots.append((s, t, key))
+
+                if round_idx == 1:
+                    # Filter to where coverage < ideal or (ideal absent and coverage < min)
+                    filtered = []
+                    for s, t, key in slots:
+                        cov = assigned[key]
+                        ideal = ideal_required.get(key, None)
+                        minreq = min_required.get(key, 0)
+                        if ideal is not None:
+                            if cov < ideal:
+                                filtered.append((s, t, key))
+                        else:
+                            if cov < minreq:
+                                filtered.append((s, t, key))
+                    slots = filtered
+                    if not slots:
+                        continue
+
+                # Try slots in random order to diversify
+                random.shuffle(slots)
+
+                for s, t, key in slots:
+                    if not _is_feasible_assignment(
+                        e,
+                        d,
+                        s,
+                        t,
+                        work,
+                       shift,
+                        total_work,
+                        total_special,
+                        vac_mask,
+                        special_days,
+                        target_workdays,
+                        special_cap,
+                    ):
+                        continue
+
+                    work[e][d] = 1
+                    shift[e][d] = s
+                    team[e][d] = t
+                    total_work[e] += 1
+                    if d in special_days:
+                        total_special[e] += 1
+                    assigned[key] += 1
+                    deficit -= 1
+                    break  # next day
+
+    # =====================================================
+    # PASS 3: Fill remaining deficit anywhere feasible, even if overstaffing
+    # =====================================================
+
+    for e in Employees:
+        deficit = target_workdays - total_work[e]
+        if deficit <= 0:
+            continue
+
+        for d in D:
+            if deficit <= 0:
+                break
+            if work[e][d] == 1:
+                continue
+            if vac_mask[(e, d)]:
+                continue
+
+            slots = []
+            for s in S:
+                for t in allowed_teams_per_emp[e]:
+                    slots.append((s, t))
+
+            random.shuffle(slots)
+
+            for s, t in slots:
+                if not _is_feasible_assignment(
+                    e,
+                    d,
+                    s,
+                    t,
+                    work,
+                    shift,
+                    total_work,
+                    total_special,
+                    vac_mask,
+                    special_days,
+                    target_workdays,
+                    special_cap,
+                ):
+                    continue
+
+                work[e][d] = 1
+                shift[e][d] = s
+                team[e][d] = t
+                total_work[e] += 1
+                if d in special_days:
+                    total_special[e] += 1
+                assigned[(d, s, t)] += 1
+                deficit -= 1
+                break
+
+    # =====================================================
+    # Build assignment structure and export
+    # =====================================================
+
+    assign = defaultdict(list)  # emp_id -> list[(day, s, t)]
+    for e in Employees:
+        emp_id = e + 1
+        for d in D:
+            if work[e][d] == 1:
+                s = shift[e][d]
+                t = team[e][d]
+                if s > 0 and t is not None:
+                    assign[emp_id].append((d, s, t))
+
+    class View:
+        pass
+
     v = View()
     v.employees = list(range(1, n_employees + 1))
     v.vacs = {emp_id: vacs_dict.get(emp_id, []) for emp_id in v.employees}
-    v.assignment = assignment_dict
-    
+    v.assignment = assign
+
     export_schedule_to_csv(v, "schedule_heuristic.csv", num_days=num_days)
 
     return schedule_to_table(
@@ -377,4 +475,22 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
         assignment=v.assignment,
         num_days=num_days,
         shifts=int(shifts),
+    )
+
+
+# ============================================================
+# Wrapper to match your existing `solve` interface
+# ============================================================
+
+def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, rules=None):
+    return solve_heuristic(
+        vacations=vacations,
+        minimuns=minimuns,
+        employees=employees,
+        maxTime=maxTime,
+        year=year,
+        shifts=shifts,
+        rules=rules,
+        target_workdays=223,
+        special_cap=22,
     )
