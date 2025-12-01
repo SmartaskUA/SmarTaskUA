@@ -23,10 +23,11 @@ const Calendar = () => {
   const reqToCalRef = useRef({});
 
   const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "November", "December", "January", "February", "March", "April",
+    "May", "June", "July", "August", "September", "October"
   ];
-  const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+  const daysInMonth = [30, 31, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31];
 
   useEffect(() => {
     setStartDay(1);
@@ -41,7 +42,7 @@ const Calendar = () => {
         if (responseData) {
           const scheduleData = responseData.data;
           const year = responseData.metadata?.year || new Date().getFullYear();
-          const firstDay = new Date(`${year}-01-01`).getDay();
+          const firstDay = new Date(`2021-11-01`).getDay();
           setFirstDayOfYear(firstDay);
           setData(scheduleData);
           setMetadata(responseData.metadata);
@@ -60,12 +61,15 @@ const Calendar = () => {
         stompClient.subscribe("/topic/comparison/all", (msg) => {
           try {
             const data = JSON.parse(msg.body);
-            data.forEach((item) => {
+            data.forEach(async (item) => {
               const mappedCalId = reqToCalRef.current[item.requestId];
               if (mappedCalId === calendarId) {
                 console.log("✅ KPI recebido:", item.result);
                 setKpiSummary(item.result);
               }
+              const res = await axios.post(`${BaseUrl}/schedules/analyze`, fd);
+              console.log("🛰️ Enviado para análise com requestId:", res.data.requestId);
+
             });
           } catch (e) {
             console.error("Erro a processar resultado via WebSocket:", e);
