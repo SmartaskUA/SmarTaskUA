@@ -1,0 +1,24 @@
+{
+  "challenge1_dayOffOptimization": {
+    "enabled": true,
+    "objective": "balanced",
+    "swapPenalty": 10,
+    "coverageReward": 100
+  },
+  "challenge2_competencyOrdering": {
+    "enabled": true,
+    "respectResourceRule": true,
+    "dynamicOrdering": true
+  },
+  "challenge3_multiCompetencyAllocation": {
+    "enabled": true,
+    "allocationStrategy": "hybrid",
+    "considerLongTerm": true,
+    "levelWeight": 0.5,
+    "priorityWeight": 0.5
+  },
+  "challenge4_breakManagement": {
+    "mode": "without_breaks",
+    "breakRules": []
+  }
+}

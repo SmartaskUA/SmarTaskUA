@@ -1,0 +1,409 @@
+{
+  "_description": "Complete Sisqual Problem Template - Based on BFarias_Doc_Sisqual.pdf specification",
+  "_version": "1.0",
+  "_created": "2025-12-02",
+
+  "storeConfiguration": {
+    "name": "Sisqual Store",
+    "storeHours": {
+      "weekdays": {
+        "open": "08:30",
+        "close": "22:00"
+      },
+      "weekends": {
+        "open": "11:00",
+        "close": "21:00"
+      },
+      "openAllYear": true,
+      "daysPerYear": 365
+    },
+    "constraints": {
+      "maxConsecutiveDays": 5,
+      "minRestBetweenShifts": 11,
+      "timeGranularity": 30,
+      "swapWithinWeekOnly": true,
+      "weekDefinition": "monday-sunday",
+      "minSundaysOffPerMonth": 1,
+      "partTimeNoSwaps": true
+    },
+    "breaks": {
+      "enabled": false,
+      "note": "Challenge 4: Can toggle between with/without breaks",
+      "rules": []
+    }
+  },
+
+  "schedulingPeriod": {
+    "targetMonth": "2025-01",
+    "startDate": "2024-12-23",
+    "endDate": "2025-02-02",
+    "note": "Period includes 1 week before and 1 week after target month"
+  },
+
+  "employees": [
+    {
+      "id": "EMP001",
+      "name": "Employee 1",
+      "competencies": [
+        {"type": "EG", "level": 1},
+        {"type": "CAJ", "level": 2}
+      ],
+      "partTime": false,
+      "contractPeriods": [
+        {"startDate": "2024-01-01", "endDate": null}
+      ]
+    },
+    {
+      "id": "EMP002",
+      "name": "Employee 2",
+      "competencies": [
+        {"type": "ALM", "level": 1}
+      ],
+      "partTime": false,
+      "contractPeriods": [
+        {"startDate": "2023-06-01", "endDate": null}
+      ],
+      "note": "Single warehouse employee - Question 5 in PDF: creates rigidity issues"
+    },
+    {
+      "id": "EMP003",
+      "name": "Employee 3",
+      "competencies": [
+        {"type": "CAJ", "level": 1}
+      ],
+      "partTime": false,
+      "contractPeriods": [
+        {"startDate": "2024-02-01", "endDate": null}
+      ]
+    },
+    {
+      "id": "EMP004",
+      "name": "Employee 4 - Multi-skilled",
+      "competencies": [
+        {"type": "EG", "level": 3},
+        {"type": "CAJ", "level": 1}
+      ],
+      "partTime": false,
+      "contractPeriods": [
+        {"startDate": "2024-01-01", "endDate": null}
+      ],
+      "note": "Challenge 3: Must decide which competency to assign"
+    },
+    {
+      "id": "EMP005",
+      "name": "Employee 5 - Part-time",
+      "competencies": [
+        {"type": "CAJ", "level": 2}
+      ],
+      "partTime": true,
+      "contractPeriods": [
+        {"startDate": "2024-01-15", "endDate": null}
+      ],
+      "note": "Works 2-3 days/week (typically weekends), cannot swap day-offs"
+    },
+    {
+      "id": "EMP006",
+      "name": "Employee 6 - Contract gap",
+      "competencies": [
+        {"type": "EG", "level": 2}
+      ],
+      "partTime": false,
+      "contractPeriods": [
+        {"startDate": "2023-01-01", "endDate": "2023-06-30"},
+        {"startDate": "2024-01-01", "endDate": null}
+      ],
+      "note": "Contract ended and resumed - history reset at gap"
+    }
+  ],
+
+  "kpiAlarms": {
+    "priorityHierarchy": [
+      {"rank": 1, "competency": "ALM", "level": "N≥1", "description": "RESP ALMACEN N≥1: MaxAlarm"},
+      {"rank": 2, "competency": "EG", "level": "N=1", "description": "RESP - EQUIPO GESTION N=1"},
+      {"rank": 3, "competency": "CAJ", "level": "N=1", "description": "CAJA N=1"},
+      {"rank": 4, "competency": "EG", "level": "N=2", "description": "RESP - EQUIPO GESTION N=2"},
+      {"rank": 5, "competency": "CAJ", "level": "N=2", "description": "CAJA N=2"},
+      {"rank": 6, "competency": "EG", "level": "N=3", "description": "RESP - EQUIPO GESTION N=3"},
+      {"rank": 7, "competency": "EG", "level": "≥4", "description": "RESP - EQUIPO GESTION ≥ 4"},
+      {"rank": 8, "competency": "CAJ", "level": "N=3", "description": "CAJA N=3"},
+      {"rank": 9, "competency": "EQUIPA", "level": "N≥1", "description": "EQUIPA Empleados N≥1"}
+    ],
+    "resourceAllocationRule": "Do not allocate resources to meet IDEAL of one task if MINIMUM of another task cannot be met",
+    "maxAlarmValue": "max(minimo, ideal, estimado)",
+    "alarms": [
+      {
+        "id": "ALM_WAREHOUSE_WEEKDAY",
+        "competency": "ALM",
+        "level": 1,
+        "applicationType": "tarefa",
+        "timeRanges": [
+          {
+            "dayType": "weekday",
+            "startTime": "08:30",
+            "endTime": "15:30",
+            "requirements": {
+              "minimo": 1,
+              "ideal": 1,
+              "estimado": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "EG_MANAGEMENT_LEVEL1",
+        "competency": "EG",
+        "level": 1,
+        "applicationType": "equipa",
+        "timeRanges": [
+          {
+            "dayType": "weekday",
+            "startTime": "08:30",
+            "endTime": "22:00",
+            "requirements": {
+              "minimo": 1,
+              "ideal": 2
+            }
+          },
+          {
+            "dayType": "weekend",
+            "startTime": "11:00",
+            "endTime": "21:00",
+            "requirements": {
+              "minimo": 1,
+              "ideal": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "CAJ_CASHIER_LEVEL1_PEAK",
+        "competency": "CAJ",
+        "level": 1,
+        "applicationType": "tipo_equipa",
+        "timeRanges": [
+          {
+            "dayType": "weekday",
+            "startTime": "12:00",
+            "endTime": "14:00",
+            "requirements": {
+              "minimo": 2,
+              "ideal": 3,
+              "estimado": 2
+            }
+          },
+          {
+            "dayType": "weekday",
+            "startTime": "18:00",
+            "endTime": "21:00",
+            "requirements": {
+              "minimo": 2,
+              "ideal": 4,
+              "estimado": 3
+            }
+          },
+          {
+            "dayType": "weekend",
+            "startTime": "14:00",
+            "endTime": "19:00",
+            "requirements": {
+              "minimo": 3,
+              "ideal": 4,
+              "estimado": 3
+            }
+          }
+        ]
+      }
+    ]
+  },
+
+  "scheduleInput": {
+    "note": "Initial schedule template with fixed and flexible markings from Excel",
+    "markingTypes": {
+      "DL": "Dia Livre - Day off (generic)",
+      "DLF": "Dia Livre Fixo - Fixed day off (cannot be changed)",
+      "DLV": "Dia Livre Variável - Variable day off (can be swapped within week)",
+      "VAC": "Vacation",
+      "EnfD": "Sick leave / absence",
+      "DC-E": "Unknown marking (Question 6 in PDF)",
+      "WORK": "Work shift",
+      "EMPTY": "Contract gap (grey cells in Excel)"
+    },
+    "employeeSchedules": [
+      {
+        "employeeId": "EMP001",
+        "days": [
+          {
+            "date": "2025-01-06",
+            "marking": "WORK",
+            "isFixed": false,
+            "shift": {
+              "duration": 8,
+              "startTime": null,
+              "endTime": null,
+              "isFlexible": true,
+              "competencyAssignment": "EG",
+              "note": "Flexible shift - algorithm must determine start/end times"
+            }
+          },
+          {
+            "date": "2025-01-07",
+            "marking": "WORK",
+            "isFixed": true,
+            "shift": {
+              "duration": 7,
+              "startTime": "09:00",
+              "endTime": "16:00",
+              "isFlexible": false,
+              "competencyAssignment": "EG",
+              "note": "Fixed shift - marked in red in Excel, cannot be modified"
+            }
+          },
+          {
+            "date": "2025-01-08",
+            "marking": "DLV",
+            "isFixed": false,
+            "note": "Variable day-off - Challenge 1: can be swapped within same week"
+          },
+          {
+            "date": "2025-01-09",
+            "marking": "DLF",
+            "isFixed": true,
+            "note": "Fixed day-off - cannot be changed"
+          }
+        ]
+      },
+      {
+        "employeeId": "EMP004",
+        "days": [
+          {
+            "date": "2025-01-06",
+            "marking": "WORK",
+            "isFixed": false,
+            "shift": {
+              "duration": 8,
+              "startTime": null,
+              "endTime": null,
+              "isFlexible": true,
+              "competencyAssignment": null,
+              "note": "Challenge 3: Multi-competency employee - algorithm must decide EG-3 or CAJ-1"
+            }
+          }
+        ]
+      },
+      {
+        "employeeId": "EMP005",
+        "days": [
+          {
+            "date": "2025-01-04",
+            "marking": "WORK",
+            "isFixed": true,
+            "shift": {
+              "duration": 8,
+              "startTime": "11:00",
+              "endTime": "19:00",
+              "isFlexible": false,
+              "competencyAssignment": "CAJ",
+              "note": "Part-time employee - Saturday shift, fixed schedule"
+            }
+          },
+          {
+            "date": "2025-01-05",
+            "marking": "WORK",
+            "isFixed": true,
+            "shift": {
+              "duration": 8,
+              "startTime": "11:00",
+              "endTime": "19:00",
+              "isFlexible": false,
+              "competencyAssignment": "CAJ",
+              "note": "Part-time employee - Sunday shift, cannot swap day-offs"
+            }
+          }
+        ]
+      }
+    ]
+  },
+
+  "challenges": {
+    "challenge1_dayOffOptimization": {
+      "name": "Otimização de Trocas de Folgas",
+      "description": "Minimize day-off swaps while maximizing service coverage",
+      "enabled": true,
+      "objective": "balanced",
+      "swapPenalty": 10,
+      "coverageReward": 100,
+      "rules": [
+        "Only DLV (variable day-offs) can be swapped",
+        "Swaps must occur within same week",
+        "Part-time employees cannot have day-offs swapped",
+        "Red markings (isFixed=true) cannot be modified"
+      ]
+    },
+    "challenge2_competencyOrdering": {
+      "name": "Preenchimento por Ordem de Competência",
+      "description": "Fill teams by competency priority order respecting resource allocation",
+      "enabled": true,
+      "respectResourceRule": true,
+      "dynamicOrdering": true,
+      "rules": [
+        "Follow priority hierarchy (1-9)",
+        "Order may vary by day/time based on KPI needs",
+        "Don't use ideal if minimum of another task unmet"
+      ]
+    },
+    "challenge3_multiCompetencyAllocation": {
+      "name": "Decisão de Alocação para Colaboradores com Múltiplas Competências",
+      "description": "Optimal competency selection for multi-skilled employees",
+      "enabled": true,
+      "allocationStrategy": "hybrid",
+      "considerLongTerm": true,
+      "levelWeight": 0.5,
+      "priorityWeight": 0.5,
+      "innovationNote": "This algorithm is an innovation - no similar solution exists in market",
+      "factors": [
+        "Alarm priority hierarchy",
+        "Employee competency levels",
+        "KPI fulfillment (minimo, ideal, estimado)",
+        "Long-term impact on future periods"
+      ]
+    },
+    "challenge4_breakManagement": {
+      "name": "Gestão de Pausas",
+      "description": "Two variants: with breaks (complex) or without breaks (simple)",
+      "mode": "without_breaks",
+      "variants": {
+        "without_breaks": {
+          "description": "Meal period included in shift duration",
+          "complexity": "lower"
+        },
+        "with_breaks": {
+          "description": "Explicit break scheduling based on country legislation",
+          "complexity": "higher",
+          "breakRules": [
+            {
+              "minShiftDuration": 6,
+              "breakDuration": 30,
+              "breakType": "meal"
+            },
+            {
+              "minShiftDuration": 4,
+              "breakDuration": 15,
+              "breakType": "rest"
+            }
+          ]
+        }
+      }
+    }
+  },
+
+  "openQuestions": {
+    "note": "Questions from Section 'Questões em Aberto' in PDF",
+    "question1": "When minimum employees < sum of minimums per task, can employees cover multiple tasks simultaneously?",
+    "question2": "Should DLF, VAC, and EnfD be treated identically algorithmically (all = unavailable)?",
+    "question3": "Any preferences/restrictions for JSON structure for Sisqual internal systems?",
+    "question4": "Week definition: Monday-Sunday or Sunday-Saturday?",
+    "question5": "Single ALM-1 employee covers all warehouse needs Mon-Fri but creates inflexibility - acceptable?",
+    "question6": "What does DC-E marking mean?",
+    "question7": "Are Estimated values available for Caixa, Gestão, and Armazém teams (currently only for Empregados)?"
+  }
+}

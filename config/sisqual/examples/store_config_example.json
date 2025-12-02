@@ -1,0 +1,26 @@
+{
+  "storeHours": {
+    "weekdays": {
+      "open": "08:30",
+      "close": "22:00"
+    },
+    "weekends": {
+      "open": "11:00",
+      "close": "21:00"
+    },
+    "openAllYear": true
+  },
+  "constraints": {
+    "maxConsecutiveDays": 5,
+    "minRestBetweenShifts": 11,
+    "timeGranularity": 30,
+    "swapWithinWeekOnly": true,
+    "weekDefinition": "monday-sunday",
+    "minSundaysOffPerMonth": 1,
+    "partTimeNoSwaps": true
+  },
+  "breaks": {
+    "enabled": false,
+    "rules": []
+  }
+}

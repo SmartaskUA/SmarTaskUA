@@ -1,0 +1,8 @@
+Alarm ID,Competency,Level,Application Type,Day Type,Start Time,End Time,Minimo,Ideal,Estimado
+ALM_WAREHOUSE_WEEKDAY,ALM,1,tarefa,weekday,08:30,15:30,1,1,1
+EG_MANAGEMENT_LEVEL1_WD,EG,1,equipa,weekday,08:30,22:00,1,2,
+EG_MANAGEMENT_LEVEL1_WE,EG,1,equipa,weekend,11:00,21:00,1,1,
+CAJ_CASHIER_PEAK_LUNCH,CAJ,1,tipo_equipa,weekday,12:00,14:00,2,3,2
+CAJ_CASHIER_PEAK_EVENING,CAJ,1,tipo_equipa,weekday,18:00,21:00,2,4,3
+CAJ_CASHIER_WEEKEND_PEAK,CAJ,1,tipo_equipa,weekend,14:00,19:00,3,4,3
+CAJ_CASHIER_LEVEL2,CAJ,2,tipo_equipa,all,08:30,22:00,1,2,
