@@ -130,7 +130,7 @@ jobs:
       - name: Build API image
         uses: docker/build-push-action@v5
         with:
-          context: ./src/api
+          context: .
           file: ./infra/docker/api/Dockerfile
           push: false
           tags: smartask/api:test
@@ -138,7 +138,7 @@ jobs:
       - name: Build Frontend image
         uses: docker/build-push-action@v5
         with:
-          context: ./src/frontend
+          context: .
           file: ./infra/docker/frontend/Dockerfile
           push: false
           tags: smartask/frontend:test
