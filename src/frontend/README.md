@@ -1,15 +1,86 @@
-# React + Vite
+# Frontend Service
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Overview
 
-Currently, two official plugins are available:
+React-based web application that provides the user interface for the SmarTask scheduling system. Allows managers and administrators to create schedules, manage employees, configure constraints, and visualize schedule comparisons.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Technology Stack
 
-## Expanding the ESLint configuration
+- **React 18** with hooks
+- **Vite** for fast development and building
+- **TailwindCSS** for styling
+- **ESLint** for code quality
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Project Structure
 
-# Frotend
+```
+src/
+├── Admin/                       # Administrator pages and components
+├── Manager/                     # Manager pages and components
+├── components/                  # Reusable UI components
+├── context/                     # React Context (e.g., AuthContext)
+├── login/                       # Login pages
+├── assets/                      # Images, icons, static files
+├── styles/                      # CSS files
+├── App.jsx                      # Main application component
+└── main.jsx                     # Application entry point
 
+public/                          # Static assets served directly
+```
+
+## Key Features
+
+- **Schedule Generation:** Configure and trigger schedule creation
+- **Schedule Visualization:** View and compare generated schedules
+- **Employee Management:** Add, edit, and manage employee profiles
+- **Vacation Management:** Import and manage vacation templates
+- **Rules Configuration:** Define and modify scheduling constraints
+- **Real-time Updates:** WebSocket notifications for task status
+- **Authentication:** Login system with role-based access
+
+## Development
+
+### Install Dependencies
+
+```bash
+npm install
+```
+
+### Run Development Server
+
+```bash
+npm run dev
+# Access at http://localhost:5173
+```
+
+### Build for Production
+
+```bash
+npm run build
+# Output in dist/ directory
+```
+
+### Lint Code
+
+```bash
+npm run lint
+```
+
+### Run with Docker
+
+```bash
+# From project root
+make build-frontend
+```
+
+## Configuration
+
+- **API Endpoint:** Configure in source code (usually points to `http://localhost:8081`)
+- **Vite Config:** `vite.config.js`
+- **Tailwind Config:** `tailwind.config.js`
+- **ESLint Config:** `eslint.config.js`
+
+## Access
+
+- **URL:** http://localhost:5173/
+- **Default Credentials:** manager/manager

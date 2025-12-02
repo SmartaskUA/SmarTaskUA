@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy master rules.json from config/
+COPY ../../config/rules.json ./rules.json
+
 # Copy the entire scheduler service (including algorithms)
 COPY . .
 

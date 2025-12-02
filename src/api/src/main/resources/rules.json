@@ -41,7 +41,7 @@
       "params": {}
     },
     {
-      "id": "max-workdays-per-year",
+      "id": "total-workdays-per-year",
       "type": "total_workdays",
       "kind": "hard",
       "scope": "per-employee-global",

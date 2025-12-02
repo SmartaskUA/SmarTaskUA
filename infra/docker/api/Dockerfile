@@ -9,6 +9,9 @@ COPY pom.xml .
 # Baixe dependências (isso usa o cache se o pom.xml não mudar)
 RUN mvn dependency:go-offline
 
+# Copy master rules.json from config/ to resources
+COPY ../../config/rules.json ./src/main/resources/rules.json
+
 # Agora copie o restante do código
 COPY src ./src
 

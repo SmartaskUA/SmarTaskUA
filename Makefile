@@ -20,7 +20,7 @@ help: ## Show this help message
 	@echo "  make down           - Stop all services"
 	@echo "  make restart        - Restart all services"
 	@echo "  make logs           - Follow logs from all services"
-	@echo "  make clean          - Stop services and remove all volumes"
+	@echo "  make clean-volumes  - Stop services and remove all volumes"
 	@echo ""
 	@echo "$(GREEN)Service-Specific Builds:$(NC)"
 	@echo "  make build-api       - Rebuild API (mvn + docker)"
@@ -40,6 +40,9 @@ help: ## Show this help message
 	@echo "  RabbitMQ UI:     http://localhost:15672 (guest/guest)"
 
 build: ## Build everything (mvn + docker) and start services
+	@echo "$(BLUE) Copying master rules.json to services...$(NC)"
+	@cp config/rules.json src/api/src/main/resources/rules.json
+	@cp config/rules.json src/scheduler/rules.json
 	@echo "$(BLUE) Building backend Java (Spring Boot)...$(NC)"
 	@if [ -d "src/api" ]; then \
 		cd src/api && mvn clean install && cd ../..; \
@@ -79,6 +82,7 @@ clean-volumes: ## Stop services and remove all volumes
 # Service-specific builds
 build-api: ## Rebuild API service
 	@echo "$(BLUE) Rebuilding API service...$(NC)"
+	@cp config/rules.json src/api/src/main/resources/rules.json
 	@cd src/api && mvn install && cd ../..
 	@docker compose -f $(COMPOSE_FILE) build api
 	@docker compose -f $(COMPOSE_FILE) stop api
@@ -87,6 +91,7 @@ build-api: ## Rebuild API service
 
 build-scheduler: ## Rebuild scheduler service
 	@echo "$(BLUE) Rebuilding scheduler service...$(NC)"
+	@cp config/rules.json src/scheduler/rules.json
 	@docker compose -f $(COMPOSE_FILE) build scheduler
 	@docker compose -f $(COMPOSE_FILE) stop scheduler
 	@docker compose -f $(COMPOSE_FILE) up -d scheduler
