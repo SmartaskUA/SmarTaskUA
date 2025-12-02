@@ -8,15 +8,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
+# Copy requirements and install Python dependencies (from src/scheduler/)
+COPY src/scheduler/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy master rules.json from config/
-COPY ../../config/rules.json ./rules.json
+COPY config/rules.json ./rules.json
 
-# Copy the entire scheduler service (including algorithms)
-COPY . .
+# Copy the entire scheduler service (from src/scheduler/)
+COPY src/scheduler/ .
 
 # The command will be specified in docker-compose.yml
 CMD ["python3", "RabbitMQClient.py"]

@@ -3,17 +3,17 @@ FROM maven:3.9.6-eclipse-temurin-17 AS build
 
 WORKDIR /app
 
-# Copie apenas o pom.xml primeiro
-COPY pom.xml .
+# Copie apenas o pom.xml primeiro (from src/api/)
+COPY src/api/pom.xml .
 
 # Baixe dependências (isso usa o cache se o pom.xml não mudar)
 RUN mvn dependency:go-offline
 
 # Copy master rules.json from config/ to resources
-COPY ../../config/rules.json ./src/main/resources/rules.json
+COPY config/rules.json ./src/main/resources/rules.json
 
-# Agora copie o restante do código
-COPY src ./src
+# Agora copie o restante do código (from src/api/src)
+COPY src/api/src ./src
 
 # Compile o projeto
 

@@ -37,8 +37,8 @@ services:
 
   scheduler:
     build:
-      context: ../src/scheduler
-      dockerfile: ../../infra/docker/scheduler/Dockerfile
+      context: ..
+      dockerfile: infra/docker/scheduler/Dockerfile
     container_name: scheduler
     command: python3 RabbitMQClient.py
     depends_on:
@@ -58,8 +58,8 @@ services:
 
   analyzer:
     build:
-      context: ../src/analyzer
-      dockerfile: ../../infra/docker/analyzer/Dockerfile
+      context: ..
+      dockerfile: infra/docker/analyzer/Dockerfile
     container_name: analyzer
     command: python3 analyze.py
     depends_on:
@@ -82,8 +82,8 @@ services:
 
   api:
     build:
-      context: ../src/api
-      dockerfile: ../../infra/docker/api/Dockerfile
+      context: ..
+      dockerfile: infra/docker/api/Dockerfile
     container_name: api
     ports:
       - "8081:8081"
@@ -137,8 +137,8 @@ services:
   frontend:
     container_name: frontend
     build:
-      context: ../src/frontend
-      dockerfile: ../../infra/docker/frontend/Dockerfile
+      context: ..
+      dockerfile: infra/docker/frontend/Dockerfile
     depends_on:
       - api
     ports:

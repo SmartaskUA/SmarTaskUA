@@ -5,7 +5,8 @@ WORKDIR /app
 # instala curl para o healthcheck (ou mude o healthcheck para wget)
 RUN apk add --no-cache curl
 
-COPY package.json package-lock.json ./
+# Copy package files (from src/frontend/)
+COPY src/frontend/package.json src/frontend/package-lock.json ./
 RUN npm ci
 
 # Não copie a app aqui; vamos montar via bind mount no compose
