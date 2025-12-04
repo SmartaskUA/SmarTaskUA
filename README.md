@@ -1,116 +1,96 @@
-# SmartTask
-Intelligent system for test automatically generating schedules work and evaluate them
+# SmarTask
 
-# Lauching : 
-#### Technical note: This project was developed and tested in operating systems from the Unix family (specifically Ubuntu and Arch Linux). No system test was performed in other operating systems (such as Windows or MacOS). If any troubleshooting problem is noticed in other environments, further investigation might be needed to adapt the system to be used in these environments.
+## Project Overview
 
-### in this project's root, execute the following commands : 
-##### (You need to have Docker Compose installed locally in your system; the commands might change from system to system.)
+SmarTask is an intelligent employee scheduling system that automatically generates and optimizes work schedules using constraint-based algorithms. The system respects business rules, vacation constraints, and minimum coverage requirements while providing real-time updates and comprehensive schedule analysis.
 
-#### Build images and set for development.
-```
-docker-compose up --build
-```
+**Key Technologies:**
+- **Backend:** Java 17 + Spring Boot
+- **Frontend:** React 18 + Vite + TailwindCSS
+- **Workers:** Python 3.11 (OR-Tools, PuLP)
+- **Database:** MongoDB
+- **Message Queue:** RabbitMQ
+- **Infrastructure:** Docker + Docker Compose
 
+---
 
-### The running frontend application can be accessed via :
-```
-http://localhost:5173/
-```
-
-#### After shutting down the application via command line, shut down the containers if not needed anymore.
-```
-docker-compose down
-```
-
-#### To debug a specific container/service that is running with the docker compose : 
-```
-docker compose logs [service name]
-```
-
-# Project Structure
+## Project Structure
 
 ```
-
 SmarTaskUA/
-├── algorithm/                          # All the developed algorithms
-│   ├── CSP.py, CSPv2.py
-│   ├── ILP.py, ILPv2.py
-│   ├── greedyClimbing.py
-│   ├── greedyRandomized.py             
-│   ├── hillClimbing.py                 
-│   ├── kpiComparison.py
-│   ├── kpiVerification.py              # For veryfying defined KPI's
-│   ├── utils.py
-│   ├── contexts/                       # Custom schedule generation (IN_PROGRESS)
-│   ├── engines/                        # Custom schedule generation (IN_PROGRESS)
-│   ├── handlers/                       # Custom schedule generation (IN_PROGRESS)
-│   └── rules/                          # Custom schedule generation (IN_PROGRESS)
+├── src/                              # All source code (microservices)
+│   ├── api/                          # Java Spring Boot REST API
+│   ├── frontend/                     # React + Vite Frontend
+│   ├── scheduler/                    # Python Worker - Schedule Generation
+│   │   └── algorithms/               # CSP, ILP, Greedy, Hill Climbing, etc.
+│   └── analyzer/                     # Python Worker - KPI Analysis
 │
-├── api/                                # Java Spring Boot Backend
-│   ├── src/main/java/smartask/api/
-│   │   ├── config/                     # (RabbitMqConfig, SecurityConfig, WebSocketConfig)
-│   │   ├── controllers/                # (REST controllers)
-│   │   ├── models/                     # (Employee, Schedule, Rule, Team, etc.)
-│   │   ├── repositories/               # (Database access)
-│   │   ├── services/                   # (Business logic)
-│   │   └── event/                      # (RabbitMQ producer/consumer)
-│   ├── src/main/resources/
-│   ├── pom.xml
-│   ├── Dockerfile
-│   └── target/
+├── config/                           # Centralized configuration
+│   ├── rules.json                    # Business rules (consolidated)
+│   └── templates/                    # CSV templates for data import
 │
-├── frontend/                           # React + Vite Frontend
-│   ├── src/
-│   │   ├── Admin/                      # Admin pages
-│   │   ├── Manager/                    # Manager pages & components
-│   │   ├── components/                 # Reusable components
-│   │   ├── context/                    # AuthContext
-│   │   ├── login/
-│   │   ├── assets/
-│   │   └── styles/
-│   ├── public/
-│   ├── package.json
-│   ├── vite.config.js
-│   ├── tailwind.config.js
-│   ├── Dockerfile / Dockerfile.dev
-│   └── node_modules/
+├── infra/                            # Infrastructure as code
+│   ├── docker-compose.yml            # Service orchestration (6 services)
+│   └── docker/                       # All Dockerfiles
 │
-├── modules/                            # Python Task Management
-│   ├── TaskManager.py                  # Where the algorithms are defined 
-│   ├── MongoDBClient.py
-│   ├── RabbitMQClient.py
-│   ├── analyze.py                      # Receives KPI analyse requests 
-│   ├── requirements.txt
-│   └── rules.json
+├── docs/                             # Comprehensive documentation
+│   ├── architecture/                 # System design & diagrams
+│   ├── services/                     # Per-service documentation
+│   ├── development/                  # Developer guides
+│   └── algorithms/                   # Algorithm documentation
 │
-├── data/                               # Data Templates (CSV files)
-│   ├── minimuns.csv                    # General minimuns template file
-│   ├── VacationTemplate.csv            # General Vacation template file
-│   └── (other template variants)
-│
-├── shared_tmp/                         
-├── docker-compose.yml
-├── run-app.sh
-└── README.md
-
+├── .github/workflows/                # CI/CD pipelines
+├── Makefile                          # Build and deployment commands
+├── CLAUDE.md                         # AI assistant context & guidelines
+└── README.md                         # This file
 ```
 
+---
 
-# System Requirements
+## Quick Start
 
-### Functional Requirements
+### Prerequisites
+- Docker & Docker Compose installed
 
-1. **Generate new schedules**: The user should be able to configure/customize and perform a generating schedule task.
-2. **Optmize the generated schedules**: The user must be able to optmize a previously generated schedule with specific method/algorithm that allows this base configuration.
-3. **Fetch all schedules**: The user should be able to fetch and see all the generated schedules, and their metadata(info regarding the generating process, such as the algorithm used and a timestamp) as well
-4. **Company restrictions management**:The user must be able to manage the restrictions used in the generation of the schedules.
-5. **Real-time update of schedules generation process**: The user should be able to receive real-time notifications(in the system) of when a generating schedule task is finished
-6. **Comparison between multiple schedules**: The system should have a feature of comparison between the newly generated schedule with the previouslys generated ones, the comparison is perfomed by a set of parameters (e.g. number of rules/restrictions fullfiled) 
+### Commands
 
-### Non-Functional Requirements
+```bash
+# Show all available commands
+make help
 
-1. **Performance and scalability in schedule generation**: When it comes to launch tasks(generate new schedules) and execute the task itselfs (the algorithsm and methods used to generate new schedules), the system must ensure effiency performance and scalability to reduce the time of execution and response to lowest as possible 
-2. **System monitoring and metrics collection**: The system should have a simple but robust monitoring process, that could be achieved by logs (that are also stored in the file system for instance), and metrics collection regarding the algorithms execution should also be perfomed, since these data might be useful for some features related to schedules/algorithms comparison 
-3. **Availability & reliability over the schedule generation process**: The system should be able to perform real-time (or almost) response to generating schedules process (tasks) and it should ensure reliability when it comes to the newly generated schedules and their useful 
+# Build everything (Maven + Docker) and start all services
+make build
 
+# Start services (without rebuilding)
+make up
+
+# Stop all services
+make down
+
+# View logs from all services
+make logs
+```
+
+### Access Points
+
+- **Web UI:** http://localhost:5173/ (manager/manager)
+- **API:** http://localhost:8081/
+- **RabbitMQ Management:** http://localhost:15672/ (guest/guest)
+
+---
+
+## Team Members
+
+|     Name    |   GitHub  |  NMEC  |
+|-------------|-----------|--------|
+| João Roldão | @roldao04 | 113920 |
+|             |           |        |
+|             |           |        |
+|             |           |        |
+
+---
+
+## Documentation
+
+For detailed documentation, see:
+- 
