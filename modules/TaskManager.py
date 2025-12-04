@@ -15,6 +15,7 @@ from algorithm.ILPv2 import solve as ilp_solver_2
 from algorithm.ILPv3 import solve as ilp_solver_3
 from algorithm.CSPv2 import solve as cspv2_solver
 from algorithm.heuristicSolver import solve as heuristic_solver
+from algorithm.ilp_greedy import solve as ilp_greedy
 
 class TaskManager:
     def __init__(self):
@@ -33,6 +34,7 @@ class TaskManager:
             "GRHC_ENGINE": grhc_engine_solver,
             "CSPv2": cspv2_solver,
             "Heuristic Solver": heuristic_solver,
+            "ilp_greedy": ilp_greedy
         }
 
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None):
@@ -55,7 +57,7 @@ class TaskManager:
         else:
             rules_json = {"rules": rules}
 
-        if algorithm_name in ["linear programming", "hill climbing", "Greedy Randomized", "Greedy Randomized + Hill Climbing", "CSP", "GRHC_ENGINE", "CSP_ENGINE", "Greedy Randomized Engine", "ILP Engine", "linear programming 2", "CSPv2", "Heuristic Solver"]:
+        if algorithm_name in ["linear programming", "hill climbing", "Greedy Randomized", "Greedy Randomized + Hill Climbing", "CSP", "GRHC_ENGINE", "CSP_ENGINE", "Greedy Randomized Engine", "ILP Engine", "linear programming 2", "CSPv2", "Heuristic Solver", "ilp_greedy"]:
             #count how long it takes to execute the algorithm
             start_time = time.time()
             schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, rules=rules_json,)

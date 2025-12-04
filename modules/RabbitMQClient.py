@@ -202,7 +202,6 @@ class RabbitMQClient:
             )
 
             print("ELAPSED TIME:", elapsed_time)
-
             metadata = {
                 "scheduleName": title,
                 "algorithmType": algorithm_name,

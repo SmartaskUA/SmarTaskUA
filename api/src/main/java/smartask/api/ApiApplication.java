@@ -77,8 +77,9 @@ public class ApiApplication {
             createScenarioWithCrossing(teamService, employeeService, 8, 48, 0.20);
             createScenarioWithCrossing(teamService, employeeService, 16, 96, 0.20);
             loadTemplatesIntoDatabase(vacationService, referenceService);
-            runLinearProgrammingScenarios(schedulesService, "linear programming 2");
-            runLinearProgrammingScenarios(schedulesService, "CSPv2");
+            //runLinearProgrammingScenarios(schedulesService, "ilp_greedy");
+            runLinearProgrammingScenarios(schedulesService, "Heuristic Solver");
+            runLinearProgrammingScenarios(schedulesService, "Greedy Randomized");
 
 
             System.out.println("\nAll team scenarios successfully initialized!");
@@ -292,7 +293,14 @@ private void runLinearProgrammingScenarios(SchedulesService schedulesService, St
             String title;
             if (algorithmName.equals("linear programming 2")) {
                title = "ILPv2_" + groupName + "_Case" + caseNum;
-            } else {
+            } 
+            else if (algorithmName.equals("Heuristic Solver")) {
+               title = "Heuristic_" + groupName + "_Case" + caseNum;
+            }
+            else if (algorithmName.equals("Greedy Randomized")) {
+               title = "GreedyRandomized_" + groupName + "_Case" + caseNum;
+            }
+            else {
                title = "CSPv2_" + groupName + "_Case" + caseNum;
             }
 

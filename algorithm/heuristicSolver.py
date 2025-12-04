@@ -154,7 +154,7 @@ def _employee_score(e, d, is_special, total_work, total_special, target_workdays
     Lower score = more desirable to assign.
     Tunable heuristic.
     """
-    w_work = 1.0
+    w_work = 1.0  
     w_special = 3.0
     w_under_target = 0.1
     w_random = 0.01
@@ -172,9 +172,7 @@ def _employee_score(e, d, is_special, total_work, total_special, target_workdays
     return score
 
 
-# ============================================================
 # Main heuristic solver
-# ============================================================
 
 def solve_heuristic(
     vacations,
@@ -201,8 +199,6 @@ def solve_heuristic(
         target_workdays: desired working days per employee
         special_cap: max special (Sunday+holiday) days per employee
 
-    Returns:
-        Table format compatible with schedule_to_table.
     """
 
     num_days = 365
