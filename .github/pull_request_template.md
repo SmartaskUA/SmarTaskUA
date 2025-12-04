@@ -1,26 +1,12 @@
-### Feature Description
-<!-- Clearly describe the new feature that has been added -->
+## Description
 
-### Why is this Feature Needed?
-<!-- Explain the problem this feature solves or the value it adds -->
+<!-- Provide a brief description of the changes in this PR -->
 
-### Related Issue
-<!-- Link to the related issue or user story (e.g., Resolves #123) -->
+## Related Issues
 
-### Changes Made
-<!-- List the changes or additions introduced by this feature -->
+- Closes #
+- Relates to #
 
-### How Has This Been Tested?
-<!-- Detail how this feature has been tested, including test cases and environments -->
+## Additional Notes
 
-### Dependencies
-<!-- List any dependencies (e.g., packages, APIs) that have been added or updated -->
-
-### Checklist
-- [ ] Feature implemented as described
-- [ ] Tests have been written or updated
-- [ ] Documentation has been updated accordingly
-- [ ] Changes do not introduce any breaking changes
-
-### Additional Context
-<!-- Add any further context or considerations (e.g., performance impacts, future improvements) -->
+<!-- Any additional information, context, or screenshots -->
