@@ -1,47 +1,96 @@
-# SmartTask
-Intelligent system for test automatically generating schedules work and evaluate them
+# SmarTask
 
-# Lauching : 
-#### Technical note: This project was developed and tested in operating systems from the Unix family (specifically Ubuntu and Arch Linux). No system test was performed in other operating systems (such as Windows or MacOS). If any troubleshooting problem is noticed in other environments, further investigation might be needed to adapt the system to be used in these environments.
+## Project Overview
 
-### in this project's root, execute the following commands : 
-##### (You need to have Docker Compose installed locally in your system; the commands might change from system to system.)
+SmarTask is an intelligent employee scheduling system that automatically generates and optimizes work schedules using constraint-based algorithms. The system respects business rules, vacation constraints, and minimum coverage requirements while providing real-time updates and comprehensive schedule analysis.
 
-#### Build images and set for development.
+**Key Technologies:**
+- **Backend:** Java 17 + Spring Boot
+- **Frontend:** React 18 + Vite + TailwindCSS
+- **Workers:** Python 3.11 (OR-Tools, PuLP)
+- **Database:** MongoDB
+- **Message Queue:** RabbitMQ
+- **Infrastructure:** Docker + Docker Compose
+
+---
+
+## Project Structure
+
 ```
-docker-compose up --build
+SmarTaskUA/
+├── src/                              # All source code (microservices)
+│   ├── api/                          # Java Spring Boot REST API
+│   ├── frontend/                     # React + Vite Frontend
+│   ├── scheduler/                    # Python Worker - Schedule Generation
+│   │   └── algorithms/               # CSP, ILP, Greedy, Hill Climbing, etc.
+│   └── analyzer/                     # Python Worker - KPI Analysis
+│
+├── config/                           # Centralized configuration
+│   ├── rules.json                    # Business rules (consolidated)
+│   └── templates/                    # CSV templates for data import
+│
+├── infra/                            # Infrastructure as code
+│   ├── docker-compose.yml            # Service orchestration (6 services)
+│   └── docker/                       # All Dockerfiles
+│
+├── docs/                             # Comprehensive documentation
+│   ├── architecture/                 # System design & diagrams
+│   ├── services/                     # Per-service documentation
+│   ├── development/                  # Developer guides
+│   └── algorithms/                   # Algorithm documentation
+│
+├── .github/workflows/                # CI/CD pipelines
+├── Makefile                          # Build and deployment commands
+├── CLAUDE.md                         # AI assistant context & guidelines
+└── README.md                         # This file
 ```
 
+---
 
-### The running frontend application can be accessed via :
+## Quick Start
+
+### Prerequisites
+- Docker & Docker Compose installed
+
+### Commands
+
+```bash
+# Show all available commands
+make help
+
+# Build everything (Maven + Docker) and start all services
+make build
+
+# Start services (without rebuilding)
+make up
+
+# Stop all services
+make down
+
+# View logs from all services
+make logs
 ```
-http://localhost:5173/
-```
 
-#### After shutting down the application via command line, shut down the containers if not needed anymore.
-```
-docker-compose down
-```
+### Access Points
 
-#### To debug a specific container/service that is running with the docker compose : 
-```
-docker compose logs [service name]
-```
+- **Web UI:** http://localhost:5173/ (manager/manager)
+- **API:** http://localhost:8081/
+- **RabbitMQ Management:** http://localhost:15672/ (guest/guest)
 
-# System Requirements
+---
 
-### Functional Requirements
+## Team Members
 
-1. **Generate new schedules**: The user should be able to configure/customize and perform a generating schedule task.
-2. **Optmize the generated schedules**: The user must be able to optmize a previously generated schedule with specific method/algorithm that allows this base configuration.
-3. **Fetch all schedules**: The user should be able to fetch and see all the generated schedules, and their metadata(info regarding the generating process, such as the algorithm used and a timestamp) as well
-4. **Company restrictions management**:The user must be able to manage the restrictions used in the generation of the schedules.
-5. **Real-time update of schedules generation process**: The user should be able to receive real-time notifications(in the system) of when a generating schedule task is finished
-6. **Comparison between multiple schedules**: The system should have a feature of comparison between the newly generated schedule with the previouslys generated ones, the comparison is perfomed by a set of parameters (e.g. number of rules/restrictions fullfiled) 
+|     Name    |   GitHub  |  NMEC  |
+|-------------|-----------|--------|
+| João Roldão | @roldao04 | 113920 |
+|             |           |        |
+|             |           |        |
+|             |           |        |
 
-### Non-Functional Requirements
+---
 
-1. **Performance and scalability in schedule generation**: When it comes to launch tasks(generate new schedules) and execute the task itselfs (the algorithsm and methods used to generate new schedules), the system must ensure effiency performance and scalability to reduce the time of execution and response to lowest as possible 
-2. **System monitoring and metrics collection**: The system should have a simple but robust monitoring process, that could be achieved by logs (that are also stored in the file system for instance), and metrics collection regarding the algorithms execution should also be perfomed, since these data might be useful for some features related to schedules/algorithms comparison 
-3. **Availability & reliability over the schedule generation process**: The system should be able to perform real-time (or almost) response to generating schedules process (tasks) and it should ensure reliability when it comes to the newly generated schedules and their useful 
+## Documentation
 
+For detailed documentation, see:
+- 
