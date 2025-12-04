@@ -12,7 +12,7 @@ from algorithm.utils import (
     build_calendar,
     rows_to_vac_dict,
     rows_to_req_dicts,
-    export_schedule_to_csv,
+    export_schedule_to_csv_shifts,
     TEAM_CODE_TO_ID,      
     TEAM_ID_TO_CODE,      
     get_team_id,   
@@ -191,6 +191,7 @@ class HourlyILPScheduler:
         start, break_start, end = block
         hours = set(range(start, break_start))  # First period
         hours.update(range(break_start + 1, end))  # Second period (skip break hour)
+        # print(f"horas : {hours}")
         return hours
 
     def _blocks_overlap(self, block1, block2):
@@ -294,7 +295,7 @@ class HourlyILPScheduler:
                 hora_str = f"{h:02d}-{h+1:02d}"
                 for team_code in self.teams.keys():
                     minimo = self.minimos.get((d, hora_str, team_code), 0)
-                    
+                    # print(f"[DEBUG] Objective minimum for day {d}, hour {hora_str}, team {team_code}: --> {minimo}")
                     # Penalty for being below minimum
                     penal_min = pulp.LpVariable(
                         f"penal_min_{d.strftime('%Y%m%d')}_h{h}_{team_code}",

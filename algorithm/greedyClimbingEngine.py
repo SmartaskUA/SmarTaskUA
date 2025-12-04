@@ -14,7 +14,7 @@ from algorithm.utils import (
     build_calendar,
     rows_to_vac_dict,
     rows_to_req_dicts,
-    export_schedule_to_csv,
+    export_schedule_to_csv_shifts,
     get_team_code,
     schedule_to_table
 )

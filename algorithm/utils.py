@@ -1,4 +1,5 @@
 import csv
+import decimal
 import os
 from datetime import date, time
 import pandas as pd
@@ -193,25 +194,90 @@ def rows_to_req_dicts(req_rows):
                 if v:
                     target[(day, shift, team_id)] = int(v)
 
-        # → modo por hora
+        # → modo por meias horas
         elif "-" in thirdHours:
             hour_label = thirdHours
-            #print(f"hour_label: {hour_label}")
+            # print(f"hour_label: {hour_label}")
             target = ideals if kind.startswith('min') else mins
             for day, val in enumerate(countsHours, start=1):
                 v = str(val).strip()
                 if v:
-                    target[(day, hour_label, team_id)] = int(v)
+                    target[(day, hour_label, team_id)] = int(val)
 
-        #print(f"Current mins: {mins}")
-        #print(f"Current ideals: {ideals}")
+
+    # print(f"Current mins: {mins}")
+    # print(f"Current ideals: {ideals}")
+    # time.sleep(15)  # para debug sequencial
+
+    return mins, ideals
+
+
+def rows_to_req_dicts_Half_Hour(req_rows):
+    """
+    Aceita ficheiros de requisitos (mínimos/ideais) tanto por turnos como por horas.
+    Formatos suportados:
+      - Equipa A, Minimo, M, <dia1>, <dia2>, ...
+      - Equipa A, 09-10, <dia1>, <dia2>, ...
+    Retorna dois dicionários:
+      mins[(day, hora_ou_turno, team_id)] e ideals[(day, hora_ou_turno, team_id)]
+    """
+    mins, ideals = {}, {}
+    for row in req_rows:
+        if not row or not row[0].strip():
+            continue
+        
+        #print(f"Processing row: {row}, from")
+        team_label = row[0].strip()
+        #print(f"team_label: {team_label}")
+        kind = row[1].strip().lower()
+        #print(f"kind: {kind}")
+
+        # Detecta se é por hora (ex: '09-10') ou por turno ('M', 'T', 'N')
+        thirdShifts = row[2].strip()
+        thirdHours = row[1].strip()
+        #print(f"third_Shifts: {thirdShifts}")
+        #print(f"third_Hours: {thirdHours}")
+        countsHours = row[2:]
+        countsShifts = row[3:]
+        #print(f"counts: {counts}")
+
+        team_code = get_team_code(team_label)
+        team_id = get_team_id(team_code)
+        #print(f"team_code: {team_code}, team_id: {team_id}")
         #time.sleep(15)  # para debug sequencial
+
+        
+        hour_label = thirdHours
+        # print(f"hour_label: {hour_label}")
+        target = ideals if kind.startswith('min') else mins
+        # Dividir a hora em 2 períodos de 30 minutos
+        # Ex: '09-10' → [(9.0, 9.5), (9.5, 10.0)]
+        hour_parts = hour_label.split('-')
+        start_hour = int(hour_parts[0])
+        end_hour = int(hour_parts[1])
+        for day, val in enumerate(countsHours, start=1):
+            v = str(val).strip()
+            if v:
+                val_int = int(v)
+                # Criar 2 entradas: uma para cada meia hora
+                # Ex: (1, '9.0-9.5', 1) e (1, '9.5-10.0', 1)
+                first_half = f"{start_hour}.0-{start_hour}.5"
+                second_half = f"{start_hour}.5-{end_hour}.0"
+                
+                target[(day, first_half, team_id)] = val_int
+                target[(day, second_half, team_id)] = val_int
+
+
+    # print(f"Current mins: {mins}")
+    # print(f"Current ideals: {ideals}")
+    # time.sleep(15)  # para debug sequencial
 
     return mins, ideals
 
 
 
-def export_schedule_to_csv(scheduler, filename="schedule.csv", num_days=365):
+
+def export_schedule_to_csv_shifts(scheduler, filename="schedule.csv", num_days=365):
     header = ["funcionario"] + [f"Dia {i+1}" for i in range(num_days)]
     label_all = {1: "M_", 2: "T_", 3: "N_"}
     label = {k: v for k, v in label_all.items() if k <= getattr(scheduler, "shifts", 2)}
@@ -236,6 +302,72 @@ def export_schedule_to_csv(scheduler, filename="schedule.csv", num_days=365):
                     row.append("0")
             writer.writerow(row)
     print(f"Schedule exported to {filename}")
+
+def export_schedule_to_csv_hours(scheduler, filename="schedule_hours.csv", num_days=365, work_blocks=None):
+    """
+    Exporta o horário por blocos de horas, usando:
+      • scheduler.assignment[emp] = [(day, block_idx, team_id), ...]
+      • scheduler.vacs[emp] = [dias de férias]
+
+    Output: CSV com 1 linha por funcionário e 365 colunas de dias.
+
+    Dia sem trabalho -> "OFF"
+    Dia de férias    -> "F"
+    Trabalho         -> "start-break-end_TEAM"
+    """
+    import csv
+
+    if work_blocks is None:
+        work_blocks = []
+
+    # Cabeçalho
+    header = ["funcionario"] + [f"Dia {i+1}" for i in range(num_days)]
+
+    with open(filename, mode="w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(header)
+
+        for emp in sorted(scheduler.employees):
+
+            # Linha do funcionário
+            row = [str(emp)]
+
+            # Dicionário rápido: day → (block_idx, team_id)
+            emp_assignments = scheduler.assignment.get(emp, [])
+            day_assign = {d: (b, t) for (d, b, t) in emp_assignments}
+
+            # Dias de férias
+            vac_days = set(scheduler.vacs.get(emp, []))
+
+            for day in range(1, num_days + 1):
+
+                # 1) Férias
+                if day in vac_days:
+                    row.append("F")
+                    continue
+
+                # 2) Trabalhou?
+                if day in day_assign:
+                    block_idx, team_id = day_assign[day]
+
+                    # Garantir id → code (A/B)
+                    team_code = TEAM_ID_TO_CODE.get(team_id, f"UNK{team_id}")
+
+                    # Garantir bloco válido
+                    if 0 <= block_idx < len(work_blocks):
+                        start, break_start, end = work_blocks[block_idx]
+                        row.append(f"{start}-{break_start}-{end}_{team_code}")
+                    else:
+                        row.append(f"INVALID_BLOCK_{block_idx}_{team_code}")
+
+                # 3) OFF total
+                else:
+                    row.append("OFF")
+
+            writer.writerow(row)
+
+    print(f"Schedule (hours) exported to {filename}")
+
 
 def schedule_to_table(*, employees: list, vacs: dict, assignment: dict, num_days: int, shifts: int = 2):
     """Builds the schedule table as a list of rows."""
@@ -284,3 +416,113 @@ def to_table(*, employees: list, vacs: dict, assignment: dict, num_days: int, wo
             rows.append(line)
         
         return rows
+
+def to_table_hours(*, employees, vacs, assignment, num_days, work_blocks):
+    """
+    Constrói uma tabela (lista de listas) com o horário por horas.
+    employees: lista de IDs reais dos empregados (ex: [1,2,3,...])
+    vacs: dict emp_id -> [dias]
+    assignment: dict emp_id -> [(day, block_idx, team_id)]
+    work_blocks: lista de blocos (start, break, end)
+    """
+    # Cabeçalho
+    header = ["Employee"] + [f"Day{d}" for d in range(1, num_days + 1)]
+    rows = [header]
+    
+    # Garantir ordenação correcta dos IDs reais
+    for emp_id in sorted(employees):
+        emp_vacs = set(vacs.get(emp_id, []))
+        emp_assign = assignment.get(emp_id, [])
+        
+        # Criar mapeamento day -> (block_idx, team_id)
+        day_map = {}
+        for (d, b, t) in emp_assign:
+            if d in day_map:
+                print(f"[WARNING] Employee {emp_id}: Day {d} assigned multiple times!")
+            day_map[d] = (b, t)
+        
+        line = [f"Emp{emp_id}"]
+        
+        for day in range(1, num_days + 1):
+            # Férias (prioridade)
+            if day in emp_vacs:
+                line.append("F")
+                continue
+            
+            # Trabalhou
+            if day in day_map:
+                block_idx, team_id = day_map[day]
+                
+                # Garantir bloco válido
+                if 0 <= block_idx < len(work_blocks):
+                    start, brk, end = work_blocks[block_idx]
+                    # Converter equipa
+                    team_code = TEAM_ID_TO_CODE.get(team_id, f"UNK{team_id}")
+                    line.append(f"{start}-{brk}-{end}_{team_code}")
+                else:
+                    print(f"[ERROR] Employee {emp_id}, Day {day}: Invalid block_idx {block_idx}")
+                    line.append(f"ERROR_BLOCK_{block_idx}")
+            else:
+                # OFF total
+                line.append("OFF")
+        
+        rows.append(line)
+    
+    return rows
+
+
+def create_Blocks(interval_in_hours, inicial_Hour, final_Hour):
+    """
+    Cria blocos de trabalho com base no intervalo e horas iniciais/finais.
+    Retorna uma lista de tuplos (start, break, end).
+    """
+    blocks = []
+    start_hour = inicial_Hour
+    while start_hour + 9 <= final_Hour:
+        end_hour = start_hour + 9
+        for i in range(0,3):
+            break_hour = start_hour + 5 + i
+            blocks.append((start_hour, break_hour, end_hour))
+        start_hour += interval_in_hours
+    return blocks
+
+def drange(x, y, jump):
+    while x < y:
+        yield float(x)
+        x += (jump)
+
+
+def drange_indexed(start, stop, step):
+    # print(f"drange_indexed: start={start}, stop={stop}, step={step}")
+    x = int(start)
+    y = x * 2 + 10
+    counter = 0
+    counter2 = 0
+    index2 = y
+    while x < stop:
+        # Geramos um índice inteiro (ex: 9.0 -> 18, 9.5 -> 19)
+        # Multiplicamos por 2 e convertemos para int
+        if counter % 2 == 0:
+            index = start + counter2
+            counter2 += 1
+            yield counter, x, index
+        else:
+            index2 =  index2 + 1
+            yield counter, x, index2
+
+        counter += 1
+        
+        # print(f"drange_indexed: counter={counter}, x={x}, index={index}")
+        x += step
+
+def drange_indexed_h(start, stop, step):
+    # print(f"drange_indexed: start={start}, stop={stop}, step={step}")
+    x = start
+
+    while x < stop:
+        # Geramos um índice inteiro (ex: 9.0 -> 18, 9.5 -> 19)
+        # Multiplicamos por 2 e convertemos para int
+        yield x
+        
+        # print(f"drange_indexed: counter={counter}, x={x}, index={index}")
+        x += step

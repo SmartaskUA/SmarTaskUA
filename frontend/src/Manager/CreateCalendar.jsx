@@ -163,6 +163,8 @@ const CreateCalendar = () => {
   const horasAlgorithms = [
     { value: "ILP_13Hours", label: "Integer Linear Programming 13 Hours" },
     { value: "CSP_13Hours", label: "CSP 13 Hours" },
+    { value: "CSP_Afonso_Hours", label: "CSP Afonso 13 Hours" },
+    { value: "ILP_13_Half_Intervals", label: "Integer Linear Programming 13 Hours Half Intervals" },
     // Adicione outros algoritmos de horas aqui se existirem
   ];
 

@@ -16,6 +16,8 @@ from algorithm.ILP2 import solve as ilp_solver_2
 from algorithm.CSPv2 import solve as cspv2_solver
 from algorithm.ILP_H import solve as ILP_13Hours_solver
 from algorithm.CSP_H import solve as CSP_13Hours_solver
+from algorithm.CSP_Afonso_Hours import solve as CSP_Afonso_Hours_solver
+from algorithm.ILP_Half_Hour import solve as ILP_13_Half_Intervals_solver
 
 class TaskManager:
     def __init__(self):
@@ -37,6 +39,8 @@ class TaskManager:
             "CSPv2": cspv2_solver,
             "ILP_13Hours": ILP_13Hours_solver,
             "CSP_13Hours": CSP_13Hours_solver,
+            "CSP_Afonso_Hours": CSP_Afonso_Hours_solver,
+            "ILP_13_Half_Intervals": ILP_13_Half_Intervals_solver,
         }
 
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13):
@@ -65,7 +69,7 @@ class TaskManager:
         if algorithm_name in ["linear programming", "hill climbing", "Greedy Randomized", "Greedy Randomized + Hill Climbing", "CSP", "GRHC_ENGINE", "CSP_ENGINE", "Greedy Randomized Engine", "ILP Engine", "linear programming 2", "CSPv2"]:
 
             schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, rules=rules_json)
-        elif algorithm_name in ["ILP_13Hours", "CSP_13Hours"]:
+        elif algorithm_name in ["ILP_13Hours", "CSP_13Hours", "CSP_Afonso_Hours", "ILP_13_Half_Intervals", "ILP_Half_Hour"]:
             schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, rules=rules_json)
         else:
             schedule_data = algorithm()
