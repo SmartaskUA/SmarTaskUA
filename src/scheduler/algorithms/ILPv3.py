@@ -24,7 +24,7 @@ import time
 import tempfile
 from collections import defaultdict
 
-from algorithm.utils import (
+from algorithms.utils import (
     TEAM_ID_TO_CODE,
     build_calendar,
     rows_to_vac_dict,

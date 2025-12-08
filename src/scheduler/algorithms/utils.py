@@ -121,8 +121,10 @@ def rows_to_req_dicts(req_rows):
     for row in req_rows:
         team_label, kind, shift_code, *counts = row
 
-        # robust final token as team code (A, B, C, D, ...):
-        team_code = team_label.strip().split()[-1].upper()
+        # Allow blank/malformed labels by skipping rows without a team code.
+        team_code = get_team_code(team_label)
+        if not team_code:
+            continue
         team_id = get_team_id(team_code)
 
         code = shift_code.strip().upper()
