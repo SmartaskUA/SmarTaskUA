@@ -3,6 +3,7 @@ import decimal
 import os
 from datetime import date, time
 import pandas as pd
+from collections import defaultdict
 
 TEAM_CODE_TO_ID = {'A': 1, 'B': 2} # will be updated if there are more teams
 TEAM_ID_TO_CODE = {v: k for k, v in TEAM_CODE_TO_ID.items()}
@@ -526,3 +527,154 @@ def drange_indexed_h(start, stop, step):
         
         # print(f"drange_indexed: counter={counter}, x={x}, index={index}")
         x += step
+
+
+def compute_lower_bound_and_report(scheduler, csv_filename="csp_lb_report.csv", verbose=True):
+    """
+    Calcula um lower bound (LB) válido para as shortages e gera relatório.
+    LB por slot (dia,hora,team) = max(0, minimo - capacidade_maxima_disponivel).
+    capacidade_maxima_disponivel = número de empregados que:
+        - pertencem àquela equipa (podem trabalhar nessa equipa),
+        - não estão de férias nesse dia,
+        - o dia não é fechado para essa equipa (mínimo != -1).
+    Retorna dicionário com LB_total, objective (valor da solução), quality_pct, e paths do csv.
+    """
+    # 1) recolhe inputs do scheduler
+    dates = scheduler.dates
+    hours = scheduler.hours
+    teams = list(scheduler.teams.keys())  # códigos ('A','B',...)
+    emp_team_code = scheduler.emp_team_code  # {f_idx: (teams...)}
+    vacations = scheduler.vacations_dates     # {f_idx: set(dates)}
+    minimos = scheduler.minimos               # {(date, "HH-HH", team_code): val}
+    objective = None
+    # tenta ler objective do solver/relatório
+    try:
+        # se tens o valor guardado em scheduler.solver e model -> cp-sat
+        objective = float(scheduler.solver.ObjectiveValue()) if scheduler.solver is not None else None
+    except Exception:
+        # fallback: procura scheduler.attribute
+        objective = getattr(scheduler, "objective_value", None) or getattr(scheduler, "last_objective", None) or None
+
+    # Se não conseguimos objective programaticamente, podes passar como argumento:
+    if objective is None:
+        # tenta usar scheduler.calculated_shortages (se soma represente objective)
+        if hasattr(scheduler, "calculated_shortages"):
+            # assumimos que objective = soma(shortage * weight). Não ideal; prefer passar objective explícito.
+            pass
+
+    # 2) calcula disponibilidade máxima por (date,h,team)
+    lb_per_slot = {}
+    total_minimos = 0
+    total_lb = 0
+
+    # Precompute: lista de empregados por equipa (indice interno)
+    team_members = {tc: set() for tc in teams}
+    for f, tcs in emp_team_code.items():
+        for tc in tcs:
+            if tc in team_members:
+                team_members[tc].add(f)
+
+    for d_idx, d in enumerate(dates):
+        for h in hours:
+            hour_label = f"{h:02d}-{h+1:02d}"
+            for tc in teams:
+                key = (d, hour_label, tc)
+                minimo = minimos.get(key, None)
+                if minimo is None:
+                    # se não existe requisito, assumimos 0 (nenhuma necessidade)
+                    minimo = 0
+                if minimo == -1:
+                    # dia fechado -> não contam para requisitos
+                    lb_per_slot[(d_idx+1, hour_label, tc)] = {'minimo': -1, 'capacity': 0, 'lb': 0}
+                    continue
+
+                # conta empregados potencialmente disponíveis naquele dia para aquela equipa
+                members = team_members.get(tc, set())
+                avail = 0
+                for f in members:
+                    # funcionário f disponível? (não em férias nesse dia)
+                    if d not in vacations.get(f, set()):
+                        # NOTA: estamos a ignorar limites globais (223 dias por empregado)
+                        # porque isso tornaria o LB ainda mais complexo. Este LB é válido.
+                        avail += 1
+
+                capacity = avail
+                lb_here = max(0, int(minimo) - capacity)
+                lb_per_slot[(d_idx+1, hour_label, tc)] = {
+                    'minimo': int(minimo),
+                    'capacity': capacity,
+                    'lb': lb_here
+                }
+                total_minimos += max(0, int(minimo))
+                total_lb += lb_here
+
+    # 3) calcula quality (usar objective passado se disponível)
+    # Se objective não está disponível, tenta ler scheduler.calculated_shortages somando
+    if objective is None:
+        # tenta somar shortages reais (se guardaste as variáveis)
+        real_shortages = 0
+        for k, v in getattr(scheduler, "calculated_shortages", {}).items():
+            if v is not None:
+                real_shortages += int(v)
+        objective = real_shortages
+
+    # Evita divisão por zero
+    if objective == 0:
+        quality = 0.0
+    else:
+        # fórmula: quality = 1 - (objective - LB)/objective = LB/objective
+        quality = float(total_lb) / float(objective) if objective > 0 else 0.0
+
+    quality_pct = quality * 100.0
+
+    # 4) escreve CSV com detalhes por slot
+    with open(csv_filename, 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["DayIndex", "Date", "Hour", "Team", "Minimo", "Capacity", "LB_slot"])
+        for (d_idx, hour_label, tc), info in sorted(lb_per_slot.items(), key=lambda x: (x[0][0], x[0][1], x[0][2])):
+            date_str = dates[d_idx-1].strftime("%Y-%m-%d")
+            writer.writerow([d_idx, date_str, hour_label, tc, info['minimo'], info['capacity'], info['lb']])
+
+    # 5) resumo por equipa e por dia / top piores
+    lb_by_team = defaultdict(int)
+    min_by_team = defaultdict(int)
+    for (d_idx, hour_label, tc), info in lb_per_slot.items():
+        if info['minimo'] >= 0:
+            lb_by_team[tc] += info['lb']
+            min_by_team[tc] += info['minimo']
+
+    team_stats = []
+    for tc in teams:
+        team_stats.append((tc, min_by_team.get(tc,0), lb_by_team.get(tc,0),
+                           (1 - ( (min_by_team.get(tc,0)-lb_by_team.get(tc,0)) / max(1, min_by_team.get(tc,0)) )) if min_by_team.get(tc,0)>0 else 1.0))
+
+    # 6) imprime resumo
+    if verbose:
+        print("===== LB REPORT =====")
+        print(f"Objective (solution) = {objective}")
+        print(f"Lower bound (sum of slot LBs) = {total_lb}")
+        print(f"Total mínimos (sum of requisitos positivos) = {total_minimos}")
+        print(f"Quality (LB/objective) = {quality_pct:.2f}%")
+        print(f"CSV detalhado escrito em: {csv_filename}")
+        print("")
+        print("Per-team summary (team, total_min, total_LB, approx_coverage):")
+        for tc, totmin, totlb, approx_cov in sorted(team_stats, key=lambda x: x[2], reverse=True):
+            cov_pct = 100.0 * (1.0 - ( (totmin - totlb) / max(1, totmin) )) if totmin>0 else 100.0
+            print(f"  Team {tc}: min={totmin}  LB={totlb}  approx_coverage={cov_pct:.2f}%")
+        # top worst slots (largest LB)
+        worst_slots = sorted([(k,v['lb']) for k,v in lb_per_slot.items()], key=lambda x: -x[1])[:10]
+        print("")
+        print("Top 10 slots com maior LB (dayindex, hour, team, LB):")
+        for (d_idx, hour_label, tc), lb_val in worst_slots:
+            print(f"  Day {d_idx} {hour_label} Team {tc} -> LB = {lb_val}")
+
+    result = {
+        'objective': objective,
+        'total_lb': total_lb,
+        'total_minimos': total_minimos,
+        'quality_pct': quality_pct,
+        'csv': csv_filename,
+        'per_slot': lb_per_slot,
+        'team_stats': team_stats
+    }
+    return result

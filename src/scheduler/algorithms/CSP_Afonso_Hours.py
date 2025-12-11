@@ -260,7 +260,7 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2021, hours=13, 
 
     print("\n[CSP] Calculating work requirements per employee:")
 
-    # target_workdays = 223
+    target_workdays = 223
     # workdays = {employee: m.NewIntVar(0, target_workdays, f"work_{employee}") for employee in Employees}
     # dev_under = {employee: m.NewIntVar(0, target_workdays, f"dev_under_{employee}") for employee in Employees}
     # dev_over  = {employee: m.NewIntVar(0, target_workdays, f"dev_over_{employee}") for employee in Employees}
@@ -270,17 +270,10 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2021, hours=13, 
 
     for e in Employees:
         vacation_count = sum(1 for d in D if vac_mask[(e, d)])
-        available = num_days - vacation_count
-        
-        # Requisitos muito mais flexíveis
-        min_work = max(150, available - 150)  # Muito flexível
-        max_work = min(250, available - 30)
-        
-        if min_work <= max_work and available > 100:
-            days_worked = sum(1 - off[(e, d)] for d in D if not vac_mask[(e, d)])
-            m.Add(days_worked >= min_work)
-            m.Add(days_worked <= max_work)
-            print(f"  Employee {e+1}: {vacation_count} vacation days, {available} available → require {min_work}-{max_work} work days")
+        available = []
+        worked = sum(1 - off[(e, d)] for d in D)
+        m.Add(worked == target_workdays)
+        print(f"  Employee {e+1}: {vacation_count} vacation days, {available} available → require {worked} work days")
 
     print("\n[CSP] ✅ Constraint 3: Minimum work days (relaxed) : 150 - 250 days per employee")
 

@@ -365,7 +365,7 @@ class HourlyILPScheduler:
 
 
 
-        # 2. Total working days = 223 in the year
+        # 3. Total working days = 223 in the year
         for f in funcionarios:
             model += (
                 pulp.lpSum(
@@ -379,7 +379,7 @@ class HourlyILPScheduler:
 
 
 
-        # 3.1. No work on days marked with -1 (closed days/holidays)
+        # 4. No work on days marked with -1 (closed days/holidays)
         # Identify all dates where minimum is -1 for any team
         closed_days = set()
         for (date_key, hora_str, team_code), minimo in self.minimos.items():
@@ -400,7 +400,7 @@ class HourlyILPScheduler:
 
 
 
-        # 4. Max 5 consecutive working days (sliding window of 6 days)
+        # 5. Max 5 consecutive working days (sliding window of 6 days)
         for f in funcionarios:
             for i in range(len(dias) - 5):
                 window = dias[i:i + 6]  # bloco de 6 dias consecutivos
@@ -475,6 +475,8 @@ class HourlyILPScheduler:
             self.build_model()
         
         print(f"[HourlyILP] Starting solver (max time: {self.maxTime_sec}s)...")
+        print(f"[HourlyILP] Optimality gap: {gap_rel * 100:.1f}%")
+        print(f"  Solver will stop when solution is within {gap_rel * 100:.1f}% of optimal")
         
         solver = pulp.PULP_CBC_CMD(
             msg=True,
@@ -622,7 +624,7 @@ def solve(vacations, minimuns, employees, maxTime, year=2025, hours=13,
     )
 
     scheduler.build_model()
-    scheduler.solve(gap_rel=0.005)
+    scheduler.solve(gap_rel=0.01)  # 1% optimality gap
     scheduler.export_csv("hourly_schedule.csv")
     
     return scheduler.to_table()

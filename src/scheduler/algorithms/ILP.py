@@ -288,7 +288,7 @@ class ILPScheduler:
         v.employees = [i + 1 for i in self.employees]
         v.vacs = self.vacs_1based
         v.assignment = self.assignment
-        export_schedule_to_csv(v, filename=filename, num_days=self.num_days)
+        export_schedule_to_csv_shifts(v, filename=filename, num_days=self.num_days)
 
     def to_table(self):
         header = ["funcionario"] + [f"Dia {i}" for i in range(1, self.num_days + 1)]
