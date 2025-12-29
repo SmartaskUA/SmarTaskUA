@@ -114,7 +114,9 @@ public class SchedulesController {
                                               @RequestParam("vacationTemplate") String vacationTemplate,
                                               @RequestParam("minimunsTemplate") String minimunsTemplate,
                                               @RequestParam("employees") String employees,
-                                              @RequestParam("year") String year) {
+                                              @RequestParam("year") String year,
+                                              @RequestParam(value = "scheduleType", required = false) String scheduleType,
+                                              @RequestParam(value = "hourGranularity", required = false) String hourGranularity) {
         try {
             log.info("Received request to analyze {} files", files.size());
             String requestId = UUID.randomUUID().toString();
@@ -145,6 +147,12 @@ public class SchedulesController {
             message.put("minimunsTemplate", minimunsTemplate);
             message.put("employees", employees);
             message.put("year", year);
+            if (scheduleType != null && !scheduleType.isBlank()) {
+                message.put("scheduleType", scheduleType);
+            }
+            if (hourGranularity != null && !hourGranularity.isBlank()) {
+                message.put("hourGranularity", hourGranularity);
+            }
             log.info("Publishing message to comparison-exchange: {}", message);
             log.info("Year: {}", year);
             //log.info("Vacation Template: {}", vacationTemplate);
