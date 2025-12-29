@@ -6,7 +6,7 @@ import numpy as np
 from collections import defaultdict
 import holidays as hl
 
-from algorithm.utils import (
+from algorithms.utils import (
     rows_to_vac_dict,
     rows_to_req_dicts,
     TEAM_ID_TO_CODE,
