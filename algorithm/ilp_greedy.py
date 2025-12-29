@@ -312,7 +312,7 @@ def solve_heuristic(
                     work[best_e][d] = 1
                     shift[best_e][d] = s
                     team[best_e][d] = t
-                    total_work[best_e] += 1
+                    total_work[e] += 1
                     if d in special_days:
                         total_special[best_e] += 1
                     assigned_min[(d, s, t)] += 1
@@ -831,7 +831,6 @@ class ILPSchedulerWeighted:
                             else:
                                 var.setInitialValue(0)
                 else:
-                    # OFF in greedy: pick an arbitrary team for OFF
                     if not allowed_teams:
                         continue
                     off_team = allowed_teams[0]
@@ -881,7 +880,7 @@ class ILPSchedulerWeighted:
 
         wall_time = time.time() - start
         status_str = pulp.LpStatus[self.model.status]
-        print(f"✅ Solver status: {status_str} | wall time: {wall_time:.2f}s")
+        print(f"Solver status: {status_str} | wall time: {wall_time:.2f}s")
 
         # Parse solver log
         history, final_obj, final_bound, final_gap = parse_cbc_log(solver_output)
@@ -1077,9 +1076,7 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, rul
     ilp.export_csv("schedule_weighted.csv")
     return ilp.to_table()
 
-# ============================================================
-# CBC log parser (unchanged)
-# ============================================================
+# CBC log parser 
 
 def parse_cbc_log(log_text):
     """

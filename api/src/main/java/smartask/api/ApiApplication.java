@@ -72,13 +72,20 @@ public class ApiApplication {
             // ----------------------------------------------------
             // Create all 4 scenarios
             // ----------------------------------------------------
-            createBaseScenario_2Teams12Employees(teamService, employeeService);    
-            createScenarioWithCrossing(teamService, employeeService, 4, 24, 0.20);
-            createScenarioWithCrossing(teamService, employeeService, 8, 48, 0.20);
-            createScenarioWithCrossing(teamService, employeeService, 16, 96, 0.20);
+            // 2-shift scenarios (disabled for now)
+            // createBaseScenario_2Teams12Employees(teamService, employeeService);
+            // createScenarioWithCrossing(teamService, employeeService, 4, 24, 0.20);
+            // createScenarioWithCrossing(teamService, employeeService, 8, 48, 0.20);
+            // createScenarioWithCrossing(teamService, employeeService, 16, 96, 0.20);
+
+            // 3-shift scenarios
+            createScenarioWithCrossing(teamService, employeeService, 2, 24, 0.20);
+            createScenarioWithCrossing(teamService, employeeService, 4, 48, 0.20);
+            createScenarioWithCrossing(teamService, employeeService, 8, 96, 0.20);
+            createScenarioWithCrossing(teamService, employeeService, 16, 192, 0.20);
             loadTemplatesIntoDatabase(vacationService, referenceService);
-            //runLinearProgrammingScenarios(schedulesService, "ilp_greedy");
-            runLinearProgrammingScenarios(schedulesService, "Heuristic Solver");
+            runLinearProgrammingScenarios(schedulesService, "linear programming 2");
+            //FrunLinearProgrammingScenarios(schedulesService, "Heuristic Solver");
             runLinearProgrammingScenarios(schedulesService, "Greedy Randomized");
 
 
@@ -222,9 +229,11 @@ public class ApiApplication {
             System.out.println("\nLoading vacation and minimun templates from /resources...");
 
             // === Vacation Templates ===
-            String[] employeeFolders = {"12", "24", "48", "96"};
+            // 2-shift templates (disabled for now)
+            // String[] employeeFolders = {"12", "24", "48", "96"};
+            String[] employeeFolders = {"24", "48", "96", "192"};
             for (String empCount : employeeFolders) {
-                String basePath = "vacationData/" + empCount + "_employees/templates/";
+                String basePath = "vacationData_3shifts/" + empCount + "_employees/templates/";
                 for (int caseNum = 1; caseNum <= 4; caseNum++) {
                     String name = "VacationTemplate_Case" + caseNum + "_" + empCount;
                     String path = basePath + name + ".csv";
@@ -246,11 +255,18 @@ public class ApiApplication {
 
             // === Minimuns / Reference Templates ===
             // Located at /resources/minimuns/minimuns_4teams_24emp.csv etc.
+            // 2-shift templates (disabled for now)
+            // String[] refFiles = {
+            //         "minimuns_2teams_12emp.csv",
+            //         "minimuns_4teams_24emp.csv",
+            //         "minimuns_8teams_48emp.csv",
+            //         "minimuns_16teams_96emp.csv"
+            // };
             String[] refFiles = {
-                    "minimuns_2teams_12emp.csv",
-                    "minimuns_4teams_24emp.csv",
-                    "minimuns_8teams_48emp.csv",
-                    "minimuns_16teams_96emp.csv"
+                    "minimuns_3shifts_2teams_24emp.csv",
+                    "minimuns_3shifts_4teams_48emp.csv",
+                    "minimuns_3shifts_8teams_96emp.csv",
+                    "minimuns_3shifts_16teams_192emp.csv"
             };
 
             for (String file : refFiles) {
@@ -277,10 +293,15 @@ private void runLinearProgrammingScenarios(SchedulesService schedulesService, St
 
     // Ordered map: smallest scenario first
     Map<String, String> minimunToGroup = new LinkedHashMap<>();
-    minimunToGroup.put("minimuns_2teams_12emp", "Scenario_2Teams");
-    minimunToGroup.put("minimuns_4teams_24emp", "Scenario_4Teams");
-    minimunToGroup.put("minimuns_8teams_48emp", "Scenario_8Teams");
-    minimunToGroup.put("minimuns_16teams_96emp", "Scenario_16Teams");
+    // 2-shift templates (disabled for now)
+    // minimunToGroup.put("minimuns_2teams_12emp", "Scenario_2Teams");
+    // minimunToGroup.put("minimuns_4teams_24emp", "Scenario_4Teams");
+    // minimunToGroup.put("minimuns_8teams_48emp", "Scenario_8Teams");
+    // minimunToGroup.put("minimuns_16teams_96emp", "Scenario_16Teams");
+    minimunToGroup.put("minimuns_3shifts_2teams_24emp", "Scenario_2Teams");
+    minimunToGroup.put("minimuns_3shifts_4teams_48emp", "Scenario_4Teams");
+    minimunToGroup.put("minimuns_3shifts_8teams_96emp", "Scenario_8Teams");
+    minimunToGroup.put("minimuns_3shifts_16teams_192emp", "Scenario_16Teams");
 
     for (Map.Entry<String, String> entry : minimunToGroup.entrySet()) {
         String minimunName = entry.getKey();
@@ -294,11 +315,17 @@ private void runLinearProgrammingScenarios(SchedulesService schedulesService, St
             if (algorithmName.equals("linear programming 2")) {
                title = "ILPv2_" + groupName + "_Case" + caseNum;
             } 
+            else if (algorithmName.equals("ilp_solver_3")) {
+               title = "ILPv3_" + groupName + "_Case" + caseNum;
+            }
             else if (algorithmName.equals("Heuristic Solver")) {
                title = "Heuristic_" + groupName + "_Case" + caseNum;
             }
             else if (algorithmName.equals("Greedy Randomized")) {
                title = "GreedyRandomized_" + groupName + "_Case" + caseNum;
+            }
+            else if (algorithmName.equals("ilp_greedy")) {
+               title = "ILP-Greedy_" + groupName + "_Case" + caseNum;
             }
             else {
                title = "CSPv2_" + groupName + "_Case" + caseNum;
@@ -315,7 +342,7 @@ private void runLinearProgrammingScenarios(SchedulesService schedulesService, St
                 java.time.LocalDateTime.now(),
                 vacationTemplate,
                 minimunName,
-                2,                           // shifts
+                3,                           // shifts
                 "default",                   // rule set
                 groupName                    // group name
             );

@@ -23,6 +23,7 @@ import os
 import time
 import tempfile
 from collections import defaultdict
+import holidays as hl
 
 from algorithm.utils import (
     TEAM_ID_TO_CODE,
@@ -64,11 +65,22 @@ class ILPSchedulerWeighted:
         self.dates, sundays_idx = build_calendar(year)
         self.num_days = len(self.dates)
         # convert sunday indices (1-based day numbers) to actual Timestamp objects
-        self.sundays_holidays = [
+        sundays = {
             self.dates[idx - 1]
             for idx in sundays_idx
             if 1 <= idx <= len(self.dates)
-        ]
+        }
+
+        # PT holidays
+        pt_holidays = hl.country_holidays("PT", years=[year])
+        holiday_dates = {
+            d
+            for d in self.dates
+            if d.date() in pt_holidays
+        }
+
+        # Combined: Sundays + Holidays
+        self.sundays_holidays = sorted(sundays | holiday_dates)
 
         raw_vacs = rows_to_vac_dict(vacations_rows)
         self.vacs_1based = {
