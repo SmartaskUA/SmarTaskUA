@@ -48,8 +48,10 @@ services:
       - rabbitmq_network
     environment:
       - PYTHONUNBUFFERED=1
+      - GRB_LICENSE_FILE=/app/gurobi.lic
     volumes:
       - shared_tmp:/shared_tmp
+      - /home/hugo/gurobi.lic:/app/gurobi.lic:ro
     healthcheck:
       test: ["CMD", "pgrep", "-f", "RabbitMQClient"]
       interval: 10s

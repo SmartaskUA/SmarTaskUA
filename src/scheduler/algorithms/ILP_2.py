@@ -219,6 +219,7 @@ class HourlyILPScheduler:
         dias = self.dates
         blocos = list(range(len(self.work_blocks)))  # Block indices
         horas = range(9, 22)  # Store hours 9:00-21:59
+        # print(f"[HourlyILP] Building model with {list(horas)} hours indices") 
 
         # Decision variables: X[employee][day][block][team]
         self.x = {
@@ -260,54 +261,64 @@ class HourlyILPScheduler:
         model = pulp.LpProblem("Hourly_Schedule_ILP", pulp.LpMinimize)
 
         # Link Y with X: count workers at each hour
-        for d in dias:
-            for h in range(9, 22):
-                hora_str = f"{h:02d}-{h+1:02d}"
-                for team_code, members in self.teams.items():
-                    minimo = self.minimos.get((d, hora_str, team_code), 0)
-                    model += (
-                        # conta todos os trabalhadores da equipe na hora h do dia d
-                        self.y[d][h][team_code] == pulp.lpSum(
-                        self.x[f][d][b][tc]
-
-                        for f in members
-                        for b in blocos
-                        if h in self._get_working_hours(self.work_blocks[b])
-                        for tc in self.emp_team_code[f]
-
-                        if tc == team_code
-                    ),
-                        f"shortage_min_{d.strftime('%Y%m%d')}_h{h}_{team_code}"
-                    )
-                    
-                    # garante que o numero de trabalhadores é pelo menos o minimo
-                    model += (
-                        self.y[d][h][team_code] >= minimo,
-                        (f"minimo_{team_code}_{d.strftime('%Y%m%d')}_h{h}") 
-                    )
-
-
-        # Objective: Minimize deviations from minimums and ideals
         penalties_min = []
+        self.shortage = {}
+
+        print(f"[HourlyILP] Adding constraints...")
+        # Link Y with X: count workers at each hour
+        # Link Y with X: count workers at each hour
+        for d in dias:
+            for h in horas:
+                for team_code, members in self.teams.items():
+                    model += (
+                        self.y[d][h][team_code] ==
+                        pulp.lpSum(
+                            self.x[f][d][b][tc]
+                            for f in members
+                            for b in blocos
+                            if h in self._get_working_hours(self.work_blocks[b])
+                            for tc in self.emp_team_code[f]
+                            if tc == team_code
+                        ),
+                        f"link_y_x_{d.strftime('%Y%m%d')}_h{h}_{team_code}"
+                    )
         
+                
+        penalties_min = []
+        self.shortage = {}
+
         for d in dias:
             for h in horas:
                 hora_str = f"{h:02d}-{h+1:02d}"
-                for team_code in self.teams.keys():
-                    minimo = self.minimos.get((d, hora_str, team_code), 0)
-                    # print(f"[DEBUG] Objective minimum for day {d}, hour {hora_str}, team {team_code}: --> {minimo}")
-                    # Penalty for being below minimum
-                    penal_min = pulp.LpVariable(
-                        f"penal_min_{d.strftime('%Y%m%d')}_h{h}_{team_code}",
-                        lowBound=0, cat="Continuous"
-                    )
-                    # Constraint: penalty >= max(0, minimo - y)
-                    # minimizar penalidade se y < minimo
-                    model += (penal_min >= minimo - self.y[d][h][team_code])
 
-                    penalties_min.append(penal_min * 100)  # High weight for minimums
+                for team_code in self.teams.keys():
+                    minimo = self.minimos.get((d, hora_str, team_code), None)
+
+                    # ignorar slots sem requisito ou fechados
+                    if minimo is None or minimo == -1:
+                        continue
+                    
+                    s = pulp.LpVariable(
+                        f"short_{d.strftime('%Y%m%d')}_h{h}_{team_code}",
+                        lowBound=0,
+                        cat="Integer"
+                    )
+
+                    self.shortage[(d, h, team_code)] = s
+
+                    model += (
+                        s >= minimo - self.y[d][h][team_code],
+                        f"short_def_{d.strftime('%Y%m%d')}_h{h}_{team_code}"
+                    )
+
+                    penalties_min.append(s)
+
+
+        # Objective: Minimize deviations from minimums and ideals
+        W_MIN = 10000  # peso MUITO alto
+
         model += (
-            pulp.lpSum(penalties_min),
+            pulp.lpSum(W_MIN * s for s in penalties_min),
             "Minimize_shortages"
         )
 

@@ -212,7 +212,7 @@ class HourlyILPStrictScheduler:
 
                     # x <= z for each team
                     for tc in self.emp_team_code[f]:
-                        model += (self.x[f][d][b][tc] <= self.z[f][d][b],
+                        model += (self.x[f][d][b][tc] <= self.z[f][d][b], # Significa que se z==0 então x==0, se nao esta no bloco, x nao pode estar 
                                   f"x_le_z_f{f}_{d.strftime('%Y%m%d')}_b{b}_{tc}")
 
                     # sum_tc x == z  (if z==1 then exactly one team must be selected)

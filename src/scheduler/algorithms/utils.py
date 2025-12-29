@@ -261,17 +261,18 @@ def rows_to_req_dicts_Half_Hour(req_rows):
             if v:
                 val_int = int(v)
                 # Criar 2 entradas: uma para cada meia hora
-                # Ex: (1, '9.0-9.5', 1) e (1, '9.5-10.0', 1)
-                first_half = f"{start_hour}.0-{start_hour}.5"
-                second_half = f"{start_hour}.5-{end_hour}.0"
+                # Ex: (1, '09.0-09.5', 1) e (1, '09.5-10.0', 1)
+                # Usar padding com zeros à esquerda para consistência
+                first_half = f"{start_hour:02.0f}.0-{start_hour:02.0f}.5"
+                second_half = f"{start_hour:02.0f}.5-{end_hour:02.0f}.0"
                 
                 target[(day, first_half, team_id)] = val_int
                 target[(day, second_half, team_id)] = val_int
 
 
-    # print(f"Current mins: {mins}")
-    # print(f"Current ideals: {ideals}")
-    # time.sleep(15)  # para debug sequencial
+    print(f"Current mins: {mins}")
+    print(f"Current ideals: {ideals}")
+    # time.sleep(3)  # para debug sequencial
 
     return mins, ideals
 
@@ -519,14 +520,16 @@ def drange_indexed(start, stop, step):
 def drange_indexed_h(start, stop, step):
     # print(f"drange_indexed: start={start}, stop={stop}, step={step}")
     x = start
+    list_indices = set()  # Deve ser set, não dict
 
     while x < stop:
         # Geramos um índice inteiro (ex: 9.0 -> 18, 9.5 -> 19)
         # Multiplicamos por 2 e convertemos para int
-        yield x
-        
-        # print(f"drange_indexed: counter={counter}, x={x}, index={index}")
+        list_indices.add(x)  # add() para sets, não update()
+        print(f"drange_indexed_h, x={x}")
         x += step
+
+    return list_indices
 
 
 def compute_lower_bound_and_report(scheduler, csv_filename="csp_lb_report.csv", verbose=True):
