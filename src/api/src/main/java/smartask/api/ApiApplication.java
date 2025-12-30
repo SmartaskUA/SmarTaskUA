@@ -344,6 +344,7 @@ private void runLinearProgrammingScenarios(SchedulesService schedulesService, St
                 minimunName,
                 3,                           // shifts
                 "default",                   // rule set
+                null,                        // hours
                 groupName                    // group name
             );
 

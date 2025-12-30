@@ -9,6 +9,7 @@ import {
   Paper,
 } from "@mui/material";
 import LegendBox from "./LegendBox";
+import { Moon, Sun, Sunset } from "lucide-react";
 
 const CalendarTable = ({
   data,
@@ -51,25 +52,13 @@ const CalendarTable = ({
   const abbreviateValue = (value) => {
     const normalized = value.toUpperCase();
     if (normalized === "0") return "";
-    if (normalized === "F") return "V"; 
+    if (normalized === "F") return "V";
     if (normalized === "VACATION") return "V";
     if (normalized === "OFF") return "";
     if (normalized === "T_A") return "A_A";
     if (normalized === "T_B") return "A_B";
     if (normalized === "T_C") return "A_C";
     return value;
-  };
-
-  const getCellStyle = (value) => {
-    const normalized = value.toUpperCase();
-    if (normalized === "0") return { backgroundColor: "#ffffff", color: "#000" };
-    if (normalized === "F" || normalized === "VACATION") {
-      return { backgroundColor: "#ffcccb", color: "#000" };
-    }
-    if (normalized.includes("M")) return { backgroundColor: "#f9e79f", color: "#000" }; // Afternoon
-    if (normalized.includes("T")) return { backgroundColor: "#d4edda", color: "#000" }; // Morning
-    if (normalized.includes("N")) return { backgroundColor: "#9eb3caff", color: "#000" }; // Night
-    return {};
   };
 
   const getDisplayedData = () => {
@@ -95,11 +84,95 @@ const CalendarTable = ({
       .some((row) => row.slice(1, 12).some((cell) => looksHourlyValue(cell)));
 
   const teamPalette = {
-    A: { bg: "#e3f2fd", border: "#90caf9", text: "#0f172a" },
-    B: { bg: "#e8f5e9", border: "#a5d6a7", text: "#0f172a" },
-    C: { bg: "#fff3e0", border: "#ffcc80", text: "#0f172a" },
-    D: { bg: "#fce4ec", border: "#f8bbd0", text: "#0f172a" },
-    default: { bg: "#f1f5f9", border: "#cbd5f5", text: "#0f172a" },
+    A: { bg: "#f8fafc", border: "#e2e8f0", text: "#0f172a" },
+    B: { bg: "#f1f5f9", border: "#cbd5e1", text: "#0f172a" },
+    C: { bg: "#e5e7eb", border: "#d1d5db", text: "#0f172a" },
+    D: { bg: "#e2e8f0", border: "#cbd5e1", text: "#0f172a" },
+    default: { bg: "#f8fafc", border: "#e2e8f0", text: "#0f172a" },
+  };
+
+  const shiftStyles = {
+    M: { label: "Morning", short: "Morning", bg: "#d4edda", border: "#a3d3b5", text: "#166534", icon: Sun },
+    T: { label: "Afternoon", short: "Afternoon", bg: "#f9e79f", border: "#f4d36b", text: "#92400e", icon: Sunset },
+    N: { label: "Night", short: "Night", bg: "#9eb3caff", border: "#7f97b5", text: "#1e3a8a", icon: Moon },
+  };
+
+  const parseShift = (value) => {
+    const text = String(value || "").trim().toUpperCase();
+    const match = text.match(/^([MTN])[_-]([A-Z])$/);
+    if (!match) return null;
+    return { shift: match[1], team: match[2] };
+  };
+
+  const getShiftCellStyle = (value) => {
+    const normalized = String(value || "").trim().toUpperCase();
+    if (!normalized || normalized === "0" || normalized === "OFF") {
+      return {
+        backgroundColor: "#f5f7fa",
+        color: "#64748b",
+        border: "1px dashed #cbd5f5",
+      };
+    }
+    if (normalized === "F" || normalized === "VACATION") {
+      return {
+        backgroundColor: "#ffe5e5",
+        color: "#7f1d1d",
+        border: "1px solid #fecaca",
+      };
+    }
+    const parsed = parseShift(value);
+    if (!parsed) {
+      return { backgroundColor: "#ffffff", color: "#0f172a" };
+    }
+    const palette = shiftStyles[parsed.shift];
+    return {
+      backgroundColor: palette?.bg || "#ffffff",
+      color: palette?.text || "#0f172a",
+      border: `1px solid ${palette?.border || "#e2e8f0"}`,
+      boxShadow: "inset 0 0 0 1px rgba(15, 23, 42, 0.04)",
+    };
+  };
+
+  const renderShiftCell = (value) => {
+    const normalized = String(value || "").trim().toUpperCase();
+    if (!normalized || normalized === "0" || normalized === "OFF") {
+      return <span style={{ fontSize: "10px", fontWeight: 600 }}>OFF</span>;
+    }
+    if (normalized === "F" || normalized === "VACATION") {
+      return <span style={{ fontSize: "10px", fontWeight: 600 }}>VAC</span>;
+    }
+    const parsed = parseShift(value);
+    if (!parsed) {
+      return <span style={{ fontSize: "10px" }}>{abbreviateValue(String(value || ""))}</span>;
+    }
+    const palette = shiftStyles[parsed.shift] || shiftStyles.M;
+    const Icon = palette.icon;
+    const team = parsed.team;
+    const teamPaletteEntry = teamPalette[team] || teamPalette.default;
+
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: "2px", alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+          <Icon size={12} color={palette.text} strokeWidth={2} />
+          <span style={{ fontSize: "9px", fontWeight: 700, color: palette.text }}>
+            {palette.short}
+          </span>
+        </div>
+        <span
+          style={{
+            marginTop: "2px",
+            padding: "1px 6px",
+            borderRadius: "999px",
+            fontSize: "9px",
+            fontWeight: 700,
+            backgroundColor: teamPaletteEntry.border,
+            color: "#0f172a",
+          }}
+        >
+          Team {team}
+        </span>
+      </div>
+    );
   };
 
   const getHourlyCellStyle = (value) => {
@@ -178,14 +251,17 @@ const CalendarTable = ({
   };
 
   const detectedTeams = new Set();
-  if (isHourly) {
-    displayedData.slice(1).forEach((row) => {
-      row.slice(1).forEach((cell) => {
+  displayedData.slice(1).forEach((row) => {
+    row.slice(1).forEach((cell) => {
+      if (isHourly) {
         const parsed = parseHourBlock(cell);
         if (parsed?.team) detectedTeams.add(parsed.team);
-      });
+      } else {
+        const parsed = parseShift(cell);
+        if (parsed?.team) detectedTeams.add(parsed.team);
+      }
     });
-  }
+  });
   const teamLegends = Array.from(detectedTeams)
     .sort()
     .map((team) => ({
@@ -201,9 +277,9 @@ const CalendarTable = ({
           marginTop: "15px",
           maxWidth: "100%",
           borderRadius: "12px",
-          border: isHourly ? "1px solid #e2e8f0" : undefined,
-          boxShadow: isHourly ? "0 12px 24px rgba(15, 23, 42, 0.08)" : undefined,
-          background: isHourly ? "linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)" : undefined,
+          border: "1px solid #e2e8f0",
+          boxShadow: "0 12px 24px rgba(15, 23, 42, 0.08)",
+          background: "linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)",
         }}
       >
         <Table sx={{ minWidth: 450 }} aria-label="calendar table">
@@ -314,11 +390,13 @@ const CalendarTable = ({
                       style={{
                         ...baseStyle,
                         backgroundColor: "#ffffff",
-                        ...(isHourly ? getHourlyCellStyle(cell || "") : getCellStyle(cell || "")),
+                        ...(isHourly
+                          ? getHourlyCellStyle(cell || "")
+                          : getShiftCellStyle(cell || "")),
                       }}
-                      title={isHourly && cell ? String(cell) : undefined}
+                      title={cell ? String(cell) : undefined}
                     >
-                      {isHourly ? renderHourlyCell(cell || "") : abbreviateValue(cell || "")}
+                      {isHourly ? renderHourlyCell(cell || "") : renderShiftCell(cell || "")}
                     </TableCell>
                   );
                 })}

@@ -370,6 +370,25 @@ def export_schedule_to_csv_hours(scheduler, filename="schedule_hours.csv", num_d
     print(f"Schedule (hours) exported to {filename}")
 
 
+def export_schedule_to_csv(scheduler, filename="schedule.csv", num_days=None):
+    """Compatibility wrapper for shift-based exports."""
+    resolved_days = num_days or getattr(scheduler, "num_days", 365)
+    work_blocks = getattr(scheduler, "work_blocks", None) or getattr(scheduler, "blocks", None)
+    if work_blocks:
+        export_schedule_to_csv_hours(
+            scheduler,
+            filename=filename,
+            num_days=resolved_days,
+            work_blocks=work_blocks,
+        )
+    else:
+        export_schedule_to_csv_shifts(
+            scheduler,
+            filename=filename,
+            num_days=resolved_days,
+        )
+
+
 def schedule_to_table(*, employees: list, vacs: dict, assignment: dict, num_days: int, shifts: int = 2):
     """Builds the schedule table as a list of rows."""
     header = ["funcionario"] + [f"Dia {d}" for d in range(1, num_days + 1)]
