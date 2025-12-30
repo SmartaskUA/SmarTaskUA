@@ -7,8 +7,11 @@ import CalendarHeader from "../components/manager/CalendarHeader";
 import KPIReport from "../components/manager/KPIReport";
 import BaseUrl from "../components/BaseUrl";
 import MetadataInfo from "../components/manager/MetadataInfo";
+import MinimumsTemplate from "../components/manager/MinimumsTemplate";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
+import { inferHourGranularity, inferScheduleType } from "../utils/scheduleType";
+import { Box, Button, Paper, Typography } from "@mui/material";
 
 const Calendar = () => {
   const [data, setData] = useState([]);
@@ -22,12 +25,15 @@ const Calendar = () => {
   const [holidayMap, setHolidayMap] = useState({});
   const reqToCalRef = useRef({});
   const [elapsed_time, setElapsedTime] = useState(null);
+  const [viewMode, setViewMode] = useState("schedule");
+  const [coverageMode, setCoverageMode] = useState("min");
 
   const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "November", "December", "January", "February", "March", "April",
+    "May", "June", "July", "August", "September", "October"
   ];
-  const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+  const daysInMonth = [30, 31, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31];
 
   useEffect(() => {
     setStartDay(1);
@@ -64,12 +70,15 @@ const Calendar = () => {
         stompClient.subscribe("/topic/comparison/all", (msg) => {
           try {
             const data = JSON.parse(msg.body);
-            data.forEach((item) => {
+            data.forEach(async (item) => {
               const mappedCalId = reqToCalRef.current[item.requestId];
               if (mappedCalId === calendarId) {
                 console.log("KPI recebido:", item.result);
                 setKpiSummary(item.result);
               }
+              const res = await axios.post(`${BaseUrl}/schedules/analyze`, fd);
+              console.log("🛰️ Enviado para análise com requestId:", res.data.requestId);
+
             });
           } catch (e) {
             console.error("Erro a processar resultado via WebSocket:", e);
@@ -97,6 +106,13 @@ const Calendar = () => {
       fd.append("minimunsTemplate", metadata?.minimunsTemplateData || "");
       fd.append("employees", JSON.stringify(metadata?.employeesTeamInfo || []));
       fd.append("year", String(metadata?.year || new Date().getFullYear()));
+      const scheduleType = inferScheduleType(metadata);
+      if (scheduleType) {
+        fd.append("scheduleType", scheduleType);
+        if (scheduleType === "Horas") {
+          fd.append("hourGranularity", inferHourGranularity(metadata));
+        }
+      }
 
       const res = await axios.post(`${BaseUrl}/schedules/analyze`, fd);
       console.log("🛰️ Enviado para análise com requestId:", res.data.requestId);
@@ -141,6 +157,21 @@ const Calendar = () => {
   const secs = Math.round(seconds % 60);
   return `${mins} min${secs > 0 ? ` ${secs} sec` : ""}`;
 };
+  const scheduleType = inferScheduleType(metadata);
+  const isHourly = scheduleType === "Horas";
+  const missingMinimums =
+    kpiSummary?.hourlyCoverageGaps ?? kpiSummary?.missedTeamMin ?? null;
+  const missingIdeals = kpiSummary?.missedTeamIdeal ?? null;
+  const hasIdeals =
+    Array.isArray(metadata?.minimunsTemplateData) &&
+    metadata.minimunsTemplateData.some((row) =>
+      row?.some((cell) => String(cell || "").toLowerCase().includes("ideal"))
+    );
+  const coverageView = hasIdeals ? coverageMode : "min";
+  const missingLabel =
+    coverageView === "ideal" ? "Missing ideals" : "Missing minimums";
+  const missingValue =
+    coverageView === "ideal" ? missingIdeals : missingMinimums;
 
   return (
     <div className="admin-container" style={{ display: "flex", height: "100vh" }}>
@@ -153,6 +184,10 @@ const Calendar = () => {
           downloadCSV={downloadCSV}
           calendarTitle={metadata?.scheduleName || "Work Calendar"}
           algorithmName={metadata?.algorithmType}
+          viewMode={viewMode}
+          onToggleView={() =>
+            setViewMode((prev) => (prev === "minimums" ? "schedule" : "minimums"))
+          }
         />
 
         {elapsed_time != null && (
@@ -173,19 +208,84 @@ const Calendar = () => {
           </div>
         )}
 
-
-        <CalendarTable
-          data={data}
-          selectedMonth={selectedMonth}
-          daysInMonth={daysInMonth}
-          startDay={startDay}
-          endDay={endDay}
-          firstDayOfYear={firstDayOfYear}
-          holidayMap={holidayMap}
-        />
+        {viewMode === "schedule" ? (
+          <CalendarTable
+            data={data}
+            selectedMonth={selectedMonth}
+            daysInMonth={daysInMonth}
+            startDay={startDay}
+            endDay={endDay}
+            firstDayOfYear={firstDayOfYear}
+            holidayMap={holidayMap}
+            scheduleType={scheduleType}
+          />
+        ) : (
+          <Box mt={3}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                mb: 2,
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: "divider",
+                backgroundColor: "#f8fafc",
+              }}
+            >
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                flexWrap="wrap"
+              >
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                  {coverageView === "ideal" ? "Ideals Summary" : "Minimums Summary"}
+                </Typography>
+                {hasIdeals && (
+                  <Box display="flex" gap={1} mb={1}>
+                    <Button
+                      variant={coverageMode === "min" ? "contained" : "outlined"}
+                      size="small"
+                      onClick={() => setCoverageMode("min")}
+                    >
+                      Minimums
+                    </Button>
+                    <Button
+                      variant={coverageMode === "ideal" ? "contained" : "outlined"}
+                      size="small"
+                      onClick={() => setCoverageMode("ideal")}
+                    >
+                      Ideals
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+              <Typography variant="body2">
+                {missingLabel}:{" "}
+                {missingValue !== null ? missingValue : "Loading KPI results..."}
+              </Typography>
+              {coverageView === "min" &&
+                isHourly &&
+                kpiSummary?.hourlyOverstaff !== undefined && (
+                  <Typography variant="body2" sx={{ mt: 0.5 }}>
+                    Hourly overstaff: {kpiSummary.hourlyOverstaff}
+                  </Typography>
+                )}
+            </Paper>
+            <MinimumsTemplate
+              name={metadata?.minimunsTemplateName || "Minimums Template"}
+              data={metadata?.minimunsTemplateData || []}
+              scheduleData={data}
+              scheduleType={scheduleType}
+              mode={coverageView}
+              showDiff
+              selectedMonth={selectedMonth}
+            />
+          </Box>
+        )}
 
         <MetadataInfo metadata={metadata} />
-        <KPIReport metrics={kpiSummary || {}} />
+        <KPIReport metrics={kpiSummary || {}} scheduleType={scheduleType} />
       </div>
     </div>
   );

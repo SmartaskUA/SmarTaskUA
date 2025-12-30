@@ -9,7 +9,7 @@ from algorithms.utils import (
     TEAM_ID_TO_CODE,
     get_team_id,
     get_team_code,
-    export_schedule_to_csv,
+    export_schedule_to_csv_shifts,
     build_calendar,
     schedule_to_table
 )
@@ -126,13 +126,13 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
 
     # Cover Minimum Requirements
     unmet = {}
-    for (day, s, t), req in min_required.items():
+    for (day, h, t), req in min_required.items():
         cover = []
         for employee in Employees:
             if not vac_mask[(employee, day)] and t in allowed_teams_per_emp[employee]:
-                cover.append(y[(employee, day, s, t)])
-        u = m.NewIntVar(0, req, f"unmet_{day}_{s}_{t}")
-        unmet[(day, s, t)] = u
+                cover.append(y[(employee, day, h, t)])
+        u = m.NewIntVar(0, req, f"unmet_{day}_{h}_{t}")
+        unmet[(day, h, t)] = u
         m.Add(sum(cover) + u >= req)
 
     # --- Hard rule: exactly 223 worked days per employee ---

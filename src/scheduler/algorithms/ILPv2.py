@@ -21,7 +21,7 @@ from algorithms.utils import (
     build_calendar,
     rows_to_vac_dict,
     rows_to_req_dicts,
-    export_schedule_to_csv,
+    export_schedule_to_csv_shifts,
     TEAM_CODE_TO_ID,
     TEAM_ID_TO_CODE,
     get_team_id,
@@ -74,6 +74,7 @@ class ILPScheduler2(ILPScheduler):
                 for s in t_range}
             for d in dias
         }
+        print(self.y)
 
         # (14) Shortage relative to IDEAL coverage
         # z[d][s][team] → shortage relative to ideal (0 if fully covered
@@ -96,6 +97,7 @@ class ILPScheduler2(ILPScheduler):
             for s in t_range:
                 for team, members in self.teams.items():
                     minimo = self.minimos.get((d, team, s), 0)
+                    print(minimo)
                     model += (
                         self.y[d][s][team] >= minimo - pulp.lpSum(
                             self.x[f][d][s][team_code]
@@ -103,8 +105,9 @@ class ILPScheduler2(ILPScheduler):
                             for team_code in self.emp_allowed_teams[f]
                             if team_code == team
                         ),
-                        f"min_shortage_{team}_{d.strftime('%Y%m%d')}_S{s}"
+                        print(f"min_shortage_{team}_{d.strftime('%Y%m%d')}_S{s}")
                     )
+
 
         # (13) Guarantee shortage relative to IDEAL coverage
         for d in dias:

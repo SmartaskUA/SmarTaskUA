@@ -10,7 +10,7 @@ from algorithms.utils import (
     TEAM_ID_TO_CODE,
     get_team_id,
     get_team_code,
-    export_schedule_to_csv,
+    export_schedule_to_csv_shifts,
     build_calendar,
     schedule_to_table
 )

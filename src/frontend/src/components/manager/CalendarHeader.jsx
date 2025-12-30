@@ -7,7 +7,9 @@ const CalendarHeader = ({
   setSelectedMonth,
   downloadCSV,
   calendarTitle,
-  algorithmName
+  algorithmName,
+  viewMode,
+  onToggleView
 }) => {
   const handlePrevMonth = () => {
     setSelectedMonth(prev => Math.max(prev - 1, 1));
@@ -115,6 +117,23 @@ const CalendarHeader = ({
         >
           Download CSV
         </button>
+        {onToggleView && (
+          <button
+            onClick={onToggleView}
+            style={{
+              padding: "8px 12px",
+              backgroundColor: viewMode === "minimums" ? "#6c757d" : "#17a2b8",
+              color: "white",
+              border: "none",
+              cursor: "pointer",
+              borderRadius: "5px",
+              fontSize: "14px",
+              transition: "background 0.3s"
+            }}
+          >
+            {viewMode === "minimums" ? "View Schedule" : "View Minimums"}
+          </button>
+        )}
       </div>
     </div>
   );

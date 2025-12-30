@@ -14,6 +14,7 @@ import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import axios from "axios";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import { inferHourGranularity, inferScheduleType } from "../utils/scheduleType";
 
 const metricInfo = {
   tmFails: {
@@ -133,6 +134,13 @@ export default function CompareCalendar() {
       fd.append("minimunsTemplate", cal.metadata.minimunsTemplateData);
       fd.append("employees", JSON.stringify(cal.metadata.employeesTeamInfo));
       fd.append("year", String(cal.metadata.year));
+      const scheduleType = inferScheduleType(cal.metadata);
+      if (scheduleType) {
+        fd.append("scheduleType", scheduleType);
+        if (scheduleType === "Horas") {
+          fd.append("hourGranularity", inferHourGranularity(cal.metadata));
+        }
+      }
       return fd;
     };
 
