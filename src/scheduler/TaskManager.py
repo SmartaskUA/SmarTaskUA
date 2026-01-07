@@ -9,9 +9,18 @@ from algorithms.CSPv2 import solve as cspv2_solver
 from algorithms.ILP_H import solve as ILP_13Hours_solver
 from algorithms.CSP_H import solve as CSP_13Hours_solver
 from algorithms.CSP_Afonso_Hours import solve as CSP_Afonso_Hours_solver
-from algorithms.ILP_Half_Hour import solve as ILP_13_Half_Intervals_solver
-from algorithms.CSP_Extra import solve as CSP_Extra_Hours_solver
-from algorithms.ILP_Extra import solve as ILP_Extra_Hours_solver
+from algorithms.ILP_1 import solve as ILP_1
+from algorithms.ILP_1_Half_Intervals import solve as ILP_1_Half_Intervals
+from algorithms.ILP_2 import solve as ILP_2
+from algorithms.ILP_2_Half_Intervals import solve as ILP_2_Half_Intervals
+from algorithms.ILP_3 import solve as ILP_3
+from algorithms.CSP_1 import solve as CSP_1
+from algorithms.CSP_2 import solve as CSP_2
+from algorithms.ILP_3_Half_Intervals import solve as ILP_3_Half_Intervals
+from algorithms.CSP_2_Half_Intervals import solve as CSP_2_Half_Intervals
+from algorithms.Heuristica1 import solve as Heuristica_1
+from algorithms.Heuristica1_v2 import solve as Heuristica1_v2
+from algorithms.Heuristica1_v3 import solve as Heuristica1_v3
 
 class TaskManager:
     def __init__(self):
@@ -26,9 +35,18 @@ class TaskManager:
             "ILP_13Hours": ILP_13Hours_solver,
             "CSP_13Hours": CSP_13Hours_solver,
             "CSP_Afonso_Hours": CSP_Afonso_Hours_solver,
-            "ILP_13_Half_Intervals": ILP_13_Half_Intervals_solver,
-            "CSP_Extra_Hours": CSP_Extra_Hours_solver,
-            "ILP_Extra_Hours": ILP_Extra_Hours_solver,
+            "ILP_1": ILP_1,
+            "ILP_1_Half_Intervals": ILP_1_Half_Intervals,
+            "ILP_2": ILP_2,
+            "ILP_2_Half_Intervals": ILP_2_Half_Intervals,
+            "ILP_3": ILP_3,
+            "CSP_1": CSP_1,
+            "CSP_2": CSP_2,
+            "ILP_3_Half_Intervals": ILP_3_Half_Intervals,
+            "CSP_2_Half_Intervals": CSP_2_Half_Intervals,
+            "Heuristica_1": Heuristica_1,
+            "Heuristica1_v2": Heuristica1_v2,
+            "Heuristica1_v3": Heuristica1_v3
         }
 
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13):
@@ -57,7 +75,21 @@ class TaskManager:
         if algorithm_name in ["linear programming", "hill climbing", "Greedy Randomized", "Greedy Randomized + Hill Climbing", "CSP", "GRHC_ENGINE", "CSP_ENGINE", "Greedy Randomized Engine", "ILP Engine", "linear programming 2", "CSPv2"]:
 
             schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, rules=rules_json)
-        elif algorithm_name in ["ILP_13Hours", "CSP_13Hours", "CSP_Afonso_Hours", "ILP_13_Half_Intervals", "ILP_Half_Hour", "CSP_Extra_Hours", "ILP_Extra_Hours"]:
+        elif algorithm_name in [# "CSP_13Hours", 
+                                # "CSP_Afonso_Hours", 
+                                "ILP_1", 
+                                "ILP_1_Half_Intervals", 
+                                "ILP_2", 
+                                "ILP_2_Half_Intervals",
+                                "ILP_3",
+                                "CSP_1",
+                                "CSP_2",
+                                "ILP_3_Half_Intervals",
+                                "CSP_2_Half_Intervals",
+                                "Heuristica_1",
+                                "Heuristica1_v2",
+                                "Heuristica1_v3"
+                                ]:
             schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, rules=rules_json)
         else:
             schedule_data = algorithm()

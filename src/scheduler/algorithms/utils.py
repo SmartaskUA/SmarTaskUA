@@ -479,6 +479,8 @@ def create_Blocks(interval_in_hours, inicial_Hour, final_Hour):
     """
     blocks = []
     start_hour = inicial_Hour
+    inicial_Hour = f"{float(inicial_Hour):.1f}"
+    
     while start_hour + 9 <= final_Hour:
         end_hour = start_hour + 9
         for i in range(0,3):
@@ -486,6 +488,8 @@ def create_Blocks(interval_in_hours, inicial_Hour, final_Hour):
             blocks.append((start_hour, break_hour, end_hour))
         start_hour += interval_in_hours
     return blocks
+
+    
 
 def drange(x, y, jump):
     while x < y:

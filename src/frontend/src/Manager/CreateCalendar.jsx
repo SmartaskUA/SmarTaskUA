@@ -161,12 +161,18 @@ const CreateCalendar = () => {
     { value: "linear programming 2", label: "Integer Linear Programming 2" },
     ];
   const horasAlgorithms = [
-    { value: "ILP_13Hours", label: "Integer Linear Programming 13 Hours" },
-    { value: "CSP_13Hours", label: "CSP 13 Hours" },
-    { value: "CSP_Afonso_Hours", label: "CSP Afonso 13 Hours" },
-    { value: "ILP_13_Half_Intervals", label: "Integer Linear Programming 13 Hours Half Intervals" },
-    { value: "CSP_Extra_Hours", label: "CSP Extra Hours" },
-    { value: "ILP_Extra_Hours", label: "ILP Extra Hours" },
+    { value: "ILP_1", label: "Integer Linear Programming 1" },
+    { value: "ILP_1_Half_Intervals", label: "Integer Linear Programming 1 Half Intervals" },
+    { value: "ILP_2", label: "Integer Linear Programming 2" },
+    { value: "ILP_2_Half_Intervals", label: "Integer Linear Programming 2 Half Intervals" },
+    { value: "ILP_3", label: "Integer Linear Programming 3" },
+    { value: "CSP_1", label: "Constraint Satisfaction Problem 1" },
+    { value: "CSP_2", label: "Constraint Satisfaction Problem 2" },
+    { value: "ILP_3_Half_Intervals", label: "Integer Linear Programming 3 Half Intervals" },
+    { value: "CSP_2_Half_Intervals", label: "Constraint Satisfaction Problem 2 Half Intervals" },
+    { value: "Heuristica_1", label: "Heurística 1" },
+    { value: "Heuristica1_v2", label: "Heurística 1 v2" },
+    { value: "Heuristica1_v3", label: "Heurística 1 v3" },
     // Adicione outros algoritmos de horas aqui se existirem
   ];
 
