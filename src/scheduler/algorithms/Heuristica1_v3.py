@@ -49,6 +49,7 @@ class HeuristicOneScheduler:
         self.num_employees = len(self.employees)
 
         self.store_hours = int(store_hours)
+        self.last_7_days = {f: [] for f in self.employees}
 
         if work_blocks is None:
             self.work_blocks = self._generate_work_blocks()
@@ -86,6 +87,12 @@ class HeuristicOneScheduler:
             for e_idx in self.employees
         }
 
+        mins, ideals = rows_to_req_dicts_Half_Hour(minimums_rows)
+        self.remaining_min = {
+                    (self.dates[d-1], h, TEAM_ID_TO_CODE[t]): v
+                    for (d, h, t), v in mins.items() if v > 0
+                }
+        
         self.worked_days = {f: set() for f in self.employees}
         self.consecutive = {f: 0 for f in self.employees}
         self.last_block = {f: None for f in self.employees}
@@ -102,6 +109,7 @@ class HeuristicOneScheduler:
 
         # closed days set (if any team has -1 at some hour, we treat day as closed for all)
         self.closed_days = {d for (d, h, t), v in self.minimos.items() if v == -1}
+        
 
         self.assignment = defaultdict(list)
         self.objective_value = None
@@ -130,73 +138,120 @@ class HeuristicOneScheduler:
         rest_hours = (24 - end_today) + start_tomorrow
         return rest_hours >= 12
 
-    def _block_coverage(self, d, block_idx, team_code):
-        covered = 0
-        for h in self.block_hours[block_idx]:
-            key = (d, h, team_code)
-            if key in self.remaining_min and self.remaining_min[key] > 0:
-                covered += 1
-        return covered
-    
-    def _hour_to_label(self, h):
-        if h % 1 == 0:
-            return f"{int(h):02d}.0-{int(h):02d}.5"
-        else:
-            return f"{int(h):02d}.5-{int(h)+1:02d}.0"
-    
-    def _day_has_minimums(self, d, team_codes):
+
+# ----------------------------------------------------------------------------------------- --------------  
+
+    def _feasible_employee_day(self, f, d):
+        # férias
+        if d in self.vacations_dates[f]:
+            return False
+
+        # já trabalhou nesse dia
+        if d in self.worked_days[f]:
+            return False
+
+        # limite anual
+        if len(self.worked_days[f]) >= 223:
+            return False
+
+        # regra 5 consecutivos (hard)
+        last_days = [x for x in self.last_7_days[f] if x is not None]
+        if len(last_days) >= 5:
+            # se os últimos 5 dias foram consecutivos até ontem
+            last_days_sorted = sorted(last_days)
+            if (d - last_days_sorted[-1]).days == 1:
+                return False
+
+        return True
+
+
+    def _feasible_block(self, f, b):
+        if self.last_block[f] is None:
+            return True
+
+        return self._validate_block_transition(
+            self.work_blocks[self.last_block[f]],
+            self.work_blocks[b]
+        )
+
+    def _employee_scarcity(self, f, d):
+        """
+        Quantas meias-horas ainda existem nesse dia
+        que este empregado consegue cobrir?
+        Menor = mais raro = deve ser preservado
+        """
+        count = 0
         for (dd, h, t), v in self.remaining_min.items():
-            if dd == d and t in team_codes and v > 0:
-                return True
-        print(f"[DEBUG] Day {d} has NO minimums for teams {team_codes}")
-        return False
+            if dd != d or v <= 0:
+                continue
+            if t not in self.emp_team_code[f]:
+                continue
+            for b in self._blocks_covering_hour(h):
+                if self._feasible_block(f, b):
+                    count += 1
+                    break
+        return count
+
+    def _blocks_covering_hour(self, h):
+        """Return list of blocks whose working-hours set covers the given hour label.
+
+        Here ``h`` is a string label like '09.0-09.5' or '09.5-10.0', coming
+        from the requirements dictionaries. We convert this label to the
+        corresponding float start time (9.0 or 9.5, etc.) and check membership
+        against ``self.block_hours[b]`` which is a set of floats.
+        """
+        # Convert label 'HH.H-HH.H' to the float start hour (e.g. '09.0-09.5' -> 9.0)
+        try:
+            start_str = str(h).split('-')[0]
+            start_hour = float(start_str)
+        except Exception:
+            return []
+
+        return [
+            b for b in range(self.num_blocks)
+            if start_hour in self.block_hours[b]
+        ]
+
+    def _criticality(self, d, h, team_code):
+        count = 0
+
+        for f in self.employees:
+            if team_code not in self.emp_team_code[f]:
+                continue
+            if not self._feasible_employee_day(f, d):
+                continue
+
+            for b in self._blocks_covering_hour(h):
+                if self._feasible_block(f, b):
+                    count += 1
+                    break
+
+        return count
 
 
-    def _block_score(self, f, d, b, team_code):
+    def _coverage_score(self, d, b, team_code):
         score = 0
-
-        # 1️⃣ HARD — Cobertura de mínimos
-        gain = 0
         for h in self.block_hours[b]:
-            hour_label = self._hour_to_label(h)
+            # ``h`` is a float hour (e.g. 9.0, 9.5). Minimum requirements
+            # are indexed by string labels like '09.0-09.5' / '09.5-10.0'.
+            # We map the float to the corresponding label before lookup.
+            if h % 1 == 0:
+                hour_label = f"{int(h):02d}.0-{int(h):02d}.5"
+            else:
+                hour_label = f"{int(h):02d}.5-{int(h)+1:02d}.0"
+
             key = (d, hour_label, team_code)
             if self.remaining_min.get(key, 0) > 0:
-                gain += 1
-
-        if gain > 0:
-            score += 1000 * gain   # HARD: domina tudo
-
-        # 2️⃣ SOFT — cumprir 223 dias
-        days_worked = len(self.worked_days[f])
-        if days_worked < 223:
-            score += (223 - days_worked) * 2  # força positiva
-
-        # 3️⃣ Penalizações (soft)
-        if self.consecutive[f] >= 5:
-            score -= 200
-
-        if self.last_block[f] is not None:
-            if not self._validate_block_transition(
-                self.work_blocks[self.last_block[f]],
-                self.work_blocks[b]
-            ):
-                score -= 1000  # continua quase proibido
-
-        if self.last_block[f] == b:
-            score -= 30
-
+                score += 1
         return score
 
 
     def solve(self):
+        print("[PHASE 1] Starting minimum coverage")
 
-        print("[HeuristicOneScheduler] Starting corrected greedy solve")
-
-        # Copiar mínimos
+        # copiar mínimos
         self.remaining_min = {
-            (d, h, t): v
-            for (d, h, t), v in self.minimos.items()
-            if v > 0
+            k: v for k, v in self.minimos.items() if v > 0
         }
 
         start_time = time()
@@ -206,86 +261,110 @@ class HeuristicOneScheduler:
             if d in self.closed_days:
                 continue
 
-            # Reset consecutivos se OFF no dia anterior
-            for f in self.employees:
-                if d not in self.worked_days[f]:
-                    self.consecutive[f] = 0
+            # mínimos do dia
+            uncovered = {
+                (h, t): v
+                for (dd, h, t), v in self.remaining_min.items()
+                if dd == d and v > 0
+            }
 
-            # Ordenar empregados: quem tem menos dias trabalhados primeiro
-            employees_sorted = sorted(
-                self.employees,
-                key=lambda f: len(self.worked_days[f])
-            )
+            while uncovered:
 
-            for f in employees_sorted:
-
-                if d in self.vacations_dates[f]:
-                    continue
-                if d in self.worked_days[f]:
-                    continue
-                if len(self.worked_days[f]) >= 223:
-                    continue
-
-                best_score = -float("inf")
-                best_block = None
-                best_team = None
-
-                # Equipas permitidas ao empregado
-                for team_code in self.emp_team_code[f]:
-
-                    for b in range(self.num_blocks):
-
-                        # Validação transição
-                        if self.last_block[f] is not None:
-                            if not self._validate_block_transition(
-                                self.work_blocks[self.last_block[f]],
-                                self.work_blocks[b]
-                            ):
-                                continue
-
-                        score = self._block_score(f, d, b, team_code)
-
-                        if score > best_score:
-                            best_score = score
-                            best_block = b
-                            best_team = team_code
-
-                # Nenhum bloco aceitável → OFF
-                day_has_min = self._day_has_minimums(d, self.emp_team_code[f])
-
-                # HARD: se há mínimos, nunca OFF
-                if best_block is None and day_has_min:
-                    continue
-                
-                # SOFT: só OFF se não há mínimos e já está perto dos 223
-                if best_block is None or (best_score <= 0 and not day_has_min):
-                    self.consecutive[f] = 0
-                    continue
-                
-
-                # Aplicar atribuição
-                self.assignment[f + 1].append(
-                    (self.dates.index(d) + 1, best_block, get_team_id(best_team))
+                # escolher demanda mais crítica
+                (h_star, t_star), _ = min(
+                    uncovered.items(),
+                    key=lambda x: self._criticality(d, x[0][0], x[0][1]) # x[0][0] = h, x[0][1] = t
                 )
 
-                self.worked_days[f].add(d)
-                self.consecutive[f] += 1
-                self.last_block[f] = best_block
+                best_choice = None
+                best_score = -1
 
-                # Atualizar mínimos
-                for h in self.block_hours[best_block]:
-                    hour_label = self._hour_to_label(h)
-                    key = (d, hour_label, best_team)
-                    if key in self.remaining_min:
-                        self.remaining_min[key] = max(
-                            0, self.remaining_min[key] - 1
+                for f in self.employees:
+
+                    if t_star not in self.emp_team_code[f]:
+                        continue
+                    if not self._feasible_employee_day(f, d):
+                        continue
+
+                    for b in self._blocks_covering_hour(h_star):
+
+                        if not self._feasible_block(f, b):
+                            continue
+
+                        score = self._coverage_score(d, b, t_star)
+
+                        scarcity = self._employee_scarcity(f, d)
+
+                        combined_score = (
+                            1000 * score          # cobertura domina
+                            - 10 * scarcity       # preserva empregados raros
                         )
 
+                        if combined_score > best_score:
+                            best_score = combined_score
+                            best_choice = (f, b)
 
+
+                # impossível cobrir
+                if best_choice is None:
+                    print(f"[PHASE 1] INFEASIBLE on {d} hour {h_star} team {t_star}")
+                    print("Equipe B total:", len(self.teams.get('B', [])))
+
+                    print("Blocos que cobrem 21.0:",
+                          [b for b in range(self.num_blocks)
+                           if 21.0 in self.block_hours[b]])
+                    
+                    for f in self.teams.get('B', []):
+                        print("Emp", f,
+                              "feasible_day:", self._feasible_employee_day(f, d),
+                              "scarcity:", self._employee_scarcity(f, d))
+                    
+                
+                    return "INFEASIBLE"
+
+                f_star, b_star = best_choice
+
+                # aplicar atribuição
+                self.assignment[f_star + 1].append(
+                    (self.dates.index(d) + 1, b_star, get_team_id(t_star))
+                )
+
+                self.worked_days[f_star].add(d)
+                self.last_block[f_star] = b_star
+
+                self.last_7_days[f_star].append(d)
+                if len(self.last_7_days[f_star]) > 7:
+                    self.last_7_days[f_star].pop(0)
+
+                # atualizar mínimos
+                for h in self.block_hours[b_star]:
+
+                    if h % 1 == 0:
+                        hour_label = f"{int(h):02d}.0-{int(h):02d}.5"
+                    else:
+                        hour_label = f"{int(h):02d}.5-{int(h)+1:02d}.0"
+
+                    key = (d, hour_label, t_star)
+
+                    if key in self.remaining_min:
+                        self.remaining_min[key] -= 1
+                        if self.remaining_min[key] <= 0:
+                            del self.remaining_min[key]
+
+
+                # atualizar uncovered
+                uncovered = {
+                    (h, t): v
+                    for (h, t), v in uncovered.items()
+                    if self.remaining_min.get((d, h, t), 0) > 0
+                }
+
+                # time limit
                 if self.maxTime_sec and time() - start_time > self.maxTime_sec:
-                    print("[HeuristicOneScheduler] TIME LIMIT")
+                    print("[PHASE 1] TIME LIMIT")
                     return "TIME_LIMIT"
 
+        print("[PHASE 1] Minimum coverage completed")
         return "OK"
 
 
