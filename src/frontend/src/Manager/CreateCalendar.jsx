@@ -20,12 +20,12 @@ import {
 const CreateCalendar = () => {
   const [title, setTitle] = useState("");
   const [year, setYear] = useState("2021");
-  const [maxDuration, setMaxDuration] = useState("1");
+  const [maxDuration, setMaxDuration] = useState("100");
   const [scheduleType, setScheduleType] = useState("Horas"); // "Turno" ou "Horas"
-  const [selectedAlgorithm, setSelectedAlgorithm] = useState("Heuristica_1");
+  const [selectedAlgorithm, setSelectedAlgorithm] = useState("Heuristica");
   const [shifts, setShifts] = useState("13");
-  const [vacationTemplate, setVacationTemplate] = useState("VacationTemplate_Case1_21.csv");
-  const [minimumTemplate, setMinimumTemplate] = useState("Mins_R10-R62.csv");
+  const [vacationTemplate, setVacationTemplate] = useState("VacationTemplate_Case1_21");
+  const [minimumTemplate, setMinimumTemplate] = useState("Mins_R10-R62.");
 
   // NEW: ruleset selection
   const [ruleSets, setRuleSets] = useState([]); // [{name, description, ...}]
@@ -167,12 +167,14 @@ const CreateCalendar = () => {
     { value: "ILP_2_Half_Intervals", label: "Integer Linear Programming 2 Half Intervals" },
     { value: "ILP_3", label: "Integer Linear Programming 3" },
     { value: "CSP_1", label: "Constraint Satisfaction Problem 1" },
-    { value: "CSP_2", label: "Constraint Satisfaction Problem 2" },
+    { value: "COP_1", label: "Constraint Optimization Problem 1" },
+    { value: "COP_2", label: "Constraint Optimization Problem 2" },
     { value: "ILP_3_Half_Intervals", label: "Integer Linear Programming 3 Half Intervals" },
     { value: "CSP_2_Half_Intervals", label: "Constraint Satisfaction Problem 2 Half Intervals" },
     { value: "Heuristica_1", label: "Heurística 1" },
     { value: "Heuristica1_v2", label: "Heurística 1 v2" },
     { value: "Heuristica1_v3", label: "Heurística 1 v3" },
+    { value: "Heuristica", label: "Heurística" },
     // Adicione outros algoritmos de horas aqui se existirem
   ];
 

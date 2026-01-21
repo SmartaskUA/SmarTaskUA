@@ -61,44 +61,63 @@ public class ApiApplication {
 			} else {
 				System.err.println("Could not find rules.json in resources folder!");
 			}
-			// ---- Equipa A ----------------------------------------------------
+
+			
+			// ---- Criar 21 empregados ----------------------------------------------------
+			for (int i = 1; i <= 21; i++) {
+				String name = "Employee " + i;
+				boolean exists = employeeService.getEmployees().stream()
+						.anyMatch(e -> name.equals(e.getName()));
+				if (!exists) {
+					employeeService.addEmployee(new Employee(name));
+				}
+			}
+
+			// ---- Equipa A (11 membros: 1-11) ----------------------------------------------------
+			Team teamA = teamService.getTeams().stream()
+					.filter(team -> "Equipa A".equals(team.getName()))
+					.findFirst().orElse(null);
+			if (teamA == null) {
+				teamService.addTeam("Equipa A");
+			}
+
+			var teamAEmployees = employeeService.getEmployees().stream()
+					.filter(e -> e.getName().startsWith("Employee "))
+					.filter(e -> {
+						try {
+							int n = Integer.parseInt(e.getName().split(" ")[1]);
+							return n >= 1 && n <= 11;
+						} catch (NumberFormatException ex) {
+							return false;
+						}
+					})
+					.map(Employee::getId)
+					.toList();
+
+			teamService.addEmployeesToTeam("Equipa A", teamAEmployees);
+
+			// ---- Equipa B (10 membros: 12-21) ----------------------------------------------------
 			Team teamB = teamService.getTeams().stream()
 					.filter(team -> "Equipa B".equals(team.getName()))
 					.findFirst().orElse(null);
 			if (teamB == null) {
 				teamService.addTeam("Equipa B");
 			}
-			Team teamA = teamService.getTeams().stream()
-					.filter(team -> "Equipa A".equals(team.getName()))
-					.findFirst().orElse(null);
-			if (teamA == null) {
-				teamService.addTeam("Equipa A");
 
-				for (int i = 1; i <= 21; i++) {
-					String name = "Employee " + i;
-					boolean exists = employeeService.getEmployees().stream()
-							.anyMatch(e -> name.equals(e.getName()));
-					if (!exists) {
-						employeeService.addEmployee(new Employee(name));
-					}
-				}
+			var teamBEmployees = employeeService.getEmployees().stream()
+					.filter(e -> e.getName().startsWith("Employee "))
+					.filter(e -> {
+						try {
+							int n = Integer.parseInt(e.getName().split(" ")[1]);
+							return n >= 12 && n <= 21;
+						} catch (NumberFormatException ex) {
+							return false;
+						}
+					})
+					.map(Employee::getId)
+					.toList();
 
-				var aEmployees = employeeService.getEmployees().stream()
-						.filter(e -> e.getName().startsWith("Employee "))
-						.filter(e -> {
-							try {
-								int n = Integer.parseInt(e.getName().split(" ")[1]);
-								return n >= 1 && n <= 21;
-							} catch (NumberFormatException ex) {
-								return false;
-							}
-						})
-						.map(Employee::getId)
-						.toList();
-
-				teamService.addEmployeesToTeam("Equipa A", aEmployees);
-				teamService.addEmployeesToTeam("Equipa B", aEmployees);
-			}
+			teamService.addEmployeesToTeam("Equipa B", teamBEmployees);
 
 			// ---- Equipa B ----------------------------------------------------
 			//Team teamB = teamService.getTeams().stream()

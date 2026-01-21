@@ -230,6 +230,17 @@ class ILP3Scheduler:
                                for a in self.A) <= 5
                 )
 
+        # (6) descanso mínimo de 12h entre dias consecutivos
+        for i in self.I:
+            for d in range(self.num_days - 1):
+                for a in self.A:
+                    end_today = self.work_blocks[a][2]
+                    for a in self.A:
+                        start_tomorrow = self.work_blocks[a][0]
+                        rest_hours = (24 - end_today) + start_tomorrow
+                        if rest_hours < 12:
+                            model += self.z[i][d][a] + self.z[i][d + 1][a] <= 1
+
         # (8) definição de y (mínimos) + regra de OFF quando mínimo = -1
         # Se theta = -1 ⇒ loja fechada nessa hora/equipa ⇒ ninguém pode trabalhar
         for d in self.D:
@@ -265,7 +276,7 @@ class ILP3Scheduler:
     # =========================================================
     # SOLVE
     # =========================================================
-    def solve(self, gap_rel=0.005, solver_name='gurobi'):
+    def solve(self, gap_rel=0.01, solver_name='gurobi'):
         """
         Solve the ILP model with automatic solver selection.
         
@@ -275,6 +286,10 @@ class ILP3Scheduler:
         """
         if self.model is None:
             self.build_model()
+        
+        print(f"[HourlyILP] Model built successfully!")
+        print(f"  Total constraints: {len(self.model.constraints):,}")
+        print(f"  Total variables: {len(self.model.variables()):,}")
         
         print(f"[HourlyILP] Solver configuration:")
         print(f"  Time limit: {self.maxTime_sec}s")
@@ -325,7 +340,7 @@ class ILP3Scheduler:
                     msg=True,
                     timeLimit=self.maxTime_sec if self.maxTime_sec else None,
                     gapRel=gap_rel,
-                    Threads=4,
+                    Threads=8,
                     Method=2,      # Barrier method, pode se escolher o metodo que quer
                     Presolve=2     # Aggressive presolve
                 )
@@ -498,7 +513,7 @@ def solve(vacations=None, minimuns=None, employees=None, maxTime=None,
     )
 
     sched.build_model()
-    sched.solve(gap_rel=0.01)
+    sched.solve(gap_rel=0.005)
     sched.export_csv("hourly_strict_schedule.csv")
 
     print("=" * 80)

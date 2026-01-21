@@ -13,13 +13,15 @@ from algorithms.ILP_1_Half_Intervals import solve as ILP_1_Half_Intervals
 from algorithms.ILP_2 import solve as ILP_2
 from algorithms.ILP_2_Half_Intervals import solve as ILP_2_Half_Intervals
 from algorithms.ILP_3 import solve as ILP_3
+from algorithms.COP_2 import solve as COP_2
+from algorithms.COP_1 import solve as COP_1
 from algorithms.CSP_1 import solve as CSP_1
-from algorithms.CSP_2 import solve as CSP_2
 from algorithms.ILP_3_Half_Intervals import solve as ILP_3_Half_Intervals
 from algorithms.CSP_2_Half_Intervals import solve as CSP_2_Half_Intervals
 from algorithms.Heuristica1 import solve as Heuristica_1
 from algorithms.Heuristica1_v2 import solve as Heuristica1_v2
 from algorithms.Heuristica1_v3 import solve as Heuristica1_v3
+from algorithms.Heuristica import solve as Heuristica
 
 class TaskManager:
     def __init__(self):
@@ -39,12 +41,14 @@ class TaskManager:
             "ILP_2_Half_Intervals": ILP_2_Half_Intervals,
             "ILP_3": ILP_3,
             "CSP_1": CSP_1,
-            "CSP_2": CSP_2,
+            "COP_1": COP_1,
+            "COP_2": COP_2,
             "ILP_3_Half_Intervals": ILP_3_Half_Intervals,
             "CSP_2_Half_Intervals": CSP_2_Half_Intervals,
             "Heuristica_1": Heuristica_1,
             "Heuristica1_v2": Heuristica1_v2,
-            "Heuristica1_v3": Heuristica1_v3
+            "Heuristica1_v3": Heuristica1_v3,
+            "Heuristica": Heuristica
         }
 
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13):
@@ -81,12 +85,14 @@ class TaskManager:
                                 "ILP_2_Half_Intervals",
                                 "ILP_3",
                                 "CSP_1",
-                                "CSP_2",
+                                "COP_1",
+                                "COP_2",
                                 "ILP_3_Half_Intervals",
                                 "CSP_2_Half_Intervals",
                                 "Heuristica_1",
                                 "Heuristica1_v2",
-                                "Heuristica1_v3"
+                                "Heuristica1_v3",
+                                "Heuristica"
                                 ]:
             schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, rules=rules_json)
         else:

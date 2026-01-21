@@ -154,10 +154,16 @@ class CPHourScheduler:
                 for e in self.all_teams:
                     theta_val = self.theta.get((d+1, h, get_team_id(e)), 0)
 
+                    # Quantos trabalham esta hora com esta equipa?
                     covered = sum(
                         self.x[(i,d,a,e)] * self.alpha[(a,h)]
-                        for i in self.I for a in self.A
+                        for i in self.I if e in self.emp_teams[i]  # Filtro adicionado!
+                        for a in self.A
                     )
+                    """
+                        Dia 1, Hora 09-10, Equipa A,
+                        x[0, 1, bloco2, A] * alpha[bloco2, 09-10] = 1 se o empregado 0 trabalhar no bloco2 (09-14-18)
+                    """
 
                     if theta_val == -1:
                         self.model.Add(covered == 0)
@@ -177,6 +183,10 @@ class CPHourScheduler:
                             <= 1
                         )
 
+        # Poderia não usar um minimizador e tornar a regra hard porém assim evita infeasibilidades
+        # Que por acaso dava para fazer
+        # Função objetivo: minimizar somatório de y[d,h,e]
+        # Solver procura o valor que minimiza esta função
         self.model.Minimize(
             sum(self.y[(d,h,e)]
                 for d in range(self.num_days)
@@ -194,9 +204,9 @@ class CPHourScheduler:
         
         # Optimality gap: stop if within 5% of optimal
         # For minimization: stops when (upper_bound - lower_bound) / lower_bound <= 0.05
-        solver.parameters.relative_gap_limit = 0.01
+        solver.parameters.relative_gap_limit = 0.005
         # Absolute gap: stop if gap <= 10 (for coverage minimization)
-        solver.parameters.absolute_gap_limit = 10.0
+        solver.parameters.absolute_gap_limit = 0
         
         self.solver = solver
         

@@ -33,16 +33,26 @@ class ILP3Scheduler:
 
         # ---------------- Empregados ----------------
         self.employees = list(range(len(employees)))
-        self.I = self.employees
+        self.E = self.employees
 
         # ---------------- Equipas ----------------
-        self.emp_team_code = {}
+        self.T = {}
         for i, emp in enumerate(employees):
             teams = emp.get("teams", []) or ["A"]
-            self.emp_team_code[i] = tuple(get_team_code(t) for t in teams)
-            for t in self.emp_team_code[i]:
+            self.T[i] = tuple(get_team_code(t) for t in teams)
+            for t in self.T[i]:
                 get_team_id(t)
-        self.teams = sorted({t for ts in self.emp_team_code.values() for t in ts})
+
+        """
+        self.T = {
+            0: ("A",),        # Emp 0 só pode A
+            1: ("A", "B"),    # Emp 1 pode A e B
+            2: ("B",),        # Emp 2 só pode B
+            3: ("C",),        # Emp 3 só pode C
+        }
+        """
+
+        self.teams = sorted({t for ts in self.T.values() for t in ts})
 
         # ---------------- Blocos ----------------
         self.work_blocks = [
@@ -53,7 +63,7 @@ class ILP3Scheduler:
                 (13, 17, 22), (13, 18, 22), (13, 19, 22),
             ]
         self.num_blocks = len(self.work_blocks)
-        self.A = list(range(self.num_blocks))
+        self.B = list(range(self.num_blocks))
 
         # ---------------- Horas (1h) ----------------
         self.hours = list(range(9, 9 + store_hours))  # ex: 9..21
@@ -66,18 +76,54 @@ class ILP3Scheduler:
                 self.alpha[(a, f"{h:02d}-{h+1:02d}")] = 1
             for h in range(brk + 1, end):
                 self.alpha[(a, f"{h:02d}-{h+1:02d}")] = 1
+        
+        """
+        {
+          (0, "09-10"): 1,
+          (0, "10-11"): 1,
+          (0, "11-12"): 1,
+          (0, "12-13"): 1,
+          (0, "14-15"): 1,
+          (0, "15-16"): 1,
+          (0, "16-17"): 1,
+          (0, "17-18"): 1,
+          (1, "09-10"): 1,
+          (1, "10-11"): 1,
+          ...
+        }
+        """
 
         # ---------------- Férias ----------------
         vacs = rows_to_vac_dict(vacations_rows)
         self.vacations_dates = {
             i: {self.dates[d - 1] for d in vacs.get(i + 1, []) if 1 <= d <= self.num_days}
-            for i in self.I
+            for i in self.E
         }
         self.delta = {(i, d): 1 if self.dates[d] in self.vacations_dates[i] else 0
-                      for i in self.I for d in self.D}
+                      for i in self.E for d in self.D}
+        
+        """
+        delta[(0, 0)] = 1   # emp 0 está de férias no dia 0 (2021‑01‑01)
+        delta[(0, 1)] = 0   # emp 0 não está de férias no dia 1
+        delta[(0, 2)] = 1   # emp 0 está de férias no dia 2
+
+        delta[(1, 0)] = 0   # emp 1 não está de férias no dia 0
+        delta[(1, 1)] = 1   # emp 1 está de férias no dia 1
+        """
 
         # ---------------- Requisitos ----------------
         self.theta, self.beta = rows_to_req_dicts(minimums_rows)
+
+        """
+        theta = {
+            (1, "09-10", team_id_A): 2,
+            (2, "09-10", team_id_A): 3,
+            (3, "09-10", team_id_A): 0,
+            (1, "10-11", team_id_A): 1,
+            (2, "10-11", team_id_A): 1,
+            (3, "10-11", team_id_A): 1,
+        }
+        """
 
         self.model = None
         self.assignment = defaultdict(list)
@@ -86,84 +132,100 @@ class ILP3Scheduler:
     # =========================================================
     # BUILD MODEL (ILP1 + ILP2)
     # =========================================================
+
+
     def build_model(self):
         model = pulp.LpProblem("ILP3_Hourly", pulp.LpMinimize)
 
         # Variáveis
         self.x = pulp.LpVariable.dicts(
-            "x", (self.I, self.D, self.A, self.teams), cat="Binary"
+            "x", (self.E, self.D, self.B, self.teams), cat="Binary"
         )
         self.z = pulp.LpVariable.dicts( # Simplifica restricoes que nao precisam de equipa.
-            "z", (self.I, self.D, self.A), cat="Binary"
+            "z", (self.E, self.D, self.B), cat="Binary"
         )
         self.y = pulp.LpVariable.dicts(
             "y", (self.D, self.H, self.teams), lowBound=0, cat="Integer"
         )
 
         # ---------- Objetivo (ILP1: mínimos) ----------
-        model += pulp.lpSum(self.y[d][h][e] for d in self.D for h in self.H for e in self.teams)
+        # Não exprime qualquer tipo de comparação
+        # Minimiza a falta aos minimos 
+        # Ex : 0 + 1 + 2 + 0 + 0 + 0 + 1 + 0 ... Tenta minimizar esta soma que exprime as violaçoes aos minimos
+        model += pulp.lpSum(self.y[d][h][t] for d in self.D for h in self.H for t in self.teams)
 
         # ---------- Restrições ----------
 
         # (2) 1 bloco por dia ou férias
-        for i in self.I:
+        for e in self.E:
             for d in self.D:
                 model += (
-                    pulp.lpSum(self.z[i][d][a] for a in self.A)
-                    <= 1 - self.delta[(i, d)] # O numero de blocos disponivel e no maximo 1 ou entao 0 se estiver de ferias
+                    pulp.lpSum(self.z[e][d][b] for b in self.B)
+                    <= 1 - self.delta[(e, d)] # O numero de blocos disponivel e no maximo 1 ou entao 0 se estiver de ferias
                 )
 
         # ligação z -> x
-        for i in self.I:
+        for e in self.E:
             for d in self.D:
-                for a in self.A:
+                for b in self.B:
                     model += (
-                        pulp.lpSum(self.x[i][d][a][e] for e in self.emp_team_code[i])
-                        == self.z[i][d][a]
+                        pulp.lpSum(self.x[e][d][b][t] for t in self.T[e])
+                        == self.z[e][d][b]
                     )
 
         # (3) equipas permitidas
-        for i in self.I:
-            for e in self.teams:
-                if e not in self.emp_team_code[i]:
+        for e in self.E:
+            for t in self.teams:
+                if t not in self.T[e]:
                     for d in self.D:
-                        for a in self.A:
-                            model += self.x[i][d][a][e] == 0
+                        for b in self.B:
+                            model += self.x[e][d][b][t] == 0
 
         # Se empregado i não está autorizado para equipa e, então x[i][d][a][e] DEVE ser 0 para todos os dias e blocos.
 
         # (4) 223 dias de trabalho
-        for i in self.I:
-            model += pulp.lpSum(self.z[i][d][a] for d in self.D for a in self.A) == 223
+        for e in self.E:
+            model += pulp.lpSum(self.z[e][d][b] for d in self.D for b in self.B) == 223
 
         # (5) máximo 5 dias consecutivos
-        for i in self.I:
+        for e in self.E:
             for d in range(self.num_days - 5):
                 model += (
-                    pulp.lpSum(self.z[i][dd][a]
+                    pulp.lpSum(self.z[e][dd][b]
                                for dd in range(d, d + 6)
-                               for a in self.A) <= 5
+                               for b in self.B) <= 5
                 )
+
+        # (6) descanso mínimo de 12h entre dias consecutivos
+        for e in self.E:
+            for d in range(self.num_days - 1):
+                for b in self.B:
+                    end_today = self.work_blocks[b][2]
+                    for a in self.B:
+                        start_tomorrow = self.work_blocks[a][0]
+                        rest_hours = (24 - end_today) + start_tomorrow
+                        if rest_hours < 12:
+                            model += self.z[e][d][b] + self.z[e][d + 1][a] <= 1
 
         # (8) definição de y (mínimos) + regra de OFF quando mínimo = -1
         # Se theta = -1 ⇒ loja fechada nessa hora/equipa ⇒ ninguém pode trabalhar
         for d in self.D:
             for h in self.H:
-                for e in self.teams:
-                    theta = self.theta.get((d + 1, h, get_team_id(e)), 0)
-
-                    total_workers = pulp.lpSum(
-                        self.alpha[(a, h)] * self.x[i][d][a][e]
-                        for i in self.I for a in self.A
+                for t in self.teams:
+                    theta = self.theta.get((d + 1, h, get_team_id(t)), 0)
+                    # Total de trabalhadores para aquele dia hora e equipa
+                    total_workers = pulp.lpSum(         
+                        self.alpha[(b, h)] * self.x[e][d][b][t]
+                        for e in self.E for b in self.B
                     )
 
                     if theta == -1:
                         # loja fechada → zero trabalhadores
                         model += total_workers == 0
-                        model += self.y[d][h][e] == 0
+                        model += self.y[d][h][t] == 0
                     else:
                         # violações aos mínimos
-                        model += self.y[d][h][e] >= theta - total_workers
+                        model += self.y[d][h][t] >= theta - total_workers
                     # if theta == -1:
                     #     model += self.y[d][h][e] == 0
                     # else:
@@ -171,7 +233,7 @@ class ILP3Scheduler:
                     #         self.y[d][h][e]
                     #         >= theta - pulp.lpSum(
                     #             self.alpha[(a, h)] * self.x[i][d][a][e]
-                    #             for i in self.I for a in self.A
+                    #             for i in self.E for a in self.A
                     #         )
                     #     )
 
@@ -181,9 +243,22 @@ class ILP3Scheduler:
     # SOLVE
     # =========================================================
     def solve(self, gap_rel=0.01):
+
+        print(f"\n{'='*80}")
+        print(f"[ILP_Extra] SOLVING ILP MODEL")
+        print(f"{'='*80}")
+        print(f"[ILP_Extra] Solver parameters:")
+        print(f"  Gap relative: {gap_rel*100:.2f}%")
+        print(f"  Variables: {self.model.numVariables()}")
+        print(f"  Constraints: {self.model.numConstraints()}")
+        print(f"\n[ILP_Extra] Starting solver (CBC)...")
+        print(f"[ILP_Extra] Real-time progress will be shown below:")
+        print(f"{'-'*80}")
+
         solver = pulp.PULP_CBC_CMD(
             msg=True,
             timeLimit=self.maxTime_sec,
+            threads=8,
             gapRel=gap_rel
         )
         status = self.model.solve(solver)
@@ -207,14 +282,14 @@ class ILP3Scheduler:
                     val_z = pulp.value(self.z[f][d_idx - 1][b])
                     if val_z is not None and val_z > 0.5:
                         chosen_b = b
-                        for tc in self.emp_team_code[f]:
+                        for tc in self.T[f]:
                             val_x = pulp.value(self.x[f][d_idx - 1][b].get(tc, 0))
                             if val_x is not None and val_x > 0.5:
                                 chosen_team = tc
                                 break
                         break
                 if chosen_b is not None:
-                    team_id = get_team_id(str(chosen_team)) if chosen_team else get_team_id(self.emp_team_code[f][0])
+                    team_id = get_team_id(str(chosen_team)) if chosen_team else get_team_id(self.T[f][0])
                     self.assignment[emp_id].append((d_idx, chosen_b, team_id))
 
     def vacs_1based(self):

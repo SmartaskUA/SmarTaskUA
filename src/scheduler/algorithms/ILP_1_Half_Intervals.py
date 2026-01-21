@@ -13,7 +13,7 @@ import pulp
 from algorithms.utils import (
     build_calendar,
     rows_to_vac_dict,
-    rows_to_req_dicts,
+    rows_to_req_dicts_Half_Hour,
     export_schedule_to_csv_shifts,
     TEAM_CODE_TO_ID,
     TEAM_ID_TO_CODE,
@@ -94,7 +94,7 @@ class HourlyILPStrictScheduler:
         }
 
         # Minimums
-        mins, ideals = rows_to_req_dicts(minimums_rows)
+        mins, ideals = rows_to_req_dicts_Half_Hour(minimums_rows)
         self.minimos = {}
         for (day, hour, team_id), val in mins.items():
             if 1 <= day <= self.num_days:
@@ -257,12 +257,12 @@ class HourlyILPStrictScheduler:
             )
 
         # Closed days: force no work any employee
-        for d in self.closed_days:
-            for f in funcionarios:
-                model += (
-                    pulp.lpSum(self.z[f][d][b] for b in blocos) == 0,
-                    f"closed_no_work_f{f}_{d.strftime('%Y%m%d')}"
-                )
+        # for d in self.closed_days:
+        #     for f in funcionarios:
+        #         model += (
+        #             pulp.lpSum(self.z[f][d][b] for b in blocos) == 0,
+        #             f"closed_no_work_f{f}_{d.strftime('%Y%m%d')}"
+        #         )
 
         # Link y with x: y[d,h,tc] == sum_{f,b} x[f,d,b,tc] for blocks that cover h
         for d in dias:
@@ -330,22 +330,22 @@ class HourlyILPStrictScheduler:
 
         # (Optional) Enforce team eligibility was already implicitly enforced by not creating x entries for disallowed team codes.
         # But also we can ensure x==0 for disallowed teams (defensive)
-        for f in funcionarios:
-            allowed = set(self.emp_team_code[f])
-            for d in dias:
-                for b in blocos:
-                    for tc in list(self.teams.keys()):
-                        if tc not in allowed:
-                            # if variable exists, set to 0 (safe-guard)
-                            if tc in self.x[f][d][b]:
-                                model += (self.x[f][d][b][tc] == 0,
-                                          f"disallow_team_f{f}_{d.strftime('%Y%m%d')}_b{b}_{tc}")
+        # for f in funcionarios:
+        #     allowed = set(self.emp_team_code[f])
+        #     for d in dias:
+        #         for b in blocos:
+        #             for tc in list(self.teams.keys()):
+        #                 if tc not in allowed:
+        #                     # if variable exists, set to 0 (safe-guard)
+        #                     if tc in self.x[f][d][b]:
+        #                         model += (self.x[f][d][b][tc] == 0,
+        #                                   f"disallow_team_f{f}_{d.strftime('%Y%m%d')}_b{b}_{tc}")
 
         # 3) Objective: minimize sum of weighted shortages
-        weight_shortage = 100  # tune as needed
+        # tune as needed
         obj_terms = []
         for (d, h, tc), s_var in self.shortage.items():
-            obj_terms.append(weight_shortage * s_var)
+            obj_terms.append(s_var)
         model += pulp.lpSum(obj_terms), "Minimize_total_shortage"
 
         self.model = model
@@ -365,6 +365,11 @@ class HourlyILPStrictScheduler:
         print(f"[HourlyILP] Solver configuration:")
         print(f"  Time limit: {self.maxTime_sec}s")
         print(f"  Gap tolerance: {gap_rel*100}%")
+        print(f"\n{'='*80}")
+        print(f"[ILP_Extra] SOLVING ILP MODEL")
+        print(f"  Variables: {self.model.numVariables()}")
+        print(f"  Constraints: {self.model.numConstraints()}")
+        print(f"\n[ILP_Extra] Starting solver (CBC)...")
         
         # Detect available solvers
         available_solvers = []
@@ -411,7 +416,7 @@ class HourlyILPStrictScheduler:
                     msg=True,
                     timeLimit=self.maxTime_sec if self.maxTime_sec else None,
                     gapRel=gap_rel,
-                    Threads=4,
+                    Threads=8,
                     Method=2,      # Barrier method, pode se escolher o metodo que quer
                     Presolve=2     # Aggressive presolve
                 )
@@ -592,7 +597,7 @@ def solve(vacations=None, minimuns=None, employees=None, maxTime=None, year=2021
     print(f"  Model built successfully!")
     
     print(f"\n[ILP_Extra] Solving...")
-    status = sched.solve(gap_rel=0.01)
+    status = sched.solve(gap_rel=0.005)
     
     print(f"\n[ILP_Extra] Exporting schedule...")
     sched.export_csv("hourly_strict_schedule.csv")

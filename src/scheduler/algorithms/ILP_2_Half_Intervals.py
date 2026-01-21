@@ -384,26 +384,7 @@ class HourlyILPScheduler:
                                 )
 
         self.model = model
-        
-        # Verify coverage
-        print(f"  [6/6] Verifying half-hour coverage...")
-        uncovered = []
-        for h in sorted(horas):
-            covered = any(
-                h in self._get_working_hours(self.work_blocks[b])
-                for b in blocos
-            )
-            if not covered:
-                uncovered.append(h)
-        
-        if uncovered:
-            print(f"    WARNING: Uncovered half-hours: {uncovered}")
-        else:
-            print(f"    All {len(horas)} half-hour periods are covered")
-                
-        print(f"[HourlyILP] Model built successfully!")
-        print(f"  Total constraints: {len(model.constraints):,}")
-        print(f"  Total variables: {len(model.variables()):,}")
+            
 
     def solve(self, gap_rel=0.005, solver_name='gurobi'):
         """
@@ -415,6 +396,10 @@ class HourlyILPScheduler:
         """
         if self.model is None:
             self.build_model()
+
+        print(f"[HourlyILP] Model built successfully!")
+        print(f"  Total constraints: {len(self.model.constraints):,}")
+        print(f"  Total variables: {len(self.model.variables()):,}")
         
         print(f"[HourlyILP] Solver configuration:")
         print(f"  Time limit: {self.maxTime_sec}s")
@@ -465,7 +450,7 @@ class HourlyILPScheduler:
                     msg=True,
                     timeLimit=self.maxTime_sec if self.maxTime_sec else None,
                     gapRel=gap_rel,
-                    Threads=4,
+                    Threads=8,
                     Method=2,      # Barrier method, pode se escolher o metodo que quer
                     Presolve=2     # Aggressive presolve
                 )
@@ -658,7 +643,7 @@ def solve(vacations, minimuns, employees, maxTime, year=2025, hours=13,
     )
 
     scheduler.build_model()
-    scheduler.solve(gap_rel=0.01, solver_name=solver)
+    scheduler.solve(gap_rel=0.005, solver_name=solver)
     
     print("Total shortage:", sum(int(pulp.value(s)) for s in scheduler.shortage.values()))
 

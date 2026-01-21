@@ -139,6 +139,8 @@ class HourlyILPStrictScheduler:
         horas = list(range(9, 22))
         teams = list(self.teams.keys())
 
+# ------------------------------------------------------------------------------
+
         # 1) Variables
         # z[f][d][b] binary: chosen block b for f on day d
         for f in funcionarios:
@@ -191,6 +193,9 @@ class HourlyILPStrictScheduler:
                     ub = max(0, len(self.employees) * 2)
                     self.shortage[(d, h, tc)] = pulp.LpVariable(name, lowBound=0, upBound=ub, cat="Continuous")
 
+# ------------------------------------------------------------------------------
+
+
         # 2) Constraints
         # Link z and x: x[f,d,b,tc] <= z[f,d,b] and sum_tc x == z (if z==1 one tc must be 1)
         for f in funcionarios:
@@ -210,11 +215,12 @@ class HourlyILPStrictScheduler:
                             model += (self.x[f][d][b][tc] == 0, f"closed_x_f{f}_{d.strftime('%Y%m%d')}_b{b}_{tc}")
                         continue
 
-                    # x <= z for each team
+                    # x <= z for each team, garante que todos os z == 0, os x == 0
                     for tc in self.emp_team_code[f]:
                         model += (self.x[f][d][b][tc] <= self.z[f][d][b], # Significa que se z==0 então x==0, se nao esta no bloco, x nao pode estar 
                                   f"x_le_z_f{f}_{d.strftime('%Y%m%d')}_b{b}_{tc}")
 
+                    # agora se z == 1, exatamente uma equipa deve ser escolhido
                     # sum_tc x == z  (if z==1 then exactly one team must be selected)
                     # but if employee has only 1 allowed team this forces that x==z
                     model += (
@@ -222,7 +228,10 @@ class HourlyILPStrictScheduler:
                         f"one_team_if_work_f{f}_{d.strftime('%Y%m%d')}_b{b}"
                     )
 
+
+
         # Workday linking: workday[f,d] >= z[f,d,b] for all b, and workday <= sum z (so equals OR)
+        # One Block per day
         for f in funcionarios:
             for d in dias:
                 model += (
@@ -235,6 +244,9 @@ class HourlyILPStrictScheduler:
                     f"workday_def_f{f}_{d.strftime('%Y%m%d')}"
                 )
 
+
+
+
         # Total working days = 223
         for f in funcionarios:
             model += (
@@ -242,13 +254,7 @@ class HourlyILPStrictScheduler:
                 f"total_223_f{f}"
             )
 
-        # Closed days: force no work any employee
-        for d in self.closed_days:
-            for f in funcionarios:
-                model += (
-                    pulp.lpSum(self.z[f][d][b] for b in blocos) == 0,
-                    f"closed_no_work_f{f}_{d.strftime('%Y%m%d')}"
-                )
+
 
         # Link y with x: y[d,h,tc] == sum_{f,b} x[f,d,b,tc] for blocks that cover h
         for d in dias:
@@ -274,6 +280,9 @@ class HourlyILPStrictScheduler:
                         # no possible members -> y == 0
                         model += (self.y[d][h][tc] == 0, f"y_zero_d{d.strftime('%Y%m%d')}_h{h}_{tc}")
 
+
+
+
         # Shortage linking and minimum constraints
         for d in dias:
             for h in horas:
@@ -291,6 +300,9 @@ class HourlyILPStrictScheduler:
                         self.shortage[(d, h, tc)] = s_var
                     model += (s_var + self.y[d][h][tc] >= minimo, f"short_def_d{d.strftime('%Y%m%d')}_h{h}_{tc}")
 
+
+
+
         # Max 5 consecutive working days (window 6)
         for f in funcionarios:
             for i in range(0, len(dias) - 5):
@@ -299,6 +311,8 @@ class HourlyILPStrictScheduler:
                     pulp.lpSum(self.workday[f][d] for d in window) <= 5,
                     f"max5_consec_f{f}_{dias[i].strftime('%Y%m%d')}"
                 )
+
+
 
         # Valid transitions (12h rest) using z variables (strict)
         for f in funcionarios:
@@ -314,28 +328,32 @@ class HourlyILPStrictScheduler:
                                 f"invalid_trans_f{f}_{d_today.strftime('%Y%m%d')}_b{b}_a{a}"
                             )
 
-        # (Optional) Enforce team eligibility was already implicitly enforced by not creating x entries for disallowed team codes.
-        # But also we can ensure x==0 for disallowed teams (defensive)
-        for f in funcionarios:
-            allowed = set(self.emp_team_code[f])
-            for d in dias:
-                for b in blocos:
-                    for tc in list(self.teams.keys()):
-                        if tc not in allowed:
-                            # if variable exists, set to 0 (safe-guard)
-                            if tc in self.x[f][d][b]:
-                                model += (self.x[f][d][b][tc] == 0,
-                                          f"disallow_team_f{f}_{d.strftime('%Y%m%d')}_b{b}_{tc}")
-
         # 3) Objective: minimize sum of weighted shortages
-        weight_shortage = 100  # tune as needed
         obj_terms = []
         for (d, h, tc), s_var in self.shortage.items():
-            obj_terms.append(weight_shortage * s_var)
-        model += pulp.lpSum(obj_terms), "Minimize_total_shortage"
+            obj_terms.append(s_var)
+        model += pulp.lpSum(obj_terms), "Minimize_total_shortage" # Funcao objetivo poris nao existe qualquer comparacao
+
 
         self.model = model
         print("[HourlyILPStrict] Model built (variables: z,x,workday,y,shortage)")
+
+
+
+
+
+
+
+
+
+
+
+# ------------------------------------------------------------------------------
+
+
+
+
+
 
     def solve(self, gap_rel=0.01):
         if self.model is None:
@@ -360,6 +378,7 @@ class HourlyILPStrictScheduler:
             msg=1,           # Enable output messages
             timeLimit=time_limit,
             gapRel=gap_rel,
+            threads=8,
             options=['logLevel=2']  # Detailed logging
         )
         
