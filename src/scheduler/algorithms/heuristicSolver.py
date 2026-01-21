@@ -1,4 +1,5 @@
 import random
+import time
 from collections import defaultdict
 import holidays as hl
 
@@ -192,7 +193,7 @@ def solve_heuristic(
         vacations: rows used by rows_to_vac_dict
         minimuns: rows used by rows_to_req_dicts
         employees: list of dicts (with "teams" field)
-        maxTime: unused (kept for API compatibility)
+        maxTime: maximum running time in minutes
         year: int
         shifts: number of shifts per day (1..S)
         rules: unused (placeholder)
@@ -202,6 +203,12 @@ def solve_heuristic(
     """
 
     num_days = 365
+    max_time_sec = int(maxTime) * 60 if maxTime is not None else None
+    start_time = time.time()
+
+    def _check_timeout():
+        if max_time_sec is not None and (time.time() - start_time) >= max_time_sec:
+            raise TimeoutError(f"Heuristic Solver timed out after {max_time_sec} seconds.")
     n_employees = len(employees)
     S = range(1, int(shifts) + 1)
     Employees = list(range(n_employees))
@@ -263,6 +270,7 @@ def solve_heuristic(
     # =====================================================
 
     for d in D:
+        _check_timeout()
         for s in S:
             # Determine teams that require coverage on this (d,s)
             teams_here = [
@@ -271,6 +279,7 @@ def solve_heuristic(
             for t in teams_here:
                 req = min_required[(d, s, t)]
                 while assigned_min[(d, s, t)] < req:
+                    _check_timeout()
                     candidates = []
                     for e in Employees:
                         if t not in allowed_teams_per_emp[e]:
@@ -317,6 +326,7 @@ def solve_heuristic(
     # =====================================================
 
     for e in Employees:
+        _check_timeout()
         deficit = target_workdays - total_work[e]
         if deficit <= 0:
             continue
@@ -329,6 +339,7 @@ def solve_heuristic(
                 break
 
             for d in D:
+                _check_timeout()
                 if deficit <= 0:
                     break
                 if work[e][d] == 1:
@@ -364,6 +375,7 @@ def solve_heuristic(
                 random.shuffle(slots)
 
                 for s, t, key in slots:
+                    _check_timeout()
                     if not _is_feasible_assignment(
                         e,
                         d,
@@ -395,11 +407,13 @@ def solve_heuristic(
     # =====================================================
 
     for e in Employees:
+        _check_timeout()
         deficit = target_workdays - total_work[e]
         if deficit <= 0:
             continue
 
         for d in D:
+            _check_timeout()
             if deficit <= 0:
                 break
             if work[e][d] == 1:
@@ -415,6 +429,7 @@ def solve_heuristic(
             random.shuffle(slots)
 
             for s, t in slots:
+                _check_timeout()
                 if not _is_feasible_assignment(
                     e,
                     d,

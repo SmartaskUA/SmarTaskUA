@@ -1,5 +1,9 @@
 import pika
 import json
+import os
+import re
+import sys
+import threading
 import time
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
@@ -7,9 +11,64 @@ from MongoDBClient import MongoDBClient
 from TaskManager import TaskManager
 
 
+class ThreadLocalStream:
+    def __init__(self, base_stream):
+        self._base_stream = base_stream
+        self._local = threading.local()
+
+    def set_thread_file(self, file_obj):
+        self._local.file_obj = file_obj
+
+    def clear_thread_file(self):
+        self._local.file_obj = None
+
+    def write(self, data):
+        if data is None:
+            return
+        if isinstance(data, bytes):
+            data = data.decode(self.encoding, errors="replace")
+        file_obj = getattr(self._local, "file_obj", None)
+        if file_obj is not None:
+            file_obj.write(data)
+            file_obj.flush()
+        self._base_stream.write(data)
+        self._base_stream.flush()
+
+    def flush(self):
+        file_obj = getattr(self._local, "file_obj", None)
+        if file_obj is not None:
+            file_obj.flush()
+        self._base_stream.flush()
+
+    def isatty(self):
+        return self._base_stream.isatty()
+
+    def fileno(self):
+        return self._base_stream.fileno()
+
+    @property
+    def encoding(self):
+        return getattr(self._base_stream, "encoding", "utf-8")
+
+    def __getattr__(self, name):
+        return getattr(self._base_stream, name)
+
+
 class RabbitMQClient:
     def __init__(self, host='rabbitmq', task_exchange='task-exchange', status_exchange='status-exchange',
                  task_queue='task-queue', task_routing_key='task-routing-key', status_routing_key='status-routing-key'):
+        if isinstance(sys.stdout, ThreadLocalStream):
+            self.stdout_router = sys.stdout
+        else:
+            self.stdout_router = ThreadLocalStream(sys.stdout)
+            sys.stdout = self.stdout_router
+
+        if isinstance(sys.stderr, ThreadLocalStream):
+            self.stderr_router = sys.stderr
+        else:
+            self.stderr_router = ThreadLocalStream(sys.stderr)
+            sys.stderr = self.stderr_router
+
         self.host = host
         self.task_exchange = task_exchange
         self.status_exchange = status_exchange
@@ -184,9 +243,26 @@ class RabbitMQClient:
             shifts,
             rules
     ):
-
-        self.send_task_status(task_id, "IN_PROGRESS")
+        log_file = None
+        log_path = None
         try:
+            log_path = self._init_task_log_path(task_id, title, algorithm_name)
+            log_file = open(log_path, "w", encoding="utf-8")
+            self.stdout_router.set_thread_file(log_file)
+            self.stderr_router.set_thread_file(log_file)
+            self._write_task_log_header(
+                log_file,
+                task_id,
+                title,
+                algorithm_name,
+                vacation_template_name,
+                minimuns_template_name,
+                year,
+                shifts,
+                maxTime
+            )
+
+            self.send_task_status(task_id, "IN_PROGRESS")
             print(f"[RabbitMQClient] Delegando execução da task {task_id} para TaskManager...")
             schedule_data, elapsed_time = self.task_manager.run_task(
                 task_id=task_id,
@@ -234,6 +310,21 @@ class RabbitMQClient:
             print("======== END TRACE ========")
             print(f"Error during schedule execution: {e}")
             self.send_task_status(task_id, "FAILED")
+        finally:
+            if log_file is not None:
+                try:
+                    self._write_task_log_footer(log_file)
+                except Exception:
+                    pass
+                self.stdout_router.clear_thread_file()
+                self.stderr_router.clear_thread_file()
+                try:
+                    log_file.close()
+                except Exception:
+                    pass
+            if log_path is not None:
+                sys.__stdout__.write(f"Saved task log: {log_path}\n")
+                sys.__stdout__.flush()
 
     def send_task_status(self, task_id, status):
         updated_at = datetime.now().isoformat()
@@ -280,6 +371,50 @@ class RabbitMQClient:
         self.connection.close()
         self.publisher_connection.close()
         print("Connections closed.")
+
+    def _init_task_log_path(self, task_id, title, algorithm_name):
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        log_dir = os.path.join(base_dir, "logs", "scheduler-runs")
+        os.makedirs(log_dir, exist_ok=True)
+        safe_title = self._sanitize_log_token(title or "task")
+        safe_algo = self._sanitize_log_token(algorithm_name or "algorithm")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{timestamp}_{safe_algo}_{safe_title}_{task_id}.log"
+        return os.path.join(log_dir, filename)
+
+    def _sanitize_log_token(self, value):
+        return re.sub(r"[^A-Za-z0-9._-]+", "_", value)
+
+    def _write_task_log_header(
+        self,
+        log_file,
+        task_id,
+        title,
+        algorithm_name,
+        vacation_template_name,
+        minimuns_template_name,
+        year,
+        shifts,
+        maxTime
+    ):
+        log_file.write("TASK LOG START\n")
+        log_file.write(f"Timestamp: {datetime.now().isoformat()}\n")
+        log_file.write(f"Task ID: {task_id}\n")
+        log_file.write(f"Title: {title}\n")
+        log_file.write(f"Algorithm: {algorithm_name}\n")
+        log_file.write(f"Vacation template: {vacation_template_name}\n")
+        log_file.write(f"Minimums template: {minimuns_template_name}\n")
+        log_file.write(f"Year: {year}\n")
+        log_file.write(f"Shifts: {shifts}\n")
+        log_file.write(f"MaxTime: {maxTime}\n")
+        log_file.write("-" * 80 + "\n")
+        log_file.flush()
+
+    def _write_task_log_footer(self, log_file):
+        log_file.write("-" * 80 + "\n")
+        log_file.write(f"Timestamp: {datetime.now().isoformat()}\n")
+        log_file.write("TASK LOG END\n")
+        log_file.flush()
 
 
 if __name__ == "__main__":

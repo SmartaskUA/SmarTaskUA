@@ -288,6 +288,7 @@ class ILPSchedulerWeighted:
             )
 
         # (5) No more than 5 consecutive working days
+        # For every 6-day window, at most 5 can be working days
         for f in funcionarios:
             for i in range(len(dias) - 5):
                 window = dias[i:i + 6]

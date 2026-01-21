@@ -89,9 +89,25 @@ class TaskManager:
             "Heuristic Solver",
             "ilp_greedy",
         ]:
-            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, rules=rules_json)
+            schedule_data = algorithm(
+                vacations=vacations,
+                minimuns=minimuns,
+                employees=employees,
+                maxTime=maxTime,
+                year=year,
+                shifts=shifts,
+                rules=rules_json,
+            )
         elif algorithm_name in ["ILP_13Hours", "CSP_13Hours", "CSP_Afonso_Hours", "ILP_13_Half_Intervals", "ILP_Half_Hour", "CSP_Extra_Hours", "ILP_Extra_Hours"]:
-            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, rules=rules_json)
+            schedule_data = algorithm(
+                vacations=vacations,
+                minimuns=minimuns,
+                employees=employees,
+                maxTime=maxTime,
+                year=year,
+                hours=hours,
+                rules=rules_json,
+            )
         else:
             schedule_data = algorithm()
         end_time = time.time()

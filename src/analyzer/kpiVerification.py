@@ -73,14 +73,21 @@ def analyze(file, holidays, mins, employees, year=2025):
         work_sequence = [1 if is_work_shift(row[col]) else 0 for col in dia_cols]
         streak = 0
         fails = 0
-        for day in work_sequence:
+        violation_days = []
+        for idx, day in enumerate(work_sequence, start=1):
             if day == 1:
                 streak += 1
                 if streak >= 6:
                     fails += 1
+                    violation_days.append(idx)
             else:
                 streak = 0
         consecutiveDays += fails
+        if violation_days:
+            emp_id = row.get('funcionario', row.get('Employee', 'UNKNOWN'))
+            print(
+                f"[KPI] Consecutive Work-Day Violations | Employee: {emp_id} | Days: {violation_days}"
+            )
 
         # Tomorrow earlier than today (TM fails) — compare by M<T<N
         tm_fails = 0

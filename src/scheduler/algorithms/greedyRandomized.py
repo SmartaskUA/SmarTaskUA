@@ -182,6 +182,7 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2,rule
             ids = [ get_team_id("A") ]
         teams[emp_id] = ids
 
+    max_time_sec = int(maxTime) * 60 if maxTime is not None else None
     scheduler = GreedyRandomized(
         employees=emp_ids,
         num_days=num_days,
@@ -191,7 +192,7 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2,rule
         ideals=ideals,
         teams=teams,
         num_iter=10,
-        maxTime=(int(maxTime) if maxTime is not None else None),
+        maxTime=max_time_sec,
         year=year,
         shifts=shifts, 
     )

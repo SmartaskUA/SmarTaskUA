@@ -395,6 +395,8 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, rul
             ids = [get_team_id("A")]
         teams[emp_id] = ids
 
+    max_time_min = int(maxTime) if maxTime else None
+    max_time_sec = max_time_min * 60 if max_time_min is not None else None
     scheduler = GreedyClimbing(
         employees=emp_ids,
         num_days=num_days,
@@ -404,7 +406,7 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, rul
         ideals=ideals,
         teams=teams,
         num_iter=10,
-        maxTime=(int(maxTime) if maxTime else None),
+        maxTime=max_time_sec,
         year=year,
         shifts=shifts,
     )
@@ -413,7 +415,7 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, rul
 
     initial_score = scheduler.score(scheduler.create_horario())
     print(f"{tag} Initial score: {initial_score}")
-    scheduler.hill_climbing(maxTime=(int(maxTime) if maxTime else None))
+    scheduler.hill_climbing(maxTime=max_time_min)
 
     export_schedule_to_csv(scheduler, "schedule_hybrid.csv", num_days=num_days)
     return schedule_to_table(

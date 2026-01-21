@@ -23,9 +23,15 @@ import smartask.api.services.SchedulesService;
 import smartask.api.services.TeamService;
 import smartask.api.services.VacationService;
 import org.springframework.mock.web.MockMultipartFile;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @EnableScheduling
@@ -85,6 +91,7 @@ public class ApiApplication {
             createScenarioWithCrossing(teamService, employeeService, 16, 192, 0.20);
             loadTemplatesIntoDatabase(vacationService, referenceService);
             runLinearProgrammingScenarios(schedulesService, "linear programming 2");
+            runLinearProgrammingScenarios(schedulesService, "CSPv2");
             //FrunLinearProgrammingScenarios(schedulesService, "Heuristic Solver");
             runLinearProgrammingScenarios(schedulesService, "Greedy Randomized");
 
@@ -349,13 +356,50 @@ private void runLinearProgrammingScenarios(SchedulesService schedulesService, St
             );
 
             System.out.printf("\nSubmitting [%s] with VacationTemplate '%s'%n", title, vacationTemplate);
+            BufferedWriter runLog = null;
+            Path logPath = null;
             try {
+                logPath = initRunLogPath(algorithmName, title, taskId);
+                runLog = Files.newBufferedWriter(
+                        logPath,
+                        StandardOpenOption.CREATE_NEW,
+                        StandardOpenOption.WRITE
+                );
+                logLine(runLog, "Task ID: " + taskId);
+                logLine(runLog, "Algorithm: " + algorithmName);
+                logLine(runLog, "Title: " + title);
+                logLine(runLog, "Group: " + groupName);
+                logLine(runLog, "Minimums: " + minimunName);
+                logLine(runLog, "VacationTemplate: " + vacationTemplate);
+                logLine(runLog, "Shifts: " + 3);
+                logLine(runLog, "MaxTime(min): " + 45);
+
                 String res = schedulesService.requestScheduleGeneration(req);
                 System.out.printf("[%s vs %s] → %s%n", minimunName, vacationTemplate, res);
+                logLine(runLog, "RequestResult: " + res);
 
-                waitForTaskCompletion(taskId, title, schedulesService, 45);
+                String finalStatus = waitForTaskCompletion(taskId, title, schedulesService, 45, runLog);
+                logLine(runLog, "FinalStatus: " + finalStatus);
             } catch (Exception e) {
                 System.err.printf("Failed for %s x %s → %s%n", minimunName, vacationTemplate, e.getMessage());
+                if (runLog != null) {
+                    try {
+                        logLine(runLog, "ERROR: " + e.getMessage());
+                    } catch (Exception ignored) {
+                        // best-effort logging
+                    }
+                }
+            } finally {
+                if (runLog != null) {
+                    try {
+                        runLog.close();
+                    } catch (Exception ignored) {
+                        // best-effort close
+                    }
+                }
+                if (logPath != null) {
+                    System.out.printf("Saved run log: %s%n", logPath.toString());
+                }
             }
         }
     }
@@ -363,7 +407,7 @@ private void runLinearProgrammingScenarios(SchedulesService schedulesService, St
     System.out.println("\nAll ILP-2 scheduling tasks completed sequentially!");
 }
 
-private void waitForTaskCompletion(String taskId, String title, SchedulesService schedulesService, int maxMinutes) {
+private String waitForTaskCompletion(String taskId, String title, SchedulesService schedulesService, int maxMinutes, BufferedWriter runLog) {
     System.out.printf("Waiting for completion of task '%s'...%n", title);
     long start = System.currentTimeMillis();
     long timeout = maxMinutes * 60 * 1000L; // Convert minutes to milliseconds
@@ -377,26 +421,51 @@ private void waitForTaskCompletion(String taskId, String title, SchedulesService
                 String status = statusOpt.get().getStatus();
                 if ("COMPLETED".equalsIgnoreCase(status)) {
                     System.out.printf("✅ Task '%s' completed successfully.%n", title);
-                    break;
+                    logLine(runLog, "Status: COMPLETED");
+                    return "COMPLETED";
                 }
                 if ("FAILED".equalsIgnoreCase(status)) {
                     System.err.printf("❌ Task '%s' failed.%n", title);
-                    break;
+                    logLine(runLog, "Status: FAILED");
+                    return "FAILED";
                 }
             } else {
                 System.out.printf("🕓 Task '%s' not yet created in DB, waiting...%n", title);
+                logLine(runLog, "Status: PENDING (not in DB yet)");
             }
 
             if (System.currentTimeMillis() - start > timeout) {
                 System.err.printf("⚠️ Timeout reached for task '%s'. Moving to next.%n", title);
-                break;
+                logLine(runLog, "Status: TIMEOUT");
+                return "TIMEOUT";
             }
 
             Thread.sleep(5000);
         } catch (Exception e) {
             System.err.printf("⚠️ Error checking status of '%s': %s%n", title, e.getMessage());
-            break;
+            logLine(runLog, "Status: ERROR (" + e.getMessage() + ")");
+            return "ERROR";
         }
+    }
+}
+
+private Path initRunLogPath(String algorithmName, String title, String taskId) throws Exception {
+    Path logDir = Paths.get("logs", "api-runs");
+    Files.createDirectories(logDir);
+    String safeTitle = title.replaceAll("[^A-Za-z0-9._-]", "_");
+    String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+    String filename = timestamp + "_" + safeTitle + "_" + taskId + ".log";
+    return logDir.resolve(filename);
+}
+
+private void logLine(BufferedWriter writer, String message) {
+    if (writer == null) return;
+    try {
+        writer.write("[" + LocalDateTime.now() + "] " + message);
+        writer.newLine();
+        writer.flush();
+    } catch (Exception ignored) {
+        // best-effort logging
     }
 }
 
