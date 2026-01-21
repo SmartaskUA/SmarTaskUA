@@ -57,34 +57,63 @@ const metricInfo = {
     label: "Team Satisfaction Level",
     description: "Median distribution of work between primary and secondary team for employees assigned to two teams.",
   },
+  hourlyCoverageGaps: {
+    label: "Hourly Coverage Gaps",
+    description: "Total shortfall versus required hourly staffing across all teams and days.",
+  },
+  hourlyOverstaff: {
+    label: "Hourly Overstaff",
+    description: "Total overstaffing versus required hourly staffing across all teams and days.",
+  },
 };
 
-const KPIReport = ({ metrics = {} }) => {
+const KPIReport = ({ metrics = {}, scheduleType }) => {
   console.log("KPI Metrics:", metrics);
-  const {
-    tmFails = 0,
-    consecutiveDays = 0,
-    workHolidays = 0,
-    missedVacationDays = 0,
-    missedWorkDays = 0,
-    missedTeamMin = 0,
-    missedTeamIdeal = 0,
-    shiftBalance = 0,
-    singleTeamViolations = 0,
-    teamSatisfactionLevel = 0,
-  } = metrics;
+  const normalizedType = String(scheduleType || "").toLowerCase();
+  const isHourly =
+    normalizedType === "horas" ||
+    normalizedType === "hours" ||
+    metrics.hourlyCoverageGaps !== undefined ||
+    metrics.hourlyOverstaff !== undefined;
 
-  const totalIssues = [
-    tmFails,
-    consecutiveDays,
-    workHolidays,
-    missedVacationDays,
-    missedWorkDays,
-    missedTeamMin,
-    missedTeamIdeal,
-    singleTeamViolations,
-    teamSatisfactionLevel,
-  ].filter((v) => v > 0).length;
+  const shiftMetrics = [
+    "tmFails",
+    "consecutiveDays",
+    "workHolidays",
+    "missedVacationDays",
+    "missedWorkDays",
+    "missedTeamMin",
+    "missedTeamIdeal",
+    "singleTeamViolations",
+    "shiftBalance",
+    "teamSatisfactionLevel",
+  ];
+
+  const hourlyMetrics = [
+    "hourlyCoverageGaps",
+    "hourlyOverstaff",
+    "consecutiveDays",
+    "workHolidays",
+    "missedVacationDays",
+    "missedWorkDays",
+    "missedTeamMin",
+    "missedTeamIdeal",
+  ];
+  if (metrics.singleTeamViolations !== undefined) {
+    hourlyMetrics.push("singleTeamViolations");
+  }
+  hourlyMetrics.push("teamSatisfactionLevel");
+
+  const displayMetrics = isHourly ? hourlyMetrics : shiftMetrics;
+  const percentMetrics = new Set(["shiftBalance", "teamSatisfactionLevel"]);
+
+  const issueMetrics = displayMetrics.filter((key) => key !== "shiftBalance");
+  const totalIssues = issueMetrics
+    .map((key) => {
+      const value = Number(metrics[key] ?? 0);
+      return Number.isFinite(value) ? value : 0;
+    })
+    .filter((v) => v > 0).length;
 
   const getStatusChip = () =>
     totalIssues === 0 ? (
@@ -133,42 +162,18 @@ const KPIReport = ({ metrics = {} }) => {
         <AccordionDetails>
           <Paper elevation={0} sx={{ p: 3 }}>
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={6} md={3}>
-                {renderMetric("tmFails", tmFails, tmFails > 0)}
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                {renderMetric("consecutiveDays", consecutiveDays, consecutiveDays > 0)}
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                {renderMetric("workHolidays", workHolidays, workHolidays > 0)}
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                {renderMetric("missedVacationDays", missedVacationDays, missedVacationDays > 0)}
-              </Grid>
-            </Grid>
-
-            <Grid container spacing={3} sx={{ mt: 2 }}>
-              <Grid item xs={12} sm={6} md={4}>
-                {renderMetric("missedWorkDays", missedWorkDays, missedWorkDays > 0)}
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                {renderMetric("missedTeamMin", missedTeamMin, missedTeamMin > 0)}
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                {renderMetric("missedTeamIdeal", missedTeamIdeal, missedTeamIdeal > 0)}
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                {renderMetric("singleTeamViolations", singleTeamViolations, singleTeamViolations > 0)}
-              </Grid>
-            </Grid>
-
-            <Grid container spacing={3} sx={{ mt: 2 }}>
-              <Grid item xs={12} sm={6} md={4}>
-                {renderMetric("shiftBalance", `${shiftBalance}%`, false, true)}
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                {renderMetric("teamSatisfactionLevel", `${teamSatisfactionLevel}%`, false, true)}
-              </Grid>
+              {displayMetrics.map((key) => {
+                const rawValue = Number(metrics[key] ?? 0);
+                const value = Number.isFinite(rawValue) ? rawValue : 0;
+                const isPercentage = percentMetrics.has(key);
+                const displayValue = isPercentage ? `${value}%` : value;
+                const isViolation = !isPercentage && value > 0;
+                return (
+                  <Grid item xs={12} sm={6} md={3} key={key}>
+                    {renderMetric(key, displayValue, isViolation, isPercentage)}
+                  </Grid>
+                );
+              })}
             </Grid>
           </Paper>
         </AccordionDetails>
