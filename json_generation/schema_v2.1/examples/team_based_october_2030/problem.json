@@ -1,0 +1,257 @@
+{
+  "schemaVersion": "2.1",
+  "problemType": "employee_scheduling",
+
+  "metadata": {
+    "problemId": "2030_OCTOBER_EXAMPLE",
+    "createdAt": "2025-01-20T15:30:00Z",
+    "description": "October 2030 employee scheduling problem - Simplified team-based model",
+    "source": "2030Exemplo2.xlsx"
+  },
+
+  "features": {
+    "useShiftBasedScheduling": true,
+    "useCompetencyModel": false,
+    "useAdvancedConstraints": false,
+    "usePriorityHierarchy": true
+  },
+
+  "temporalScope": {
+    "year": 2030,
+    "numDays": 31,
+    "targetPeriod": {
+      "start": "2030-10-01",
+      "end": "2030-10-31",
+      "includeBufferWeeks": false
+    }
+  },
+
+  "employees": {
+    "model": "team",
+    "simple": [
+      {
+        "id": "20072412",
+        "name": "Emp_20072412",
+        "teams": ["EG"]
+      },
+      {
+        "id": "20066543",
+        "name": "Emp_20066543",
+        "teams": ["EG"]
+      },
+      {
+        "id": "20067009",
+        "name": "Emp_20067009",
+        "teams": ["CAJ", "EG"]
+      },
+      {
+        "id": "20054956",
+        "name": "Emp_20054956",
+        "teams": ["CAJ", "EG"]
+      },
+      {
+        "id": "20056459",
+        "name": "Emp_20056459",
+        "teams": ["CAJ"]
+      },
+      {
+        "id": "20062688",
+        "name": "Emp_20062688",
+        "teams": ["CAJ", "EG"],
+        "unavailability": [
+          {
+            "dates": ["2030-10-02", "2030-10-03", "2030-10-04", "2030-10-05", "2030-10-06", "2030-10-07"],
+            "reason": "vacation",
+            "type": "VAC"
+          }
+        ]
+      },
+      {
+        "id": "20067696",
+        "name": "Emp_20067696",
+        "teams": ["CAJ"]
+      }
+    ]
+  },
+
+  "demand": {
+    "shiftModel": "fixed",
+    "dataFile": "demand.csv",
+    "organizationalUnits": {
+      "teams": ["EG", "CAJ", "ALM", "HOSS"]
+    },
+    "shifts": [
+      {
+        "code": "M",
+        "name": "Morning",
+        "order": 1,
+        "timeRange": {
+          "start": "08:30",
+          "end": "16:30"
+        },
+        "breaks": [
+          {
+            "type": "meal",
+            "duration": 30,
+            "timing": {
+              "mode": "window",
+              "window": {"start": "12:00", "end": "14:30"}
+            },
+            "paid": false,
+            "required": true,
+            "canStagger": true
+          }
+        ]
+      },
+      {
+        "code": "T",
+        "name": "Afternoon",
+        "order": 2,
+        "timeRange": {
+          "start": "14:00",
+          "end": "22:00"
+        },
+        "breaks": [
+          {
+            "type": "meal",
+            "duration": 30,
+            "timing": {
+              "mode": "afterWork",
+              "afterMinutes": 240
+            },
+            "paid": false,
+            "required": true,
+            "canStagger": true
+          }
+        ]
+      }
+    ],
+    "priorityHierarchy": [
+      {
+        "rank": 1,
+        "team": "ALM",
+        "description": "Warehouse operations - Highest priority"
+      },
+      {
+        "rank": 2,
+        "team": "HOSS",
+        "description": "HOSS Manager - High priority"
+      },
+      {
+        "rank": 3,
+        "team": "EG",
+        "description": "Management Team - Medium priority"
+      },
+      {
+        "rank": 4,
+        "team": "CAJ",
+        "description": "Cashier - Standard priority"
+      }
+    ]
+  },
+
+  "scheduleInput": {
+    "dataFile": "schedule_input.csv",
+    "markingTypes": {
+      "DL": "Day Off - Generic day off",
+      "DLF": "Fixed day off (cannot change)",
+      "DLV": "Variable day off (can swap)",
+      "VAC": "Vacation",
+      "EnfD": "Sick leave",
+      "WORK": "Work shift"
+    }
+  },
+
+  "constraints": {
+    "hard": [
+      {
+        "id": "max-consecutive-days",
+        "type": "max_consecutive_days",
+        "params": {
+          "window": 6,
+          "max_worked": 5
+        },
+        "enabled": true
+      },
+      {
+        "id": "min-rest-hours",
+        "type": "min_rest_hours",
+        "params": {
+          "hours": 11
+        },
+        "enabled": true
+      },
+      {
+        "id": "total-workdays",
+        "type": "total_workdays",
+        "params": {
+          "min": 223,
+          "max": 223
+        },
+        "enabled": true
+      },
+      {
+        "id": "max-special-days",
+        "type": "max_special_days",
+        "params": {
+          "cap": 22
+        },
+        "enabled": true
+      },
+      {
+        "id": "no-backward-shift-transitions",
+        "type": "no_earlier_shift_next_day",
+        "params": {},
+        "enabled": true
+      },
+      {
+        "id": "vacation-days",
+        "type": "vacation_block",
+        "params": {},
+        "enabled": true
+      }
+    ],
+    "soft": [
+      {
+        "id": "min-coverage",
+        "type": "min_coverage",
+        "params": {
+          "penalty_per_missing": 1000
+        },
+        "weight": 1000,
+        "enabled": true
+      },
+      {
+        "id": "balance-workload",
+        "type": "balance_workload",
+        "params": {
+          "penalty_per_imbalance": 10
+        },
+        "weight": 10,
+        "enabled": true
+      }
+    ]
+  },
+
+  "optimization": {
+    "algorithm": "CSPv2",
+    "maxTimeMinutes": 10,
+    "objectives": [
+      {
+        "goal": "minimize_shortages",
+        "weight": 1000,
+        "priority": 1
+      },
+      {
+        "goal": "balance_workload",
+        "weight": 10,
+        "priority": 2
+      },
+      {
+        "goal": "respect_preferences",
+        "weight": 5,
+        "priority": 3
+      }
+    ]
+  }
+}
