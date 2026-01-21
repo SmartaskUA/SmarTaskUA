@@ -11,7 +11,6 @@
 
   "features": {
     "useShiftBasedScheduling": true,
-    "useCompetencyModel": false,
     "useAdvancedConstraints": false,
     "usePriorityHierarchy": true
   },
@@ -57,14 +56,7 @@
       {
         "id": "20062688",
         "name": "Emp_20062688",
-        "teams": ["CAJ", "EG"],
-        "unavailability": [
-          {
-            "dates": ["2030-10-02", "2030-10-03", "2030-10-04", "2030-10-05", "2030-10-06", "2030-10-07"],
-            "reason": "vacation",
-            "type": "VAC"
-          }
-        ]
+        "teams": ["CAJ", "EG"]
       },
       {
         "id": "20067696",
@@ -78,7 +70,7 @@
     "shiftModel": "fixed",
     "dataFile": "demand.csv",
     "organizationalUnits": {
-      "teams": ["EG", "CAJ", "ALM", "HOSS"]
+      "teams": ["EG", "CAJ"]
     },
     "shifts": [
       {
@@ -129,21 +121,11 @@
     "priorityHierarchy": [
       {
         "rank": 1,
-        "team": "ALM",
-        "description": "Warehouse operations - Highest priority"
+        "team": "EG",
+        "description": "Management Team - High priority"
       },
       {
         "rank": 2,
-        "team": "HOSS",
-        "description": "HOSS Manager - High priority"
-      },
-      {
-        "rank": 3,
-        "team": "EG",
-        "description": "Management Team - Medium priority"
-      },
-      {
-        "rank": 4,
         "team": "CAJ",
         "description": "Cashier - Standard priority"
       }

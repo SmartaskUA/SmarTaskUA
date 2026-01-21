@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://smartask.ua/schemas/scheduling-problem-v2.1.json",
   "title": "Employee Scheduling Problem Definition (Hybrid JSON + CSV)",
-  "description": "Hybrid schema for employee scheduling: JSON for structure/metadata, CSV for large data matrices. Supports team-based and competency-based models using unified CSV format. CSV validation: shift codes must exist in shifts[], team/competency codes must exist in organizationalUnits, dates must be within temporalScope.targetPeriod",
+  "description": "Hybrid schema for employee scheduling: JSON for structure/metadata, CSV for large data matrices. Supports team-based and competency-based models. See FORMAT.md for CSV validation rules and detailed specifications.",
   "type": "object",
   "required": ["schemaVersion", "problemType", "metadata", "temporalScope", "employees", "demand", "constraints", "optimization"],
   "properties": {
@@ -47,11 +47,6 @@
           "type": "boolean",
           "default": true,
           "description": "Enable shift-based scheduling (true) or interval-based scheduling (false)"
-        },
-        "useCompetencyModel": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable competency-based employee model instead of fixed teams"
         },
         "useAdvancedConstraints": {
           "type": "boolean",
@@ -137,7 +132,7 @@
         },
         "competency": {
           "type": "array",
-          "description": "Competency-based employee list (when model='competency' and useCompetencyModel=true)",
+          "description": "Competency-based employee list (when model='competency')",
           "items": {
             "type": "object",
             "required": ["id", "competencies"],
@@ -236,7 +231,7 @@
         },
         "dataFile": {
           "type": "string",
-          "description": "Path to demand.csv with columns: date,shift,team,minimum,ideal,estimated. Note: 'team' column contains team codes (for team model) or competency codes (for competency model). CSV validation: shift codes must match shifts[].code, team/competency codes must match organizationalUnits.teams[] or organizationalUnits.competencies[].code, dates must be within temporalScope.targetPeriod, minimum <= estimated <= ideal"
+          "description": "Path to demand.csv with daily coverage requirements. Format: date,shift,team,minimum,ideal,estimated. The 'team' column contains team codes (team model) or competency codes (competency model). See FORMAT.md for validation rules."
         },
         "organizationalUnits": {
           "type": "object",

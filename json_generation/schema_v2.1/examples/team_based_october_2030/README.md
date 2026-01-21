@@ -26,8 +26,6 @@ This example demonstrates a simple team-based scheduling problem derived from a 
 - **EG**: Management Team
 - **CAJ**: Cashier
 
-(Note: ALM and HOSS teams are defined but have no employees assigned in this example)
-
 ### Shifts (2)
 - **M (Morning)**: 08:30 - 16:30
   - Includes 30-minute meal break between 12:00-14:30
@@ -54,9 +52,10 @@ This example demonstrates a simple team-based scheduling problem derived from a 
 
 ### ✅ Enabled Features
 - `useShiftBasedScheduling`: true
-- `useCompetencyModel`: false (using simple team model)
 - `usePriorityHierarchy`: true
 - `useAdvancedConstraints`: false
+
+**Note**: Using team-based employee model (`employees.model="team"`)
 
 ### Employee Model
 - **Type**: Team-based (`employees.model="team"`)
@@ -65,10 +64,8 @@ This example demonstrates a simple team-based scheduling problem derived from a 
 
 ### Priority Hierarchy
 Defines allocation order when resources are scarce:
-1. **Rank 1**: ALM (Warehouse) - Highest priority
-2. **Rank 2**: HOSS - High priority
-3. **Rank 3**: EG (Management) - Medium priority
-4. **Rank 4**: CAJ (Cashier) - Standard priority
+1. **Rank 1**: EG (Management) - High priority
+2. **Rank 2**: CAJ (Cashier) - Standard priority
 
 ### Constraints
 **Hard constraints**:

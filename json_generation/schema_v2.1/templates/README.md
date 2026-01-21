@@ -77,7 +77,6 @@ Create your problem definition JSON file that references these CSVs:
 
   "features": {
     "useShiftBasedScheduling": true,
-    "useCompetencyModel": false,
     "useAdvancedConstraints": false,
     "usePriorityHierarchy": false
   },

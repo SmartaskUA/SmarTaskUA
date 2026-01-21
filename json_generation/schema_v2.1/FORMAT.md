@@ -51,20 +51,15 @@ Controls which optional modules are enabled:
 | Feature | Default | Description |
 |---------|---------|-------------|
 | `useShiftBasedScheduling` | true | Enable shift-based (true) or interval-based (false) scheduling |
-| `useCompetencyModel` | false | Enable skill-based model (vs. fixed teams) |
-| `useScheduleInput` | false | Enable pre-existing schedule from CSV |
-| `useMultiLevelDemand` | false | Enable minimum/ideal/estimated levels |
 | `useAdvancedConstraints` | false | Enable day-off swapping, breaks, etc. |
-| `usePriorityHierarchy` | false | Enable competency priority ordering |
+| `usePriorityHierarchy` | false | Enable priority-based allocation ordering |
 
 **Example:**
 ```json
 {
   "features": {
     "useShiftBasedScheduling": true,
-    "useCompetencyModel": true,
-    "useScheduleInput": true,
-    "useMultiLevelDemand": true,
+    "useAdvancedConstraints": false,
     "usePriorityHierarchy": true
   }
 }
@@ -131,13 +126,6 @@ Controls which optional modules are enabled:
     "contractType": "fullTime" | "partTime",
     "contractPeriods": [
       {"start": "2024-01-01", "end": null}
-    ],
-    "unavailability": [
-      {
-        "dates": ["2025-01-10"],
-        "reason": "vacation",
-        "type": "VAC" | "EnfD" | "DLF" | "other"
-      }
     ],
     "restrictions": {
       "cannotSwapDayOffs": false,
