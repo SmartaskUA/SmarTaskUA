@@ -316,17 +316,40 @@ JSON references both CSV files:
 
 ## Validation
 
-### JSON Validation
+### Comprehensive Validator Tool
+
+We provide a comprehensive validator that checks JSON and both CSV files for consistency:
+
+```bash
+python3 validator.py path/to/problem.json -v
+```
+
+The validator performs:
+- **JSON validation** against schema.json
+- **CSV format validation** (dates, columns, values)
+- **Cross-validation** (employee IDs, shift codes, date ranges match)
+
+See [VALIDATOR_README.md](VALIDATOR_README.md) for detailed documentation.
+
+**Quick validation:**
+```bash
+# Install dependencies
+pip install -r validator_requirements.txt
+
+# Validate a problem
+python3 validator.py examples/sisqual_example/problem.json
+
+# Verbose output with statistics
+python3 validator.py examples/sisqual_example/problem.json -v
+
+# JSON output for automation
+python3 validator.py examples/sisqual_example/problem.json --json
+```
+
+### Manual JSON Validation
 ```bash
 jsonschema -i problem.json schema.json
 ```
-
-### CSV Validation
-The transformer validates:
-- Employee IDs match between JSON and CSV
-- Date format is consistent (YYYY-MM-DD)
-- Values are valid (numbers, DL, VAC, time ranges)
-- Number of columns matches temporal scope
 
 ---
 
