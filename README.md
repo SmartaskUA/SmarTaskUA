@@ -41,7 +41,6 @@ SmarTaskUA/
 │
 ├── .github/workflows/                # CI/CD pipelines
 ├── Makefile                          # Build and deployment commands
-├── CLAUDE.md                         # AI assistant context & guidelines
 └── README.md                         # This file
 ```
 

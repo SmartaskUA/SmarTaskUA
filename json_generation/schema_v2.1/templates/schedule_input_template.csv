@@ -1,0 +1,74 @@
+# Employee Availability Constraints Template
+# ==========================================
+#
+# PURPOSE:
+#   This CSV specifies WHEN employees are NOT available or have specific constraints.
+#   These are INPUT CONSTRAINTS for the algorithm, NOT work assignments.
+#   The algorithm will generate work schedules respecting these constraints.
+#
+# FORMAT:
+#   - Matrix format: One row per employee, one column per date
+#   - First column: employee_id (must match employee IDs in problem.json)
+#   - Remaining columns: One column per date (YYYY-MM-DD format)
+#
+# ALLOWED VALUES IN DATE CELLS:
+#
+#   A          - Available (default state - employee can work)
+#   VAC        - Vacation (cannot work)
+#   DL         - Day off / Generic unavailability (cannot work)
+#   DLF        - Fixed day off (cannot work, cannot be swapped)
+#   DLV        - Variable day off (cannot work, but can be swapped if needed)
+#   EnfD       - Sick leave / Enforced day off (cannot work)
+#   HH:MM-HH:MM - Pre-assigned time window (e.g., 10:00-14:00)
+#               Employee can only work during this window on this day
+#
+# IMPORTANT NOTES:
+#   - This CSV contains INPUT CONSTRAINTS, not work assignments
+#   - "A" means available to be assigned work by the algorithm
+#   - Vacation/DL/etc. mean the person CANNOT work on that day
+#   - Time windows (e.g., 10:00-14:00) restrict availability to specific hours
+#   - Employee IDs MUST match exactly with IDs in problem.json employees section
+#
+# VALIDATION RULES:
+#   1. First column must be "employee_id"
+#   2. All employee IDs must exist in problem.json employees array
+#   3. Date columns must match temporalScope.targetPeriod
+#   4. Date headers must be in YYYY-MM-DD format
+#   5. Cell values must be one of: A, VAC, DL, DLF, DLV, EnfD, or HH:MM-HH:MM
+#   6. Time windows must be valid HH:MM-HH:MM format (e.g., 08:00-16:00)
+#
+# HOW TO USE THIS TEMPLATE:
+#   1. Copy this file and rename it (e.g., schedule_input_2025_q1.csv)
+#   2. Delete all comment lines (lines starting with #)
+#   3. Keep the header row with employee_id and date columns
+#   4. Add one row per employee
+#   5. Fill in constraints for each employee/date combination
+#   6. Use "A" for dates where employee is available (most common)
+#   7. Use other codes (VAC, DL, etc.) only where constraints apply
+#
+# EXAMPLE (3 employees, 5 days):
+#
+#employee_id,2025-01-01,2025-01-02,2025-01-03,2025-01-04,2025-01-05
+#EMP001,A,A,VAC,VAC,VAC
+#EMP002,A,DL,A,A,A
+#EMP003,A,A,10:00-14:00,A,A
+#
+# In this example:
+#   - EMP001 is available Jan 1-2, on vacation Jan 3-5
+#   - EMP002 is available except Jan 2 (day off)
+#   - EMP003 is available but can only work 10:00-14:00 on Jan 3
+#
+# TIPS FOR LARGE PROBLEMS:
+#   - Use Excel/LibreOffice formulas to fill repetitive patterns
+#   - Start with all "A" values, then mark exceptions
+#   - Use conditional formatting in Excel to visualize constraints
+#   - Import from existing vacation calendars
+#
+# COMMON USE CASES:
+#   - Pre-scheduled vacations: Mark dates with VAC
+#   - Part-time workers: Mark unavailable days with DL
+#   - Specific hour requirements: Use time windows (10:00-14:00)
+#   - Medical leave: Use EnfD for sick days
+#   - Fixed days off: Use DLF for contractually fixed days off
+
+employee_id
