@@ -522,7 +522,7 @@ if __name__ == "__main__":
     print("="*80)
     
     # Configuration for local testing
-    CSV_FILE = "Horário_Por_Intervalos_1Hora.csv"
+    CSV_FILE = "Heuristica.csv"
     
     # Sample holidays (customize as needed)
     holidays_list = [

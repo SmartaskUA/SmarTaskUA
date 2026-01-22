@@ -783,7 +783,7 @@ if __name__ == "__main__":
     
     # Configuration for local testing
     #CSV_FILE = "Horário_Por_Intervalos_1Hora.csv"
-    CSV_FILE = "Horário_Por_Intervalos_1Hora_7hours_to_run.csv"
+    CSV_FILE = "Heuristica.csv"
     MINS_CSV = "Mins_R10-R62.csv"
     VACATION_CSV = "VacationTemplate_Case1_21.csv"
     
