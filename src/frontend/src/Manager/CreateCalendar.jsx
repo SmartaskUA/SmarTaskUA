@@ -21,12 +21,14 @@ const CreateCalendar = () => {
   const [title, setTitle] = useState("");
   const [year, setYear] = useState("");
   const [maxDuration, setMaxDuration] = useState("");
+  const [scheduleType, setScheduleType] = useState(""); // "Turno" ou "Horas"
   const [selectedAlgorithm, setSelectedAlgorithm] = useState("");
   const [shifts, setShifts] = useState("");
   const [vacationTemplate, setVacationTemplate] = useState("");
   const [minimumTemplate, setMinimumTemplate] = useState("");
+  const [groupNames, setGroupNames] = useState([]); 
+  const [selectedGroup, setSelectedGroup] = useState("");
 
-  // NEW: ruleset selection
   const [ruleSets, setRuleSets] = useState([]); // [{name, description, ...}]
   const [ruleSetName, setRuleSetName] = useState("");
   const selectedRuleSet = useMemo(
@@ -47,7 +49,19 @@ const CreateCalendar = () => {
     fetchVacationTemplates();
     fetchMinimumTemplates();
     fetchRuleSets();
+    fetchGroupNames();
   }, []);
+
+  const fetchGroupNames = async () => {
+  try {
+    const response = await axios.get(`${baseurl}/api/v1/teams/groups`); 
+    setGroupNames(response.data || []);
+  } catch (error) {
+    console.error("Erro ao buscar grupos de equipes:", error);
+    setGroupNames([]);
+  }
+};
+
 
   const fetchVacationTemplates = async () => {
     try {
@@ -92,6 +106,7 @@ const CreateCalendar = () => {
         minimuns: minimumTemplate,
         shifts: shifts,
         ruleSetName: ruleSetName, 
+        groupName: selectedGroup,
       };
 
       const response = await axios.post(`${baseurl}/schedules/generate`, data);
@@ -148,19 +163,26 @@ const CreateCalendar = () => {
     setMaxDurationError(!intValue || intValue <= 0 || !/^\d+$/.test(value));
   };
 
-  // disable Generate if core required fields invalid
-  const canGenerate = useMemo(() => {
-    const y = parseInt(year, 10);
-    const d = parseInt(maxDuration, 10);
-    return (
-      title.trim() &&
-      y > 0 &&
-      /^\d+$/.test(String(year)) &&
-      d > 0 &&
-      /^\d+$/.test(String(maxDuration)) &&
-      !!ruleSetName
-    );
-  }, [title, year, maxDuration, ruleSetName]);
+
+  // Algoritmos separados
+  const turnoAlgorithms = [
+    { value: "hill climbing", label: "Hill Climbing" },
+    { value: "Greedy Randomized", label: "Greedy Randomized" },
+    { value: "Greedy Randomized + Hill Climbing", label: "Greedy Randomized + Hill Climbing" },
+    { value: "genetic_algorithm", label: "Genetic Algorithm" },
+    { value: "CSP Scheduling", label: "CSP Scheduling" },
+    { value: "linear programming", label: "Integer Linear Programming" },
+    { value: "linear programming 2", label: "Integer Linear Programming 2" },
+    ];
+  const horasAlgorithms = [
+    { value: "ILP_13Hours", label: "Integer Linear Programming 13 Hours" },
+    { value: "CSP_13Hours", label: "CSP 13 Hours" },
+    { value: "CSP_Afonso_Hours", label: "CSP Afonso 13 Hours" },
+    { value: "ILP_13_Half_Intervals", label: "Integer Linear Programming 13 Hours Half Intervals" },
+    { value: "CSP_Extra_Hours", label: "CSP Extra Hours" },
+    { value: "ILP_Extra_Hours", label: "ILP Extra Hours" },
+    // Adicione outros algoritmos de horas aqui se existirem
+  ];
 
   return (
     <div className="admin-container">
@@ -213,59 +235,85 @@ const CreateCalendar = () => {
                 helperText={maxDurationError ? "Duration must be a positive integer" : ""}
               />
 
+              {/* Novo input para tipo de horário */}
               <FormControl fullWidth margin="normal">
-                <InputLabel id="algorithm-select-label">Algorithm</InputLabel>
+                <InputLabel id="schedule-type-label">Tipo de Horário</InputLabel>
                 <Select
-                  labelId="algorithm-select-label"
-                  value={selectedAlgorithm}
-                  label="Algorithm"
-                  onChange={(e) => setSelectedAlgorithm(e.target.value)}
+                  labelId="schedule-type-label"
+                  value={scheduleType}
+                  label="Tipo de Horário"
+                  onChange={(e) => {
+                    setScheduleType(e.target.value);
+                    setShifts("");
+                    setSelectedAlgorithm("");
+                  }}
                 >
-                  <MenuItem value="hill climbing">Hill Climbing</MenuItem>
-                  <MenuItem value="linear programming">Integer Linear Programming</MenuItem>
-                  <MenuItem value="linear programming 2">Integer Linear Programming 2</MenuItem>
-                  <MenuItem value="ILP Engine">ILP Engine</MenuItem>
-                  <MenuItem value="Greedy Randomized">Greedy Randomized</MenuItem>
-                  <MenuItem value="Greedy Randomized Engine">Greedy Randomized Engine</MenuItem>
-                  <MenuItem value="Greedy Randomized + Hill Climbing">Greedy Randomized + Hill Climbing</MenuItem>
-                  <MenuItem value="CSP">CSP</MenuItem>
-                  <MenuItem value="CSPv2">CSPv2</MenuItem>
-                  <MenuItem value="CSP_ENGINE">CSP Engine</MenuItem>
-                  <MenuItem value="GRHC_ENGINE">Greedy Randomized + Hill Climbing Engine</MenuItem>
+                  <MenuItem value="Turno">Turnos</MenuItem>
+                  <MenuItem value="Horas">Horas</MenuItem>
                 </Select>
               </FormControl>
 
-              {/* NEW: Rule Set Select */}
               <FormControl fullWidth margin="normal">
-                <InputLabel id="ruleset-select-label">Rule Set</InputLabel>
+                <InputLabel id="group-select-label">Group</InputLabel>
                 <Select
-                  labelId="ruleset-select-label"
-                  value={ruleSetName}
-                  label="Rule Set"
-                  onChange={(e) => {
-                    setRuleSetName(e.target.value);
-                  }}
+                  labelId="group-select-label"
+                  value={selectedGroup}
+                  label="Group"
+                  onChange={(e) => setSelectedGroup(e.target.value)}
                 >
-                  {ruleSets.map((rs) => (
-                    <MenuItem key={rs.name} value={rs.name}>
-                      {rs.name}
+                  {groupNames.map((g) => (
+                    <MenuItem key={g} value={g}>
+                      {g}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
 
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="shifts-select-label">Shifts</InputLabel>
-                <Select
-                  labelId="shifts-select-label"
-                  value={shifts}
-                  label="Shifts"
-                  onChange={(e) => setShifts(e.target.value)}
-                >
-                  <MenuItem value={2}>2 shifts</MenuItem>
-                  <MenuItem value={3}>3 shifts</MenuItem>
-                </Select>
-              </FormControl>
+              {/* Select condicional para turnos ou horas */}
+              {scheduleType === "Turno" && (
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="shifts-select-label">Turnos</InputLabel>
+                  <Select
+                    labelId="shifts-select-label"
+                    value={shifts}
+                    label="Turnos"
+                    onChange={(e) => setShifts(e.target.value)}
+                  >
+                    <MenuItem value={2}>2 turnos</MenuItem>
+                    <MenuItem value={3}>3 turnos</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
+              {scheduleType === "Horas" && (
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="hours-select-label">Horas</InputLabel>
+                  <Select
+                    labelId="hours-select-label"
+                    value={shifts}
+                    label="Horas"
+                    onChange={(e) => setShifts(e.target.value)}
+                  >
+                    <MenuItem value={13}>13 Horas</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
+
+              {/* Select de algoritmo filtrado */}
+              {scheduleType && (
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="algorithm-select-label">Algoritmo</InputLabel>
+                  <Select
+                    labelId="algorithm-select-label"
+                    value={selectedAlgorithm}
+                    label="Algoritmo"
+                    onChange={(e) => setSelectedAlgorithm(e.target.value)}
+                  >
+                    {(scheduleType === "Turno" ? turnoAlgorithms : horasAlgorithms).map((alg) => (
+                      <MenuItem key={alg.value} value={alg.value}>{alg.label}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
 
               <FormControl fullWidth margin="normal">
                 <InputLabel id="vacation-template-label">Vacation Template</InputLabel>
@@ -303,7 +351,7 @@ const CreateCalendar = () => {
         </Grid>
 
         <Box sx={{ display: "flex", justifyContent: "left", marginTop: 3, marginLeft: "17%", gap: 2 }}>
-          <Button variant="contained" color="success" onClick={handleSave} disabled={!canGenerate}>
+          <Button variant="contained" color="success" onClick={handleSave} >
             Generate
           </Button>
           <Button variant="contained" color="error" onClick={handleClear}>

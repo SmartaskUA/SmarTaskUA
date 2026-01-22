@@ -10,3 +10,4 @@ holidays
 tabulate
 tenacity
 ortools
+docplex

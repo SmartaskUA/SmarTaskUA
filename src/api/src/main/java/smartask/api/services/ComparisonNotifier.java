@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.bson.Document;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,28 +23,36 @@ public class ComparisonNotifier {
 
     @Scheduled(fixedDelay = 2000)
     public void notifyComparisonResults() {
-
         Query query = new Query(Criteria.where("status").is("done"));
-        List<Document> results = mongoTemplate.find(query, Document.class, "verifications");
+
+        // ✅ Ler de ambas as coleções
+        List<Document> verificationDocs = mongoTemplate.find(query, Document.class, "verifications");
+        List<Document> comparisonDocs = mongoTemplate.find(query, Document.class, "comparisons");
+
+        List<Document> results = new ArrayList<>();
+        results.addAll(verificationDocs);
+        results.addAll(comparisonDocs);
 
         if (!results.isEmpty()) {
-        System.out.println("\n Comparison results : "+results);
+            System.out.println("📊 Sending KPI results to frontend: " + results.size());
 
-
-            // Pode enviar os documentos inteiros, ou apenas os resultados
-            List<Object> comparisonResults = results.stream()
+            // Extrair só o necessário
+            List<Object> payload = results.stream()
                     .map(doc -> {
-                        Document response = new Document();
-                        response.put("requestId", doc.getString("requestId"));
-                        response.put("result", doc.get("result"));
-                        return response;
+                        Document res = new Document();
+                        res.put("requestId", doc.getString("requestId"));
+                        res.put("problemType", doc.getString("problemType"));
+                        res.put("result", doc.get("result"));
+                        return res;
                     })
                     .collect(Collectors.toList());
 
-            messagingTemplate.convertAndSend("/topic/comparison/all", comparisonResults);
+            // ✅ Envia para o tópico WebSocket
+            messagingTemplate.convertAndSend("/topic/comparison/all", payload);
 
-            // Remove todos os documentos enviados
+            // ✅ Remove resultados enviados
             mongoTemplate.remove(query, "verifications");
+            mongoTemplate.remove(query, "comparisons");
         }
     }
 }
