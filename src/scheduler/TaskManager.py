@@ -22,6 +22,8 @@ from algorithms.CSP_Afonso_Hours import solve as CSP_Afonso_Hours_solver
 from algorithms.ILP_Half_Hour import solve as ILP_13_Half_Intervals_solver
 from algorithms.CSP_Extra import solve as CSP_Extra_Hours_solver
 from algorithms.ILP_Extra import solve as ILP_Extra_Hours_solver
+from algorithms.general.ilp_general import solve as ilp_general_solver
+from algorithms.general.csp_general import solve as csp_general_solver
 
 class TaskManager:
     def __init__(self):
@@ -31,11 +33,13 @@ class TaskManager:
             "hill climbing": hill_clibing_alg_solver,
             "linear programming": ilp_solver,
             "linear programming 2": ilp_solver_3,
+            "ILP General": ilp_general_solver,
             "ILP Engine": ilp_solver_engine,
             "Greedy Randomized": greedy_randomized_solver,
             "Greedy Randomized + Hill Climbing": greedy_climbing_solver,
             "CSP": csp_solver,
             "CSPv2": cspv2_solver,
+            "CSP General": csp_general_solver,
             "CSP_ENGINE": csp_engine_solver,
             "GRHC_ENGINE": grhc_engine_solver,
             "Greedy Randomized Engine": greedy_randomized_engine_solver,
@@ -61,17 +65,21 @@ class TaskManager:
         print(f"[TaskManager] Executing algorithm '{algorithm_name}' with Task ID: {task_id}")
         algorithm = self.algorithms[algorithm_name]
 
-        if not rules:
-            from pathlib import Path
-            current_dir = Path(__file__).parent
-            rules_path = current_dir /  "rules.json"
-            with open(rules_path) as f:
-                rules = json.load(f)
-                
-        if isinstance(rules, dict) and "rules" in rules:
-            rules_json = rules
-        else:
-            rules_json = {"rules": rules}
+        no_rules_algorithms = {"ILP General", "CSP General"}
+        uses_rules = algorithm_name not in no_rules_algorithms
+        rules_json = None
+        if uses_rules:
+            if not rules:
+                from pathlib import Path
+                current_dir = Path(__file__).parent
+                rules_path = current_dir /  "rules.json"
+                with open(rules_path) as f:
+                    rules = json.load(f)
+
+            if isinstance(rules, dict) and "rules" in rules:
+                rules_json = rules
+            else:
+                rules_json = {"rules": rules}
 
         start_time = time.time()
         if algorithm_name in [
@@ -85,13 +93,21 @@ class TaskManager:
             "Greedy Randomized Engine",
             "ILP Engine",
             "linear programming 2",
+            "ILP General",
             "CSPv2",
+            "CSP General",
             "Heuristic Solver",
             "ilp_greedy",
         ]:
-            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, rules=rules_json)
+            if uses_rules:
+                schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, rules=rules_json)
+            else:
+                schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, constraints=rules)
         elif algorithm_name in ["ILP_13Hours", "CSP_13Hours", "CSP_Afonso_Hours", "ILP_13_Half_Intervals", "ILP_Half_Hour", "CSP_Extra_Hours", "ILP_Extra_Hours"]:
-            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, rules=rules_json)
+            if uses_rules:
+                schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, rules=rules_json)
+            else:
+                schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, constraints=rules)
         else:
             schedule_data = algorithm()
         end_time = time.time()

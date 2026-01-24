@@ -4,13 +4,11 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import smartask.api.models.ReferenceTemplate;
-import smartask.api.models.RuleSet;
 import smartask.api.models.TaskStatus;
 import smartask.api.models.VacationTemplate;
 import smartask.api.models.requests.ScheduleRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import smartask.api.repositories.ReferenceTemplateRepository;
-import smartask.api.repositories.RuleSetRepository;
 import smartask.api.repositories.TaskStatusRepository;
 import smartask.api.repositories.VacationTemplateRepository;
 
@@ -18,7 +16,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class RabbitMqProducer {
@@ -41,8 +38,6 @@ public class RabbitMqProducer {
     @Autowired
     private ReferenceTemplateRepository referenceTemplateRepository;
 
-    @Autowired
-    private RuleSetRepository ruleSetRepository;
 
     public String requestScheduleMessage(ScheduleRequest schedule) {
         //Verify the existence of the vacationTemplate
@@ -57,11 +52,6 @@ public class RabbitMqProducer {
         final Optional<ReferenceTemplate> mins = referenceTemplateRepository.findByName(schedule.getMinimuns());
         if (mins.isEmpty()) {
             return "Minimums template not found";
-        }
-
-        Optional<RuleSet> ruleSetOpt = Optional.empty();
-        if (schedule.getRuleSetName() != null && !schedule.getRuleSetName().isBlank()) {
-            ruleSetOpt = ruleSetRepository.findByName(schedule.getRuleSetName());
         }
 
         try {
@@ -92,13 +82,15 @@ public class RabbitMqProducer {
             payload.put("minimuns", mins.get().getName());
             payload.put("shifts", schedule.getShifts());
             payload.put("groupName", schedule.getGroupName());
+            if (schedule.getEmployees() != null) {
+                payload.put("employees", schedule.getEmployees());
+            }
 
-            // Add RuleSet if available
-            if (ruleSetOpt.isPresent()) {
-                RuleSet ruleSet = ruleSetOpt.get();
-                payload.put("rules", ruleSet); // includes all rules + params
+            // Add constraints if provided; otherwise send null for rules
+            if (schedule.getConstraints() != null) {
+                payload.put("rules", schedule.getConstraints());
             } else {
-                payload.put("rules", Map.of("rules", java.util.List.of())); // fallback empty list
+                payload.put("rules", null);
             }
 
             // Serialize to JSON for logging/debug

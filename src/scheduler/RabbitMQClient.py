@@ -95,35 +95,46 @@ class RabbitMQClient:
                 group_name = message.get("groupName")  # <-- comes from your producer
                 print(f"[INFO] groupName in message: {group_name}")
 
-                all_employees = self.mongodb_client.fetch_employees()
+                employees_override = message.get("employees")
+                if isinstance(employees_override, str):
+                    try:
+                        employees_override = json.loads(employees_override)
+                    except json.JSONDecodeError:
+                        employees_override = None
 
-                if group_name:
-                    # 1) get all teams in the group
-                    teams_in_group = self.mongodb_client.fetch_teams_by_group(group_name)
-                    team_emp_ids = set()
-                    for t in teams_in_group:
-                        for eid in t.get("employeeIds", []):
-                            team_emp_ids.add(eid)
-
-                    # 2) restrict employees to that group
-                    employees_in_group = [
-                        e for e in all_employees if str(e.get("_id")) in {str(eid) for eid in team_emp_ids}
-                    ]
-                    print(f"[INFO] Found {len(employees_in_group)} employees in group '{group_name}'.")
-
-                    # 3) finally intersect with the vacation template names
-                    employees_data = [
-                        e for e in employees_in_group
-                        if e.get("name", "").strip() in employee_names_in_template
-                    ]
-
-                    print(f"[INFO] Using {len(employees_data)} employees from group '{group_name}' (intersected with vacation template).")
+                if isinstance(employees_override, list) and employees_override:
+                    employees_data = employees_override
+                    print(f"[INFO] Using {len(employees_data)} employees from problem payload.")
                 else:
-                    employees_data = [
-                        emp for emp in all_employees
-                        if emp.get("name", "").strip() in employee_names_in_template
-                    ]
-                    print(f"[INFO] Using {len(employees_data)} employees (no groupName provided; filtered only by template).")
+                    all_employees = self.mongodb_client.fetch_employees()
+
+                    if group_name:
+                        # 1) get all teams in the group
+                        teams_in_group = self.mongodb_client.fetch_teams_by_group(group_name)
+                        team_emp_ids = set()
+                        for t in teams_in_group:
+                            for eid in t.get("employeeIds", []):
+                                team_emp_ids.add(eid)
+
+                        # 2) restrict employees to that group
+                        employees_in_group = [
+                            e for e in all_employees if str(e.get("_id")) in {str(eid) for eid in team_emp_ids}
+                        ]
+                        print(f"[INFO] Found {len(employees_in_group)} employees in group '{group_name}'.")
+
+                        # 3) finally intersect with the vacation template names
+                        employees_data = [
+                            e for e in employees_in_group
+                            if e.get("name", "").strip() in employee_names_in_template
+                        ]
+
+                        print(f"[INFO] Using {len(employees_data)} employees from group '{group_name}' (intersected with vacation template).")
+                    else:
+                        employees_data = [
+                            emp for emp in all_employees
+                            if emp.get("name", "").strip() in employee_names_in_template
+                        ]
+                        print(f"[INFO] Using {len(employees_data)} employees (no groupName provided; filtered only by template).")
 
                 year = message.get("year")
                 shifts = message.get("shifts", [])

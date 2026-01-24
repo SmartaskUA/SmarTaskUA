@@ -144,6 +144,111 @@ def rows_to_req_dicts(req_rows):
                 target[(day, shift, team_id)] = int(v)
     return mins, ideals
 
+
+def rows_to_req_dicts_any(req_rows, year=None):
+    """
+    Accept either the legacy minimuns format or demand.csv rows.
+    Demand rows format: date, shift, team, minimum, ideal, estimated
+    """
+    if _looks_like_demand_rows(req_rows):
+        return rows_to_req_dicts_from_demand(req_rows, year=year)
+    return rows_to_req_dicts(req_rows)
+
+
+def rows_to_req_dicts_from_demand(demand_rows, year=None):
+    mins, ideals = {}, {}
+    if not demand_rows:
+        return mins, ideals
+
+    for row in demand_rows:
+        if not row or len(row) < 5:
+            continue
+        if _is_demand_header(row):
+            continue
+        demand_date = _parse_iso_date(row[0])
+        if demand_date is None:
+            continue
+        day = demand_date.timetuple().tm_yday
+
+        shift_code = str(row[1]).strip().upper()
+        shift = _shift_code_to_index(shift_code)
+        if shift is None:
+            continue
+
+        team_code = get_team_code(str(row[2]))
+        if not team_code:
+            continue
+        team_id = get_team_id(team_code)
+
+        min_val = _parse_int(row[3])
+        ideal_val = _parse_int(row[4])
+        if min_val is None and ideal_val is None:
+            continue
+        if min_val is None:
+            min_val = 0
+        if ideal_val is None:
+            ideal_val = min_val
+
+        mins[(day, shift, team_id)] = min_val
+        ideals[(day, shift, team_id)] = ideal_val
+
+    return mins, ideals
+
+
+def _looks_like_demand_rows(rows):
+    if not rows:
+        return False
+    for row in rows[:3]:
+        if not row or len(row) < 5:
+            continue
+        if _is_demand_header(row):
+            return True
+        if _parse_iso_date(row[0]) is not None and str(row[1]).strip():
+            return True
+    return False
+
+
+def _is_demand_header(row):
+    if not row:
+        return False
+    first = str(row[0]).strip().lower()
+    second = str(row[1]).strip().lower() if len(row) > 1 else ""
+    return first in {"date", "data"} and second in {"shift", "turno"}
+
+
+def _parse_iso_date(value):
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        return date.fromisoformat(text)
+    except ValueError:
+        return None
+
+
+def _parse_int(value):
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        return int(text)
+    except ValueError:
+        return None
+
+
+def _shift_code_to_index(code):
+    if not code:
+        return None
+    if code.startswith("M"):
+        return 1
+    if code.startswith("T"):
+        return 2
+    if code.startswith("N"):
+        return 3
+    return None
+
 def rows_to_req_dicts(req_rows):
     """
     Aceita ficheiros de requisitos (mínimos/ideais) tanto por turnos como por horas.

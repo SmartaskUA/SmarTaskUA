@@ -64,7 +64,6 @@ public class ReferenceService {
                     .minimuns(new ArrayList<>(lines))
                     .build();
 
-            System.out.println("\nTemplate generated: " + template);
             return repository.save(template);
 
         } catch (Exception e) {

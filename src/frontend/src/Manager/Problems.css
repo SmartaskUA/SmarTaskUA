@@ -1,0 +1,185 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:wght@500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+.problems-page {
+  --problems-font-body: "Space Grotesk", "Trebuchet MS", sans-serif;
+  --problems-font-display: "Fraunces", "Georgia", serif;
+  --problems-ink: #0f1a1d;
+  --problems-ink-muted: #3c4a4f;
+  --problems-accent: #0f766e;
+  --problems-accent-strong: #0b5d56;
+  --problems-surface: rgba(255, 255, 255, 0.82);
+  --problems-border: rgba(15, 118, 110, 0.18);
+  --problems-shadow: 0 24px 50px rgba(15, 23, 42, 0.16);
+  --problems-shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.1);
+  --problems-highlight: #f4efe4;
+  --problems-ember: #f5c38a;
+  --problems-sky: #cfeee7;
+  background: radial-gradient(900px circle at 10% 10%, rgba(245, 195, 138, 0.45), transparent 55%),
+    radial-gradient(800px circle at 100% 0%, rgba(207, 238, 231, 0.6), transparent 50%),
+    linear-gradient(180deg, #f8f3ea 0%, #f4f8f7 48%, #eef2f0 100%);
+  position: relative;
+  overflow: hidden;
+  font-family: var(--problems-font-body);
+  color: var(--problems-ink);
+}
+
+.problems-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(15, 118, 110, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 118, 110, 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.problems-page::after {
+  content: "";
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  right: -120px;
+  bottom: -160px;
+  background: radial-gradient(circle, rgba(15, 118, 110, 0.18), transparent 70%);
+  filter: blur(6px);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.problems-main {
+  position: relative;
+  z-index: 1;
+}
+
+.problems-page .MuiTypography-root,
+.problems-page .MuiButton-root,
+.problems-page .MuiChip-root,
+.problems-page .MuiInputBase-input,
+.problems-page .MuiListItemText-root {
+  font-family: var(--problems-font-body);
+}
+
+.problems-title {
+  font-family: var(--problems-font-display);
+  letter-spacing: -0.02em;
+}
+
+.problems-subtitle {
+  color: var(--problems-ink-muted);
+}
+
+.problems-card {
+  background: var(--problems-surface);
+  border: 1px solid var(--problems-border);
+  border-radius: 20px;
+  box-shadow: var(--problems-shadow);
+  backdrop-filter: blur(10px);
+}
+
+.problems-card.slim {
+  box-shadow: var(--problems-shadow-soft);
+}
+
+.problems-list {
+  margin-top: 4px;
+}
+
+.problems-list .MuiListItemButton-root {
+  border-radius: 12px;
+  margin-bottom: 6px;
+  padding: 10px 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.problems-list .MuiListItemText-secondary {
+  color: var(--problems-ink-muted);
+}
+
+.problems-list .MuiListItemButton-root:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.12);
+}
+
+.problems-list .MuiListItemButton-root.Mui-selected {
+  background: rgba(15, 118, 110, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.35);
+}
+
+.problems-chip {
+  border-radius: 999px;
+  border-color: rgba(15, 118, 110, 0.4);
+  color: var(--problems-accent-strong);
+  font-weight: 600;
+  background: rgba(15, 118, 110, 0.08);
+}
+
+.problems-action {
+  text-transform: none;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.problems-action.primary {
+  background: linear-gradient(135deg, #0f766e, #0b5d56);
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(15, 118, 110, 0.25);
+}
+
+.problems-action.primary:hover {
+  background: linear-gradient(135deg, #0b5d56, #095049);
+}
+
+.problems-action.ghost {
+  border-color: rgba(15, 118, 110, 0.4);
+  color: var(--problems-accent-strong);
+}
+
+.problems-page .MuiDivider-root {
+  border-color: rgba(15, 118, 110, 0.18);
+}
+
+.problems-json {
+  background: rgba(9, 27, 24, 0.92);
+  color: #e6f4f1;
+  border-radius: 16px;
+  border: 1px solid rgba(207, 238, 231, 0.25);
+  box-shadow: inset 0 0 0 1px rgba(207, 238, 231, 0.1);
+}
+
+.problems-panel {
+  animation: fadeUp 0.6s ease both;
+}
+
+.problems-stagger {
+  animation: rise 0.45s ease both;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .problems-card {
+    border-radius: 16px;
+  }
+}

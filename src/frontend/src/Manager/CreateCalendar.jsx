@@ -3,7 +3,7 @@ import axios from "axios";
 import baseurl from "../components/BaseUrl";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import NotificationSnackbar from "../components/manager/NotificationSnackbar";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Typography,
   Grid,
@@ -18,6 +18,10 @@ import {
 } from "@mui/material";
 
 const CreateCalendar = () => {
+  const [searchParams] = useSearchParams();
+  const initialProblemId = searchParams.get("problemId") || "";
+  const initialMode = initialProblemId ? "problem" : "manual";
+  const [mode, setMode] = useState(initialMode);
   const [title, setTitle] = useState("");
   const [year, setYear] = useState("");
   const [maxDuration, setMaxDuration] = useState("");
@@ -28,13 +32,15 @@ const CreateCalendar = () => {
   const [minimumTemplate, setMinimumTemplate] = useState("");
   const [groupNames, setGroupNames] = useState([]); 
   const [selectedGroup, setSelectedGroup] = useState("");
-
-  const [ruleSets, setRuleSets] = useState([]); // [{name, description, ...}]
-  const [ruleSetName, setRuleSetName] = useState("");
-  const selectedRuleSet = useMemo(
-    () => ruleSets.find((r) => r.name === ruleSetName),
-    [ruleSets, ruleSetName]
+  const [problems, setProblems] = useState([]);
+  const [selectedProblemId, setSelectedProblemId] = useState(initialProblemId);
+  const selectedProblem = useMemo(
+    () => problems.find((p) => p.problemId === selectedProblemId),
+    [problems, selectedProblemId]
   );
+  const problemSelected = mode === "problem" && Boolean(selectedProblem);
+  const [problemJson, setProblemJson] = useState(null);
+  const [problemJsonLoading, setProblemJsonLoading] = useState(false);
 
   const [templateOptions, setTemplateOptions] = useState([]);
   const [minimumOptions, setMinimumOptions] = useState([]);
@@ -48,9 +54,15 @@ const CreateCalendar = () => {
   useEffect(() => {
     fetchVacationTemplates();
     fetchMinimumTemplates();
-    fetchRuleSets();
     fetchGroupNames();
+    fetchProblems();
   }, []);
+
+  useEffect(() => {
+    if (mode === "problem" && !selectedProblemId && problems.length) {
+      setSelectedProblemId(problems[0].problemId);
+    }
+  }, [mode, selectedProblemId, problems]);
 
   const fetchGroupNames = async () => {
   try {
@@ -81,36 +93,109 @@ const CreateCalendar = () => {
     }
   };
 
-  const fetchRuleSets = async () => {
+  const fetchProblems = async () => {
     try {
-      const response = await axios.get(`${baseurl}/rulesets`);
+      const response = await axios.get(`${baseurl}/problems`);
       const list = Array.isArray(response.data) ? response.data : [];
-      setRuleSets(list);
+      setProblems(list);
     } catch (error) {
-      console.error("Erro ao buscar rulesets:", error);
-      setRuleSets([]);
+      console.error("Erro ao buscar problemas:", error);
+      setProblems([]);
     }
   };
 
+  const fetchProblemJson = async (problemId) => {
+    if (!problemId) return;
+    try {
+      setProblemJsonLoading(true);
+      const response = await axios.get(`${baseurl}/problems/${encodeURIComponent(problemId)}/json`);
+      setProblemJson(response.data);
+    } catch (error) {
+      console.error("Erro ao buscar problem.json:", error);
+      setProblemJson(null);
+    } finally {
+      setProblemJsonLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (mode === "problem" && selectedProblemId) {
+      fetchProblemJson(selectedProblemId);
+      return;
+    }
+    setProblemJson(null);
+  }, [mode, selectedProblemId]);
+
+  useEffect(() => {
+    if (mode !== "problem") {
+      return;
+    }
+    if (!problemJson) {
+      setScheduleType("");
+      setShifts("");
+      setYear("");
+      return;
+    }
+    const temporal = problemJson.temporalScope || {};
+    const demand = problemJson.demand || {};
+    const shiftCount = Array.isArray(demand.shifts) ? demand.shifts.length : null;
+
+    if (shiftCount != null) {
+      setScheduleType("Turno");
+      setShifts(shiftCount);
+    } else {
+      setScheduleType("");
+      setShifts("");
+    }
+    setSelectedAlgorithm("");
+    setYear(temporal.year != null ? String(temporal.year) : "");
+  }, [mode, problemJson]);
+
   const handleSave = async () => {
+    const shiftsValue = scheduleType === "Turno" ? parseInt(shifts, 10) : null;
+    const hoursValue = scheduleType === "Horas" ? parseInt(shifts, 10) : null;
+    const safeShifts = Number.isNaN(shiftsValue) ? null : shiftsValue;
+    const safeHours = Number.isNaN(hoursValue) ? null : hoursValue;
 
     try {
       console.log("Minimum Template:", minimumTemplate);
-      const data = {
-        year: year,
-        algorithm: selectedAlgorithm,
-        title: title.trim(),
-        maxTime: maxDuration,
-        requestedAt: new Date().toISOString(),
-        vacationTemplate: vacationTemplate,
-        minimuns: minimumTemplate,
-        shifts: shifts,
-        ruleSetName: ruleSetName, 
-        groupName: selectedGroup,
-      };
+      if (mode === "problem") {
+        if (!selectedProblem) {
+          setErrorMessage("Please select a problem to solve.");
+          setErrorOpen(true);
+          return;
+        }
+        const data = {
+          algorithm: selectedAlgorithm,
+          title: title.trim(),
+          maxTime: maxDuration,
+          year: year,
+          shifts: safeShifts,
+          hours: safeHours,
+        };
 
-      const response = await axios.post(`${baseurl}/schedules/generate`, data);
-      console.log("API Response:", response.data);
+        const response = await axios.post(
+          `${baseurl}/problems/${encodeURIComponent(selectedProblem.problemId)}/solve`,
+          data
+        );
+        console.log("API Response:", response.data);
+      } else {
+        const data = {
+          year: year,
+          algorithm: selectedAlgorithm,
+          title: title.trim(),
+          maxTime: maxDuration,
+          requestedAt: new Date().toISOString(),
+          vacationTemplate: vacationTemplate,
+          minimuns: minimumTemplate,
+          shifts: shifts,
+          groupName: selectedGroup,
+        };
+
+        const response = await axios.post(`${baseurl}/schedules/generate`, data);
+        console.log("API Response:", response.data);
+      }
+
       setSuccessOpen(true);
       setTimeout(() => {
         navigate("/manager");
@@ -135,9 +220,12 @@ const CreateCalendar = () => {
     setYear("");
     setMaxDuration("");
     setSelectedAlgorithm("");
+    setScheduleType("");
+    setShifts("");
     setVacationTemplate("");
     setMinimumTemplate("");
-    setRuleSetName("");
+    setSelectedGroup("");
+    setSelectedProblemId("");
   };
   const [titleError, setTitleError] = useState(false);
   const [yearError, setYearError] = useState(false);
@@ -164,6 +252,11 @@ const CreateCalendar = () => {
   };
 
 
+  const generalAlgorithms = [
+    { value: "ILP General", label: "ILP General" },
+    { value: "CSP General", label: "CSP General" },
+  ];
+
   // Algoritmos separados
   const turnoAlgorithms = [
     { value: "hill climbing", label: "Hill Climbing" },
@@ -173,6 +266,8 @@ const CreateCalendar = () => {
     { value: "CSP Scheduling", label: "CSP Scheduling" },
     { value: "linear programming", label: "Integer Linear Programming" },
     { value: "linear programming 2", label: "Integer Linear Programming 2" },
+    { value: "ILP General", label: "ILP General" },
+    { value: "CSP General", label: "CSP General" },
     ];
   const horasAlgorithms = [
     { value: "ILP_13Hours", label: "Integer Linear Programming 13 Hours" },
@@ -221,6 +316,7 @@ const CreateCalendar = () => {
                 value={year}
                 onChange={handleYearChange}
                 margin="normal"
+                disabled={mode === "problem"}
                 error={yearError}
                 helperText={yearError ? "Year must be a positive integer" : ""}
               />
@@ -235,42 +331,93 @@ const CreateCalendar = () => {
                 helperText={maxDurationError ? "Duration must be a positive integer" : ""}
               />
 
-              {/* Novo input para tipo de horário */}
               <FormControl fullWidth margin="normal">
-                <InputLabel id="schedule-type-label">Tipo de Horário</InputLabel>
+                <InputLabel id="mode-select-label">Mode</InputLabel>
                 <Select
-                  labelId="schedule-type-label"
-                  value={scheduleType}
-                  label="Tipo de Horário"
+                  labelId="mode-select-label"
+                  value={mode}
+                  label="Mode"
                   onChange={(e) => {
-                    setScheduleType(e.target.value);
-                    setShifts("");
-                    setSelectedAlgorithm("");
+                    const nextMode = e.target.value;
+                    setMode(nextMode);
+                    if (nextMode === "manual") {
+                      setSelectedProblemId("");
+                    }
                   }}
                 >
-                  <MenuItem value="Turno">Turnos</MenuItem>
-                  <MenuItem value="Horas">Horas</MenuItem>
+                  <MenuItem value="problem">Problem (General)</MenuItem>
+                  <MenuItem value="manual">Manual</MenuItem>
                 </Select>
               </FormControl>
 
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="group-select-label">Group</InputLabel>
-                <Select
-                  labelId="group-select-label"
-                  value={selectedGroup}
-                  label="Group"
-                  onChange={(e) => setSelectedGroup(e.target.value)}
-                >
-                  {groupNames.map((g) => (
-                    <MenuItem key={g} value={g}>
-                      {g}
+              {mode === "problem" && (
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="problem-select-label">Problem</InputLabel>
+                  <Select
+                    labelId="problem-select-label"
+                    value={selectedProblemId}
+                    label="Problem"
+                    onChange={(e) => setSelectedProblemId(e.target.value)}
+                  >
+                    <MenuItem value="">
+                      <em>None</em>
                     </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                    {problems.map((problem) => (
+                      <MenuItem key={problem.problemId} value={problem.problemId}>
+                        {problem.name ? `${problem.name} (${problem.problemId})` : problem.problemId}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+              {problemSelected && (
+                <Typography variant="caption" color="text.secondary">
+                  {problemJsonLoading
+                    ? "Loading problem details..."
+                    : "Problem mode uses the bundled input files and defaults."}
+                </Typography>
+              )}
+
+              {/* Novo input para tipo de horário */}
+              {mode === "manual" && (
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="schedule-type-label">Tipo de Horário</InputLabel>
+                  <Select
+                    labelId="schedule-type-label"
+                    value={scheduleType}
+                    label="Tipo de Horário"
+                    onChange={(e) => {
+                      setScheduleType(e.target.value);
+                      setShifts("");
+                      setSelectedAlgorithm("");
+                    }}
+                  >
+                    <MenuItem value="Turno">Turnos</MenuItem>
+                    <MenuItem value="Horas">Horas</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
+
+              {mode === "manual" && (
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="group-select-label">Group</InputLabel>
+                  <Select
+                    labelId="group-select-label"
+                    value={selectedGroup}
+                    label="Group"
+                    onChange={(e) => setSelectedGroup(e.target.value)}
+                  >
+                    {groupNames.map((g) => (
+                      <MenuItem key={g} value={g}>
+                        {g}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
 
               {/* Select condicional para turnos ou horas */}
-              {scheduleType === "Turno" && (
+              {mode === "manual" && scheduleType === "Turno" && (
                 <FormControl fullWidth margin="normal">
                   <InputLabel id="shifts-select-label">Turnos</InputLabel>
                   <Select
@@ -284,7 +431,7 @@ const CreateCalendar = () => {
                   </Select>
                 </FormControl>
               )}
-              {scheduleType === "Horas" && (
+              {mode === "manual" && scheduleType === "Horas" && (
                 <FormControl fullWidth margin="normal">
                   <InputLabel id="hours-select-label">Horas</InputLabel>
                   <Select
@@ -299,7 +446,7 @@ const CreateCalendar = () => {
               )}
 
               {/* Select de algoritmo filtrado */}
-              {scheduleType && (
+              {(mode === "problem" || scheduleType) && (
                 <FormControl fullWidth margin="normal">
                   <InputLabel id="algorithm-select-label">Algoritmo</InputLabel>
                   <Select
@@ -308,44 +455,51 @@ const CreateCalendar = () => {
                     label="Algoritmo"
                     onChange={(e) => setSelectedAlgorithm(e.target.value)}
                   >
-                    {(scheduleType === "Turno" ? turnoAlgorithms : horasAlgorithms).map((alg) => (
+                    {(mode === "problem"
+                      ? generalAlgorithms
+                      : (scheduleType === "Turno" ? turnoAlgorithms : horasAlgorithms)
+                    ).map((alg) => (
                       <MenuItem key={alg.value} value={alg.value}>{alg.label}</MenuItem>
                     ))}
                   </Select>
                 </FormControl>
               )}
 
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="vacation-template-label">Vacation Template</InputLabel>
-                <Select
-                  labelId="vacation-template-label"
-                  value={vacationTemplate}
-                  label="Vacation Template"
-                  onChange={(e) => setVacationTemplate(e.target.value)}
-                >
-                  {templateOptions.map((option) => (
-                    <MenuItem key={option.id ?? option.name} value={option.name}>
-                      {option.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              {mode === "manual" && (
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="vacation-template-label">Vacation Template</InputLabel>
+                  <Select
+                    labelId="vacation-template-label"
+                    value={vacationTemplate}
+                    label="Vacation Template"
+                    onChange={(e) => setVacationTemplate(e.target.value)}
+                  >
+                    {templateOptions.map((option) => (
+                      <MenuItem key={option.id ?? option.name} value={option.name}>
+                        {option.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
 
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="minimum-template-label">Minimum Template</InputLabel>
-                <Select
-                  labelId="minimum-template-label"
-                  value={minimumTemplate}
-                  label="Minimum Template"
-                  onChange={(e) => setMinimumTemplate(e.target.value)}
-                >
-                  {minimumOptions.map((option) => (
-                    <MenuItem key={option.id ?? option.name} value={option.name}>
-                      {option.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              {mode === "manual" && (
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="minimum-template-label">Minimum Template</InputLabel>
+                  <Select
+                    labelId="minimum-template-label"
+                    value={minimumTemplate}
+                    label="Minimum Template"
+                    onChange={(e) => setMinimumTemplate(e.target.value)}
+                  >
+                    {minimumOptions.map((option) => (
+                      <MenuItem key={option.id ?? option.name} value={option.name}>
+                        {option.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
             </Paper>
           </Grid>
         </Grid>
