@@ -3,8 +3,6 @@
 # ============================================================
 
 import pulp
-import io
-import re
 import os
 import time
 import tempfile
@@ -12,6 +10,7 @@ from collections import defaultdict
 import random
 import holidays as hl
 
+from algorithms.general.solver_logging import parse_cbc_log, write_ilp_log
 from algorithms.utils import (
     TEAM_ID_TO_CODE,
     build_calendar,
@@ -915,49 +914,18 @@ class ILPSchedulerWeighted:
         # Write log file
         if log_to_file:
             n_employees = len(self.employee_rows)
-            base_name = f"logs_ilp_{n_employees}_employees_scenario"
-            scenario_id = 1
-            while True:
-                filename = os.path.join(log_dir, f"{base_name}_{scenario_id}.txt")
-                if not os.path.exists(filename):
-                    break
-                scenario_id += 1
-
-            with open(filename, "w") as f:
-                f.write("SOLVER REPORT (ILP / CBC)\n")
-                f.write("=========================\n")
-                f.write(f"Employees: {n_employees}\n")
-                f.write(f"Max Time Allowed: {self.maxTime if self.maxTime else 'Unlimited'} mins\n")
-                f.write(f"Final Status: {status_str}\n")
-                f.write(f"Wall Time: {wall_time:.4f}s\n")
-                f.write(f"Final Objective: {final_obj if final_obj is not None else 'N/A'}\n")
-                f.write(f"Final Bound: {final_bound if final_bound is not None else 'N/A'}\n")
-                if final_gap is not None:
-                    f.write(f"Final Gap: {final_gap:.4%}\n")
-                else:
-                    f.write("Final Gap: N/A\n")
-
-                f.write("\n--- PROGRESS LOG ---\n")
-                f.write(
-                    f"{'Count':<8} | {'Time (s)':<10} | "
-                    f"{'Objective':<15} | {'Bound':<15} | "
-                    f"{'Gap':<10} | {'Iters':<8} | {'Nodes':<8}\n"
-                )
-                f.write("-" * 98 + "\n")
-
-                for idx, h in enumerate(history, start=1):
-                    gap_str = f"{h['gap']:.4%}" if h["gap"] is not None else "N/A"
-                    bound_str = f"{h['bound']:.4f}" if h["bound"] is not None else "N/A"
-                    f.write(
-                        f"{idx:<8} | {h['time']:<10.4f} | "
-                        f"{h['obj']:<15.4f} | {bound_str:<15} | "
-                        f"{gap_str:<10} | {h['iters']:<8} | {h['nodes']:<8}\n"
-                    )
-
-                f.write("\n--- CBC RAW LOG ---\n")
-                f.write(solver_output)
-
-            print(f"Log file saved to: {filename}")
+            write_ilp_log(
+                history=history,
+                final_obj=final_obj,
+                final_bound=final_bound,
+                final_gap=final_gap,
+                solver_output=solver_output,
+                n_employees=n_employees,
+                max_time=self.maxTime,
+                status_str=status_str,
+                wall_time=wall_time,
+                log_dir=log_dir,
+            )
 
         # Store for programmatic inspection
         self.log_history = history
@@ -1075,101 +1043,3 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, rul
     # 5) Export and return table
     ilp.export_csv("schedule_weighted.csv")
     return ilp.to_table()
-
-# CBC log parser 
-
-def parse_cbc_log(log_text):
-    """
-    Parse CBC solver output to extract progress (time, obj, bound, iterations, nodes).
-
-    Returns:
-      history: list of dicts with keys:
-          nodes, iters, time, obj, bound, gap
-      final_obj, final_bound, final_gap
-    """
-    history = []
-    final_obj = None
-    final_bound = None
-    final_gap = None
-
-    # Example progress line:
-    # Cbc0010I After 0 nodes, 0 on tree, 0 iterations, 0 seconds, objective 0, best possible 0
-    prog_re = re.compile(
-        r"After\s+(?P<nodes>\d+)\s+nodes.*?,\s+"
-        r"(?P<iters>\d+)\s+iterations,\s+"
-        r"(?P<time>[0-9.]+)\s+seconds.*?"
-        r"objective\s+(?P<obj>-?[0-9.]+)"
-        r"(?:.*?best possible\s+(?P<bound>-?[0-9.]+))?",
-        re.IGNORECASE,
-    )
-
-    # Example pass line:
-    # Cbc0038I Pass   1: (12.54 seconds) ... obj. 1165 iterations 12504
-    pass_re = re.compile(
-        r"Cbc0038I\s+(?:Pass\s+(?P<pass>\d+):\s+)?\("
-        r"(?P<time>[0-9.]+)\s+seconds\).*?"
-        r"obj\.\s+(?P<obj>-?[0-9.]+)\s+iterations\s+(?P<iters>\d+)",
-        re.IGNORECASE,
-    )
-
-    # Example final line:
-    # Cbc0038I ... best objective 123.45, best possible 120.00 (gap 2.80%)
-    final_re = re.compile(
-        r"best objective\s+(-?[0-9.]+),\s+best possible\s+(-?[0-9.]+)\s+\(gap\s+([0-9.]+)%",
-        re.IGNORECASE,
-    )
-
-    for line in log_text.splitlines():
-        m = prog_re.search(line)
-        if m:
-            nodes = int(m.group("nodes"))
-            iters = int(m.group("iters"))
-            t = float(m.group("time"))
-            obj = float(m.group("obj"))
-            bound_raw = m.group("bound")
-            bound = float(bound_raw) if bound_raw is not None else None
-            history.append(
-                {
-                    "nodes": nodes,
-                    "iters": iters,
-                    "time": t,
-                    "obj": obj,
-                    "bound": bound,
-                    "gap": None,
-                }
-            )
-
-        m2 = final_re.search(line)
-        if m2:
-            final_obj = float(m2.group(1))
-            final_bound = float(m2.group(2))
-            final_gap = float(m2.group(3)) / 100.0
-
-        m3 = pass_re.search(line)
-        if m3:
-            pass_id = m3.group("pass")
-            nodes = int(pass_id) if pass_id is not None else None
-            t = float(m3.group("time"))
-            obj = float(m3.group("obj"))
-            iters = int(m3.group("iters"))
-            history.append(
-                {
-                    "nodes": nodes,
-                    "iters": iters,
-                    "time": t,
-                    "obj": obj,
-                    "bound": None,
-                    "gap": None,
-                }
-            )
-
-    # If we know final_bound, fill per-step gaps
-    if final_bound is not None:
-        for h in history:
-            obj = h["obj"]
-            if obj != 0:
-                h["gap"] = abs(obj - final_bound) / abs(obj)
-            else:
-                h["gap"] = 0.0
-
-    return history, final_obj, final_bound, final_gap

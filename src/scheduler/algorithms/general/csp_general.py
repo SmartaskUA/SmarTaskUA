@@ -2,51 +2,46 @@ from ortools.sat.python import cp_model
 import numpy as np
 from collections import defaultdict
 import holidays as hl
-import os 
 
 from algorithms.general.constraints import parse_constraints
+from algorithms.general.solver_logging import SolutionTracker, write_csp_log
 from algorithms.utils import (
+    build_allowed_teams,
+    infer_shift_count_from_dicts,
     rows_to_vac_dict,
     rows_to_req_dicts_any,
-    TEAM_ID_TO_CODE,
-    get_team_id,
-    get_team_code,
-    export_schedule_to_csv_shifts,
+    safe_int,
+    export_schedule_to_csv,
     build_calendar,
     schedule_to_table
 )
 
-def _build_allowed_teams(employees):
-    """
-    Convert employee 'teams' labels to internal numeric team IDs.
-    Fallback to team 'A' when none provided.
-    """
-    allowed = []
-    for Employees in employees:
-        codes = [get_team_code(t) for t in Employees.get("teams", []) if t]
-        ids = [get_team_id(c) for c in codes if c]
-        if not ids:
-            ids = [get_team_id("A")]
-        allowed.append(ids)
-    return allowed
 
 def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, rules=None, constraints=None):
 
-    num_days = 365
+    resolved_year = safe_int(year, 2025)
+    dias_ano, sundays_1based = build_calendar(resolved_year)
+    num_days = len(dias_ano)
     n_employees = len(employees)
-    S = range(1, int(shifts) + 1)
     Employees = range(n_employees)
     D = range(1, num_days + 1)
 
-    cfg = parse_constraints(constraints if constraints is not None else rules)
+    plan = parse_constraints(constraints if constraints is not None else rules)
 
-    allowed_teams_per_emp = _build_allowed_teams(employees)
-    vacs_dict = rows_to_vac_dict(vacations) 
-    mins_raw, ideals_raw = rows_to_req_dicts_any(minimuns, year=year)
+    allowed_teams_per_emp = build_allowed_teams(employees)
+    vacs_dict = rows_to_vac_dict(vacations)
+    mins_raw, ideals_raw = rows_to_req_dicts_any(minimuns, year=resolved_year)
+    shift_count = safe_int(shifts, None)
+    inferred_shifts = infer_shift_count_from_dicts(mins_raw, ideals_raw)
+    if shift_count is None or shift_count <= 0:
+        shift_count = inferred_shifts if inferred_shifts is not None else 2
+    elif inferred_shifts is not None and inferred_shifts > shift_count:
+        shift_count = inferred_shifts
+    S = range(1, int(shift_count) + 1)
 
     min_required = {}
     for (d, s, t), v in mins_raw.items():
-        if 1 <= d <= num_days and 1 <= s <= int(shifts):
+        if 1 <= d <= num_days and 1 <= s <= int(shift_count):
             try:
                 req = int(v)
             except Exception:
@@ -56,7 +51,7 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
 
     ideal_required = {}
     for (d, s, t), v in ideals_raw.items():
-        if 1 <= d <= num_days and 1 <= s <= int(shifts):
+        if 1 <= d <= num_days and 1 <= s <= int(shift_count):
             try:
                 req = int(v)
             except Exception:
@@ -64,15 +59,13 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
             if req > 0:
                 ideal_required[(d, s, t)] = req
 
-    year = int(year) if year is not None else 2025
-    dias_ano, sundays_1based = build_calendar(year)
-    pt_holidays = hl.country_holidays("PT", years=[year])
+    pt_holidays = hl.country_holidays("PT", years=[resolved_year])
     start_date = dias_ano[0].date()
     special_days = {(d - start_date).days + 1 for d in pt_holidays}
     special_days |= set(sundays_1based)
 
     vac_mask = {(i, d): False for i in Employees for d in D}
-    if cfg["enforce_vacation"]:
+    if plan.enforce_vacation:
         for emp_id, days in vacs_dict.items():
             i = emp_id - 1
             for d in days:
@@ -91,7 +84,7 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
     for employee in Employees:
         for day in D:
             off[(employee, day)] = m.NewBoolVar(f"off_{employee}_{day}")
-            shift_id[(employee, day)] = m.NewIntVar(0, int(shifts), f"shift_{employee}_{day}")
+            shift_id[(employee, day)] = m.NewIntVar(0, int(shift_count), f"shift_{employee}_{day}")
             if not vac_mask[(employee, day)]:
                 for s in S:
                     for t in allowed_teams_per_emp[employee]:
@@ -106,7 +99,7 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
             m.Add(sum(choices) == 1)
 
     # No earlier shift on the next day (if not off)
-    if cfg["enforce_no_earlier"]:
+    if plan.enforce_no_earlier:
         for employee in Employees:
             for day in range(1, num_days):
                 m.Add(shift_id[(employee, day + 1)] >= shift_id[(employee, day)]).OnlyEnforceIf(
@@ -124,17 +117,17 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
                         m.Add(shift_id[(employee, day)] == s).OnlyEnforceIf(y[(employee, day, s, t)]) # if y is 1 it means the employee works shift s
 
     # Max worked days in any window
-    if cfg["max_consecutive_window"] is not None and cfg["max_consecutive_worked"] is not None:
-        window = int(cfg["max_consecutive_window"])
-        max_in_window = int(cfg["max_consecutive_worked"])
+    if plan.max_consecutive_window is not None and plan.max_consecutive_worked is not None:
+        window = int(plan.max_consecutive_window)
+        max_in_window = int(plan.max_consecutive_worked)
         for employee in Employees:
             for start in range(1, num_days - window + 2):
                 days = range(start, start + window)
                 m.Add(sum(1 - off[(employee, day)] for day in days) <= max_in_window)
 
     # Max special-days cap per employee
-    if cfg["special_cap"] is not None:
-        special_cap = int(cfg["special_cap"])
+    if plan.special_cap is not None:
+        special_cap = int(plan.special_cap)
         for employee in Employees:
             sp_terms = [1 - off[(employee, day)] for day in D if day in special_days]
             if sp_terms:
@@ -142,8 +135,8 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
 
     # Cover Minimum Requirements
     unmet = {}
-    min_cov_weight = int(cfg["min_coverage_weight"])
-    min_cov_hard = cfg["min_coverage_hard"]
+    min_cov_weight = int(plan.min_coverage_weight)
+    min_cov_hard = plan.min_coverage_hard
     if min_cov_hard or min_cov_weight > 0:
         for (day, s, t), req in min_required.items():
             cover = []
@@ -158,8 +151,8 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
                 m.Add(sum(cover) + u >= req)
 
     unmet_ideal = {}
-    ideal_cov_weight = int(cfg["ideal_coverage_weight"])
-    ideal_cov_hard = cfg["ideal_coverage_hard"]
+    ideal_cov_weight = int(plan.ideal_coverage_weight)
+    ideal_cov_hard = plan.ideal_coverage_hard
     if ideal_cov_hard or ideal_cov_weight > 0:
         for (day, s, t), ideal in ideal_required.items():
             cover = []
@@ -173,8 +166,8 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
                 unmet_ideal[(day, s, t)] = z
                 m.Add(sum(cover) + z >= ideal)
 
-    total_min = cfg["total_workdays_min"]
-    total_max = cfg["total_workdays_max"]
+    total_min = plan.total_workdays_min
+    total_max = plan.total_workdays_max
     if total_min is not None or total_max is not None:
         for employee in Employees:
             total_work = sum(1 - off[(employee, d)] for d in D)
@@ -209,44 +202,13 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
     # Attach the tracker
     tracker = SolutionTracker()
     status = solver.Solve(m, solution_callback=tracker)
-
-    # --- GENERATE LOG FILE ---
-    # 1. Find the correct filename (Scenario increment)
-    base_name = f"logs_{n_employees}_employees_scenario"
-    scenario_id = 1
-    while True:
-        filename = f"{base_name}_{scenario_id}.txt"
-        if not os.path.exists(filename):
-            break
-        scenario_id += 1
-    
-    # 2. Write data to file
-    final_gap = 0.0
-    if tracker.best_objective != 0 and tracker.best_objective != float('inf'):
-        final_gap = abs(tracker.best_objective - tracker.best_bound) / abs(tracker.best_objective)
-
-    with open(filename, "w") as f:
-        f.write(f"SOLVER REPORT\n")
-        f.write(f"=============\n")
-        f.write(f"Employees: {n_employees}\n")
-        f.write(f"Max Time Allowed: {maxTime if maxTime else 'Unlimited'} mins\n")
-        f.write(f"Final Status: {solver.StatusName(status)}\n")
-        f.write(f"Total Solutions Found: {tracker.solution_count}\n")
-        f.write(f"\n--- PROGRESS LOG ---\n")
-        f.write(f"{'Count':<8} | {'Time (s)':<12} | {'Objective':<15} | {'Gap':<10}\n")
-        f.write("-" * 55 + "\n")
-        
-        for entry in tracker.history:
-            f.write(f"{entry['count']:<8} | {entry['time']:<12.4f} | {entry['obj']:<15} | {entry['gap']:.4%}\n")
-            
-        f.write("-" * 55 + "\n")
-        f.write(f"FINAL RESULTS:\n")
-        f.write(f"Best Solution Time: {tracker.best_solution_time:.4f}s\n")
-        f.write(f"Objective Value:    {tracker.best_objective}\n")
-        f.write(f"Lower Bound:        {tracker.best_bound}\n")
-        f.write(f"Final Gap:          {final_gap:.4%}\n")
-
-    print(f"\nLog file saved to: {filename}")
+    write_csp_log(
+        tracker=tracker,
+        solver=solver,
+        status=status,
+        n_employees=n_employees,
+        max_time=maxTime,
+    )
 
     # --- EXPORT SCHEDULE ---
     assign = defaultdict(list)
@@ -278,38 +240,5 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
         vacs=v.vacs,
         assignment=v.assignment,
         num_days=num_days,
-        shifts=int(shifts),
+        shifts=int(shift_count),
     )
-
-
-class SolutionTracker(cp_model.CpSolverSolutionCallback):
-    def __init__(self):
-        super().__init__()
-        self.best_solution_time = 0.0
-        self.best_objective = float('inf')
-        self.best_bound = float('-inf')
-        self.solution_count = 0
-        self.history = []  
-
-    def on_solution_callback(self):
-        self.solution_count += 1
-        self.best_solution_time = self.WallTime()
-        self.best_objective = self.ObjectiveValue()
-        self.best_bound = self.BestObjectiveBound()
-        
-        # Calculate gap
-        gap = 0.0
-        if self.best_objective != 0:
-            gap = abs(self.best_objective - self.best_bound) / abs(self.best_objective)
-            
-        # Store data for file writing later
-        self.history.append({
-            "count": self.solution_count,
-            "time": self.best_solution_time,
-            "obj": self.best_objective,
-            "bound": self.best_bound,
-            "gap": gap
-        })
-
-        print(f"Solution #{self.solution_count} found at {self.best_solution_time:.2f}s "
-              f"| Obj: {self.best_objective} | Gap: {gap:.2%}")
