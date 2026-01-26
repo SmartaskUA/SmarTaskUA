@@ -8,7 +8,7 @@ from algorithms.utils import (
     build_calendar,
     rows_to_vac_dict,
     rows_to_req_dicts,
-    export_schedule_to_csv,
+    export_schedule_to_csv_shifts,
     TEAM_ID_TO_CODE,
     get_team_id,
     get_team_code,

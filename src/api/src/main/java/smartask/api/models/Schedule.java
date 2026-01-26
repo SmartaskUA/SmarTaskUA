@@ -28,11 +28,28 @@ public class Schedule {
     private String algorithm;
     private List<List<String>> data;
     private Map<String, Object> metadata;
-
+    private Double elapsed_time;
 
     public Schedule(List<List<String>> data, String title, String algorithm) {
         this.data = data;
         this.title = title;
         this.algorithm = algorithm;
+    }
+
+    public Schedule(List<List<String>> data, String title, String algorithm, Map<String, Object> metadata, Double elapsed_time) {
+        this.data = data;
+        this.title = title;
+        this.algorithm = algorithm;
+        this.metadata = metadata;
+        this.elapsed_time = elapsed_time;
+    }
+
+    public Schedule(List<List<String>> data, String title, String algorithm, Instant timestamp, Map<String, Object> metadata, Double elapsed_time) {
+        this.data = data;
+        this.title = title;
+        this.algorithm = algorithm;
+        this.timestamp = timestamp;
+        this.metadata = metadata;
+        this.elapsed_time = elapsed_time;
     }
 }

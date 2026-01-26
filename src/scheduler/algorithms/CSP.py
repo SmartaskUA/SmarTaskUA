@@ -9,10 +9,11 @@ from algorithms.utils import (
     TEAM_ID_TO_CODE,
     get_team_id,
     get_team_code,
-    export_schedule_to_csv,
+    export_schedule_to_csv_shifts,
     build_calendar,
     schedule_to_table
 )
+
 
 def _build_allowed_teams(employees):
     """
@@ -20,16 +21,16 @@ def _build_allowed_teams(employees):
     Fallback to team 'A' when none provided.
     """
     allowed = []
-    for Employees in employees:
-        codes = [get_team_code(t) for t in Employees.get("teams", []) if t]
+    for emp in employees:
+        codes = [get_team_code(t) for t in emp.get("teams", []) if t]
         ids = [get_team_id(c) for c in codes if c]
         if not ids:
             ids = [get_team_id("A")]
         allowed.append(ids)
     return allowed
 
-def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, rules=None):
 
+def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, rules=None):
     num_days = 365
     n_employees = len(employees)
     S = range(1, int(shifts) + 1)
@@ -37,8 +38,8 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
     D = range(1, num_days + 1)
 
     allowed_teams_per_emp = _build_allowed_teams(employees)
-    vacs_dict = rows_to_vac_dict(vacations) 
-    mins_raw, ideals_raw = rows_to_req_dicts(minimuns)
+    vacs_dict = rows_to_vac_dict(vacations)
+    mins_raw, _ = rows_to_req_dicts(minimuns)
 
     min_required = {}
     for (d, s, t), v in mins_raw.items():
@@ -50,13 +51,15 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
             if req > 0:
                 min_required[(d, s, t)] = req
 
-    year = int(year) if year is not None else 2025
+    # --- Calendar + holidays ---
+    year = int(year)
     dias_ano, sundays_1based = build_calendar(year)
     pt_holidays = hl.country_holidays("PT", years=[year])
     start_date = dias_ano[0].date()
     special_days = {(d - start_date).days + 1 for d in pt_holidays}
     special_days |= set(sundays_1based)
 
+    # --- Vacation mask ---
     vac_mask = {(i, d): False for i in Employees for d in D}
     for emp_id, days in vacs_dict.items():
         i = emp_id - 1
@@ -64,10 +67,10 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
             if 1 <= d <= num_days:
                 vac_mask[(i, d)] = True
 
-
+    # === MODEL ===
     m = cp_model.CpModel()
 
-    # variables
+    # --- Variables ---
     y, off, shift_id = {}, {}, {}
     # Iterate over all employees and days to create the variables
     # variable y[e,d,s,t] = 1 if employee e works shift s in team t on day d (binary)
@@ -85,7 +88,7 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
     # exactly one of: OFF or exactly one (s, t) (vacation days forced OFF)
     for employee in Employees:
         for day in D:
-            choices = [off[(employee, day)]] 
+            choices = [off[(employee, day)]]
             if not vac_mask[(employee, day)]:
                 choices += [y[(employee, day, s, t)] for s in S for t in allowed_teams_per_emp[employee]]
             m.Add(sum(choices) == 1)
@@ -96,21 +99,21 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
             m.Add(shift_id[(employee, day + 1)] >= shift_id[(employee, day)]).OnlyEnforceIf(
                 [off[(employee, day)].Not(), off[(employee, day + 1)].Not()]
             )
-            
+
     # Keep shift_id consistent with off and y
     # (off -> shift_id=0, assigned to (s,t) -> shift_id=s)
     for employee in Employees:
         for day in D:
-            m.Add(shift_id[(employee, day)] == 0).OnlyEnforceIf(off[(employee, day)]) # if the employee is off, shift_id is 0 (does not work)
-            if not vac_mask[(employee, day)]: # if not on vacation, can work
-                for s in S: # iterate over possible shifts
-                    for t in allowed_teams_per_emp[employee]: # iterate over possible teams
-                        m.Add(shift_id[(employee, day)] == s).OnlyEnforceIf(y[(employee, day, s, t)]) # if y is 1 it means the employee works shift s
+            m.Add(shift_id[(employee, day)] == 0).OnlyEnforceIf(off[(employee, day)])
+            if not vac_mask[(employee, day)]:
+                for s in S:
+                    for t in allowed_teams_per_emp[employee]:
+                        m.Add(shift_id[(employee, day)] == s).OnlyEnforceIf(y[(employee, day, s, t)])
 
     # Max 5 worked days in any 6-day window
     window, max_in_window = 6, 5
     for employee in Employees:
-        for start in range(1, num_days - window + 2):  # + 2 because range is exclusive at the end
+        for start in range(1, num_days - window + 2):
             days = range(start, start + window)
             m.Add(sum(1 - off[(employee, day)] for day in days) <= max_in_window)
 
@@ -123,39 +126,35 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
 
     # Cover Minimum Requirements
     unmet = {}
-    for (day, s, t), req in min_required.items():
+    for (day, h, t), req in min_required.items():
         cover = []
         for employee in Employees:
             if not vac_mask[(employee, day)] and t in allowed_teams_per_emp[employee]:
-                cover.append(y[(employee, day, s, t)])
-        u = m.NewIntVar(0, req, f"unmet_{day}_{s}_{t}")
-        unmet[(day, s, t)] = u
+                cover.append(y[(employee, day, h, t)])
+        u = m.NewIntVar(0, req, f"unmet_{day}_{h}_{t}")
+        unmet[(day, h, t)] = u
         m.Add(sum(cover) + u >= req)
 
-    # Workdays should be 223
+    # --- Hard rule: exactly 223 worked days per employee ---
     target_workdays = 223
-    workdays = {employee: m.NewIntVar(0, target_workdays, f"work_{employee}") for employee in Employees}
-    dev_under = {employee: m.NewIntVar(0, target_workdays, f"dev_under_{employee}") for employee in Employees}
-    dev_over  = {employee: m.NewIntVar(0, target_workdays, f"dev_over_{employee}") for employee in Employees}
     for employee in Employees:
-        m.Add(workdays[employee] == sum(1 - off[(employee, d)] for d in D))
-        m.Add(workdays[employee] + dev_under[employee] - dev_over[employee] == target_workdays)
+        total_worked = sum(1 - off[(employee, d)] for d in D)
+        m.Add(total_worked == target_workdays)
 
-    w_unmet_min, w_workday_dev = 1000, 1
-    obj = []
-    obj += [w_unmet_min * unmet[k] for k in unmet]
-    obj += [w_workday_dev * (dev_under[employee] + dev_over[employee]) for employee in Employees]
-    m.Minimize(sum(obj))
+    # --- Objective: minimize unmet minimums only (hard workday constraint) ---
+    w_unmet_min = 100
+    m.Minimize(sum(w_unmet_min * unmet[k] for k in unmet))
 
-    # Solve model
+    # === SOLVE ===
     solver = cp_model.CpSolver()
     if maxTime is not None:
-        # maxTime is in minutes converted to seconds
         solver.parameters.max_time_in_seconds = float(int(maxTime) * 60)
     solver.parameters.num_search_workers = 8
+    solver.parameters.log_search_progress = True
 
     status = solver.Solve(m)
 
+    # === EXTRACT SOLUTION ===
     assign = defaultdict(list)
     if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
         for employee in Employees:
@@ -173,6 +172,7 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
                         if team_val is not None:
                             assign[emp_id].append((day, s_val, team_val))
 
+    # === EXPORT & RETURN ===
     class View: pass
     v = View()
     v.employees = list(range(1, n_employees + 1))

@@ -4,13 +4,11 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import smartask.api.models.ReferenceTemplate;
-import smartask.api.models.RuleSet;
 import smartask.api.models.TaskStatus;
 import smartask.api.models.VacationTemplate;
 import smartask.api.models.requests.ScheduleRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import smartask.api.repositories.ReferenceTemplateRepository;
-import smartask.api.repositories.RuleSetRepository;
 import smartask.api.repositories.TaskStatusRepository;
 import smartask.api.repositories.VacationTemplateRepository;
 
@@ -18,7 +16,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class RabbitMqProducer {
@@ -41,8 +38,6 @@ public class RabbitMqProducer {
     @Autowired
     private ReferenceTemplateRepository referenceTemplateRepository;
 
-    @Autowired
-    private RuleSetRepository ruleSetRepository;
 
     public String requestScheduleMessage(ScheduleRequest schedule) {
         //Verify the existence of the vacationTemplate
@@ -59,17 +54,9 @@ public class RabbitMqProducer {
             return "Minimums template not found";
         }
 
-        Optional<RuleSet> ruleSetOpt = Optional.empty();
-        if (schedule.getRuleSetName() != null && !schedule.getRuleSetName().isBlank()) {
-            ruleSetOpt = ruleSetRepository.findByName(schedule.getRuleSetName());
-        }
-
         try {
-            // ✅ Generate unique task ID
-            String taskId = UUID.randomUUID().toString();
-            schedule.setTaskId(taskId);
+            String taskId = schedule.getTaskId();
 
-            // ✅ Store task status in DB
             TaskStatus taskStatus = new TaskStatus(
                 taskId,
                 "PENDING",
@@ -94,29 +81,32 @@ public class RabbitMqProducer {
             payload.put("vacationTemplate", vactemp.get().getName());
             payload.put("minimuns", mins.get().getName());
             payload.put("shifts", schedule.getShifts());
-
-            // ✅ Add RuleSet if available
-            if (ruleSetOpt.isPresent()) {
-                RuleSet ruleSet = ruleSetOpt.get();
-                payload.put("rules", ruleSet); // includes all rules + params
-            } else {
-                payload.put("rules", Map.of("rules", java.util.List.of())); // fallback empty list
+            payload.put("groupName", schedule.getGroupName());
+            if (schedule.getEmployees() != null) {
+                payload.put("employees", schedule.getEmployees());
             }
 
-            // ✅ Serialize to JSON for logging/debug
+            // Add constraints if provided; otherwise send null for rules
+            if (schedule.getConstraints() != null) {
+                payload.put("rules", schedule.getConstraints());
+            } else {
+                payload.put("rules", null);
+            }
+
+            // Serialize to JSON for logging/debug
             String jsonMessage = objectMapper.writeValueAsString(payload);
             System.out.println("📤 Sent task request payload:\n" + jsonMessage);
 
-            // ✅ Send message to RabbitMQ
+            // Send message to RabbitMQ
             rabbitTemplate.convertAndSend(EXCHANGE_NAME, ROUTING_KEY, payload);
 
             return res = "Sent task request";
 
         } catch (JsonProcessingException e) {
-            System.err.println("❌ Error converting payload to JSON: " + e.getMessage());
+            System.err.println("Error converting payload to JSON: " + e.getMessage());
             return res = "Error converting ScheduleRequest to JSON: " + e.getMessage();
         } catch (Exception e) {
-            System.err.println("❌ Unexpected error: " + e.getMessage());
+            System.err.println("Unexpected error: " + e.getMessage());
             e.printStackTrace();
             return res = "Unexpected error: " + e.getMessage();
         }

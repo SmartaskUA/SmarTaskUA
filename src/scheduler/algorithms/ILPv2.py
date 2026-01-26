@@ -21,7 +21,7 @@ from algorithms.utils import (
     build_calendar,
     rows_to_vac_dict,
     rows_to_req_dicts,
-    export_schedule_to_csv,
+    export_schedule_to_csv_shifts,
     TEAM_CODE_TO_ID,
     TEAM_ID_TO_CODE,
     get_team_id,
@@ -37,9 +37,7 @@ class ILPScheduler2(ILPScheduler):
         super().__init__(vacations_rows, minimuns_rows, employees, maxTime, year, shifts)
         self.y_opt = y_opt  # From ILP1 – ensures we do not violate minimum feasibility
 
-    # ---------------------------------------------------------------------
     # MODEL CREATION (ILP2)
-    # ---------------------------------------------------------------------
     def build_model(self):
         funcionarios = self.employees
         dias = self.dates
@@ -76,6 +74,7 @@ class ILPScheduler2(ILPScheduler):
                 for s in t_range}
             for d in dias
         }
+        print(self.y)
 
         # (14) Shortage relative to IDEAL coverage
         # z[d][s][team] → shortage relative to ideal (0 if fully covered
@@ -98,6 +97,7 @@ class ILPScheduler2(ILPScheduler):
             for s in t_range:
                 for team, members in self.teams.items():
                     minimo = self.minimos.get((d, team, s), 0)
+                    print(minimo)
                     model += (
                         self.y[d][s][team] >= minimo - pulp.lpSum(
                             self.x[f][d][s][team_code]
@@ -105,8 +105,9 @@ class ILPScheduler2(ILPScheduler):
                             for team_code in self.emp_allowed_teams[f]
                             if team_code == team
                         ),
-                        f"min_shortage_{team}_{d.strftime('%Y%m%d')}_S{s}"
+                        print(f"min_shortage_{team}_{d.strftime('%Y%m%d')}_S{s}")
                     )
+
 
         # (13) Guarantee shortage relative to IDEAL coverage
         for d in dias:
@@ -196,7 +197,7 @@ class ILPScheduler2(ILPScheduler):
                 d_next = dias[i + 1]
                 for s_prev in range(1, self.shifts + 1):
                     for s_next in range(1, self.shifts + 1):
-                        if s_next < s_prev:  # e.g. cannot go from Afternoon→Morning
+                        if s_next < s_prev:  
                             model += (
                                 pulp.lpSum(self.x[f][d_today][s_prev][team]
                                            for team in self.emp_allowed_teams[f]) +
@@ -206,7 +207,7 @@ class ILPScheduler2(ILPScheduler):
                                 f"forbid_{s_prev}_to_{s_next}_f{f}_{d_today.strftime('%Y%m%d')}"
                             )
 
-        # (7)Vacation days must be OFF
+        # (7) Vacation days must be OFF
         for f_emp in funcionarios:
             for vac_day in self.vacations_dates[f_emp]:
                 model += (
@@ -218,9 +219,7 @@ class ILPScheduler2(ILPScheduler):
         self.model = model
 
 
-# -------------------------------------------------------------------------
 # Solve ILP1 + ILP2 sequentially
-# -------------------------------------------------------------------------
 def solve(vacations, minimuns, employees, maxTime, year=2025, shifts=2, rules=None):
     """
     Runs both ILP phases:

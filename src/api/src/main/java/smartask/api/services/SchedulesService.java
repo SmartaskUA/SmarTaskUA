@@ -11,7 +11,9 @@ import smartask.api.models.ReferenceTemplate;
 import smartask.api.models.requests.ScheduleRequest;
 import smartask.api.repositories.*;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -43,7 +45,8 @@ public class SchedulesService {
 
     public String requestScheduleGeneration(ScheduleRequest schedule) {
 
-        boolean exists = schedulerepository.existsByTitleAndAlgorithm(schedule.getTitle(), schedule.getAlgorithm());
+        boolean exists = schedulerepository.existsByTitleAndAlgorithm(schedule.getTitle(), schedule.getAlgorithm());    
+
 
         if (exists) {
             return "Schedule with the same title and algorithm exists!";
@@ -64,27 +67,37 @@ public class SchedulesService {
                 .map(row -> row.get(0).replace("\uFEFF", "").trim())
                 .collect(Collectors.toSet());
 
-        // Carregar nomes de funcionários do banco
-        Set<String> employeeNamesInDb = Emprepository.findAll().stream()
-                .map(emp -> emp.getName().trim())
-                .collect(Collectors.toSet());
+        // Carregar nomes de funcionários do banco (ou do problema, se fornecidos)
+        Set<String> employeeNamesInScope = new HashSet<>();
+        List<Map<String, Object>> problemEmployees = schedule.getEmployees();
+        boolean hasProblemEmployees = problemEmployees != null && !problemEmployees.isEmpty();
+        if (hasProblemEmployees) {
+            employeeNamesInScope = extractEmployeeNames(problemEmployees);
+        } else {
+            employeeNamesInScope = Emprepository.findAll().stream()
+                    .map(emp -> emp.getName().trim())
+                    .collect(Collectors.toSet());
+        }
 
-        // Verificar existência de todos os nomes do template no banco
-        for (String name : namesInTemplate) {
-            if (!employeeNamesInDb.contains(name)) {
-                return "Vacation template contains employee '" + name + "' who does not exist in the system.";
+        // Verificar existência de todos os nomes do template no escopo escolhido
+        if (!employeeNamesInScope.isEmpty()) {
+            for (String name : namesInTemplate) {
+                if (!employeeNamesInScope.contains(name)) {
+                    String source = hasProblemEmployees ? "problem definition" : "system";
+                    return "Vacation template contains employee '" + name + "' who does not exist in the " + source + ".";
+                }
             }
         }
 
         // Verificar se quantidade de funcionários do template é igual ao do banco
-        if (namesInTemplate.size() != employeeNamesInDb.size()) {
-            return "Vacation template contains " + namesInTemplate.size() +
-                    " employees, but the system has " + employeeNamesInDb.size() + " employees.";
-        }
+        //if (namesInTemplate.size() != employeeNamesInDb.size()) {
+        //    return "Vacation template contains " + namesInTemplate.size() +
+        //            " employees, but the system has " + employeeNamesInDb.size() + " employees.";
+        //}
 
-        if (schedule.getShifts() == null || (schedule.getShifts() != 2 && schedule.getShifts() != 3)) {
-            return "Invalid 'shifts' value. Expected 2 or 3.";
-        }
+        //if (schedule.getShifts() == null || (schedule.getShifts() != 2 && schedule.getShifts() != 3)) {
+        //    return "Invalid 'shifts' value. Expected 2 or 3.";
+        //}
 
         Optional<ReferenceTemplate> refOpt =
                 referenceTemplateRepository.findByName(schedule.getMinimuns());
@@ -94,18 +107,61 @@ public class SchedulesService {
 
         List<List<String>> minRows = refOpt.get().getMinimuns();
         Integer inferredShiftCount = inferShiftCount(minRows);
-        if (inferredShiftCount == null) {
-            return "Unable to infer shifts from minimums template '" + schedule.getMinimuns() + "'. " +
-                   "Make sure the CSV has a 'Turno' column with values like M/T/N.";
+        // Detectar se o template é por turnos (M/T/N) ou por horas (09-10, etc.)
+        boolean isHourly = hasHourColumn(minRows);
+        Integer inferredHourCount = inferHourCount(minRows);
+        
+        if (isHourly) {
+            if (inferredHourCount == null || inferredHourCount == 0) {
+                return "Unable to infer hourly minimums from template '" + schedule.getMinimuns() +
+                       "'. Make sure the CSV has a 'Hora' column (e.g., 09-10, 10-11, ...).";
+            }
+        
+            System.out.println("[INFO] Detetado template de mínimos por HORA com " + inferredHourCount + " intervalos.");
+        } else {
+            if (inferredShiftCount == null) {
+                return "Unable to infer shifts from minimums template '" + schedule.getMinimuns() + "'. " +
+                       "Make sure the CSV has a 'Turno' column with values like M/T/N.";
+            }
+        
+            if (!inferredShiftCount.equals(schedule.getShifts())) {
+                return "Selected shifts (" + schedule.getShifts() + ") do not match minimums template '" +
+                       schedule.getMinimuns() + "' (found " + inferredShiftCount + ").";
+            }
+        
+            System.out.println("[INFO] Detetado template de mínimos por TURNO (" + inferredShiftCount + ").");
         }
 
-        if (!inferredShiftCount.equals(schedule.getShifts())) {
-            return "Selected shifts (" + schedule.getShifts() + ") does not match minimums template '" +
-                   schedule.getMinimuns() + "' (found " + inferredShiftCount + ").";
+        if (isHourly) {
+
+            if (!inferredHourCount.equals(schedule.getShifts())) {
+                return "Selected shifts (" + schedule.getShifts() + ") does not match minimums template '" +
+                       schedule.getMinimuns() + "' (found " + inferredShiftCount + ").";
+            }
+
+        } else {
+
+            if (!inferredShiftCount.equals(schedule.getShifts())) {
+                return "Selected shifts (" + schedule.getShifts() + ") does not match minimums template '" +
+                       schedule.getMinimuns() + "' (found " + inferredShiftCount + ").";
+            }
         }
 
         final String res = producer.requestScheduleMessage(schedule);
         return res.equals("Sent task request") ? "Sent task request" : res;
+    }
+
+    /** Verifica se o ficheiro tem uma coluna 'Hora' (indicando um template horário). */
+    private boolean hasHourColumn(List<List<String>> rows) {
+        if (rows == null || rows.isEmpty()) return false;
+
+        List<String> header = rows.get(0).stream()
+                .map(s -> s == null ? "" : s.trim().toLowerCase())
+                .collect(Collectors.toList());
+
+        // Procura uma coluna chamada "hora" ou que contenha intervalos tipo "09-10"
+        return header.contains("hora") || rows.stream()
+                .anyMatch(r -> r.size() > 1 && r.get(1).matches(".*\\d{2}-\\d{2}.*"));
     }
 
     /**
@@ -136,6 +192,21 @@ public class SchedulesService {
         return count == 0 ? null : count;
     }
 
+    /** Conta o número de intervalos horários únicos definidos (09-10, 10-11, etc.) */
+
+    private Integer inferHourCount(List<List<String>> rows) {
+        if (rows == null || rows.isEmpty()) return null;
+
+        Set<String> hours = rows.stream()
+                .filter(r -> r.size() > 1)
+                .map(r -> r.get(1).trim())
+                .filter(s -> s.matches("\\d{2}-\\d{2}"))
+                .collect(Collectors.toSet());
+
+        System.out.println("[DEBUG] Detetados intervalos horários: " + hours);
+        return hours.size();
+    }
+
     /** Normaliza o valor do campo 'Turno' para M/T/N (tolerante a acentos e palavras completas). */
     private String normalizeShiftToken(String s) {
         if (s == null) return "";
@@ -146,6 +217,23 @@ public class SchedulesService {
         if (u.startsWith("N") || u.contains("NOIT") || u.contains("NIGH")) return "N"; // N, Noite, Night
 
         return "";
+    }
+
+    private Set<String> extractEmployeeNames(List<Map<String, Object>> employees) {
+        Set<String> names = new HashSet<>();
+        for (Map<String, Object> emp : employees) {
+            if (emp == null) {
+                continue;
+            }
+            Object name = emp.get("name");
+            Object id = emp.get("id");
+            if (name != null && !name.toString().trim().isBlank()) {
+                names.add(name.toString().trim());
+            } else if (id != null && !id.toString().trim().isBlank()) {
+                names.add(id.toString().trim());
+            }
+        }
+        return names;
     }
 
     public Optional<Schedule> getByTitle(String title) {
@@ -221,4 +309,8 @@ public class SchedulesService {
         return false;
     }
 
+
+    public TaskStatusRepository getTaskStatusRepository() {
+        return taskStatusRepository;
+    }
 }

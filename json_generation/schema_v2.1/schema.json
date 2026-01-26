@@ -421,6 +421,26 @@
         }
       }
     },
+    "vacations": {
+      "type": "object",
+      "description": "Vacation template data from CSV file",
+      "properties": {
+        "dataFile": {
+          "type": "string",
+          "description": "Path to CSV file containing vacation template (relative to JSON file)"
+        }
+      }
+    },
+    "minimuns": {
+      "type": "object",
+      "description": "Minimum staffing levels from CSV file",
+      "properties": {
+        "dataFile": {
+          "type": "string",
+          "description": "Path to CSV file containing minimums (relative to JSON file)"
+        }
+      }
+    },
     "constraints": {
       "type": "object",
       "required": ["hard"],
