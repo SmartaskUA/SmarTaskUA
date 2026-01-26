@@ -4,9 +4,8 @@ import pika
 import json
 import os
 from pymongo import MongoClient
-from kpiVerification import analyze as verifyKpis
-from kpiVerification_HoursLocalv2 import analyze as verifyKpis_Hours
-from kpiVerification_30minLocal import analyze as verifyKpis_30min
+from kpiVerification import analyze as verifyKpis                                                        
+from kpiVerification_unified_v3 import analyze as verifyKpis_Unified
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 import pandas as pd
 import holidays as hl
@@ -109,11 +108,11 @@ def detect_schedule_format(file_path, mins_text=None):
 
     return problem_type, hour_granularity
 
-def select_kpi_verifier(problem_type, hour_granularity):
-    if problem_type == "hours":
-        if hour_granularity == "30min":
-            return verifyKpis_30min
-        return verifyKpis_Hours
+def select_kpi_verifier(problem_type, hour_granularity):                                                 
+    if problem_type == "hours":                                                                          
+        # Retorna uma função wrapper que passa a granularidade correta                                   
+        granularity = 30 if hour_granularity == "30min" else 60                                          
+        return lambda f, h, m, e, y: verifyKpis_Unified(f, h, m, e, y, granularity=granularity)          
     return verifyKpis
 
 def normalize_schedule_type(value):
@@ -271,19 +270,19 @@ def callback(ch, method, properties, body):
             # 🔹 Definir holidays com base no problem_type
             if problem_type == "hours":
                 holidays = {
-                    date(2022, 1, 1): "New Year's Day", 
-                    date(2022, 1, 6): 'Epiphany', 
-                    date(2022, 3, 1): 'Day of Baleares', 
-                    date(2022, 4, 14): 'Maundy Thursday', 
-                    date(2022, 4, 15): 'Good Friday', 
-                    date(2022, 5, 1): 'Labor Day', 
-                    date(2022, 5, 2): 'Madrid Day', 
-                    date(2022, 6, 29): 'Folga', 
-                    date(2022, 7, 8): 'Folga', 
-                    date(2022, 8, 15): 'Assumption Day', 
-                    date(2022, 9, 8): 'Regional Holiday', 
+                    date(2022, 1, 1): "New Year's Day",
+                    date(2022, 1, 6): 'Epiphany',
+                    date(2022, 3, 1): 'Day of Baleares',
+                    date(2022, 4, 14): 'Maundy Thursday',
+                    date(2022, 4, 15): 'Good Friday',
+                    date(2022, 5, 1): 'Labor Day',
+                    date(2022, 5, 2): 'Madrid Day',
+                    date(2022, 6, 29): 'Folga',
+                    date(2022, 7, 8): 'Folga',
+                    date(2022, 8, 15): 'Assumption Day',
+                    date(2022, 9, 8): 'Regional Holiday',
                     date(2022, 10, 12): 'National Day',
-                    date(2021, 11, 1): "All Saints' Day", 
+                    date(2021, 11, 1): "All Saints' Day",
                     date(2021, 12, 6): 'Constitution Day',
                     date(2021, 12, 8): 'Immaculate Conception',
                     date(2021, 12, 25): 'Christmas Day'
@@ -291,26 +290,7 @@ def callback(ch, method, properties, body):
             else:
                 holidays = hl.country_holidays("PT", years=[year])
 
-            # Enviar resultado via RabbitMQ para o WebSocket
-            try:
-                websocket_channel = ch.connection.channel()
-                websocket_channel.exchange_declare(exchange="websocket-exchange", exchange_type="fanout", durable=True)
-            
-                payload = json.dumps({
-                    "requestId": request_id,
-                    "result": results if len(files) >= 2 else result
-                })
-            
-                websocket_channel.basic_publish(
-                    exchange="websocket-exchange",
-                    routing_key="",
-                    body=payload
-                )
-            
-                print(f"[WebSocket] Sent result for requestId={request_id} to websocket-exchange")
-            except Exception as e:
-                print(f"[ERROR] Failed to send WebSocket message: {e}")
-            
+            # 1️⃣ PRIMEIRO: Calcular resultados para todos os ficheiros
             results = {}
             print(f"[DEBUG] Running KPI comparison for {len(files)} files...")
 
@@ -320,6 +300,27 @@ def callback(ch, method, properties, body):
 
             print("[DEBUG] KPI comparison results:", results)
 
+            # 2️⃣ DEPOIS: Enviar resultado via WebSocket
+            try:
+                websocket_channel = ch.connection.channel()
+                websocket_channel.exchange_declare(exchange="websocket-exchange", exchange_type="fanout", durable=True)
+
+                payload = json.dumps({
+                    "requestId": request_id,
+                    "result": results
+                })
+
+                websocket_channel.basic_publish(
+                    exchange="websocket-exchange",
+                    routing_key="",
+                    body=payload
+                )
+
+                print(f"[WebSocket] Sent result for requestId={request_id} to websocket-exchange")
+            except Exception as e:
+                print(f"[ERROR] Failed to send WebSocket message: {e}")
+
+            # 3️⃣ POR FIM: Guardar no MongoDB
             try:
                 comparison_results.insert_one({
                     "requestId": request_id,

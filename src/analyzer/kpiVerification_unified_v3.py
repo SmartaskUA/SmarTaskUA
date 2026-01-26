@@ -14,7 +14,7 @@ class TestConfig:
     
     # Test flags - set to True/False to enable/disable each test
     TEST_30MIN = True
-    TEST_1HOUR = False
+    TEST_1HOUR = True
     
     # File paths
     CSV_30MIN = "Horário_Por_Intervalos_30min.csv"
@@ -608,20 +608,33 @@ def analyze(file, holidays, mins, employees, year, granularity=30):
     
     # Calculate total staffing gap (people missing across all time slots)
     totalStaffingGap = compare_minimums(mins_required_ordered, mins_final_ordered)
-    
-    # Calculate overstaff (excess staff across all time slots)
+
+    # Calculate overstaff AND coverage rate
     hourlyOverstaff = 0
+    totalRequiredSlots = 0  # Total slots with valid requirements
+    slotsMet = 0            # Slots where actual >= required
+
     for key, actual_count in mins_final_ordered.items():
         required = mins_required_ordered.get(key, 0)
-        
+
         # Skip special days (marked as -1)
         if required == -1 or actual_count == -1:
             continue
-        
+
+        totalRequiredSlots += 1
         gap = required - actual_count
+
+        if gap <= 0:
+            slotsMet += 1  # Requirement was met (or exceeded)
         if gap < 0:
             hourlyOverstaff += abs(gap)
-    
+
+    # Calculate coverage rate as percentage
+    if totalRequiredSlots > 0:
+        staffingCoverageRate = round((slotsMet / totalRequiredSlots) * 100, 2)
+    else:
+        staffingCoverageRate = 100.0  # No requirements = 100% coverage
+
     # Ideals: only calculate if we actually have ideal values
     has_ideals = len(ideals_required_dict) > 0
     if has_ideals:
@@ -631,9 +644,10 @@ def analyze(file, holidays, mins, employees, year, granularity=30):
     else:
         totalIdealGap = 0
         print("[INFO] No ideal requirements provided - totalIdealGap set to 0")
-    
+
     print(f"[DEBUG] Total Staffing Gap: {totalStaffingGap}")
     print(f"[DEBUG] Overstaff: {hourlyOverstaff}")
+    print(f"[DEBUG] Coverage Rate: {staffingCoverageRate}% ({slotsMet}/{totalRequiredSlots} slots met)")
     
     # --------------------------- Process Schedule DataFrame ---------------------------
     
@@ -826,7 +840,8 @@ def analyze(file, holidays, mins, employees, year, granularity=30):
         "minRestViolations": minRestViolations,
         "totalStaffingGap": totalStaffingGap,
         "totalIdealGap": totalIdealGap if has_ideals else None,
-        "excessStaffing": hourlyOverstaff
+        "excessStaffing": hourlyOverstaff,
+        "staffingCoverageRate": staffingCoverageRate
     }
 
 # ==============================================================================

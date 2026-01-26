@@ -17,6 +17,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 
 const metricInfo = {
+  // ============ SHIFT-BASED METRICS (kpiVerification.py) ============                                   
   tmFails: {
     label: "Afternoon-Morning Sequence",
     description: "Number of times an employee works in an afternoon shift followed by a morning shift in the day after.",
@@ -65,17 +66,61 @@ const metricInfo = {
     label: "Hourly Overstaff",
     description: "Total overstaffing versus required hourly staffing across all teams and days.",
   },
-};
+
+  // ============ HOURLY METRICS (kpiVerification_unified_v3.py) ============                             
+  workDaysTargetDeviation: {                                                                              
+    label: "Work Days Target Deviation",                                                                  
+    description: "Total absolute deviation from the target of 223 workdays per year, summed across all employees (0 means everyone has exactly 223 workdays).",                                                  
+  }, 
+
+  vacationDaysQuotaDeviation: {                                                                           
+    label: "Vacation Days Quota Deviation",                                                               
+    description: "Total absolute deviation from the mandatory vacation days per year, across all employees (0 means everyone has exactly 30 vacation days).",                                                       
+  },                                                                                                      
+  holidayWorkLimitViolations: {                                                                           
+    label: "Holiday Work Limit Violations",                                                               
+    description: "Total number of holiday/weekend workdays beyond the legal limit of 22, summed across employees.",                                                                                              
+  },                                                                                                      
+  consecutiveDaysViolations: {                                                                            
+    label: "Consecutive Days Violations",                                                                 
+    description: "Total count of violations where an employee worked 6 or more consecutive days without a rest day.",                                                                                               
+  },                                                                                                      
+  totalStaffingGap: {                                                                                     
+    label: "Total Staffing Gap",                                                                          
+    description: "Total missing staff compared to required minimums across all teams, time slots and days.",                                                                                                   
+  },         
+  staffingCoverageRate: {                                                                                 
+    label: "Staffing Coverage Rate",                                                                      
+    description: "Percentage of time slots where the minimum staffing requirement was met (100% means all minimums were satisfied).",                                                                               
+  },                                                                                               
+  totalIdealGap: {                                                                                        
+    label: "Total Ideal Gap",                                                                             
+    description: "Total missing staff compared to ideal staffing levels across all teams, time slots and days (N/A when no ideal requirements are provided).",                                                     
+  },                                                                                                      
+  excessStaffing: {                                                                                       
+    label: "Excess Staffing",                                                                             
+    description: "Total extra staff assigned beyond required minimums across all teams, time slots and days.",                                                                                                   
+  },                                                                                                      
+  minRestViolations: {                                                                                    
+    label: "Minimum Rest Violations",                                                                     
+    description: "Number of shift-to-shift transitions where the rest time between consecutive working days is less than 11 hours (should be 0 if the schedule is valid).",                                      
+  },                                                                                               
+};                                            
+
 
 const KPIReport = ({ metrics = {}, scheduleType }) => {
   console.log("KPI Metrics:", metrics);
   const normalizedType = String(scheduleType || "").toLowerCase();
+
+  // Detect if hourly based on schedule type OR presence of hourly-specific metrics
   const isHourly =
     normalizedType === "horas" ||
     normalizedType === "hours" ||
-    metrics.hourlyCoverageGaps !== undefined ||
-    metrics.hourlyOverstaff !== undefined;
+    metrics.totalStaffingGap !== undefined ||                                                             
+    metrics.excessStaffing !== undefined ||                                                               
+    metrics.workDaysTargetDeviation !== undefined;  
 
+  // Shift-based metrics (from kpiVerification.py)     
   const shiftMetrics = [
     "tmFails",
     "consecutiveDays",
@@ -89,31 +134,36 @@ const KPIReport = ({ metrics = {}, scheduleType }) => {
     "teamSatisfactionLevel",
   ];
 
-  const hourlyMetrics = [
-    "hourlyCoverageGaps",
-    "hourlyOverstaff",
-    "consecutiveDays",
-    "workHolidays",
-    "missedVacationDays",
-    "missedWorkDays",
-    "missedTeamMin",
-    "missedTeamIdeal",
-  ];
-  if (metrics.singleTeamViolations !== undefined) {
-    hourlyMetrics.push("singleTeamViolations");
-  }
-  hourlyMetrics.push("teamSatisfactionLevel");
+  // Hourly metrics (from kpiVerification_unified_v3.py)       
+  const hourlyMetrics = [                                                                                 
+    "workDaysTargetDeviation",                                                                            
+    "vacationDaysQuotaDeviation",                                                                         
+    "holidayWorkLimitViolations",                                                                         
+    "consecutiveDaysViolations",                                                                          
+    "minRestViolations",                                                                                  
+    "totalStaffingGap",
+    "staffingCoverageRate",                                                                                  
+    "totalIdealGap",                                                                                      
+    "excessStaffing",                                                                                     
+  ]; 
 
   const displayMetrics = isHourly ? hourlyMetrics : shiftMetrics;
-  const percentMetrics = new Set(["shiftBalance", "teamSatisfactionLevel"]);
+  const percentMetrics = new Set(["shiftBalance", "teamSatisfactionLevel", "staffingCoverageRate"]);
 
-  const issueMetrics = displayMetrics.filter((key) => key !== "shiftBalance");
-  const totalIssues = issueMetrics
-    .map((key) => {
-      const value = Number(metrics[key] ?? 0);
-      return Number.isFinite(value) ? value : 0;
-    })
-    .filter((v) => v > 0).length;
+  // Filter out metrics that shouldn't count as issues 
+  const issueMetrics = displayMetrics.filter(
+    (key) => key !== "shiftBalance" && key !== "teamSatisfactionLevel"
+  );
+  
+  const totalIssues = issueMetrics                                                                        
+    .map((key) => {                                                                                       
+      const value = metrics[key];                                                                         
+      // Handle null/undefined (e.g., totalIdealGap can be null)                                          
+      if (value === null || value === undefined) return 0;                                                
+      const numValue = Number(value);                                                                     
+      return Number.isFinite(numValue) ? numValue : 0;                                                    
+    })                                                                                                    
+    .filter((v) => v > 0).length;  
 
   const getStatusChip = () =>
     totalIssues === 0 ? (
@@ -163,8 +213,18 @@ const KPIReport = ({ metrics = {}, scheduleType }) => {
           <Paper elevation={0} sx={{ p: 3 }}>
             <Grid container spacing={3}>
               {displayMetrics.map((key) => {
-                const rawValue = Number(metrics[key] ?? 0);
-                const value = Number.isFinite(rawValue) ? rawValue : 0;
+                const rawValue = metrics[key];
+
+                // Handle null (e.g., totalIdealGap when no ideals provided)
+                if (rawValue === null || rawValue === undefined) {
+                  return (
+                    <Grid item xs={12} sm={6} md={3} key={key}>
+                      {renderMetric(key, "N/A", false, false)}
+                    </Grid>
+                  );
+                }
+
+                const value = Number.isFinite(Number(rawValue)) ? Number(rawValue) : 0;
                 const isPercentage = percentMetrics.has(key);
                 const displayValue = isPercentage ? `${value}%` : value;
                 const isViolation = !isPercentage && value > 0;
