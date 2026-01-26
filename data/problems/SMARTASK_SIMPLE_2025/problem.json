@@ -4,9 +4,9 @@
 
   "metadata": {
     "problemId": "SMARTASK_SIMPLE_2025",
-    "createdAt": "2025-01-01T00:00:00Z",
+    "createdAt": "2026-01-24T14:56:23Z",
     "description": "Simple team-based scheduling problem derived from the initial Sisqual problem",
-    "source": "SmarTask Relatorio Tecnico - simple case"
+    "source": "Created by reading the report of Final Informatics Project"
   },
 
   "features": {

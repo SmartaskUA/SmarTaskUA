@@ -4,9 +4,9 @@
 
   "metadata": {
     "problemId": "SMARTASK_SIMPLE_2025",
-    "createdAt": "2025-01-01T00:00:00Z",
-    "description": "Simple team-based scheduling problem derived from VacationTemplate.csv and minimuns.csv",
-    "source": "SmarTask Relatorio Tecnico - simple case"
+    "createdAt": "2026-01-24T14:56:23Z",
+    "description": "Simple team-based scheduling problem derived from the initial Sisqual problem",
+    "source": "Created by reading the report of Final Informatics Project"
   },
 
   "features": {
@@ -71,14 +71,6 @@
     ]
   },
 
-  "scheduleInput": {
-    "dataFile": "schedule_input.csv",
-    "markingTypes": {
-      "A": "Available",
-      "VAC": "Vacation"
-    }
-  },
-
   "constraints": {
     "hard": [
       {
@@ -127,7 +119,7 @@
         "params": {
           "penalty_per_missing": 100
         },
-        "weight": 1000,
+        "weight": 100,
         "enabled": true
       },
       {
@@ -136,25 +128,8 @@
         "params": {
           "penalty_per_missing": 1
         },
-        "weight": 100,
+        "weight": 1,
         "enabled": true
-      }
-    ]
-  },
-
-  "optimization": {
-    "algorithm": "CSPv2",
-    "maxTimeMinutes": 10,
-    "objectives": [
-      {
-        "goal": "minimize_shortages",
-        "weight": 1000,
-        "priority": 1
-      },
-      {
-        "goal": "balance_workload",
-        "weight": 10,
-        "priority": 2
       }
     ]
   }
