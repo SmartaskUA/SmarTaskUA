@@ -61,6 +61,11 @@ Thumbs.db
 coverage/
 .coverage
 htmlcov/
+.pytest_cache/
+.mypy_cache/
+.tox/
+.nox/
+.ruff_cache/
 
 # Logs
 *.log
