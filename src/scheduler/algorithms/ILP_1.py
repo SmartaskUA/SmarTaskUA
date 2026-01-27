@@ -107,6 +107,19 @@ class HourlyILPStrictScheduler:
         # closed days set (if any team has -1 at some hour, we treat day as closed for all)
         self.closed_days = {d for (d, h, t), v in self.minimos.items() if v == -1}
 
+        # Br Blocos que influenciam o dia seguinte
+        self.Br = set()
+        for b in self.work_blocks:
+            for a in self.work_blocks:
+                if not self._validate_block_transition(b, a):
+                    self.Br.add(b)
+
+        self.Ar = set()
+        for b in self.work_blocks:
+            for a in self.work_blocks:
+                if not self._validate_block_transition(b, a):
+                    self.Ar.add(a)
+
         # model placeholders
         self.model = None
         self.z = {}            # z[f,d,b] binary: employee f works block b on day d
@@ -315,18 +328,42 @@ class HourlyILPStrictScheduler:
 
 
         # Valid transitions (12h rest) using z variables (strict)
+        # for f in funcionarios:
+        #     for i in range(0, len(dias) - 1):
+        #         d_today = dias[i]
+        #         d_next = dias[i + 1]
+        #         for b in blocos:
+        #             for a in blocos:
+        #                 # if transition invalid (end_today->start_tomorrow < 12h) then forbid z[f,d_today,b] + z[f,d_next,a] > 1
+        #                 if not self._validate_block_transition(self.work_blocks[b], self.work_blocks[a]):
+        #                     model += (
+        #                         self.z[f][d_today][b] + self.z[f][d_next][a] <= 1,
+        #                         f"invalid_trans_f{f}_{d_today.strftime('%Y%m%d')}_b{b}_a{a}"
+        #                     )
+
+
+        # Valid transitions (12h rest) - aggregate constraint
+        # Equation: sum_{b∈B_a} z_edb + sum_{a∈A_r} z_{e,d+1,a} ≤ 1
+        # If employee works late block (B_a) today, cannot work early block (A_r) tomorrow
         for f in funcionarios:
-            for i in range(0, len(dias) - 1):
+            for i in range(len(dias) - 1):
                 d_today = dias[i]
                 d_next = dias[i + 1]
-                for b in blocos:
-                    for a in blocos:
-                        # if transition invalid (end_today->start_tomorrow < 12h) then forbid z[f,d_today,b] + z[f,d_next,a] > 1
-                        if not self._validate_block_transition(self.work_blocks[b], self.work_blocks[a]):
-                            model += (
-                                self.z[f][d_today][b] + self.z[f][d_next][a] <= 1,
-                                f"invalid_trans_f{f}_{d_today.strftime('%Y%m%d')}_b{b}_a{a}"
-                            )
+                
+                # Construir conjuntos B_a (índices de blocos tardios) e A_r (índices de blocos cedo)
+                B_a_indices = [self.work_blocks.index(b) for b in self.Br]
+                A_r_indices = [self.work_blocks.index(a) for a in self.Ar]
+                
+                # Restrição agregada: soma de blocos tardios hoje + soma de blocos cedo amanhã ≤ 1
+                # Usa z (decisão de bloco) em vez de x (decisão de equipa)
+                model += (
+                    pulp.lpSum(self.z[f][d_today][b_idx] for b_idx in B_a_indices) + 
+                    pulp.lpSum(self.z[f][d_next][a_idx] for a_idx in A_r_indices) <= 1,
+                    f"rest_12h_f{f}_{d_today.strftime('%Y%m%d')}"
+                )
+
+
+
 
         # 3) Objective: minimize sum of weighted shortages
         obj_terms = []

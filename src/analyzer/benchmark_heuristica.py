@@ -15,6 +15,7 @@ from statistics import mean, stdev
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'scheduler'))
 
 from algorithms.Heuristica import Heuristica
+from algorithms.ILP_2 import HourlyILPScheduler
 from algorithms.utils import rows_to_req_dicts, TEAM_ID_TO_CODE
 
 
@@ -160,33 +161,18 @@ def run_benchmark(vacations_file, minimums_file, num_runs=100,
     for run_idx in range(1, num_runs + 1):
         print(f"[Benchmark] Run {run_idx}/{num_runs}...", end=' ')
         
-        # Create scheduler instance
-        scheduler = Heuristica(
-            vacations_rows=vacations,
-            minimums_rows=minimums,
-            employees=employees,
-            maxTime=max_time,
-            year=2025,
-            store_hours=13
-        )
-        
-        # Suppress scheduler output
+        # Suppress output
         import io
         import contextlib
-        
-        with contextlib.redirect_stdout(io.StringIO()):
-            scheduler.solve()
-        
-        # Extract timing from solve() method
-        # Note: We need to access the timing data
-        # For now, we'll re-run timing manually
         import time
         
+        # Measure timing
         start_wall = time.time()
         start_cpu = time.process_time()
         
         with contextlib.redirect_stdout(io.StringIO()):
-            scheduler2 = Heuristica(
+            # Create and solve HourlyILPScheduler
+            scheduler = HourlyILPScheduler(
                 vacations_rows=vacations,
                 minimums_rows=minimums,
                 employees=employees,
@@ -194,13 +180,14 @@ def run_benchmark(vacations_file, minimums_file, num_runs=100,
                 year=2025,
                 store_hours=13
             )
-            scheduler2.build_model()
+            scheduler.build_model()
+            scheduler.solve()
         
         wall_time = time.time() - start_wall
         cpu_time = time.process_time() - start_cpu
         
         # Count failures
-        failures = count_minimum_failures(scheduler2)
+        failures = count_minimum_failures(scheduler)
         
         wall_times.append(wall_time)
         cpu_times.append(cpu_time)
@@ -295,8 +282,8 @@ if __name__ == "__main__":
         MINIMUMS_FILE = "/home/hugo/Desktop/SmarTaskUA/src/analyzer/Mins_R10-R62.csv"
     
     # Run benchmark
-    NUM_RUNS = 100
-    TEAM_DIST = {'A_only': 7, 'B_only': 7, 'both': 7}
+    NUM_RUNS = 1
+    TEAM_DIST = {'A_only': 0, 'B_only': 0, 'both': 21}
     
     results = run_benchmark(
         vacations_file=VACATIONS_FILE,

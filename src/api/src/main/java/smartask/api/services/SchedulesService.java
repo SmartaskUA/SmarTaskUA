@@ -99,9 +99,18 @@ public class SchedulesService {
         Integer inferredHourCount = inferHourCount(minRows);
         
         if (isHourly) {
+
+            System.out.println("[INFO] Template de mínimos por HORA detetado.");
+
             if (inferredHourCount == null || inferredHourCount == 0) {
                 return "Unable to infer hourly minimums from template '" + schedule.getMinimuns() +
                        "'. Make sure the CSV has a 'Hora' column (e.g., 09-10, 10-11, ...).";
+            }
+            
+            try {
+                Thread.sleep(2000); // Espera 2 segundos
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         
             System.out.println("[INFO] Detetado template de mínimos por HORA com " + inferredHourCount + " intervalos.");
@@ -146,9 +155,9 @@ public class SchedulesService {
                 .map(s -> s == null ? "" : s.trim().toLowerCase())
                 .collect(Collectors.toList());
 
-        // Procura uma coluna chamada "hora" ou que contenha intervalos tipo "09-10"
+        // Procura uma coluna chamada "hora" ou que contenha intervalos tipo "09-10" ou "09:00-09:30"
         return header.contains("hora") || rows.stream()
-                .anyMatch(r -> r.size() > 1 && r.get(1).matches(".*\\d{2}-\\d{2}.*"));
+                .anyMatch(r -> r.size() > 1 && (r.get(1).matches(".*\\d{2}:\\d{2}-\\d{2}:\\d{2}.*") || r.get(1).matches(".*\\d{2}-\\d{2}.*")));
     }
 
     /**
@@ -179,7 +188,7 @@ public class SchedulesService {
         return count == 0 ? null : count;
     }
 
-    /** Conta o número de intervalos horários únicos definidos (09-10, 10-11, etc.) */
+    /** Conta o número de intervalos horários únicos definidos (09-10, 10-11, 09:00-09:30, etc.) */
 
     private Integer inferHourCount(List<List<String>> rows) {
         if (rows == null || rows.isEmpty()) return null;
@@ -187,7 +196,7 @@ public class SchedulesService {
         Set<String> hours = rows.stream()
                 .filter(r -> r.size() > 1)
                 .map(r -> r.get(1).trim())
-                .filter(s -> s.matches("\\d{2}-\\d{2}"))
+                .filter(s -> s.matches("\\d{2}:\\d{2}-\\d{2}:\\d{2}") || s.matches("\\d{2}-\\d{2}"))
                 .collect(Collectors.toSet());
 
         System.out.println("[DEBUG] Detetados intervalos horários: " + hours);

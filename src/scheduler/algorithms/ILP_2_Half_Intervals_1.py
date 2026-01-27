@@ -25,76 +25,90 @@ from algorithms.utils import (
 
 
 def rows_to_req_dicts_FIXED(req_rows):
+    """
+    ✅ CRITICAL FIX: Return hour keys as FLOAT tuples, not strings!
+    Build model uses: (pd.Timestamp, float, team_id)
+    Example: (Timestamp('2021-11-02'), 9.0, 1) not (Timestamp, "9.0-9.5", 1)
+    """
     import pandas as pd
 
     mins = {}
-    closed_slots = set()   # (date, hour: float)
+    dates = pd.date_range(start="2021-11-01", end="2022-10-31").to_list()
 
-    # Datas fixas (1 ano)
-    dates = pd.date_range(
-        start="2021-11-01",
-        end="2022-10-31"
-    ).to_list()
+    print(f"[DEBUG] Created {len(dates)} dates for conversion")
 
     for row in req_rows:
-        # Sanity check da linha
         if not row or len(row) < 3:
             continue
-
-        # -----------------------------
-        # TEAM
-        # -----------------------------
-        team_label = str(row[0]).strip()
-        if not team_label.upper().startswith("EQUIPA"):
+        
+        team_label = row[0].strip()
+        if not team_label.upper().startswith('EQUIPA'):
             continue
-
+        
+        second_col = row[1].strip()
         team_code = get_team_code(team_label)
         team_id = get_team_id(team_code)
 
-        # -----------------------------
-        # HOUR
-        # -----------------------------
-        hour_label = str(row[1]).strip()
-        if "-" not in hour_label or ":" not in hour_label:
+        # Check if hour-based
+        if '-' not in second_col:
             continue
+            
+        hour_label = second_col
+        counts = row[2:]
 
-        # Ex: "09:30-10:00" → 9.5
-        start_str = hour_label.split("-")[0]
-        try:
-            h, m = start_str.split(":")
-            start_float = int(h) + (0.5 if int(m) == 30 else 0.0)
-        except Exception:
-            continue
-
-        # -----------------------------
-        # DAYS
-        # -----------------------------
-        for day_idx, val in enumerate(row[2:]):
-            if val in ("", None):
-                continue
-
+        # Convert "09:00-09:30" to float 9.0
+        if ':' in hour_label:
             try:
-                v = int(val)
-            except (ValueError, TypeError):
+                start_str, end_str = hour_label.split('-')
+                start_hour, start_min = map(int, start_str.split(':'))
+                
+                # ✅ KEY FIX: Store as FLOAT, not string
+                start_float = float(start_hour) + (0.5 if start_min == 30 else 0.0)
+
+            except (ValueError, IndexError) as e:
+                print(f"[ERROR] Failed to parse hour '{hour_label}': {e}")
                 continue
+        else:
+            # "09-10" format
+            try:
+                parts = hour_label.split('-')
+                start_float = float(parts[0])
+            except (ValueError, IndexError) as e:
+                print(f"[ERROR] Failed to parse hour '{hour_label}': {e}")
+                continue
+        
+        # ✅ Store with (Timestamp, FLOAT, team_id) format
+        for day_num, val in enumerate(counts, start=1):
+            v = str(val).strip()
 
-            if day_idx >= len(dates):
-                break
-
-            d = dates[day_idx]
-
-            key = (d, start_float, team_id)
-
-            if v == -1:
-                # Empresa fechada neste slot
-                closed_slots.add((d, start_float))
-                mins[key] = 0
+            if not v:
+                continue
+            
+            try:
+                val_int = int(v)
+            except ValueError:
+                continue
+            
+            
+            # Convert day number (1-365) to Timestamp
+            if 1 <= day_num <= len(dates):
+                date_key = dates[day_num - 1]
             else:
-                mins[key] = v
+                continue
+            
+            try:
+                val_int = int(v)
+                # ✅ KEY: Store as (date, FLOAT hour, team_id)
+                mins[(date_key, start_float, team_id)] = val_int
+            except ValueError:
+                continue
+                
+    print(f"[DEBUG] Processed {len(mins)} minimum entries")
+    print(f"[DEBUG] Sample keys (first 10):")
+    for i, (key, val) in enumerate(list(mins.items())[:10]):
+        print(f"  {key} → {val}")
 
-    return mins, closed_slots
-
-
+    return mins, {}
 
 
 class HourlyILPScheduler:
@@ -168,7 +182,7 @@ class HourlyILPScheduler:
         }
         """
 
-        mins, closed_slots = rows_to_req_dicts_FIXED(minimums_rows)
+        mins, ideals = rows_to_req_dicts_FIXED(minimums_rows)
         
         # DEBUG: Verificar quantos mínimos foram processados
         print(f"\n[DEBUG] rows_to_req_dicts returned {len(mins)} entries")
@@ -192,7 +206,7 @@ class HourlyILPScheduler:
         # ✅ rows_to_req_dicts_FIXED already returns (Timestamp, float, team_id) format
         # No conversion needed - just copy directly!
         self.minimos = mins.copy()
-        self.closed_slots = closed_slots.copy()
+        self.ideais = ideals.copy()
 
         """
         self.minimos = {
@@ -471,18 +485,6 @@ class HourlyILPScheduler:
         dias = self.dates
         blocos = list(range(len(self.work_blocks)))
 
-        valid_blocos = []
-        for b_idx, b in enumerate(self.work_blocks):
-            for d in self.dates:
-                hours = self._get_working_hours(b)
-                if any((d, h) in self.closed_slots for h in hours):
-                    break
-            else:
-                valid_blocos.append(b_idx)
-
-        blocos = valid_blocos
-
-
         # Slots reais vindos dos mínimos (fonte da verdade)
         horas = self.slot_hours
 
@@ -493,33 +495,17 @@ class HourlyILPScheduler:
                 d: {
                     b: {
                         team_code: pulp.LpVariable(
-                            f"x_{f}_{d.strftime('%Y%m%d')}_{b}_{team_code}",
-                            lowBound=0, upBound=1, cat=pulp.LpBinary
+                            f"x_{f}_{d.strftime('%Y%m%d')}_{b}_{team_code}", 
+                            cat="Binary"
                         )
                         for team_code in self.emp_team_code[f]
                     }
                     for b in blocos
-                    if not all(
-                        (d, h) in self.closed_slots
-                        for h in self._get_working_hours(self.work_blocks[b])
-                    )
                 }
                 for d in dias
             }
             for f in funcionarios
         }
-
-        total_x = sum(
-            1
-            for f in self.x
-            for d in self.x[f]
-            for b in self.x[f][d]
-            for _ in self.x[f][d][b]
-        )
-        
-        print("Total X variables:", total_x)
-        
-
 
         # Auxiliary Y variables (unchanged)
         self.y = {
@@ -527,7 +513,7 @@ class HourlyILPScheduler:
                 h: {
                     team_code: pulp.LpVariable(
                         f"y_{d.strftime('%Y%m%d')}_h{h}_{team_code}",
-                        lowBound=0, cat=pulp.LpInteger
+                        lowBound=0, cat="Integer"
                     )
                     for team_code in self.teams.keys()
                 }
@@ -577,12 +563,25 @@ class HourlyILPScheduler:
                     team_id = get_team_id(team_code)
                     minimo = self.minimos.get((d, h, team_id), None)
                     
-                    if minimo > 0:
-                        model += self.y[d][h][team_code] >= minimo
-                    else:
+                    if minimo == -1:
+                        # Closed - force to 0
+                        model += (
+                            self.y[d][h][team_code] == 0,
+                            f"closed_{d.strftime('%Y%m%d')}_h{h}_{team_code}"
+                        )
+
+                    elif minimo is None:
                         model += self.y[d][h][team_code] == 0
 
-                    min_constraints_added += 1
+
+                    else:
+                        
+                        # Relaxed constraint: coverage >= minimum - 1
+                        model += (
+                            self.y[d][h][team_code] >= minimo,
+                            f"min_coverage_{d.strftime('%Y%m%d')}_h{h}_{team_code}"
+                        )
+                        min_constraints_added += 1
 
         print(f"  Added {min_constraints_added} hard minimum constraints")
 
@@ -615,24 +614,24 @@ class HourlyILPScheduler:
 
         # 4. No work on days marked with -1 (closed days/holidays)
         # Identify all dates where minimum is -1 for any team
-        # closed_days = set()
-        # for (date_key, hora_str, team_code), minimo in self.minimos.items():
-        #     if minimo == -1:
-        #         closed_days.add(date_key)
-        # 
-        # # Force no work on closed days
-        # # for f in funcionarios:
-        # #     for d in closed_days:
-        # model += (
-        #     pulp.lpSum(
-        #         self.x[f][d][b][tc]
-        #         for f in funcionarios
-        #         for d in closed_days
-        #         for b in blocos
-        #         for tc in self.emp_team_code[f]
-        #     ) == 0,
-        #     f"no_work_closed_day"
-        # )
+        closed_days = set()
+        for (date_key, hora_str, team_code), minimo in self.minimos.items():
+            if minimo == -1:
+                closed_days.add(date_key)
+        
+        # Force no work on closed days
+        # for f in funcionarios:
+        #     for d in closed_days:
+        model += (
+            pulp.lpSum(
+                self.x[f][d][b][tc]
+                for f in funcionarios
+                for d in closed_days
+                for b in blocos
+                for tc in self.emp_team_code[f]
+            ) == 0,
+            f"no_work_closed_day"
+        )
 
         # CONSTRAINT 4: Max 5 consecutive days
         print(f"[HourlyILP] Adding max-5-consecutive constraints...")
@@ -1028,6 +1027,7 @@ class HourlyILPScheduler:
         print(f"[HourlyILP] SOLVING CSP MODEL (Hard Constraints)")
         print(f"{'='*80}")
 
+        # Use CBC solver (open-source, bundled with PuLP)
         solver = pulp.PULP_CBC_CMD(
             msg=True,
             timeLimit=self.maxTime_sec if self.maxTime_sec else None,

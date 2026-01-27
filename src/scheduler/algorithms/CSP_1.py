@@ -85,6 +85,31 @@ class CPHourSchedulerPure:
                 if s2 < end1 - 12:
                     self.incompatible_blocks[a1].add(a2)
 
+        # Br Blocos que influenciam o dia seguinte
+        self.Br = set()
+        for b in self.work_blocks:
+            for a in self.work_blocks:
+                if not self._validate_block_transition(b, a):
+                    self.Br.add(b)
+
+        self.Ar = set()
+        for b in self.work_blocks:
+            for a in self.work_blocks:
+                if not self._validate_block_transition(b, a):
+                    self.Ar.add(a)
+
+    def _validate_block_transition(self, block_today, block_tomorrow):
+        """
+        Check if transition from block_today to block_tomorrow is valid.
+        Rules: Must have at least 12 hours rest between end and start.
+        """
+        end_today = block_today[2]  # End hour of today's block
+        start_tomorrow = block_tomorrow[0]  # Start hour of tomorrow's block
+        # Calculate rest hours (always overnight, so add 24 to tomorrow's start)
+        rest_hours = (24 - end_today) + start_tomorrow
+        # Must have at least 12 hours rest
+        return rest_hours >= 12
+
     def _define_vars(self):
         # x[i,d,a,e] boolean
         self.x = {}
@@ -159,16 +184,29 @@ class CPHourSchedulerPure:
 
         print(f"[CSP_Pure] Added {coverage_constraints} hard coverage constraints")
 
-        # 6. Descanso mínimo de 12h entre dias
-        for i in self.I:
-            for d in range(self.num_days - 1):
-                for a1 in self.A:
-                    for a2 in self.incompatible_blocks[a1]:
-                        self.model.Add(
-                            sum(self.x[(i, d, a1, e)] for e in self.emp_teams[i]) +
-                            sum(self.x[(i, d + 1, a2, e)] for e in self.emp_teams[i])
-                            <= 1
-                        )
+        # 6. Rest constraint (12h minimum between consecutive days)
+        # Equação: sum_{b∈B_a} x + sum_{a∈A_r} x ≤ 1
+        for f in self.I:
+            for d_today in range(self.num_days - 1):
+                d_next = d_today + 1
+                
+                # Construir conjuntos B_a (índices de blocos tardios) e A_r (índices de blocos cedo)
+                B_a_indices = [self.work_blocks.index(b) for b in self.Br]
+                A_r_indices = [self.work_blocks.index(a) for a in self.Ar]
+                
+                # Restrição agregada: soma de blocos tardios hoje + soma de blocos cedo amanhã ≤ 1
+                self.model.Add(
+                    sum(
+                        self.x[(f, d_today, b_idx, tc)]
+                        for b_idx in B_a_indices
+                        for tc in self.emp_teams[f]
+                    ) + 
+                    sum(
+                        self.x[(f, d_next, a_idx, tc)]
+                        for a_idx in A_r_indices
+                        for tc in self.emp_teams[f]
+                    ) <= 1
+                )
 
         # NO OBJECTIVE FUNCTION - Pure CSP just finds ANY feasible solution!
         print("[CSP_Pure] No objective function - searching for feasibility only")

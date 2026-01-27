@@ -212,6 +212,9 @@ class HourlyILPScheduler:
 
         print(f"[HourlyILP] Loaded vacations for {len(self.vacations_dates)} employees")
 
+        # For lexicographic optimization (two-phase approach)
+        self.y_opt = None
+
         #time.sleep(1000)  # para debug sequencial
 
     def _generate_work_blocks(self):
@@ -337,7 +340,7 @@ class HourlyILPScheduler:
 # -------------------------------------------------------
 
         penalties_min = []
-        self.shortage = {}
+        penalties_ideal = []
 
         print(f"[HourlyILP] Adding constraints...")
         # Link Y with X: count workers at each hour
@@ -368,9 +371,43 @@ class HourlyILPScheduler:
 
                     penalties_min.append(self.y[d][h][team_code])
 
+        
+
+        for d in dias:
+            for h in horas:
+                hora_str = f"{h:02d}-{h+1:02d}"
+
+                for team_code, members in self.teams.items():
+                    ideal = self.ideais.get((d, hora_str, team_code), None)
+
+                    # ignorar slots sem requisito ou fechados
+                    if ideal is None or ideal == -1:
+                        continue
+                
+
+                    model += (
+                        self.z[d][h][team_code] >= ideal - pulp.lpSum(
+                            self.x[f][d][b][tc]
+                            for f in members
+                            for b in blocos
+                            if h in self._get_working_hours(self.work_blocks[b])
+                            for tc in self.emp_team_code[f]
+                            if tc == team_code
+                        ),
+                        f"ideal_def_{d.strftime('%Y%m%d')}_h{h}_{team_code}"
+                    )
+
+                    penalties_ideal.append(self.z[d][h][team_code])
 
 
 
+        # if self.y_opt is not None:
+        #     model += (
+        #         pulp.lpSum(self.y[d][h][team]
+        #                    for d in dias for h in horas for team in self.teams.keys())
+        #         <= self.y_opt,
+        #         "keep_y_optimum"
+        #     )
         # Objective: Minimize deviations from minimums and ideals
         # W_MIN = 10000  # peso MUITO alto (Agravante da situação). Muda o custo relativo das decisoes
 
@@ -382,7 +419,8 @@ class HourlyILPScheduler:
         """
 
         model += (
-            pulp.lpSum(y for y in penalties_min),
+            pulp.lpSum(y for y in penalties_ideal) +
+              10000 * pulp.lpSum(y for y in penalties_min),
             "Minimize_shortages"
         ) 
 

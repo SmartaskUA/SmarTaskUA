@@ -4,6 +4,8 @@ import os
 from datetime import date, time
 import pandas as pd
 from collections import defaultdict
+from time import sleep
+import math
 
 TEAM_CODE_TO_ID = {'A': 1, 'B': 2} # will be updated if there are more teams
 TEAM_ID_TO_CODE = {v: k for k, v in TEAM_CODE_TO_ID.items()}
@@ -148,67 +150,90 @@ def rows_to_req_dicts(req_rows):
     """
     Aceita ficheiros de requisitos (mínimos/ideais) tanto por turnos como por horas.
     Formatos suportados:
-      - Equipa A, Minimo, M, <dia1>, <dia2>, ...
-      - Equipa A, 09-10, <dia1>, <dia2>, ...
+      - Turnos: Equipa A, Minimo, M, <dia1>, <dia2>, ...
+      - Horas simples: Equipa A, 09-10, <dia1>, <dia2>, ...
+      - Horas com minutos: Equipa A, 09:00-09:30, <dia1>, <dia2>, ...
     Retorna dois dicionários:
       mins[(day, hora_ou_turno, team_id)] e ideals[(day, hora_ou_turno, team_id)]
     """
     mins, ideals = {}, {}
     for row in req_rows:
-        if not row or not row[0].strip():
+        # Saltar linhas vazias ou que não começam com "Equipa"
+        if not row or len(row) < 3:
             continue
         
-        #print(f"Processing row: {row}, from")
         team_label = row[0].strip()
-        #print(f"team_label: {team_label}")
-        kind = row[1].strip().lower()
-        #print(f"kind: {kind}")
-
-        # Detecta se é por hora (ex: '09-10') ou por turno ('M', 'T', 'N')
-        thirdShifts = row[2].strip()
-        thirdHours = row[1].strip()
-        #print(f"third_Shifts: {thirdShifts}")
-        #print(f"third_Hours: {thirdHours}")
-        countsHours = row[2:]
-        countsShifts = row[3:]
-        #print(f"counts: {counts}")
-
+        if not team_label.upper().startswith('EQUIPA'):
+            continue
+        
+        second_col = row[1].strip()
+        
+        # Detectar formato baseado na segunda coluna
+        # Formato 1: Turnos → row[1]="Minimo/Ideal", row[2]="M/T/N"
+        # Formato 2: Horas → row[1]="09-10" ou "09:00-09:30"
+        
         team_code = get_team_code(team_label)
         team_id = get_team_id(team_code)
-        #print(f"team_code: {team_code}, team_id: {team_id}")
-        #time.sleep(15)  # para debug sequencial
-
-        # → modo por turno
-        if thirdShifts.upper().startswith(("M", "T", "N")):
-            code = thirdShifts.upper()
-            if code.startswith('M'):
+        
+        # MODO 1: Formato de turnos (Equipa A, Minimo, M, ...)
+        if second_col.lower() in ('minimo', 'ideal', 'mínimo'):
+            if len(row) < 4:
+                continue
+                
+            kind = second_col.lower()
+            shift_code = row[2].strip().upper()
+            counts = row[3:]
+            
+            if shift_code.startswith('M'):
                 shift = 1
-            elif code.startswith('T') or code.startswith('A'):
+            elif shift_code.startswith('T') or shift_code.startswith('A'):
                 shift = 2
-            elif code.startswith('N'):
+            elif shift_code.startswith('N'):
                 shift = 3
             else:
                 continue
+            
             target = mins if kind.startswith('min') else ideals
-            for day, val in enumerate(countsShifts, start=1):
+            for day, val in enumerate(counts, start=1):
                 v = str(val).strip()
-                if v:
-                    target[(day, shift, team_id)] = int(v)
-
-        # → modo por meias horas
-        elif "-" in thirdHours:
-            hour_label = thirdHours
-            # print(f"hour_label: {hour_label}")
-            target = ideals if kind.startswith('min') else mins
-            for day, val in enumerate(countsHours, start=1):
+                if v and v != '0':
+                    try:
+                        target[(day, shift, team_id)] = int(v)
+                    except ValueError:
+                        continue
+        
+        # MODO 2: Formato de horas (Equipa A, 09-10, ...) ou (Equipa A, 09:00-09:30, ...)
+        elif '-' in second_col:
+            hour_label = second_col
+            counts = row[2:]
+            
+            # Converter formato "09:00-09:30" para "09.0-09.5" (ILP format)
+            if ':' in hour_label:
+                try:
+                    start_str, end_str = hour_label.split('-')
+                    start_hour, start_min = map(int, start_str.split(':'))
+                    end_hour, end_min = map(int, end_str.split(':'))
+                    
+                    start_float = float(start_hour) + (0.5 if start_min == 30 else 0.0)
+                    end_float = float(end_hour) + (0.5 if end_min == 30 else 0.0)
+                    
+                    hour_label = f"{start_float:04.1f}-{end_float:04.1f}"
+                except (ValueError, IndexError):
+                    # Se falhar, usar o formato original
+                    pass
+            
+            # Sempre mins para formato de horas (não há "ideal" neste formato)
+            for day, val in enumerate(counts, start=1):
                 v = str(val).strip()
-                if v:
-                    target[(day, hour_label, team_id)] = int(val)
-
-
-    # print(f"Current mins: {mins}")
-    # print(f"Current ideals: {ideals}")
-    # time.sleep(15)  # para debug sequencial
+                if v and v != '0':
+                    try:
+                        mins[(day, hour_label, team_id)] = int(v)
+                    except ValueError:
+                        continue
+    
+    print(f"[DEBUG FINAL] mins keys: {len(mins)}, ideals keys: {len(ideals)}")
+    print(f"[DEBUG FINAL] Sample mins (first 5): {dict(list(mins.items())[:5])}")
+    print(f"[DEBUG FINAL] Sample ideals (first 5): {dict(list(ideals.items())[:5])}")
 
     return mins, ideals
 
@@ -223,60 +248,175 @@ def rows_to_req_dicts_Half_Hour(req_rows):
       mins[(day, hora_ou_turno, team_id)] e ideals[(day, hora_ou_turno, team_id)]
     """
     mins, ideals = {}, {}
-    for row in req_rows:
+    print(f"[DEBUG rows_to_req_dicts_Half_Hour] Processing {len(req_rows)} rows")
+    
+    for row_idx, row in enumerate(req_rows):
         if not row or not row[0].strip():
+            print(f"[DEBUG] Row {row_idx}: SKIPPED (empty)")
             continue
         
-        #print(f"Processing row: {row}, from")
+        print(f"\n[DEBUG] Row {row_idx}: {row[:5]}...")  # Primeiros 5 elementos
         team_label = row[0].strip()
-        #print(f"team_label: {team_label}")
+        print(f"  team_label: '{team_label}'")
         kind = row[1].strip().lower()
-        #print(f"kind: {kind}")
+        print(f"  kind: '{kind}'")
 
         # Detecta se é por hora (ex: '09-10') ou por turno ('M', 'T', 'N')
-        thirdShifts = row[2].strip()
+        thirdShifts = row[2].strip() if len(row) > 2 else ""
         thirdHours = row[1].strip()
-        #print(f"third_Shifts: {thirdShifts}")
-        #print(f"third_Hours: {thirdHours}")
+        print(f"  thirdShifts: '{thirdShifts}'")
+        print(f"  thirdHours: '{thirdHours}'")
+        
         countsHours = row[2:]
         countsShifts = row[3:]
-        #print(f"counts: {counts}")
+        print(f"  countsHours length: {len(countsHours)}")
 
         team_code = get_team_code(team_label)
         team_id = get_team_id(team_code)
-        #print(f"team_code: {team_code}, team_id: {team_id}")
-        #time.sleep(15)  # para debug sequencial
+        print(f"  team_code: '{team_code}', team_id: {team_id}")
 
         
         hour_label = thirdHours
-        # print(f"hour_label: {hour_label}")
+        print(f"  hour_label: '{hour_label}'")
         target = ideals if kind.startswith('min') else mins
+        print(f"  target: {'ideals' if kind.startswith('min') else 'mins'}")
+        
         # Dividir a hora em 2 períodos de 30 minutos
         # Ex: '09-10' → [(9.0, 9.5), (9.5, 10.0)]
         hour_parts = hour_label.split('-')
+        if len(hour_parts) != 2:
+            print(f"  [WARNING] Invalid hour format: '{hour_label}', skipping row")
+            continue
+            
         start_hour = int(hour_parts[0])
         end_hour = int(hour_parts[1])
+        print(f"  Parsed: start_hour={start_hour}, end_hour={end_hour}")
+        
+        entries_created = 0
         for day, val in enumerate(countsHours, start=1):
             v = str(val).strip()
-            if v:
+            if v and v != '0':
                 val_int = int(v)
                 # Criar 2 entradas: uma para cada meia hora
-                # Ex: (1, '09.0-09.5', 1) e (1, '09.5-10.0', 1)
-                # Usar padding com zeros à esquerda para consistência
-                first_half = f"{start_hour:02.0f}.0-{start_hour:02.0f}.5"
-                second_half = f"{start_hour:02.0f}.5-{end_hour:02.0f}.0"
+                # Format: "09.0-09.5" to match ILP lookup format
+                first_half = f"{float(start_hour):04.1f}-{float(start_hour)+0.5:04.1f}"
+                second_half = f"{float(start_hour)+0.5:04.1f}-{float(end_hour):04.1f}"
                 
                 target[(day, first_half, team_id)] = val_int
                 target[(day, second_half, team_id)] = val_int
+                entries_created += 2
+                
+                if day <= 3:  # Debug primeiros 3 dias
+                    print(f"    Day {day}: '{first_half}' = {val_int}, '{second_half}' = {val_int}")
+        
+        print(f"  Total entries created: {entries_created}")
 
+    print(f"\n[DEBUG FINAL] mins keys: {len(mins)}, ideals keys: {len(ideals)}")
+    print(f"[DEBUG FINAL] Sample mins (first 5): {dict(list(mins.items())[:5])}")
+    print(f"[DEBUG FINAL] Sample ideals (first 5): {dict(list(ideals.items())[:5])}")
 
-    print(f"Current mins: {mins}")
-    print(f"Current ideals: {ideals}")
-    # time.sleep(3)  # para debug sequencial
-
+    # sleep(1500)  # para debug sequencial
     return mins, ideals
 
 
+def rows_to_req_dicts_Half_Hour_2(req_rows):
+    """
+    Processa ficheiros CSV de requisitos mínimos com intervalos de 30 minutos.
+    
+    Formato esperado:
+      - Linha 1: Header com datas (vazio, 'Hora', '2021-11-01', '2021-11-02', ...)
+      - Linha 2: Dias da semana (vazio, vazio, 'Segunda', 'Terça', ...)
+      - Linhas de dados: 'Equipa A', '09:00-09:30', val_dia1, val_dia2, ...
+    
+    Retorna:
+      mins[(day, hora_str, team_id)] onde hora_str = "09.0-09.5"
+    """
+    mins = {}
+    
+    if len(req_rows) < 3:
+        print(f"[WARNING] Ficheiro tem menos de 3 linhas - vazio ou inválido")
+        return mins, {}
+    
+    # Parse header (primeira linha) para extrair datas
+    header = req_rows[0]
+    date_map = {}  # {col_index: day_number}
+    
+    from datetime import datetime
+    for col_idx, cell in enumerate(header[2:], start=2):  # Skip primeiras 2 colunas
+        try:
+            # Parse data (formato: 2021-11-01)
+            date_obj = datetime.strptime(cell.strip(), '%Y-%m-%d')
+            # Calcular day-of-year
+            day_of_year = date_obj.timetuple().tm_yday
+            date_map[col_idx] = day_of_year
+        except ValueError:
+            continue
+    
+    print(f"[DEBUG] Parsed {len(date_map)} dates from header")
+    print(f"[DEBUG] First 5 date mappings: {dict(list(date_map.items())[:5])}")
+    
+    # Processar linhas de dados (skip header e dias da semana)
+    for row_idx, row in enumerate(req_rows[2:], start=2):
+        if not row or len(row) < 3:
+            continue
+        
+        team_label = row[0].strip()
+        hour_range = row[1].strip()
+        
+        # Validar formato de equipa
+        if not team_label.startswith('Equipa'):
+            continue
+        
+        team_code = get_team_code(team_label)
+        team_id = get_team_id(team_code)
+        
+        # Parse formato hora: "09:00-09:30" -> "09.0-09.5"
+        if ':' not in hour_range or '-' not in hour_range:
+            print(f"[WARNING] Row {row_idx}: Invalid hour format '{hour_range}'")
+            continue
+        
+        try:
+            # "09:00-09:30" -> ["09:00", "09:30"]
+            start_str, end_str = hour_range.split('-')
+            
+            # "09:00" -> 9.0, "09:30" -> 9.5
+            start_hour, start_min = map(int, start_str.split(':'))
+            end_hour, end_min = map(int, end_str.split(':'))
+            
+            start_float = float(start_hour) + (0.5 if start_min == 30 else 0.0)
+            end_float = float(end_hour) + (0.5 if end_min == 30 else 0.0)
+            
+            # Criar string no formato ILP: "09.0-09.5"
+            hora_str = f"{start_float:04.1f}-{end_float:04.1f}"
+            
+        except (ValueError, IndexError) as e:
+            print(f"[WARNING] Row {row_idx}: Failed to parse '{hour_range}': {e}")
+            continue
+        
+        # Processar valores por dia
+        entries_created = 0
+        for col_idx in range(2, len(row)):
+            if col_idx not in date_map:
+                continue
+            
+            day = date_map[col_idx]
+            val_str = str(row[col_idx]).strip()
+            
+            if val_str and val_str != '0':
+                try:
+                    val_int = int(val_str)
+                    mins[(day, hora_str, team_id)] = val_int
+                    entries_created += 1
+                except ValueError:
+                    continue
+        
+        if row_idx <= 5:  # Debug primeiras linhas
+            print(f"[DEBUG] Row {row_idx}: {team_label} {hora_str} -> {entries_created} entries")
+    
+    print(f"\n[DEBUG FINAL] Total mins entries: {len(mins)}")
+    print(f"[DEBUG FINAL] Sample (first 5): {dict(list(mins.items())[:5])}")
+    
+    return mins, {}
 
 
 def export_schedule_to_csv_shifts(scheduler, filename="schedule.csv", num_days=365):
@@ -479,18 +619,21 @@ def create_Blocks(interval_in_hours, inicial_Hour, final_Hour):
     Retorna uma lista de tuplos (start, break, end).
     """
     blocks = []
-    start_hour = inicial_Hour
-    inicial_Hour = f"{float(inicial_Hour):.1f}"
+    start_hour = float(inicial_Hour)
+    final_Hour = float(final_Hour)
+    interval_in_hours = float(interval_in_hours)
     
     while start_hour + 9 <= final_Hour:
         end_hour = start_hour + 9
-        for i in range(0,3):
+        for i in range(0, 3):
             break_hour = start_hour + 5 + i
             blocks.append((start_hour, break_hour, end_hour))
+            print(f"Created block: {start_hour}-{break_hour}-{end_hour}")
         start_hour += interval_in_hours
+
+    # sleep(1000)  # para debug sequencial
     return blocks
 
-    
 
 def drange(x, y, jump):
     while x < y:
@@ -522,166 +665,12 @@ def drange_indexed(start, stop, step):
         x += step
 
 def drange_indexed_h(start, stop, step):
-    # print(f"drange_indexed: start={start}, stop={stop}, step={step}")
-    x = start
-    list_indices = set()  # Deve ser set, não dict
+    x = float(start)  # Force float to avoid int/float mixing
+    list_indices = set()
 
     while x < stop:
-        # Geramos um índice inteiro (ex: 9.0 -> 18, 9.5 -> 19)
-        # Multiplicamos por 2 e convertemos para int
-        list_indices.add(x)  # add() para sets, não update()
-        print(f"drange_indexed_h, x={x}")
+        # Round to 1 decimal to avoid floating point precision issues
+        list_indices.add(round(x, 1))
         x += step
 
     return list_indices
-
-
-def compute_lower_bound_and_report(scheduler, csv_filename="csp_lb_report.csv", verbose=True):
-    """
-    Calcula um lower bound (LB) válido para as shortages e gera relatório.
-    LB por slot (dia,hora,team) = max(0, minimo - capacidade_maxima_disponivel).
-    capacidade_maxima_disponivel = número de empregados que:
-        - pertencem àquela equipa (podem trabalhar nessa equipa),
-        - não estão de férias nesse dia,
-        - o dia não é fechado para essa equipa (mínimo != -1).
-    Retorna dicionário com LB_total, objective (valor da solução), quality_pct, e paths do csv.
-    """
-    # 1) recolhe inputs do scheduler
-    dates = scheduler.dates
-    hours = scheduler.hours
-    teams = list(scheduler.teams.keys())  # códigos ('A','B',...)
-    emp_team_code = scheduler.emp_team_code  # {f_idx: (teams...)}
-    vacations = scheduler.vacations_dates     # {f_idx: set(dates)}
-    minimos = scheduler.minimos               # {(date, "HH-HH", team_code): val}
-    objective = None
-    # tenta ler objective do solver/relatório
-    try:
-        # se tens o valor guardado em scheduler.solver e model -> cp-sat
-        objective = float(scheduler.solver.ObjectiveValue()) if scheduler.solver is not None else None
-    except Exception:
-        # fallback: procura scheduler.attribute
-        objective = getattr(scheduler, "objective_value", None) or getattr(scheduler, "last_objective", None) or None
-
-    # Se não conseguimos objective programaticamente, podes passar como argumento:
-    if objective is None:
-        # tenta usar scheduler.calculated_shortages (se soma represente objective)
-        if hasattr(scheduler, "calculated_shortages"):
-            # assumimos que objective = soma(shortage * weight). Não ideal; prefer passar objective explícito.
-            pass
-
-    # 2) calcula disponibilidade máxima por (date,h,team)
-    lb_per_slot = {}
-    total_minimos = 0
-    total_lb = 0
-
-    # Precompute: lista de empregados por equipa (indice interno)
-    team_members = {tc: set() for tc in teams}
-    for f, tcs in emp_team_code.items():
-        for tc in tcs:
-            if tc in team_members:
-                team_members[tc].add(f)
-
-    for d_idx, d in enumerate(dates):
-        for h in hours:
-            hour_label = f"{h:02d}-{h+1:02d}"
-            for tc in teams:
-                key = (d, hour_label, tc)
-                minimo = minimos.get(key, None)
-                if minimo is None:
-                    # se não existe requisito, assumimos 0 (nenhuma necessidade)
-                    minimo = 0
-                if minimo == -1:
-                    # dia fechado -> não contam para requisitos
-                    lb_per_slot[(d_idx+1, hour_label, tc)] = {'minimo': -1, 'capacity': 0, 'lb': 0}
-                    continue
-
-                # conta empregados potencialmente disponíveis naquele dia para aquela equipa
-                members = team_members.get(tc, set())
-                avail = 0
-                for f in members:
-                    # funcionário f disponível? (não em férias nesse dia)
-                    if d not in vacations.get(f, set()):
-                        # NOTA: estamos a ignorar limites globais (223 dias por empregado)
-                        # porque isso tornaria o LB ainda mais complexo. Este LB é válido.
-                        avail += 1
-
-                capacity = avail
-                lb_here = max(0, int(minimo) - capacity)
-                lb_per_slot[(d_idx+1, hour_label, tc)] = {
-                    'minimo': int(minimo),
-                    'capacity': capacity,
-                    'lb': lb_here
-                }
-                total_minimos += max(0, int(minimo))
-                total_lb += lb_here
-
-    # 3) calcula quality (usar objective passado se disponível)
-    # Se objective não está disponível, tenta ler scheduler.calculated_shortages somando
-    if objective is None:
-        # tenta somar shortages reais (se guardaste as variáveis)
-        real_shortages = 0
-        for k, v in getattr(scheduler, "calculated_shortages", {}).items():
-            if v is not None:
-                real_shortages += int(v)
-        objective = real_shortages
-
-    # Evita divisão por zero
-    if objective == 0:
-        quality = 0.0
-    else:
-        # fórmula: quality = 1 - (objective - LB)/objective = LB/objective
-        quality = float(total_lb) / float(objective) if objective > 0 else 0.0
-
-    quality_pct = quality * 100.0
-
-    # 4) escreve CSV com detalhes por slot
-    with open(csv_filename, 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(["DayIndex", "Date", "Hour", "Team", "Minimo", "Capacity", "LB_slot"])
-        for (d_idx, hour_label, tc), info in sorted(lb_per_slot.items(), key=lambda x: (x[0][0], x[0][1], x[0][2])):
-            date_str = dates[d_idx-1].strftime("%Y-%m-%d")
-            writer.writerow([d_idx, date_str, hour_label, tc, info['minimo'], info['capacity'], info['lb']])
-
-    # 5) resumo por equipa e por dia / top piores
-    lb_by_team = defaultdict(int)
-    min_by_team = defaultdict(int)
-    for (d_idx, hour_label, tc), info in lb_per_slot.items():
-        if info['minimo'] >= 0:
-            lb_by_team[tc] += info['lb']
-            min_by_team[tc] += info['minimo']
-
-    team_stats = []
-    for tc in teams:
-        team_stats.append((tc, min_by_team.get(tc,0), lb_by_team.get(tc,0),
-                           (1 - ( (min_by_team.get(tc,0)-lb_by_team.get(tc,0)) / max(1, min_by_team.get(tc,0)) )) if min_by_team.get(tc,0)>0 else 1.0))
-
-    # 6) imprime resumo
-    if verbose:
-        print("===== LB REPORT =====")
-        print(f"Objective (solution) = {objective}")
-        print(f"Lower bound (sum of slot LBs) = {total_lb}")
-        print(f"Total mínimos (sum of requisitos positivos) = {total_minimos}")
-        print(f"Quality (LB/objective) = {quality_pct:.2f}%")
-        print(f"CSV detalhado escrito em: {csv_filename}")
-        print("")
-        print("Per-team summary (team, total_min, total_LB, approx_coverage):")
-        for tc, totmin, totlb, approx_cov in sorted(team_stats, key=lambda x: x[2], reverse=True):
-            cov_pct = 100.0 * (1.0 - ( (totmin - totlb) / max(1, totmin) )) if totmin>0 else 100.0
-            print(f"  Team {tc}: min={totmin}  LB={totlb}  approx_coverage={cov_pct:.2f}%")
-        # top worst slots (largest LB)
-        worst_slots = sorted([(k,v['lb']) for k,v in lb_per_slot.items()], key=lambda x: -x[1])[:10]
-        print("")
-        print("Top 10 slots com maior LB (dayindex, hour, team, LB):")
-        for (d_idx, hour_label, tc), lb_val in worst_slots:
-            print(f"  Day {d_idx} {hour_label} Team {tc} -> LB = {lb_val}")
-
-    result = {
-        'objective': objective,
-        'total_lb': total_lb,
-        'total_minimos': total_minimos,
-        'quality_pct': quality_pct,
-        'csv': csv_filename,
-        'per_slot': lb_per_slot,
-        'team_stats': team_stats
-    }
-    return result

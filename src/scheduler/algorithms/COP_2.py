@@ -29,7 +29,6 @@ from algorithms.utils import (
     TEAM_ID_TO_CODE,
     get_team_id,
     get_team_code,
-    compute_lower_bound_and_report
 )
 # Referência: funções/estrutura em utils.py e ILP_H.py. :contentReference[oaicite:2]{index=2} :contentReference[oaicite:3]{index=3}
 

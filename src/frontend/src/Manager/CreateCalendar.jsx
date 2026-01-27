@@ -25,7 +25,7 @@ const CreateCalendar = () => {
   const [selectedAlgorithm, setSelectedAlgorithm] = useState("Heuristica");
   const [shifts, setShifts] = useState("13");
   const [vacationTemplate, setVacationTemplate] = useState("VacationTemplate_Case1_21");
-  const [minimumTemplate, setMinimumTemplate] = useState("Mins_R10-R62.");
+  const [minimumTemplate, setMinimumTemplate] = useState("Mins_R10-R62_30min.");
 
   // NEW: ruleset selection
   const [ruleSets, setRuleSets] = useState([]); // [{name, description, ...}]
@@ -166,6 +166,7 @@ const CreateCalendar = () => {
     { value: "ILP_2", label: "Integer Linear Programming 2" },
     { value: "ILP_2_Half_Intervals", label: "Integer Linear Programming 2 Half Intervals" },
     { value: "ILP_3", label: "Integer Linear Programming 3" },
+    { value: "ILP_4", label: "Integer Linear Programming 4" },
     { value: "CSP_1", label: "Constraint Satisfaction Problem 1" },
     { value: "COP_1", label: "Constraint Optimization Problem 1" },
     { value: "COP_2", label: "Constraint Optimization Problem 2" },
@@ -175,6 +176,7 @@ const CreateCalendar = () => {
     { value: "Heuristica1_v2", label: "Heurística 1 v2" },
     { value: "Heuristica1_v3", label: "Heurística 1 v3" },
     { value: "Heuristica", label: "Heurística" },
+    { value: "Heuristica_Half_Intervals", label: "Heurística Half Intervals" },
     // Adicione outros algoritmos de horas aqui se existirem
   ];
 
@@ -272,6 +274,7 @@ const CreateCalendar = () => {
                     onChange={(e) => setShifts(e.target.value)}
                   >
                     <MenuItem value={13}>13 Horas</MenuItem>
+                    <MenuItem value={26}>26 Horas</MenuItem>
                   </Select>
                 </FormControl>
               )}

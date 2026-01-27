@@ -207,6 +207,8 @@ class ILP3Scheduler:
                         if rest_hours < 12:
                             model += self.z[e][d][b] + self.z[e][d + 1][a] <= 1
 
+        
+
         # (8) definição de y (mínimos) + regra de OFF quando mínimo = -1
         # Se theta = -1 ⇒ loja fechada nessa hora/equipa ⇒ ninguém pode trabalhar
         for d in self.D:
