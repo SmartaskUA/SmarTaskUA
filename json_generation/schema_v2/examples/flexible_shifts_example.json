@@ -1,0 +1,312 @@
+{
+  "schemaVersion": "2.0",
+  "problemType": "employee_scheduling",
+
+  "metadata": {
+    "problemId": "FLEXIBLE_SHIFTS_2025_01",
+    "createdAt": "2025-12-15T12:00:00Z",
+    "description": "Flexible shift model - Multiple shift variants with staggered breaks",
+    "source": "Example demonstrating flexible shift scheduling"
+  },
+
+  "features": {
+    "useShiftBasedScheduling": true,
+    "useCompetencyModel": false,
+    "useScheduleInput": false,
+    "useMultiLevelDemand": false,
+    "useAdvancedConstraints": false,
+    "usePriorityHierarchy": false
+  },
+
+  "temporalScope": {
+    "year": 2025,
+    "numDays": 31,
+    "targetPeriod": {
+      "start": "2025-01-01",
+      "end": "2025-01-31",
+      "includeBufferWeeks": false
+    }
+  },
+
+  "employees": {
+    "model": "team",
+    "simple": [
+      {"id": "EMP001", "name": "João Silva", "teams": ["A"]},
+      {"id": "EMP002", "name": "Maria Santos", "teams": ["A", "B"]},
+      {"id": "EMP003", "name": "Pedro Costa", "teams": ["B"]},
+      {"id": "EMP004", "name": "Ana Oliveira", "teams": ["A"]},
+      {"id": "EMP005", "name": "Carlos Rodrigues", "teams": ["B"]},
+      {"id": "EMP006", "name": "Sofia Fernandes", "teams": ["A", "B"]},
+      {"id": "EMP007", "name": "Miguel Pereira", "teams": ["A"]},
+      {"id": "EMP008", "name": "Rita Alves", "teams": ["B"]},
+      {"id": "EMP009", "name": "Tiago Mendes", "teams": ["A"]},
+      {"id": "EMP010", "name": "Beatriz Lopes", "teams": ["B"]}
+    ]
+  },
+
+  "demand": {
+    "model": "simple",
+    "shiftModel": "flexible",
+    "organizationalUnits": {
+      "teams": ["A", "B"]
+    },
+    "shifts": [
+      {
+        "code": "M_A",
+        "name": "Morning A (Early Start)",
+        "order": 1,
+        "duration": 8,
+        "allowedStartTimes": ["08:00", "08:30"],
+        "breaks": [
+          {
+            "type": "rest",
+            "duration": 15,
+            "timing": {
+              "mode": "afterWork",
+              "afterMinutes": 120
+            },
+            "paid": true,
+            "required": true,
+            "canStagger": false
+          },
+          {
+            "type": "meal",
+            "duration": 30,
+            "timing": {
+              "mode": "window",
+              "window": {"start": "12:00", "end": "14:00"}
+            },
+            "paid": false,
+            "required": true,
+            "canStagger": true
+          }
+        ]
+      },
+      {
+        "code": "M_B",
+        "name": "Morning B (Mid Start)",
+        "order": 1,
+        "duration": 8,
+        "allowedStartTimes": ["09:00", "09:30"],
+        "breaks": [
+          {
+            "type": "meal",
+            "duration": 30,
+            "timing": {
+              "mode": "window",
+              "window": {"start": "13:00", "end": "15:00"}
+            },
+            "paid": false,
+            "required": true,
+            "canStagger": true
+          }
+        ]
+      },
+      {
+        "code": "M_C",
+        "name": "Morning C (Late Start)",
+        "order": 1,
+        "duration": 7.5,
+        "allowedStartTimes": ["10:00", "10:30"],
+        "breaks": [
+          {
+            "type": "meal",
+            "duration": 30,
+            "timing": {
+              "mode": "window",
+              "window": {"start": "14:00", "end": "16:00"}
+            },
+            "paid": false,
+            "required": true,
+            "canStagger": true
+          }
+        ]
+      },
+      {
+        "code": "T_A",
+        "name": "Afternoon A (Early)",
+        "order": 2,
+        "duration": 8,
+        "allowedStartTimes": ["14:00", "14:30"],
+        "breaks": [
+          {
+            "type": "meal",
+            "duration": 30,
+            "timing": {
+              "mode": "afterWork",
+              "afterMinutes": 240
+            },
+            "paid": false,
+            "required": true,
+            "canStagger": true
+          },
+          {
+            "type": "rest",
+            "duration": 15,
+            "timing": {
+              "mode": "afterWork",
+              "afterMinutes": 480
+            },
+            "paid": true,
+            "required": false,
+            "canStagger": false
+          }
+        ]
+      },
+      {
+        "code": "T_B",
+        "name": "Afternoon B (Late)",
+        "order": 2,
+        "duration": 8,
+        "allowedStartTimes": ["15:00", "15:30"],
+        "breaks": [
+          {
+            "type": "meal",
+            "duration": 30,
+            "timing": {
+              "mode": "window",
+              "window": {"start": "18:00", "end": "20:00"}
+            },
+            "paid": false,
+            "required": true,
+            "canStagger": true
+          }
+        ]
+      }
+    ],
+    "simple": [
+      {
+        "pattern": "weekdays",
+        "unit": "A",
+        "shift": "M_A",
+        "minimum": 2,
+        "ideal": 3
+      },
+      {
+        "pattern": "weekdays",
+        "unit": "A",
+        "shift": "M_B",
+        "minimum": 1,
+        "ideal": 2
+      },
+      {
+        "pattern": "weekdays",
+        "unit": "A",
+        "shift": "T_A",
+        "minimum": 2,
+        "ideal": 2
+      },
+      {
+        "pattern": "weekdays",
+        "unit": "B",
+        "shift": "M_A",
+        "minimum": 1,
+        "ideal": 2
+      },
+      {
+        "pattern": "weekdays",
+        "unit": "B",
+        "shift": "M_C",
+        "minimum": 1,
+        "ideal": 1
+      },
+      {
+        "pattern": "weekdays",
+        "unit": "B",
+        "shift": "T_B",
+        "minimum": 2,
+        "ideal": 2
+      },
+      {
+        "pattern": "weekends",
+        "unit": "A",
+        "shift": "M_B",
+        "minimum": 2,
+        "ideal": 2
+      },
+      {
+        "pattern": "weekends",
+        "unit": "B",
+        "shift": "M_B",
+        "minimum": 1,
+        "ideal": 2
+      }
+    ]
+  },
+
+  "constraints": {
+    "hard": [
+      {
+        "id": "max-consecutive-days",
+        "type": "max_consecutive_days",
+        "params": {"window": 6, "max_worked": 5},
+        "enabled": true
+      },
+      {
+        "id": "total-workdays",
+        "type": "total_workdays",
+        "params": {"min": 223, "max": 223},
+        "enabled": true
+      },
+      {
+        "id": "max-special-days",
+        "type": "max_special_days",
+        "params": {"cap": 22},
+        "enabled": true
+      },
+      {
+        "id": "no-backward-shift-transitions",
+        "type": "no_earlier_shift_next_day",
+        "params": {},
+        "enabled": true
+      },
+      {
+        "id": "min-rest-between-shifts",
+        "type": "min_rest_hours",
+        "params": {"hours": 11},
+        "enabled": true
+      }
+    ],
+    "soft": [
+      {
+        "id": "min-coverage",
+        "type": "min_coverage",
+        "params": {"penalty_per_missing": 1000},
+        "weight": 1000,
+        "enabled": true
+      },
+      {
+        "id": "prefer-early-starts",
+        "type": "prefer_shift_variant",
+        "params": {
+          "preferred_codes": ["M_A", "T_A"],
+          "penalty_per_nonpreferred": 5
+        },
+        "weight": 5,
+        "enabled": true
+      }
+    ]
+  },
+
+  "optimization": {
+    "algorithm": "CSPv2",
+    "maxTimeMinutes": 10,
+    "objectives": [
+      {
+        "goal": "minimize_shortages",
+        "weight": 1000,
+        "priority": 1
+      },
+      {
+        "goal": "balance_workload",
+        "weight": 10,
+        "priority": 2
+      },
+      {
+        "goal": "prefer_consistent_start_times",
+        "weight": 5,
+        "priority": 3
+      }
+    ]
+  }
+}

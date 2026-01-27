@@ -1,0 +1,398 @@
+{
+  "schemaVersion": "2.0",
+  "problemType": "employee_scheduling",
+
+  "metadata": {
+    "problemId": "MEDIUM_COMP_2025_01",
+    "createdAt": "2025-12-15T10:00:00Z",
+    "description": "Medium complexity - Competency model with multi-level demand and priorities",
+    "source": "Example showing competency-based scheduling"
+  },
+
+  "features": {
+    "useShiftBasedScheduling": true,
+    "useCompetencyModel": true,
+    "useScheduleInput": false,
+    "useMultiLevelDemand": true,
+    "useAdvancedConstraints": false,
+    "usePriorityHierarchy": true
+  },
+
+  "temporalScope": {
+    "year": 2025,
+    "numDays": 365,
+    "targetPeriod": {
+      "start": "2025-01-01",
+      "end": "2025-01-31",
+      "includeBufferWeeks": false
+    }
+  },
+
+  "employees": {
+    "model": "competency",
+    "competency": [
+      {
+        "id": "EMP001",
+        "name": "João Silva",
+        "competencies": [
+          {"code": "EG", "level": 1, "description": "Gestão nivel 1"},
+          {"code": "CAJ", "level": 2, "description": "Caja nivel 2"}
+        ],
+        "contractType": "fullTime",
+        "contractPeriods": [
+          {"start": "2024-01-01", "end": null}
+        ],
+        "unavailability": [
+          {
+            "dates": ["2025-01-10", "2025-01-11", "2025-01-12"],
+            "reason": "vacation",
+            "type": "VAC"
+          }
+        ],
+        "restrictions": {
+          "cannotSwapDayOffs": false,
+          "preferredShifts": [],
+          "blackoutDates": []
+        }
+      },
+      {
+        "id": "EMP002",
+        "name": "Maria Santos",
+        "competencies": [
+          {"code": "CAJ", "level": 1, "description": "Caja nivel 1"}
+        ],
+        "contractType": "fullTime",
+        "contractPeriods": [
+          {"start": "2023-06-01", "end": null}
+        ],
+        "unavailability": [],
+        "restrictions": {
+          "cannotSwapDayOffs": false
+        }
+      },
+      {
+        "id": "EMP003",
+        "name": "Pedro Costa",
+        "competencies": [
+          {"code": "ALM", "level": 1, "description": "Almacén nivel 1"}
+        ],
+        "contractType": "fullTime",
+        "contractPeriods": [
+          {"start": "2024-02-01", "end": null}
+        ],
+        "unavailability": [],
+        "restrictions": {
+          "cannotSwapDayOffs": false
+        }
+      },
+      {
+        "id": "EMP004",
+        "name": "Ana Oliveira",
+        "competencies": [
+          {"code": "EG", "level": 2, "description": "Gestão nivel 2"},
+          {"code": "CAJ", "level": 1, "description": "Caja nivel 1"}
+        ],
+        "contractType": "fullTime",
+        "contractPeriods": [
+          {"start": "2024-01-01", "end": null}
+        ],
+        "unavailability": [],
+        "restrictions": {
+          "cannotSwapDayOffs": false
+        }
+      },
+      {
+        "id": "EMP005",
+        "name": "Carlos Rodrigues",
+        "competencies": [
+          {"code": "CAJ", "level": 2, "description": "Caja nivel 2"}
+        ],
+        "contractType": "partTime",
+        "contractPeriods": [
+          {"start": "2024-01-15", "end": null}
+        ],
+        "unavailability": [],
+        "restrictions": {
+          "cannotSwapDayOffs": true,
+          "preferredShifts": ["T"]
+        }
+      },
+      {
+        "id": "EMP006",
+        "name": "Sofia Fernandes",
+        "competencies": [
+          {"code": "EG", "level": 3, "description": "Gestão nivel 3"}
+        ],
+        "contractType": "fullTime",
+        "contractPeriods": [
+          {"start": "2023-01-01", "end": "2023-06-30"},
+          {"start": "2024-01-01", "end": null}
+        ],
+        "unavailability": [],
+        "restrictions": {
+          "cannotSwapDayOffs": false
+        }
+      }
+    ]
+  },
+
+  "demand": {
+    "model": "multiLevel",
+    "shiftModel": "fixed",
+    "organizationalUnits": {
+      "competencies": [
+        {"code": "EG", "name": "Equipo de Gestión"},
+        {"code": "CAJ", "name": "Caja"},
+        {"code": "ALM", "name": "Almacén"}
+      ]
+    },
+    "shifts": [
+      {
+        "code": "M",
+        "name": "Mañana",
+        "order": 1,
+        "timeRange": {
+          "start": "08:30",
+          "end": "16:30"
+        },
+        "breaks": [
+          {
+            "type": "meal",
+            "duration": 30,
+            "timing": {
+              "mode": "window",
+              "window": {"start": "12:00", "end": "14:30"}
+            },
+            "paid": false,
+            "required": true,
+            "canStagger": true
+          }
+        ]
+      },
+      {
+        "code": "T",
+        "name": "Tarde",
+        "order": 2,
+        "timeRange": {
+          "start": "14:00",
+          "end": "22:00"
+        },
+        "breaks": [
+          {
+            "type": "meal",
+            "duration": 30,
+            "timing": {
+              "mode": "afterWork",
+              "afterMinutes": 240
+            },
+            "paid": false,
+            "required": true,
+            "canStagger": true
+          }
+        ]
+      }
+    ],
+    "multiLevel": {
+      "priorityHierarchy": [
+        {
+          "rank": 1,
+          "competency": "ALM",
+          "level": "N≥1",
+          "description": "RESP ALMACEN N≥1: MaxAlarm"
+        },
+        {
+          "rank": 2,
+          "competency": "EG",
+          "level": "N=1",
+          "description": "RESP - EQUIPO GESTION N=1"
+        },
+        {
+          "rank": 3,
+          "competency": "CAJ",
+          "level": "N=1",
+          "description": "CAJA N=1"
+        },
+        {
+          "rank": 4,
+          "competency": "EG",
+          "level": "N=2",
+          "description": "RESP - EQUIPO GESTION N=2"
+        },
+        {
+          "rank": 5,
+          "competency": "CAJ",
+          "level": "N=2",
+          "description": "CAJA N=2"
+        }
+      ],
+      "requirements": [
+        {
+          "applies": {
+            "dayType": "weekday",
+            "dates": null
+          },
+          "timeWindow": {
+            "start": "08:30",
+            "end": "15:30"
+          },
+          "competency": "ALM",
+          "level": 1,
+          "minimo": 1,
+          "ideal": 1,
+          "estimado": 1,
+          "applicationType": "tarefa"
+        },
+        {
+          "applies": {
+            "dayType": "weekday",
+            "dates": null
+          },
+          "timeWindow": {
+            "start": "08:30",
+            "end": "22:00"
+          },
+          "competency": "EG",
+          "level": 1,
+          "minimo": 1,
+          "ideal": 2,
+          "applicationType": "equipa"
+        },
+        {
+          "applies": {
+            "dayType": "weekend",
+            "dates": null
+          },
+          "timeWindow": {
+            "start": "11:00",
+            "end": "21:00"
+          },
+          "competency": "EG",
+          "level": 1,
+          "minimo": 1,
+          "ideal": 1,
+          "applicationType": "equipa"
+        },
+        {
+          "applies": {
+            "dayType": "weekday",
+            "dates": null
+          },
+          "timeWindow": {
+            "start": "12:00",
+            "end": "14:00"
+          },
+          "competency": "CAJ",
+          "level": 1,
+          "minimo": 2,
+          "ideal": 3,
+          "estimado": 2,
+          "applicationType": "tipo_equipa"
+        },
+        {
+          "applies": {
+            "dayType": "weekday",
+            "dates": null
+          },
+          "timeWindow": {
+            "start": "18:00",
+            "end": "21:00"
+          },
+          "competency": "CAJ",
+          "level": 1,
+          "minimo": 2,
+          "ideal": 4,
+          "estimado": 3,
+          "applicationType": "tipo_equipa"
+        }
+      ]
+    }
+  },
+
+  "constraints": {
+    "hard": [
+      {
+        "id": "max-consecutive-days",
+        "type": "max_consecutive_days",
+        "params": {
+          "window": 6,
+          "max_worked": 5
+        },
+        "enabled": true
+      },
+      {
+        "id": "total-workdays",
+        "type": "total_workdays",
+        "params": {
+          "min": 223,
+          "max": 223
+        },
+        "enabled": true
+      },
+      {
+        "id": "max-special-days",
+        "type": "max_special_days",
+        "params": {
+          "cap": 22
+        },
+        "enabled": true
+      },
+      {
+        "id": "no-backward-shift-transitions",
+        "type": "no_earlier_shift_next_day",
+        "params": {},
+        "enabled": true
+      },
+      {
+        "id": "vacation-days",
+        "type": "vacation_block",
+        "params": {},
+        "enabled": true
+      }
+    ],
+    "soft": [
+      {
+        "id": "min-coverage",
+        "type": "min_coverage",
+        "params": {
+          "penalty_per_missing": 1000
+        },
+        "weight": 1000,
+        "enabled": true
+      }
+    ]
+  },
+
+  "optimization": {
+    "algorithm": "CSPv2",
+    "maxTimeMinutes": 10,
+    "objectives": [
+      {
+        "goal": "minimize_shortages",
+        "weight": 1000,
+        "priority": 1
+      },
+      {
+        "goal": "balance_workload",
+        "weight": 10,
+        "priority": 2
+      }
+    ],
+    "challenges": {
+      "multiCompetencyAllocation": {
+        "enabled": true,
+        "strategy": "hybrid",
+        "weights": {
+          "priorityWeight": 0.5,
+          "levelWeight": 0.5
+        },
+        "considerLongTerm": true
+      },
+      "competencyOrdering": {
+        "enabled": true,
+        "respectResourceRule": true,
+        "dynamicOrdering": true,
+        "rule": "Do not allocate resources to meet IDEAL of one task if MINIMUM of another task cannot be met"
+      }
+    }
+  }
+}

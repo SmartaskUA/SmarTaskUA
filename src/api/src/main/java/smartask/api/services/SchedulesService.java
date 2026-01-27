@@ -11,7 +11,9 @@ import smartask.api.models.ReferenceTemplate;
 import smartask.api.models.requests.ScheduleRequest;
 import smartask.api.repositories.*;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -43,7 +45,8 @@ public class SchedulesService {
 
     public String requestScheduleGeneration(ScheduleRequest schedule) {
 
-        boolean exists = schedulerepository.existsByTitleAndAlgorithm(schedule.getTitle(), schedule.getAlgorithm());
+        boolean exists = schedulerepository.existsByTitleAndAlgorithm(schedule.getTitle(), schedule.getAlgorithm());    
+
 
         if (exists) {
             return "Schedule with the same title and algorithm exists!";
@@ -64,15 +67,25 @@ public class SchedulesService {
                 .map(row -> row.get(0).replace("\uFEFF", "").trim())
                 .collect(Collectors.toSet());
 
-        // Carregar nomes de funcionários do banco
-        Set<String> employeeNamesInDb = Emprepository.findAll().stream()
-                .map(emp -> emp.getName().trim())
-                .collect(Collectors.toSet());
+        // Carregar nomes de funcionários do banco (ou do problema, se fornecidos)
+        Set<String> employeeNamesInScope = new HashSet<>();
+        List<Map<String, Object>> problemEmployees = schedule.getEmployees();
+        boolean hasProblemEmployees = problemEmployees != null && !problemEmployees.isEmpty();
+        if (hasProblemEmployees) {
+            employeeNamesInScope = extractEmployeeNames(problemEmployees);
+        } else {
+            employeeNamesInScope = Emprepository.findAll().stream()
+                    .map(emp -> emp.getName().trim())
+                    .collect(Collectors.toSet());
+        }
 
-        // Verificar existência de todos os nomes do template no banco
-        for (String name : namesInTemplate) {
-            if (!employeeNamesInDb.contains(name)) {
-                return "Vacation template contains employee '" + name + "' who does not exist in the system.";
+        // Verificar existência de todos os nomes do template no escopo escolhido
+        if (!employeeNamesInScope.isEmpty()) {
+            for (String name : namesInTemplate) {
+                if (!employeeNamesInScope.contains(name)) {
+                    String source = hasProblemEmployees ? "problem definition" : "system";
+                    return "Vacation template contains employee '" + name + "' who does not exist in the " + source + ".";
+                }
             }
         }
 
@@ -206,6 +219,23 @@ public class SchedulesService {
         return "";
     }
 
+    private Set<String> extractEmployeeNames(List<Map<String, Object>> employees) {
+        Set<String> names = new HashSet<>();
+        for (Map<String, Object> emp : employees) {
+            if (emp == null) {
+                continue;
+            }
+            Object name = emp.get("name");
+            Object id = emp.get("id");
+            if (name != null && !name.toString().trim().isBlank()) {
+                names.add(name.toString().trim());
+            } else if (id != null && !id.toString().trim().isBlank()) {
+                names.add(id.toString().trim());
+            }
+        }
+        return names;
+    }
+
     public Optional<Schedule> getByTitle(String title) {
         return schedulerepository.findByTitle(title);
     }
@@ -279,4 +309,8 @@ public class SchedulesService {
         return false;
     }
 
+
+    public TaskStatusRepository getTaskStatusRepository() {
+        return taskStatusRepository;
+    }
 }

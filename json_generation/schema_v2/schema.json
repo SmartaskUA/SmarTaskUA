@@ -1,0 +1,885 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://smartask.ua/schemas/scheduling-problem-v2.json",
+  "title": "Employee Scheduling Problem Definition",
+  "description": "Unified schema for employee scheduling problems supporting simple to complex scenarios",
+  "type": "object",
+  "required": ["schemaVersion", "problemType", "metadata", "temporalScope", "employees", "demand", "constraints", "optimization"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "2.0",
+      "description": "Schema version identifier"
+    },
+    "problemType": {
+      "type": "string",
+      "const": "employee_scheduling",
+      "description": "Type of scheduling problem"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["problemId", "createdAt"],
+      "properties": {
+        "problemId": {
+          "type": "string",
+          "description": "Unique identifier for this problem instance"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of problem creation"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the problem"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source document or reference"
+        }
+      }
+    },
+    "features": {
+      "type": "object",
+      "description": "Feature flags to enable optional modules",
+      "properties": {
+        "useShiftBasedScheduling": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable shift-based scheduling (true) or interval-based scheduling (false)"
+        },
+        "useCompetencyModel": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable competency-based employee model instead of fixed teams"
+        },
+        "useScheduleInput": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable pre-existing schedule with fixed/flexible markings"
+        },
+        "useMultiLevelDemand": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable minimo/ideal/estimado demand levels"
+        },
+        "useAdvancedConstraints": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable day-off swapping, break rules, etc."
+        },
+        "usePriorityHierarchy": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable competency priority ordering for resource allocation"
+        }
+      }
+    },
+    "temporalScope": {
+      "type": "object",
+      "required": ["year", "numDays"],
+      "properties": {
+        "year": {
+          "type": "integer",
+          "minimum": 2020,
+          "maximum": 2100,
+          "description": "Year for scheduling"
+        },
+        "numDays": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 366,
+          "description": "Number of days in the scheduling period"
+        },
+        "targetPeriod": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "string",
+              "format": "date",
+              "description": "Start date of primary scheduling period (ISO 8601)"
+            },
+            "end": {
+              "type": "string",
+              "format": "date",
+              "description": "End date of primary scheduling period (ISO 8601)"
+            },
+            "includeBufferWeeks": {
+              "type": "boolean",
+              "default": false,
+              "description": "Whether to include buffer weeks before/after target period"
+            }
+          }
+        }
+      }
+    },
+    "employees": {
+      "type": "object",
+      "required": ["model"],
+      "properties": {
+        "model": {
+          "type": "string",
+          "enum": ["team", "competency"],
+          "description": "Employee organization model: 'team' for fixed teams, 'competency' for skill-based"
+        },
+        "simple": {
+          "type": "array",
+          "description": "Simple employee list (when model='team')",
+          "items": {
+            "type": "object",
+            "required": ["id", "teams"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique employee identifier"
+              },
+              "name": {
+                "type": "string",
+                "description": "Employee name"
+              },
+              "teams": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "List of team codes this employee can work in"
+              }
+            }
+          }
+        },
+        "competency": {
+          "type": "array",
+          "description": "Competency-based employee list (when model='competency' and useCompetencyModel=true)",
+          "items": {
+            "type": "object",
+            "required": ["id", "competencies"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique employee identifier"
+              },
+              "name": {
+                "type": "string",
+                "description": "Employee name"
+              },
+              "competencies": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["code", "level"],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "description": "Competency code (e.g., 'EG', 'CAJ', 'ALM')"
+                    },
+                    "level": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "Skill level (1=highest, increasing numbers=lower skill)"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Human-readable description"
+                    }
+                  }
+                },
+                "description": "List of competencies and skill levels"
+              },
+              "contractType": {
+                "type": "string",
+                "enum": ["fullTime", "partTime"],
+                "default": "fullTime",
+                "description": "Contract type"
+              },
+              "contractPeriods": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["start"],
+                  "properties": {
+                    "start": {
+                      "type": "string",
+                      "format": "date",
+                      "description": "Contract start date"
+                    },
+                    "end": {
+                      "type": ["string", "null"],
+                      "format": "date",
+                      "description": "Contract end date (null = ongoing)"
+                    }
+                  }
+                },
+                "description": "Contract period history"
+              },
+              "unavailability": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["dates", "type"],
+                  "properties": {
+                    "dates": {
+                      "type": "array",
+                      "items": {"type": "string", "format": "date"},
+                      "description": "List of unavailable dates"
+                    },
+                    "reason": {
+                      "type": "string",
+                      "description": "Human-readable reason"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": ["VAC", "EnfD", "DLF", "other"],
+                      "description": "Unavailability type code"
+                    }
+                  }
+                },
+                "description": "Unavailability periods (vacation, sick leave, etc.)"
+              },
+              "restrictions": {
+                "type": "object",
+                "properties": {
+                  "cannotSwapDayOffs": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether day-offs cannot be swapped (typically true for part-time)"
+                  },
+                  "preferredShifts": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of preferred shift codes"
+                  },
+                  "blackoutDates": {
+                    "type": "array",
+                    "items": {"type": "string", "format": "date"},
+                    "description": "Dates where employee cannot work"
+                  }
+                },
+                "description": "Employee-specific restrictions"
+              }
+            }
+          }
+        }
+      }
+    },
+    "demand": {
+      "type": "object",
+      "required": ["model", "organizationalUnits", "shiftModel"],
+      "properties": {
+        "model": {
+          "type": "string",
+          "enum": ["simple", "multiLevel"],
+          "description": "Demand specification model: 'simple' (min/ideal) or 'multiLevel' (min/ideal/estimado + priorities)"
+        },
+        "shiftModel": {
+          "type": "string",
+          "enum": ["fixed", "flexible", "interval"],
+          "description": "Scheduling paradigm: 'fixed'=predefined shifts, 'flexible'=shifts with variable start times, 'interval'=no shifts (continuous time blocks)"
+        },
+        "organizationalUnits": {
+          "type": "object",
+          "properties": {
+            "teams": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "List of team codes (when using team model)"
+            },
+            "competencies": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["code", "name"],
+                "properties": {
+                  "code": {"type": "string"},
+                  "name": {"type": "string"}
+                }
+              },
+              "description": "List of competency definitions (when using competency model)"
+            }
+          }
+        },
+        "shifts": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "object",
+            "required": ["code", "name", "order"],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Shift code (e.g., 'M', 'T_A', 'MORNING_8H')"
+              },
+              "name": {
+                "type": "string",
+                "description": "Human-readable shift name"
+              },
+              "order": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Shift ordering (1=earliest, higher=later)"
+              },
+              "timeRange": {
+                "type": "object",
+                "description": "Fixed start and end times (for shiftModel='fixed')",
+                "properties": {
+                  "start": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+                    "description": "Shift start time (HH:MM)"
+                  },
+                  "end": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+                    "description": "Shift end time (HH:MM)"
+                  }
+                },
+                "required": ["start", "end"]
+              },
+              "duration": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Shift duration in hours (for shiftModel='flexible')"
+              },
+              "allowedStartTimes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+                },
+                "description": "Allowed start times for flexible shifts (for shiftModel='flexible')"
+              },
+              "breaks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["type", "duration"],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["meal", "rest", "other"],
+                      "description": "Type of break"
+                    },
+                    "duration": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "Break duration in minutes"
+                    },
+                    "timing": {
+                      "type": "object",
+                      "required": ["mode"],
+                      "properties": {
+                        "mode": {
+                          "type": "string",
+                          "enum": ["fixed", "window", "afterWork"],
+                          "description": "How break timing is determined"
+                        },
+                        "fixedTime": {
+                          "type": "string",
+                          "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+                          "description": "Fixed break time (required if mode='fixed')"
+                        },
+                        "window": {
+                          "type": "object",
+                          "properties": {
+                            "start": {"type": "string", "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"},
+                            "end": {"type": "string", "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"}
+                          },
+                          "required": ["start", "end"],
+                          "description": "Time window for break (required if mode='window')"
+                        },
+                        "afterMinutes": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Minutes after shift start to take break (required if mode='afterWork')"
+                        }
+                      }
+                    },
+                    "paid": {
+                      "type": "boolean",
+                      "default": false,
+                      "description": "Whether break is paid time"
+                    },
+                    "required": {
+                      "type": "boolean",
+                      "default": true,
+                      "description": "Whether break is mandatory"
+                    },
+                    "canStagger": {
+                      "type": "boolean",
+                      "default": true,
+                      "description": "Whether break can be staggered across employees for coverage"
+                    }
+                  }
+                },
+                "description": "Break definitions for this shift"
+              }
+            }
+          },
+          "description": "Shift definitions (null if using interval mode)"
+        },
+        "workParameters": {
+          "type": "object",
+          "description": "Work scheduling parameters for interval mode (required when shiftModel='interval')",
+          "properties": {
+            "minDuration": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Minimum work duration in hours"
+            },
+            "maxDuration": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Maximum work duration in hours"
+            },
+            "granularity": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Time granularity in minutes (e.g., 15, 30)"
+            },
+            "operatingHours": {
+              "type": "object",
+              "required": ["start", "end"],
+              "properties": {
+                "start": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+                  "description": "Operating hours start time"
+                },
+                "end": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+                  "description": "Operating hours end time"
+                }
+              },
+              "description": "Overall operating hours constraint"
+            },
+            "breakRules": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["type", "duration", "trigger"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["meal", "rest", "other"],
+                    "description": "Type of break"
+                  },
+                  "duration": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Break duration in minutes"
+                  },
+                  "trigger": {
+                    "type": "object",
+                    "required": ["mode"],
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "enum": ["afterHours", "withinWindow", "everyXHours"],
+                        "description": "What triggers this break"
+                      },
+                      "hours": {
+                        "type": "number",
+                        "description": "Hours threshold (for afterHours/everyXHours modes)"
+                      },
+                      "window": {
+                        "type": "object",
+                        "properties": {
+                          "start": {"type": "string", "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"},
+                          "end": {"type": "string", "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"}
+                        },
+                        "description": "Time window (for withinWindow mode)"
+                      }
+                    }
+                  },
+                  "paid": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether break is paid time"
+                  },
+                  "required": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether break is mandatory"
+                  },
+                  "canStagger": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether break can be staggered"
+                  }
+                }
+              },
+              "description": "Break rules for interval-based scheduling"
+            }
+          }
+        },
+        "simple": {
+          "type": "array",
+          "description": "Simple demand requirements (when model='simple')",
+          "items": {
+            "type": "object",
+            "required": ["unit", "shift", "minimum"],
+            "properties": {
+              "pattern": {
+                "type": "string",
+                "enum": ["weekdays", "weekends", "all", "specific"],
+                "description": "When this requirement applies"
+              },
+              "dates": {
+                "type": "array",
+                "items": {"type": "string", "format": "date"},
+                "description": "Specific dates (when pattern='specific')"
+              },
+              "unit": {
+                "type": "string",
+                "description": "Team or competency code"
+              },
+              "shift": {
+                "type": "string",
+                "description": "Shift code"
+              },
+              "minimum": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Minimum number of employees required"
+              },
+              "ideal": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Ideal number of employees"
+              }
+            }
+          }
+        },
+        "multiLevel": {
+          "type": "object",
+          "description": "Multi-level demand with priorities (when model='multiLevel' and useMultiLevelDemand=true)",
+          "properties": {
+            "priorityHierarchy": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["rank", "competency", "level"],
+                "properties": {
+                  "rank": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Priority rank (1=highest)"
+                  },
+                  "competency": {
+                    "type": "string",
+                    "description": "Competency code"
+                  },
+                  "level": {
+                    "type": "string",
+                    "description": "Level specification (e.g., 'N=1', 'N>=2')"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Human-readable description"
+                  }
+                }
+              },
+              "description": "Priority hierarchy for resource allocation"
+            },
+            "requirements": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["competency", "level", "minimo"],
+                "properties": {
+                  "applies": {
+                    "type": "object",
+                    "properties": {
+                      "dayType": {
+                        "type": "string",
+                        "enum": ["weekday", "weekend", "all"],
+                        "description": "Type of days this applies to"
+                      },
+                      "dates": {
+                        "type": ["array", "null"],
+                        "items": {"type": "string", "format": "date"},
+                        "description": "Specific dates (overrides dayType if provided)"
+                      }
+                    }
+                  },
+                  "timeWindow": {
+                    "type": "object",
+                    "properties": {
+                      "start": {
+                        "type": "string",
+                        "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+                        "description": "Start time (HH:MM format)"
+                      },
+                      "end": {
+                        "type": "string",
+                        "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+                        "description": "End time (HH:MM format)"
+                      }
+                    }
+                  },
+                  "competency": {
+                    "type": "string",
+                    "description": "Competency code"
+                  },
+                  "level": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Required skill level"
+                  },
+                  "minimo": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Minimum required employees"
+                  },
+                  "ideal": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Ideal number of employees"
+                  },
+                  "estimado": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Estimated demand"
+                  },
+                  "applicationType": {
+                    "type": "string",
+                    "enum": ["tarefa", "equipa", "tipo_equipa"],
+                    "description": "How this requirement applies"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "scheduleInput": {
+      "type": "object",
+      "description": "Pre-existing schedule with fixed/flexible markings (requires useScheduleInput=true)",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether schedule input is provided"
+        },
+        "markingTypes": {
+          "type": "object",
+          "additionalProperties": {"type": "string"},
+          "description": "Mapping of marking codes to descriptions"
+        },
+        "employeeSchedules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["employeeId", "days"],
+            "properties": {
+              "employeeId": {
+                "type": "string",
+                "description": "Employee identifier"
+              },
+              "days": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["date", "marking"],
+                  "properties": {
+                    "date": {
+                      "type": "string",
+                      "format": "date",
+                      "description": "Date for this marking"
+                    },
+                    "marking": {
+                      "type": "string",
+                      "enum": ["WORK", "DL", "DLF", "DLV", "VAC", "EnfD", "DC-E"],
+                      "description": "Day marking type"
+                    },
+                    "isFixed": {
+                      "type": "boolean",
+                      "default": false,
+                      "description": "Whether this marking cannot be changed (red in Excel)"
+                    },
+                    "shift": {
+                      "type": "object",
+                      "properties": {
+                        "duration": {
+                          "type": "number",
+                          "minimum": 0,
+                          "description": "Shift duration in hours"
+                        },
+                        "startTime": {
+                          "type": ["string", "null"],
+                          "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+                          "description": "Start time (null = flexible)"
+                        },
+                        "endTime": {
+                          "type": ["string", "null"],
+                          "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+                          "description": "End time (null = flexible)"
+                        },
+                        "competency": {
+                          "type": ["string", "null"],
+                          "description": "Assigned competency (null = to be determined)"
+                        }
+                      }
+                    },
+                    "note": {
+                      "type": "string",
+                      "description": "Additional notes"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "required": ["hard"],
+      "properties": {
+        "hard": {
+          "type": "array",
+          "description": "Hard constraints that must be satisfied",
+          "items": {
+            "type": "object",
+            "required": ["id", "type"],
+            "properties": {
+              "id": {"type": "string"},
+              "type": {"type": "string"},
+              "params": {"type": "object"},
+              "enabled": {"type": "boolean", "default": true}
+            }
+          }
+        },
+        "soft": {
+          "type": "array",
+          "description": "Soft constraints with penalty weights",
+          "items": {
+            "type": "object",
+            "required": ["id", "type"],
+            "properties": {
+              "id": {"type": "string"},
+              "type": {"type": "string"},
+              "params": {"type": "object"},
+              "weight": {"type": "number", "minimum": 0},
+              "enabled": {"type": "boolean", "default": true}
+            }
+          }
+        },
+        "advanced": {
+          "type": "object",
+          "description": "Advanced constraint configurations (requires useAdvancedConstraints=true)",
+          "properties": {
+            "dayOffSwapping": {
+              "type": "object",
+              "properties": {
+                "enabled": {"type": "boolean"},
+                "rules": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                },
+                "weekDefinition": {
+                  "type": "string",
+                  "enum": ["monday-sunday", "sunday-saturday"]
+                }
+              }
+            },
+            "breaks": {
+              "type": "object",
+              "properties": {
+                "enabled": {"type": "boolean"},
+                "mode": {
+                  "type": "string",
+                  "enum": ["with_breaks", "without_breaks"]
+                },
+                "rules": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "minShiftHours": {"type": "number"},
+                      "breakMinutes": {"type": "integer"},
+                      "breakType": {"type": "string"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "optimization": {
+      "type": "object",
+      "required": ["algorithm"],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "enum": ["ILP", "ILPv2", "CSP", "CSPv2", "ILP Engine", "CSP_ENGINE", "Greedy Randomized", "Greedy Randomized Engine", "Greedy Randomized + Hill Climbing", "GRHC_ENGINE"],
+          "description": "Algorithm to use for solving"
+        },
+        "maxTimeMinutes": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 10,
+          "description": "Maximum solver time in minutes"
+        },
+        "objectives": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["goal", "weight"],
+            "properties": {
+              "goal": {
+                "type": "string",
+                "description": "Optimization goal identifier"
+              },
+              "weight": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Relative weight for this objective"
+              },
+              "priority": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Priority level (1=highest)"
+              }
+            }
+          },
+          "description": "Optimization objectives and weights"
+        },
+        "challenges": {
+          "type": "object",
+          "description": "Challenge-specific configurations",
+          "properties": {
+            "multiCompetencyAllocation": {
+              "type": "object",
+              "properties": {
+                "enabled": {"type": "boolean"},
+                "strategy": {
+                  "type": "string",
+                  "enum": ["priority_first", "level_first", "hybrid"]
+                },
+                "weights": {
+                  "type": "object",
+                  "properties": {
+                    "priorityWeight": {"type": "number"},
+                    "levelWeight": {"type": "number"}
+                  }
+                },
+                "considerLongTerm": {"type": "boolean"}
+              }
+            },
+            "competencyOrdering": {
+              "type": "object",
+              "properties": {
+                "enabled": {"type": "boolean"},
+                "respectResourceRule": {"type": "boolean"},
+                "dynamicOrdering": {"type": "boolean"},
+                "rule": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -58,13 +58,12 @@ class MongoDBClient:
                 team_names = [team_id_to_name.get(str(team_id)) for team_id in team_ids]
 
                 result.append({
+                    "_id": str(emp.get("_id")), 
                     "name": emp_name,
                     "teams": team_names
                 })
 
             print(f"Retrieved {len(result)} employees with team names.")
-            for item in result:
-                print(item)
 
             return result
 
@@ -80,15 +79,17 @@ class MongoDBClient:
             print(schedule["title"], ", ", schedule["algorithm"])
         return schedules
 
-    def insert_schedule(self, data, title, algorithm, timestamp=None, metadata=None):
+    def insert_schedule(self, data, title, algorithm, timestamp=None, metadata=None, elapsed_time=None):
         try:
             timestamp = timestamp if isinstance(timestamp, datetime) else datetime.now(tz=pytz.UTC)
-
+            print(f"Inserting schedule titled '{title}' using algorithm '{algorithm}' at {timestamp.isoformat()}")
+            print(f"Elapsed time: {elapsed_time} seconds")
             schedule_document = {
                 "data": data,
                 "title": title,
                 "algorithm": algorithm,
                 "timestamp": timestamp,
+                "elapsed_time": elapsed_time
             }
 
             if metadata:
@@ -106,10 +107,6 @@ class MongoDBClient:
         """Fetch a vacation template by its name."""
         try:
             result = self.vacations_collection.find_one({"name": name})
-            if result:
-                print(f"Found vacation template: {result}")
-            else:
-                print(f"No vacation template found with name '{name}'")
             return result
         except errors.PyMongoError as e:
             print(f"Failed to fetch vacation by name: {e}")
@@ -119,14 +116,37 @@ class MongoDBClient:
         """Fetch a reference template by its name."""
         try:
             result = self.reference_collection.find_one({"name": name})
-            if result:
-                print(f"Found reference template: {result}")
-            else:
-                print(f"No reference template found with name '{name}'")
             return result
         except errors.PyMongoError as e:
             print(f"Failed to fetch reference by name: {e}")
             return None
+
+
+    def fetch_teams_by_group(self, group_name=None):
+        """
+        Fetch teams from the 'teams' collection.
+        If group_name is provided, return only teams that belong to that group,
+        including their employeeIds for cross-referencing.
+        """
+        try:
+            query = {"groupName": group_name} if group_name else {}
+            teams = list(self.db["teams"].find(query, {"_id": 1, "name": 1, "groupName": 1, "employeeIds": 1}))
+            
+            if not teams:
+                print(f"No teams found for group '{group_name}'" if group_name else "No teams found.")
+                return []
+
+            print(f"Retrieved {len(teams)} teams" + (f" for group '{group_name}'" if group_name else "") + ".")
+            for team in teams:
+                emp_count = len(team.get("employeeIds", []))
+                print(f"Team: {team['name']} (Group: {team.get('groupName', 'N/A')}, Employees: {emp_count})")
+
+            return teams
+
+        except Exception as e:
+            print(f"Error while fetching teams by group: {e}")
+            return []
+
 
     def close_connection(self):
         """Close the connection to the MongoDB database."""

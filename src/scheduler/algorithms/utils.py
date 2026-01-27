@@ -1,6 +1,7 @@
 import csv
 import decimal
 import os
+import re
 from datetime import date, time
 import pandas as pd
 from collections import defaultdict
@@ -21,6 +22,27 @@ def get_team_id(code: str) -> int:
         TEAM_CODE_TO_ID[code] = (max(TEAM_CODE_TO_ID.values(), default=0) + 1)
         TEAM_ID_TO_CODE[TEAM_CODE_TO_ID[code]] = code
     return TEAM_CODE_TO_ID[code]
+
+def safe_int(value, fallback):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return fallback
+
+
+def build_allowed_teams(employees):
+    """
+    Convert employee 'teams' labels to internal numeric team IDs.
+    Fallback to team 'A' when none provided.
+    """
+    allowed = []
+    for employee in employees:
+        codes = [get_team_code(t) for t in employee.get("teams", []) if t]
+        ids = [get_team_id(c) for c in codes if c]
+        if not ids:
+            ids = [get_team_id("A")]
+        allowed.append(ids)
+    return allowed
 
 
 def build_calendar(year: int):
@@ -53,12 +75,19 @@ def rows_to_vac_dict(vac_rows):
     Returns: {emp_id: [day_numbers]}
     """
     vacs = {}
+    if not vac_rows:
+        return vacs
     for row in vac_rows:
-        emp_id = int(row[0].split()[-1])
+        if not row:
+            continue
+        try:
+            emp_id = int(str(row[0]).split()[-1])
+        except (ValueError, TypeError, IndexError):
+            continue
         vacs[emp_id] = [
             idx + 1
             for idx, bit in enumerate(row[1:])
-            if bit.strip() == '1'
+            if str(bit).strip() == '1'
         ]
     return vacs
 
@@ -144,6 +173,137 @@ def rows_to_req_dicts(req_rows):
                 target[(day, shift, team_id)] = int(v)
     return mins, ideals
 
+
+def rows_to_req_dicts_any(req_rows, year=None):
+    """
+    Accept either the legacy minimuns format or demand.csv rows.
+    Demand rows format: date, shift, team, minimum, ideal, estimated
+    """
+    if not req_rows:
+        return {}, {}
+    if _looks_like_demand_rows(req_rows):
+        return rows_to_req_dicts_from_demand(req_rows, year=year)
+    return rows_to_req_dicts(req_rows)
+
+def infer_shift_count_from_dicts(mins_raw, ideals_raw):
+    shift_values = [
+        key[1]
+        for key in list(mins_raw.keys()) + list(ideals_raw.keys())
+        if isinstance(key[1], int)
+    ]
+    return max(shift_values) if shift_values else None
+
+
+def infer_shift_count_from_rows(req_rows, year=None):
+    if not req_rows:
+        return None
+    mins_raw, ideals_raw = rows_to_req_dicts_any(req_rows, year=year)
+    return infer_shift_count_from_dicts(mins_raw, ideals_raw)
+
+
+def rows_to_req_dicts_from_demand(demand_rows, year=None):
+    mins, ideals = {}, {}
+    if not demand_rows:
+        return mins, ideals
+
+    for row in demand_rows:
+        if not row or len(row) < 5:
+            continue
+        if _is_demand_header(row):
+            continue
+        demand_date = _parse_iso_date(row[0])
+        if demand_date is None:
+            continue
+        day = demand_date.timetuple().tm_yday
+
+        shift_code = str(row[1]).strip().upper()
+        shift = _shift_code_to_index(shift_code)
+        if shift is None:
+            continue
+
+        team_code = get_team_code(str(row[2]))
+        if not team_code:
+            continue
+        team_id = get_team_id(team_code)
+
+        min_val = _parse_int(row[3])
+        ideal_val = _parse_int(row[4])
+        if min_val is None and ideal_val is None:
+            continue
+        if min_val is None:
+            min_val = 0
+        if ideal_val is None:
+            ideal_val = min_val
+
+        mins[(day, shift, team_id)] = min_val
+        ideals[(day, shift, team_id)] = ideal_val
+
+    return mins, ideals
+
+
+def _looks_like_demand_rows(rows):
+    if not rows:
+        return False
+    for row in rows[:3]:
+        if not row or len(row) < 5:
+            continue
+        if _is_demand_header(row):
+            return True
+        if _parse_iso_date(row[0]) is not None and str(row[1]).strip():
+            return True
+    return False
+
+
+def _is_demand_header(row):
+    if not row:
+        return False
+    first = str(row[0]).strip().lower()
+    second = str(row[1]).strip().lower() if len(row) > 1 else ""
+    return first in {"date", "data"} and second in {"shift", "turno"}
+
+
+def _parse_iso_date(value):
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        return date.fromisoformat(text)
+    except ValueError:
+        return None
+
+
+def _parse_int(value):
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        return int(text)
+    except ValueError:
+        return None
+
+
+def _shift_code_to_index(code):
+    if not code:
+        return None
+    text = str(code).strip().upper()
+    if not text:
+        return None
+    if text.startswith("M"):
+        return 1
+    if text.startswith("T") or text.startswith("A"):
+        return 2
+    if text.startswith("N"):
+        return 3
+    match = re.search(r"\d+", text)
+    if match:
+        try:
+            return int(match.group())
+        except ValueError:
+            return None
+    return None
+
 def rows_to_req_dicts(req_rows):
     """
     Aceita ficheiros de requisitos (mínimos/ideais) tanto por turnos como por horas.
@@ -178,22 +338,21 @@ def rows_to_req_dicts(req_rows):
         #print(f"team_code: {team_code}, team_id: {team_id}")
         #time.sleep(15)  # para debug sequencial
 
+        is_shift_mode = kind.startswith("min") or kind.startswith("ideal")
+
         # → modo por turno
-        if thirdShifts.upper().startswith(("M", "T", "N")):
-            code = thirdShifts.upper()
-            if code.startswith('M'):
-                shift = 1
-            elif code.startswith('T') or code.startswith('A'):
-                shift = 2
-            elif code.startswith('N'):
-                shift = 3
-            else:
+        if is_shift_mode:
+            shift = _shift_code_to_index(thirdShifts)
+            if shift is None:
                 continue
             target = mins if kind.startswith('min') else ideals
             for day, val in enumerate(countsShifts, start=1):
                 v = str(val).strip()
                 if v:
-                    target[(day, shift, team_id)] = int(v)
+                    try:
+                        target[(day, shift, team_id)] = int(v)
+                    except (TypeError, ValueError):
+                        continue
 
         # → modo por meias horas
         elif "-" in thirdHours:
@@ -203,7 +362,10 @@ def rows_to_req_dicts(req_rows):
             for day, val in enumerate(countsHours, start=1):
                 v = str(val).strip()
                 if v:
-                    target[(day, hour_label, team_id)] = int(val)
+                    try:
+                        target[(day, hour_label, team_id)] = int(v)
+                    except (TypeError, ValueError):
+                        continue
 
 
     # print(f"Current mins: {mins}")
@@ -370,6 +532,25 @@ def export_schedule_to_csv_hours(scheduler, filename="schedule_hours.csv", num_d
     print(f"Schedule (hours) exported to {filename}")
 
 
+def export_schedule_to_csv(scheduler, filename="schedule.csv", num_days=None):
+    """Compatibility wrapper for shift-based exports."""
+    resolved_days = num_days or getattr(scheduler, "num_days", 365)
+    work_blocks = getattr(scheduler, "work_blocks", None) or getattr(scheduler, "blocks", None)
+    if work_blocks:
+        export_schedule_to_csv_hours(
+            scheduler,
+            filename=filename,
+            num_days=resolved_days,
+            work_blocks=work_blocks,
+        )
+    else:
+        export_schedule_to_csv_shifts(
+            scheduler,
+            filename=filename,
+            num_days=resolved_days,
+        )
+
+
 def schedule_to_table(*, employees: list, vacs: dict, assignment: dict, num_days: int, shifts: int = 2):
     """Builds the schedule table as a list of rows."""
     header = ["funcionario"] + [f"Dia {d}" for d in range(1, num_days + 1)]
@@ -387,7 +568,8 @@ def schedule_to_table(*, employees: list, vacs: dict, assignment: dict, num_days
                 line.append("F")
             elif d in day_to:
                 s, t = day_to[d]
-                line.append(label.get(s, "") + TEAM_ID_TO_CODE.get(t, str(t)))
+                prefix = label.get(s, f"S{s}_")
+                line.append(prefix + TEAM_ID_TO_CODE.get(t, str(t)))
             else:
                 line.append("0")
         rows.append(line)

@@ -1,0 +1,311 @@
+{
+  "schemaVersion": "2.1",
+  "problemType": "employee_scheduling",
+
+  "metadata": {
+    "problemId": "SISQUAL_OCTOBER_2025",
+    "createdAt": "2026-01-21T16:00:00Z",
+    "description": "Sisqual October 2025 employee scheduling - Competency-based model with 15 employees across 3 teams",
+    "source": "sisqual_example"
+  },
+
+  "features": {
+    "useShiftBasedScheduling": true,
+    "useAdvancedConstraints": false,
+    "usePriorityHierarchy": true
+  },
+
+  "temporalScope": {
+    "year": 2025,
+    "numDays": 31,
+    "targetPeriod": {
+      "start": "2025-10-01",
+      "end": "2025-10-31",
+      "includeBufferWeeks": false
+    }
+  },
+
+  "employees": {
+    "model": "competency",
+    "competency": [
+      {
+        "id": "20072412",
+        "name": "Emp_20072412",
+        "competencies": [
+          {"code": "Management", "level": 1}
+        ]
+      },
+      {
+        "id": "20066543",
+        "name": "Emp_20066543",
+        "competencies": [
+          {"code": "Management", "level": 2}
+        ]
+      },
+      {
+        "id": "20067009",
+        "name": "Emp_20067009",
+        "competencies": [
+          {"code": "Checkout", "level": 1},
+          {"code": "Management", "level": 3}
+        ]
+      },
+      {
+        "id": "20054956",
+        "name": "Emp_20054956",
+        "competencies": [
+          {"code": "Checkout", "level": 2},
+          {"code": "Management", "level": 4}
+        ]
+      },
+      {
+        "id": "20056459",
+        "name": "Emp_20056459",
+        "competencies": [
+          {"code": "Checkout", "level": 1}
+        ]
+      },
+      {
+        "id": "20062688",
+        "name": "Emp_20062688",
+        "competencies": [
+          {"code": "Checkout", "level": 3},
+          {"code": "Management", "level": 4}
+        ]
+      },
+      {
+        "id": "20067696",
+        "name": "Emp_20067696",
+        "competencies": [
+          {"code": "Checkout", "level": 2}
+        ]
+      },
+      {
+        "id": "20058959",
+        "name": "Emp_20058959",
+        "competencies": [
+          {"code": "Checkout", "level": 2}
+        ]
+      },
+      {
+        "id": "20068397",
+        "name": "Emp_20068397",
+        "competencies": [
+          {"code": "Checkout", "level": 2}
+        ]
+      },
+      {
+        "id": "20038706",
+        "name": "Emp_20038706",
+        "competencies": [
+          {"code": "Checkout", "level": 2}
+        ]
+      },
+      {
+        "id": "20066338",
+        "name": "Emp_20066338",
+        "competencies": [
+          {"code": "Checkout", "level": 3}
+        ]
+      },
+      {
+        "id": "900027719",
+        "name": "Emp_900027719",
+        "competencies": [
+          {"code": "Checkout", "level": 4}
+        ]
+      },
+      {
+        "id": "20051291",
+        "name": "Emp_20051291",
+        "competencies": [
+          {"code": "Storage", "level": 1}
+        ]
+      },
+      {
+        "id": "20055066",
+        "name": "Emp_20055066",
+        "competencies": [
+          {"code": "Checkout", "level": 4}
+        ]
+      },
+      {
+        "id": "900027718",
+        "name": "Emp_900027718",
+        "competencies": [
+          {"code": "Checkout", "level": 5}
+        ]
+      }
+    ]
+  },
+
+  "demand": {
+    "shiftModel": "fixed",
+    "dataFile": "demand.csv",
+    "organizationalUnits": {
+      "competencies": [
+        {"code": "Storage", "name": "Storage Team"},
+        {"code": "Checkout", "name": "Checkout Team"},
+        {"code": "Management", "name": "Management Team"}
+      ]
+    },
+    "shifts": [
+      {
+        "code": "STORAGE_0830_1530",
+        "name": "Storage 08:30-15:30",
+        "order": 1,
+        "timeRange": {
+          "start": "08:30",
+          "end": "15:30"
+        }
+      },
+      {
+        "code": "CHECKOUT_1000_1100",
+        "name": "Checkout 10:00-11:00",
+        "order": 2,
+        "timeRange": {
+          "start": "10:00",
+          "end": "11:00"
+        }
+      },
+      {
+        "code": "CHECKOUT_1100_2100",
+        "name": "Checkout 11:00-21:00",
+        "order": 3,
+        "timeRange": {
+          "start": "11:00",
+          "end": "21:00"
+        }
+      },
+      {
+        "code": "CHECKOUT_2100_2200",
+        "name": "Checkout 21:00-22:00",
+        "order": 4,
+        "timeRange": {
+          "start": "21:00",
+          "end": "22:00"
+        }
+      },
+      {
+        "code": "MANAGEMENT_1000_1100",
+        "name": "Management 10:00-11:00",
+        "order": 5,
+        "timeRange": {
+          "start": "10:00",
+          "end": "11:00"
+        }
+      },
+      {
+        "code": "MANAGEMENT_1100_1400",
+        "name": "Management 11:00-14:00",
+        "order": 6,
+        "timeRange": {
+          "start": "11:00",
+          "end": "14:00"
+        }
+      },
+      {
+        "code": "MANAGEMENT_1400_1900",
+        "name": "Management 14:00-19:00",
+        "order": 7,
+        "timeRange": {
+          "start": "14:00",
+          "end": "19:00"
+        }
+      },
+      {
+        "code": "MANAGEMENT_1900_2100",
+        "name": "Management 19:00-21:00",
+        "order": 8,
+        "timeRange": {
+          "start": "19:00",
+          "end": "21:00"
+        }
+      },
+      {
+        "code": "MANAGEMENT_2100_2200",
+        "name": "Management 21:00-22:00",
+        "order": 9,
+        "timeRange": {
+          "start": "21:00",
+          "end": "22:00"
+        }
+      }
+    ],
+    "priorityHierarchy": [
+      {
+        "rank": 1,
+        "competency": "Management",
+        "description": "Management Team - Highest priority"
+      },
+      {
+        "rank": 2,
+        "competency": "Checkout",
+        "description": "Checkout Team - Medium priority"
+      },
+      {
+        "rank": 3,
+        "competency": "Storage",
+        "description": "Storage Team - Standard priority"
+      }
+    ]
+  },
+
+  "scheduleInput": {
+    "dataFile": "schedule_input.csv",
+    "markingTypes": {
+      "A": "Available",
+      "VAC": "Vacation/Holidays",
+      "NOT": "Unavailable",
+      "DO": "Day Off",
+      "Med": "Medical Reason"
+    }
+  },
+
+  "constraints": {
+    "hard": [
+      {
+        "id": "min-rest-hours",
+        "type": "min_rest_hours",
+        "params": {
+          "hours": 11
+        },
+        "enabled": true
+      },
+      {
+        "id": "vacation-days",
+        "type": "vacation_block",
+        "params": {},
+        "enabled": true
+      }
+    ],
+    "soft": [
+      {
+        "id": "min-coverage",
+        "type": "min_coverage",
+        "params": {
+          "penalty_per_missing": 1000
+        },
+        "weight": 1000,
+        "enabled": true
+      }
+    ]
+  },
+
+  "optimization": {
+    "algorithm": "CSPv2",
+    "maxTimeMinutes": 10,
+    "objectives": [
+      {
+        "goal": "minimize_shortages",
+        "weight": 1000,
+        "priority": 1
+      },
+      {
+        "goal": "balance_workload",
+        "weight": 10,
+        "priority": 2
+      }
+    ]
+  }
+}
