@@ -861,6 +861,7 @@ class ILPSchedulerWeighted:
             timeLimit=time_limit,
             gapRel=gap_rel if gap_rel is not None else None,
             logPath=tmp_log_path,
+            warmStart=True,
         )
 
         start = time.time()

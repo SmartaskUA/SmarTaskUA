@@ -16,6 +16,7 @@ from algorithms.ILPv3 import solve as ilp_solver_3
 from algorithms.heuristicSolver import solve as heuristic_solver
 from algorithms.ilp_greedy import solve as ilp_greedy
 from algorithms.CSPv2 import solve as cspv2_solver
+from algorithms.CSPv2_greedy import solve as cspv2_greedy_solver
 from algorithms.ILP_H import solve as ILP_13Hours_solver
 from algorithms.CSP_H import solve as CSP_13Hours_solver
 from algorithms.CSP_Afonso_Hours import solve as CSP_Afonso_Hours_solver
@@ -36,6 +37,7 @@ class TaskManager:
             "Greedy Randomized + Hill Climbing": greedy_climbing_solver,
             "CSP": csp_solver,
             "CSPv2": cspv2_solver,
+            "CSPv2_greedy": cspv2_greedy_solver,
             "CSP_ENGINE": csp_engine_solver,
             "GRHC_ENGINE": grhc_engine_solver,
             "Greedy Randomized Engine": greedy_randomized_engine_solver,
@@ -86,6 +88,7 @@ class TaskManager:
             "ILP Engine",
             "linear programming 2",
             "CSPv2",
+            "CSPv2_greedy",
             "Heuristic Solver",
             "ilp_greedy",
         ]:
