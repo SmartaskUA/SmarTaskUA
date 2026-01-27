@@ -58,14 +58,6 @@ const metricInfo = {
     label: "Team Satisfaction Level",
     description: "Median distribution of work between primary and secondary team for employees assigned to two teams.",
   },
-  hourlyCoverageGaps: {
-    label: "Hourly Coverage Gaps",
-    description: "Total shortfall versus required hourly staffing across all teams and days.",
-  },
-  hourlyOverstaff: {
-    label: "Hourly Overstaff",
-    description: "Total overstaffing versus required hourly staffing across all teams and days.",
-  },
 
   // ============ HOURLY METRICS (kpiVerification_unified_v3.py) ============                             
   workDaysTargetDeviation: {                                                                              
