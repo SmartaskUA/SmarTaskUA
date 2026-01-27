@@ -1,0 +1,13 @@
+KPI Summary (latest 10 schedules)
+
+timestamp	algorithm	title	time	minFilled/minReq	minMissed	minMiss%	idealFilled/idealReq	idealMissed	idealMiss%
+Tue Jan 27 2026 13:08:39 GMT+0000 (Coordinated Universal Time)	CSPv2_greedy	CSPv2Greedy_Scenario_8Teams_Case2	90m 13s	14188/14600	412	2.82%	21408/23360	1952	8.36%
+Tue Jan 27 2026 11:38:16 GMT+0000 (Coordinated Universal Time)	CSPv2_greedy	CSPv2Greedy_Scenario_8Teams_Case1	90m 13s	14188/14600	412	2.82%	21408/23360	1952	8.36%
+Tue Jan 27 2026 10:07:55 GMT+0000 (Coordinated Universal Time)	CSPv2_greedy	CSPv2Greedy_Scenario_4Teams_Case4	90m 04s	7084/7300	216	2.96%	10297/11680	1383	11.84%
+Tue Jan 27 2026 08:37:43 GMT+0000 (Coordinated Universal Time)	CSPv2_greedy	CSPv2Greedy_Scenario_4Teams_Case3	78m 04s	7085/7300	215	2.95%	10704/11680	976	8.36%
+Tue Jan 27 2026 07:19:32 GMT+0000 (Coordinated Universal Time)	CSPv2_greedy	CSPv2Greedy_Scenario_4Teams_Case2	90m 04s	7085/7300	215	2.95%	10703/11680	977	8.36%
+Tue Jan 27 2026 05:49:18 GMT+0000 (Coordinated Universal Time)	CSPv2_greedy	CSPv2Greedy_Scenario_4Teams_Case1	90m 03s	7085/7300	215	2.95%	10704/11680	976	8.36%
+Tue Jan 27 2026 04:19:08 GMT+0000 (Coordinated Universal Time)	CSPv2_greedy	CSPv2Greedy_Scenario_2Teams_Case4	13m 13s	3547/3650	103	2.82%	5159/5840	681	11.66%
+Tue Jan 27 2026 04:05:53 GMT+0000 (Coordinated Universal Time)	CSPv2_greedy	CSPv2Greedy_Scenario_2Teams_Case3	2m 43s	3547/3650	103	2.82%	5352/5840	488	8.36%
+Tue Jan 27 2026 04:03:04 GMT+0000 (Coordinated Universal Time)	CSPv2_greedy	CSPv2Greedy_Scenario_2Teams_Case2	5m 44s	3547/3650	103	2.82%	5349/5840	491	8.41%
+Tue Jan 27 2026 03:57:14 GMT+0000 (Coordinated Universal Time)	CSPv2_greedy	CSPv2Greedy_Scenario_2Teams_Case1	4m 09s	3547/3650	103	2.82%	5352/5840	488	8.36%

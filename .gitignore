@@ -60,10 +60,6 @@ coverage/
 .coverage
 htmlcov/
 
-# Logs
-*.log
-logs/
-
 # Generated config files (copied from config/ during build)
 src/api/src/main/resources/rules.json
 src/scheduler/rules.json
