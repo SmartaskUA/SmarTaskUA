@@ -1,0 +1,14 @@
+KPI Summary (generator minimum files)
+
+scenarioFile	totalMinRequired	totalIdealRequired
+minimuns_16teams_96emp.csv	11680	23360
+minimuns_3shifts_16teams_144emp.csv	29200	46720
+minimuns_3shifts_16teams_192emp.csv	29200	46720
+minimuns_3shifts_2teams_18emp.csv	3650	5840
+minimuns_3shifts_2teams_24emp.csv	3650	5840
+minimuns_3shifts_4teams_36emp.csv	7300	11680
+minimuns_3shifts_4teams_48emp.csv	7300	11680
+minimuns_3shifts_8teams_72emp.csv	14600	23360
+minimuns_3shifts_8teams_96emp.csv	14600	23360
+minimuns_4teams_24emp.csv	2920	5840
+minimuns_8teams_48emp.csv	5840	11680

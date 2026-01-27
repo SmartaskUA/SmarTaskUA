@@ -1,0 +1,18 @@
+KPI Summary (latest schedules from DB)
+
+timestamp	algorithm	title	time	minFilled/minReq	minMissed	minMiss%	idealFilled/idealReq	idealMissed	idealMiss%
+Tue Jan 27 2026 15:26:33 GMT+0000 (Coordinated Universal Time)	Greedy Randomized	GreedyRandomized_Scenario_16Teams_Case4	0m 25s	27978/29200	1222	4.18%	40461/46720	6259	13.40%
+Tue Jan 27 2026 15:26:06 GMT+0000 (Coordinated Universal Time)	Greedy Randomized	GreedyRandomized_Scenario_16Teams_Case3	0m 23s	28320/29200	880	3.01%	41742/46720	4978	10.65%
+Tue Jan 27 2026 15:25:41 GMT+0000 (Coordinated Universal Time)	Greedy Randomized	GreedyRandomized_Scenario_16Teams_Case2	0m 23s	28319/29200	881	3.02%	41648/46720	5072	10.86%
+Tue Jan 27 2026 15:25:17 GMT+0000 (Coordinated Universal Time)	Greedy Randomized	GreedyRandomized_Scenario_16Teams_Case1	0m 24s	28333/29200	867	2.97%	41815/46720	4905	10.50%
+Tue Jan 27 2026 15:24:49 GMT+0000 (Coordinated Universal Time)	Greedy Randomized	GreedyRandomized_Scenario_8Teams_Case4	0m 12s	13921/14600	679	4.65%	20219/23360	3141	13.45%
+Tue Jan 27 2026 15:24:34 GMT+0000 (Coordinated Universal Time)	Greedy Randomized	GreedyRandomized_Scenario_8Teams_Case3	0m 11s	14154/14600	446	3.05%	20884/23360	2476	10.60%
+Tue Jan 27 2026 15:24:19 GMT+0000 (Coordinated Universal Time)	Greedy Randomized	GreedyRandomized_Scenario_8Teams_Case2	0m 11s	14156/14600	444	3.04%	20818/23360	2542	10.88%
+Tue Jan 27 2026 15:24:04 GMT+0000 (Coordinated Universal Time)	Greedy Randomized	GreedyRandomized_Scenario_8Teams_Case1	0m 11s	14155/14600	445	3.05%	20842/23360	2518	10.78%
+Tue Jan 27 2026 15:23:48 GMT+0000 (Coordinated Universal Time)	Greedy Randomized	GreedyRandomized_Scenario_4Teams_Case4	0m 06s	6996/7300	304	4.16%	10098/11680	1582	13.54%
+Tue Jan 27 2026 15:23:38 GMT+0000 (Coordinated Universal Time)	Greedy Randomized	GreedyRandomized_Scenario_4Teams_Case3	0m 05s	7065/7300	235	3.22%	10428/11680	1252	10.72%
+Tue Jan 27 2026 15:23:28 GMT+0000 (Coordinated Universal Time)	Greedy Randomized	GreedyRandomized_Scenario_4Teams_Case2	0m 06s	7062/7300	238	3.26%	10384/11680	1296	11.10%
+Tue Jan 27 2026 15:23:18 GMT+0000 (Coordinated Universal Time)	Greedy Randomized	GreedyRandomized_Scenario_4Teams_Case1	0m 06s	7069/7300	231	3.16%	10395/11680	1285	11.00%
+Tue Jan 27 2026 15:23:10 GMT+0000 (Coordinated Universal Time)	Greedy Randomized	GreedyRandomized_Scenario_2Teams_Case4	0m 03s	3503/3650	147	4.03%	5058/5840	782	13.39%
+Tue Jan 27 2026 15:23:05 GMT+0000 (Coordinated Universal Time)	Greedy Randomized	GreedyRandomized_Scenario_2Teams_Case3	0m 03s	3540/3650	110	3.01%	5229/5840	611	10.46%
+Tue Jan 27 2026 15:23:00 GMT+0000 (Coordinated Universal Time)	Greedy Randomized	GreedyRandomized_Scenario_2Teams_Case2	0m 03s	3538/3650	112	3.07%	5199/5840	641	10.98%
