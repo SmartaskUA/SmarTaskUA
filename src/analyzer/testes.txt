@@ -1,0 +1,143 @@
+================================================================================
+KPI RESULTS - 1-HOUR GRANULARITY -- COP1_Case3.csv
+================================================================================
+workDaysTargetDeviation       : 0
+vacationDaysQuotaDeviation    : 0
+holidayWorkLimitViolations    : 0
+consecutiveDaysViolations     : 0
+minRestViolations             : 0
+totalStaffingGap              : 17
+totalIdealGap                 : N/A
+excessStaffing                : 11370
+
+================================================================================
+KPI RESULTS - 1-HOUR GRANULARITY -- COP2_Case2.csv
+================================================================================
+workDaysTargetDeviation       : 0
+vacationDaysQuotaDeviation    : 0
+holidayWorkLimitViolations    : 0
+consecutiveDaysViolations     : 0
+minRestViolations             : 0
+totalStaffingGap              : 0
+totalIdealGap                 : N/A
+excessStaffing                : 11353
+
+================================================================================
+KPI RESULTS - 1-HOUR GRANULARITY -- CSP1_Case1.csv
+================================================================================
+workDaysTargetDeviation       : 0
+vacationDaysQuotaDeviation    : 0
+holidayWorkLimitViolations    : 0
+consecutiveDaysViolations     : 0
+minRestViolations             : 0
+totalStaffingGap              : 0
+totalIdealGap                 : N/A
+excessStaffing                : 11353
+
+================================================================================
+KPI RESULTS - 1-HOUR GRANULARITY -- CSP2_Case2.csv
+================================================================================
+workDaysTargetDeviation       : 0
+vacationDaysQuotaDeviation    : 0
+holidayWorkLimitViolations    : 0
+consecutiveDaysViolations     : 0
+minRestViolations             : 0
+totalStaffingGap              : 0
+totalIdealGap                 : N/A
+excessStaffing                : 11353
+
+================================================================================
+KPI RESULTS - 1-HOUR GRANULARITY -- ILP1_Case2.csv
+================================================================================
+workDaysTargetDeviation       : 0
+vacationDaysQuotaDeviation    : 0
+holidayWorkLimitViolations    : 0
+consecutiveDaysViolations     : 0
+minRestViolations             : 0
+totalStaffingGap              : 0
+totalIdealGap                 : N/A
+excessStaffing                : 11353
+
+================================================================================
+KPI RESULTS - 1-HOUR GRANULARITY -- ILP1_Case3.csv
+================================================================================
+workDaysTargetDeviation       : 0
+vacationDaysQuotaDeviation    : 0
+holidayWorkLimitViolations    : 0
+consecutiveDaysViolations     : 0
+minRestViolations             : 0
+totalStaffingGap              : 17
+totalIdealGap                 : N/A
+excessStaffing                : 11370
+
+================================================================================
+KPI RESULTS - 1-HOUR GRANULARITY -- ILP2_Case2.csv
+================================================================================
+workDaysTargetDeviation       : 0
+vacationDaysQuotaDeviation    : 0
+holidayWorkLimitViolations    : 0
+consecutiveDaysViolations     : 0
+minRestViolations             : 0
+totalStaffingGap              : 0
+totalIdealGap                 : N/A
+excessStaffing                : 11353
+
+================================================================================
+KPI RESULTS - 1-HOUR GRANULARITY -- ILP2_Case3.csv
+================================================================================
+workDaysTargetDeviation       : 0
+vacationDaysQuotaDeviation    : 0
+holidayWorkLimitViolations    : 0
+consecutiveDaysViolations     : 0
+minRestViolations             : 0
+totalStaffingGap              : 17
+totalIdealGap                 : N/A
+excessStaffing                : 11370
+
+================================================================================
+KPI RESULTS - 1-HOUR GRANULARITY -- ILP3_Case2.csv
+================================================================================
+workDaysTargetDeviation       : 0
+vacationDaysQuotaDeviation    : 0
+holidayWorkLimitViolations    : 0
+consecutiveDaysViolations     : 0
+minRestViolations             : 0
+totalStaffingGap              : 0
+totalIdealGap                 : N/A
+excessStaffing                : 11353
+
+================================================================================
+KPI RESULTS - 1-HOUR GRANULARITY -- ILP3_Case3.csv
+================================================================================
+workDaysTargetDeviation       : 0
+vacationDaysQuotaDeviation    : 0
+holidayWorkLimitViolations    : 0
+consecutiveDaysViolations     : 0
+minRestViolations             : 0
+totalStaffingGap              : 17
+totalIdealGap                 : N/A
+excessStaffing                : 11370
+
+================================================================================
+KPI RESULTS - 30-MINUTE GRANULARITY -- Heuristica_HH_Case1.csv
+================================================================================
+workDaysTargetDeviation       : 0
+vacationDaysQuotaDeviation    : 0
+holidayWorkLimitViolations    : 0
+consecutiveDaysViolations     : 0
+minRestViolations             : 0
+totalStaffingGap              : 2943
+totalIdealGap                 : N/A
+excessStaffing                : 25389
+
+================================================================================
+KPI RESULTS - 30-MINUTE GRANULARITY -- ILP3_HH5.csv
+================================================================================
+workDaysTargetDeviation       : 0
+vacationDaysQuotaDeviation    : 0
+holidayWorkLimitViolations    : 0
+consecutiveDaysViolations     : 0
+minRestViolations             : 0
+totalStaffingGap              : 950
+totalIdealGap                 : N/A
+excessStaffing                : 23656
