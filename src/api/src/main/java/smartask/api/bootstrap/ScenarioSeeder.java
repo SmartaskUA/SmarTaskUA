@@ -86,13 +86,23 @@ public class ScenarioSeeder {
 
         loadTemplatesIntoDatabase();
 
-        if (runAlgorithms) {
-            runLinearProgrammingScenarios("linear programming 2");
-            // runLinearProgrammingScenarios("Heuristic Solver");
-            // runLinearProgrammingScenarios("Greedy Randomized");
-        }
-
         System.out.println("\nAll team scenarios successfully initialized!");
+    }
+
+    public void runScenarioAlgorithmsIfEnabled(String algorithmName) {
+        if (!seedScenarios) {
+            System.out.println("Scenario groups disabled (smartask.scenarios.enabled=false).");
+            return;
+        }
+        if (!runAlgorithms) {
+            System.out.println("Scenario algorithm runs disabled (smartask.scenarios.run-algorithms=false).");
+            return;
+        }
+        if (!hasScenarioGroups()) {
+            System.out.println("Scenario groups not initialized - skipping algorithm runs.");
+            return;
+        }
+        runLinearProgrammingScenarios(algorithmName);
     }
 
     private void seedDefaultTeams() {

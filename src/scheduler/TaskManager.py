@@ -97,6 +97,7 @@ class TaskManager:
             "CSPv2",
             "CSP General",
             "Heuristic Solver",
+            "Heuristic Solver Restarts",
             "ilp_greedy",
         ]:
             if uses_rules:
