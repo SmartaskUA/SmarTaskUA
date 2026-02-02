@@ -1,6 +1,6 @@
-.PHONY: help build up down restart logs clean
-.PHONY: build-api build-scheduler build-analyzer build-frontend
-.PHONY: logs-api logs-scheduler logs-analyzer logs-frontend
+.PHONY: help build up down restart rebuild logs clean
+.PHONY: build-api build-scheduler build-analyzer build-frontend build-json-generator build-nginx
+.PHONY: logs-api logs-scheduler logs-analyzer logs-frontend logs-json-generator logs-nginx
 
 # Docker Compose file location
 COMPOSE_FILE := infra/docker-compose.yml
@@ -16,27 +16,33 @@ help: ## Show this help message
 	@echo ""
 	@echo "$(GREEN)Main Commands:$(NC)"
 	@echo "  make build          - Build API (mvn) and all Docker images, then start"
-	@echo "  make up             - Start all services in detached mode"
+	@echo "  make up             - Start all services (rebuild if Dockerfiles changed)"
 	@echo "  make down           - Stop all services"
 	@echo "  make restart        - Restart all services"
+	@echo "  make rebuild        - Force rebuild all services without cache"
 	@echo "  make logs           - Follow logs from all services"
 	@echo "  make clean-volumes  - Stop services and remove all volumes"
 	@echo ""
 	@echo "$(GREEN)Service-Specific Builds:$(NC)"
-	@echo "  make build-api       - Rebuild API (mvn + docker)"
-	@echo "  make build-scheduler - Rebuild scheduler service"
-	@echo "  make build-analyzer  - Rebuild analyzer service"
-	@echo "  make build-frontend  - Rebuild frontend service"
+	@echo "  make build-api            - Rebuild API (mvn + docker)"
+	@echo "  make build-scheduler      - Rebuild scheduler service"
+	@echo "  make build-analyzer       - Rebuild analyzer service"
+	@echo "  make build-frontend       - Rebuild frontend service"
+	@echo "  make build-json-generator - Rebuild JSON generator service"
+	@echo "  make build-nginx          - Rebuild nginx reverse proxy"
 	@echo ""
 	@echo "$(GREEN)Service-Specific Logs:$(NC)"
-	@echo "  make logs-api        - View API logs"
-	@echo "  make logs-scheduler  - View scheduler logs"
-	@echo "  make logs-analyzer   - View analyzer logs"
-	@echo "  make logs-frontend   - View frontend logs"
+	@echo "  make logs-api            - View API logs"
+	@echo "  make logs-scheduler      - View scheduler logs"
+	@echo "  make logs-analyzer       - View analyzer logs"
+	@echo "  make logs-frontend       - View frontend logs"
+	@echo "  make logs-json-generator - View JSON generator logs"
+	@echo "  make logs-nginx          - View nginx logs"
 	@echo ""
 	@echo "$(YELLOW)Access Points:$(NC)"
-	@echo "  Web UI:          http://localhost:5173"
-	@echo "  API:             http://localhost:8081"
+	@echo "  Main App:        http://localhost/"
+	@echo "  JSON Generator:  http://localhost/json-gen"
+	@echo "  API:             http://localhost/api"
 	@echo "  RabbitMQ UI:     http://localhost:15672 (guest/guest)"
 
 build: ## Build everything (mvn + docker) and start services
@@ -58,18 +64,27 @@ build: ## Build everything (mvn + docker) and start services
 	@echo ""
 	@$(MAKE) -s _show_access_points
 
-up: ## Start all services in detached mode
+up: ## Start all services (rebuild if Dockerfiles changed)
 	@echo "$(BLUE) Starting all services...$(NC)"
-	@docker compose -f $(COMPOSE_FILE) up -d
+	@docker compose -f $(COMPOSE_FILE) up --build -d
 	@echo "$(GREEN) Services started!$(NC)"
 	@$(MAKE) -s _show_access_points
 
 down: ## Stop all services
 	@echo "$(BLUE) Stopping all services...$(NC)"
-	@docker compose -f $(COMPOSE_FILE) down
+	@docker compose -f $(COMPOSE_FILE) down --remove-orphans
 	@echo "$(GREEN) Services stopped!$(NC)"
 
 restart: down up ## Restart all services
+
+rebuild: ## Force rebuild all services without cache
+	@echo "$(BLUE) Force rebuilding all services...$(NC)"
+	@docker compose -f $(COMPOSE_FILE) down --remove-orphans
+	@docker compose -f $(COMPOSE_FILE) build --no-cache
+	@docker compose -f $(COMPOSE_FILE) up -d
+	@echo "$(GREEN) Services rebuilt and started!$(NC)"
+	@echo ""
+	@$(MAKE) -s _show_access_points
 
 logs: ## Follow logs from all services
 	@docker compose -f $(COMPOSE_FILE) logs -f
@@ -111,6 +126,20 @@ build-frontend: ## Rebuild frontend service
 	@docker compose -f $(COMPOSE_FILE) up -d frontend
 	@echo "$(GREEN) Frontend service rebuilt!$(NC)"
 
+build-json-generator: ## Rebuild JSON generator service
+	@echo "$(BLUE) Rebuilding JSON generator service...$(NC)"
+	@docker compose -f $(COMPOSE_FILE) build json-generator
+	@docker compose -f $(COMPOSE_FILE) stop json-generator
+	@docker compose -f $(COMPOSE_FILE) up -d json-generator
+	@echo "$(GREEN) JSON generator service rebuilt!$(NC)"
+
+build-nginx: ## Rebuild nginx reverse proxy
+	@echo "$(BLUE) Rebuilding nginx service...$(NC)"
+	@docker compose -f $(COMPOSE_FILE) build nginx
+	@docker compose -f $(COMPOSE_FILE) stop nginx
+	@docker compose -f $(COMPOSE_FILE) up -d nginx
+	@echo "$(GREEN) Nginx service rebuilt!$(NC)"
+
 # Service-specific logs
 logs-api: ## View API logs
 	@docker compose -f $(COMPOSE_FILE) logs -f api
@@ -124,9 +153,16 @@ logs-analyzer: ## View analyzer logs
 logs-frontend: ## View frontend logs
 	@docker compose -f $(COMPOSE_FILE) logs -f frontend
 
+logs-json-generator: ## View JSON generator logs
+	@docker compose -f $(COMPOSE_FILE) logs -f json-generator
+
+logs-nginx: ## View nginx logs
+	@docker compose -f $(COMPOSE_FILE) logs -f nginx
+
 # Internal helper (not shown in help)
 _show_access_points:
 	@echo "$(YELLOW)Access points:$(NC)"
-	@echo "  Web UI:           http://localhost:5173"
-	@echo "  API:              http://localhost:8081"
+	@echo "  Main App:         http://localhost/"
+	@echo "  JSON Generator:   http://localhost/json-gen"
+	@echo "  API:              http://localhost/api"
 	@echo "  RabbitMQ UI:      http://localhost:15672 (guest/guest)"
