@@ -24,6 +24,7 @@ from algorithms.CSP_Extra import solve as CSP_Extra_Hours_solver
 from algorithms.ILP_Extra import solve as ILP_Extra_Hours_solver
 from algorithms.general.ilp_general import solve as ilp_general_solver
 from algorithms.general.csp_general import solve as csp_general_solver
+from algorithms.general.heuristic_general import solve as heuristic_general_solver
 
 class TaskManager:
     def __init__(self):
@@ -44,6 +45,7 @@ class TaskManager:
             "GRHC_ENGINE": grhc_engine_solver,
             "Greedy Randomized Engine": greedy_randomized_engine_solver,
             "Heuristic Solver": heuristic_solver,
+            "Heuristic General": heuristic_general_solver,
             "ilp_greedy": ilp_greedy,
             "ILP_13Hours": ILP_13Hours_solver,
             "CSP_13Hours": CSP_13Hours_solver,
