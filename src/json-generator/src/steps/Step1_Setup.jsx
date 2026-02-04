@@ -179,16 +179,30 @@ const Step1_Setup = () => {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Box sx={{ maxHeight: '85vh', overflowY: 'auto' }}>
-        <Typography variant="h4" gutterBottom fontWeight={600} sx={{ mb: 3 }}>
-          Setup
-        </Typography>
-        <Typography variant="body1" color="text.secondary" paragraph>
-          Define the basics: problem details, employee model, and scheduling period.
-        </Typography>
+      <Box sx={{
+        height: 'calc(100vh - 280px)',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        {/* HEADER - Fixed */}
+        <Box sx={{ flexShrink: 0, mb: 2 }}>
+          <Typography variant="h4" gutterBottom fontWeight={600}>
+            Setup
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Define the basics: problem details, employee model, and scheduling period.
+          </Typography>
+        </Box>
 
-        {/* Two-Column Layout */}
-        <Grid container spacing={4}>
+        {/* CONTENT - Scrollable */}
+        <Box sx={{
+          flexGrow: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          pr: 1 // Small padding for scrollbar
+        }}>
+          {/* Two-Column Layout */}
+          <Grid container spacing={4}>
           {/* LEFT COLUMN - Metadata + Employee Model */}
           <Grid item xs={12} md={5}>
             {/* Problem Metadata */}
@@ -338,14 +352,14 @@ const Step1_Setup = () => {
           </Grid>
 
           {/* RIGHT COLUMN - Calendar */}
-          <Grid item xs={12} md={6}>
-            <Box>
+          <Grid item xs={12} md={6} sx={{ overflow: 'hidden' }}>
+            <Box sx={{ position: 'relative' }}>
               <Typography variant="h6" gutterBottom fontWeight={600}>
                 Scheduling Period
               </Typography>
 
               {/* Instructions */}
-              <Box sx={{ mb: 2, textAlign: 'center' }}>
+              <Box sx={{ mb: 2, textAlign: 'center', justifyContent: 'center', display: 'flex' }}>
                 <Typography variant="body2" color="text.secondary">
                   {selectingStart || !startDate
                     ? 'Click to select the start date'
@@ -355,8 +369,8 @@ const Step1_Setup = () => {
                 </Typography>
               </Box>
 
-              {/* Calendar */}
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              {/* Calendar - Fixed with padding for content below */}
+              <Box sx={{ pb: '90px' }}>
                 <Paper
                   elevation={0}
                   sx={{
@@ -376,15 +390,8 @@ const Step1_Setup = () => {
                 </Paper>
               </Box>
 
-              {/* Error Alert */}
-              {(errors.startDate || errors.endDate || errors.dateRange) && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                  {errors.startDate || errors.endDate || errors.dateRange}
-                </Alert>
-              )}
-
-              {/* Date Chips */}
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'center' }}>
+              {/* Date Chips - Absolutely positioned */}
+              <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'center' }}>
                 {startDate && (
                   <Chip
                     label={`Start: ${format(startDate, 'MMM dd, yyyy')}`}
@@ -418,9 +425,12 @@ const Step1_Setup = () => {
             </Box>
           </Grid>
         </Grid>
+        </Box>
 
-        {/* Navigation */}
-        <NavigationButtons onNext={handleNext} nextDisabled={false} />
+        {/* NAVIGATION - Fixed at bottom */}
+        <Box sx={{ flexShrink: 0, mt: 2 }}>
+          <NavigationButtons onNext={handleNext} nextDisabled={false} />
+        </Box>
       </Box>
     </LocalizationProvider>
   );

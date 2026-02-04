@@ -204,33 +204,47 @@ const Step2_Contracts = () => {
   const weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom fontWeight={600}>
-        Contract Definitions
-      </Typography>
-      <Typography variant="body1" color="text.secondary" paragraph>
-        Define reusable contract types for your employees. Each contract specifies work hours and optional constraints.
-      </Typography>
+    <Box sx={{
+      height: 'calc(100vh - 280px)',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      {/* HEADER - Fixed */}
+      <Box sx={{ flexShrink: 0, mb: 2 }}>
+        <Typography variant="h4" gutterBottom fontWeight={600}>
+          Contract Definitions
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Define reusable contract types for your employees. Each contract specifies work hours and optional constraints.
+        </Typography>
+      </Box>
 
-      <StepCard>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6">Contracts ({contracts.length})</Typography>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={handleAddContract}
-          >
-            Add Contract
-          </Button>
-        </Box>
+      {/* CONTENT - Scrollable */}
+      <Box sx={{
+        flexGrow: 1,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        pr: 1
+      }}>
+        <StepCard>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6">Contracts ({contracts.length})</Typography>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={handleAddContract}
+            >
+              Add Contract
+            </Button>
+          </Box>
 
-        {contracts.length === 0 ? (
-          <Alert severity="info">
-            No contracts defined yet. Click "Add Contract" to create your first contract type.
-          </Alert>
-        ) : (
-          <TableContainer component={Paper} variant="outlined">
-            <Table>
+          {contracts.length === 0 ? (
+            <Alert severity="info">
+              No contracts defined yet. Click "Add Contract" to create your first contract type.
+            </Alert>
+          ) : (
+            <TableContainer component={Paper} variant="outlined">
+            <Table stickyHeader>
               <TableHead>
                 <TableRow>
                   <TableCell>ID</TableCell>
@@ -278,7 +292,16 @@ const Step2_Contracts = () => {
             </Table>
           </TableContainer>
         )}
-      </StepCard>
+        </StepCard>
+      </Box>
+
+      {/* NAVIGATION - Fixed at bottom */}
+      <Box sx={{ flexShrink: 0, mt: 2 }}>
+        <NavigationButtons
+          onNext={handleNext}
+          nextDisabled={contracts.length === 0}
+        />
+      </Box>
 
       {/* Add/Edit Contract Dialog */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
@@ -413,12 +436,6 @@ const Step2_Contracts = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Navigation */}
-      <NavigationButtons 
-        onNext={handleNext}
-        nextDisabled={contracts.length === 0}
-      />
     </Box>
   );
 };
