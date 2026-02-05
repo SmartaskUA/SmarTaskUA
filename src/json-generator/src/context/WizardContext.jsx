@@ -76,7 +76,7 @@ const initialState = {
   },
   
   organizationalUnits: {
-    teams: [],        // for team model: ['A', 'B', 'C']
+    teams: [],        // for team model: [{code: 'A', name: 'Team A'}]
     competencies: []  // for competency model: [{code, name}]
   },
   

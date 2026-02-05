@@ -342,8 +342,15 @@
           "properties": {
             "teams": {
               "type": "array",
-              "items": {"type": "string"},
-              "description": "List of team codes (when using team model)"
+              "items": {
+                "type": "object",
+                "required": ["code", "name"],
+                "properties": {
+                  "code": {"type": "string"},
+                  "name": {"type": "string"}
+                }
+              },
+              "description": "List of team definitions with code and name (when using team model)"
             },
             "competencies": {
               "type": "array",
