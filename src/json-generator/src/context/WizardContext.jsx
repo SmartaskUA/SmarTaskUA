@@ -88,17 +88,11 @@ const initialState = {
     dataFile: 'schedule_input.csv',
     markingTypes: {
       'A': 'Auto-allocate from contract',
+      'SPECIFIC': 'Specific hours (from contract)',
       'VAC': 'Vacation',
-      'DL': 'Day off',
-      'DLF': 'Fixed day off',
-      'DLV': 'Variable day off',
-      'EnfD': 'Sick day',
-      'DO': 'Day off',
-      'NOT': 'Not available',
-      'Med': 'Medical',
-      'DC-E': 'Special leave'
+      'NOT': 'Not available'
     },
-    dataMatrix: {} // { employeeId: { 'YYYY-MM-DD': 'A' | '1-16' | marking } }
+    dataMatrix: {} // { employeeId: { 'YYYY-MM-DD': 'A' | numeric | 'VAC' | 'NOT' } }
   },
   
   // Step 6: Shifts
