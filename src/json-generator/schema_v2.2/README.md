@@ -279,7 +279,7 @@ cp templates/demand_template.csv my_demand.csv
 
 **Option B: Create from scratch**
 ```csv
-date,shift,team,minimum,ideal,estimated
+date,workPeriod,team,minimum,ideal,estimated
 2025-01-01,M,TeamA,2,3,2
 2025-01-01,T,TeamA,2,2,2
 2025-01-01,M,TeamB,1,2,1
@@ -519,7 +519,7 @@ The validator performs:
 - **CSV format validation** (dates, columns, values)
 - **v2.2: Numeric value validation** (1-16 hours)
 - **v2.2: Contract validation** (workHoursPerDay when "A" is used)
-- **Cross-validation** (employee IDs, shift codes, date ranges match)
+- **Cross-validation** (employee IDs, work period codes, date ranges match)
 
 **Quick validation:**
 ```bash

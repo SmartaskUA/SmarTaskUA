@@ -55,7 +55,7 @@ Controls which optional modules are enabled:
 
 | Feature | Default | Description |
 |---------|---------|-------------|
-| `useShiftBasedScheduling` | true | Enable shift-based (true) or interval-based (false) scheduling |
+| `useWorkPeriodBasedScheduling` | true | Enable shift-based (true) or interval-based (false) scheduling |
 | `useAdvancedConstraints` | false | Enable day-off swapping, breaks, etc. |
 | `usePriorityHierarchy` | false | Enable priority-based allocation ordering |
 
@@ -63,7 +63,7 @@ Controls which optional modules are enabled:
 ```json
 {
   "features": {
-    "useShiftBasedScheduling": true,
+    "useWorkPeriodBasedScheduling": true,
     "useAdvancedConstraints": false,
     "usePriorityHierarchy": true
   }
@@ -213,7 +213,7 @@ All contract constraints are optional. Define them only when needed for your use
     ],
     "restrictions": {
       "cannotSwapDayOffs": false,
-      "preferredShifts": ["M"],
+      "preferredWorkPeriods": ["M"],
       "blackoutDates": []
     }
   }
@@ -233,17 +233,17 @@ All contract constraints are optional. Define them only when needed for your use
 
 ## Demand Requirements
 
-### Shift Model Selection
+### Work Period Model Selection
 
 ```json
 "demand": {
-  "shiftModel": "fixed" | "flexible"
+  "workPeriodModel": "fixed" | "flexible"
 }
 ```
 
 | Model | Description | Use Case |
 |-------|-------------|----------|
-| **fixed** | Predefined shifts with fixed times | Traditional shift work (most common) |
+| **fixed** | Predefined shifts with fixed times | Traditional work period work (most common) |
 | **flexible** | Shifts with multiple start time options | Variable start times within constraints |
 
 ### Organizational Units
@@ -258,9 +258,9 @@ All contract constraints are optional. Define them only when needed for your use
 }
 ```
 
-### Shift Definitions (Fixed Model)
+### Work Period Definitions (Fixed Model)
 ```json
-"shifts": [
+"workPeriods": [
   {
     "code": "M",
     "name": "Morning",
@@ -416,12 +416,12 @@ employee_id,2030-10-01,2030-10-02,2030-10-03,2030-10-04,2030-10-05
 ### JSON Configuration
 ```json
 "demand": {
-  "shiftModel": "fixed",
+  "workPeriodModel": "fixed",
   "dataFile": "demand.csv",
   "organizationalUnits": {
     "teams": ["TeamA", "TeamB", "TeamC"]
   },
-  "shifts": [
+  "workPeriods": [
     {"code": "M", "name": "Morning", "timeRange": {"start": "08:30", "end": "16:30"}},
     {"code": "T", "name": "Afternoon", "timeRange": {"start": "14:00", "end": "22:00"}}
   ],
@@ -438,7 +438,7 @@ employee_id,2030-10-01,2030-10-02,2030-10-03,2030-10-04,2030-10-05
 
 **Structure:**
 ```csv
-date,shift,team,minimum,ideal,estimated
+date,workPeriod,team,minimum,ideal,estimated
 2030-10-01,M,TeamA,2,3,2
 2030-10-01,T,TeamA,2,2,2
 2030-10-01,M,TeamB,1,2,1
@@ -449,7 +449,7 @@ date,shift,team,minimum,ideal,estimated
 | Column | Type | Description | Example Values |
 |--------|------|-------------|----------------|
 | `date` | ISO date | Date for this requirement | `2030-10-01` |
-| `shift` | string | Shift code (must match shifts[].code in JSON) | `M`, `T`, `N` |
+| `shift` | string | Work period code (must match shifts[].code in JSON) | `M`, `T`, `N` |
 | `team` | string | Team identifier (must match organizationalUnits.teams[] in JSON) | `TeamA`, `TeamB` |
 | `minimum` | integer | Minimum people required (hard constraint) | `1`, `2`, `3` |
 | `ideal` | integer | Ideal number of people (soft target) | `2`, `3`, `4` |
@@ -457,7 +457,7 @@ date,shift,team,minimum,ideal,estimated
 
 **Validation Rules:**
 1. All dates must be within `temporalScope.targetPeriod`
-2. Shift codes must exist in `demand.shifts[].code`
+2. Work period codes must exist in `demand.shifts[].code`
 3. Team codes must exist in `demand.organizationalUnits.teams[]`
 4. `minimum ≤ estimated ≤ ideal` (logical constraint)
 5. No duplicate rows (same date/shift/team combination)
@@ -488,7 +488,7 @@ date,shift,team,minimum,ideal,estimated
 - `max_consecutive_days` - Max work days in rolling window
 - `total_workdays` - Annual workday limits (min/max)
 - `max_special_days` - Max Sundays/holidays per year
-- `no_earlier_shift_next_day` - No backward shift transitions
+- `no_earlier_shift_next_day` - No backward work period transitions
 - `min_rest_hours` - Minimum rest between shifts
 - `vacation_block` - Vacation days cannot be worked
 
@@ -583,10 +583,10 @@ date,shift,team,minimum,ideal,estimated
   },
 
   "demand": {
-    "shiftModel": "fixed",
+    "workPeriodModel": "fixed",
     "dataFile": "demand.csv",
     "organizationalUnits": {...},
-    "shifts": [...],
+    "workPeriods": [...],
     "priorityHierarchy": [...]
   },
 
@@ -614,7 +614,7 @@ employee_id,2030-10-01,2030-10-02,2030-10-03
 
 And `demand.csv`:
 ```csv
-date,shift,competency,level,minimum,ideal,estimated
+date,workPeriod,competency,level,minimum,ideal,estimated
 2030-10-01,M,Management,1,1,2,1
 2030-10-01,M,Checkout,1,2,3,2
 ```
@@ -726,7 +726,7 @@ In v2.2:
 ### demand.csv Validation
 - [ ] All required columns present (date, shift, team, minimum, ideal, estimated)
 - [ ] All dates within `temporalScope.targetPeriod`
-- [ ] All shift codes exist in JSON `demand.shifts[]`
+- [ ] All work period codes exist in JSON `demand.shifts[]`
 - [ ] All team/competency codes exist in JSON `organizationalUnits`
 - [ ] Logical order: minimum ≤ estimated ≤ ideal
 - [ ] No duplicate rows
@@ -737,7 +737,7 @@ In v2.2:
 - [ ] Number of date columns in schedule_input.csv = `temporalScope.numDays`
 - [ ] Date range in schedule_input.csv matches `temporalScope.targetPeriod`
 - [ ] Employees with "A" have `workHoursPerDay` defined or valid defaults
-- [ ] demand.csv references match JSON shift and team/competency definitions
+- [ ] demand.csv references match JSON work period and team/competency definitions
 
 ---
 

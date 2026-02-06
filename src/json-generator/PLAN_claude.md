@@ -33,7 +33,7 @@
      │ │   │   ├── Step3_OrganizationalUnits.jsx                                                                                                                              │
      │ │   │   ├── Step4_Employees.jsx                                                                                                                                        │
      │ │   │   ├── Step5_ScheduleInput.jsx                                                                                                                                    │
-     │ │   │   ├── Step6_Shifts.jsx                                                                                                                                           │
+     │ │   │   ├── Step6_WorkPeriods.jsx                                                                                                                                           │
      │ │   │   ├── Step7_Demand.jsx                                                                                                                                           │
      │ │   │   ├── Step8_Constraints.jsx                                                                                                                                      │
      │ │   │   ├── Step9_Optimization.jsx                                                                                                                                     │
@@ -225,7 +225,7 @@
      │ - Date columns match temporal scope                                                                                                                                    │
      │                                                                                                                                                                        │
      │ ---                                                                                                                                                                    │
-     │ Step 6: Shifts Definition                                                                                                                                              │
+     │ Step 6: Work Periods Definition                                                                                                                                              │
      │                                                                                                                                                                        │
      │ Purpose: Define shift types and schedules                                                                                                                              │
      │                                                                                                                                                                        │
@@ -429,13 +429,13 @@
      │ // WizardContext structure                                                                                                                                             │
      │ {                                                                                                                                                                      │
      │   metadata: { problemId, createdAt, description, source },                                                                                                             │
-     │   features: { useShiftBasedScheduling, ... },                                                                                                                          │
+     │   features: { useWorkPeriodBasedScheduling, ... },                                                                                                                          │
      │   temporalScope: { year, numDays, targetPeriod },                                                                                                                      │
      │   contracts: { definitions: [...] },                                                                                                                                   │
      │   employees: { model, simple/competency: [...] },                                                                                                                      │
      │   organizationalUnits: { teams/competencies: [...] },                                                                                                                  │
      │   scheduleInput: { dataMatrix, markingTypes },                                                                                                                         │
-     │   demand: { shiftModel, shifts: [...], demandData: [...] },                                                                                                            │
+     │   demand: { workPeriodModel, shifts: [...], demandData: [...] },                                                                                                            │
      │   constraints: { hard: [...], soft: [...], advanced: {...} },                                                                                                          │
      │   optimization: { algorithm, maxTimeMinutes, objectives: [...] }                                                                                                       │
      │ }                                                                                                                                                                      │

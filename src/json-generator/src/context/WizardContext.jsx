@@ -7,7 +7,7 @@ import { detectAllFeatures, applyAutoDetectedFeatures } from '../utils/featureDe
  * This context manages the entire wizard state including:
  * - metadata, features, temporal scope
  * - contracts, employees, organizational units
- * - schedule input, shifts, demand
+ * - schedule input, work periods, demand
  * - constraints and optimization settings
  *
  * Feature flags are automatically detected based on user configuration,
@@ -28,7 +28,7 @@ const initialState = {
     2: false,  // Organizational Units
     3: false,  // Employees
     4: false,  // Schedule Input
-    5: false,  // Shifts
+    5: false,  // Work Periods
     6: false,  // Demand
     7: false,  // Constraints
     8: false,  // Optimization
@@ -48,7 +48,7 @@ const initialState = {
   },
   
   features: {
-    useShiftBasedScheduling: true,
+    useWorkPeriodBasedScheduling: true,
     useAdvancedConstraints: false,
     usePriorityHierarchy: false
   },
@@ -95,17 +95,17 @@ const initialState = {
     dataMatrix: {} // { employeeId: { 'YYYY-MM-DD': 'A' | numeric | 'VAC' | 'NOT' } }
   },
   
-  // Step 6: Shifts
+  // Step 6: Work Periods
   demand: {
-    shiftModel: 'fixed', // 'fixed' or 'flexible'
-    shifts: [],
-    // Each shift: { code, name, order, timeRange: {start, end} } or { duration, allowedStartTimes }
+    workPeriodModel: 'fixed', // 'fixed' or 'flexible'
+    workPeriods: [],
+    // Each work period: { code, name, order, timeRange: {start, end} } or { duration, allowedStartTimes }
     organizationalUnits: {
       teams: [],
       competencies: []
     },
     dataFile: 'demand.csv',
-    demandData: [], // Array of { date, shift, team, minimum, ideal, estimated }
+    demandData: [], // Array of { date, workPeriod, team, minimum, ideal, estimated }
     priorityHierarchy: [] // Optional priority ordering
   },
   
@@ -222,8 +222,8 @@ export const WizardProvider = ({ children }) => {
         markingTypes: state.scheduleInput.markingTypes
       },
       demand: {
-        shiftModel: state.demand.shiftModel,
-        shifts: state.demand.shifts,
+        workPeriodModel: state.demand.workPeriodModel,
+        workPeriods: state.demand.workPeriods,
         organizationalUnits: state.employees.model === 'team'
           ? { teams: state.organizationalUnits.teams }
           : { competencies: state.organizationalUnits.competencies },

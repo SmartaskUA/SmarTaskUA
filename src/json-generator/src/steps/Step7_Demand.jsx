@@ -16,7 +16,7 @@ const Step7_Demand = () => {
           Demand Calendar
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Define coverage requirements for each date, shift, and team/competency.
+          Define coverage requirements for each date, work period, and team/competency.
         </Typography>
       </Box>
 

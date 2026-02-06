@@ -10,7 +10,7 @@
   },
 
   "features": {
-    "useShiftBasedScheduling": true,
+    "useWorkPeriodBasedScheduling": true,
     "useAdvancedConstraints": true,
     "usePriorityHierarchy": true
   },
@@ -225,7 +225,7 @@
   },
 
   "demand": {
-    "shiftModel": "fixed",
+    "workPeriodModel": "fixed",
     "dataFile": "demand.csv",
     "organizationalUnits": {
       "competencies": [
@@ -234,7 +234,7 @@
         {"code": "Management", "name": "Management Team"}
       ]
     },
-    "shifts": [
+    "workPeriods": [
       {
         "code": "STORAGE_0830_1530",
         "name": "Storage 08:30-15:30",

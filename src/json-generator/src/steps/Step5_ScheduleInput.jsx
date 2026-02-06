@@ -221,16 +221,6 @@ const Step5_ScheduleInput = () => {
         pr: 1
       }}>
         <StepCard>
-          {/* Info Alert */}
-          <Alert severity="success" sx={{ mb: 3 }}>
-            <Typography variant="body2" fontWeight={600} gutterBottom>
-              Matrix Auto-Filled!
-            </Typography>
-            <Typography variant="body2">
-              All cells have been automatically filled with "A - Auto-allocate". Click "Open Calendar" below to review and make changes.
-            </Typography>
-          </Alert>
-
           {/* Summary Stats */}
           <Paper sx={{ p: 2, mb: 3, bgcolor: '#fafafa' }}>
             <Typography variant="subtitle2" gutterBottom fontWeight={600}>

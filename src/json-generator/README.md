@@ -33,7 +33,7 @@ src/
 │   ├── Step3_OrganizationalUnits.jsx # 🔄 Placeholder
 │   ├── Step4_Employees.jsx          # 🔄 Placeholder
 │   ├── Step5_ScheduleInput.jsx      # 🔄 Placeholder
-│   ├── Step6_Shifts.jsx             # 🔄 Placeholder
+│   ├── Step6_Work Periods.jsx             # 🔄 Placeholder
 │   ├── Step7_Demand.jsx             # 🔄 Placeholder
 │   ├── Step8_Constraints.jsx        # 🔄 Placeholder
 │   ├── Step9_Optimization.jsx       # 🔄 Placeholder
@@ -94,9 +94,9 @@ export const themeConfig = {
 - Visual matrix for employee availability
 - Marking types: A, 1-16, VAC, DL, etc.
 
-### 🔄 Step 6: Shifts (Coming Soon)
+### 🔄 Step 6: Work Periods (Coming Soon)
 - Define shift codes, names, time ranges
-- Fixed or flexible shifts
+- Fixed or flexible work periods
 - Break rules
 
 ### 🔄 Step 7: Demand Calendar (Coming Soon)
@@ -133,7 +133,7 @@ export const themeConfig = {
 
 ### Phase 3: Scheduling
 - [ ] Step 5: Schedule Input Matrix
-- [ ] Step 6: Shifts
+- [ ] Step 6: Work Periods
 - [ ] Step 7: Demand Calendar
 
 ### Phase 4: Configuration

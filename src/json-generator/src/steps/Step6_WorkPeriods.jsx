@@ -3,7 +3,7 @@ import { Typography, Box } from '@mui/material';
 import StepCard from '../components/wizard/StepCard';
 import NavigationButtons from '../components/wizard/NavigationButtons';
 
-const Step6_Shifts = () => {
+const Step6_WorkPeriods = () => {
   return (
     <Box sx={{
       height: 'calc(100vh - 280px)',
@@ -13,10 +13,10 @@ const Step6_Shifts = () => {
       {/* HEADER - Fixed */}
       <Box sx={{ flexShrink: 0, mb: 2 }}>
         <Typography variant="h4" gutterBottom fontWeight={600}>
-          Shift Definitions
+          Work Period Definitions
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Define shift types, time ranges, and break rules.
+          Define work period types, time ranges, and break rules.
         </Typography>
       </Box>
 
@@ -32,7 +32,7 @@ const Step6_Shifts = () => {
             This step is coming soon!
           </Typography>
           <Typography color="text.secondary" sx={{ mt: 2 }}>
-            Placeholder for Shifts implementation.
+            Placeholder for Work Periods implementation.
           </Typography>
         </StepCard>
       </Box>
@@ -45,4 +45,4 @@ const Step6_Shifts = () => {
   );
 };
 
-export default Step6_Shifts;
+export default Step6_WorkPeriods;

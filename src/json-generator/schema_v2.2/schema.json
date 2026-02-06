@@ -43,10 +43,10 @@
       "type": "object",
       "description": "Feature flags to enable optional modules",
       "properties": {
-        "useShiftBasedScheduling": {
+        "useWorkPeriodBasedScheduling": {
           "type": "boolean",
           "default": true,
-          "description": "Enable shift-based scheduling (true) or interval-based scheduling (false)"
+          "description": "Enable work period-based scheduling (true) or interval-based scheduling (false)"
         },
         "useAdvancedConstraints": {
           "type": "boolean",
@@ -306,10 +306,10 @@
                     "default": false,
                     "description": "Whether day-offs cannot be swapped (typically true for part-time)"
                   },
-                  "preferredShifts": {
+                  "preferredWorkPeriods": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "List of preferred shift codes"
+                    "description": "List of preferred work period codes"
                   },
                   "blackoutDates": {
                     "type": "array",
@@ -326,16 +326,16 @@
     },
     "demand": {
       "type": "object",
-      "required": ["organizationalUnits", "shiftModel"],
+      "required": ["organizationalUnits", "workPeriodModel"],
       "properties": {
-        "shiftModel": {
+        "workPeriodModel": {
           "type": "string",
           "enum": ["fixed", "flexible"],
-          "description": "Scheduling paradigm: 'fixed'=predefined shifts with fixed times, 'flexible'=shifts with variable start times"
+          "description": "Scheduling paradigm: 'fixed'=predefined work periods with fixed times, 'flexible'=work periods with variable start times"
         },
         "dataFile": {
           "type": "string",
-          "description": "Path to demand.csv with daily coverage requirements. Format: date,shift,team,minimum,ideal,estimated. The 'team' column contains team codes (team model) or competency codes (competency model). See FORMAT.md for validation rules."
+          "description": "Path to demand.csv with daily coverage requirements. Format: date,workPeriod,team,minimum,ideal,estimated. The 'team' column contains team codes (team model) or competency codes (competency model). See FORMAT.md for validation rules."
         },
         "organizationalUnits": {
           "type": "object",
@@ -366,7 +366,7 @@
             }
           }
         },
-        "shifts": {
+        "workPeriods": {
           "type": ["array", "null"],
           "items": {
             "type": "object",
@@ -374,30 +374,30 @@
             "properties": {
               "code": {
                 "type": "string",
-                "description": "Shift code (e.g., 'M', 'T_A', 'MORNING_8H')"
+                "description": "Work period code (e.g., 'M', 'T_A', 'MORNING_8H')"
               },
               "name": {
                 "type": "string",
-                "description": "Human-readable shift name"
+                "description": "Human-readable work period name"
               },
               "order": {
                 "type": "integer",
                 "minimum": 1,
-                "description": "Shift ordering (1=earliest, higher=later)"
+                "description": "Work period ordering (1=earliest, higher=later)"
               },
               "timeRange": {
                 "type": "object",
-                "description": "Fixed start and end times (for shiftModel='fixed')",
+                "description": "Fixed start and end times (for workPeriodModel='fixed')",
                 "properties": {
                   "start": {
                     "type": "string",
                     "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
-                    "description": "Shift start time (HH:MM)"
+                    "description": "Work period start time (HH:MM)"
                   },
                   "end": {
                     "type": "string",
                     "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
-                    "description": "Shift end time (HH:MM)"
+                    "description": "Work period end time (HH:MM)"
                   }
                 },
                 "required": ["start", "end"]
@@ -405,7 +405,7 @@
               "duration": {
                 "type": "number",
                 "minimum": 0,
-                "description": "Shift duration in hours (for shiftModel='flexible')"
+                "description": "Work period duration in hours (for workPeriodModel='flexible')"
               },
               "allowedStartTimes": {
                 "type": "array",
@@ -413,7 +413,7 @@
                   "type": "string",
                   "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
                 },
-                "description": "Allowed start times for flexible shifts (for shiftModel='flexible')"
+                "description": "Allowed start times for flexible work periods (for workPeriodModel='flexible')"
               },
               "breaks": {
                 "type": "array",
@@ -457,7 +457,7 @@
                         "afterMinutes": {
                           "type": "integer",
                           "minimum": 1,
-                          "description": "Minutes after shift start to take break (required if mode='afterWork')"
+                          "description": "Minutes after work period start to take break (required if mode='afterWork')"
                         }
                       }
                     },
@@ -478,11 +478,11 @@
                     }
                   }
                 },
-                "description": "Break definitions for this shift"
+                "description": "Break definitions for this work period"
               }
             }
           },
-          "description": "Shift definitions - FLEXIBLE: define any shifts needed (M/T/N, DAY/NIGHT, custom codes, etc.). CSV must reference these codes."
+          "description": "Work period definitions - FLEXIBLE: define any work periods needed (M/T/N, DAY/NIGHT, custom codes, etc.). CSV must reference these codes."
         },
         "priorityHierarchy": {
           "type": "array",
@@ -616,7 +616,7 @@
                   "items": {
                     "type": "object",
                     "properties": {
-                      "minShiftHours": {"type": "number"},
+                      "minWorkPeriodHours": {"type": "number"},
                       "breakMinutes": {"type": "integer"},
                       "breakType": {"type": "string"}
                     }

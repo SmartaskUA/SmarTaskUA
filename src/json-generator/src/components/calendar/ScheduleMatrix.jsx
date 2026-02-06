@@ -176,6 +176,7 @@ const ScheduleMatrix = ({
                   key={`${employee.id}-${date}`}
                   sx={{
                     padding: 0,
+                    height: '40px',
                     borderRight: '1px solid #e0e0e0',
                     ...(isWeekend(date) && {
                       backgroundColor: '#fafafa'

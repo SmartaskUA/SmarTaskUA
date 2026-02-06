@@ -95,13 +95,13 @@ src/json-generator/
   currentStep: 0-10,  // 11 steps total (updated Feb 4, 2026)
   stepCompleted: { 0: false, 1: false, ..., 10: false },
   metadata: { problemId, createdAt, description },
-  features: { useShiftBasedScheduling, ... },
+  features: { useWorkPeriodBasedScheduling, ... },
   temporalScope: { year, numDays, targetPeriod },
   contracts: { definitions: [...] },
   employees: { model, simple/competency: [...] },  // model now selected in Step 2
   organizationalUnits: { teams/competencies: [...] },
   scheduleInput: { dataMatrix, markingTypes },
-  demand: { shiftModel, shifts, demandData },
+  demand: { workPeriodModel, shifts, demandData },
   constraints: { hard, soft, advanced },
   optimization: { algorithm, maxTimeMinutes, objectives }
 }
@@ -424,14 +424,14 @@ updateState('scheduleInput.markingTypes', {
 
 ---
 
-### Step 6: Shifts Definition
+### Step 6: Work Periods Definition
 **Status**: Placeholder  
 **Priority**: MEDIUM  
 **Dependencies**: Step 1 (features)
 
 **Implementation Plan**:
 
-**Shift Model Selection**:
+**Work Period Model Selection**:
 - Radio: Fixed vs Flexible
 - Shows in Step 1 feature flags, but configurable here
 
@@ -467,7 +467,7 @@ updateState('scheduleInput.markingTypes', {
 
 **Validation**:
 - At least 1 shift required
-- Unique shift codes
+- Unique work period codes
 - Unique order values
 - Start < End (fixed model)
 - Valid time formats (HH:MM)
@@ -475,7 +475,7 @@ updateState('scheduleInput.markingTypes', {
 
 **State Updates**:
 ```javascript
-updateState('demand.shiftModel', 'fixed');
+updateState('demand.workPeriodModel', 'fixed');
 updateState('demand.shifts', [
   {
     code: 'M',
@@ -548,7 +548,7 @@ updateState('demand.shifts', [
 - Valid shift references
 - Valid team/competency references
 - Dates within temporal scope
-- No duplicate (date, shift, team) combinations
+- No duplicate (date, workPeriod, team) combinations
 
 **CSV Format**:
 ```csv
@@ -795,8 +795,8 @@ export function generateProblemJson(state) {
       markingTypes: state.scheduleInput.markingTypes
     },
     demand: {
-      shiftModel: state.demand.shiftModel,
-      shifts: state.demand.shifts,
+      workPeriodModel: state.demand.workPeriodModel,
+      work periods: state.demand.shifts,
       organizationalUnits: state.employees.model === 'team'
         ? {teams: state.organizationalUnits.teams}
         : {competencies: state.organizationalUnits.competencies},

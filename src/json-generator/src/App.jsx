@@ -11,7 +11,7 @@ import Step2_Contracts from './steps/Step2_Contracts';
 import Step3_OrganizationalUnits from './steps/Step3_OrganizationalUnits';
 import Step4_Employees from './steps/Step4_Employees';
 import Step5_ScheduleInput from './steps/Step5_ScheduleInput';
-import Step6_Shifts from './steps/Step6_Shifts';
+import Step6_WorkPeriods from './steps/Step6_WorkPeriods';
 import Step7_Demand from './steps/Step7_Demand';
 import Step8_Constraints from './steps/Step8_Constraints';
 import Step9_Optimization from './steps/Step9_Optimization';
@@ -32,7 +32,7 @@ const WizardContent = () => {
       case 2: return <Step3_OrganizationalUnits />;
       case 3: return <Step4_Employees />;
       case 4: return <Step5_ScheduleInput />;
-      case 5: return <Step6_Shifts />;
+      case 5: return <Step6_WorkPeriods />;
       case 6: return <Step7_Demand />;
       case 7: return <Step8_Constraints />;
       case 8: return <Step9_Optimization />;

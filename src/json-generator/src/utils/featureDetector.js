@@ -8,13 +8,13 @@
  */
 
 /**
- * Auto-detect if shift-based scheduling should be enabled
+ * Auto-detect if work period-based scheduling should be enabled
  * @param {Object} state - The wizard state
- * @returns {boolean} - True if shifts are defined
+ * @returns {boolean} - True if work periods are defined
  */
-export const detectShiftBasedScheduling = (state) => {
-  // If user has defined any shifts in Step 6, enable shift-based scheduling
-  return state.demand?.shifts?.length > 0;
+export const detectWorkPeriodBasedScheduling = (state) => {
+  // If user has defined any work periods in Step 6, enable work period-based scheduling
+  return state.demand?.workPeriods?.length > 0;
 };
 
 /**
@@ -29,12 +29,12 @@ export const detectAdvancedConstraints = (state) => {
   // Check if break rules are enabled
   const breakRulesEnabled = state.constraints?.advanced?.breaks?.enabled || false;
 
-  // Check if any shift has breaks defined
-  const shiftsWithBreaks = state.demand?.shifts?.some(shift =>
-    shift.breaks && shift.breaks.length > 0
+  // Check if any work period has breaks defined
+  const workPeriodsWithBreaks = state.demand?.workPeriods?.some(workPeriod =>
+    workPeriod.breaks && workPeriod.breaks.length > 0
   ) || false;
 
-  return dayOffSwappingEnabled || breakRulesEnabled || shiftsWithBreaks;
+  return dayOffSwappingEnabled || breakRulesEnabled || workPeriodsWithBreaks;
 };
 
 /**
@@ -54,7 +54,7 @@ export const detectPriorityHierarchy = (state) => {
  */
 export const detectAllFeatures = (state) => {
   return {
-    useShiftBasedScheduling: detectShiftBasedScheduling(state),
+    useWorkPeriodBasedScheduling: detectWorkPeriodBasedScheduling(state),
     useAdvancedConstraints: detectAdvancedConstraints(state),
     usePriorityHierarchy: detectPriorityHierarchy(state)
   };
