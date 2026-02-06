@@ -1,0 +1,178 @@
+{
+  "schemaVersion": "2.0",
+  "problemType": "employee_scheduling",
+
+  "metadata": {
+    "problemId": "SIMPLE_2025_01",
+    "createdAt": "2025-12-15T10:00:00Z",
+    "description": "Simple scheduling problem - 5 employees, 2 teams, 7 days",
+    "source": "Example for basic use case"
+  },
+
+  "features": {
+    "useShiftBasedScheduling": true,
+    "useCompetencyModel": false,
+    "useScheduleInput": false,
+    "useMultiLevelDemand": false,
+    "useAdvancedConstraints": false,
+    "usePriorityHierarchy": false
+  },
+
+  "temporalScope": {
+    "year": 2025,
+    "numDays": 7,
+    "targetPeriod": {
+      "start": "2025-01-01",
+      "end": "2025-01-07",
+      "includeBufferWeeks": false
+    }
+  },
+
+  "employees": {
+    "model": "team",
+    "simple": [
+      {
+        "id": "EMP001",
+        "name": "João Silva",
+        "teams": ["A"]
+      },
+      {
+        "id": "EMP002",
+        "name": "Maria Santos",
+        "teams": ["A", "B"]
+      },
+      {
+        "id": "EMP003",
+        "name": "Pedro Costa",
+        "teams": ["B"]
+      },
+      {
+        "id": "EMP004",
+        "name": "Ana Oliveira",
+        "teams": ["A"]
+      },
+      {
+        "id": "EMP005",
+        "name": "Carlos Rodrigues",
+        "teams": ["B"]
+      }
+    ]
+  },
+
+  "demand": {
+    "model": "simple",
+    "shiftModel": "fixed",
+    "organizationalUnits": {
+      "teams": ["A", "B"]
+    },
+    "shifts": [
+      {
+        "code": "M",
+        "name": "Morning",
+        "order": 1,
+        "timeRange": {
+          "start": "08:00",
+          "end": "16:00"
+        }
+      },
+      {
+        "code": "T",
+        "name": "Afternoon",
+        "order": 2,
+        "timeRange": {
+          "start": "14:00",
+          "end": "22:00"
+        }
+      }
+    ],
+    "simple": [
+      {
+        "pattern": "weekdays",
+        "unit": "A",
+        "shift": "M",
+        "minimum": 2,
+        "ideal": 3
+      },
+      {
+        "pattern": "weekdays",
+        "unit": "A",
+        "shift": "T",
+        "minimum": 1,
+        "ideal": 2
+      },
+      {
+        "pattern": "weekdays",
+        "unit": "B",
+        "shift": "M",
+        "minimum": 1,
+        "ideal": 2
+      },
+      {
+        "pattern": "weekdays",
+        "unit": "B",
+        "shift": "T",
+        "minimum": 1,
+        "ideal": 1
+      },
+      {
+        "pattern": "weekends",
+        "unit": "A",
+        "shift": "M",
+        "minimum": 1,
+        "ideal": 2
+      },
+      {
+        "pattern": "weekends",
+        "unit": "B",
+        "shift": "M",
+        "minimum": 1,
+        "ideal": 1
+      }
+    ]
+  },
+
+  "constraints": {
+    "hard": [
+      {
+        "id": "max-consecutive-days",
+        "type": "max_consecutive_days",
+        "params": {
+          "window": 6,
+          "max_worked": 5
+        }
+      },
+      {
+        "id": "no-backward-shift-transitions",
+        "type": "no_earlier_shift_next_day",
+        "params": {}
+      }
+    ],
+    "soft": [
+      {
+        "id": "min-coverage",
+        "type": "min_coverage",
+        "params": {
+          "penalty_per_missing": 1000
+        },
+        "weight": 1000
+      }
+    ]
+  },
+
+  "optimization": {
+    "algorithm": "CSPv2",
+    "maxTimeMinutes": 5,
+    "objectives": [
+      {
+        "goal": "minimize_shortages",
+        "weight": 1000,
+        "priority": 1
+      },
+      {
+        "goal": "balance_workload",
+        "weight": 10,
+        "priority": 2
+      }
+    ]
+  }
+}

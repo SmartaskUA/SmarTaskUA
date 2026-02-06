@@ -8,6 +8,7 @@ import {
   Code2,
   Sun,
   FileText,
+  Database,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import "../styles/Manager.css";
@@ -45,8 +46,8 @@ const Sidebar_Manager = () => {
         <Link to="/manager/importminimus" className={`nav-item ${isActive("/manager/importminimus") ? "active" : ""}`}>
           <FileText size={20} className="icon"/> Import Minimums
         </Link>
-        <Link to="/manager/rulesets" className={`nav-item ${isActive("/manager/rulesets") ? "active" : ""}`}>
-          <Briefcase size={20} className="icon"/> Rule Sets
+        <Link to="/manager/problems" className={`nav-item ${isActive("/manager/problems") ? "active" : ""}`}>
+          <Database size={20} className="icon"/> Problems
         </Link>
       </nav>
       <div className="manager-btn">

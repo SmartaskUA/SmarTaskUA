@@ -637,13 +637,25 @@ def analyze(file, holidays, mins, employees, year, granularity=30):
 
     # Ideals: only calculate if we actually have ideal values
     has_ideals = len(ideals_required_dict) > 0
+
     if has_ideals:
         ideals_required_ordered = order_minimums(ideals_required_dict)
         ideals_required_ordered = add_feriados_and_sundays(ideals_required_ordered, (all_teams, all_hours))
         totalIdealGap = compare_minimums(ideals_required_ordered, mins_final_ordered)
     else:
-        totalIdealGap = 0
-        print("[INFO] No ideal requirements provided - totalIdealGap set to 0")
+        totalIdealGap = None
+        print("[INFO] No ideal requirements provided - totalIdealGap set to N/A")
+
+    # Robustness gap: always calculate using synthetic ideals (minimum + 1)
+    synthetic_ideals = {}
+    for key, min_value in mins_required_ordered.items():
+        if min_value == -1:  # Skip holidays/sundays
+            synthetic_ideals[key] = -1
+        else:
+            synthetic_ideals[key] = min_value + 1
+
+    staffingRobustnessGap = compare_minimums(synthetic_ideals, mins_final_ordered)
+    print(f"[DEBUG] Staffing Robustness Gap (synthetic ideals = min+1): {staffingRobustnessGap}")
 
     print(f"[DEBUG] Total Staffing Gap: {totalStaffingGap}")
     print(f"[DEBUG] Overstaff: {hourlyOverstaff}")
@@ -720,9 +732,12 @@ def analyze(file, holidays, mins, employees, year, granularity=30):
     for daynum in col_to_day.values():
         daynum_to_date[daynum] = start_date + pd.Timedelta(days=daynum - 1)
     
-    # Special columns (holidays)
-    all_special_cols = [col for col, daynum in col_to_day.items() 
-                        if daynum in daynum_to_date and daynum_to_date[daynum] in holidays_set]
+    # Special columns (holidays AND Sundays)
+    all_special_cols = [col for col, daynum in col_to_day.items()
+                        if daynum in daynum_to_date and (
+                            daynum_to_date[daynum] in holidays_set or
+                            daynum_to_date[daynum].weekday() == 6  # Sunday
+                        )]
     
     # Debug counters
     debug_work_holidays = []
@@ -755,7 +770,7 @@ def analyze(file, holidays, mins, employees, year, granularity=30):
         # KPI: Vacation days quota deviation (quota: 30 days/year)
         vacationDaysQuotaDeviation += abs(30 - vacation_days)
         
-        # KPI: Holiday work limit violations (limit: max 22 holidays/year)
+        # KPI: Holiday work limit violations (limit: max 22 holidays+sundays/year)
         total_worked_holidays = sum(1 for c in all_special_cols if c in row.index and is_work_block(row[c]))
         
         if total_worked_holidays > 0:
@@ -788,38 +803,35 @@ def analyze(file, holidays, mins, employees, year, granularity=30):
                 streak = 0
         consecutiveDaysViolations += fails
         
-        # KPI: Minimum rest time violations (11 hours between shifts)
+        # KPI: Minimum rest time violations (12 hours between shifts)
         # Check each consecutive day pair (day D and day D+1)
-        for i in range(len(dia_cols) - 1):
-            current_col = dia_cols[i]
-            next_col = dia_cols[i + 1]
-            
-            current_shift = row.get(current_col, "")
-            next_shift = row.get(next_col, "")
-            
-            # Skip if either shift is not a work block (OFF/VACATION/empty)
-            if not is_work_block(current_shift) or not is_work_block(next_shift):
-                continue
-            
-            # Parse shift times
-            _, end_current, _ = parse_block(current_shift)
-            start_next, _, _ = parse_block(next_shift)
-            
-            # Skip if parsing failed
-            if end_current is None or start_next is None:
-                continue
-            
-            # Calculate rest hours (assuming next day starts after midnight)
-            # Normal case: shift ends at 22h, next starts at 9h → rest = (24-22) + 9 = 11h
-            rest_hours = (24 - end_current) + start_next
-            
-            # Check for violation (less than 11 hours rest)
-            if rest_hours < 11:
-                minRestViolations += 1
+        last_worked_day_index = None
+        last_worked_shift = None
+
+        for i, col in enumerate(dia_cols):
+            current_shift = row.get(col, "")
+    
+            if not is_work_block(current_shift):
+                continue  # Skip non-work days
+    
+            # Check rest from last worked day (if exists)
+            if last_worked_day_index is not None:
+                # Only check if days are TRULY consecutive (no gap)
+                if i == last_worked_day_index + 1:  
+                    # Do rest calculation
+                    _, end_last, _ = parse_block(last_worked_shift)
+                    start_current, _, _ = parse_block(current_shift)
+                    rest_hours = (24 - end_last) + start_current
+                    if rest_hours < 12:
+                        minRestViolations += 1
+    
+        # Update last worked day
+        last_worked_day_index = i
+        last_worked_shift = current_shift
     
     # Print debug info
-    print(f"\n[DEBUG WORK HOLIDAYS]")
-    print(f"  Total special columns (holidays/sundays): {len(all_special_cols)}")
+    print(f"\n[DEBUG WORK HOLIDAYS + SUNDAYS]")
+    print(f"  Total special columns (holidays + sundays): {len(all_special_cols)}")
     print(f"  Employees who worked on holidays/sundays: {len(debug_work_holidays)}")
     
     if debug_work_holidays:
@@ -839,7 +851,8 @@ def analyze(file, holidays, mins, employees, year, granularity=30):
         "consecutiveDaysViolations": consecutiveDaysViolations,
         "minRestViolations": minRestViolations,
         "totalStaffingGap": totalStaffingGap,
-        "totalIdealGap": totalIdealGap if has_ideals else None,
+        "totalIdealGap": totalIdealGap,
+        "staffingRobustnessGap": staffingRobustnessGap,
         "excessStaffing": hourlyOverstaff,
         "staffingCoverageRate": staffingCoverageRate
     }

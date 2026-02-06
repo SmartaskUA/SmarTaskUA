@@ -5,9 +5,9 @@ const LegendBox = ({ scheduleType, teamLegends = [] }) => {
   const isHourly = normalizedType === "horas" || normalizedType === "hours";
 
   const shiftLegends = [
-    { label: "Break", color: "#ffffff" },
-    { label: "Holiday", color: "#800080" },
     { label: "Vacation", color: "#ffcccb" },
+    { label: "Off", color: "#f5f7fa" },
+    { label: "Holiday", color: "#800080" },
     { label: "Morning", color: "#d4edda" },
     { label: "Afternoon", color: "#f9e79f" },
     { label: "Night", color: "#9eb3caff" },
@@ -19,7 +19,7 @@ const LegendBox = ({ scheduleType, teamLegends = [] }) => {
     ...teamLegends,
   ];
 
-  const legends = isHourly ? hourlyLegends : shiftLegends;
+  const legends = isHourly ? hourlyLegends : [...shiftLegends, ...teamLegends];
 
   return (
     <div

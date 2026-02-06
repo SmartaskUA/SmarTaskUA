@@ -3,6 +3,7 @@ import numpy as np
 from collections import defaultdict
 import holidays as hl
 
+from algorithms.general.solver_logging import SolutionTracker, write_csp_log
 from algorithms.utils import (
     rows_to_vac_dict,
     rows_to_req_dicts,
@@ -152,32 +153,40 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
         unmet_ideal[(day, s, t)] = z
         m.Add(sum(cover) + z >= ideal)
 
-    # Workdays should be 223
     target_workdays = 223
-    workdays = {employee: m.NewIntVar(0, target_workdays, f"work_{employee}") for employee in Employees}
-    dev_under = {employee: m.NewIntVar(0, target_workdays, f"dev_under_{employee}") for employee in Employees}
-    dev_over  = {employee: m.NewIntVar(0, target_workdays, f"dev_over_{employee}") for employee in Employees}
     for employee in Employees:
-        m.Add(workdays[employee] == sum(1 - off[(employee, d)] for d in D))
-        m.Add(workdays[employee] + dev_under[employee] - dev_over[employee] == target_workdays)
+        total_work = sum(1 - off[(employee, d)] for d in D)
+        m.Add(total_work == target_workdays)
 
-    w_unmet_min, w_workday_dev = 1000, 1
+
+    w_unmet_min = 100
     w_unmet_ideal = 1
     obj = []
     obj += [w_unmet_min * unmet[k] for k in unmet]
-    obj += [w_workday_dev * (dev_under[employee] + dev_over[employee]) for employee in Employees]
     obj += [w_unmet_ideal * unmet_ideal[k] for k in unmet_ideal]
     m.Minimize(sum(obj))
 
     # Solve model
+    # --- SOLVING ---
     solver = cp_model.CpSolver()
     if maxTime is not None:
-        # maxTime is in minutes converted to seconds
         solver.parameters.max_time_in_seconds = float(int(maxTime) * 60)
+    solver.parameters.relative_gap_limit = 0.001
     solver.parameters.num_search_workers = 8
+    solver.parameters.log_search_progress = True 
 
-    status = solver.Solve(m)
+    # Attach the tracker
+    tracker = SolutionTracker()
+    status = solver.Solve(m, solution_callback=tracker)
+    write_csp_log(
+        tracker=tracker,
+        solver=solver,
+        status=status,
+        n_employees=n_employees,
+        max_time=maxTime,
+    )
 
+    # --- EXPORT SCHEDULE ---
     assign = defaultdict(list)
     if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
         for employee in Employees:

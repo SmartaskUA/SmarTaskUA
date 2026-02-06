@@ -1,0 +1,78 @@
+# Employee Scheduling Demand Requirements Template
+# ==================================================
+#
+# PURPOSE:
+#   This CSV specifies HOW MANY people are needed for each day/shift/team combination.
+#   The algorithm uses these requirements to generate the schedule.
+#
+# REQUIRED COLUMNS:
+#   date           - Date in YYYY-MM-DD format (ISO 8601)
+#   shift          - Shift code (must match a shift defined in problem.json shifts array)
+#   team           - Team/competency code (see note below about this column)
+#   minimum        - Minimum people required (hard constraint - MUST be satisfied)
+#   ideal          - Ideal number of people (soft target - algorithm tries to reach this)
+#   estimated      - Estimated demand (used for KPI analysis after schedule generation)
+#
+# IMPORTANT NOTE ABOUT THE "team" COLUMN:
+#   The "team" column is semantically flexible depending on your employee model:
+#
+#   - If using TEAM MODEL (employees.model="team"):
+#     → This column contains TEAM CODES from organizationalUnits.teams[]
+#     → Example: "TeamA", "TeamB", "Sales", "Support"
+#
+#   - If using COMPETENCY MODEL (employees.model="competency"):
+#     → This column contains COMPETENCY CODES from organizationalUnits.competencies[].code
+#     → Example: "EG", "CAJ", "ALM", "Manager", "Cashier"
+#
+# VALIDATION RULES:
+#   1. All dates must be within temporalScope.targetPeriod in problem.json
+#   2. All shift codes must exist in demand.shifts[].code in problem.json
+#   3. All team/competency codes must exist in organizationalUnits.teams[] or
+#      organizationalUnits.competencies[].code in problem.json
+#   4. Values must satisfy: minimum <= estimated <= ideal
+#   5. No duplicate rows (same date/shift/team combination)
+#
+# FORMAT REQUIREMENTS:
+#   - Dates: YYYY-MM-DD (e.g., 2025-01-15)
+#   - All numeric values must be non-negative integers
+#   - One row per day/shift/team combination
+#   - No empty values
+#
+# COVERAGE LOGIC:
+#   - minimum: Hard constraint - schedule MUST have at least this many people
+#   - ideal: Soft constraint - algorithm tries to assign this many (may assign less if needed)
+#   - estimated: Not used by algorithm, only for post-analysis KPI comparison
+#
+# HOW TO USE THIS TEMPLATE:
+#   1. Copy this file and rename it (e.g., demand_2025_q1.csv)
+#   2. Delete all comment lines (lines starting with #)
+#   3. Keep the header row (date,shift,team,minimum,ideal,estimated)
+#   4. Add your coverage requirements - one row per day/shift/team
+#   5. Validate using: Check that all shifts exist, all teams exist, dates are in range
+#
+# EXAMPLES:
+#   For a simple 2-team, 2-shift problem over 3 days:
+#
+#date,shift,team,minimum,ideal,estimated
+#2025-01-01,M,TeamA,2,3,2
+#2025-01-01,T,TeamA,2,2,2
+#2025-01-01,M,TeamB,1,2,1
+#2025-01-02,M,TeamA,2,3,2
+#2025-01-02,T,TeamA,2,2,2
+#2025-01-02,M,TeamB,1,2,1
+#2025-01-03,M,TeamA,2,3,2
+#2025-01-03,T,TeamA,2,2,2
+#2025-01-03,M,TeamB,1,2,1
+#
+# COMMON PATTERNS:
+#   - Weekdays need more staff: increase minimum/ideal on Mon-Fri
+#   - Special events: increase ideal for specific dates
+#   - Reduced hours (weekends/holidays): fewer shifts or lower minimum
+#
+# TIPS FOR LARGE PROBLEMS (365 days):
+#   - Use Excel/LibreOffice to generate the CSV with formulas
+#   - Use WEEKDAY() function to set different values for weekdays vs weekends
+#   - Use IF() statements for holidays/special events
+#   - Copy-paste for repetitive patterns
+
+date,shift,team,minimum,ideal,estimated

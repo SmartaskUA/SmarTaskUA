@@ -24,6 +24,7 @@ const Calendar = () => {
   const [kpiSummary, setKpiSummary] = useState(null);
   const [holidayMap, setHolidayMap] = useState({});
   const reqToCalRef = useRef({});
+  const [elapsed_time, setElapsedTime] = useState(null);
   const [viewMode, setViewMode] = useState("schedule");
   const [coverageMode, setCoverageMode] = useState("min");
 
@@ -47,10 +48,13 @@ const Calendar = () => {
         if (responseData) {
           const scheduleData = responseData.data;
           const year = responseData.metadata?.year || new Date().getFullYear();
-          const firstDay = new Date(`2021-11-01`).getDay();
+          const firstDay = new Date(`${year}-01-01`).getDay();
+          const elapsed_time = responseData?.elapsed_time || null;
           setFirstDayOfYear(firstDay);
           setData(scheduleData);
           setMetadata(responseData.metadata);
+          setElapsedTime(elapsed_time);
+          console.log("Elapsed time:", elapsed_time);
           fetchNationalHolidays(year);
           analyzeScheduleViaWebSocket(scheduleData, responseData.metadata);
         }
@@ -69,7 +73,7 @@ const Calendar = () => {
             data.forEach(async (item) => {
               const mappedCalId = reqToCalRef.current[item.requestId];
               if (mappedCalId === calendarId) {
-                console.log("✅ KPI recebido:", item.result);
+                console.log("KPI recebido:", item.result);
                 setKpiSummary(item.result);
               }
               const res = await axios.post(`${BaseUrl}/schedules/analyze`, fd);
@@ -146,6 +150,13 @@ const Calendar = () => {
     link.click();
   };
 
+  const formatElapsedTime = (seconds) => {
+  if (!seconds && seconds !== 0) return null;
+  if (seconds < 60) return `${seconds.toFixed(2)} sec`;
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.round(seconds % 60);
+  return `${mins} min${secs > 0 ? ` ${secs} sec` : ""}`;
+};
   const scheduleType = inferScheduleType(metadata);
   const isHourly = scheduleType === "Horas";
   const missingMinimums =
@@ -178,6 +189,24 @@ const Calendar = () => {
             setViewMode((prev) => (prev === "minimums" ? "schedule" : "minimums"))
           }
         />
+
+        {elapsed_time != null && (
+          <div
+            style={{
+              fontSize: "1rem",
+              color: "#555",
+              margin: "10px 0 20px 5px",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            <span style={{ fontSize: "1.2rem" }}>⏱</span>
+            <span>
+              Generated in <strong>{formatElapsedTime(elapsed_time)}</strong>
+            </span>
+          </div>
+        )}
 
         {viewMode === "schedule" ? (
           <CalendarTable

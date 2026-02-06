@@ -4,40 +4,24 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import smartask.api.event.RabbitMqProducer;
-import smartask.api.models.Employee;
-import smartask.api.models.Rule;
-import smartask.api.models.RuleSet;
-import smartask.api.models.Team;
-import smartask.api.repositories.SchedulesRepository;
-import smartask.api.services.EmployeeService;
-import smartask.api.services.RuleSetService;
-import smartask.api.services.SchedulesService;
-import smartask.api.services.TeamService;
-
-import java.io.InputStream;
-import java.time.Instant;
-import java.util.List;
-import java.util.stream.Stream;
+import smartask.api.bootstrap.ScenarioSeeder;
+import smartask.api.services.ProblemService;
 
 @EnableScheduling
 @SpringBootApplication
 public class ApiApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(ApiApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(ApiApplication.class, args);
+    }
 
-	@Bean
-	CommandLineRunner initDatabase(TeamService teamService, EmployeeService employeeService,
-								   SchedulesRepository schedulesRepository, SchedulesService schedulesService, RabbitMqProducer producer, RuleSetService ruleSetService) {
-		return args -> {
-			ObjectMapper mapper = new ObjectMapper();
+    @Bean
+    CommandLineRunner initDatabase(ScenarioSeeder scenarioSeeder) {
+        return args -> {
+            scenarioSeeder.seedIfEnabled();
+        };
+    }
 
 			// Load the JSON file from resources
 			InputStream inputStream = new ClassPathResource("rules.json").getInputStream();
@@ -250,4 +234,12 @@ public class ApiApplication {
 			
 		};
 	}
+    @Bean
+    CommandLineRunner initProblems(ProblemService problemService) {
+        return args -> {
+            System.out.println("[Startup] Seeding problems from data/problems...");
+            problemService.seedDefaultProblems();
+            System.out.println("[Startup] Problem seeding complete.");
+        };
+    }
 }
