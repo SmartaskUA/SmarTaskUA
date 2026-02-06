@@ -6,7 +6,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
-# Capabilities for "general" algorithms.
 GENERAL_CAPABILITIES = {
     "ilp_general": {
         "team_eligibility",
