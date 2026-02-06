@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Select, MenuItem, TextField } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { isTimeConstraint, getConstraintType } from '../../utils/validators/timeConstraintValidator';
 
 /**
  * Get cell background color based on value type
@@ -8,16 +9,33 @@ import { styled } from '@mui/material/styles';
 function getCellColor(value) {
   if (!value || value === '') return '#ffffff';
 
-  const val = value.toString().trim().toUpperCase();
+  const val = value.toString().trim();
+
+  // Check for time constraints first (case-sensitive)
+  if (isTimeConstraint(val)) {
+    const type = getConstraintType(val);
+    switch (type) {
+      case 'ONLY':
+        return '#f3e5f5'; // light purple
+      case 'ATLEAST':
+        return '#fff3e0'; // light orange
+      case 'NOT':
+        return '#fce4ec'; // light pink
+      default:
+        return '#ffffff';
+    }
+  }
+
+  const valUpper = val.toUpperCase();
 
   // Auto-allocate
-  if (val === 'A') return '#e8f5e9'; // light green
+  if (valUpper === 'A') return '#e8f5e9'; // light green
 
   // Vacation
-  if (val === 'VAC') return '#fff9c4'; // light yellow
+  if (valUpper === 'VAC') return '#fff9c4'; // light yellow
 
-  // Not available
-  if (val === 'NOT') return '#ffebee'; // light red
+  // Not available (plain NOT, not time constraint)
+  if (valUpper === 'NOT') return '#ffebee'; // light red
 
   // Numeric hours (custom hours)
   const numVal = parseFloat(val);
