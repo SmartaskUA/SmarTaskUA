@@ -79,10 +79,7 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-
-      - name: Copy master rules.json
-        run: cp config/rules.json src/scheduler/rules.json
-
+          
       - name: Install scheduler dependencies
         working-directory: src/scheduler
         run: |
