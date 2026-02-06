@@ -1,22 +1,23 @@
+import copy
 import csv
 from collections import defaultdict
 import datetime
-from time import time
 
 import numpy as np
 import pandas as pd
 import pulp
 import holidays
-from time import time, sleep
+import time
 import random
 
 from algorithms.utils import (
     rows_to_vac_dict,
     rows_to_req_dicts,
-    TEAM_CODE_TO_ID,      
     TEAM_ID_TO_CODE,      
     get_team_id,   
-    get_team_code       
+    get_team_code,
+    count_minimum_failures,
+    check_5_consecutive_days       
 )
 
 
@@ -27,7 +28,11 @@ class Heuristica:
     """
     
     def __init__(self, vacations_rows, minimums_rows, employees, maxTime, year=2025, 
-                 store_hours=13, work_blocks=None):
+                 store_hours=13, work_blocks=None, W_TOTAL=0.65, W_WEEK=0.25, W_TEAMS=0.05):
+
+        self.W_TOTAL = W_TOTAL
+        self.W_WEEK = W_WEEK
+        self.W_TEAMS = W_TEAMS
         
         self.year = year
         self.maxTime_sec = int(maxTime) * 60 if maxTime is not None else None
@@ -82,26 +87,6 @@ class Heuristica:
           "C": {3},         # Equipa C tem empregado 3
         }
         """
-
-        # Holidays and Sundays
-        feriados_pt = {
-            datetime.date(2022, 1, 1): "New Year's Day", 
-            datetime.date(2022, 1, 6): 'Epiphany', 
-            datetime.date(2022, 3, 1): 'Day of Baleares', 
-            datetime.date(2022, 4, 14): 'Maundy Thursday', 
-            datetime.date(2022, 4, 15): 'Good Friday', 
-            datetime.date(2022, 5, 1): 'Labor Day', 
-            datetime.date(2022, 5, 2): 'Madrid Day', 
-            datetime.date(2022, 6, 29): 'Folga', 
-            datetime.date(2022, 7, 8): 'Folga', 
-            datetime.date(2022, 8, 15): 'Assumption Day', 
-            datetime.date(2022, 9, 8): 'Regional Holiday', 
-            datetime.date(2022, 10, 12): 'National Day',
-            datetime.date(2021, 11, 1): "All Saints' Day", 
-            datetime.date(2021, 12, 6): 'Constitution Day',
-            datetime.date(2021, 12, 8): 'Immaculate Conception',
-            datetime.date(2021, 12, 25): 'Christmas Day'
-        }
     
         # Vacations
         vacs_dict = rows_to_vac_dict(vacations_rows)
@@ -142,7 +127,6 @@ class Heuristica:
         }
         """
 
-        #time.sleep(1000)  # para debug sequencial
         # Model variables
 
         self.assignment = defaultdict(list)
@@ -216,12 +200,6 @@ class Heuristica:
         hours.update(range(break_start + 1, end))  # Second period (skip break hour)
         return hours
 
-    def _blocks_overlap(self, block1, block2):
-        """Check if two work blocks have overlapping working hours."""
-
-        hours1 = self._get_working_hours(block1)
-        hours2 = self._get_working_hours(block2)
-        return len(hours1 & hours2) > 0
 
     def _validate_block_transition(self, block_today, block_tomorrow):
         """
@@ -245,10 +223,9 @@ class Heuristica:
         # -----------------------------
         # PARAMETERS (tunable weights)
         # -----------------------------
-        W_TOTAL = 0.60   # Quem trabalhou menos tem prioridade
-        W_WEEK  = 0.30   # Equilibrar dentro da semana
-        W_BLOCK = 0.00   # Pequena penalização para descanso
-        W_TEAMS = 0.00   # Remover (redundante para este problema)
+        W_TOTAL = 0.502   # Quem trabalhou menos tem prioridade
+        W_WEEK  = 0.272   # Equilibrar dentro da semana
+        W_TEAMS = 0   # Flexibilidade de equipas
 
         # -----------------------------
         # 1. TOTAL DAYS COMPONENT
@@ -282,22 +259,9 @@ class Heuristica:
         max_teams = max(len(v) for v in self.emp_team_code.values())
 
         if max_teams > 1:
-            team_component = (num_teams - 1) / (max_teams - 1)
+            team_component = max(0.0, 1.0 - (num_teams) / (max_teams))
         else:
             team_component = 0.0
-
-        # -----------------------------
-        # 5. If Employee on Vacation that Week, give him a little boost to work on the days before
-        # -----------------------------
-
-        week_start = d - datetime.timedelta(days=d.weekday())  # Monday
-        week_end = week_start + datetime.timedelta(days=6)     # Sunday
-        vacations_this_week = any(
-            (week_start + datetime.timedelta(days=i)) in self.vacations_dates[f]
-            for i in range(7)
-        )
-        if vacations_this_week:
-            week_component += 0.2  # Small boost
 
         # -----------------------------
         # FINAL SCORE
@@ -305,9 +269,9 @@ class Heuristica:
 
         score = (
             W_TOTAL * total_component +
-            W_WEEK * week_component 
+            W_WEEK * week_component +
             # W_BLOCK * block_component +
-            # W_TEAMS * team_component
+            W_TEAMS * team_component
         )
 
         return score
@@ -373,7 +337,8 @@ class Heuristica:
         result = []
         for b in blocks:
             count = int(pulp.value(x[b]))
-            result.extend([b] * count)
+            result.extend([b] * count) # [4] * 2 -> [4, 4]
+            # O extend adiciona uma lista a outra lista, sem criar listas aninhadas
 
         return result
 
@@ -385,122 +350,24 @@ class Heuristica:
         """
 
         result = {}
-
         for team_code in self.teams.keys():
             blocks = self._solve_block_cover_ilp(day, mins, team_code)
-            blocks.sort()  # cedo → tarde
+            # Ordenar blocos: primeiro por número de horas cobertas (desc), depois pelo início mais cedo
+            blocks.sort()
             result[team_code] = blocks
-
         return result
+    
+    def order_of_ranks(self, Pontuation):
+        """
+        Recebe um dicionário {emp_id: pontuacao} e retorna uma lista de emp_id ordenada por pontuação decrescente.
+        """
+        # Adiciona desempate aleatório em caso de empate de pontuação
+        ranked = list(Pontuation.items())
+        random.shuffle(ranked)  # Embaralha antes de ordenar para garantir desempate aleatório
+        # Ordena por pontuação (maior para menor) com os desempates aleatórios já embaralhados
+        ranked.sort(key=lambda x: x[1], reverse=True)
+        return [emp_id for emp_id, _ in ranked]
 
-
-    
-    def _calculate_all_ranks_for_each_Team(self, Pontuation):
-        """
-        Calculate ranks for employees grouped by team.
-        Each team gets its own ordered list of employee indices.
-        
-        Args:
-            Pontuation (dict): {Employee_ID: Pontuation_Score}
-        
-        Returns:
-            dict: {'Team_Code': [emp_idx_rank1, emp_idx_rank2, ...], ...}
-                  Employees ordered from best (rank 1) to worst within each team
-        """
-        
-        # Group employees by team with their scores
-        team_employees = {}  # {team_code: [(emp_id, score, random_tie)]}
-        
-        for emp_id, score in Pontuation.items():
-            emp_teams = self.emp_team_code.get(emp_id, ())
-            random_tie = random.random()  # Same tie-breaker for all teams this employee is in
-            
-            for team_code in emp_teams:
-                if team_code not in team_employees:
-                    team_employees[team_code] = []
-                team_employees[team_code].append((emp_id, score, random_tie))
-        
-        # Sort employees within each team by score (descending)
-        team_ranks = {}
-        for team_code, employees in team_employees.items():
-            # Sort by score descending, then random tie-breaker
-            sorted_employees = sorted(
-                employees,
-                key=lambda x: (x[1], x[2]),
-                reverse=True
-            )
-            # Extract just the employee IDs in rank order
-            team_ranks[team_code] = [emp_id for emp_id, _, _ in sorted_employees]
-        
-        return team_ranks
-    
-    def _create_global_employee_order(self, team_ranks):
-        """
-        Create a global employee order alternating between teams by rank.
-        Eliminates duplicates when employees belong to multiple teams.
-        
-        Args:
-            team_ranks (dict): {'Team_Code': [emp_rank1, emp_rank2, ...], ...}
-        
-        Returns:
-            list: [emp_id, emp_id, ...] ordered globally across all teams (no duplicates)
-        
-        Example:
-            Input: {'A': [10, 8, 9], 'B': [10, 8, 9]}  # Same employees in both teams
-            Output: [10, 8, 9]  # Each employee appears only once
-        """
-        seen = set()
-        global_order = []
-        
-        # Get all team codes sorted for consistent ordering
-        teams_sorted = sorted(team_ranks.keys())
-        
-        # Find maximum rank depth across all teams
-        max_rank = max(len(ranks) for ranks in team_ranks.values()) if team_ranks else 0
-        
-        # Iterate through ranks (0-based index = rank-1)
-        for rank_idx in range(max_rank):
-            # For each team, add employee at this rank position
-            for team_code in teams_sorted:
-                ranks_list = team_ranks[team_code]
-                if rank_idx < len(ranks_list):
-                    emp_id = ranks_list[rank_idx]
-                    if emp_id not in seen:
-                        global_order.append(emp_id)
-                        seen.add(emp_id)
-        
-        return global_order
-    
-    def Pontuation_rank (self, Pontuation, employee_id):
-        """
-        Rank employees based on their pontuation values.
-        No repeated ranks - employees with same score are ordered randomly.
-        
-        Args:
-            Pontuation (dict): {Employee_ID: Pontuation_Score}
-            employee_id (int): The employee ID to get rank for
-        
-        Returns:
-            int: Rank of the employee (1 = highest pontuation, no ties)
-        """
-        
-        # Create list of (employee_id, score) tuples
-        emp_scores = [(emp_id, score) for emp_id, score in Pontuation.items()]
-        
-        # Sort by score (descending), then by random value to break ties
-        emp_scores_sorted = sorted(
-            emp_scores, 
-            key=lambda x: (x[1], random.random()),  # Score descending, random for ties
-            reverse=True
-        )
-        
-        # Find the employee's position (1-based rank)
-        for rank, (emp_id, _) in enumerate(emp_scores_sorted, start=1):
-            if emp_id == employee_id:
-                return rank
-        
-        # Should never happen, but return last rank as fallback
-        return len(emp_scores_sorted)
 
 
     def build_model(self):
@@ -519,34 +386,22 @@ class Heuristica:
         # Heuristica - Tracking variables (one entry per employee)
     
         Worked_Total_Days = {}      # {Employee: Total Days Worked} - incrementa por cada dia trabalhado
-        Worked_Week_Days = {}       # {Employee: Days Worked this week} - reseta a cada 7 dias
+        Worked_Sequential_Days = {}       # {Employee: Days Worked sequentially} - reseta se não trabalhar
         Worked_Previous_Day = {}    # {Employee: Block worked yesterday} - atualiza diariamente com bloco do dia anterior
         Pontuation = {}              # {Employee: Pontuation} - pontuacao acumulada passada do empregado
 
         for f in funcionarios:
             Worked_Total_Days[f] = 0        # Contador total de dias trabalhados
-            Worked_Week_Days[f] = 0         # Contador semanal (0-5)
+            Worked_Sequential_Days[f] = 0         # Contador de dias trabalhados sequencialmente
             Worked_Previous_Day[f] = None   # Bloco do dia anterior (None = não trabalhou)
             Pontuation[f] = 0               # Pontuação inicial
 
-        flag = False
         for d in dias: 
 
-            # print(f"[Heuristica] Day {d} started.\n")            
-
-            # Reset semanal REAL: segunda-feira
-            if d.weekday() == 0:  # Monday
-                # print(f"[Heuristica] Resetting weekly counters (Monday {d.date()})")
-                for f in funcionarios:
-                    Worked_Week_Days[f] = 0
-
-            if d == datetime.datetime(2022, 10, 10):
-                flag = False
-            elif d == datetime.datetime(2022, 10, 31):
-                flag = False
-
             if d in self.closed_days:
-
+                for f in funcionarios:
+                    Worked_Previous_Day[f] = None
+                    Worked_Sequential_Days[f] = 0
                 continue  # Loja fechada, nenhum funcionário trabalha
 
             # Minimo do dia
@@ -560,52 +415,31 @@ class Heuristica:
             # Avaliacao do dia e devolucao de um conjunto de indices de blocos a atribuir
             Block_Indexes = self.evaluate_Day_ToBlocks(d, mins)
 
-
-            if flag:
-
-                print(f"[Heuristica] Day {d}: Block Indexes to assign: {Block_Indexes}")
-
-            # Calculate all employee ranks ONCE before the loop (avoids inconsistent random ordering)
-            employee_ranks = self._calculate_all_ranks_for_each_Team(Pontuation)
-            if flag:
-                print(f"[Heuristica] Day {d}: Employee ranks per team: {employee_ranks}")
-            
-            original_ranks = {team: list(ranks) for team, ranks in employee_ranks.items()}  # Cópia
-
-
             # Ordem de funcionarios pelo score (maior para menor)
-            create_global_order = self._create_global_employee_order(employee_ranks)
+            create_global_order = self.order_of_ranks(Pontuation)
 
             # Atribuicao dos blocos aos funcionarios
             for f in create_global_order:
 
-                # Verificar se funcionário está de férias
                 if d in self.vacations_dates[f]:
                     Worked_Previous_Day[f] = None
-                    # print(f"[Heuristica] Day {d}, Emp {f}: On vacation, skipping.")
+                    Worked_Sequential_Days[f] = 0
                     continue  # Pula para o próximo funcionário
 
                 if len(Block_Indexes) == 0:
                     Worked_Previous_Day[f] = None
+                    Worked_Sequential_Days[f] = 0
                     continue  # Nenhum bloco a atribuir
 
-                if Worked_Week_Days[f] >= 5:
+                if Worked_Sequential_Days[f] >= 5:
                     Worked_Previous_Day[f] = None
-                    if flag:
-                        print(f"[Heuristica] Day {d}, Emp {f}: Skipping due to 5 days worked this week.")
-
+                    Worked_Sequential_Days[f] = 0
                     continue  # Funcionário já trabalhou 5 dias esta semana
 
                 if Worked_Total_Days[f] >= 223:
                     Worked_Previous_Day[f] = None
-                    if flag:
-                        print(f"[Heuristica] Day {d}, Emp {f}: Skipping due to 223 total days worked.")
-
+                    Worked_Sequential_Days[f] = 0
                     continue  # Funcionário já atingiu o máximo anual de dias trabalhados
-
-                # Get employee's rank from pre-calculated ranks
-                # ranks = employee_ranks.get(f, len(funcionarios))
-                emp_score = Pontuation.get(f, 0)
         
                 Emp_Teams = self.emp_team_code[f]
                 # Ordenar equipas por número de blocos necessários (descendente)
@@ -615,42 +449,15 @@ class Heuristica:
                     reverse=True
                 )
 
-                
-                if flag:
-                    print(f"[Heuristica] Day {d}, Emp {f}: Teams most needed: {teams_most_needed}")
-                # teams_most_needed = [('A', 4), ('B', 3), ('C', 1)] → lista de tuplas (equipa, num_blocos)
-                
-                # if not teams_most_needed or teams_most_needed[0][1] == 0:
-                #     continue  # Nenhum bloco necessário para as equipas do funcionário
-                
-                # Tentar atribuir bloco priorizando equipas com mais necessidades
                 assigned = False
                 
                 for team_code, num_blocks in teams_most_needed:
-                    # Escolhe a equipa com mais blocos necessários
                     if assigned:
                         break  # Já atribuiu, sair
-
-                    emp_rank_in_team = original_ranks[team_code].index(f)
-
-                    if flag:
-                        print(f"[Heuristica] Day {d}, Emp {f}: Pontuation {emp_score:.4f}, Rank {emp_rank_in_team}")
-                
-
-
-                    # Se a posicao do indice do funcionario nos ranks for menor do que o tamanho da lista com indices de blocos a atribuir passa a frente  # 1-based rank
-                    # if emp_rank_in_team > len(original_Block_Indexes[team_code]):
-                    #     if flag:
-                    #         print(f"[Heuristica] Day {d}, Emp {f}: Rank {emp_rank_in_team} exceeds blocks needed {len(Block_Indexes[team_code])} for team {team_code}, skipping.")
-                    #     continue  # Pula para a próxima equipa
-
 
                     # Tentar cada bloco disponível desta equipa
                     for block_idx_position in range(len(Block_Indexes[team_code])):
                         assigned_block_idx = Block_Indexes[team_code][block_idx_position]
-                        if flag:
-                            print(f"[Heuristica] Day {d}, Emp {f}: Trying to assign block index {assigned_block_idx} for team {team_code}")
-                        
                         assigned_block = self.work_blocks[assigned_block_idx]
                         
                         # Verificar transição de blocos
@@ -658,54 +465,38 @@ class Heuristica:
                         if prev_block_idx is not None:
                             prev_block = self.work_blocks[prev_block_idx]
                             if not self._validate_block_transition(prev_block, assigned_block):
-                                # Bloco inválido para ESTE empregado - tenta o próximo bloco
-                                if flag:
-                                    print(f"[Heuristica] Day {d}, Emp {f}: Block {assigned_block_idx} invalid (12h rest), trying next block")
-                                continue  # Tenta próximo bloco SEM remover
+                               continue  # Tenta próximo bloco SEM remover
                         
                         # Atribuição válida - AGORA remove bloco da lista
                         Block_Indexes[team_code].pop(block_idx_position)
-                        employee_ranks[team_code].pop(employee_ranks[team_code].index(f))
                         
                         self.assignment[f + 1].append((
                             self.dates.index(d) + 1, 
                             assigned_block_idx, 
                             get_team_id(team_code)
                         ))
-                        if flag:
-                            print(f"\033[94m[Heuristica] Day {d}, Emp {f}: Assigned block {assigned_block} (index {assigned_block_idx}) for team {team_code}\033[0m")  
-                        # sleep(1)  # Para evitar prints sobrepostos
+
                         # Atualizar variáveis de rastreamento
                         Worked_Total_Days[f] += 1
-                        Worked_Week_Days[f] += 1
+                        Worked_Sequential_Days[f] += 1
                         Worked_Previous_Day[f] = assigned_block_idx
                         assigned = True
-                        # print(f"[Heuristica] Day {d}, Emp {f}: Worked Total Days: {Worked_Total_Days[f]}, Worked Week Days: {Worked_Week_Days[f]}")
                         break  # Bloco atribuído com sucesso
                     
                 if not assigned:
                     Worked_Previous_Day[f] = None
-                    if flag:
-                        print(f"[Heuristica] Day {d}, Emp {f}: No block assigned.")
-
+                    Worked_Sequential_Days[f] = 0
 
                 # Atualizar pontuação 
-                Pontuation[f] = self.choose_Employee(Worked_Total_Days, Worked_Week_Days, Worked_Previous_Day, self.emp_team_code[f], f, d)
-                if flag:    
-                    print(f"[Heuristica] Day {d}, Emp {f}: New Pontuation {Pontuation[f]:.4f}")
-
-            
-            
-            # print(f"[Heuristica] Day {d} completed.\n")
-            sleep(0)  # Pequena pausa para clareza nos prints
-
+                Pontuation[f] = self.choose_Employee(Worked_Total_Days, Worked_Sequential_Days, Worked_Previous_Day, self.emp_team_code[f], f, d)
+                
         return True
 
 #   # =========================================================
 
     def solve(self):
         """Execute the heuristic scheduling algorithm."""
-        import time as time_module
+        # import time as time_module (not needed, use 'import time' at top)
         
         print(f"\n{'='*80}")
         print(f"[Heuristica] EXECUTING HEURISTIC SCHEDULER")
@@ -713,15 +504,15 @@ class Heuristica:
         print(f"[Heuristica] Building schedule...")
         
         # Start timing
-        start_wall = time()
-        start_cpu = time_module.process_time()
+        start_wall = time.time()
+        start_cpu = time.process_time()
         
         # Build model executes the heuristic and populates self.assignment
         self.build_model()
         
         # End timing
-        end_wall = time()
-        end_cpu = time_module.process_time()
+        end_wall = time.time()
+        end_cpu = time.process_time()
         
         wall_time = end_wall - start_wall
         cpu_time = end_cpu - start_cpu
@@ -767,14 +558,13 @@ class Heuristica:
         print(f"[Heuristica] Schedule exported to {filename}")
 
     def to_table(self):
-        """Return schedule as table for display."""
+        """Return schedule as table for display and print days worked per employee."""
         header = ["Employee"] + [f"Day{i}" for i in range(1, self.num_days + 1)]
         rows = [header]
-        
+        dias_trabalhados = {}
         for emp_id in sorted([i + 1 for i in self.employees]):
             vac_days = set(self.vacs_1based.get(emp_id, []))
             day_to_block = {d: (b, t) for (d, b, t) in self.assignment.get(emp_id, [])}
-            
             line = [f"Emp{emp_id}"]
             for d in range(1, self.num_days + 1):
                 if d in vac_days:
@@ -786,14 +576,12 @@ class Heuristica:
                     line.append(f"{block[0]}-{block[1]}-{block[2]}_{team_code}")
                 else:
                     line.append("OFF")
-            
             rows.append(line)
-        
         return rows
+    
 
 
-def solve(vacations, minimuns, employees, maxTime, year=2025, hours=13, 
-          work_blocks=None, rules=None):
+def solve(vacations=None, minimuns=None, employees=None, maxTime=None, year=2021, hours=13, work_blocks=None, rules=None, **kwargs):
     """
     Main solve function for hourly scheduling.
     
@@ -810,22 +598,60 @@ def solve(vacations, minimuns, employees, maxTime, year=2025, hours=13,
     Returns:
         Table representation of the schedule
     """
-    scheduler = Heuristica(
-        vacations_rows=vacations,
-        minimums_rows=minimuns,
-        employees=employees,
-        maxTime=maxTime,
-        year=year,
-        store_hours=hours,
-        work_blocks=work_blocks
-    )
 
-    scheduler.solve()
-    scheduler.export_csv("heuristic_schedule.csv")
+    # Executa múltiplas rodadas da heurística durante o tempo máximo (maxTime em minutos)
+    total_seconds = 90
+    import copy
+    import time
+    best_score = None
+    best_scheduler = None
+    best_assignment = None
+    start = time.time()
+    n_iter = 0
     
-    return scheduler.to_table()
+    while time.time() - start < total_seconds:
 
+        scheduler = Heuristica(
+            vacations, 
+            minimuns, 
+            employees, 
+            maxTime, 
+            year=year, 
+            store_hours=hours, 
+            work_blocks=work_blocks
+        )
+        scheduler.solve()
+        # Critério: menor número de falhas aos mínimos necessários
+        score = count_minimum_failures(scheduler)
 
+        if (best_score is None) or (score < best_score):
+            best_score = score
+            best_scheduler = scheduler
+            best_assignment = copy.deepcopy(scheduler.assignment)
+            print(f"[Heuristica-Multi] Nova melhor solução encontrada na iteração {n_iter+1} (falhas={score})")
+        n_iter += 1
 
-## Fazer regra de 5 dias consecutivos de trabalho
-## Desenvolver kpis
+        print(f"[Heuristica-Multi] Iteração {n_iter} concluída. Tempo decorrido: {time.time() - start:.2f}s")
+        print(f"[Heuristica-Multi] Score desta iteração {score} Melhor score até agora: {best_score}")
+
+    # Restaurar melhor assignment
+    if best_scheduler and best_assignment:
+        best_scheduler.assignment = best_assignment
+        best_scheduler.export_csv("heuristic_schedule_best.csv")
+        print(f"[Heuristica-Multi] Total de iterações: {n_iter}")
+        print(f"[Heuristica-Multi] Melhor score: {-best_score if best_score is not None else None}")
+        table = best_scheduler.to_table()
+        # --- Verificação de violação dos 5 dias consecutivos ---
+        
+        violations = check_5_consecutive_days(table)
+        if violations:
+            print("[Heuristica00] Violação dos 5 dias consecutivos detectada:")
+            for emp, start, end in violations:
+                print(f"  {emp}: Dias {start} a {end}")
+        else:
+            print("[Heuristica00] Nenhuma violação dos 5 dias consecutivos encontrada.")
+        return table
+    else:
+        print("[Heuristica00] Nenhuma solução encontrada, devolvendo tabela vazia.")
+        return [["Employee"]]
+

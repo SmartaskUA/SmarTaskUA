@@ -13,18 +13,18 @@ class TestConfig:
     """Local testing configuration - edit these flags to control what runs"""
     
     # Test flags - set to True/False to enable/disable each test
-    TEST_30MIN = True
+    TEST_30MIN = False
     TEST_1HOUR = True
     
     # File paths
-    CSV_30MIN = "Horário_Por_Intervalos_30min.csv"
-    CSV_1HOUR = "Horário_Por_Intervalos_1Hora_7hours_to_run.csv"
+    CSV_30MIN = "ILP1_Case1_HH.csv"
+    CSV_1HOUR = "ILP2.csv"
     
-    MINS_CSV = "Mins_R10-R62.csv"  # Same CSV for both granularities
+    MINS_CSV = "Mins_R10-R62_New.csv"  # Same CSV for both granularities
     VACATION_CSV = "VacationTemplate_Case1_21.csv"
 
 # ==============================================================================
-# MINIMUMS LOADING - UNIFIED FOR BOTH GRANULARITIES
+# MINIMUMS LOADING - UNIFIED FOR BOTH    GRANULARITIES
 # ==============================================================================
 
 def expand_hour_to_30min(hour_range):

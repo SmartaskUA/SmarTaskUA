@@ -674,3 +674,263 @@ def drange_indexed_h(start, stop, step):
         x += step
 
     return list_indices
+
+
+def automatic_weight_search(
+    vacations,
+    minimuns,
+    employees,
+    maxTime,
+    year,
+    hours,
+    work_blocks=None,
+    max_seconds=25200,
+    early_stop_score=0,
+    seed=None
+):
+    
+    def count_minimum_failures(scheduler):
+        """
+        Conta o número total de falhas aos mínimos necessários na solução atribuída.
+        Para cada (dia, hora, equipa), verifica se o número de funcionários atribuídos < mínimo.
+        """
+        # Reconstruir cobertura por (dia, hora, equipa)
+        coverage = {}
+        for emp_id, assignments in scheduler.assignment.items():
+            for (day_idx, block_idx, team_id) in assignments:
+                date = scheduler.dates[day_idx - 1]
+                block = scheduler.work_blocks[block_idx]
+                team_code = TEAM_ID_TO_CODE.get(team_id, 'A')
+                hours = scheduler._get_working_hours(block)
+                for h in hours:
+                    key = (date, f"{h:02d}-{h+1:02d}", team_code)
+                    coverage[key] = coverage.get(key, 0) + 1
+        failures = 0
+        for key, minimo in scheduler.minimos.items():
+            if minimo > 0:
+                covered = coverage.get(key, 0)
+                if covered < minimo:
+                    failures += 1
+        return failures
+    
+    """
+    Pesquisa automática de pesos contínuos em [0,1] para a heurística.
+    Corre o máximo de combinações possíveis dentro do tempo dado.
+    """
+
+    if seed is not None:
+        random.seed(seed)
+
+    best_score = None
+    best_weights = None
+    best_assignment = None
+    best_scheduler = None
+
+    start_time = time.time()
+    n_iter = 0
+
+    print("\n" + "=" * 80)
+    print("[AutoSearch] INÍCIO DA PESQUISA AUTOMÁTICA DE PESOS")
+    print("=" * 80)
+
+    while time.time() - start_time < max_seconds:
+
+        n_iter += 1
+        used_weights = set()
+
+        # -----------------------------
+        # 1. Gerar pesos aleatórios contínuos
+        # -----------------------------
+        while True:
+            w = [random.random(), random.random(), random.random()]
+            s = sum(w)
+            weights_tuple = tuple(round(x / s, 3) for x in w)  # arredondar para evitar flutuação de ponto flutuante
+            if weights_tuple not in used_weights:
+                used_weights.add(weights_tuple)
+                W_TOTAL, W_WEEK, W_TEAMS = weights_tuple
+                break
+
+        print(f"\n[AutoSearch] Iteração {n_iter}")
+        print(f"  Pesos → TOTAL={W_TOTAL:.4f}, WEEK={W_WEEK:.4f}, TEAMS={W_TEAMS:.4f}")
+
+        # -----------------------------
+        # 2. Executar heurística
+        # -----------------------------
+        scheduler = Heuristica(
+            vacations,
+            minimuns,
+            employees,
+            maxTime,
+            year=year,
+            store_hours=hours,
+            work_blocks=work_blocks,
+            W_TOTAL=W_TOTAL,
+            W_WEEK=W_WEEK,
+            W_TEAMS=W_TEAMS
+        )
+
+        scheduler.solve()
+
+        # -----------------------------
+        # 3. Avaliar solução
+        # -----------------------------
+        score = count_minimum_failures(scheduler)
+        print(f"  Falhas nos mínimos: {score}")
+
+        # -----------------------------
+        # 4. Atualizar melhor solução
+        # -----------------------------
+        if best_score is None or score < best_score:
+            best_score = score
+            best_weights = (W_TOTAL, W_WEEK, W_TEAMS)
+            best_assignment = copy.deepcopy(scheduler.assignment)
+            best_scheduler = scheduler
+
+            print("\033[92m"
+                  f"  ★ NOVA MELHOR SOLUÇÃO (falhas={score})"
+                  "\033[0m")
+
+        # -----------------------------
+        # 5. Early stop se perfeito
+        # -----------------------------
+        if best_score <= early_stop_score:
+            print("[AutoSearch] Solução perfeita encontrada. A terminar.")
+            break
+
+    print("\n" + "=" * 80)
+    print("[AutoSearch] RESULTADO FINAL")
+    print(f"  Iterações: {n_iter}")
+    print(f"  Melhor score: {best_score}")
+    print(f"  Melhores pesos:")
+    print(f"    W_TOTAL = {best_weights[0]:.4f}")
+    print(f"    W_WEEK  = {best_weights[1]:.4f}")
+    print(f"    W_TEAMS = {best_weights[2]:.4f}")
+    print("=" * 80)
+
+    if best_scheduler and best_assignment:
+        best_scheduler.assignment = best_assignment
+        best_scheduler.export_csv("heuristic_best_auto_weights.csv")
+        return best_scheduler
+
+    return None
+
+def count_minimum_failures(scheduler):
+        """
+        Conta o número total de falhas aos mínimos necessários na solução atribuída.
+        Para cada (dia, hora, equipa), verifica se o número de funcionários atribuídos < mínimo.
+        """
+        # Reconstruir cobertura por (dia, hora, equipa)
+        coverage = {}
+        for emp_id, assignments in scheduler.assignment.items():
+            for (day_idx, block_idx, team_id) in assignments:
+                date = scheduler.dates[day_idx - 1]
+                block = scheduler.work_blocks[block_idx]
+                team_code = TEAM_ID_TO_CODE.get(team_id, 'A')
+                hours = scheduler._get_working_hours(block)
+                for h in hours:
+                    # Suporta tanto inteiros (hora cheia) quanto floats (meia hora)
+                    if isinstance(h, float) and h % 1 == 0:
+                        # Hora cheia: 9.0 -> '09-10'
+                        key1 = (date, f"{int(h):02d}-{int(h+1):02d}", team_code)
+                        coverage[key1] = coverage.get(key1, 0) + 1
+                    elif isinstance(h, float):
+                        # Meia hora: 9.5 -> '09.5-10.0'
+                        start = h
+                        end = h + 0.5
+                        key2 = (date, f"{start:04.1f}-{end:04.1f}", team_code)
+                        coverage[key2] = coverage.get(key2, 0) + 1
+        failures = 0
+        for key, minimo in scheduler.minimos.items():
+            if minimo > 0:
+                covered = coverage.get(key, 0)
+                if covered < minimo:
+                    failures += 1
+        return failures
+
+def check_5_consecutive_days(table):
+    violations = []
+    for row in table[1:]:  # Ignora header
+        emp = row[0]
+        work_streak = 0
+        start_idx = None
+        for i, cell in enumerate(row[1:], 1):
+            if cell not in ("OFF", "F", "VACATION"):
+                if work_streak == 0:
+                    start_idx = i
+                work_streak += 1
+                if work_streak > 5:
+                    violations.append((emp, start_idx, i))
+            else:
+                work_streak = 0
+                start_idx = None
+    return violations
+
+
+def rows_to_req_dicts_FIXED(req_rows):
+    """
+    FIXED: Store minimums with FLOAT keys (not strings)
+    Key format: (pd.Timestamp, float, int)
+    Example: (Timestamp('2021-11-02'), 9.0, 1)
+    """
+    mins = {}
+    dates = pd.date_range(start="2021-11-01", end="2022-10-31").to_list()
+
+    print(f"[DEBUG] Created {len(dates)} dates for conversion")
+
+    for row in req_rows:
+        if not row or len(row) < 3:
+            continue
+        
+        team_label = row[0].strip()
+        if not team_label.upper().startswith('EQUIPA'):
+            continue
+        
+        second_col = row[1].strip()
+        team_code = get_team_code(team_label)
+        team_id = get_team_id(team_code)
+
+        if '-' not in second_col:
+            continue
+            
+        hour_label = second_col
+        counts = row[2:]
+
+        # Parse hour to FLOAT
+        if ':' in hour_label:
+            try:
+                start_str, _ = hour_label.split('-')
+                start_hour, start_min = map(int, start_str.split(':'))
+                start_float = round(float(start_hour) + (0.5 if start_min == 30 else 0.0), 1)
+            except (ValueError, IndexError) as e:
+                print(f"[ERROR] Failed to parse hour '{hour_label}': {e}")
+                continue
+        else:
+            try:
+                parts = hour_label.split('-')
+                start_float = round(float(parts[0]), 1)
+            except (ValueError, IndexError) as e:
+                print(f"[ERROR] Failed to parse hour '{hour_label}': {e}")
+                continue
+        
+        # Store with (Timestamp, FLOAT, team_id) format
+        for day_num, val in enumerate(counts, start=1):
+            v = str(val).strip()
+            if not v:
+                continue
+            
+            try:
+                val_int = int(v)
+            except ValueError:
+                continue
+            
+            if 1 <= day_num <= len(dates):
+                date_key = dates[day_num - 1]
+                # KEY FIX: Store as (date, FLOAT, team_id)
+                mins[(date_key, start_float, team_id)] = val_int
+                
+    print(f"[DEBUG] Processed {len(mins)} minimum entries")
+    print(f"[DEBUG] Sample keys (first 10):")
+    for i, (key, val) in enumerate(list(mins.items())[:10]):
+        print(f"  {key} → {val}")
+
+    return mins, {}

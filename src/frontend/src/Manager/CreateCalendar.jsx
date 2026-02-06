@@ -173,9 +173,7 @@ const CreateCalendar = () => {
     { value: "ILP_3_Half_Intervals", label: "Integer Linear Programming 3 Half Intervals" },
     { value: "CSP_2_Half_Intervals", label: "Constraint Satisfaction Problem 2 Half Intervals" },
     { value: "Heuristica_1", label: "Heurística 1" },
-    { value: "Heuristica1_v2", label: "Heurística 1 v2" },
-    { value: "Heuristica1_v3", label: "Heurística 1 v3" },
-    { value: "Heuristica", label: "Heurística" },
+    { value: "Heuristica00", label: "Heurística" },
     { value: "Heuristica_Half_Intervals", label: "Heurística Half Intervals" },
     // Adicione outros algoritmos de horas aqui se existirem
   ];

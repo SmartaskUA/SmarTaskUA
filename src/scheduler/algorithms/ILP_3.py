@@ -125,6 +125,9 @@ class ILP3Scheduler:
         }
         """
 
+        self.Ar = self._Ar_Builder(self.work_blocks, rest_hours=12)
+        print(f"Dictionary Ar de blocos dependentes para descanso de 12h: {self.Ar}")
+
         self.model = None
         self.assignment = defaultdict(list)
         self.maxTime_sec = int(maxTime) * 60 if maxTime else None
@@ -132,6 +135,32 @@ class ILP3Scheduler:
     # =========================================================
     # BUILD MODEL (ILP1 + ILP2)
     # =========================================================
+    
+    def _Ar_Builder(self, work_Blocks, rest_hours):
+
+        """
+        Return a dictionary of blocks that are dependent on the previous day's block for Xh rest.
+        {(9, 13, 18): [(12, 16, 21), (12, 17, 21), (12, 18, 21), (13, 17, 22), (13, 18, 22), (13, 19, 22)],
+        (9, 14, 18): [(12, 16, 21), (12, 17, 21), (12, 18, 21), (13, 17, 22), (13, 18, 22), (13, 19, 22)],
+        (9, 15, 18): [(12, 16, 21), (12, 17, 21), (12, 18, 21), (13, 17, 22), (13, 18, 22), (13, 19, 22)], 
+        (10, 14, 19): [(13, 17, 22), (13, 18, 22), (13, 19, 22)], 
+        (10, 15, 19): [(13, 17, 22), (13, 18, 22), (13, 19, 22)], 
+        (10, 16, 19): [(13, 17, 22), (13, 18, 22), (13, 19, 22)]}
+        ....
+        """
+
+        Non_Rest_Hours = 24 - rest_hours + 1
+        Ar = {} # {() : [(), (), ()]} Key - Block a ; Value - Set of Blocks b that depend on a
+        for b in work_Blocks:
+            (start_b, break_b, end_b) = b
+            for a in work_Blocks:
+                (start_a, break_a, end_a) = a
+                if start_b + round(Non_Rest_Hours) <= end_a:
+                    if b not in Ar:
+                        Ar[b] = []
+                    Ar[(b)].append(a)
+                    print(f"Adicionando bloco {b} em Ar pois e dependente de {a} com {rest_hours}h de descanso")
+        return Ar
 
 
     def build_model(self):
@@ -198,15 +227,35 @@ class ILP3Scheduler:
 
         # (6) descanso mínimo de 12h entre dias consecutivos
         for e in self.E:
-            for d in range(self.num_days - 1):
-                for b in self.B:
-                    end_today = self.work_blocks[b][2]
-                    for a in self.B:
-                        start_tomorrow = self.work_blocks[a][0]
-                        rest_hours = (24 - end_today) + start_tomorrow
-                        if rest_hours < 12:
-                            model += self.z[e][d][b] + self.z[e][d + 1][a] <= 1
+            for i in range(len(self.D) - 1):
 
+                d_today = self.D[i]
+                d_next = self.D[i + 1]
+
+                for a, ba in self.Ar.items():  # a ∈ A_r e b ∈ B_a
+
+                    Ba = set()
+                    for b in ba:
+                        Ba.add(b)
+
+                    team_codes = self.T[e]
+
+                    sum_next = pulp.lpSum(
+                        self.x[e][d_next][self.work_blocks.index(a)][tc]
+                        for tc in team_codes
+                    )
+
+                    sum_today = pulp.lpSum(
+                        self.x[e][d_today][self.work_blocks.index(b)][tc]
+                        for b in Ba
+                        for tc in team_codes
+                    )
+
+                    model += (
+                        sum_today + sum_next <= 1,
+                        f"rest_12h_f{e}_{self.dates[d_today].strftime('%Y%m%d')}_a{a}"
+                    )
+        
         
 
         # (8) definição de y (mínimos) + regra de OFF quando mínimo = -1
@@ -228,17 +277,7 @@ class ILP3Scheduler:
                     else:
                         # violações aos mínimos
                         model += self.y[d][h][t] >= theta - total_workers
-                    # if theta == -1:
-                    #     model += self.y[d][h][e] == 0
-                    # else:
-                    #     model += (
-                    #         self.y[d][h][e]
-                    #         >= theta - pulp.lpSum(
-                    #             self.alpha[(a, h)] * self.x[i][d][a][e]
-                    #             for i in self.E for a in self.A
-                    #         )
-                    #     )
-
+                
         self.model = model
 
     # =========================================================

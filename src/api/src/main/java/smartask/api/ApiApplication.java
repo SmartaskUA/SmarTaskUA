@@ -63,6 +63,7 @@ public class ApiApplication {
 			}
 
 			
+
 			// ---- Criar 21 empregados ----------------------------------------------------
 			for (int i = 1; i <= 21; i++) {
 				String name = "Employee " + i;
@@ -73,7 +74,8 @@ public class ApiApplication {
 				}
 			}
 
-			// ---- Equipa A (Employee 1-7) ----------------------------------------------------
+
+			//---- Equipa A (todos os 21 empregados) ----------------------------------------------------
 			Team teamA = teamService.getTeams().stream()
 					.filter(team -> "Equipa A".equals(team.getName()))
 					.findFirst().orElse(null);
@@ -81,7 +83,17 @@ public class ApiApplication {
 				teamService.addTeam("Equipa A");
 			}
 
-			var employeesForA = employeeService.getEmployees().stream()
+			Team teamB = teamService.getTeams().stream()
+					.filter(team -> "Equipa B".equals(team.getName()))
+					.findFirst().orElse(null);
+			if (teamB == null) {
+				teamService.addTeam("Equipa B");
+			}
+
+
+
+			// 7 só na Equipa A (Employee 1-7)
+			var onlyA = employeeService.getEmployees().stream()
 					.filter(e -> e.getName().startsWith("Employee "))
 					.filter(e -> {
 						try {
@@ -93,18 +105,10 @@ public class ApiApplication {
 					})
 					.map(Employee::getId)
 					.toList();
+			teamService.addEmployeesToTeam("Equipa A", onlyA);
 
-			teamService.addEmployeesToTeam("Equipa A", employeesForA);
-
-			// ---- Equipa B (Employee 8-14) ----------------------------------------------------
-			Team teamB = teamService.getTeams().stream()
-					.filter(team -> "Equipa B".equals(team.getName()))
-					.findFirst().orElse(null);
-			if (teamB == null) {
-				teamService.addTeam("Equipa B");
-			}
-
-			var employeesForB = employeeService.getEmployees().stream()
+			// 7 só na Equipa B (Employee 8-14)
+			var onlyB = employeeService.getEmployees().stream()
 					.filter(e -> e.getName().startsWith("Employee "))
 					.filter(e -> {
 						try {
@@ -116,11 +120,10 @@ public class ApiApplication {
 					})
 					.map(Employee::getId)
 					.toList();
+			teamService.addEmployeesToTeam("Equipa B", onlyB);
 
-			teamService.addEmployeesToTeam("Equipa B", employeesForB);
-
-			// ---- Empregados em ambas as equipas (Employee 15-21) ----------------------------------------------------
-			var employeesForBoth = employeeService.getEmployees().stream()
+			// 7 em ambas (Employee 17-21)
+			var both = employeeService.getEmployees().stream()
 					.filter(e -> e.getName().startsWith("Employee "))
 					.filter(e -> {
 						try {
@@ -132,9 +135,25 @@ public class ApiApplication {
 					})
 					.map(Employee::getId)
 					.toList();
+			teamService.addEmployeesToTeam("Equipa A", both);
+			teamService.addEmployeesToTeam("Equipa B", both);
 
-			teamService.addEmployeesToTeam("Equipa A", employeesForBoth);
-			teamService.addEmployeesToTeam("Equipa B", employeesForBoth);
+			
+
+			// var Employees = employeeService.getEmployees().stream()
+			// 		.filter(e -> e.getName().startsWith("Employee "))
+			// 		.filter(e -> {
+			// 			try {
+			// 				int n = Integer.parseInt(e.getName().split(" ")[1]);
+			// 				return n >= 1 && n <= 21;
+			// 			} catch (NumberFormatException ex) {
+			// 				return false;
+			// 			}
+			// 		})
+			// 		.map(Employee::getId)
+			// 		.toList();
+			// teamService.addEmployeesToTeam("Equipa A", Employees);
+			// teamService.addEmployeesToTeam("Equipa B", Employees);
 
 			// ---- Equipa B ----------------------------------------------------
 			//Team teamB = teamService.getTeams().stream()

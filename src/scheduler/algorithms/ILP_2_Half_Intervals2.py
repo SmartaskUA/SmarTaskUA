@@ -524,21 +524,19 @@ class HourlyILPScheduler:
 
         # ✅ CSP Model (NO objective - just feasibility)
         model = pulp.LpProblem("Hourly_Schedule_CSP", pulp.LpMinimize)
-        model += (0, "Feasibility")  # Dummy objective
+        # model += (0, "Feasibility")  # Dummy objective
 
-        print(f"[HourlyILP] Linking Y with X...")
-        # Link Y with X: count workers at each hour
+        penalties_min = []
+        self.shortage = {}
+
+
+        print(f"[HourlyILP] Adding constraints...")
+        # Link Y with X: count workers at each hour (como no ILP_2_Half_Intervals_1.py)
         for d in dias:
             for h in horas:
                 for team_code, members in self.teams.items():
-                    # working_hours_check = []
-                    # for b in blocos:
-                    #     working_hours = self._get_working_hours(self.work_blocks[b])
-                    #     is_working = h in working_hours
-                    #     working_hours_check.append((b, is_working, working_hours))
-                    #     # if is_working:
-                    #         #print(f"[DEBUG] h={h}, block={b} ({self.work_blocks[b]}), working_hours={working_hours}")
-                    
+                    team_id = get_team_id(team_code)
+                    # y[d][h][team_code] == soma dos x que cobrem esse slot
                     model += (
                         self.y[d][h][team_code] ==
                         pulp.lpSum(
@@ -552,65 +550,66 @@ class HourlyILPScheduler:
                         f"link_y_x_{d.strftime('%Y%m%d')}_h{h}_{team_code}"
                     )
 
-        # ✅ HARD CONSTRAINTS: Minimum coverage MUST be met
-        print(f"[HourlyILP] Adding HARD minimum coverage constraints...")
-        min_constraints_added = 0
-
+        # HARD CONSTRAINTS: Minimum coverage
+        penalties_min = []
         for d in dias:
             for h in horas:
                 for team_code in self.teams.keys():
-                    # ✅ FIX: self.minimos uses (Timestamp, FLOAT, team_id) keys
                     team_id = get_team_id(team_code)
                     minimo = self.minimos.get((d, h, team_id), None)
-                    
                     if minimo == -1:
-                        # Closed - force to 0
+                        # Fechado - força para 0
                         model += (
                             self.y[d][h][team_code] == 0,
                             f"closed_{d.strftime('%Y%m%d')}_h{h}_{team_code}"
                         )
-
                     elif minimo is None:
                         model += self.y[d][h][team_code] == 0
-
-
                     else:
-                        
-                        # Relaxed constraint: coverage >= minimum - 1
+                        # Penalidade para violação dos mínimos
                         model += (
                             self.y[d][h][team_code] >= minimo,
                             f"min_coverage_{d.strftime('%Y%m%d')}_h{h}_{team_code}"
                         )
-                        min_constraints_added += 1
+                        penalties_min.append(self.y[d][h][team_code])
 
-        print(f"  Added {min_constraints_added} hard minimum constraints")
+        # Objective: Minimize deviations from minimums (só para manter a estrutura, mas é CSP)
+        model += (
+            pulp.lpSum(y for y in penalties_min),
+            "Minimize_shortages"
+        )
 
-        # CONSTRAINT 1: One block per day OR vacation
-        print(f"[HourlyILP] Adding one-block-per-day constraints...")
+# ----------------------------------------------------        
+
+        # CONSTRAINTS
+
+
+        # 1. One block per day - exactly one block must be selected and no work on vacation days
         for f in funcionarios:
             for d in dias:
-                is_vacation = 1 if d in self.vacations_dates[f] else 0
                 model += (
                     pulp.lpSum(
                         self.x[f][d][b][tc]
                         for b in blocos
                         for tc in self.emp_team_code[f]
-                    ) <= 1 - is_vacation,
-                    f"one_block_f{f}_{d.strftime('%Y%m%d')}"
+                    ) <= 1 - (1 if d in self.vacations_dates[f] else 0),
+                    f"one_block_or_vacation_f{f}_{d.strftime('%Y%m%d')}"
                 )
 
-        # CONSTRAINT 2: 223 working days
-        # print(f"[HourlyILP] Adding 223-days constraints...")
-        # for f in funcionarios:
-        #     model += (
-        #         pulp.lpSum(
-        #             self.x[f][d][b][tc]
-        #             for d in dias
-        #             for b in blocos
-        #             for tc in self.emp_team_code[f]
-        #         ) == 223,
-        #         f"total_days_f{f}"
-        #     )
+
+        # 3. Total working days = 223 in the year
+        for f in funcionarios:
+            model += (
+                pulp.lpSum(
+                    self.x[f][d][b][tc]
+                    for d in dias
+                    for b in blocos
+                    for tc in self.emp_team_code[f]
+                ) == 223,
+                f"total_working_days_f{f}"
+            )
+
+
 
         # 4. No work on days marked with -1 (closed days/holidays)
         # Identify all dates where minimum is -1 for any team
@@ -630,47 +629,101 @@ class HourlyILPScheduler:
                 for b in blocos
                 for tc in self.emp_team_code[f]
             ) == 0,
-            f"no_work_closed_day"
+            f"no_work_closed_day_f{f}_{d.strftime('%Y%m%d')}"
         )
 
-        # CONSTRAINT 4: Max 5 consecutive days
-        print(f"[HourlyILP] Adding max-5-consecutive constraints...")
+
+
+        # 5. Max 5 consecutive working days (sliding window of 6 days)
         for f in funcionarios:
             for i in range(len(dias) - 5):
-                window = dias[i:i + 6]
+                window = dias[i:i + 6]  # bloco de 6 dias consecutivos
                 model += (
                     pulp.lpSum(
                         self.x[f][d][b][tc]
                         for d in window
                         for b in blocos
                         for tc in self.emp_team_code[f]
-                    ) <= 5,
-                    f"max5_f{f}_d{i}"
+                    ) <= 5, # Se a soma das variaveis for maior que 5 nos 6 dias, viola a restrição
+                    f"max_5_consecutive_f{f}_{dias[i].strftime('%Y%m%d')}"
                 )
 
-        # CONSTRAINT 5: ✅ OPTIMIZED - 12h rest
-        # print(f"[HourlyILP] Pre-computing incompatible block pairs...")
-        # incompatible_pairs = []
-        # for b_idx, b in enumerate(self.work_blocks):
-        #     for a_idx, a in enumerate(self.work_blocks):
-        #         if not self._validate_block_transition(b, a):
-        #             incompatible_pairs.append((b_idx, a_idx))
-# 
-        # print(f"  Found {len(incompatible_pairs)} incompatible pairs")
-        # print(f"  Adding rest constraints...")
-# 
+
+
+        # 4.5. Exactly 5 working days per week (segunda-sábado)
+        # Cada empregado trabalha 5 de 6 dias (seg-sab), falhando um qualquer
+        #for f in funcionarios:
+        #    i = 0
+        #    while i < len(dias):
+        #        # Encontrar próxima segunda
+        #        while i < len(dias) and dias[i].weekday() != 0:
+        #            i += 1
+        #        if i + 5 >= len(dias):
+        #            break
+        #        week_days = dias[i:i + 6]  # seg–sáb
+        #        # feriados e dias fechados
+        #        week_holidays = [
+        #            d for d in week_days if d in self.sundays_holidays or d in closed_days
+        #        ]
+        #        valid_days = [d for d in week_days if d not in week_holidays]
+        #        # soma de trabalho da semana
+        #        workdays_expr = pulp.lpSum(
+        #            self.x[f][d][b][tc]
+        #            for d in valid_days
+        #            for b in blocos
+        #            for tc in self.emp_team_code[f]
+        #        )
+        #        # regra: máximo 5 dias de trabalho
+        #        model += (
+        #            workdays_expr <= min(5, len(valid_days)),
+        #            f"max_5_days_per_week_f{f}_{dias[i].strftime('%Y%m%d')}"
+        #        )
+        #        i += 7
+
+
+        # 5. Valid transitions between consecutive days (12h rest minimum)
         # for f in funcionarios:
         #     for i in range(len(dias) - 1):
         #         d_today = dias[i]
         #         d_next = dias[i + 1]
-# 
-        #         for (b_idx, a_idx) in incompatible_pairs:
-        #             model += (
-        #                 pulp.lpSum(self.x[f][d_today][b_idx][tc] for tc in self.emp_team_code[f]) +
-        #                 pulp.lpSum(self.x[f][d_next][a_idx][tc] for tc in self.emp_team_code[f])
-        #                 <= 1,
-        #                 f"rest_f{f}_d{i}_b{b_idx}_{a_idx}"
-        #             )
+        #         for a in blocos:  # a ∈ A_r (todos os blocos)
+        #             for b in blocos:  # b ∈ B_a
+        #                 if not self._validate_block_transition(self.work_blocks[b], self.work_blocks[a]):
+        #                     for tc in self.emp_team_code[f]:
+        #                         model += (
+        #                             # Invalid transition constraint, sum must be <= 1, only one can be chosen
+        #                             self.x[f][d_today][b][tc] + self.x[f][d_next][a][tc] <= 1,
+        #                             (f"invalid_transition_f{f}_{d_today.strftime('%Y%m%d')}_b{b}_a{a}_{tc}")
+        #                         )
+
+        # 5. Valid transitions between consecutive days (12h rest minimum)
+        # Equação: sum_{b∈B_a} sum_{t∈T_e} x_edbt + sum_{a∈A_r} sum_{t∈T_e} x_{e,d+1,at} ≤ 1
+        # Para cada empregado e par de dias consecutivos (d, d+1):
+        # Se trabalha num bloco tardio (B_a) no dia d, NÃO pode trabalhar num bloco cedo (A_r) no dia d+1
+        for f in funcionarios:
+            for i in range(len(dias) - 1):
+                d_today = dias[i]
+                d_next = dias[i + 1]
+                
+                # Construir conjuntos B_a (índices de blocos tardios) e A_r (índices de blocos cedo)
+                B_a_indices = [self.work_blocks.index(b) for b in self.Br]
+                A_r_indices = [self.work_blocks.index(a) for a in self.Ar]
+                
+                # Restrição agregada: soma de blocos tardios hoje + soma de blocos cedo amanhã ≤ 1
+                model += (
+                    pulp.lpSum(
+                        self.x[f][d_today][b_idx][tc]
+                        for b_idx in B_a_indices
+                        for tc in self.emp_team_code[f]
+                    ) + 
+                    pulp.lpSum(
+                        self.x[f][d_next][a_idx][tc]
+                        for a_idx in A_r_indices
+                        for tc in self.emp_team_code[f]
+                    ) <= 1,
+                    f"rest_12h_f{f}_{d_today.strftime('%Y%m%d')}"
+                )
+        
 
         self._validate_minimum_coverage_feasibility()
 

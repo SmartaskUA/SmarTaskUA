@@ -24,6 +24,93 @@ from algorithms.utils import (
 )
 
 
+def rows_to_req_dicts_FIXED(req_rows):
+    """
+    ✅ CRITICAL FIX: Return hour keys as FLOAT tuples, not strings!
+    Build model uses: (pd.Timestamp, float, team_id)
+    Example: (Timestamp('2021-11-02'), 9.0, 1) not (Timestamp, "9.0-9.5", 1)
+    """
+    import pandas as pd
+
+    mins = {}
+    dates = pd.date_range(start="2021-11-01", end="2022-10-31").to_list()
+
+    print(f"[DEBUG] Created {len(dates)} dates for conversion")
+
+    for row in req_rows:
+        if not row or len(row) < 3:
+            continue
+        
+        team_label = row[0].strip()
+        if not team_label.upper().startswith('EQUIPA'):
+            continue
+        
+        second_col = row[1].strip()
+        team_code = get_team_code(team_label)
+        team_id = get_team_id(team_code)
+
+        # Check if hour-based
+        if '-' not in second_col:
+            continue
+            
+        hour_label = second_col
+        counts = row[2:]
+
+        # Convert "09:00-09:30" to float 9.0
+        if ':' in hour_label:
+            try:
+                start_str, end_str = hour_label.split('-')
+                start_hour, start_min = map(int, start_str.split(':'))
+                
+                # ✅ KEY FIX: Store as FLOAT, not string
+                start_float = float(start_hour) + (0.5 if start_min == 30 else 0.0)
+
+            except (ValueError, IndexError) as e:
+                print(f"[ERROR] Failed to parse hour '{hour_label}': {e}")
+                continue
+        else:
+            # "09-10" format
+            try:
+                parts = hour_label.split('-')
+                start_float = float(parts[0])
+            except (ValueError, IndexError) as e:
+                print(f"[ERROR] Failed to parse hour '{hour_label}': {e}")
+                continue
+        
+        # ✅ Store with (Timestamp, FLOAT, team_id) format
+        for day_num, val in enumerate(counts, start=1):
+            v = str(val).strip()
+
+            if not v:
+                continue
+            
+            try:
+                val_int = int(v)
+            except ValueError:
+                continue
+            
+            
+            # Convert day number (1-365) to Timestamp
+            if 1 <= day_num <= len(dates):
+                date_key = dates[day_num - 1]
+            else:
+                continue
+            
+            try:
+                val_int = int(v)
+                # ✅ KEY: Store as (date, FLOAT hour, team_id)
+                mins[(date_key, start_float, team_id)] = val_int
+            except ValueError:
+                continue
+                
+    print(f"[DEBUG] Processed {len(mins)} minimum entries")
+    print(f"[DEBUG] Sample keys (first 10):")
+    for i, (key, val) in enumerate(list(mins.items())[:10]):
+        print(f"  {key} → {val}")
+
+    return mins, {}
+
+
 class ILP3Scheduler:
     """
     Scheduler por HORAS (09-10, 10-11, ...), baseado em blocos de 8h
@@ -111,7 +198,7 @@ class ILP3Scheduler:
                       for i in self.I for d in self.D}
 
         # ---------------- Requisitos ----------------
-        self.theta, self.beta = rows_to_req_dicts_Half_Hour(minimums_rows)
+        self.theta, self.beta = rows_to_req_dicts_FIXED(minimums_rows)
 
         self.model = None
         self.assignment = defaultdict(list)
@@ -124,7 +211,7 @@ class ILP3Scheduler:
         Each block: (start_hour, break_hour, end_hour)
         Examples: (9.0, 13.0, 18.0), (9.0, 14.0, 18.0), (9.5, 13.5, 18.5), etc.
         """
-        blocks = create_Blocks(0.5, 9.0, 22.0)
+        blocks = create_Blocks(0.5, 9, 22)
         print(f"[HourlyILP] Generated {len(blocks)} work blocks (30-min intervals)")
         return blocks
 
@@ -148,8 +235,6 @@ class ILP3Scheduler:
         while h < end:
             hours.append(h)
             h += 0.5
-
-        assert len(hours) == 16, f"Invalid block coverage: {block} has {len(hours)} half-hours, expected 16"
 
         return set(hours)
 
@@ -188,7 +273,7 @@ class ILP3Scheduler:
         )
 
         # ---------- Objetivo (ILP1: mínimos) ----------
-        model += pulp.lpSum(self.y[d][h][e] for d in self.D for h in self.H for e in self.teams)
+        # model += pulp.lpSum(self.y[d][h][e] for d in self.D for h in self.H for e in self.teams)
 
         # ---------- Restrições ----------
 

@@ -19,9 +19,7 @@ from algorithms.CSP_1 import solve as CSP_1
 from algorithms.ILP_3_Half_Intervals import solve as ILP_3_Half_Intervals
 from algorithms.CSP_2_Half_Intervals import solve as CSP_2_Half_Intervals
 from algorithms.Heuristica1 import solve as Heuristica_1
-from algorithms.Heuristica1_v2 import solve as Heuristica1_v2
-from algorithms.Heuristica1_v3 import solve as Heuristica1_v3
-from algorithms.Heuristica import solve as Heuristica
+from algorithms.Heuristica00 import solve as Heuristica00
 from algorithms.Heuristica_Half_Intervals import solve as Heuristica_Half_Intervals
 from algorithms.ILP_4 import solve as ILP_4
 
@@ -49,9 +47,7 @@ class TaskManager:
             "ILP_3_Half_Intervals": ILP_3_Half_Intervals,
             "CSP_2_Half_Intervals": CSP_2_Half_Intervals,
             "Heuristica_1": Heuristica_1,
-            "Heuristica1_v2": Heuristica1_v2,
-            "Heuristica1_v3": Heuristica1_v3,
-            "Heuristica": Heuristica,
+            "Heuristica00": Heuristica00,
             "Heuristica_Half_Intervals": Heuristica_Half_Intervals,
         }
 
@@ -97,7 +93,7 @@ class TaskManager:
                                 "Heuristica_1",
                                 "Heuristica1_v2",
                                 "Heuristica1_v3",
-                                "Heuristica",
+                                "Heuristica00",
                                 "Heuristica_Half_Intervals"
                                 ]:
             schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, rules=rules_json)
