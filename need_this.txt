@@ -11,3 +11,4 @@ ILPv2_Scenario_8Teams_Case1         | 412           | 1952            | 42.38   
 ILPv2_Scenario_8Teams_Case2         | 412           | 1952            | 41.03        | 91.70
 ILPv2_Scenario_8Teams_Case3         | 412           | 1952            | 37.00        | 91.71
 ILPv2_Scenario_8Teams_Case4         | 492           | 2783            | 37.67        | 91.63
+
