@@ -33,6 +33,10 @@ class ILP3Scheduler:
 
         # ---------------- Empregados ----------------
         self.employees = list(range(len(employees)))
+
+        if employees is None:
+            raise ValueError("Employees list cannot be None.")
+
         self.E = self.employees
 
         # ---------------- Equipas ----------------
@@ -302,6 +306,16 @@ class ILP3Scheduler:
             threads=8,
             gapRel=gap_rel
         )
+
+        # solver = pulp.GUROBI(
+        #             msg=True,
+        #             timeLimit=self.maxTime_sec if self.maxTime_sec else None,
+        #             gapRel=gap_rel,
+        #             Threads=8,
+        #             Method=2,      # Barrier method, pode se escolher o metodo que quer
+        #             Presolve=2     # Aggressive presolve
+        #         )
+        
         status = self.model.solve(solver)
         self._extract_assignments()
         return status

@@ -23,13 +23,6 @@ const CreateCalendar = () => {
   const initialMode = initialProblemId ? "problem" : "manual";
   const [mode, setMode] = useState(initialMode);
   const [title, setTitle] = useState("");
-  const [year, setYear] = useState("");
-  const [maxDuration, setMaxDuration] = useState("");
-  const [scheduleType, setScheduleType] = useState(""); // "Turno" ou "Horas"
-  const [selectedAlgorithm, setSelectedAlgorithm] = useState("");
-  const [shifts, setShifts] = useState("");
-  const [vacationTemplate, setVacationTemplate] = useState("");
-  const [minimumTemplate, setMinimumTemplate] = useState("");
   const [groupNames, setGroupNames] = useState([]); 
   const [selectedGroup, setSelectedGroup] = useState("");
   const [problems, setProblems] = useState([]);

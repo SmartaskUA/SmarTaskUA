@@ -108,29 +108,29 @@ public class ScenarioSeeder {
             teamService.addTeam(teamB);
         }
 
-        ensureEmployeesExist(1, 9);
-        ensureEmployeesExist(10, 12);
+        // Create 21 employees
+        ensureEmployeesExist(1, 21);
 
-        List<String> aEmployees = employeeIdsInRange(1, 9);
-        if (!aEmployees.isEmpty()) {
-            addEmployeesToTeam(teamA, aEmployees);
+        // 7 only in Equipa A (Employee 1-7)
+        List<String> onlyA = employeeIdsInRange(1, 7);
+        if (!onlyA.isEmpty()) {
+            addEmployeesToTeam(teamA, onlyA);
         }
 
-        List<String> bEmployees = employeeIdsInRange(10, 12);
-        if (!bEmployees.isEmpty()) {
-            addEmployeesToTeam(teamB, bEmployees);
+        // 7 only in Equipa B (Employee 8-14)
+        List<String> onlyB = employeeIdsInRange(8, 14);
+        if (!onlyB.isEmpty()) {
+            addEmployeesToTeam(teamB, onlyB);
         }
 
-        Employee employee5 = findEmployeeByName("Employee 5");
-        Employee employee6 = findEmployeeByName("Employee 6");
-        if (employee5 != null && employee6 != null) {
-            addEmployeesToTeam(teamB, List.of(employee5.getId(), employee6.getId()));
+        // 7 in both teams (Employee 15-21)
+        List<String> both = employeeIdsInRange(15, 21);
+        if (!both.isEmpty()) {
+            addEmployeesToTeam(teamA, both);
+            addEmployeesToTeam(teamB, both);
         }
 
-        Employee employee11 = findEmployeeByName("Employee 11");
-        if (employee11 != null) {
-            addEmployeesToTeam(teamA, List.of(employee11.getId()));
-        }
+        System.out.println("[Startup] Created 21 employees: 7 in A only, 7 in B only, 7 in both.");
     }
 
     // BASE SCENARIO (exactly as requested):

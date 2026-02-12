@@ -310,28 +310,31 @@ def rows_to_req_dicts(req_rows):
     """
     Aceita ficheiros de requisitos (mínimos/ideais) tanto por turnos como por horas.
     Formatos suportados:
-      - Turnos: Equipa A, Minimo, M, <dia1>, <dia2>, ...
-      - Horas simples: Equipa A, 09-10, <dia1>, <dia2>, ...
-      - Horas com minutos: Equipa A, 09:00-09:30, <dia1>, <dia2>, ...
+      - Equipa A, Minimo, M, <dia1>, <dia2>, ...
+      - Equipa A, 09-10, <dia1>, <dia2>, ...
     Retorna dois dicionários:
       mins[(day, hora_ou_turno, team_id)] e ideals[(day, hora_ou_turno, team_id)]
     """
     mins, ideals = {}, {}
     for row in req_rows:
-        # Saltar linhas vazias ou que não começam com "Equipa"
-        if not row or len(row) < 3:
+        if not row or not row[0].strip():
             continue
         
+        #print(f"Processing row: {row}, from")
         team_label = row[0].strip()
-        if not team_label.upper().startswith('EQUIPA'):
-            continue
-        
-        second_col = row[1].strip()
-        
-        # Detectar formato baseado na segunda coluna
-        # Formato 1: Turnos → row[1]="Minimo/Ideal", row[2]="M/T/N"
-        # Formato 2: Horas → row[1]="09-10" ou "09:00-09:30"
-        
+        #print(f"team_label: {team_label}")
+        kind = row[1].strip().lower()
+        #print(f"kind: {kind}")
+
+        # Detecta se é por hora (ex: '09-10') ou por turno ('M', 'T', 'N')
+        thirdShifts = row[2].strip()
+        thirdHours = row[1].strip()
+        #print(f"third_Shifts: {thirdShifts}")
+        #print(f"third_Hours: {thirdHours}")
+        countsHours = row[2:]
+        countsShifts = row[3:]
+        #print(f"counts: {counts}")
+
         team_code = get_team_code(team_label)
         team_id = get_team_id(team_code)
         #print(f"team_code: {team_code}, team_id: {team_id}")
@@ -344,9 +347,8 @@ def rows_to_req_dicts(req_rows):
             shift = _shift_code_to_index(thirdShifts)
             if shift is None:
                 continue
-            
             target = mins if kind.startswith('min') else ideals
-            for day, val in enumerate(counts, start=1):
+            for day, val in enumerate(countsShifts, start=1):
                 v = str(val).strip()
                 if v:
                     try:
@@ -831,112 +833,7 @@ def drange_indexed_h(start, stop, step):
         x += step
 
 
-def compute_lower_bound_and_report(scheduler, csv_filename="csp_lb_report.csv", verbose=True):
-    """
-    Calcula um lower bound (LB) válido para as shortages e gera relatório.
-    LB por slot (dia,hora,team) = max(0, minimo - capacidade_maxima_disponivel).
-    capacidade_maxima_disponivel = número de empregados que:
-        - pertencem àquela equipa (podem trabalhar nessa equipa),
-        - não estão de férias nesse dia,
-        - o dia não é fechado para essa equipa (mínimo != -1).
-    Retorna dicionário com LB_total, objective (valor da solução), quality_pct, e paths do csv.
-    """
 
-    if seed is not None:
-        random.seed(seed)
-
-    best_score = None
-    best_weights = None
-    best_assignment = None
-    best_scheduler = None
-
-    start_time = time.time()
-    n_iter = 0
-
-    print("\n" + "=" * 80)
-    print("[AutoSearch] INÍCIO DA PESQUISA AUTOMÁTICA DE PESOS")
-    print("=" * 80)
-
-    while time.time() - start_time < max_seconds:
-
-        n_iter += 1
-        used_weights = set()
-
-        # -----------------------------
-        # 1. Gerar pesos aleatórios contínuos
-        # -----------------------------
-        while True:
-            w = [random.random(), random.random(), random.random()]
-            s = sum(w)
-            weights_tuple = tuple(round(x / s, 3) for x in w)  # arredondar para evitar flutuação de ponto flutuante
-            if weights_tuple not in used_weights:
-                used_weights.add(weights_tuple)
-                W_TOTAL, W_WEEK, W_TEAMS = weights_tuple
-                break
-
-        print(f"\n[AutoSearch] Iteração {n_iter}")
-        print(f"  Pesos → TOTAL={W_TOTAL:.4f}, WEEK={W_WEEK:.4f}, TEAMS={W_TEAMS:.4f}")
-
-        # -----------------------------
-        # 2. Executar heurística
-        # -----------------------------
-        scheduler = Heuristica(
-            vacations,
-            minimuns,
-            employees,
-            maxTime,
-            year=year,
-            store_hours=hours,
-            work_blocks=work_blocks,
-            W_TOTAL=W_TOTAL,
-            W_WEEK=W_WEEK,
-            W_TEAMS=W_TEAMS
-        )
-
-        scheduler.solve()
-
-        # -----------------------------
-        # 3. Avaliar solução
-        # -----------------------------
-        score = count_minimum_failures(scheduler)
-        print(f"  Falhas nos mínimos: {score}")
-
-        # -----------------------------
-        # 4. Atualizar melhor solução
-        # -----------------------------
-        if best_score is None or score < best_score:
-            best_score = score
-            best_weights = (W_TOTAL, W_WEEK, W_TEAMS)
-            best_assignment = copy.deepcopy(scheduler.assignment)
-            best_scheduler = scheduler
-
-            print("\033[92m"
-                  f"  ★ NOVA MELHOR SOLUÇÃO (falhas={score})"
-                  "\033[0m")
-
-        # -----------------------------
-        # 5. Early stop se perfeito
-        # -----------------------------
-        if best_score <= early_stop_score:
-            print("[AutoSearch] Solução perfeita encontrada. A terminar.")
-            break
-
-    print("\n" + "=" * 80)
-    print("[AutoSearch] RESULTADO FINAL")
-    print(f"  Iterações: {n_iter}")
-    print(f"  Melhor score: {best_score}")
-    print(f"  Melhores pesos:")
-    print(f"    W_TOTAL = {best_weights[0]:.4f}")
-    print(f"    W_WEEK  = {best_weights[1]:.4f}")
-    print(f"    W_TEAMS = {best_weights[2]:.4f}")
-    print("=" * 80)
-
-    if best_scheduler and best_assignment:
-        best_scheduler.assignment = best_assignment
-        best_scheduler.export_csv("heuristic_best_auto_weights.csv")
-        return best_scheduler
-
-    return None
 
 def count_minimum_failures(scheduler):
         """

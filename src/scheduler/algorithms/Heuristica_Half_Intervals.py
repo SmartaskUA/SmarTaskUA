@@ -615,7 +615,7 @@ def solve(vacations=None, minimuns=None, employees=None, maxTime=None, year=2021
     """
 
     # Executa múltiplas rodadas da heurística durante o tempo máximo (maxTime em minutos)
-    total_seconds = 90
+    total_seconds = 150
     import copy
     import time
     best_score = None

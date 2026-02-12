@@ -91,18 +91,34 @@ class CPHourScheduler:
                 if s2 < end1 - 12:
                     self.incompatible_blocks[a1].add(a2)
         
-        # Br Blocos que influenciam o dia seguinte
-        self.Br = set()
-        for b in self.work_blocks:
-            for a in self.work_blocks:
-                if not self._validate_block_transition(b, a):
-                    self.Br.add(b)
+        self.Ar = self._Ar_Builder(self.work_blocks, rest_hours=12)
+        print(f"Dictionary Ar de blocos dependentes para descanso de 12h: {self.Ar}")
 
-        self.Ar = set()
-        for b in self.work_blocks:
-            for a in self.work_blocks:
-                if not self._validate_block_transition(b, a):
-                    self.Ar.add(a)
+    def _Ar_Builder(self, work_Blocks, rest_hours):
+
+        """
+        Return a dictionary of blocks that are dependent on the previous day's block for Xh rest.
+        {(9, 13, 18): [(12, 16, 21), (12, 17, 21), (12, 18, 21), (13, 17, 22), (13, 18, 22), (13, 19, 22)],
+        (9, 14, 18): [(12, 16, 21), (12, 17, 21), (12, 18, 21), (13, 17, 22), (13, 18, 22), (13, 19, 22)],
+        (9, 15, 18): [(12, 16, 21), (12, 17, 21), (12, 18, 21), (13, 17, 22), (13, 18, 22), (13, 19, 22)], 
+        (10, 14, 19): [(13, 17, 22), (13, 18, 22), (13, 19, 22)], 
+        (10, 15, 19): [(13, 17, 22), (13, 18, 22), (13, 19, 22)], 
+        (10, 16, 19): [(13, 17, 22), (13, 18, 22), (13, 19, 22)]}
+        ....
+        """
+
+        Non_Rest_Hours = 24 - rest_hours + 1
+        Ar = {} # {() : [(), (), ()]} Key - Block a ; Value - Set of Blocks b that depend on a
+        for b in work_Blocks:
+            (start_b, break_b, end_b) = b
+            for a in work_Blocks:
+                (start_a, break_a, end_a) = a
+                if start_b + round(Non_Rest_Hours) <= end_a:
+                    if b not in Ar:
+                        Ar[b] = []
+                    Ar[(b)].append(a)
+                    print(f"Adicionando bloco {b} em Ar pois e dependente de {a} com {rest_hours}h de descanso")
+        return Ar
         
     def _validate_block_transition(self, block_today, block_tomorrow):
         """
@@ -196,29 +212,35 @@ class CPHourScheduler:
                         self.model.Add(covered + self.y[(d,h,e)] >= theta_val)
 
 
-        # 6. Rest constraint (12h minimum between consecutive days)
-        # Equação: sum_{b∈B_a} x + sum_{a∈A_r} x ≤ 1
-        for f in self.I:
-            for d_today in range(self.num_days - 1):
-                d_next = d_today + 1
-                
-                # Construir conjuntos B_a (índices de blocos tardios) e A_r (índices de blocos cedo)
-                B_a_indices = [self.work_blocks.index(b) for b in self.Br]
-                A_r_indices = [self.work_blocks.index(a) for a in self.Ar]
-                
-                # Restrição agregada: soma de blocos tardios hoje + soma de blocos cedo amanhã ≤ 1
-                self.model.Add(
-                    sum(
-                        self.x[(f, d_today, b_idx, tc)]
-                        for b_idx in B_a_indices
-                        for tc in self.emp_teams[f]
-                    ) + 
-                    sum(
-                        self.x[(f, d_next, a_idx, tc)]
-                        for a_idx in A_r_indices
-                        for tc in self.emp_teams[f]
-                    ) <= 1
-                )
+
+        # (6) descanso mínimo de 12h entre dias consecutivos
+        for e in self.I:
+            for i in range(self.num_days - 1):
+                d_today = i
+                d_next = i + 1
+
+                for a, ba in self.Ar.items():  # a ∈ A_r e b ∈ B_a
+
+                    Ba = set()
+                    for b in ba:
+                        Ba.add(b)
+
+                    team_codes = self.emp_teams[e]
+
+                    sum_next = sum(
+                        self.x[(e, d_next, self.work_blocks.index(a), tc)]
+                        for tc in team_codes
+                    )
+
+                    sum_today = sum(
+                        self.x[(e, d_today, self.work_blocks.index(b), tc)]
+                        for b in Ba
+                        for tc in team_codes
+                    )
+
+                    self.model.Add(
+                        sum_today + sum_next <= 1
+                    )
 
         # Poderia não usar um minimizador e tornar a regra hard porém assim evita infeasibilidades
         # Que por acaso dava para fazer

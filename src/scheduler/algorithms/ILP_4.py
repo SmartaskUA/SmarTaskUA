@@ -168,17 +168,8 @@ class HourlyILPScheduler:
         """
 
         # Br Blocos que influenciam o dia seguinte
-        self.Br = set()
-        for b in self.work_blocks:
-            for a in self.work_blocks:
-                if not self._validate_block_transition(b, a):
-                    self.Br.add(b)
-
-        self.Ar = set()
-        for b in self.work_blocks:
-            for a in self.work_blocks:
-                if not self._validate_block_transition(b, a):
-                    self.Ar.add(a)
+        self.Ar = self._Ar_Builder(self.work_blocks, rest_hours=12)
+        print(f"Dictionary Ar de blocos dependentes para descanso de 12h: {self.Ar}")
         
         #for (day, hour, team_id), val in ideals.items():
         #    if 1 <= day <= self.num_days:
@@ -261,6 +252,32 @@ class HourlyILPScheduler:
         hours1 = self._get_working_hours(block1)
         hours2 = self._get_working_hours(block2)
         return len(hours1 & hours2) > 0
+    
+    def _Ar_Builder(self, work_Blocks, rest_hours):
+
+        """
+        Return a dictionary of blocks that are dependent on the previous day's block for Xh rest.
+        {(9, 13, 18): [(12, 16, 21), (12, 17, 21), (12, 18, 21), (13, 17, 22), (13, 18, 22), (13, 19, 22)],
+        (9, 14, 18): [(12, 16, 21), (12, 17, 21), (12, 18, 21), (13, 17, 22), (13, 18, 22), (13, 19, 22)],
+        (9, 15, 18): [(12, 16, 21), (12, 17, 21), (12, 18, 21), (13, 17, 22), (13, 18, 22), (13, 19, 22)], 
+        (10, 14, 19): [(13, 17, 22), (13, 18, 22), (13, 19, 22)], 
+        (10, 15, 19): [(13, 17, 22), (13, 18, 22), (13, 19, 22)], 
+        (10, 16, 19): [(13, 17, 22), (13, 18, 22), (13, 19, 22)]}
+        ....
+        """
+
+        Non_Rest_Hours = 24 - rest_hours + 1
+        Ar = {} # {() : [(), (), ()]} Key - Block a ; Value - Set of Blocks b that depend on a
+        for b in work_Blocks:
+            (start_b, break_b, end_b) = b
+            for a in work_Blocks:
+                (start_a, break_a, end_a) = a
+                if start_b + round(Non_Rest_Hours) <= end_a:
+                    if b not in Ar:
+                        Ar[b] = []
+                    Ar[(b)].append(a)
+                    print(f"Adicionando bloco {b} em Ar pois e dependente de {a} com {rest_hours}h de descanso")
+        return Ar
 
     def _validate_block_transition(self, block_today, block_tomorrow):
         """
@@ -547,27 +564,33 @@ class HourlyILPScheduler:
         # Se trabalha num bloco tardio (B_a) no dia d, NÃO pode trabalhar num bloco cedo (A_r) no dia d+1
         for f in funcionarios:
             for i in range(len(dias) - 1):
+
                 d_today = dias[i]
                 d_next = dias[i + 1]
-                
-                # Construir conjuntos B_a (índices de blocos tardios) e A_r (índices de blocos cedo)
-                B_a_indices = [self.work_blocks.index(b) for b in self.Br]
-                A_r_indices = [self.work_blocks.index(a) for a in self.Ar]
-                
-                # Restrição agregada: soma de blocos tardios hoje + soma de blocos cedo amanhã ≤ 1
-                model += (
-                    pulp.lpSum(
-                        self.x[f][d_today][b_idx][tc]
-                        for b_idx in B_a_indices
-                        for tc in self.emp_team_code[f]
-                    ) + 
-                    pulp.lpSum(
-                        self.x[f][d_next][a_idx][tc]
-                        for a_idx in A_r_indices
-                        for tc in self.emp_team_code[f]
-                    ) <= 1,
-                    f"rest_12h_f{f}_{d_today.strftime('%Y%m%d')}"
-                )
+
+                for a, ba in self.Ar.items():  # a ∈ A_r e b ∈ B_a
+
+                    Ba = set()
+                    for b in ba:
+                        Ba.add(b)
+
+                    team_codes = self.emp_team_code[f]
+
+                    sum_next = pulp.lpSum(
+                        self.x[f][d_next][self.work_blocks.index(a)][tc]
+                        for tc in team_codes
+                    )
+
+                    sum_today = pulp.lpSum(
+                        self.x[f][d_today][self.work_blocks.index(b)][tc]
+                        for b in Ba
+                        for tc in team_codes
+                    )
+
+                    model += (
+                        sum_today + sum_next <= 1,
+                        f"rest_12h_f{f}_{d_today.strftime('%Y%m%d')}_a{a}"
+                    )
         
 
 

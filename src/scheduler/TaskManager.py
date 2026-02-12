@@ -78,10 +78,21 @@ class TaskManager:
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13):
         print(f"\n[DEBUG] Vacations received:\n{vacations}")
         print(f"[DEBUG] Minimuns received:\n{minimuns}")
+        print(f"[DEBUG] Employees received:\n{employees}")
         print(f"[DEBUG] Rules received:\n{json.dumps(rules, indent=2) if rules else 'None'}")
 
         if algorithm_name not in self.algorithms:
             raise ValueError(f"Algorithm '{algorithm_name}' not found.")
+
+        # Defensive: ensure employees is always a list
+        if employees is None:
+            print("[WARNING] 'employees' is None, converting to empty list.")
+            employees = []
+        elif not isinstance(employees, list):
+            print(f"[WARNING] 'employees' is not a list (type={type(employees)}), converting to list.")
+            employees = list(employees)
+
+        print(f"[DEBUG] Employees after normalization: {employees}")
 
         print(f"[TaskManager] Executing algorithm '{algorithm_name}' with Task ID: {task_id}")
         algorithm = self.algorithms[algorithm_name]
@@ -102,29 +113,9 @@ class TaskManager:
             else:
                 rules_json = {"rules": rules}
 
-            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, rules=rules_json)
-        elif algorithm_name in [# "CSP_13Hours", 
-                                # "CSP_Afonso_Hours", 
-                                "ILP_1", 
-                                "ILP_1_Half_Intervals", 
-                                "ILP_2", 
-                                "ILP_2_Half_Intervals",
-                                "ILP_3",
-                                "ILP_4",
-                                "CSP_1",
-                                "COP_1",
-                                "COP_2",
-                                "ILP_3_Half_Intervals",
-                                "CSP_2_Half_Intervals",
-                                "Heuristica_1",
-                                "Heuristica1_v2",
-                                "Heuristica1_v3",
-                                "Heuristica00",
-                                "Heuristica_Half_Intervals"
-                                ]:
-            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, rules=rules_json)
         start_time = time.time()
-        if algorithm_name in [
+        # Algoritmos que aceitam 'shifts'
+        algs_with_shifts = [
             "linear programming",
             "hill climbing",
             "Greedy Randomized",
@@ -140,18 +131,36 @@ class TaskManager:
             "CSP General",
             "Heuristic Solver",
             "ilp_greedy",
-        ]:
+        ]
+        if algorithm_name in algs_with_shifts:
             if uses_rules:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, rules=rules_json)
             else:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, constraints=rules)
-        elif algorithm_name in ["ILP_13Hours", "CSP_13Hours", "CSP_Afonso_Hours", "ILP_13_Half_Intervals", "ILP_Half_Hour", "CSP_Extra_Hours", "ILP_Extra_Hours"]:
-            if uses_rules:
-                schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, rules=rules_json)
-            else:
-                schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, constraints=rules)
+            
+        elif algorithm_name in [
+            # "CSP_13Hours", 
+            # "CSP_Afonso_Hours", 
+            "ILP_1", 
+            "ILP_1_Half_Intervals", 
+            "ILP_2",
+            "ILP_2_Half_Intervals",
+            "ILP_3",
+            "ILP_4",
+            "ILP_3_Half_Intervals",
+            "CSP_1",
+            "COP_1",
+            "COP_2",
+            "CSP_2_Half_Intervals",
+            "Heuristica_1",
+            "Heuristica1_v2",
+            "Heuristica1_v3",
+            "Heuristica00",
+            "Heuristica_Half_Intervals"
+        ]:
+            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours)
         else:
-            schedule_data = algorithm()
+            raise ValueError(f"Algorithm '{algorithm_name}' not configured in TaskManager.")
         end_time = time.time()
         elapsed_time = end_time - start_time
         print(f"[TaskManager] Algorithm '{algorithm_name}' executed in {elapsed_time:.2f} seconds.")
