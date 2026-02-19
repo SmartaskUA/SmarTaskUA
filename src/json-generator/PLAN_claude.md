@@ -206,8 +206,12 @@
      │ - Date header row (auto-generated from Step 1 date range)                                                                                                              │
      │ - Employee rows (from Step 4)                                                                                                                                          │
      │ - Editable cells with:                                                                                                                                                 │
-     │   - Text input: A, 1-16, VAC, DL, etc.                                                                                                                                 │
-     │   - Color coding: Green (A/numbers), Red (DL/VAC), etc.                                                                                                                │
+     │   - Work Requirements: A (auto-allocate), 1-16 (specific hours)                                                                                                        │
+     │   - Time Window Constraints (v2.2): EQUALS:HH:MM-HH:MM, INCLUDE:HH:MM-HH:MM, EXCEPT:HH:MM-HH:MM                                                                        │
+     │   - Standard Constraints: VAC (vacation), NOT (unavailable) - always valid                                                                                             │
+     │   - Custom Constraints: DL, DLF, etc. - must be defined                                                                                                                │
+     │   - Time picker UI for time window constraints                                                                                                                         │
+     │   - Color coding: Green (A/numbers), Yellow (VAC), Red (NOT/DL), Blue (time windows)                                                                                   │
      │   - Keyboard navigation (arrow keys, tab)                                                                                                                              │
      │   - Cell validation on blur                                                                                                                                            │
      │ - Toolbar:                                                                                                                                                             │
@@ -219,9 +223,11 @@
      │                                                                                                                                                                        │
      │ MUI Components: Box, Paper, Table, TableCell (custom styled), TextField, IconButton, Tooltip, Dialog                                                                   │
      │                                                                                                                                                                        │
-     │ Validation:                                                                                                                                                            │
-     │ - Valid cell values: A, 1-16, or defined marking types                                                                                                                 │
+     │ Validation (v2.2):                                                                                                                                                     │
+     │ - Valid cell values: A, 1-16, VAC, NOT, time windows (EQUALS/INCLUDE/EXCEPT:HH:MM-HH:MM), or custom markings                                                           │
      │ - Employees using 'A' must have valid contract with workHoursPerDay                                                                                                    │
+     │ - Time window constraints: valid HH:MM format, start < end, align with work periods                                                                                    │
+     │ - No contradictory constraints on same day                                                                                                                             │
      │ - Date columns match temporal scope                                                                                                                                    │
      │                                                                                                                                                                        │
      │ ---                                                                                                                                                                    │
@@ -281,23 +287,28 @@
      │ - Dates within temporal scope                                                                                                                                          │
      │                                                                                                                                                                        │
      │ ---                                                                                                                                                                    │
-     │ Step 8: Constraints & Rules                                                                                                                                            │
+     │ Step 8: Constraints & Rules (v2.2)                                                                                                                                     │
      │                                                                                                                                                                        │
      │ Purpose: Configure scheduling constraints                                                                                                                              │
      │                                                                                                                                                                        │
      │ UI Components:                                                                                                                                                         │
      │ - Tabs: "Hard Constraints" | "Soft Constraints" | "Advanced"                                                                                                           │
      │ - Hard Constraints Tab:                                                                                                                                                │
-     │   - List of constraint types with:                                                                                                                                     │
+     │   - List of predefined constraints (max_consecutive_days, min_rest_hours, vacation_block, etc.)                                                                       │
+     │   - Each constraint:                                                                                                                                                   │
      │       - Checkbox: Enable/Disable                                                                                                                                       │
-     │     - Expandable panel: Parameters (JSON editor or form)                                                                                                               │
+     │     - Expandable panel: Parameters with form fields                                                                                                                    │
+     │     - Helper text explaining the constraint                                                                                                                            │
      │ - Soft Constraints Tab:                                                                                                                                                │
-     │   - Similar to hard but with:                                                                                                                                          │
+     │   - List of soft constraints (min_coverage, balance_workload, minimize_shortages)                                                                                      │
+     │   - Each with:                                                                                                                                                         │
+     │       - Checkbox: Enable/Disable                                                                                                                                       │
      │       - Slider: Weight (0-100)                                                                                                                                         │
-     │ - Advanced Tab (if feature enabled in Step 1):                                                                                                                         │
-     │   - Day-off swapping rules                                                                                                                                             │
-     │   - Break rules                                                                                                                                                        │
-     │   - Priority hierarchy builder                                                                                                                                         │
+     │     - Parameters form                                                                                                                                                  │
+     │ - Advanced Tab (if features.useAdvancedConstraints = true):                                                                                                            │
+     │   - Day-off swapping (enabled, rules, weekDefinition)                                                                                                                  │
+     │   - Break rules (mode, minWorkPeriodHours, breakMinutes)                                                                                                               │
+     │   - Priority hierarchy builder (drag-drop ranking)                                                                                                                     │
      │                                                                                                                                                                        │
      │ MUI Components: Tabs, List, Checkbox, Slider, Accordion, TextField, Select, Button                                                                                     │
      │                                                                                                                                                                        │

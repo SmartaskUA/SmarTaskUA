@@ -87,12 +87,18 @@ const initialState = {
   scheduleInput: {
     dataFile: 'schedule_input.csv',
     markingTypes: {
-      'A': 'Auto-allocate from contract',
-      'SPECIFIC': 'Specific hours (from contract)',
-      'VAC': 'Vacation',
-      'NOT': 'Not available'
+      // Standard constraints (always valid - don't need to be defined)
+      'A': 'Auto-allocate hours from contract (work requirement)',
+      'VAC': 'Vacation (standard constraint)',
+      'NOT': 'Unavailable (standard constraint)',
+      // Time window constraints (v2.2 - examples, format: TYPE:HH:MM-HH:MM)
+      'EQUALS': 'Must work exactly this time range (format: EQUALS:HH:MM-HH:MM)',
+      'INCLUDE': 'Must cover this entire range minimum (format: INCLUDE:HH:MM-HH:MM)',
+      'EXCEPT': 'Unavailable during this time window (format: EXCEPT:HH:MM-HH:MM)',
+      // Custom constraints (must be defined by user)
+      // Examples: 'DL': 'Day off', 'DLF': 'Fixed day off', 'DLV': 'Variable day off'
     },
-    dataMatrix: {} // { employeeId: { 'YYYY-MM-DD': 'A' | numeric | 'VAC' | 'NOT' } }
+    dataMatrix: {} // { employeeId: { 'YYYY-MM-DD': 'A' | numeric | 'VAC' | 'NOT' | 'EQUALS:...' | 'INCLUDE:...' | 'EXCEPT:...' | custom } }
   },
   
   // Step 6: Work Periods
@@ -114,20 +120,40 @@ const initialState = {
   
   // Step 8: Constraints
   constraints: {
-    hard: [],
-    // Each: { id, type, params, enabled: true }
-    soft: [],
-    // Each: { id, type, params, weight, enabled: true }
+    hard: [
+      // Predefined hard constraints (schema v2.2)
+      // User will enable/disable and configure via UI
+      { id: 'max_consecutive_days', type: 'max_consecutive_days', params: { window: 7, max_worked: 6 }, enabled: false },
+      { id: 'min_rest_hours', type: 'min_rest_hours', params: { hours: 11 }, enabled: false },
+      { id: 'vacation_block', type: 'vacation_block', params: {}, enabled: true },
+      { id: 'total_workdays', type: 'total_workdays', params: { min: 0, max: 365 }, enabled: false },
+      { id: 'max_special_days', type: 'max_special_days', params: { max_sundays: 52, max_holidays: 10 }, enabled: false },
+      { id: 'no_earlier_shift_next_day', type: 'no_earlier_shift_next_day', params: {}, enabled: false },
+      { id: 'respect_contract_constraints', type: 'respect_contract_constraints', params: {}, enabled: true },
+      { id: 'employee_availability', type: 'employee_availability', params: {}, enabled: true }
+    ],
+    soft: [
+      // Predefined soft constraints (schema v2.2)
+      { id: 'min_coverage', type: 'min_coverage', params: { penalty_per_missing: 1000 }, weight: 1000, enabled: true },
+      { id: 'ideal_coverage', type: 'ideal_coverage', params: { penalty_per_missing: 100 }, weight: 100, enabled: false },
+      { id: 'balance_workload', type: 'balance_workload', params: {}, weight: 10, enabled: false },
+      { id: 'minimize_shortages', type: 'minimize_shortages', params: {}, weight: 500, enabled: false },
+      { id: 'prefer_experienced', type: 'prefer_experienced', params: {}, weight: 5, enabled: false },
+      { id: 'minimize_split_shifts', type: 'minimize_split_shifts', params: {}, weight: 20, enabled: false },
+      { id: 'respect_preferred_work_periods', type: 'respect_preferred_work_periods', params: {}, weight: 10, enabled: false }
+    ],
     advanced: {
       dayOffSwapping: {
         enabled: false,
-        rules: [],
+        rules: ['can_swap_within_week'],
         weekDefinition: 'monday-sunday'
       },
       breaks: {
         enabled: false,
         mode: 'with_breaks',
-        rules: []
+        rules: [
+          { minWorkPeriodHours: 6, breakMinutes: 30, breakType: 'meal' }
+        ]
       }
     }
   },

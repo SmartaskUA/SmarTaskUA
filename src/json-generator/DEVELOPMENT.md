@@ -222,6 +222,27 @@ Make sure `CHOKIDAR_USEPOLLING=1` is set in docker-compose.yml (already configur
 2. Check nginx logs: `docker logs nginx`
 3. Verify all services are healthy: `docker-compose ps`
 
+## Schema v2.2 Features
+
+The JSON Generator now supports schema v2.2, which includes:
+
+### Time Window Constraints (Allen Interval Algebra)
+New constraint types in `schedule_input.csv`:
+- `EQUALS:HH:MM-HH:MM` - Employee must work exactly this time range
+- `INCLUDE:HH:MM-HH:MM` - Employee must cover this entire range minimum (can extend)
+- `EXCEPT:HH:MM-HH:MM` - Employee unavailable during this time window
+
+### Standard vs Custom Constraints
+- **Standard** (always valid): `VAC` (vacation), `NOT` (unavailable)
+- **Custom** (must be defined in `scheduleInput.markingTypes`): DL, DLF, DLV, etc.
+
+### Constraints Configuration
+- **Hard Constraints**: max_consecutive_days, min_rest_hours, vacation_block, etc.
+- **Soft Constraints**: min_coverage, balance_workload, with penalty weights
+- **Advanced**: Day-off swapping, break rules (requires `useAdvancedConstraints` feature flag)
+
+See `schema_v2.2/FORMAT.md` and `schema_v2.2/README.md` for complete details.
+
 ## Next Steps
 
 Now that the infrastructure is ready, you can:

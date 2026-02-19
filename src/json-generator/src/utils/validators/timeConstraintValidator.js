@@ -1,230 +1,120 @@
 /**
- * Time Constraint Validator
+ * Time Window Constraint Validator (Schema v2.2)
  *
- * Validates and parses time window constraints in the format:
- * MODIFIER:HH:MM-HH:MM
- *
- * Where:
- * - MODIFIER: ONLY | ATLEAST | NOT
- * - HH: 00-23 (hours)
- * - MM: 00-59 (minutes)
- * - Constraint: startTime < endTime
+ * Validates time window constraints in schedule_input.csv using Allen Interval Algebra:
+ * - EQUALS:HH:MM-HH:MM - Must work exactly this time range
+ * - INCLUDE:HH:MM-HH:MM - Must cover this entire range minimum
+ * - EXCEPT:HH:MM-HH:MM - Unavailable during this time window
  */
 
-// Valid constraint modifiers
-export const CONSTRAINT_MODIFIERS = {
-  ONLY: 'ONLY',
-  ATLEAST: 'ATLEAST',
-  NOT: 'NOT'
-};
-
-// Regex pattern for time constraint format
-const TIME_CONSTRAINT_REGEX = /^(ONLY|ATLEAST|NOT):(\d{2}):(\d{2})-(\d{2}):(\d{2})$/;
-
 /**
- * Check if a value is a time constraint
- * @param {string} value - The value to check
- * @returns {boolean} True if value matches time constraint pattern
- */
-export function isTimeConstraint(value) {
-  if (!value || typeof value !== 'string') return false;
-  return TIME_CONSTRAINT_REGEX.test(value.trim());
-}
-
-/**
- * Parse a time constraint string into components
- * @param {string} value - Time constraint string (e.g., "ONLY:08:00-16:00")
- * @returns {Object|null} Parsed components or null if invalid
- * Returns: { modifier, startHour, startMinute, endHour, endMinute, startTime, endTime }
- */
-export function parseTimeConstraint(value) {
-  if (!value || typeof value !== 'string') return null;
-
-  const match = value.trim().match(TIME_CONSTRAINT_REGEX);
-  if (!match) return null;
-
-  const [, modifier, startHH, startMM, endHH, endMM] = match;
-
-  return {
-    modifier,
-    startHour: parseInt(startHH, 10),
-    startMinute: parseInt(startMM, 10),
-    endHour: parseInt(endHH, 10),
-    endMinute: parseInt(endMM, 10),
-    startTime: `${startHH}:${startMM}`,
-    endTime: `${endHH}:${endMM}`
-  };
-}
-
-/**
- * Validate time constraint format and logic
- * @param {string} value - Time constraint string to validate
- * @returns {Object} { valid: boolean, error: string|null, parsed: Object|null }
- */
-export function validateTimeConstraint(value) {
-  // Check if empty
-  if (!value || typeof value !== 'string') {
-    return {
-      valid: false,
-      error: 'Time constraint cannot be empty',
-      parsed: null
-    };
-  }
-
-  const trimmed = value.trim();
-
-  // Check format
-  if (!TIME_CONSTRAINT_REGEX.test(trimmed)) {
-    return {
-      valid: false,
-      error: 'Invalid format. Expected: MODIFIER:HH:MM-HH:MM (e.g., ONLY:08:00-16:00)',
-      parsed: null
-    };
-  }
-
-  // Parse components
-  const parsed = parseTimeConstraint(trimmed);
-  if (!parsed) {
-    return {
-      valid: false,
-      error: 'Failed to parse time constraint',
-      parsed: null
-    };
-  }
-
-  const { modifier, startHour, startMinute, endHour, endMinute, startTime, endTime } = parsed;
-
-  // Validate modifier
-  if (!Object.values(CONSTRAINT_MODIFIERS).includes(modifier)) {
-    return {
-      valid: false,
-      error: `Invalid modifier "${modifier}". Must be one of: ONLY, ATLEAST, NOT`,
-      parsed: null
-    };
-  }
-
-  // Validate hour ranges
-  if (startHour < 0 || startHour > 23) {
-    return {
-      valid: false,
-      error: `Invalid start hour "${startHour}". Must be 00-23`,
-      parsed: null
-    };
-  }
-
-  if (endHour < 0 || endHour > 23) {
-    return {
-      valid: false,
-      error: `Invalid end hour "${endHour}". Must be 00-23`,
-      parsed: null
-    };
-  }
-
-  // Validate minute ranges
-  if (startMinute < 0 || startMinute > 59) {
-    return {
-      valid: false,
-      error: `Invalid start minute "${startMinute}". Must be 00-59`,
-      parsed: null
-    };
-  }
-
-  if (endMinute < 0 || endMinute > 59) {
-    return {
-      valid: false,
-      error: `Invalid end minute "${endMinute}". Must be 00-59`,
-      parsed: null
-    };
-  }
-
-  // Validate time logic: start < end
-  const startMinutes = startHour * 60 + startMinute;
-  const endMinutes = endHour * 60 + endMinute;
-
-  if (startMinutes >= endMinutes) {
-    return {
-      valid: false,
-      error: `Start time (${startTime}) must be before end time (${endTime})`,
-      parsed: null
-    };
-  }
-
-  // All validations passed
-  return {
-    valid: true,
-    error: null,
-    parsed
-  };
-}
-
-/**
- * Format a time constraint from components
- * @param {string} modifier - Constraint modifier (ONLY, ATLEAST, NOT)
- * @param {string} startTime - Start time HH:MM
- * @param {string} endTime - End time HH:MM
- * @returns {string} Formatted constraint string
- */
-export function formatTimeConstraint(modifier, startTime, endTime) {
-  return `${modifier}:${startTime}-${endTime}`;
-}
-
-/**
- * Get constraint type from value
- * @param {string} value - Time constraint string
- * @returns {string|null} Modifier type or null if not a valid constraint
- */
-export function getConstraintType(value) {
-  const parsed = parseTimeConstraint(value);
-  return parsed ? parsed.modifier : null;
-}
-
-/**
- * Get user-friendly description for constraint type
- * @param {string} modifier - Constraint modifier (ONLY, ATLEAST, NOT)
- * @returns {string} Human-readable description
- */
-export function getConstraintDescription(modifier) {
-  const descriptions = {
-    ONLY: 'Must work exactly this time range (no earlier/later)',
-    ATLEAST: 'Must work entire range minimum (can start earlier or end later)',
-    NOT: 'Completely unavailable during this time window'
-  };
-
-  return descriptions[modifier] || 'Unknown constraint type';
-}
-
-/**
- * Validate time format HH:MM
- * @param {string} time - Time string to validate
- * @returns {boolean} True if valid HH:MM format
+ * Validates time format (HH:MM)
  */
 export function isValidTimeFormat(time) {
-  if (!time || typeof time !== 'string') return false;
-
-  const match = time.match(/^(\d{2}):(\d{2})$/);
-  if (!match) return false;
-
-  const [, hour, minute] = match;
-  const h = parseInt(hour, 10);
-  const m = parseInt(minute, 10);
-
-  return h >= 0 && h <= 23 && m >= 0 && m <= 59;
+  if (typeof time !== 'string') return false;
+  const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+  return timeRegex.test(time);
 }
 
 /**
- * Check if two times are in valid order (start before end)
- * @param {string} startTime - Start time HH:MM
- * @param {string} endTime - End time HH:MM
- * @returns {boolean} True if start < end
+ * Parses time string to minutes since midnight
  */
-export function isValidTimeOrder(startTime, endTime) {
-  if (!isValidTimeFormat(startTime) || !isValidTimeFormat(endTime)) return false;
-
-  const [startH, startM] = startTime.split(':').map(n => parseInt(n, 10));
-  const [endH, endM] = endTime.split(':').map(n => parseInt(n, 10));
-
-  const startMinutes = startH * 60 + startM;
-  const endMinutes = endH * 60 + endM;
-
-  return startMinutes < endMinutes;
+export function parseTimeToMinutes(time) {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
 }
+
+/**
+ * Validates a time range (start < end)
+ */
+export function validateTimeRange(start, end) {
+  if (!isValidTimeFormat(start)) {
+    return { valid: false, error: `Invalid start time: "${start}"` };
+  }
+  if (!isValidTimeFormat(end)) {
+    return { valid: false, error: `Invalid end time: "${end}"` };
+  }
+  const startMin = parseTimeToMinutes(start);
+  const endMin = parseTimeToMinutes(end);
+  if (startMin >= endMin) {
+    return { valid: false, error: `Start (${start}) must be before end (${end})` };
+  }
+  return { valid: true };
+}
+
+/**
+ * Parses a time window constraint string
+ */
+export function parseTimeWindowConstraint(constraint) {
+  if (typeof constraint !== 'string') return null;
+  const match = constraint.match(/^(EQUALS|INCLUDE|EXCEPT):(\d{2}:\d{2})-(\d{2}:\d{2})$/);
+  if (!match) return null;
+  return { type: match[1], start: match[2], end: match[3] };
+}
+
+/**
+ * Validates a time window constraint
+ */
+export function validateTimeWindowConstraint(constraint) {
+  const parsed = parseTimeWindowConstraint(constraint);
+  if (!parsed) {
+    return { valid: false, error: `Invalid format: "${constraint}"` };
+  }
+  const rangeValidation = validateTimeRange(parsed.start, parsed.end);
+  if (!rangeValidation.valid) {
+    return { valid: false, error: `${rangeValidation.error} in "${constraint}"` };
+  }
+  return { valid: true, parsed };
+}
+
+/**
+ * Checks if a cell value is a time window constraint
+ */
+export function isTimeWindowConstraint(value) {
+  if (typeof value !== 'string') return false;
+  return /^(EQUALS|INCLUDE|EXCEPT):\d{2}:\d{2}-\d{2}:\d{2}$/.test(value);
+}
+
+/**
+ * Alias for isTimeWindowConstraint (backward compatibility)
+ */
+export function isTimeConstraint(value) {
+  return isTimeWindowConstraint(value);
+}
+
+/**
+ * Extracts the constraint type from a time window constraint string
+ * @param {string} constraint - Constraint string (e.g., "EQUALS:08:00-16:00")
+ * @returns {string|null} - Constraint type ('EQUALS', 'INCLUDE', 'EXCEPT') or null
+ */
+export function getConstraintType(constraint) {
+  const parsed = parseTimeWindowConstraint(constraint);
+  return parsed ? parsed.type : null;
+}
+
+/**
+ * Formats a time window constraint for display
+ */
+export function formatTimeWindowConstraint(constraint) {
+  const parsed = parseTimeWindowConstraint(constraint);
+  if (!parsed) return constraint;
+  const { type, start, end } = parsed;
+  switch (type) {
+    case 'EQUALS': return `Must work exactly ${start} to ${end}`;
+    case 'INCLUDE': return `Must cover ${start} to ${end} (minimum)`;
+    case 'EXCEPT': return `Unavailable ${start} to ${end}`;
+    default: return constraint;
+  }
+}
+
+export default {
+  isValidTimeFormat,
+  parseTimeToMinutes,
+  validateTimeRange,
+  parseTimeWindowConstraint,
+  validateTimeWindowConstraint,
+  isTimeWindowConstraint,
+  isTimeConstraint,
+  getConstraintType,
+  formatTimeWindowConstraint
+};

@@ -359,15 +359,18 @@ updateState('employees.competency', [
 - Click to edit
 - Keyboard navigation (Tab, Arrow keys, Enter)
 - Cell values:
-  - "A" = auto-allocate from contract
-  - 1-16 = specific hours
-  - Marking types: VAC, DL, DLF, etc.
+  - **Work Requirements**: "A" = auto-allocate from contract, 1-16 = specific hours
+  - **Time Window Constraints (v2.2)**: EQUALS:HH:MM-HH:MM, INCLUDE:HH:MM-HH:MM, EXCEPT:HH:MM-HH:MM
+  - **Standard Constraints**: VAC (vacation), NOT (unavailable) - always valid
+  - **Custom Constraints**: DL, DLF, etc. - must be defined in markingTypes
 - Auto-complete dropdown for marking types
+- Time picker UI for time window constraints
 - Color coding by value type:
-  - Green: A / numbers (available)
+  - Green: A / numbers (work requirements)
   - Yellow: VAC (vacation)
-  - Red: DL/OFF (not available)
-  - Blue: Custom markings
+  - Red: NOT/DL/OFF (constraints)
+  - Blue: Time window constraints (EQUALS/INCLUDE/EXCEPT)
+  - Purple: Custom markings
 
 **Toolbar**:
 - Button: "Define Custom Marking Types" → Dialog
@@ -399,8 +402,11 @@ updateState('employees.competency', [
 - `MatrixLegend.jsx` - color legend
 
 **Validation**:
-- Valid cell values only (A, 1-16, or defined markings)
+- Valid cell values only (A, 1-16, VAC, NOT, time window constraints, or defined custom markings)
 - Employees using "A" must have contract with workHoursPerDay
+- Time window constraints: valid HH:MM format (00-23:00-59), start < end
+- Time windows should align with or overlap defined work periods
+- No contradictory constraints on same day (e.g., both EQUALS:08:00-16:00 and EXCEPT:08:00-16:00)
 - Date columns must match temporal scope
 - Warn if employee has no availability
 
@@ -415,10 +421,15 @@ updateState('scheduleInput.dataMatrix', {
 });
 
 updateState('scheduleInput.markingTypes', {
-  'A': 'Auto-allocate from contract',
-  'VAC': 'Vacation',
-  'DL': 'Day off',
-  'CUSTOM': 'Custom marking'
+  'A': 'Auto-allocate from contract (work requirement)',
+  'VAC': 'Vacation (standard constraint - always valid)',
+  'NOT': 'Unavailable (standard constraint - always valid)',
+  'EQUALS:HH:MM-HH:MM': 'Must work exactly this time range (v2.2)',
+  'INCLUDE:HH:MM-HH:MM': 'Must cover this entire range minimum (v2.2)',
+  'EXCEPT:HH:MM-HH:MM': 'Unavailable during this time window (v2.2)',
+  'DL': 'Day off (custom constraint - must be defined)',
+  'DLF': 'Fixed day off (custom constraint - must be defined)',
+  'DLV': 'Variable day off (custom constraint - must be defined)'
 });
 ```
 
@@ -591,25 +602,29 @@ updateState('demand.demandData', [
   - Expandable panel: Parameters
   - Helper text explaining the constraint
 
-**Common Hard Constraints**:
-- No overlapping shifts
-- Respect contract max hours
-- Minimum rest between shifts
-- Maximum consecutive days
-- Required skills for shift
-- Employee availability (from Step 5)
+**Common Hard Constraints** (from schema v2.2):
+- `max_consecutive_days` - Maximum work days in rolling window
+- `total_workdays` - Annual workday limits (min/max)
+- `max_special_days` - Maximum Sundays/holidays per year
+- `no_earlier_shift_next_day` - No backward work period transitions
+- `min_rest_hours` - Minimum rest hours between shifts
+- `vacation_block` - Vacation days cannot be worked
+- `respect_contract_constraints` - Enforce contract-level constraints (weekendsOnly, etc.)
+- `employee_availability` - Respect schedule_input.csv constraints
 
 **Soft Constraints Tab**:
 - Similar to hard constraints
 - Additional field: Weight (slider 0-100)
 - Explains how weight affects optimization
 
-**Common Soft Constraints**:
-- Prefer certain shift patterns
-- Balance workload across employees
-- Minimize overtime
-- Prefer experienced employees
-- Minimize split shifts
+**Common Soft Constraints** (from schema v2.2):
+- `min_coverage` - Penalty for missing minimum coverage requirements
+- `ideal_coverage` - Penalty for not meeting ideal coverage
+- `balance_workload` - Distribute work evenly across employees
+- `minimize_shortages` - Minimize staffing shortages
+- `prefer_experienced` - Prefer higher-skilled employees (competency model)
+- `minimize_split_shifts` - Avoid split work periods
+- `respect_preferred_work_periods` - Honor employee work period preferences
 
 **Advanced Tab** (if feature enabled in Step 1):
 - Day-off swapping configuration

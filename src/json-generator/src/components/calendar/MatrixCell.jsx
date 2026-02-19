@@ -11,16 +11,16 @@ function getCellColor(value) {
 
   const val = value.toString().trim();
 
-  // Check for time constraints first (case-sensitive)
+  // Check for time window constraints first (v2.2: EQUALS, INCLUDE, EXCEPT)
   if (isTimeConstraint(val)) {
     const type = getConstraintType(val);
     switch (type) {
-      case 'ONLY':
-        return '#f3e5f5'; // light purple
-      case 'ATLEAST':
-        return '#fff3e0'; // light orange
-      case 'NOT':
-        return '#fce4ec'; // light pink
+      case 'EQUALS':
+        return '#e1bee7'; // purple - must work exactly this time
+      case 'INCLUDE':
+        return '#ffe0b2'; // orange - must cover minimum
+      case 'EXCEPT':
+        return '#f8bbd0'; // pink - unavailable
       default:
         return '#ffffff';
     }

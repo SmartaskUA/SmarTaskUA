@@ -91,21 +91,26 @@ export const themeConfig = {
 - Assign teams/competencies and contracts
 
 ### 🔄 Step 5: Schedule Input Matrix (Coming Soon)
-- Visual matrix for employee availability
-- Marking types: A, 1-16, VAC, DL, etc.
+- Visual matrix for employee availability and work requirements
+- **Work Requirements**: A (auto-allocate), 1-16 (specific hours)
+- **Time Window Constraints (v2.2)**: EQUALS:HH:MM-HH:MM, INCLUDE:HH:MM-HH:MM, EXCEPT:HH:MM-HH:MM
+- **Standard Constraints**: VAC (vacation), NOT (unavailable)
+- **Custom Constraints**: Define project-specific codes (DL, DLF, etc.)
 
 ### 🔄 Step 6: Work Periods (Coming Soon)
-- Define shift codes, names, time ranges
+- Define work period codes, names, time ranges
 - Fixed or flexible work periods
-- Break rules
+- Break rules (meal, rest, other)
+- Timing modes: fixed, window, afterWork
 
 ### 🔄 Step 7: Demand Calendar (Coming Soon)
 - Coverage requirements per date/shift/team
 - Minimum, Ideal, Estimated values
 
 ### 🔄 Step 8: Constraints (Coming Soon)
-- Hard and soft constraints
-- Advanced rules
+- **Hard Constraints**: Must be satisfied (max_consecutive_days, min_rest_hours, vacation_block, etc.)
+- **Soft Constraints**: With penalty weights (min_coverage, balance_workload, etc.)
+- **Advanced**: Day-off swapping, break rules, priority hierarchy (requires useAdvancedConstraints feature flag)
 
 ### 🔄 Step 9: Optimization (Coming Soon)
 - Algorithm selection
