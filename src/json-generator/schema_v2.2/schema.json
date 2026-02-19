@@ -528,7 +528,7 @@
         "markingTypes": {
           "type": "object",
           "additionalProperties": {"type": "string"},
-          "description": "Mapping of marking codes to descriptions. v2.2: 'A' = auto-allocate from employee's contract (reads contracts.definitions[].workHoursPerDay), numbers = specific hours (e.g., '8' = 8 hours), 'DL' = Day off, 'VAC' = Vacation, etc. Time window constraints (Allen Interval Algebra): 'EQUALS:HH:MM-HH:MM' = must work exactly this time range, 'INCLUDE:HH:MM-HH:MM' = must work at minimum this entire range (can extend), 'EXCEPT:HH:MM-HH:MM' = unavailable during this time window."
+          "description": "Mapping of custom constraint codes to descriptions. v2.2: Standard constraints 'VAC' (vacation) and 'NOT' (unavailable) are always valid. All other constraints (DL, DLF, DLV, DO, EnfD, Med, etc.) must be defined here. Work requirements: 'A' = auto-allocate from contract, numbers (1-16) = specific hours. Time window constraints (Allen Interval Algebra): 'EQUALS:HH:MM-HH:MM' = must work exactly this time range, 'INCLUDE:HH:MM-HH:MM' = must work at minimum this entire range (can extend), 'EXCEPT:HH:MM-HH:MM' = unavailable during this time window."
         }
       }
     },

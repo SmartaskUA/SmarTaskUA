@@ -378,14 +378,19 @@ EMP003,VAC,VAC,4,...
 | **`EQUALS:HH:MM-HH:MM`** | Time constraint | Must work EXACTLY this time range (no earlier/later) | `EQUALS:08:00-16:00` = work 8 AM to 4 PM only |
 | **`INCLUDE:HH:MM-HH:MM`** | Time constraint | Must work entire range minimum (can start earlier/end later) | `INCLUDE:09:00-17:00` = must cover 9-5, could work 8-6 |
 | **`EXCEPT:HH:MM-HH:MM`** | Time constraint | Completely unavailable during this time window | `EXCEPT:14:00-22:00` = cannot work 2 PM to 10 PM |
-| **`DL`** | Constraint | Day off (cannot work) | Standard day off |
-| **`DLF`** | Constraint | Fixed day off (cannot work, cannot swap) | Contract-mandated day off |
-| **`DLV`** | Constraint | Variable day off (can swap within week) | Flexible day off |
-| **`VAC`** | Constraint | Vacation (cannot work) | Approved vacation |
-| **`EnfD`** | Constraint | Sick leave (cannot work) | Medical absence |
-| **`NOT`** | Constraint | Unavailable (cannot work) | General unavailability |
-| **`Med`** | Constraint | Medical reason (cannot work) | Medical appointment/leave |
-| **`10:00-14:00`** | Time window | Pre-assigned time window (legacy format) | Must work during this window |
+| **`VAC`** | Standard constraint | Vacation (cannot work) | Always valid - approved vacation |
+| **`NOT`** | Standard constraint | Unavailable (cannot work) | Always valid - general unavailability |
+
+**Custom Constraints (must be defined in JSON scheduleInput.markingTypes):**
+
+Common custom constraints that must be explicitly defined in your problem.json:
+- `DL` = Day off (generic)
+- `DLF` = Fixed day off (cannot swap)
+- `DLV` = Variable day off (can swap within week)
+- `DO` = Day off (alias for DL)
+- `EnfD` = Sick leave
+- `Med` = Medical reason
+- Any project-specific constraint codes you need
 
 **IMPORTANT v2.2 Changes:**
 - ✅ **"A" now means AUTO-ALLOCATE** from contract (not just "available")
@@ -484,7 +489,7 @@ EMP002,EXCEPT:14:00-22:00,DL,6,A
 1. First column must be named `employee_id`
 2. All employee IDs must exist in JSON
 3. Date columns must be consecutive and match `temporalScope`
-4. Valid values: A, integers 1-16, DL, DLF, DLV, VAC, EnfD, NOT, Med, DC-E, or time ranges HH:MM-HH:MM
+4. Valid values: A, integers 1-16, VAC, NOT, or custom codes defined in scheduleInput.markingTypes
 5. Time window constraints: EQUALS:HH:MM-HH:MM, INCLUDE:HH:MM-HH:MM, EXCEPT:HH:MM-HH:MM
    - Time format: HH must be 00-23, MM must be 00-59
    - Start time must be before end time

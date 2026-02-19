@@ -129,7 +129,7 @@
         - 26 oct
 - Emp_20056459
     - Time Constraint
-        - 7 oct (10:00-14:00)
+        - 7 oct (EQUALS:10:00-14:00)
     - Forced Day Off
         - 10 oct
     - Day Off

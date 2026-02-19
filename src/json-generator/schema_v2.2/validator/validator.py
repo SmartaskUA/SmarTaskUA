@@ -663,8 +663,9 @@ class SchemaValidator:
             # If markingTypes are defined, use those as valid values (excluding numeric which are always valid in v2.2)
             valid_values = set(marking_types.keys())
         else:
-            # Default valid values based on templates and documentation
-            valid_values = {"A", "VAC", "DL", "DLF", "DLV", "EnfD", "DO", "NOT", "Med", "DC-E"}
+            # Only normalized/standard constraints are valid by default
+            # All other constraints (DL, DLF, DO, EnfD, Med, etc.) must be defined in scheduleInput.markingTypes
+            valid_values = {"A", "VAC", "NOT"}
 
         for col in date_columns:
             for idx, value in enumerate(self.schedule_df[col]):
@@ -708,30 +709,17 @@ class SchemaValidator:
                         )
                     continue
 
-                # Check if it's a basic time range (legacy format)
-                time_range_pattern = re.compile(r'^\d{2}:\d{2}-\d{2}:\d{2}$')
-                if time_range_pattern.match(value_str):
-                    # Validate time range properly
-                    is_valid, error_msg = validate_time_range(value_str)
-                    if not is_valid:
-                        self.report.add_error(
-                            "CSV",
-                            f"Invalid time range in cell: {error_msg}",
-                            f"{csv_path.name}:row {idx+2}, col {col}"
-                        )
-                    continue
-
-                # Not a valid marking, number, time window constraint, or time range
+                # Not a valid marking, number, or time window constraint
                 if marking_types:
                     self.report.add_error(
                         "CSV",
-                        f"Invalid cell value: '{value_str}' (must be 'A', 1-16, one of {valid_values} defined in scheduleInput.markingTypes, a time window constraint EQUALS/INCLUDE/EXCEPT:HH:MM-HH:MM, or a time range HH:MM-HH:MM)",
+                        f"Invalid cell value: '{value_str}' (must be 'A', 1-16, one of {valid_values} defined in scheduleInput.markingTypes, or a time window constraint EQUALS/INCLUDE/EXCEPT:HH:MM-HH:MM)",
                         f"{csv_path.name}:row {idx+2}, col {col}"
                     )
                 else:
                     self.report.add_error(
                         "CSV",
-                        f"Invalid cell value: '{value_str}' (must be 'A', 1-16, one of {valid_values}, a time window constraint EQUALS/INCLUDE/EXCEPT:HH:MM-HH:MM, or a time range HH:MM-HH:MM)",
+                        f"Invalid cell value: '{value_str}' (must be 'A', 1-16, standard constraints (VAC, NOT), or a time window constraint EQUALS/INCLUDE/EXCEPT:HH:MM-HH:MM. Custom constraints must be defined in scheduleInput.markingTypes)",
                         f"{csv_path.name}:row {idx+2}, col {col}"
                     )
 

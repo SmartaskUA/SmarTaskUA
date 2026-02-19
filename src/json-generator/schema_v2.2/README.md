@@ -139,8 +139,8 @@ JSON (problem.json)          CSV Files
 ### What Goes in CSV
 ✅ **schedule_input.csv** - Work requirements and availability constraints
   - When employees should work (A = auto from contract, 4/6/8 = specific hours)
-  - When employees are NOT available (VAC, DL, EnfD)
-  - Pre-assigned time windows (optional)
+  - When employees are NOT available (VAC, NOT, custom constraints)
+  - Time window constraints (EQUALS/INCLUDE/EXCEPT with Allen Interval Algebra)
 
 ✅ **demand.csv** - Daily coverage requirements
   - How many people needed per day/shift/team
@@ -259,13 +259,20 @@ EMP003,6,VAC,VAC,A,...
 - `A` = Auto-allocate from contract (uses workHoursPerDay)
 - `4`, `6`, `8`, etc. = Work exactly this many hours (1-16)
 
-**Constraints (unchanged):**
-- `DL` = Day off (cannot work)
+**Standard Constraints (always valid):**
 - `VAC` = Vacation (cannot work)
-- `DLF` = Fixed day off (cannot swap)
-- `EnfD` = Sick leave (cannot work)
 - `NOT` = Unavailable (cannot work)
-- `10:00-14:00` = Pre-assigned time window (optional constraint)
+
+**Custom Constraints (must be defined in scheduleInput.markingTypes):**
+- `DL` = Day off (example custom constraint)
+- `DLF` = Fixed day off (example custom constraint)
+- `EnfD` = Sick leave (example custom constraint)
+- Any project-specific codes you define
+
+**Time Window Constraints (Allen Interval Algebra):**
+- `EQUALS:08:00-16:00` = Must work exactly 8 AM-4 PM
+- `INCLUDE:09:00-17:00` = Must cover 9 AM-5 PM minimum
+- `EXCEPT:14:00-22:00` = Cannot work 2 PM-10 PM
 
 **v2.2 Important:** This CSV now contains BOTH work requirements (A, numbers) AND constraints (DL, VAC, etc.)
 
