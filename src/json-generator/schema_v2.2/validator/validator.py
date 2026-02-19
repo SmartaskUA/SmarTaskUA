@@ -3,8 +3,10 @@
 Schema v2.2 Validator for Employee Scheduling Problems
 
 Validates that problem.json, demand.csv, and schedule_input.csv are consistent
-and can be used together for scheduling. v2.2 adds support for contract-based
-hour allocation (A) and specific hour requirements (1-16).
+and can be used together for scheduling. v2.2 adds support for:
+- Contract-based hour allocation (A)
+- Specific hour requirements (1-16)
+- Time window constraints using Allen Interval Algebra (EQUALS:, INCLUDE:, EXCEPT:)
 
 Usage:
     python validator.py <path_to_problem.json> [--verbose] [--json]
@@ -138,6 +140,35 @@ def validate_time_range(time_range_str: str) -> Tuple[bool, Optional[str]]:
 
     if start_total_mins >= end_total_mins:
         return False, f"Start time must be before end time in '{time_range_str}'"
+
+    return True, None
+
+
+def validate_time_window_constraint(constraint_str: str) -> Tuple[bool, Optional[str]]:
+    """
+    Validate time window constraint format with Allen Interval Algebra operators.
+
+    Supported formats (v2.2):
+    - EQUALS:HH:MM-HH:MM - Must work exactly this time range
+    - INCLUDE:HH:MM-HH:MM - Must cover this entire range minimum (can extend)
+    - EXCEPT:HH:MM-HH:MM - Unavailable during this time window
+
+    Returns:
+        (is_valid, error_message): True if valid, False with error message if invalid
+    """
+    pattern = re.compile(r'^(EQUALS|INCLUDE|EXCEPT):(\d{2}:\d{2}-\d{2}:\d{2})$')
+    match = pattern.match(constraint_str)
+
+    if not match:
+        return False, f"Invalid time window constraint '{constraint_str}' (expected EQUALS:HH:MM-HH:MM, INCLUDE:HH:MM-HH:MM, or EXCEPT:HH:MM-HH:MM)"
+
+    operator = match.group(1)
+    time_range = match.group(2)
+
+    # Validate the time range part
+    is_valid, error_msg = validate_time_range(time_range)
+    if not is_valid:
+        return False, f"Time window constraint '{constraint_str}' has invalid time range: {error_msg}"
 
     return True, None
 
@@ -664,7 +695,20 @@ class SchemaValidator:
                 if value_str in valid_values:
                     continue
 
-                # Check if it's a time range
+                # Check if it's a time window constraint (v2.2: EQUALS/INCLUDE/EXCEPT)
+                time_window_pattern = re.compile(r'^(EQUALS|INCLUDE|EXCEPT):\d{2}:\d{2}-\d{2}:\d{2}$')
+                if time_window_pattern.match(value_str):
+                    # Validate time window constraint properly
+                    is_valid, error_msg = validate_time_window_constraint(value_str)
+                    if not is_valid:
+                        self.report.add_error(
+                            "CSV",
+                            f"Invalid time window constraint in cell: {error_msg}",
+                            f"{csv_path.name}:row {idx+2}, col {col}"
+                        )
+                    continue
+
+                # Check if it's a basic time range (legacy format)
                 time_range_pattern = re.compile(r'^\d{2}:\d{2}-\d{2}:\d{2}$')
                 if time_range_pattern.match(value_str):
                     # Validate time range properly
@@ -675,20 +719,21 @@ class SchemaValidator:
                             f"Invalid time range in cell: {error_msg}",
                             f"{csv_path.name}:row {idx+2}, col {col}"
                         )
+                    continue
+
+                # Not a valid marking, number, time window constraint, or time range
+                if marking_types:
+                    self.report.add_error(
+                        "CSV",
+                        f"Invalid cell value: '{value_str}' (must be 'A', 1-16, one of {valid_values} defined in scheduleInput.markingTypes, a time window constraint EQUALS/INCLUDE/EXCEPT:HH:MM-HH:MM, or a time range HH:MM-HH:MM)",
+                        f"{csv_path.name}:row {idx+2}, col {col}"
+                    )
                 else:
-                    # Not a valid marking, number, or time range
-                    if marking_types:
-                        self.report.add_error(
-                            "CSV",
-                            f"Invalid cell value: '{value_str}' (must be 'A', 1-16, one of {valid_values} defined in scheduleInput.markingTypes, or a valid time range HH:MM-HH:MM)",
-                            f"{csv_path.name}:row {idx+2}, col {col}"
-                        )
-                    else:
-                        self.report.add_error(
-                            "CSV",
-                            f"Invalid cell value: '{value_str}' (must be 'A', 1-16, one of {valid_values}, or a valid time range HH:MM-HH:MM)",
-                            f"{csv_path.name}:row {idx+2}, col {col}"
-                        )
+                    self.report.add_error(
+                        "CSV",
+                        f"Invalid cell value: '{value_str}' (must be 'A', 1-16, one of {valid_values}, a time window constraint EQUALS/INCLUDE/EXCEPT:HH:MM-HH:MM, or a time range HH:MM-HH:MM)",
+                        f"{csv_path.name}:row {idx+2}, col {col}"
+                    )
 
         # v2.2: Validate employees using "A" have contract with workHoursPerDay
         for emp_id in employees_using_A:

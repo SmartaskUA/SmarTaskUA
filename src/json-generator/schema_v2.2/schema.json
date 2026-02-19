@@ -519,7 +519,7 @@
     },
     "scheduleInput": {
       "type": "object",
-      "description": "Employee availability constraints from CSV file. v2.2: supports 'A' for auto-allocation from employee's contract workHoursPerDay, numeric values (1-16) for specific hour requirements, and time window constraints with ONLY/ATLEAST/NOT modifiers.",
+      "description": "Employee availability constraints from CSV file. v2.2: supports 'A' for auto-allocation from employee's contract workHoursPerDay, numeric values (1-16) for specific hour requirements, and time window constraints with EQUALS/INCLUDE/EXCEPT modifiers (Allen Interval Algebra).",
       "properties": {
         "dataFile": {
           "type": "string",
@@ -528,7 +528,7 @@
         "markingTypes": {
           "type": "object",
           "additionalProperties": {"type": "string"},
-          "description": "Mapping of marking codes to descriptions. v2.2: 'A' = auto-allocate from employee's contract (reads contracts.definitions[].workHoursPerDay), numbers = specific hours (e.g., '8' = 8 hours), 'DL' = Day off, 'VAC' = Vacation, etc. Time window constraints: 'ONLY:HH:MM-HH:MM' = must work exactly this time range, 'ATLEAST:HH:MM-HH:MM' = must work at minimum this entire range (can extend), 'NOT:HH:MM-HH:MM' = unavailable during this time window."
+          "description": "Mapping of marking codes to descriptions. v2.2: 'A' = auto-allocate from employee's contract (reads contracts.definitions[].workHoursPerDay), numbers = specific hours (e.g., '8' = 8 hours), 'DL' = Day off, 'VAC' = Vacation, etc. Time window constraints (Allen Interval Algebra): 'EQUALS:HH:MM-HH:MM' = must work exactly this time range, 'INCLUDE:HH:MM-HH:MM' = must work at minimum this entire range (can extend), 'EXCEPT:HH:MM-HH:MM' = unavailable during this time window."
         }
       }
     },

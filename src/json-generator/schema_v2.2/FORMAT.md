@@ -336,9 +336,9 @@ All contract constraints are optional. Define them only when needed for your use
   "markingTypes": {
     "A": "Auto-allocate hours from contract (v2.2)",
     "8": "Work exactly 8 hours (v2.2 - any number 1-16)",
-    "ONLY:08:00-16:00": "Must work exactly 8 AM to 4 PM (v2.2)",
-    "ATLEAST:09:00-17:00": "Must cover 9 AM to 5 PM minimum (v2.2)",
-    "NOT:14:00-22:00": "Unavailable from 2 PM to 10 PM (v2.2)",
+    "EQUALS:08:00-16:00": "Must work exactly 8 AM to 4 PM (v2.2)",
+    "INCLUDE:09:00-17:00": "Must cover 9 AM to 5 PM minimum (v2.2)",
+    "EXCEPT:14:00-22:00": "Unavailable from 2 PM to 10 PM (v2.2)",
     "DL": "Day Off - Generic day off",
     "DLF": "Fixed day off (cannot change)",
     "DLV": "Variable day off (can swap)",
@@ -375,9 +375,9 @@ EMP003,VAC,VAC,4,...
 |-------|------|-------------|---------|
 | **`A`** | Auto-allocate | Algorithm allocates hours from employee's `workHoursPerDay` | Employee with `workHoursPerDay: 8` gets 8 hours |
 | **`4`, `6`, `8`, etc.** | Specific hours | Employee must work exactly this many hours | `8` = work 8 hours that day |
-| **`ONLY:HH:MM-HH:MM`** | Time constraint | Must work EXACTLY this time range (no earlier/later) | `ONLY:08:00-16:00` = work 8 AM to 4 PM only |
-| **`ATLEAST:HH:MM-HH:MM`** | Time constraint | Must work entire range minimum (can start earlier/end later) | `ATLEAST:09:00-17:00` = must cover 9-5, could work 8-6 |
-| **`NOT:HH:MM-HH:MM`** | Time constraint | Completely unavailable during this time window | `NOT:14:00-22:00` = cannot work 2 PM to 10 PM |
+| **`EQUALS:HH:MM-HH:MM`** | Time constraint | Must work EXACTLY this time range (no earlier/later) | `EQUALS:08:00-16:00` = work 8 AM to 4 PM only |
+| **`INCLUDE:HH:MM-HH:MM`** | Time constraint | Must work entire range minimum (can start earlier/end later) | `INCLUDE:09:00-17:00` = must cover 9-5, could work 8-6 |
+| **`EXCEPT:HH:MM-HH:MM`** | Time constraint | Completely unavailable during this time window | `EXCEPT:14:00-22:00` = cannot work 2 PM to 10 PM |
 | **`DL`** | Constraint | Day off (cannot work) | Standard day off |
 | **`DLF`** | Constraint | Fixed day off (cannot work, cannot swap) | Contract-mandated day off |
 | **`DLV`** | Constraint | Variable day off (can swap within week) | Flexible day off |
@@ -390,15 +390,15 @@ EMP003,VAC,VAC,4,...
 **IMPORTANT v2.2 Changes:**
 - ✅ **"A" now means AUTO-ALLOCATE** from contract (not just "available")
 - ✅ **Numbers 1-16 are WORK HOURS** (algorithm must allocate exactly this many hours)
-- ✅ **Time window constraints** with ONLY/ATLEAST/NOT modifiers for precise time control
+- ✅ **Time window constraints** with EQUALS/INCLUDE/EXCEPT modifiers (Allen Interval Algebra) for precise time control
 - ✅ **All other markings remain CONSTRAINTS** (days employee cannot work)
 
 **Example CSV (v2.2 with Time Constraints):**
 ```csv
 employee_id,2030-10-01,2030-10-02,2030-10-03,2030-10-04,2030-10-05
-20072412,A,A,8,DL,ONLY:08:00-16:00
-20066543,DL,ATLEAST:09:00-17:00,6,A,DL
-20067009,NOT:14:00-22:00,4,DL,A,A
+20072412,A,A,8,DL,EQUALS:08:00-16:00
+20066543,DL,INCLUDE:09:00-17:00,6,A,DL
+20067009,EXCEPT:14:00-22:00,4,DL,A,A
 20062688,VAC,VAC,VAC,VAC,VAC
 ```
 
@@ -412,7 +412,7 @@ employee_id,2030-10-01,2030-10-02,2030-10-03,2030-10-04,2030-10-05
 
 Time window constraints allow precise control over when employees work using three modifiers:
 
-#### ONLY:HH:MM-HH:MM
+#### EQUALS:HH:MM-HH:MM
 **Semantics:** Employee must work EXACTLY this time range. Cannot start earlier or end later.
 
 **Use Cases:**
@@ -420,12 +420,12 @@ Time window constraints allow precise control over when employees work using thr
 - Legal restrictions: "Part-time staff must finish by 6 PM"
 - Equipment access: "Lab work only during 10 AM-2 PM window"
 
-**Example:** `ONLY:08:00-16:00`
+**Example:** `EQUALS:08:00-16:00`
 - ✅ Valid: Assign to work period 08:00-16:00
 - ❌ Invalid: Assign to 07:00-16:00 (starts too early)
 - ❌ Invalid: Assign to 08:00-17:00 (ends too late)
 
-#### ATLEAST:HH:MM-HH:MM
+#### INCLUDE:HH:MM-HH:MM
 **Semantics:** Employee must work the ENTIRE specified range as a minimum. Can start earlier or end later.
 
 **Use Cases:**
@@ -433,14 +433,14 @@ Time window constraints allow precise control over when employees work using thr
 - Supervision needs: "Must overlap with manager's 9 AM-5 PM shift"
 - Peak periods: "Must cover lunch rush 12 PM-2 PM"
 
-**Example:** `ATLEAST:09:00-17:00`
+**Example:** `INCLUDE:09:00-17:00`
 - ✅ Valid: Assign to 09:00-17:00 (exact match)
 - ✅ Valid: Assign to 08:00-18:00 (covers and extends)
 - ✅ Valid: Assign to 07:00-17:00 (starts earlier, same end)
 - ❌ Invalid: Assign to 10:00-17:00 (missing 9-10 AM coverage)
 - ❌ Invalid: Assign to 09:00-16:00 (missing 4-5 PM coverage)
 
-#### NOT:HH:MM-HH:MM
+#### EXCEPT:HH:MM-HH:MM
 **Semantics:** Employee is completely UNAVAILABLE during this time window. Cannot work at all during this period.
 
 **Use Cases:**
@@ -448,7 +448,7 @@ Time window constraints allow precise control over when employees work using thr
 - Avoiding specific shifts: "Unavailable during night shift hours"
 - Partial day availability: "Not available mornings (before 12 PM)"
 
-**Example:** `NOT:14:00-22:00`
+**Example:** `EXCEPT:14:00-22:00`
 - ✅ Valid: Assign to 06:00-14:00 (ends exactly at exclusion start)
 - ✅ Valid: Assign to 08:00-12:00 (completely before exclusion)
 - ❌ Invalid: Assign to 10:00-18:00 (overlaps with 14:00-18:00)
@@ -466,7 +466,7 @@ Time window constraints work alongside your defined work periods:
 **Example:**
 ```
 Work Periods: M=08:30-16:30, T=14:00-22:00, N=22:00-06:30
-Employee constraint: NOT:14:00-22:00
+Employee constraint: EXCEPT:14:00-22:00
 Result: Employee can only be assigned to M (Morning) shift
 ```
 
@@ -476,8 +476,8 @@ You can mix different constraint types across days in the same schedule:
 
 ```csv
 employee_id,2030-10-01,2030-10-02,2030-10-03,2030-10-04
-EMP001,A,ONLY:08:00-16:00,8,ATLEAST:09:00-17:00
-EMP002,NOT:14:00-22:00,DL,6,A
+EMP001,A,EQUALS:08:00-16:00,8,INCLUDE:09:00-17:00
+EMP002,EXCEPT:14:00-22:00,DL,6,A
 ```
 
 **Validation Rules (v2.2):**
@@ -485,13 +485,13 @@ EMP002,NOT:14:00-22:00,DL,6,A
 2. All employee IDs must exist in JSON
 3. Date columns must be consecutive and match `temporalScope`
 4. Valid values: A, integers 1-16, DL, DLF, DLV, VAC, EnfD, NOT, Med, DC-E, or time ranges HH:MM-HH:MM
-5. Time window constraints: ONLY:HH:MM-HH:MM, ATLEAST:HH:MM-HH:MM, NOT:HH:MM-HH:MM
+5. Time window constraints: EQUALS:HH:MM-HH:MM, INCLUDE:HH:MM-HH:MM, EXCEPT:HH:MM-HH:MM
    - Time format: HH must be 00-23, MM must be 00-59
    - Start time must be before end time
    - Times should align with or overlap defined work periods
 6. If "A" is used, employee should have `workHoursPerDay` defined (defaults to 8 for fullTime, 4 for partTime)
 7. No duplicate employee IDs
-8. No contradictory constraints on same day (e.g., both ONLY:08:00-16:00 and NOT:08:00-16:00)
+8. No contradictory constraints on same day (e.g., both EQUALS:08:00-16:00 and EXCEPT:08:00-16:00)
 
 ---
 
@@ -713,7 +713,7 @@ date,workPeriod,competency,level,minimum,ideal,estimated
 | `employees[].workHoursPerDay` | Not present | **New:** Default hours when "A" is used in CSV |
 | `scheduleInput` CSV "A" value | Available (constraint) | **Changed:** Auto-allocate from contract |
 | `scheduleInput` CSV numeric values | Invalid (error) | **New:** Valid (specific hours 1-16) |
-| `scheduleInput` CSV time constraints | Not available | **New:** ONLY/ATLEAST/NOT:HH:MM-HH:MM for time window control |
+| `scheduleInput` CSV time constraints | Not available | **New:** EQUALS/INCLUDE/EXCEPT:HH:MM-HH:MM for time window control (Allen Interval Algebra) |
 | Employee contract defaults | N/A | Defaults: 8h fullTime, 4h partTime |
 
 ---
@@ -730,7 +730,7 @@ date,workPeriod,competency,level,minimum,ideal,estimated
 ### Optional Enhancements:
 1. Use numeric values (4, 6, 8) for specific hour requirements instead of "A"
 2. Mix "A" (auto) and numbers (specific) in the same schedule for flexibility
-3. Use time window constraints (ONLY/ATLEAST/NOT:HH:MM-HH:MM) for precise time control
+3. Use time window constraints (EQUALS/INCLUDE/EXCEPT:HH:MM-HH:MM) for precise time control (Allen Interval Algebra)
 4. Combine all constraint types for maximum flexibility (A, numbers, and time windows)
 
 ### Example Migration:
@@ -774,9 +774,9 @@ In v2.2:
 4. **Define workHoursPerDay** in JSON for employees using "A"
 5. **Use numbers (1-16) for specific hours**, "A" for contract-based allocation
 6. **Use time window constraints** when you need precise time control:
-   - ONLY:HH:MM-HH:MM for fixed schedules
-   - ATLEAST:HH:MM-HH:MM for minimum coverage requirements
-   - NOT:HH:MM-HH:MM for unavailability periods
+   - EQUALS:HH:MM-HH:MM for fixed schedules
+   - INCLUDE:HH:MM-HH:MM for minimum coverage requirements
+   - EXCEPT:HH:MM-HH:MM for unavailability periods
 7. **Document markings** in `scheduleInput.markingTypes`
 8. **Mix constraint types** for flexible scheduling (A, numbers, and time windows as needed)
 
@@ -810,7 +810,7 @@ In v2.2:
 - [ ] Date columns match `temporalScope` period
 - [ ] All values are valid: A, integers 1-16, DL, DLF, DLV, VAC, EnfD, NOT, Med, or time ranges
 - [ ] Numeric values are within 1-16 range
-- [ ] Time window constraints use valid format: ONLY:HH:MM-HH:MM, ATLEAST:HH:MM-HH:MM, NOT:HH:MM-HH:MM
+- [ ] Time window constraints use valid format: EQUALS:HH:MM-HH:MM, INCLUDE:HH:MM-HH:MM, EXCEPT:HH:MM-HH:MM
 - [ ] Time window constraints have valid times (HH: 00-23, MM: 00-59)
 - [ ] Time window constraints have start time before end time
 - [ ] No contradictory time constraints on same day
