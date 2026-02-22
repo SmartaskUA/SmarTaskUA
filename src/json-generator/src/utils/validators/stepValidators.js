@@ -229,8 +229,52 @@ export function validateStep6(state) {
 export function validateStep7(state) {
   const errors = [];
 
-  // Optional: Demand data is optional
-  // Could add validation here if demand becomes required
+  // At least one demand entry required
+  if (!state.demand.demandData || state.demand.demandData.length === 0) {
+    errors.push('At least one demand entry is required');
+  }
+
+  // Validate each demand entry
+  if (state.demand.demandData && state.demand.demandData.length > 0) {
+    const teamField = state.employees.model === 'team' ? 'team' : 'competency';
+
+    state.demand.demandData.forEach((entry, index) => {
+      // Check required fields
+      if (!entry.date) {
+        errors.push(`Demand entry ${index + 1}: Date is required`);
+      }
+      if (!entry.workPeriod) {
+        errors.push(`Demand entry ${index + 1}: Work period is required`);
+      }
+      if (!entry[teamField]) {
+        errors.push(`Demand entry ${index + 1}: ${teamField} is required`);
+      }
+
+      // Validate coverage values
+      const { minimum, ideal, estimated } = entry;
+
+      if (minimum === undefined || minimum === null) {
+        errors.push(`Demand entry ${index + 1}: Minimum coverage is required`);
+      }
+      if (ideal === undefined || ideal === null) {
+        errors.push(`Demand entry ${index + 1}: Ideal coverage is required`);
+      }
+      if (estimated === undefined || estimated === null) {
+        errors.push(`Demand entry ${index + 1}: Estimated coverage is required`);
+      }
+
+      // Validate logical order: minimum ≤ estimated ≤ ideal
+      if (minimum !== undefined && estimated !== undefined && minimum > estimated) {
+        errors.push(`Demand entry ${index + 1}: Minimum (${minimum}) cannot be greater than estimated (${estimated})`);
+      }
+      if (estimated !== undefined && ideal !== undefined && estimated > ideal) {
+        errors.push(`Demand entry ${index + 1}: Estimated (${estimated}) cannot be greater than ideal (${ideal})`);
+      }
+      if (minimum !== undefined && ideal !== undefined && minimum > ideal) {
+        errors.push(`Demand entry ${index + 1}: Minimum (${minimum}) cannot be greater than ideal (${ideal})`);
+      }
+    });
+  }
 
   return {
     valid: errors.length === 0,
@@ -286,6 +330,7 @@ export function validateStep10(state) {
   const step3 = validateStep3(state);
   const step4 = validateStep4(state);
   const step6 = validateStep6(state);
+  const step7 = validateStep7(state);
 
   // Collect all critical errors
   if (!step1.valid) errors.push(...step1.errors.map(e => `Step 1: ${e}`));
@@ -293,6 +338,7 @@ export function validateStep10(state) {
   if (!step3.valid) errors.push(...step3.errors.map(e => `Step 3: ${e}`));
   if (!step4.valid) errors.push(...step4.errors.map(e => `Step 4: ${e}`));
   if (!step6.valid) errors.push(...step6.errors.map(e => `Step 6: ${e}`));
+  if (!step7.valid) errors.push(...step7.errors.map(e => `Step 7: ${e}`));
 
   return {
     valid: errors.length === 0,
@@ -332,7 +378,7 @@ export function validateStep(stepNumber, state) {
  * @returns {object} {valid: boolean, errors: string[], criticalSteps: number[]}
  */
 export function validateAllCriticalSteps(state) {
-  const criticalSteps = [0, 1, 2, 3, 5]; // Steps 1, 2, 3, 4, 6 are critical
+  const criticalSteps = [0, 1, 2, 3, 5, 6]; // Steps 1, 2, 3, 4, 6, 7 are critical
   const allErrors = [];
 
   criticalSteps.forEach((stepNum) => {
