@@ -370,7 +370,7 @@
           "type": ["array", "null"],
           "items": {
             "type": "object",
-            "required": ["code", "name", "order"],
+            "required": ["code", "name"],
             "properties": {
               "code": {
                 "type": "string",
@@ -379,11 +379,6 @@
               "name": {
                 "type": "string",
                 "description": "Human-readable work period name"
-              },
-              "order": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "Work period ordering (1=earliest, higher=later)"
               },
               "timeRange": {
                 "type": "object",

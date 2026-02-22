@@ -238,7 +238,6 @@
       {
         "code": "STORAGE_0830_1530",
         "name": "Storage 08:30-15:30",
-        "order": 1,
         "timeRange": {
           "start": "08:30",
           "end": "15:30"
@@ -247,7 +246,6 @@
       {
         "code": "CHECKOUT_1000_1100",
         "name": "Checkout 10:00-11:00",
-        "order": 2,
         "timeRange": {
           "start": "10:00",
           "end": "11:00"
@@ -256,7 +254,6 @@
       {
         "code": "CHECKOUT_1100_2100",
         "name": "Checkout 11:00-21:00",
-        "order": 3,
         "timeRange": {
           "start": "11:00",
           "end": "21:00"
@@ -265,7 +262,6 @@
       {
         "code": "CHECKOUT_2100_2200",
         "name": "Checkout 21:00-22:00",
-        "order": 4,
         "timeRange": {
           "start": "21:00",
           "end": "22:00"
@@ -274,7 +270,6 @@
       {
         "code": "MANAGEMENT_1000_1100",
         "name": "Management 10:00-11:00",
-        "order": 5,
         "timeRange": {
           "start": "10:00",
           "end": "11:00"
@@ -283,7 +278,6 @@
       {
         "code": "MANAGEMENT_1100_1400",
         "name": "Management 11:00-14:00",
-        "order": 6,
         "timeRange": {
           "start": "11:00",
           "end": "14:00"
@@ -292,7 +286,6 @@
       {
         "code": "MANAGEMENT_1400_1900",
         "name": "Management 14:00-19:00",
-        "order": 7,
         "timeRange": {
           "start": "14:00",
           "end": "19:00"
@@ -301,7 +294,6 @@
       {
         "code": "MANAGEMENT_1900_2100",
         "name": "Management 19:00-21:00",
-        "order": 8,
         "timeRange": {
           "start": "19:00",
           "end": "21:00"
@@ -310,7 +302,6 @@
       {
         "code": "MANAGEMENT_2100_2200",
         "name": "Management 21:00-22:00",
-        "order": 9,
         "timeRange": {
           "start": "21:00",
           "end": "22:00"

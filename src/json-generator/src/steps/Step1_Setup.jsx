@@ -11,13 +11,22 @@ import {
   Card,
   CardContent,
   IconButton,
-  Tooltip
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button
 } from '@mui/material';
 import {
   Groups as GroupsIcon,
   Engineering as EngineeringIcon,
   Info as InfoIcon,
-  CheckCircle as CheckCircleIcon
+  CheckCircle as CheckCircleIcon,
+  Schedule as ScheduleIcon,
+  HourglassEmpty as HourglassIcon,
+  Warning as WarningIcon
 } from '@mui/icons-material';
 import { StaticDatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -38,11 +47,15 @@ import { useWizard } from '../context/WizardContext';
 const Step1_Setup = () => {
   const { state, updateState } = useWizard();
   const [errors, setErrors] = useState({});
+  const [workPeriodModelWarningOpen, setWorkPeriodModelWarningOpen] = useState(false);
+  const [pendingWorkPeriodModel, setPendingWorkPeriodModel] = useState(null);
 
   // Extract values from state
   const { problemId, description } = state.metadata;
   const { year, numDays, targetPeriod } = state.temporalScope;
   const selectedModel = state.employees.model;
+  const selectedWorkPeriodModel = state.demand.workPeriodModel;
+  const workPeriods = state.demand.workPeriods || [];
 
   // Local state for date range picker
   const [startDate, setStartDate] = useState(
@@ -81,6 +94,33 @@ const Step1_Setup = () => {
     if (errors.model) {
       setErrors({ ...errors, model: null });
     }
+  };
+
+  const handleWorkPeriodModelSelect = (model) => {
+    // Check if there are existing work periods
+    if (workPeriods.length > 0 && model !== selectedWorkPeriodModel) {
+      // Show warning
+      setPendingWorkPeriodModel(model);
+      setWorkPeriodModelWarningOpen(true);
+    } else {
+      // Safe to change
+      updateState('demand.workPeriodModel', model);
+      if (errors.workPeriodModel) {
+        setErrors({ ...errors, workPeriodModel: null });
+      }
+    }
+  };
+
+  const handleConfirmWorkPeriodModelChange = () => {
+    updateState('demand.workPeriodModel', pendingWorkPeriodModel);
+    updateState('demand.workPeriods', []); // Clear work periods
+    setWorkPeriodModelWarningOpen(false);
+    setPendingWorkPeriodModel(null);
+  };
+
+  const handleCancelWorkPeriodModelChange = () => {
+    setWorkPeriodModelWarningOpen(false);
+    setPendingWorkPeriodModel(null);
   };
 
   // Handle date selection from single calendar
@@ -145,6 +185,26 @@ const Step1_Setup = () => {
     }
   ];
 
+  // Work period model options
+  const workPeriodModelOptions = [
+    {
+      value: 'fixed',
+      title: 'Fixed Time Ranges',
+      description: 'Specific start and end times',
+      icon: ScheduleIcon,
+      tooltip: 'Each work period has specific start and end times (e.g., Morning: 08:00-16:00). Best for organizations with fixed shift times.',
+      color: 'primary.main'
+    },
+    {
+      value: 'flexible',
+      title: 'Flexible Duration',
+      description: 'Duration + allowed start times',
+      icon: HourglassIcon,
+      tooltip: 'Each work period has a duration and multiple allowed start times (e.g., 8 hours, can start 06:00-08:00). More flexible for variable shift patterns.',
+      color: 'primary.main'
+    }
+  ];
+
   // Validation
   const validate = () => {
     const newErrors = {};
@@ -167,6 +227,10 @@ const Step1_Setup = () => {
 
     if (!selectedModel || selectedModel === '') {
       newErrors.model = 'Employee model selection is required';
+    }
+
+    if (!selectedWorkPeriodModel || selectedWorkPeriodModel === '') {
+      newErrors.workPeriodModel = 'Work period model selection is required';
     }
 
     setErrors(newErrors);
@@ -254,6 +318,110 @@ const Step1_Setup = () => {
                     <Grid item xs={12} key={option.value}>
                       <Card
                         onClick={() => handleModelSelect(option.value)}
+                        sx={{
+                          cursor: 'pointer',
+                          position: 'relative',
+                          border: isSelected ? '2px solid' : '1px solid',
+                          borderColor: isSelected ? option.color : 'divider',
+                          boxShadow: isSelected ? 2 : 0,
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            borderColor: option.color,
+                            boxShadow: 1
+                          }
+                        }}
+                      >
+                        {/* Info Icon */}
+                        <Tooltip title={option.tooltip} arrow placement="top">
+                          <IconButton
+                            sx={{
+                              position: 'absolute',
+                              top: 8,
+                              right: 8,
+                              color: 'text.secondary',
+                              '&:hover': { color: option.color }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            size="small"
+                          >
+                            <InfoIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+
+                        {/* Selected Indicator */}
+                        {isSelected && (
+                          <CheckCircleIcon
+                            sx={{
+                              position: 'absolute',
+                              top: 8,
+                              left: 8,
+                              color: option.color,
+                              fontSize: 24
+                            }}
+                          />
+                        )}
+
+                        <CardContent
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            py: 2,
+                            px: 2
+                          }}
+                        >
+                          <Icon
+                            sx={{
+                              fontSize: 40,
+                              color: isSelected ? option.color : 'text.secondary',
+                              mr: 2
+                            }}
+                          />
+                          <Box sx={{ flexGrow: 1 }}>
+                            <Typography
+                              variant="subtitle1"
+                              fontWeight={600}
+                              sx={{ color: isSelected ? option.color : 'text.primary' }}
+                            >
+                              {option.title}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {option.description}
+                            </Typography>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            </Box>
+
+            <Divider sx={{ my: 3 }} />
+
+            {/* Work Period Model Selection */}
+            <Box>
+              <Typography variant="h6" gutterBottom fontWeight={600}>
+                Work Period Model
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                Choose how work periods (shifts) are defined:
+              </Typography>
+
+              {errors.workPeriodModel && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {errors.workPeriodModel}
+                </Alert>
+              )}
+
+              <Grid container spacing={2}>
+                {workPeriodModelOptions.map((option) => {
+                  const Icon = option.icon;
+                  const isSelected = selectedWorkPeriodModel === option.value;
+
+                  return (
+                    <Grid item xs={12} key={option.value}>
+                      <Card
+                        onClick={() => handleWorkPeriodModelSelect(option.value)}
                         sx={{
                           cursor: 'pointer',
                           position: 'relative',
@@ -431,6 +599,37 @@ const Step1_Setup = () => {
         <Box sx={{ flexShrink: 0, mt: 2 }}>
           <NavigationButtons onNext={handleNext} nextDisabled={false} />
         </Box>
+
+        {/* Work Period Model Change Warning Dialog */}
+        <Dialog
+          open={workPeriodModelWarningOpen}
+          onClose={handleCancelWorkPeriodModelChange}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <WarningIcon color="warning" />
+            Change Work Period Model?
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Changing the work period model will <strong>clear all existing work periods</strong> in Step 6 ({workPeriods.length} work period{workPeriods.length !== 1 ? 's' : ''}).
+              This action cannot be undone.
+            </DialogContentText>
+            <DialogContentText sx={{ mt: 2 }}>
+              Are you sure you want to change from <strong>{selectedWorkPeriodModel === 'fixed' ? 'Fixed Time Ranges' : 'Flexible Duration'}</strong> to{' '}
+              <strong>{pendingWorkPeriodModel === 'fixed' ? 'Fixed Time Ranges' : 'Flexible Duration'}</strong>?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCancelWorkPeriodModelChange} color="inherit">
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmWorkPeriodModelChange} color="warning" variant="contained">
+              Clear and Change Model
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </LocalizationProvider>
   );

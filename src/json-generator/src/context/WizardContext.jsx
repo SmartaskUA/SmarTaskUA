@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { detectAllFeatures, applyAutoDetectedFeatures } from '../utils/featureDetector';
+import { validateStep } from '../utils/validators/stepValidators';
 
 /**
  * Wizard Context - Central state management for all wizard steps
@@ -224,6 +225,41 @@ export const WizardProvider = ({ children }) => {
     setState(initialState);
   };
 
+  // Validate current step
+  const validateCurrentStep = () => {
+    return validateStep(state.currentStep, state);
+  };
+
+  // Validate specific step
+  const validateSpecificStep = (stepNumber) => {
+    return validateStep(stepNumber, state);
+  };
+
+  // Navigate to step with optional validation
+  const navigateToStep = (stepNumber, skipValidation = false) => {
+    if (stepNumber < 0 || stepNumber > 9) {
+      console.error(`Invalid step number: ${stepNumber}`);
+      return { success: false, validation: null };
+    }
+
+    // If skipValidation is true, navigate immediately
+    if (skipValidation) {
+      goToStep(stepNumber);
+      return { success: true, validation: null };
+    }
+
+    // Validate current step
+    const validation = validateCurrentStep();
+
+    // Return validation result for the caller to handle
+    // (e.g., show warning dialog)
+    return {
+      success: false, // Caller should check validation and call with skipValidation=true if confirmed
+      validation,
+      targetStep: stepNumber
+    };
+  };
+
   // Auto-detect and update feature flags based on configuration
   const updateFeatureFlags = () => {
     const detectedFeatures = applyAutoDetectedFeatures(state, updateState);
@@ -269,7 +305,10 @@ export const WizardProvider = ({ children }) => {
     completeStep,
     resetWizard,
     exportData,
-    updateFeatureFlags
+    updateFeatureFlags,
+    validateCurrentStep,
+    validateSpecificStep,
+    navigateToStep
   };
 
   return (
