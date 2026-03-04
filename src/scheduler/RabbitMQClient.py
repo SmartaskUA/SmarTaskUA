@@ -144,7 +144,7 @@ class RabbitMQClient:
                 solver = message.get("solver", "CBC")  # Default to CBC
 
                 print(f"\n[Received Task] Task ID: {task_id}")
-                print(f"Algorithm: {algorithm_name}, Shifts: {shifts}, Year: {year}, Solver: {solver}")
+                print(f"Algorithm: {algorithm_name}, Intervals: {shifts}, Year: {year}, Solver: {solver}")
 
                 # --- Submit task to executor ---
                 self.executor.submit(
