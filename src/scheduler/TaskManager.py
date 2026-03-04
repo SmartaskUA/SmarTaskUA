@@ -16,24 +16,21 @@ from algorithms.ILPv3 import solve as ilp_solver_3
 from algorithms.heuristicSolver import solve as heuristic_solver
 from algorithms.ilp_greedy import solve as ilp_greedy
 from algorithms.CSPv2 import solve as cspv2_solver
-from algorithms.CSP_H import solve as CSP_13Hours_solver
 from algorithms.CSP_Afonso_Hours import solve as CSP_Afonso_Hours_solver
-from algorithms.ILP_1 import solve as ILP_1
-from algorithms.ILP_1_Half_Intervals import solve as ILP_1_Half_Intervals
 from algorithms.ILP_2 import solve as ILP_2
 from algorithms.ILP_2_Half_Intervals import solve as ILP_2_Half_Intervals
 from algorithms.ILP_3 import solve as ILP_3
 from algorithms.COP_2 import solve as COP_2
 from algorithms.COP_1 import solve as COP_1
-from algorithms.CSP_1 import solve as CSP_1
 from algorithms.ILP_3_Half_Intervals import solve as ILP_3_Half_Intervals
-from algorithms.CSP_2_Half_Intervals import solve as CSP_2_Half_Intervals
 from algorithms.Heuristica1 import solve as Heuristica_1
-from algorithms.Heuristica00 import solve as Heuristica00
 from algorithms.Heuristica_Half_Intervals import solve as Heuristica_Half_Intervals
 from algorithms.ILP_4 import solve as ILP_4
 from algorithms.general.ilp_general import solve as ilp_general_solver
 from algorithms.general.csp_general import solve as csp_general_solver
+from algorithms.ILP_4_Half_Intervals import solve as ILP_4_Half_Intervals
+from algorithms.COP_2_Half_Intervals import solve as COP_2_Half_Intervals_Solver
+from algorithms.COP_1_Half_Intervals import solve as COP_1_Half_Intervals_solver
 
 class TaskManager:
     def __init__(self):
@@ -49,21 +46,16 @@ class TaskManager:
             "Greedy Randomized + Hill Climbing": greedy_climbing_solver,
             "CSP": csp_solver,
             "CSPv2": cspv2_solver,
-            "CSP_13Hours": CSP_13Hours_solver,
             "CSP_Afonso_Hours": CSP_Afonso_Hours_solver,
-            "ILP_1": ILP_1,
-            "ILP_1_Half_Intervals": ILP_1_Half_Intervals,
             "ILP_2": ILP_2,
             "ILP_2_Half_Intervals": ILP_2_Half_Intervals,
             "ILP_3": ILP_3,
             "ILP_4": ILP_4,
-            "CSP_1": CSP_1,
+            "ILP_4_Half_Intervals": ILP_4_Half_Intervals,
             "COP_1": COP_1,
             "COP_2": COP_2,
             "ILP_3_Half_Intervals": ILP_3_Half_Intervals,
-            "CSP_2_Half_Intervals": CSP_2_Half_Intervals,
             "Heuristica_1": Heuristica_1,
-            "Heuristica00": Heuristica00,
             "Heuristica_Half_Intervals": Heuristica_Half_Intervals,
             "CSP General": csp_general_solver,
             "CSP_ENGINE": csp_engine_solver,
@@ -71,15 +63,17 @@ class TaskManager:
             "Greedy Randomized Engine": greedy_randomized_engine_solver,
             "Heuristic Solver": heuristic_solver,
             "ilp_greedy": ilp_greedy,
-            "CSP_13Hours": CSP_13Hours_solver,
             "CSP_Afonso_Hours": CSP_Afonso_Hours_solver,
+            "COP_1_Half_Intervals": COP_1_Half_Intervals_solver,
+            "COP_2_Half_Intervals": COP_2_Half_Intervals_Solver,
         }
 
-    def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13):
-        print(f"\n[DEBUG] Vacations received:\n{vacations}")
-        print(f"[DEBUG] Minimuns received:\n{minimuns}")
-        print(f"[DEBUG] Employees received:\n{employees}")
-        print(f"[DEBUG] Rules received:\n{json.dumps(rules, indent=2) if rules else 'None'}")
+    def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13, solver="CBC"):
+        # print(f"\n[DEBUG] Vacations received:\n{vacations}")
+        # print(f"[DEBUG] Minimuns received:\n{minimuns}")
+        # print(f"[DEBUG] Employees received:\n{employees}")
+        # print(f"[DEBUG] Rules received:\n{json.dumps(rules, indent=2) if rules else 'None'}")
+        # print(f"[DEBUG] Solver received: {solver}")
 
         if algorithm_name not in self.algorithms:
             raise ValueError(f"Algorithm '{algorithm_name}' not found.")
@@ -91,8 +85,6 @@ class TaskManager:
         elif not isinstance(employees, list):
             print(f"[WARNING] 'employees' is not a list (type={type(employees)}), converting to list.")
             employees = list(employees)
-
-        print(f"[DEBUG] Employees after normalization: {employees}")
 
         print(f"[TaskManager] Executing algorithm '{algorithm_name}' with Task ID: {task_id}")
         algorithm = self.algorithms[algorithm_name]
@@ -139,26 +131,20 @@ class TaskManager:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, constraints=rules)
             
         elif algorithm_name in [
-            # "CSP_13Hours", 
-            # "CSP_Afonso_Hours", 
-            "ILP_1", 
-            "ILP_1_Half_Intervals", 
             "ILP_2",
             "ILP_2_Half_Intervals",
             "ILP_3",
             "ILP_4",
+            "ILP_4_Half_Intervals",
             "ILP_3_Half_Intervals",
-            "CSP_1",
             "COP_1",
+            "COP_1_Half_Intervals",
             "COP_2",
-            "CSP_2_Half_Intervals",
+            "COP_2_Half_Intervals",
             "Heuristica_1",
-            "Heuristica1_v2",
-            "Heuristica1_v3",
-            "Heuristica00",
             "Heuristica_Half_Intervals"
         ]:
-            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours)
+            schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, solver=solver)
         else:
             raise ValueError(f"Algorithm '{algorithm_name}' not configured in TaskManager.")
         end_time = time.time()

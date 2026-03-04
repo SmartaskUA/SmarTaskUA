@@ -2,25 +2,28 @@ from collections import defaultdict
 from ortools.sat.python import cp_model
 import pandas as pd
 import csv
-from algorithms.utils import get_team_code, get_team_id, rows_to_req_dicts, rows_to_vac_dict, TEAM_ID_TO_CODE
+from algorithms.utils import get_team_code, get_team_id, rows_to_req_dicts_FIXED, rows_to_vac_dict, TEAM_ID_TO_CODE
         
 
-class CPHourSchedulerPure:
-    """Pure CSP - No optimization, only feasibility"""
-    
+class CPHourScheduler:
     def __init__(self, vacations, minimums, employees, work_blocks=None, maxTime=None, year=2021):
         self.vacations = vacations
         self.minimums = minimums
         self.employees = employees
         
+        # Generate default work blocks if not provided
         if work_blocks is None:
             self.work_blocks = [
-                (9, 13, 18), (9, 14, 18), (9, 15, 18),
-                (10, 14, 19), (10, 15, 19), (10, 16, 19),
-                (11, 15, 20), (11, 16, 20), (11, 17, 20),
-                (12, 16, 21), (12, 17, 21), (12, 18, 21),
-                (13, 17, 22), (13, 18, 22), (13, 19, 22),
-            ]
+            (9.0, 13.0, 18.0), (9.0, 14.0, 18.0), (9.0, 15.0, 18.0),
+            (9.5, 13.5, 18.5), (9.5, 14.5, 18.5), (9.5, 15.5, 18.5),
+            (10.0, 14.0, 19.0), (10.0, 15.0, 19.0), (10.0, 16.0, 19.0),
+            (10.5, 14.5, 19.5), (10.5, 15.5, 19.5), (10.5, 16.5, 19.5),
+            (11.0, 15.0, 20.0), (11.0, 16.0, 20.0), (11.0, 17.0, 20.0),
+            (11.5, 15.5, 20.5), (11.5, 16.5, 20.5), (11.5, 17.5, 20.5),
+            (12.0, 16.0, 21.0), (12.0, 17.0, 21.0), (12.0, 18.0, 21.0),
+            (12.5, 16.5, 21.5), (12.5, 17.5, 21.5), (12.5, 18.5, 21.5),
+            (13.0, 17.0, 22.0), (13.0, 18.0, 22.0), (13.0, 19.0, 22.0),
+        ]
         else:
             self.work_blocks = work_blocks
             
@@ -34,9 +37,11 @@ class CPHourSchedulerPure:
         self._add_constraints()
 
     def _prepare_data(self):
+        
+        # Store get_team_id for later use
         self.get_team_id = get_team_id
         
-        self.dates = pd.date_range(start=f"{self.year}-01-01", end=f"{self.year}-12-31").to_list()
+        self.dates = pd.date_range(start=f"2021-11-01", end=f"2022-10-31").to_list()
         self.num_days = len(self.dates)
         self.I = list(range(len(self.employees)))
         self.A = list(range(len(self.work_blocks)))
@@ -47,12 +52,34 @@ class CPHourSchedulerPure:
             teams = emp.get("teams", []) or ["A"]
             self.emp_teams[i] = [get_team_code(t) for t in teams]
         
+        # all_teams deve vir DEPOIS de emp_teams ser definido
         self.all_teams = sorted(
             {t for teams in self.emp_teams.values() for t in teams}
         )
 
         # mínimos (theta) e ideais (beta)
-        self.theta, self.beta = rows_to_req_dicts(self.minimums)
+        mins, ideal = rows_to_req_dicts_FIXED(self.minimums)
+        self.theta = {}
+        self.beta = {}
+
+        for (day, hour, team_id), val in mins.items():
+            # Se for inteiro, converte para Timestamp
+            
+            if isinstance(day, int):
+                if 1 <= day <= self.num_days:
+                    date_key = self.dates[day - 1]
+                else:
+                    continue
+            elif isinstance(day, pd.Timestamp):
+                if day in self.dates:
+                    date_key = day
+                else:
+                    continue
+            else:
+                continue
+            team_code = TEAM_ID_TO_CODE.get(team_id)
+            if team_code:
+                self.theta[(date_key, hour, team_code)] = int(val)
 
         # férias delta
         vacs = rows_to_vac_dict(self.vacations)
@@ -61,55 +88,68 @@ class CPHourSchedulerPure:
             for i in self.I for d in range(self.num_days)
         }
         
+        # vacations_dates para compatibilidade com export
         self.vacations_dates = {
             i: {self.dates[day - 1] for day in vacs.get(i + 1, []) if 1 <= day <= self.num_days}
             for i in self.I
         }
 
-        # horas (ex. "09-10", "10-11", ...)
-        self.hours = [f"{h:02d}-{h+1:02d}" for h in range(9, 22)]
+        # horas (intervalos de 0.5h)
+        self.hours = [round(h, 1) for h in [
+            9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 12.5,
+            13.0, 13.5, 14.0, 14.5, 15.0, 15.5, 16.0, 16.5,
+            17.0, 17.5, 18.0, 18.5, 19.0, 19.5, 20.0, 20.5, 21.0, 21.5
+        ]]
 
-        # alpha[a, h]
+        # alpha[a, h] - 1 se o bloco cobre essa hora (intervalos de 0.5h)
         from collections import defaultdict
         self.alpha = defaultdict(int)
         for a, (start, brk, end) in enumerate(self.work_blocks):
-            for h in range(start, brk):
-                self.alpha[(a, f"{h:02d}-{h+1:02d}")] = 1
-            for h in range(brk+1, end):
-                self.alpha[(a, f"{h:02d}-{h+1:02d}")] = 1
+            # Horas antes da pausa
+            h = start
+            while h < brk:
+                self.alpha[(a, round(h, 1))] = 1
+                h = round(h + 0.5, 1)
+            h = brk + 1
+            while h < end:
+                self.alpha[(a, round(h, 1))] = 1
+                h = round(h + 0.5, 1)
 
         self.incompatible_blocks = defaultdict(set)
+
         for a1, (s1, b1, e1) in enumerate(self.work_blocks):
             end1 = e1
             for a2, (s2, b2, e2) in enumerate(self.work_blocks):
                 if s2 < end1 - 12:
                     self.incompatible_blocks[a1].add(a2)
+        
+        self.Ar = self._Ar_Builder(self.work_blocks, rest_hours=12)
 
-        # Br Blocos que influenciam o dia seguinte
-        self.Br = set()
-        for b in self.work_blocks:
-            for a in self.work_blocks:
-                if not self._validate_block_transition(b, a):
-                    self.Br.add(b)
+    def _Ar_Builder(self, work_Blocks, rest_hours):
 
-        self.Ar = set()
-        for b in self.work_blocks:
-            for a in self.work_blocks:
-                if not self._validate_block_transition(b, a):
-                    self.Ar.add(a)
-
-    def _validate_block_transition(self, block_today, block_tomorrow):
         """
-        Check if transition from block_today to block_tomorrow is valid.
-        Rules: Must have at least 12 hours rest between end and start.
+        Return a dictionary of blocks that are dependent on the previous day's block for Xh rest.
+        {(9, 13, 18): [(12, 16, 21), (12, 17, 21), (12, 18, 21), (13, 17, 22), (13, 18, 22), (13, 19, 22)],
+        (9, 14, 18): [(12, 16, 21), (12, 17, 21), (12, 18, 21), (13, 17, 22), (13, 18, 22), (13, 19, 22)],
+        (9, 15, 18): [(12, 16, 21), (12, 17, 21), (12, 18, 21), (13, 17, 22), (13, 18, 22), (13, 19, 22)], 
+        (10, 14, 19): [(13, 17, 22), (13, 18, 22), (13, 19, 22)], 
+        (10, 15, 19): [(13, 17, 22), (13, 18, 22), (13, 19, 22)], 
+        (10, 16, 19): [(13, 17, 22), (13, 18, 22), (13, 19, 22)]}
+        ....
         """
-        end_today = block_today[2]  # End hour of today's block
-        start_tomorrow = block_tomorrow[0]  # Start hour of tomorrow's block
-        # Calculate rest hours (always overnight, so add 24 to tomorrow's start)
-        rest_hours = (24 - end_today) + start_tomorrow
-        # Must have at least 12 hours rest
-        return rest_hours >= 12
 
+        Non_Rest_Hours = 24 - rest_hours + 1
+        Ar = {} # {() : [(), (), ()]} Key - Block a ; Value - Set of Blocks b that depend on a
+        for b in work_Blocks:
+            (start_b, break_b, end_b) = b
+            for a in work_Blocks:
+                (start_a, break_a, end_a) = a
+                if start_b + round(Non_Rest_Hours) <= end_a:
+                    if b not in Ar:
+                        Ar[b] = []
+                    Ar[(b)].append(a)
+        return Ar
+        
     def _define_vars(self):
         # x[i,d,a,e] boolean
         self.x = {}
@@ -125,11 +165,17 @@ class CPHourSchedulerPure:
             for d in range(self.num_days):
                 self.worked[(i,d)] = self.model.NewBoolVar(f"worked_{i}_{d}")
 
-        # NO y VARIABLES - Pure CSP doesn't need shortage tracking!
+        self.y = {}
+        for d in range(self.num_days):
+            for h in self.hours:
+                for e in self.all_teams:
+                    self.y[(d,h,e)] = self.model.NewIntVar(
+                        0, len(self.I), f"y_{d}_{h}_{e}"
+                    )
+
 
     def _add_constraints(self):
-        print("[CSP_Pure] Adding constraints...")
-        
+
         # 1. um bloco por dia + definição correta de worked
         for i in self.I:
             for d in range(self.num_days):
@@ -141,107 +187,125 @@ class CPHourSchedulerPure:
                 self.model.Add(work_sum <= 1)
                 self.model.Add(self.worked[(i, d)] == work_sum)
 
+
         # 2. não trabalhar em férias / dias fechados
         for i in self.I:
             for d in range(self.num_days):
                 if self.delta[(i,d)] == 1:
                     self.model.Add(self.worked[(i,d)] == 0)
 
-        # 3. 223 dias
+        # 4. 223 dias
         for i in self.I:
             self.model.Add(sum(self.worked[(i,d)] for d in range(self.num_days)) == 223)
 
-        # 4. max 5 consecutivos
+        # 5. max 5 consecutivos
         for i in self.I:
             for start in range(self.num_days - 5):
                 self.model.Add(
                     sum(self.worked[(i,d)] for d in range(start, start+6)) <= 5
                 )
 
-        # 5. HARD CONSTRAINT - Minimum coverage MUST be met!
-        coverage_constraints = 0
+        # 7. Mínimos com penalização
         for d in range(self.num_days):
             for h in self.hours:
                 for e in self.all_teams:
-                    theta_val = self.theta.get((d+1, h, get_team_id(e)), 0)
+                    theta_val = self.theta.get((self.dates[d], h, e), 0)
 
                     # Quantos trabalham esta hora com esta equipa?
-                    # Só conta empregados que PODEM trabalhar nesta equipa!
                     covered = sum(
                         self.x[(i,d,a,e)] * self.alpha[(a,h)]
                         for i in self.I if e in self.emp_teams[i]  # Filtro adicionado!
                         for a in self.A
                     )
+                    """
+                        Dia 1, Hora 09-10, Equipa A,
+                        x[0, 1, bloco2, A] * alpha[bloco2, 09-10] = 1 se o empregado 0 trabalhar no bloco2 (09-14-18)
+                    """
 
                     if theta_val == -1:
-                        # Closed slot - nobody works
                         self.model.Add(covered == 0)
-                    elif theta_val > 0:
-                        # HARD CONSTRAINT: Must meet minimum!
-                        self.model.Add(covered >= theta_val)
-                        coverage_constraints += 1
-                    # if theta_val == 0, no constraint needed
+                        self.model.Add(self.y[(d,h,e)] == 0)
+                    else:
+                        self.model.Add(covered + self.y[(d,h,e)] >= theta_val)
 
-        print(f"[CSP_Pure] Added {coverage_constraints} hard coverage constraints")
 
-        # 6. Rest constraint (12h minimum between consecutive days)
-        # Equação: sum_{b∈B_a} x + sum_{a∈A_r} x ≤ 1
-        for f in self.I:
-            for d_today in range(self.num_days - 1):
-                d_next = d_today + 1
-                
-                # Construir conjuntos B_a (índices de blocos tardios) e A_r (índices de blocos cedo)
-                B_a_indices = [self.work_blocks.index(b) for b in self.Br]
-                A_r_indices = [self.work_blocks.index(a) for a in self.Ar]
-                
-                # Restrição agregada: soma de blocos tardios hoje + soma de blocos cedo amanhã ≤ 1
-                self.model.Add(
-                    sum(
-                        self.x[(f, d_today, b_idx, tc)]
-                        for b_idx in B_a_indices
-                        for tc in self.emp_teams[f]
-                    ) + 
-                    sum(
-                        self.x[(f, d_next, a_idx, tc)]
-                        for a_idx in A_r_indices
-                        for tc in self.emp_teams[f]
-                    ) <= 1
-                )
 
-        # NO OBJECTIVE FUNCTION - Pure CSP just finds ANY feasible solution!
-        print("[CSP_Pure] No objective function - searching for feasibility only")
+        # (6) descanso mínimo de 12h entre dias consecutivos
+        for e in self.I:
+            for i in range(self.num_days - 1):
+                d_today = i
+                d_next = i + 1
+
+                for a, ba in self.Ar.items():  # a ∈ A_r e b ∈ B_a
+
+                    Ba = set()
+                    for b in ba:
+                        Ba.add(b)
+
+                    team_codes = self.emp_teams[e]
+
+                    sum_next = sum(
+                        self.x[(e, d_next, self.work_blocks.index(a), tc)]
+                        for tc in team_codes
+                    )
+
+                    sum_today = sum(
+                        self.x[(e, d_today, self.work_blocks.index(b), tc)]
+                        for b in Ba
+                        for tc in team_codes
+                    )
+
+                    self.model.Add(
+                        sum_today + sum_next <= 1
+                    )
+
+        # Solver procura o valor que minimiza esta função
+        self.model.Minimize(
+            sum(self.y[(d,h,e)]
+                for d in range(self.num_days)
+                for h in self.hours
+                for e in self.all_teams)
+        )
+
+
 
     def solve(self, time_limit_sec=60):
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = self.max_time_seconds
-        solver.parameters.num_search_workers = 8
-        solver.parameters.log_search_progress = True
+        solver.parameters.num_search_workers = 8 # Number of parallel workers (Threads)
+        solver.parameters.log_search_progress = False  # Enable detailed logging
+        solver.parameters.relative_gap_limit = 0.01
+        solver.parameters.absolute_gap_limit = 0
         
         self.solver = solver
         
-        print(f"\n[CSP_Pure] Solver parameters:")
+        print(f"[COP1_Half_Intervals] Solver parameters:")
         print(f"  max_time_in_seconds: {solver.parameters.max_time_in_seconds}")
         print(f"  num_search_workers: {solver.parameters.num_search_workers}")
-        print(f"  Mode: PURE CSP (feasibility only, no optimization)")
+        print(f"  log_search_progress: {solver.parameters.log_search_progress}")
+        print(f"  relative_gap_limit: {solver.parameters.relative_gap_limit * 100:.1f}%")
+        print(f"  absolute_gap_limit: {solver.parameters.absolute_gap_limit}")
         
-        print(f"\n[CSP_Pure] Starting solver.Solve()...")
+        print(f"\n[COP1_Half_Intervals] Starting solver.Solve()...")
         print(f"  Model has {len(self.model.Proto().variables)} variables")
         print(f"  Model has {len(self.model.Proto().constraints)} constraints")
         
         result = solver.Solve(self.model)
         
         status = solver.StatusName(result)
-        print(f"\n[CSP_Pure] Solver finished!")
+        print(f"\n[COP1_Half_Intervals] Solver finished!")
         print(f"  Status: {status}")
         print(f"  Wall time: {solver.WallTime():.2f}s")
         print(f"  Branches: {solver.NumBranches()}")
         print(f"  Conflicts: {solver.NumConflicts()}")
-        
-        # Extract solution
-        self.assignment = defaultdict(list)
+        print(f"  Best objective bound: {solver.BestObjectiveBound()}")
         if result in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-            print("\n[CSP_Pure] ✅ Feasible solution found!")
-            print("[CSP_Pure] Extracting solution...")
+            print(f"  Objective value: {solver.ObjectiveValue()}")
+        
+        # extract if optimal or feasible
+        self.assignment = defaultdict(list)  # emp_id (1-based) -> list of (day_idx+1, block_idx, team_id)
+        if result in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+            print("\n[COP1_Half_Intervals] Extracting solution...")
             for i in self.I:
                 emp_id = i + 1
                 for d_idx in range(self.num_days):
@@ -259,20 +323,18 @@ class CPHourSchedulerPure:
                     if chosen_block is not None:
                         team_id = get_team_id(str(chosen_team))
                         self.assignment[emp_id].append((d_idx + 1, chosen_block, team_id))
-            print(f"[CSP_Pure] Extracted assignments for {len(self.assignment)} employees")
+            print(f"[COP1_Half_Intervals] Extracted assignments for {len(self.assignment)} employees")
         else:
-            print("\n[CSP_Pure] ❌ No feasible solution found!")
-            print("  This means the constraints are INCOMPATIBLE:")
-            print("    - The minimum coverage requirements cannot be met")
-            print("    - Given the vacation days, 223 work days, and rest periods")
-            print("  Possible solutions:")
-            print("    - Reduce minimum coverage requirements")
-            print("    - Hire more employees")
-            print("    - Relax some constraints (use COP version instead)")
+            print("\n[COP1_Half_Intervals] ⚠️ No feasible solution found.")
+            print("  This could mean:")
+            print("    - Constraints are too restrictive (INFEASIBLE)")
+            print("    - Time limit reached before finding solution (UNKNOWN)")
+            print("    - Model has errors (MODEL_INVALID)")
 
         return result
 
-    def export_csv(self, filename="csp_pure_schedule.csv"):
+
+    def export_csv(self, filename="hourly_strict_schedule.csv"):
         with open(filename, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             header = ['Employee'] + [f'Day{i}' for i in range(1, self.num_days + 1)]
@@ -292,7 +354,7 @@ class CPHourSchedulerPure:
                     else:
                         row.append('OFF')
                 writer.writerow(row)
-        print(f"[CSP_Pure] Schedule exported to {filename}")
+        print(f"[COP1_Half_Intervals] Schedule exported to {filename}")
 
     def vacs_1based(self):
         return {
@@ -301,6 +363,7 @@ class CPHourSchedulerPure:
         }
     
     def to_table(self):
+        # returns rows as list of lists (same layout as ILP to_table)
         rows = []
         header = ["Employee"] + [f"Day{i}" for i in range(1, self.num_days + 1)]
         rows.append(header)
@@ -321,27 +384,22 @@ class CPHourSchedulerPure:
                     line.append("OFF")
             rows.append(line)
         return rows
-    
-    
 
 
-def solve(vacations=None, minimuns=None, employees=None, maxTime=None, year=2021, 
-          hours=13, work_blocks=None, rules=None, **kwargs):
+def solve(vacations=None, minimuns=None, employees=None, maxTime=None, year=2021, hours=13, work_blocks=None, rules=None, **kwargs):
     print(f"\n{'='*80}")
-    print(f"[CSP_PURE] HOURLY SCHEDULER - PURE CONSTRAINT SATISFACTION")
+    print(f"[COP1_Half_Intervals] HOURLY SCHEDULER - CONSTRAINT PROGRAMMING (CP-SAT)")
     print(f"{'='*80}")
-    print(f"[CSP_PURE] Parameters:")
+    print(f"[COP1_Half_Intervals] Parameters:")
     print(f"  Employees: {len(employees) if employees else 0}")
     print(f"  Vacations: {len(vacations) if vacations else 0} rows")
     print(f"  Minimums: {len(minimuns) if minimuns else 0} rows")
-    print(f"  Max time: {maxTime} minutes" if maxTime else "  Max time: default (60 min)")
+    print(f"  Max time: {maxTime} minutes (type: {type(maxTime).__name__})" if maxTime else "  Max time: default (8 hours)")
     print(f"  Year: {year}")
     print(f"  Store hours: {hours}")
-    print(f"\n WARNING: This is PURE CSP - minimum coverage is MANDATORY!")
-    print(f"   If no solution is found, the problem is INFEASIBLE.")
     
-    print("\n[CSP_PURE] Building model...")
-    sched = CPHourSchedulerPure(
+    print("\n[COP1_Half_Intervals] Building model...")
+    sched = CPHourScheduler(
         vacations=vacations,
         minimums=minimuns,
         employees=employees,
@@ -351,14 +409,15 @@ def solve(vacations=None, minimuns=None, employees=None, maxTime=None, year=2021
     )
     print(f"  Model built successfully!")
     
-    print(f"\n[CSP_PURE] Solving...")
+    print(f"\n[COP1_Half_Intervals] Solving...")
     status = sched.solve()
     
-    print(f"\n[CSP_PURE] Exporting schedule...")
-    sched.export_csv("csp_pure_schedule.csv")
+    print(f"\n[COP1_Half_Intervals] Exporting schedule...")
+    sched.export_csv("hourly_strict_schedule.csv")
     
     print(f"{'='*80}")
-    print(f"[CSP_PURE] COMPLETE")
+    print(f"[COP1_Half_Intervals] COMPLETE")
     print(f"{'='*80}\n")
     
     return sched.to_table()
+

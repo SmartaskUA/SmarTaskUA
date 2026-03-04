@@ -1,8 +1,5 @@
-# ILP3 – Scheduler por HORAS (intervalos de 1h)
-# Segue rigorosamente o método do PDF (ILP1 + ILP2)
-# Usa blocos horários (start, break, end) como enviados pelo utilizador
-
 import csv
+import time
 import pulp
 import pandas as pd
 from collections import defaultdict
@@ -24,7 +21,9 @@ class ILP3Scheduler:
     """
 
     def __init__(self, vacations_rows, minimums_rows, employees, maxTime,
-                 year=2021, store_hours=13, work_blocks=None):
+                 year=2021, store_hours=13, work_blocks=None, solver="CBC"):
+
+        self.solver_name = solver.upper() if solver else "CBC"  # "CBC" or "GUROBI"
 
         # ---------------- Calendário ----------------
         self.dates = pd.date_range(start=f"{year}-01-01", end=f"{year}-12-31").to_list()
@@ -130,15 +129,11 @@ class ILP3Scheduler:
         """
 
         self.Ar = self._Ar_Builder(self.work_blocks, rest_hours=12)
-        print(f"Dictionary Ar de blocos dependentes para descanso de 12h: {self.Ar}")
 
         self.model = None
         self.assignment = defaultdict(list)
         self.maxTime_sec = int(maxTime) * 60 if maxTime else None
 
-    # =========================================================
-    # BUILD MODEL (ILP1 + ILP2)
-    # =========================================================
     
     def _Ar_Builder(self, work_Blocks, rest_hours):
 
@@ -163,7 +158,6 @@ class ILP3Scheduler:
                     if b not in Ar:
                         Ar[b] = []
                     Ar[(b)].append(a)
-                    print(f"Adicionando bloco {b} em Ar pois e dependente de {a} com {rest_hours}h de descanso")
         return Ar
 
 
@@ -182,14 +176,11 @@ class ILP3Scheduler:
         )
 
         # ---------- Objetivo (ILP1: mínimos) ----------
-        # Não exprime qualquer tipo de comparação
-        # Minimiza a falta aos minimos 
-        # Ex : 0 + 1 + 2 + 0 + 0 + 0 + 1 + 0 ... Tenta minimizar esta soma que exprime as violaçoes aos minimos
         model += pulp.lpSum(self.y[d][h][t] for d in self.D for h in self.H for t in self.teams)
 
         # ---------- Restrições ----------
 
-        # (2) 1 bloco por dia ou férias
+        # 1 bloco por dia ou férias
         for e in self.E:
             for d in self.D:
                 model += (
@@ -213,8 +204,6 @@ class ILP3Scheduler:
                     for d in self.D:
                         for b in self.B:
                             model += self.x[e][d][b][t] == 0
-
-        # Se empregado i não está autorizado para equipa e, então x[i][d][a][e] DEVE ser 0 para todos os dias e blocos.
 
         # (4) 223 dias de trabalho
         for e in self.E:
@@ -263,66 +252,73 @@ class ILP3Scheduler:
         
 
         # (8) definição de y (mínimos) + regra de OFF quando mínimo = -1
-        # Se theta = -1 ⇒ loja fechada nessa hora/equipa ⇒ ninguém pode trabalhar
         for d in self.D:
             for h in self.H:
                 for t in self.teams:
                     theta = self.theta.get((d + 1, h, get_team_id(t)), 0)
-                    # Total de trabalhadores para aquele dia hora e equipa
                     total_workers = pulp.lpSum(         
                         self.alpha[(b, h)] * self.x[e][d][b][t]
                         for e in self.E for b in self.B
                     )
 
                     if theta == -1:
-                        # loja fechada → zero trabalhadores
                         model += total_workers == 0
                         model += self.y[d][h][t] == 0
                     else:
-                        # violações aos mínimos
                         model += self.y[d][h][t] >= theta - total_workers
                 
         self.model = model
 
-    # =========================================================
-    # SOLVE
-    # =========================================================
     def solve(self, gap_rel=0.01):
 
         print(f"\n{'='*80}")
-        print(f"[ILP_Extra] SOLVING ILP MODEL")
+        print(f"[ILP3] SOLVING ILP MODEL")
         print(f"{'='*80}")
-        print(f"[ILP_Extra] Solver parameters:")
+        print(f"[ILP3] Solver parameters:")
         print(f"  Gap relative: {gap_rel*100:.2f}%")
         print(f"  Variables: {self.model.numVariables()}")
         print(f"  Constraints: {self.model.numConstraints()}")
-        print(f"\n[ILP_Extra] Starting solver (CBC)...")
-        print(f"[ILP_Extra] Real-time progress will be shown below:")
+        print(f"  Solver: {self.solver_name}")
+        print(f"\n[ILP3] Starting solver ({self.solver_name})...")
+        print(f"[ILP3] Real-time progress will be shown below:")
         print(f"{'-'*80}")
 
-        solver = pulp.PULP_CBC_CMD(
-            msg=True,
-            timeLimit=self.maxTime_sec,
-            threads=8,
-            gapRel=gap_rel
-        )
-
-        # solver = pulp.GUROBI(
-        #             msg=True,
-        #             timeLimit=self.maxTime_sec if self.maxTime_sec else None,
-        #             gapRel=gap_rel,
-        #             Threads=8,
-        #             Method=2,      # Barrier method, pode se escolher o metodo que quer
-        #             Presolve=2     # Aggressive presolve
-        #         )
+        # Choose solver based on solver_name
+        if self.solver_name == "GUROBI":
+            try:
+                solver = pulp.GUROBI(
+                    msg=False,
+                    timeLimit=self.maxTime_sec if self.maxTime_sec else None,
+                    gapRel=gap_rel,
+                )
+                print("[ILP3] Using GUROBI solver")
+            except Exception as e:
+                print(f"[ILP3] GUROBI not available ({e}), falling back to CBC")
+                solver = pulp.PULP_CBC_CMD(
+                    msg=False,
+                    timeLimit=self.maxTime_sec,
+                    threads=8,
+                    gapRel=gap_rel
+                )
+        else:
+            solver = pulp.PULP_CBC_CMD(
+                msg=False,
+                timeLimit=self.maxTime_sec,
+                threads=8,
+                gapRel=gap_rel
+            )
+            print("[ILP3] Using CBC solver")
         
+        start_time = time.time()
         status = self.model.solve(solver)
+        solve_time = time.time() - start_time
+        
+        print(f"[ILP3] Solver wall clock time: {solve_time:.2f} seconds")
+        
         self._extract_assignments()
         return status
 
-    # =========================================================
-    # EXTRAÇÃO / EXPORTAÇÃO (como pedido)
-    # =========================================================
+
     def _extract_assignments(self):
         self.assignment = defaultdict(list)
         dias = self.dates
@@ -353,6 +349,7 @@ class ILP3Scheduler:
             for i in self.employees
         }
 
+
     def export_csv(self, filename="hourly_strict_schedule.csv"):
         with open(filename, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
@@ -374,7 +371,8 @@ class ILP3Scheduler:
                     else:
                         row.append('OFF')
                 writer.writerow(row)
-        print(f"[HourlyILPStrict] Schedule exported to {filename}")
+        print(f"[ILP3] Schedule exported to {filename}")
+
 
     def to_table(self):
         rows = []
@@ -400,11 +398,12 @@ class ILP3Scheduler:
 
 
 def solve(vacations=None, minimuns=None, employees=None, maxTime=None,
-          year=2021, hours=13, work_blocks=None, rules=None, **kwargs):
+          year=2021, hours=13, work_blocks=None, rules=None, solver="CBC", **kwargs):
 
     print("\n" + "=" * 80)
-    print("[ILP_Extra] HOURLY SCHEDULER - INTEGER LINEAR PROGRAMMING")
+    print("[ILP3] HOURLY SCHEDULER - INTEGER LINEAR PROGRAMMING")
     print("=" * 80)
+    print(f"[ILP3] Using solver: {solver}")
 
     sched = ILP3Scheduler(
         vacations,
@@ -413,38 +412,11 @@ def solve(vacations=None, minimuns=None, employees=None, maxTime=None,
         maxTime,
         year=year,
         store_hours=hours,
-        work_blocks=work_blocks
+        work_blocks=work_blocks,
+        solver=solver
     )
 
     sched.build_model()
     sched.solve(gap_rel=0.01)
     sched.export_csv("hourly_strict_schedule.csv")
-
-    print("=" * 80)
-    print("[ILP_Extra] COMPLETE")
-    print("=" * 80 + "\n")
-
     return sched.to_table()
- 
-
-# ┌─────────────────────────────────────────────────────────────┐
-# │ x[i][d][a][e] = 1                                           │
-# │ ↓                                                           │
-# │ Empregado 7 trabalha dia 120, bloco (11,15,20), equipa B    │
-# │                                                             │
-# │ Implica automaticamente:                                    │
-# │ z[7][120][6] = 1  (bloco 6 é (11,15,20))                    │
-# │                                                             │
-# │ Contribui para cobertura:                                   │
-# │ covered[120]["11-12"]["B"] += 1                             │
-# │ covered[120]["12-13"]["B"] += 1                             │
-# │ covered[120]["13-14"]["B"] += 1                             │
-# │ covered[120]["14-15"]["B"] += 1  (pausa 15-16)              │
-# │ covered[120]["16-17"]["B"] += 1                             │
-# │ covered[120]["17-18"]["B"] += 1                             │
-# │ covered[120]["18-19"]["B"] += 1                             │
-# │ covered[120]["19-20"]["B"] += 1                             │
-# │                                                             │
-# │ Se theta[120]["14-15"]["B"] = 3 e covered = 2:              │
-# │ y[120]["14-15"]["B"] = 1  (falta 1 pessoa)                  │ 
-# └─────────────────────────────────────────────────────────────┘

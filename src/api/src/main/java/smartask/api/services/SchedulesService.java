@@ -143,9 +143,14 @@ public class SchedulesService {
 
         if (isHourly) {
 
-            if (!inferredHourCount.equals(schedule.getShifts())) {
-                return "Selected shifts (" + schedule.getShifts() + ") does not match minimums template '" +
-                       schedule.getMinimuns() + "' (found " + inferredShiftCount + ").";
+            // Para templates de horas, validar schedule.getHours() em vez de shifts
+            Integer requestedHours = schedule.getHours();
+            if (requestedHours == null) {
+                // Se hours não está definido, assume que está correto (skip validation)
+                System.out.println("[INFO] Hours not specified, skipping hourly validation.");
+            } else if (!inferredHourCount.equals(requestedHours)) {
+                return "Selected hours (" + requestedHours + ") does not match minimums template '" +
+                       schedule.getMinimuns() + "' (found " + inferredHourCount + " hour slots).";
             }
 
         } else {

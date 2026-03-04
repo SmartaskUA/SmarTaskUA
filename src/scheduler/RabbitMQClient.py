@@ -141,9 +141,10 @@ class RabbitMQClient:
                 maxTime = message.get("maxTime")
                 algorithm_name = message.get("algorithm", "CSP Scheduling")
                 rules = message.get("rules")
+                solver = message.get("solver", "CBC")  # Default to CBC
 
                 print(f"\n[Received Task] Task ID: {task_id}")
-                print(f"Algorithm: {algorithm_name}, Shifts: {shifts}, Year: {year}")
+                print(f"Algorithm: {algorithm_name}, Shifts: {shifts}, Year: {year}, Solver: {solver}")
 
                 # --- Submit task to executor ---
                 self.executor.submit(
@@ -159,7 +160,8 @@ class RabbitMQClient:
                     year,
                     maxTime,
                     shifts,
-                    rules
+                    rules,
+                    solver
                 )
 
                 ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -193,7 +195,8 @@ class RabbitMQClient:
             year,
             maxTime,
             shifts,
-            rules
+            rules,
+            solver="CBC"
     ):
 
         self.send_task_status(task_id, "IN_PROGRESS")
@@ -209,7 +212,8 @@ class RabbitMQClient:
                 maxTime=maxTime,
                 year=year,
                 shifts=shifts,
-                rules=rules
+                rules=rules,
+                solver=solver
             )
 
             print("ELAPSED TIME:", elapsed_time)

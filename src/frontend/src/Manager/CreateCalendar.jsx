@@ -41,6 +41,7 @@ const CreateCalendar = () => {
   const [shifts, setShifts] = useState("13");
   const [vacationTemplate, setVacationTemplate] = useState("VacationTemplate_Case1_21");
   const [minimumTemplate, setMinimumTemplate] = useState("Mins_R10-R62_30min.");
+  const [selectedSolver, setSelectedSolver] = useState("CBC"); // "CBC" ou "GUROBI"
 
   // NEW: ruleset selection
   const [ruleSets, setRuleSets] = useState([]); // [{name, description, ...}]
@@ -198,6 +199,7 @@ const CreateCalendar = () => {
           minimuns: minimumTemplate,
           shifts: shifts,
           groupName: selectedGroup,
+          solver: scheduleType === "Horas" ? selectedSolver : null,
         };
 
         const response = await axios.post(`${baseurl}/schedules/generate`, data);
@@ -278,19 +280,17 @@ const CreateCalendar = () => {
     { value: "CSP General", label: "CSP General" },
     ];
   const horasAlgorithms = [
-    { value: "ILP_1", label: "Integer Linear Programming 1" },
-    { value: "ILP_1_Half_Intervals", label: "Integer Linear Programming 1 Half Intervals" },
     { value: "ILP_2", label: "Integer Linear Programming 2" },
     { value: "ILP_2_Half_Intervals", label: "Integer Linear Programming 2 Half Intervals" },
     { value: "ILP_3", label: "Integer Linear Programming 3" },
-    { value: "ILP_4", label: "Integer Linear Programming 4" },
-    { value: "CSP_1", label: "Constraint Satisfaction Problem 1" },
-    { value: "COP_1", label: "Constraint Optimization Problem 1" },
-    { value: "COP_2", label: "Constraint Optimization Problem 2" },
     { value: "ILP_3_Half_Intervals", label: "Integer Linear Programming 3 Half Intervals" },
-    { value: "CSP_2_Half_Intervals", label: "Constraint Satisfaction Problem 2 Half Intervals" },
+    { value: "ILP_4", label: "Integer Linear Programming 4" },
+    { value: "ILP_4_Half_Intervals", label: "Integer Linear Programming 4 Half Intervals" },
+    { value: "COP_1", label: "Constraint Optimization Problem 1" },
+    { value: "COP_1_Half_Intervals", label: "Constraint Optimization Problem 1 Half Intervals" },
+    { value: "COP_2", label: "Constraint Optimization Problem 2" },
+    { value: "COP_2_Half_Intervals", label: "Constraint Optimization Problem 2 Half Intervals" },
     { value: "Heuristica_1", label: "Heurística 1" },
-    { value: "Heuristica00", label: "Heurística" },
     { value: "Heuristica_Half_Intervals", label: "Heurística Half Intervals" },
     // Adicione outros algoritmos de horas aqui se existirem
   ];
@@ -343,8 +343,9 @@ const CreateCalendar = () => {
                 value={maxDuration}
                 onChange={handleMaxDurationChange}
                 margin="normal"
+                inputProps={{ min: 1, max: 1000 }}
                 error={maxDurationError}
-                helperText={maxDurationError ? "Duration must be a positive integer" : ""}
+                helperText={maxDurationError ? "Duration must be a positive integer (até 1000)" : ""}
               />
 
               <FormControl fullWidth margin="normal">
@@ -478,6 +479,21 @@ const CreateCalendar = () => {
                     ).map((alg) => (
                       <MenuItem key={alg.value} value={alg.value}>{alg.label}</MenuItem>
                     ))}
+                  </Select>
+                </FormControl>
+              )}
+
+              {mode === "manual" && ["ILP_2", "ILP_2_Half_Intervals", "ILP_3", "ILP_3_Half_Intervals", "ILP_4", "ILP_4_Half_Intervals"].includes(selectedAlgorithm) && (
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="solver-select-label">Solver</InputLabel>
+                  <Select
+                    labelId="solver-select-label"
+                    value={selectedSolver}
+                    label="Solver"
+                    onChange={(e) => setSelectedSolver(e.target.value)}
+                  >
+                    <MenuItem value="CBC">CBC (Open Source)</MenuItem>
+                    <MenuItem value="GUROBI">Gurobi (Commercial)</MenuItem>
                   </Select>
                 </FormControl>
               )}

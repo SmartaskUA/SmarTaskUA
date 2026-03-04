@@ -108,29 +108,21 @@ public class ScenarioSeeder {
             teamService.addTeam(teamB);
         }
 
-        // Create 21 employees
+        // Criar 21 funcionários: 7 exclusivos para A, 7 exclusivos para B, 7 para ambas
         ensureEmployeesExist(1, 21);
 
-        // 7 only in Equipa A (Employee 1-7)
-        List<String> onlyA = employeeIdsInRange(1, 7);
-        if (!onlyA.isEmpty()) {
-            addEmployeesToTeam(teamA, onlyA);
-        }
+        // IDs dos funcionários
+        List<String> onlyA = employeeIdsInRange(1, 7);      // 1-7
+        List<String> onlyB = employeeIdsInRange(8, 14);     // 8-14
+        List<String> both = employeeIdsInRange(15, 21);     // 15-21
 
-        // 7 only in Equipa B (Employee 8-14)
-        List<String> onlyB = employeeIdsInRange(8, 14);
-        if (!onlyB.isEmpty()) {
-            addEmployeesToTeam(teamB, onlyB);
-        }
+        // Adicionar aos respetivos grupos
+        addEmployeesToTeam(teamA, onlyA);
+        addEmployeesToTeam(teamB, onlyB);
+        addEmployeesToTeam(teamA, both);
+        addEmployeesToTeam(teamB, both);
 
-        // 7 in both teams (Employee 15-21)
-        List<String> both = employeeIdsInRange(15, 21);
-        if (!both.isEmpty()) {
-            addEmployeesToTeam(teamA, both);
-            addEmployeesToTeam(teamB, both);
-        }
-
-        System.out.println("[Startup] Created 21 employees: 7 in A only, 7 in B only, 7 in both.");
+        System.out.println("[Startup] Criados 7 exclusivos para Equipa A, 7 exclusivos para Equipa B e 7 para ambas as equipas.");
     }
 
     // BASE SCENARIO (exactly as requested):

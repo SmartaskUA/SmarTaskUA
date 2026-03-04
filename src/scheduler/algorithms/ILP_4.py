@@ -6,14 +6,10 @@ from time import time
 import numpy as np
 import pandas as pd
 import pulp
-import holidays
 
 from algorithms.utils import (
-    build_calendar,
     rows_to_vac_dict,
     rows_to_req_dicts,
-    export_schedule_to_csv_shifts,
-    TEAM_CODE_TO_ID,      
     TEAM_ID_TO_CODE,      
     get_team_id,   
     get_team_code       
@@ -27,37 +23,28 @@ class HourlyILPScheduler:
     """
     
     def __init__(self, vacations_rows, minimums_rows, employees, maxTime, year=2025, 
-                 store_hours=13, work_blocks=None):
+                 store_hours=13, work_blocks=None, solver="CBC"):
         self.year = year
         self.maxTime_sec = int(maxTime) * 60 if maxTime is not None else None
+        self.solver_name = solver.upper() if solver else "CBC"  # "CBC" or "GUROBI"
 
         # Calendar - Using 2021-11-01 to 2022-10-31 as in original
         self.dates = pd.date_range(start=f"2021-11-01", end=f"2022-10-31").to_list()
         self.num_days = len(self.dates)
-        #print(f"[HourlyILP] Calendar has {self.num_days} days")
 
         # Employees
         self.employees = list(range(len(employees)))
-
         self.num_employees = len(self.employees)
 
-        #print(f"[HourlyILP] Employees: {self.employees}")
         # Store operating hours (9:00-22:00 = 13 hours)
         self.store_hours = int(store_hours)
-
-        #print(f"[HourlyILP] Store operating hours: 9:00 to {self.store_hours}:00")
-
         
         # Define valid work blocks: (start_hour, break_hour, end_hour)
-        # Each block = 4h + 1h break + 4h = 8 working hours
         if work_blocks is None:
             self.work_blocks = self._generate_work_blocks()
         else:
             self.work_blocks = work_blocks
         
-        #print(f"[HourlyILP] {self.num_employees} employees, {len(self.work_blocks)} work blocks")
-        #print(f"[HourlyILP] Work blocks: {self.work_blocks[:5]}... (showing first 5)")
-
         # Employee teams
         self.emp_team_code = {}
         for idx, emp in enumerate(employees):
@@ -79,8 +66,6 @@ class HourlyILPScheduler:
         }
         """
 
-        #print(f"[HourlyILP] Team codes: {self.emp_team_code}")
-
         # Build team membership
         self.teams = {}
         for idx, codes in self.emp_team_code.items():
@@ -94,33 +79,6 @@ class HourlyILPScheduler:
           "C": {3},         # Equipa C tem empregado 3
         }
         """
-
-        print(f"[HourlyILP] Teams: {self.teams}")
-
-        # Holidays and Sundays
-        feriados_pt = {
-            datetime.date(2022, 1, 1): "New Year's Day", 
-            datetime.date(2022, 1, 6): 'Epiphany', 
-            datetime.date(2022, 3, 1): 'Day of Baleares', 
-            datetime.date(2022, 4, 14): 'Maundy Thursday', 
-            datetime.date(2022, 4, 15): 'Good Friday', 
-            datetime.date(2022, 5, 1): 'Labor Day', 
-            datetime.date(2022, 5, 2): 'Madrid Day', 
-            datetime.date(2022, 6, 29): 'Folga', 
-            datetime.date(2022, 7, 8): 'Folga', 
-            datetime.date(2022, 8, 15): 'Assumption Day', 
-            datetime.date(2022, 9, 8): 'Regional Holiday', 
-            datetime.date(2022, 10, 12): 'National Day',
-            datetime.date(2021, 11, 1): "All Saints' Day", 
-            datetime.date(2021, 12, 6): 'Constitution Day',
-            datetime.date(2021, 12, 8): 'Immaculate Conception',
-            datetime.date(2021, 12, 25): 'Christmas Day'
-        }
-        
-        self.sundays_holidays = [
-            d for d in self.dates if d.weekday() == 6 or d.date() in feriados_pt
-        ]
-        #print(f"[HourlyILP] Sundays + Holidays: {(self.sundays_holidays)}")
 
         # Vacations
         vacs_dict = rows_to_vac_dict(vacations_rows)
@@ -139,8 +97,6 @@ class HourlyILPScheduler:
           2: {datetime(2021, 12, 8)},
         }
         """
-
-        #print(f"[HourlyILP] Loaded vacations for {(self.vacations_dates)} employees")
 
         # Minimum requirements per hour
         mins, ideals = rows_to_req_dicts(minimums_rows)
@@ -169,19 +125,7 @@ class HourlyILPScheduler:
 
         # Br Blocos que influenciam o dia seguinte
         self.Ar = self._Ar_Builder(self.work_blocks, rest_hours=12)
-        print(f"Dictionary Ar de blocos dependentes para descanso de 12h: {self.Ar}")
-        
-        #for (day, hour, team_id), val in ideals.items():
-        #    if 1 <= day <= self.num_days:
-        #        date_key = self.dates[day - 1]
-        #        team_code = TEAM_ID_TO_CODE.get(team_id)
-        #        if team_code:
-        #            self.ideais[(date_key, hour, team_code)] = int(val)
 
-        #print(f"[HourlyILP] Loaded {(self.minimos)} minimum requirements")
-        #print(f"[HourlyILP] Loaded {len(self.ideais)} ideal requirements")
-
-        #time.sleep(1000)  # para debug sequencial
         # Model variables
         self.x = None
         self.model = None
@@ -201,12 +145,8 @@ class HourlyILPScheduler:
         }
         """
 
-        print(f"[HourlyILP] Loaded vacations for {len(self.vacations_dates)} employees")
-
-        # For lexicographic optimization (two-phase approach)
         self.y_opt = None
 
-        #time.sleep(1000)  # para debug sequencial
 
     def _generate_work_blocks(self):
         """
@@ -244,15 +184,9 @@ class HourlyILPScheduler:
         start, break_start, end = block
         hours = set(range(start, break_start))  # First period
         hours.update(range(break_start + 1, end))  # Second period (skip break hour)
-        # print(f"horas : {hours}")
         return hours
-
-    def _blocks_overlap(self, block1, block2):
-        """Check if two work blocks have overlapping working hours."""
-        hours1 = self._get_working_hours(block1)
-        hours2 = self._get_working_hours(block2)
-        return len(hours1 & hours2) > 0
     
+
     def _Ar_Builder(self, work_Blocks, rest_hours):
 
         """
@@ -276,21 +210,7 @@ class HourlyILPScheduler:
                     if b not in Ar:
                         Ar[b] = []
                     Ar[(b)].append(a)
-                    print(f"Adicionando bloco {b} em Ar pois e dependente de {a} com {rest_hours}h de descanso")
         return Ar
-
-    def _validate_block_transition(self, block_today, block_tomorrow):
-        """
-        Check if transition from block_today to block_tomorrow is valid.
-        Rules: 
-        - Must have at least 12 hours rest between end and start
-        """
-        end_today = block_today[2]  # End hour of today's block
-        start_tomorrow = block_tomorrow[0]  # Start hour of tomorrow's block
-        # Calculate rest hours (always overnight, so add 24 to tomorrow's start)
-        rest_hours = (24 - end_today) + start_tomorrow
-        # Must have at least 12 hours rest
-        return rest_hours >= 12
 
     def build_model(self):
         """Build the ILP model with hourly constraints."""
@@ -298,7 +218,6 @@ class HourlyILPScheduler:
         dias = self.dates
         blocos = list(range(len(self.work_blocks)))  # Block indices
         horas = range(9, 22)  # Store hours 9:00-21:59
-        # print(f"[HourlyILP] Building model with {list(horas)} hours indices") 
 
         # Decision variables: X[employee][day][block][team]
         self.x = {
@@ -309,16 +228,13 @@ class HourlyILPScheduler:
                             f"x_{f}_{d.strftime('%Y%m%d')}_{b}_{team_code}", 
                             cat="Binary"
                         )
-                        
                         for team_code in self.emp_team_code[f]
-                        
                     }
                     for b in blocos
                 }
                 for d in dias
             }
             for f in funcionarios
-            
         }
 
         # Auxiliary: Number of workers at hour h on day d in team e
@@ -359,9 +275,9 @@ class HourlyILPScheduler:
         penalties_min = []
         penalties_ideal = []
 
-        print(f"[HourlyILP] Adding constraints...")
+        print(f"[ILP_4] Adding constraints...")
+
         # Link Y with X: count workers at each hour
- 
         for d in dias:
             for h in horas:
                 hora_str = f"{h:02d}-{h+1:02d}"
@@ -369,26 +285,20 @@ class HourlyILPScheduler:
                 for team_code, members in self.teams.items():
                     minimo = self.minimos.get((d, hora_str, team_code), None)
 
-                    # ignorar slots sem requisito ou fechados
                     if minimo is None or minimo == -1:
                         continue
                 
-
                     model += (
                         self.y[d][h][team_code] >= minimo - pulp.lpSum(
-                            self.x[f][d][b][tc]
+                            self.x[f][d][b][team_code]
                             for f in members
                             for b in blocos
                             if h in self._get_working_hours(self.work_blocks[b])
-                            for tc in self.emp_team_code[f]
-                            if tc == team_code
                         ),
                         f"short_def_{d.strftime('%Y%m%d')}_h{h}_{team_code}"
                     )
-
                     penalties_min.append(self.y[d][h][team_code])
 
-        
 
         for d in dias:
             for h in horas:
@@ -397,36 +307,22 @@ class HourlyILPScheduler:
                 for team_code, members in self.teams.items():
                     ideal = self.ideais.get((d, hora_str, team_code), None)
 
-                    # ignorar slots sem requisito ou fechados
                     if ideal is None or ideal == -1:
                         continue
-                
 
                     model += (
                         self.z[d][h][team_code] >= ideal - pulp.lpSum(
-                            self.x[f][d][b][tc]
+                            self.x[f][d][b][team_code]
                             for f in members
                             for b in blocos
                             if h in self._get_working_hours(self.work_blocks[b])
-                            for tc in self.emp_team_code[f]
-                            if tc == team_code
                         ),
                         f"ideal_def_{d.strftime('%Y%m%d')}_h{h}_{team_code}"
                     )
-
                     penalties_ideal.append(self.z[d][h][team_code])
 
 
-
-        # if self.y_opt is not None:
-        #     model += (
-        #         pulp.lpSum(self.y[d][h][team]
-        #                    for d in dias for h in horas for team in self.teams.keys())
-        #         <= self.y_opt,
-        #         "keep_y_optimum"
-        #     )
         # Objective: Minimize deviations from minimums and ideals
-        # W_MIN = 10000  # peso MUITO alto (Agravante da situação). Muda o custo relativo das decisoes
 
         """
         O solver vai prioritariamente tentar reduzir as faltas aos mínimos, 
@@ -458,8 +354,7 @@ class HourlyILPScheduler:
                     f"one_block_or_vacation_f{f}_{d.strftime('%Y%m%d')}"
                 )
 
-
-        # 3. Total working days = 223 in the year
+        # 2. Total working days = 223 in the year
         for f in funcionarios:
             model += (
                 pulp.lpSum(
@@ -473,7 +368,7 @@ class HourlyILPScheduler:
 
 
 
-        # 4. No work on days marked with -1 (closed days/holidays)
+        # 3. No work on days marked with -1 (closed days/holidays)
         # Identify all dates where minimum is -1 for any team
         closed_days = set()
         for (date_key, hora_str, team_code), minimo in self.minimos.items():
@@ -481,8 +376,6 @@ class HourlyILPScheduler:
                 closed_days.add(date_key)
         
         # Force no work on closed days
-        # for f in funcionarios:
-        #     for d in closed_days:
         model += (
             pulp.lpSum(
                 self.x[f][d][b][tc]
@@ -494,9 +387,7 @@ class HourlyILPScheduler:
             f"no_work_closed_day_f{f}_{d.strftime('%Y%m%d')}"
         )
 
-
-
-        # 5. Max 5 consecutive working days (sliding window of 6 days)
+        # 4. Max 5 consecutive working days (sliding window of 6 days)
         for f in funcionarios:
             for i in range(len(dias) - 5):
                 window = dias[i:i + 6]  # bloco de 6 dias consecutivos
@@ -511,57 +402,7 @@ class HourlyILPScheduler:
                 )
 
 
-
-        # 4.5. Exactly 5 working days per week (segunda-sábado)
-        # Cada empregado trabalha 5 de 6 dias (seg-sab), falhando um qualquer
-        #for f in funcionarios:
-        #    i = 0
-        #    while i < len(dias):
-        #        # Encontrar próxima segunda
-        #        while i < len(dias) and dias[i].weekday() != 0:
-        #            i += 1
-        #        if i + 5 >= len(dias):
-        #            break
-        #        week_days = dias[i:i + 6]  # seg–sáb
-        #        # feriados e dias fechados
-        #        week_holidays = [
-        #            d for d in week_days if d in self.sundays_holidays or d in closed_days
-        #        ]
-        #        valid_days = [d for d in week_days if d not in week_holidays]
-        #        # soma de trabalho da semana
-        #        workdays_expr = pulp.lpSum(
-        #            self.x[f][d][b][tc]
-        #            for d in valid_days
-        #            for b in blocos
-        #            for tc in self.emp_team_code[f]
-        #        )
-        #        # regra: máximo 5 dias de trabalho
-        #        model += (
-        #            workdays_expr <= min(5, len(valid_days)),
-        #            f"max_5_days_per_week_f{f}_{dias[i].strftime('%Y%m%d')}"
-        #        )
-        #        i += 7
-
-
         # 5. Valid transitions between consecutive days (12h rest minimum)
-        # for f in funcionarios:
-        #     for i in range(len(dias) - 1):
-        #         d_today = dias[i]
-        #         d_next = dias[i + 1]
-        #         for a in blocos:  # a ∈ A_r (todos os blocos)
-        #             for b in blocos:  # b ∈ B_a
-        #                 if not self._validate_block_transition(self.work_blocks[b], self.work_blocks[a]):
-        #                     for tc in self.emp_team_code[f]:
-        #                         model += (
-        #                             # Invalid transition constraint, sum must be <= 1, only one can be chosen
-        #                             self.x[f][d_today][b][tc] + self.x[f][d_next][a][tc] <= 1,
-        #                             (f"invalid_transition_f{f}_{d_today.strftime('%Y%m%d')}_b{b}_a{a}_{tc}")
-        #                         )
-
-        # 5. Valid transitions between consecutive days (12h rest minimum)
-        # Equação: sum_{b∈B_a} sum_{t∈T_e} x_edbt + sum_{a∈A_r} sum_{t∈T_e} x_{e,d+1,at} ≤ 1
-        # Para cada empregado e par de dias consecutivos (d, d+1):
-        # Se trabalha num bloco tardio (B_a) no dia d, NÃO pode trabalhar num bloco cedo (A_r) no dia d+1
         for f in funcionarios:
             for i in range(len(dias) - 1):
 
@@ -591,26 +432,12 @@ class HourlyILPScheduler:
                         sum_today + sum_next <= 1,
                         f"rest_12h_f{f}_{d_today.strftime('%Y%m%d')}_a{a}"
                     )
-        
 
-
-        self.model = model
-                
-        print("[HourlyILP] Model built successfully")
-
-
-
-
-
-
+        self.model = model 
+        print("[ILP_4] Model built successfully")
 
 
 #   # =========================================================
-
-
-
-
-
 
 
     def solve(self, gap_rel=0.01):
@@ -619,27 +446,50 @@ class HourlyILPScheduler:
             self.build_model()
 
         print(f"\n{'='*80}")
-        print(f"[ILP_Extra] SOLVING ILP MODEL")
+        print(f"[ILP_4] SOLVING ILP MODEL")
         print(f"{'='*80}")
-        print(f"[ILP_Extra] Solver parameters:")
+        print(f"[ILP_4] Solver parameters:")
         print(f"  Gap relative: {gap_rel*100:.2f}%")
         print(f"  Variables: {self.model.numVariables()}")
         print(f"  Constraints: {self.model.numConstraints()}")
-        print(f"\n[ILP_Extra] Starting solver (CBC)...")
-        print(f"[ILP_Extra] Real-time progress will be shown below:")
+        print(f"  Solver: {self.solver_name}")
+        print(f"\n[ILP_4] Starting solver ({self.solver_name})...")
+        print(f"[ILP_4] Real-time progress will be shown below:")
         print(f"{'-'*80}")
         
-        print(f"[HourlyILP] Starting solver (max time: {self.maxTime_sec}s)...")
-        print(f"[HourlyILP] Optimality gap: {gap_rel * 100:.1f}%")
+        print(f"[ILP_4] Starting solver (max time: {self.maxTime_sec}s)...")
+        print(f"[ILP_4] Optimality gap: {gap_rel * 100:.1f}%")
         print(f"  Solver will stop when solution is within {gap_rel * 100:.1f}% of optimal")
         
-        solver = pulp.PULP_CBC_CMD(
-            msg=True,
-            timeLimit=(self.maxTime_sec if self.maxTime_sec is not None else 8 * 3600),
-            gapRel=gap_rel,
-        )
+        # Choose solver based on solver_name
+        if self.solver_name == "GUROBI":
+            try:
+                solver = pulp.GUROBI(
+                    msg=False,
+                    timeLimit=(self.maxTime_sec if self.maxTime_sec is not None else 8 * 3600),
+                    gapRel=gap_rel,
+                )
+                print("[ILP_4] Using GUROBI solver")
+            except Exception as e:
+                print(f"[ILP_4] GUROBI not available ({e}), falling back to CBC")
+                solver = pulp.PULP_CBC_CMD(
+                    msg=False,
+                    timeLimit=(self.maxTime_sec if self.maxTime_sec is not None else 8 * 3600),
+                    gapRel=gap_rel,
+                )
+        else:
+            solver = pulp.PULP_CBC_CMD(
+                msg=False,
+                timeLimit=(self.maxTime_sec if self.maxTime_sec is not None else 8 * 3600),
+                gapRel=gap_rel,
+            )
+            print("[ILP_4] Using CBC solver")
         
+        start_time = time()
         self.status = self.model.solve(solver)
+        solve_time = time() - start_time
+        
+        print(f"[ILP_4] Solver wall clock time: {solve_time:.2f} seconds")
         
         status_map = {
             pulp.LpStatusOptimal: "Optimal",
@@ -649,18 +499,14 @@ class HourlyILPScheduler:
             pulp.LpStatusUndefined: "Undefined"
         }
         
-        print(f"[HourlyILP] Solver status: {status_map.get(self.status, 'Unknown')}")
+        print(f"[ILP_4] Solver status: {status_map.get(self.status, 'Unknown')}")
         
         if self.status == pulp.LpStatusOptimal or self.status == pulp.LpStatusNotSolved:
             self._extract_assignments()
-            print("[HourlyILP] Solution extracted")
+            print("[ILP_4] Solution extracted")
 
-        print("[HourlyILP] Employees with assignments:")
-        for emp, assg in self.assignment.items():
-            print(f"Emp {emp}: {len(assg)} days")
-        
-        
         return self.status
+
 
     def _extract_assignments(self):
         """Extract solution into assignment dict."""
@@ -694,6 +540,7 @@ class HourlyILPScheduler:
                     team_id = get_team_id(str(best_team))
                     self.assignment[emp_id].append((day_idx, best_block, team_id))
 
+
     def export_csv(self, filename="hourly_schedule.csv"):
         """Export schedule to CSV."""
         with open(filename, 'w', newline='', encoding='utf-8') as f:
@@ -721,8 +568,8 @@ class HourlyILPScheduler:
                         row.append('OFF')
                 
                 writer.writerow(row)
-        
-        print(f"[HourlyILP] Schedule exported to {filename}")
+        print(f"[ILP_4] Schedule exported to {filename}")
+
 
     def to_table(self):
         """Return schedule as table for display."""
@@ -751,7 +598,7 @@ class HourlyILPScheduler:
 
 
 def solve(vacations, minimuns, employees, maxTime, year=2025, hours=13, 
-          work_blocks=None, rules=None):
+          work_blocks=None, rules=None, solver="CBC", **kwargs):
     """
     Main solve function for hourly scheduling.
     
@@ -764,10 +611,12 @@ def solve(vacations, minimuns, employees, maxTime, year=2025, hours=13,
         hours: Total store operating hours (default 13: 9am-10pm)
         work_blocks: Optional custom work blocks, otherwise auto-generated
         rules: Optional rules dict (for future extensions)
+        solver: Solver to use - "CBC" (default) or "GUROBI"
     
     Returns:
         Table representation of the schedule
     """
+    print(f"[ILP_4] Using solver: {solver}")
     scheduler = HourlyILPScheduler(
         vacations_rows=vacations,
         minimums_rows=minimuns,
@@ -775,16 +624,11 @@ def solve(vacations, minimuns, employees, maxTime, year=2025, hours=13,
         maxTime=maxTime,
         year=year,
         store_hours=hours,
-        work_blocks=work_blocks
+        work_blocks=work_blocks,
+        solver=solver
     )
 
     scheduler.build_model()
-    scheduler.solve(gap_rel=0.01)  # 1% optimality gap
+    scheduler.solve(gap_rel=0.01)
     scheduler.export_csv("hourly_schedule.csv")
-    
     return scheduler.to_table()
-
-
-
-## Fazer regra de 5 dias consecutivos de trabalho
-## Desenvolver kpis

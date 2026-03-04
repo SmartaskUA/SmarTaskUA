@@ -391,27 +391,6 @@ class Heuristica:
         ranked.sort(key=lambda x: x[1], reverse=True)
         return [emp_id for emp_id, _ in ranked]
 
-    def minimumFaults(self, assignment):
-        """
-        Retorna Verdadeiro se encontra minimos nao cumpridos, Falso caso contrário.
-        """
-
-        return False
-    
-    def Days_Not_Assigned_Totally(self, assignment):
-        """
-        Retorna uma lista de dias em que os minimos nao foram cumpridos.
-        """
-
-        return []
-    
-    def count_Days_Worked_That_Week(self, assignment, day):
-        """
-        Retorna um dicionário {emp_id: dias_trabalhados_naquela_semana} para a semana do dia dado.
-        """
-
-        return {}
-
     def build_model(self):
 
         """Build the Heuristic model with hourly constraints."""
@@ -442,10 +421,10 @@ class Heuristica:
 
         for d in dias: 
 
-            print(f"[Heuristica] Day {d} started.\n")
+            # print(f"[Heuristica] Day {d} started.\n")
 
             if d == datetime.datetime(2022, 4, 1):
-                flag = True
+                flag = False
             elif d == datetime.datetime(2022, 8, 31):
                 flag = False
 
@@ -571,7 +550,7 @@ class Heuristica:
                         Worked_Sequential_Days[f] += 1
                         Worked_Previous_Day[f] = assigned_block_idx
                         assigned = True
-                        print(f"[Heuristica] Day {d}, Emp {f}: Worked Total Days: {Worked_Total_Days[f]}, Worked Sequential Days: {Worked_Sequential_Days[f]}")
+                        # print(f"[Heuristica] Day {d}, Emp {f}: Worked Total Days: {Worked_Total_Days[f]}, Worked Sequential Days: {Worked_Sequential_Days[f]}")
                         break  # Bloco atribuído com sucesso
                     
                 if not assigned:
@@ -587,29 +566,12 @@ class Heuristica:
                     print(f"[Heuristica] Day {d}, Emp {f}: New Pontuation {Pontuation[f]:.4f}")
             
             
-            print(f"[Heuristica] Day {d} completed.\n")
-            time.sleep(0)  # Pequena pausa para clareza nos prints
+            # print(f"[Heuristica] Day {d} completed.\n")
 
-
-        Total_Days = {}
-        for emp, assg in self.assignment.items():
-            print(f"  Emp {emp}: {len(assg)} days")
-            Total_Days[emp] = len(assg)
-
-
-        if (self.minimumFaults(self.assignment) == True):
-            Days_In_Which_Minimums_Not_Met = self.Days_Not_Assigned_Totally(self.assignment)
-            
-            for day in Days_In_Which_Minimums_Not_Met:
-                print(f"\033[91m[Heuristica] Minimums not met on day {day}.\033[0m")
-                Employees_Worked_That_Week = self.count_Days_Worked_That_Week(self.assignment, day)
-                
-                for emp, days_worked in Employees_Worked_That_Week.items():
-                    print(f"  Emp {emp} worked {days_worked} days that week.")
-                    if days_worked < 5:
-                        print(f"Valid Case")
-
-        
+        # Total_Days = {}
+        # for emp, assg in self.assignment.items():
+        #     print(f"  Emp {emp}: {len(assg)} days")
+        #     Total_Days[emp] = len(assg)
 
         return True
 
@@ -721,7 +683,7 @@ def solve(vacations=None, minimuns=None, employees=None, maxTime=None, year=2021
     """
 
     # Executa múltiplas rodadas da heurística durante o tempo máximo (maxTime em minutos)
-    total_seconds = 1
+    total_seconds = 60
     import copy
     import time
     best_score = None

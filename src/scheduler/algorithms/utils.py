@@ -145,36 +145,6 @@ def parse_requirements_file(file_path: str):
 
     return mins, ideals
 
-def rows_to_req_dicts(req_rows):
-    """
-    req_rows: rows like ['Equipa A','Minimo','M', <day1>, ...]
-    Supports 'Equipa C', 'Team D', or just 'C' as the last token.
-    """
-    mins, ideals = {}, {}
-    for row in req_rows:
-        team_label, kind, shift_code, *counts = row
-
-        # robust final token as team code (A, B, C, D, ...):
-        team_code = team_label.strip().split()[-1].upper()
-        team_id = get_team_id(team_code)
-
-        code = shift_code.strip().upper()
-        if code.startswith('M'):
-            shift = 1
-        elif code.startswith('T') or code.startswith('A'):
-            shift = 2
-        elif code.startswith('N'):
-            shift = 3
-        else:
-            continue
-
-        target = mins if kind.strip().lower().startswith('min') else ideals
-        for day, value in enumerate(counts, start=1):
-            v = str(value).strip()
-            if v:
-                target[(day, shift, team_id)] = int(v)
-    return mins, ideals
-
 
 def rows_to_req_dicts_any(req_rows, year=None):
     """
@@ -186,6 +156,7 @@ def rows_to_req_dicts_any(req_rows, year=None):
     if _looks_like_demand_rows(req_rows):
         return rows_to_req_dicts_from_demand(req_rows, year=year)
     return rows_to_req_dicts(req_rows)
+
 
 def infer_shift_count_from_dicts(mins_raw, ideals_raw):
     shift_values = [
@@ -458,106 +429,6 @@ def rows_to_req_dicts_Half_Hour(req_rows):
     return mins, ideals
 
 
-def rows_to_req_dicts_Half_Hour_2(req_rows):
-    """
-    Processa ficheiros CSV de requisitos mínimos com intervalos de 30 minutos.
-    
-    Formato esperado:
-      - Linha 1: Header com datas (vazio, 'Hora', '2021-11-01', '2021-11-02', ...)
-      - Linha 2: Dias da semana (vazio, vazio, 'Segunda', 'Terça', ...)
-      - Linhas de dados: 'Equipa A', '09:00-09:30', val_dia1, val_dia2, ...
-    
-    Retorna:
-      mins[(day, hora_str, team_id)] onde hora_str = "09.0-09.5"
-    """
-    mins = {}
-    
-    if len(req_rows) < 3:
-        print(f"[WARNING] Ficheiro tem menos de 3 linhas - vazio ou inválido")
-        return mins, {}
-    
-    # Parse header (primeira linha) para extrair datas
-    header = req_rows[0]
-    date_map = {}  # {col_index: day_number}
-    
-    from datetime import datetime
-    for col_idx, cell in enumerate(header[2:], start=2):  # Skip primeiras 2 colunas
-        try:
-            # Parse data (formato: 2021-11-01)
-            date_obj = datetime.strptime(cell.strip(), '%Y-%m-%d')
-            # Calcular day-of-year
-            day_of_year = date_obj.timetuple().tm_yday
-            date_map[col_idx] = day_of_year
-        except ValueError:
-            continue
-    
-    print(f"[DEBUG] Parsed {len(date_map)} dates from header")
-    print(f"[DEBUG] First 5 date mappings: {dict(list(date_map.items())[:5])}")
-    
-    # Processar linhas de dados (skip header e dias da semana)
-    for row_idx, row in enumerate(req_rows[2:], start=2):
-        if not row or len(row) < 3:
-            continue
-        
-        team_label = row[0].strip()
-        hour_range = row[1].strip()
-        
-        # Validar formato de equipa
-        if not team_label.startswith('Equipa'):
-            continue
-        
-        team_code = get_team_code(team_label)
-        team_id = get_team_id(team_code)
-        
-        # Parse formato hora: "09:00-09:30" -> "09.0-09.5"
-        if ':' not in hour_range or '-' not in hour_range:
-            print(f"[WARNING] Row {row_idx}: Invalid hour format '{hour_range}'")
-            continue
-        
-        try:
-            # "09:00-09:30" -> ["09:00", "09:30"]
-            start_str, end_str = hour_range.split('-')
-            
-            # "09:00" -> 9.0, "09:30" -> 9.5
-            start_hour, start_min = map(int, start_str.split(':'))
-            end_hour, end_min = map(int, end_str.split(':'))
-            
-            start_float = float(start_hour) + (0.5 if start_min == 30 else 0.0)
-            end_float = float(end_hour) + (0.5 if end_min == 30 else 0.0)
-            
-            # Criar string no formato ILP: "09.0-09.5"
-            hora_str = f"{start_float:04.1f}-{end_float:04.1f}"
-            
-        except (ValueError, IndexError) as e:
-            print(f"[WARNING] Row {row_idx}: Failed to parse '{hour_range}': {e}")
-            continue
-        
-        # Processar valores por dia
-        entries_created = 0
-        for col_idx in range(2, len(row)):
-            if col_idx not in date_map:
-                continue
-            
-            day = date_map[col_idx]
-            val_str = str(row[col_idx]).strip()
-            
-            if val_str and val_str != '0':
-                try:
-                    val_int = int(val_str)
-                    mins[(day, hora_str, team_id)] = val_int
-                    entries_created += 1
-                except ValueError:
-                    continue
-        
-        if row_idx <= 5:  # Debug primeiras linhas
-            print(f"[DEBUG] Row {row_idx}: {team_label} {hora_str} -> {entries_created} entries")
-    
-    print(f"\n[DEBUG FINAL] Total mins entries: {len(mins)}")
-    print(f"[DEBUG FINAL] Sample (first 5): {dict(list(mins.items())[:5])}")
-    
-    return mins, {}
-
-
 def export_schedule_to_csv_shifts(scheduler, filename="schedule.csv", num_days=365):
     header = ["funcionario"] + [f"Dia {i+1}" for i in range(num_days)]
     label_all = {1: "M_", 2: "T_", 3: "N_"}
@@ -693,31 +564,6 @@ def schedule_to_table(*, employees: list, vacs: dict, assignment: dict, num_days
         rows.append(line)
     return rows
 
-def to_table(*, employees: list, vacs: dict, assignment: dict, num_days: int, work_blocks: list):
-        """Return schedule as table for display."""
-        header = ["Employee"] + [f"Day{i}" for i in range(1, num_days + 1)]
-        rows = [header]
-        
-        for emp_id in sorted([i + 1 for i in employees]):
-            vac_days = set(vacs.get(emp_id, []))
-            day_to_block = {d: (b, t) for (d, b, t) in assignment.get(emp_id, [])}
-            
-            line = [f"Emp{emp_id}"]
-            for d in range(1, num_days + 1):
-                if d in vac_days:
-                    line.append("F")
-                elif d in day_to_block:
-                    block_idx, team_id = day_to_block[d]
-                    block = work_blocks[block_idx]
-                    team_code = TEAM_ID_TO_CODE.get(team_id, 'A')
-                    line.append(f"{block[0]}-{block[1]}-{block[2]}_{team_code}")
-                else:
-                    line.append("OFF")
-            
-            rows.append(line)
-        
-        return rows
-
 def to_table_hours(*, employees, vacs, assignment, num_days, work_blocks):
     """
     Constrói uma tabela (lista de listas) com o horário por horas.
@@ -839,7 +685,24 @@ def count_minimum_failures(scheduler):
         """
         Conta o número total de falhas aos mínimos necessários na solução atribuída.
         Para cada (dia, hora, equipa), verifica se o número de funcionários atribuídos < mínimo.
+        
+        Suporta dois formatos de chaves:
+        - COP: (Timestamp, float, team_code) ex: (Timestamp, 9.0, 'A')
+        - Heurística: (Timestamp, str, team_code) ex: (Timestamp, '09-10', 'A')
         """
+        # Obter o dicionário de mínimos correto (theta em COP_1, minimos em COP_2/Heuristica)
+        minimos_dict = getattr(scheduler, 'minimos', None) or getattr(scheduler, 'theta', {})
+        
+        if not minimos_dict:
+            return 0
+        
+        # Detectar formato das chaves: float ou string?
+        sample_key = next(iter(minimos_dict.keys()), None)
+        if sample_key is None:
+            return 0
+        
+        use_string_hours = isinstance(sample_key[1], str)
+        
         # Reconstruir cobertura por (dia, hora, equipa)
         coverage = {}
         for emp_id, assignments in scheduler.assignment.items():
@@ -849,19 +712,19 @@ def count_minimum_failures(scheduler):
                 team_code = TEAM_ID_TO_CODE.get(team_id, 'A')
                 hours = scheduler._get_working_hours(block)
                 for h in hours:
-                    # Suporta tanto inteiros (hora cheia) quanto floats (meia hora)
-                    if isinstance(h, float) and h % 1 == 0:
-                        # Hora cheia: 9.0 -> '09-10'
-                        key1 = (date, f"{int(h):02d}-{int(h+1):02d}", team_code)
-                        coverage[key1] = coverage.get(key1, 0) + 1
-                    elif isinstance(h, float):
-                        # Meia hora: 9.5 -> '09.5-10.0'
-                        start = h
-                        end = h + 0.5
-                        key2 = (date, f"{start:04.1f}-{end:04.1f}", team_code)
-                        coverage[key2] = coverage.get(key2, 0) + 1
+                    if use_string_hours:
+                        # Formato Heurística: '09-10' (hora inteira)
+                        h_int = int(h)
+                        hour_key = f"{h_int:02d}-{h_int+1:02d}"
+                    else:
+                        # Formato COP: float (9.0, 9.5, etc.)
+                        hour_key = round(float(h), 1)
+                    
+                    key = (date, hour_key, team_code)
+                    coverage[key] = coverage.get(key, 0) + 1
+        
         failures = 0
-        for key, minimo in scheduler.minimos.items():
+        for key, minimo in minimos_dict.items():
             if minimo > 0:
                 covered = coverage.get(key, 0)
                 if covered < minimo:
@@ -895,8 +758,6 @@ def rows_to_req_dicts_FIXED(req_rows):
     """
     mins = {}
     dates = pd.date_range(start="2021-11-01", end="2022-10-31").to_list()
-
-    print(f"[DEBUG] Created {len(dates)} dates for conversion")
 
     for row in req_rows:
         if not row or len(row) < 3:
@@ -938,7 +799,6 @@ def rows_to_req_dicts_FIXED(req_rows):
             v = str(val).strip()
             if not v:
                 continue
-            
             try:
                 val_int = int(v)
             except ValueError:
@@ -948,10 +808,5 @@ def rows_to_req_dicts_FIXED(req_rows):
                 date_key = dates[day_num - 1]
                 # KEY FIX: Store as (date, FLOAT, team_id)
                 mins[(date_key, start_float, team_id)] = val_int
-                
-    print(f"[DEBUG] Processed {len(mins)} minimum entries")
-    print(f"[DEBUG] Sample keys (first 10):")
-    for i, (key, val) in enumerate(list(mins.items())[:10]):
-        print(f"  {key} → {val}")
 
     return mins, {}

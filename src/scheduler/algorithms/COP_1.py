@@ -92,7 +92,6 @@ class CPHourScheduler:
                     self.incompatible_blocks[a1].add(a2)
         
         self.Ar = self._Ar_Builder(self.work_blocks, rest_hours=12)
-        print(f"Dictionary Ar de blocos dependentes para descanso de 12h: {self.Ar}")
 
     def _Ar_Builder(self, work_Blocks, rest_hours):
 
@@ -117,21 +116,8 @@ class CPHourScheduler:
                     if b not in Ar:
                         Ar[b] = []
                     Ar[(b)].append(a)
-                    print(f"Adicionando bloco {b} em Ar pois e dependente de {a} com {rest_hours}h de descanso")
         return Ar
         
-    def _validate_block_transition(self, block_today, block_tomorrow):
-        """
-        Check if transition from block_today to block_tomorrow is valid.
-        Rules: Must have at least 12 hours rest between end and start.
-        """
-        end_today = block_today[2]  # End hour of today's block
-        start_tomorrow = block_tomorrow[0]  # Start hour of tomorrow's block
-        # Calculate rest hours (always overnight, so add 24 to tomorrow's start)
-        rest_hours = (24 - end_today) + start_tomorrow
-        # Must have at least 12 hours rest
-        return rest_hours >= 12
-
     def _define_vars(self):
         # x[i,d,a,e] boolean
         self.x = {}
@@ -255,35 +241,35 @@ class CPHourScheduler:
 
 
 
-    def solve(self, time_limit_sec=60):
+    def solve(self):
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = self.max_time_seconds
         solver.parameters.num_search_workers = 8 # Number of parallel workers (Threads)
-        solver.parameters.log_search_progress = True  # Enable detailed logging
+        solver.parameters.log_search_progress = False  # Enable detailed logging
         
         # Optimality gap: stop if within 5% of optimal
         # For minimization: stops when (upper_bound - lower_bound) / lower_bound <= 0.05
-        solver.parameters.relative_gap_limit = 0.005
+        solver.parameters.relative_gap_limit = 0.01
         # Absolute gap: stop if gap <= 10 (for coverage minimization)
         solver.parameters.absolute_gap_limit = 0
         
         self.solver = solver
         
-        print(f"[CSP_Extra.solve()] Solver parameters:")
+        print(f"[COP1] Solver parameters:")
         print(f"  max_time_in_seconds: {solver.parameters.max_time_in_seconds}")
         print(f"  num_search_workers: {solver.parameters.num_search_workers}")
         print(f"  log_search_progress: {solver.parameters.log_search_progress}")
         print(f"  relative_gap_limit: {solver.parameters.relative_gap_limit * 100:.1f}%")
         print(f"  absolute_gap_limit: {solver.parameters.absolute_gap_limit}")
         
-        print(f"\n[CSP_Extra.solve()] Starting solver.Solve()...")
+        print(f"\n[COP1] Starting solver.Solve()...")
         print(f"  Model has {len(self.model.Proto().variables)} variables")
         print(f"  Model has {len(self.model.Proto().constraints)} constraints")
         
         result = solver.Solve(self.model)
         
         status = solver.StatusName(result)
-        print(f"\n[CSP_Extra.solve()] Solver finished!")
+        print(f"\n[COP1] Solver finished!")
         print(f"  Status: {status}")
         print(f"  Wall time: {solver.WallTime():.2f}s")
         print(f"  Branches: {solver.NumBranches()}")
@@ -295,7 +281,7 @@ class CPHourScheduler:
         # extract if optimal or feasible
         self.assignment = defaultdict(list)  # emp_id (1-based) -> list of (day_idx+1, block_idx, team_id)
         if result in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-            print("\n[CSP_Extra.solve()] Extracting solution...")
+            print("\n[COP1] Extracting solution...")
             for i in self.I:
                 emp_id = i + 1
                 for d_idx in range(self.num_days):
@@ -313,9 +299,9 @@ class CPHourScheduler:
                     if chosen_block is not None:
                         team_id = get_team_id(str(chosen_team))
                         self.assignment[emp_id].append((d_idx + 1, chosen_block, team_id))
-            print(f"[CSP_Extra.solve()] Extracted assignments for {len(self.assignment)} employees")
+            print(f"[COP1] Extracted assignments for {len(self.assignment)} employees")
         else:
-            print("\n[CSP_Extra.solve()] ⚠️ No feasible solution found.")
+            print("\n[COP1] ⚠️ No feasible solution found.")
             print("  This could mean:")
             print("    - Constraints are too restrictive (INFEASIBLE)")
             print("    - Time limit reached before finding solution (UNKNOWN)")
@@ -344,7 +330,7 @@ class CPHourScheduler:
                     else:
                         row.append('OFF')
                 writer.writerow(row)
-        print(f"[HourlyILPStrict] Schedule exported to {filename}")
+        print(f"[COP1] Schedule exported to {filename}")
 
     def vacs_1based(self):
         return {
@@ -378,9 +364,9 @@ class CPHourScheduler:
 
 def solve(vacations=None, minimuns=None, employees=None, maxTime=None, year=2021, hours=13, work_blocks=None, rules=None, **kwargs):
     print(f"\n{'='*80}")
-    print(f"[CSP_2] HOURLY SCHEDULER - CONSTRAINT PROGRAMMING (CP-SAT)")
+    print(f"[COP_1] HOURLY SCHEDULER - CONSTRAINT PROGRAMMING (CP-SAT)")
     print(f"{'='*80}")
-    print(f"[CSP_2] Parameters:")
+    print(f"[COP_1] Parameters:")
     print(f"  Employees: {len(employees) if employees else 0}")
     print(f"  Vacations: {len(vacations) if vacations else 0} rows")
     print(f"  Minimums: {len(minimuns) if minimuns else 0} rows")
@@ -388,7 +374,7 @@ def solve(vacations=None, minimuns=None, employees=None, maxTime=None, year=2021
     print(f"  Year: {year}")
     print(f"  Store hours: {hours}")
     
-    print("\n[CSP_2] Building model...")
+    print("\n[COP_1] Building model...")
     sched = CPHourScheduler(
         vacations=vacations,
         minimums=minimuns,
@@ -399,14 +385,14 @@ def solve(vacations=None, minimuns=None, employees=None, maxTime=None, year=2021
     )
     print(f"  Model built successfully!")
     
-    print(f"\n[CSP_2] Solving...")
+    print(f"\n[COP_1] Solving...")
     status = sched.solve()
     
-    print(f"\n[CSP_2] Exporting schedule...")
+    print(f"\n[COP_1] Exporting schedule...")
     sched.export_csv("hourly_strict_schedule.csv")
     
     print(f"{'='*80}")
-    print(f"[CSP_2] COMPLETE")
+    print(f"[COP_1] COMPLETE")
     print(f"{'='*80}\n")
     
     return sched.to_table()

@@ -2,7 +2,7 @@ from collections import defaultdict
 from ortools.sat.python import cp_model
 import pandas as pd
 import csv
-from algorithms.utils import get_team_code, get_team_id, rows_to_req_dicts, rows_to_vac_dict, TEAM_ID_TO_CODE 
+from algorithms.utils import get_team_code, get_team_id, rows_to_req_dicts_FIXED, rows_to_vac_dict, TEAM_ID_TO_CODE 
 import datetime
 
 class CPHourScheduler:
@@ -21,14 +21,13 @@ class CPHourScheduler:
 
         # Store operating hours (9:00-22:00 = 13 hours)
         self.store_hours = int(store_hours)
-
+        
         # Define valid work blocks: (start_hour, break_hour, end_hour)
-        # Each block = 4h + 1h break + 4h = 8 working hours
         if work_blocks is None:
             self.work_blocks = self._generate_work_blocks()
         else:
             self.work_blocks = work_blocks
-
+        
         # Employee teams
         self.emp_team_code = {}
         for idx, emp in enumerate(employees):
@@ -82,21 +81,39 @@ class CPHourScheduler:
         }
         """
 
-        # Minimum requirements per hour
-        mins, ideals = rows_to_req_dicts(minimums_rows)
-        self.minimos = {} #(1, '09-10', 1): -1, (2, '09-10', 1): 4, (3, '09-10', 1): 3, (4, '09-10', 1): 2, (5, '09-10', 1): 3, (6, '09-10', 1): 4, (7, '09-10', 1): -1, (8, '09-10', 1): 3, (9, '09-10', 1): 3, (10, '09-10', 1): 3
+        self.hours = [round(h, 1) for h in [
+            9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 12.5,
+            13.0, 13.5, 14.0, 14.5, 15.0, 15.5, 16.0, 16.5,
+            17.0, 17.5, 18.0, 18.5, 19.0, 19.5, 20.0, 20.5, 21.0, 21.5
+        ]]
+
+        # Minimum requirements per hour - using FIXED function
+        mins, ideals = rows_to_req_dicts_FIXED(minimums_rows)
+        self.minimos = {}  # (date, hour_float, team_code): val
         self.ideais = {}
         
         for (day, hour, team_id), val in mins.items():
-            if 1 <= day <= self.num_days:
-                date_key = self.dates[day - 1]
-                team_code = TEAM_ID_TO_CODE.get(team_id)
-                if team_code:
-                    self.minimos[(date_key, hour, team_code)] = int(val)
-                    if int(val) == -1:
-                        self.ideais[(date_key, hour, team_code)] = -1
-                    else:
-                        self.ideais[(date_key, hour, team_code)] = self.minimos[(date_key, hour, team_code)] + 1
+            # day can be int or Timestamp, hour is float, team_id is int
+            if isinstance(day, int):
+                if 1 <= day <= self.num_days:
+                    date_key = self.dates[day - 1]
+                else:
+                    continue
+            elif isinstance(day, pd.Timestamp):
+                if day in self.dates:
+                    date_key = day
+                else:
+                    continue
+            else:
+                continue
+            
+            team_code = TEAM_ID_TO_CODE.get(team_id)
+            if team_code:
+                self.minimos[(date_key, hour, team_code)] = int(val)
+                if int(val) == -1:
+                    self.ideais[(date_key, hour, team_code)] = -1
+                else:
+                    self.ideais[(date_key, hour, team_code)] = self.minimos[(date_key, hour, team_code)] + 1
 
         """
         self.minimos = {
@@ -109,7 +126,7 @@ class CPHourScheduler:
 
         # Br Blocos que influenciam o dia seguinte
         self.Ar = self._Ar_Builder(self.work_blocks, rest_hours=12)
-
+        
         # Model variables
         self.x = None
         self.model = cp_model.CpModel()
@@ -131,28 +148,22 @@ class CPHourScheduler:
         
     def _generate_work_blocks(self):
         """
-        Generate valid work blocks based on the specific combinations provided.
-        Each tuple represents (start_hour, break_hour, end_hour).
+        Generate valid work blocks with 0.5h intervals.
+        Each tuple represents (start_hour, break_hour, end_hour) as floats.
         Examples:
-        - (9, 13, 18): work 9-13 (4h), break 13-14, work 14-18 (4h) = 8h total
-        - (9, 14, 18): work 9-14 (5h), break 14-15, work 15-18 (3h) = 8h total
+        - (9.0, 13.0, 18.0): work 9:00-13:00 (4h), break 13:00-14:00, work 14:00-18:00 (4h) = 8h total
+        - (9.5, 13.5, 18.5): work 9:30-13:30 (4h), break 13:30-14:30, work 14:30-18:30 (4h) = 8h total
         """
         blocks = [
-            (9, 13, 18),   # 4h + 1h break + 4h
-            (9, 14, 18),   # 5h + 1h break + 3h
-            (9, 15, 18),   # 6h + 1h break + 2h
-            (10, 14, 19),  # 4h + 1h break + 4h
-            (10, 15, 19),  # 5h + 1h break + 3h
-            (10, 16, 19),  # 6h + 1h break + 2h
-            (11, 15, 20),  # 4h + 1h break + 4h
-            (11, 16, 20),  # 5h + 1h break + 3h
-            (11, 17, 20),  # 6h + 1h break + 2h
-            (12, 16, 21),  # 4h + 1h break + 4h
-            (12, 17, 21),  # 5h + 1h break + 3h
-            (12, 18, 21),  # 6h + 1h break + 2h
-            (13, 17, 22),  # 4h + 1h break + 4h
-            (13, 18, 22),  # 5h + 1h break + 3h
-            (13, 19, 22),  # 6h + 1h break + 2h
+            (9.0, 13.0, 18.0), (9.0, 14.0, 18.0), (9.0, 15.0, 18.0),
+            (9.5, 13.5, 18.5), (9.5, 14.5, 18.5), (9.5, 15.5, 18.5),
+            (10.0, 14.0, 19.0), (10.0, 15.0, 19.0), (10.0, 16.0, 19.0),
+            (10.5, 14.5, 19.5), (10.5, 15.5, 19.5), (10.5, 16.5, 19.5),
+            (11.0, 15.0, 20.0), (11.0, 16.0, 20.0), (11.0, 17.0, 20.0),
+            (11.5, 15.5, 20.5), (11.5, 16.5, 20.5), (11.5, 17.5, 20.5),
+            (12.0, 16.0, 21.0), (12.0, 17.0, 21.0), (12.0, 18.0, 21.0),
+            (12.5, 16.5, 21.5), (12.5, 17.5, 21.5), (12.5, 18.5, 21.5),
+            (13.0, 17.0, 22.0), (13.0, 18.0, 22.0), (13.0, 19.0, 22.0),
         ]
         
         return blocks
@@ -160,12 +171,21 @@ class CPHourScheduler:
 
     def _get_working_hours(self, block):
         """
-        Returns set of hours an employee is actually working (excluding break).
-        For block (9, 13, 18): returns {9,10,11,12,14,15,16,17}
+        Returns set of hours (floats) an employee is actually working (excluding break).
+        For block (9.0, 13.0, 18.0): returns {9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 12.5, 14.0, 14.5, 15.0, 15.5, 16.0, 16.5, 17.0, 17.5}
         """
         start, break_start, end = block
-        hours = set(range(start, break_start))  # First period
-        hours.update(range(break_start + 1, end))  # Second period (skip break hour)
+        hours = set()
+        # First period: start to break_start
+        h = start
+        while h < break_start:
+            hours.add(round(h, 1))
+            h = round(h + 0.5, 1)
+        # Second period: break_start + 1h to end
+        h = break_start + 1
+        while h < end:
+            hours.add(round(h, 1))
+            h = round(h + 0.5, 1)
         return hours
 
     def _Ar_Builder(self, work_Blocks, rest_hours):
@@ -204,7 +224,7 @@ class CPHourScheduler:
 
         self.y = {}
         for d in self.dates:
-            for h in range(9, 22):
+            for h in self.hours:  # Use float hours list
                 for e in self.teams.keys():
                     self.y[(d,h,e)] = self.model.NewIntVar(
                         0, len(self.employees), f"y_{d}_{h}_{e}"
@@ -216,29 +236,24 @@ class CPHourScheduler:
         funcionarios = self.employees
         dias = self.dates
         blocos = list(range(len(self.work_blocks)))  # Block indices
-        horas = range(9, 22)  # Store hours 9:00-21:59
 
         self._define_vars()
+
 
 # -------------------------------------------------------
 
         penalties_min = []
         self.shortage = {}
 
-        print(f"[COP_2] Adding constraints...")
-        # Link Y with X: count workers at each hour
+        print(f"[COP2_Half_Intervals] Adding constraints...")
  
         for d in dias:
-            for h in horas:
-                hora_str = f"{h:02d}-{h+1:02d}"
-
+            for h in self.hours:  # Use float hours list
                 for team_code, members in self.teams.items():
-                    minimo = self.minimos.get((d, hora_str, team_code), None)
+                    minimo = self.minimos.get((d, h, team_code), None)
 
-                    # ignorar slots sem requisito ou fechados
                     if minimo is None or minimo == -1:
                         continue
-                
 
                     self.model.Add(
                         self.y[(d,h,team_code)] >= minimo - sum(
@@ -250,17 +265,6 @@ class CPHourScheduler:
                     )
 
                     penalties_min.append(self.y[(d,h,team_code)])
-
-
-        # Objective: Minimize deviations from minimums and ideals
-        # W_MIN = 10000  # peso MUITO alto (Agravante da situação). Muda o custo relativo das decisoes
-
-        """
-        O solver vai prioritariamente tentar reduzir as faltas aos mínimos, 
-        porque cada pessoa que falta custa 10000 unidades na função objectivo.
-        Pesos entre 1000 e 10000 tornam hard as violacoes aos minimos
-        Viola apenas se não existir solucao viavel ou existir conflitos estruturais (Ferias ou dia total de trabalhos)
-        """
 
         self.model.Minimize(sum(y for y in penalties_min))
 
@@ -293,6 +297,7 @@ class CPHourScheduler:
             )
 
 
+
         # 4. No work on days marked with -1 (closed days/holidays)
         # Identify all dates where minimum is -1 for any team
         closed_days = set()
@@ -310,6 +315,7 @@ class CPHourScheduler:
                 for tc in self.emp_team_code[f]
             ) == 0,
         )
+
 
 
         # 5. Max 5 consecutive working days (sliding window of 6 days)
@@ -356,34 +362,36 @@ class CPHourScheduler:
                         sum_today + sum_next <= 1,
                     )
                         
-        print("[COP_2] Model built successfully")
+        print("[COP2_Half_Intervals] Model built successfully")
+
 
 
     def solve(self, time_limit_sec=60):
         solver = cp_model.CpSolver()
+
         solver.parameters.max_time_in_seconds = self.maxTime_sec if self.maxTime_sec is not None else 28800
         solver.parameters.num_search_workers = 8 # Number of parallel workers (Threads)
-        solver.parameters.log_search_progress = False
+        solver.parameters.log_search_progress = False  # Enable detailed logging
         solver.parameters.relative_gap_limit = 0.01
         solver.parameters.absolute_gap_limit = 0
         
         self.solver = solver
         
-        print(f"[COP_2] Solver parameters:")
+        print(f"[COP2_Half_Intervals] Solver parameters:")
         print(f"  max_time_in_seconds: {solver.parameters.max_time_in_seconds}")
         print(f"  num_search_workers: {solver.parameters.num_search_workers}")
         print(f"  log_search_progress: {solver.parameters.log_search_progress}")
         print(f"  relative_gap_limit: {solver.parameters.relative_gap_limit * 100:.1f}%")
         print(f"  absolute_gap_limit: {solver.parameters.absolute_gap_limit}")
         
-        print(f"\n[COP_2] Starting solver.Solve()...")
+        print(f"\n[COP2_Half_Intervals] Starting solver.Solve()...")
         print(f"  Model has {len(self.model.Proto().variables)} variables")
         print(f"  Model has {len(self.model.Proto().constraints)} constraints")
         
         result = solver.Solve(self.model)
         
         status = solver.StatusName(result)
-        print(f"\n[COP_2] Solver finished!")
+        print(f"\n[COP2_Half_Intervals] Solver finished!")
         print(f"  Status: {status}")
         print(f"  Wall time: {solver.WallTime():.2f}s")
         print(f"  Branches: {solver.NumBranches()}")
@@ -395,7 +403,7 @@ class CPHourScheduler:
         # extract if optimal or feasible
         self.assignment = defaultdict(list)  # emp_id (1-based) -> list of (day_idx+1, block_idx, team_id)
         if result in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-            print("\n[COP_2] Extracting solution...")
+            print("\n[COP2_Half_Intervals] Extracting solution...")
             for i in self.employees:
                 emp_id = i + 1
                 for d_idx in range(self.num_days):
@@ -414,9 +422,9 @@ class CPHourScheduler:
                     if chosen_block is not None:
                         team_id = get_team_id(str(chosen_team))
                         self.assignment[emp_id].append((d_idx + 1, chosen_block, team_id))
-            print(f"[COP_2] Extracted assignments for {len(self.assignment)} employees")
+            print(f"[COP2_Half_Intervals] Extracted assignments for {len(self.assignment)} employees")
         else:
-            print("\n[COP_2] ⚠️ No feasible solution found.")
+            print("\n[COP2_Half_Intervals] ⚠️ No feasible solution found.")
             print("  This could mean:")
             print("    - Constraints are too restrictive (INFEASIBLE)")
             print("    - Time limit reached before finding solution (UNKNOWN)")
@@ -445,10 +453,9 @@ class CPHourScheduler:
                     else:
                         row.append('OFF')
                 writer.writerow(row)
-        print(f"[COP_2] Schedule exported to {filename}")
+        print(f"[COP2_Half_Intervals] Schedule exported to {filename}")
     
     def to_table(self):
-        # returns rows as list of lists (same layout as ILP to_table)
         rows = []
         header = ["Employee"] + [f"Day{i}" for i in range(1, self.num_days + 1)]
         rows.append(header)
@@ -472,9 +479,9 @@ class CPHourScheduler:
 
 def solve(vacations=None, minimuns=None, employees=None, maxTime=None, year=2021, hours=13, work_blocks=None, rules=None, **kwargs):
     print(f"\n{'='*80}")
-    print(f"[COP_2] HOURLY SCHEDULER - CONSTRAINT PROGRAMMING (CP-SAT)")
+    print(f"[COP2_Half_Intervals] HOURLY SCHEDULER - CONSTRAINT PROGRAMMING (CP-SAT)")
     print(f"{'='*80}")
-    print(f"[COP_2] Parameters:")
+    print(f"[COP2_Half_Intervals] Parameters:")
     print(f"  Employees: {len(employees) if employees else 0}")
     print(f"  Vacations: {len(vacations) if vacations else 0} rows")
     print(f"  Minimums: {len(minimuns) if minimuns else 0} rows")
@@ -482,7 +489,7 @@ def solve(vacations=None, minimuns=None, employees=None, maxTime=None, year=2021
     print(f"  Year: {year}")
     print(f"  Store hours: {hours}")
     
-    print("\n[COP_2] Building model...")
+    print("\n[COP2_Half_Intervals] Building model...")
     sched = CPHourScheduler(
         vacations_rows=vacations,
         minimums_rows=minimuns,
@@ -494,14 +501,14 @@ def solve(vacations=None, minimuns=None, employees=None, maxTime=None, year=2021
     sched.build_model()
     print(f"  Model built successfully!")
     
-    print(f"\n[COP_2] Solving...")
+    print(f"\n[COP2_Half_Intervals] Solving...")
     status = sched.solve()
     
-    print(f"\n[COP_2] Exporting schedule...")
+    print(f"\n[COP2_Half_Intervals] Exporting schedule...")
     sched.export_csv("hourly_strict_schedule.csv")
     
     print(f"{'='*80}")
-    print(f"[COP_2] COMPLETE")
+    print(f"[COP2_Half_Intervals] COMPLETE")
     print(f"{'='*80}\n")
     
     return sched.to_table()
