@@ -1,19 +1,15 @@
-import copy
 import csv
 from collections import defaultdict
 import datetime
 
-import numpy as np
 import pandas as pd
 import pulp
-import holidays
 import time
 import random
 
 from algorithms.utils import (
     rows_to_vac_dict,
     rows_to_req_dicts,
-    TEAM_CODE_TO_ID,      
     TEAM_ID_TO_CODE,      
     get_team_id,   
     get_team_code,
@@ -276,7 +272,6 @@ class Heuristica:
         # -----------------------------
 
         week_start = d - datetime.timedelta(days=d.weekday())  # Monday
-        week_end = week_start + datetime.timedelta(days=6)     # Sunday
         vacations_this_week = any(
             (week_start + datetime.timedelta(days=i)) in self.vacations_dates[f]
             for i in range(7)
