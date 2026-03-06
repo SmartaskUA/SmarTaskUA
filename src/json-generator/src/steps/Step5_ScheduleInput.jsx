@@ -8,6 +8,7 @@ import { useWizard } from '../context/WizardContext';
 import { generateDateRange } from '../utils/helpers/dateHelpers';
 import { downloadScheduleInputCsv } from '../utils/generators/scheduleInputCsvGenerator';
 import { parseScheduleInputCsv } from '../utils/parsers/scheduleInputCsvParser';
+import { isTimeConstraint, getConstraintType } from '../utils/validators/timeConstraintValidator';
 
 /**
  * Step 5: Schedule Input Matrix
@@ -138,18 +139,67 @@ const Step5_ScheduleInput = () => {
     let specificHours = 0;
     let vacation = 0;
     let notAvailable = 0;
+    let timeConstraints = {
+      equals: 0,
+      include: 0,
+      except: 0
+    };
+    let invalid = 0;
 
     Object.values(dataMatrix).forEach(empData => {
       Object.values(empData).forEach(value => {
-        const val = value.toString().toUpperCase();
-        if (val === 'A') autoAllocate++;
-        else if (val === 'VAC') vacation++;
-        else if (val === 'NOT') notAvailable++;
-        else specificHours++;
+        // Handle null/undefined
+        if (value === null || value === undefined) {
+          invalid++;
+          return;
+        }
+
+        const val = value.toString().trim();
+
+        // Handle empty or placeholder values
+        if (val === '' || val === '-') {
+          invalid++;
+          return;
+        }
+
+        // Check for time window constraints (EQUALS, INCLUDE, EXCEPT)
+        if (isTimeConstraint(val)) {
+          const type = getConstraintType(val);
+          if (type === 'EQUALS') timeConstraints.equals++;
+          else if (type === 'INCLUDE') timeConstraints.include++;
+          else if (type === 'EXCEPT') timeConstraints.except++;
+          return;
+        }
+
+        const valUpper = val.toUpperCase();
+
+        // Standard value types
+        if (valUpper === 'A') {
+          autoAllocate++;
+        } else if (valUpper === 'VAC') {
+          vacation++;
+        } else if (valUpper === 'NOT') {
+          notAvailable++;
+        } else {
+          // Try to parse as numeric value
+          const numVal = parseFloat(val);
+          if (!isNaN(numVal) && numVal > 0 && numVal <= 24) {
+            specificHours++;
+          } else {
+            invalid++;
+          }
+        }
       });
     });
 
-    return { autoAllocate, specificHours, vacation, notAvailable };
+    return {
+      autoAllocate,
+      specificHours,
+      vacation,
+      notAvailable,
+      timeConstraints,
+      invalid
+    };
   }, [dataMatrix]);
 
   // Guard: Check prerequisites
@@ -231,6 +281,38 @@ const Step5_ScheduleInput = () => {
               <Chip label={`Specific hours: ${stats.specificHours}`} color="info" size="small" />
               <Chip label={`Vacation: ${stats.vacation}`} color="warning" size="small" />
               <Chip label={`Not available: ${stats.notAvailable}`} color="error" size="small" />
+              {(stats.timeConstraints.equals + stats.timeConstraints.include + stats.timeConstraints.except) > 0 && (
+                <>
+                  {stats.timeConstraints.equals > 0 && (
+                    <Chip
+                      label={`EQUALS constraints: ${stats.timeConstraints.equals}`}
+                      size="small"
+                      sx={{ bgcolor: '#e1bee7', color: '#4a148c' }}
+                    />
+                  )}
+                  {stats.timeConstraints.include > 0 && (
+                    <Chip
+                      label={`INCLUDE constraints: ${stats.timeConstraints.include}`}
+                      size="small"
+                      sx={{ bgcolor: '#ffe0b2', color: '#e65100' }}
+                    />
+                  )}
+                  {stats.timeConstraints.except > 0 && (
+                    <Chip
+                      label={`EXCEPT constraints: ${stats.timeConstraints.except}`}
+                      size="small"
+                      sx={{ bgcolor: '#f8bbd0', color: '#880e4f' }}
+                    />
+                  )}
+                </>
+              )}
+              {stats.invalid > 0 && (
+                <Chip
+                  label={`Invalid/Empty: ${stats.invalid}`}
+                  size="small"
+                  sx={{ bgcolor: '#bdbdbd', color: '#424242' }}
+                />
+              )}
             </Box>
             <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
               Total cells: {employees.length} employees × {dateRange.length} days = {employees.length * dateRange.length}
