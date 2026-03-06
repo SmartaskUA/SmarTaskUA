@@ -53,6 +53,7 @@ SmarTask supports 11 scheduling algorithms with different approaches and perform
 - Algorithm implementations in `src/scheduler/algorithms/`
 - Each algorithm receives: vacations, minimums, employees, maxTime, year, shifts, rules
 - Results saved to MongoDB `schedules` collection
+- General algorithms JSON flow: See `docs/algorithms/general-algorithms-flow.md`
 
 ## Adding New Algorithms
 
