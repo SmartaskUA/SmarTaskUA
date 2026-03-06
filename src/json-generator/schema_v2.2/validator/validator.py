@@ -438,15 +438,13 @@ class SchemaValidator:
                 if period_contract and period_contract not in self.contract_definitions:
                     self.report.add_error("JSON", f"Employee {emp_id} contractPeriods[{period_idx}] references contract '{period_contract}' which does not exist in contracts.definitions", f"employees[{idx}].contractPeriods[{period_idx}].contractType")
 
-            # Validate team/competency presence
-            if model == "team":
-                teams = emp.get("teams", [])
-                if not teams:
+            # Validate team presence (both models use teams field)
+            teams = emp.get("teams", [])
+            if not teams:
+                if model == "team":
                     self.report.add_warning("JSON", f"Employee {emp_id} has no teams assigned", f"employees[{idx}].teams")
-            else:  # competency
-                competencies = emp.get("competencies", [])
-                if not competencies:
-                    self.report.add_warning("JSON", f"Employee {emp_id} has no competencies assigned", f"employees[{idx}].competencies")
+                else:  # competency
+                    self.report.add_warning("JSON", f"Employee {emp_id} has no teams with competency levels assigned", f"employees[{idx}].teams")
 
     def _validate_demand_config(self):
         """Validate demand configuration in JSON"""
@@ -457,26 +455,16 @@ class SchemaValidator:
         if shift_model not in ["fixed", "flexible"]:
             self.report.add_error("JSON", f"Invalid shift model: {shift_model}", "demand.shiftModel")
 
-        # Check organizational units
+        # Check organizational units (both models use teams)
         org_units = demand.get("organizationalUnits", {})
-        employees = self.problem_data.get("employees", {})
-        model = employees.get("model")
-
-        if model == "team":
-            teams = org_units.get("teams", [])
-            if not teams:
-                self.report.add_error("JSON", "No teams defined in organizationalUnits for team model", "demand.organizationalUnits.teams")
-            # Check for duplicate teams
-            if len(teams) != len(set(teams)):
-                self.report.add_error("JSON", "Duplicate team codes in organizationalUnits.teams", "demand.organizationalUnits.teams")
-        else:  # competency
-            competencies = org_units.get("competencies", [])
-            if not competencies:
-                self.report.add_error("JSON", "No competencies defined in organizationalUnits for competency model", "demand.organizationalUnits.competencies")
-            # Check for duplicate competency codes
-            codes = [c.get("code") for c in competencies if c.get("code")]
+        teams = org_units.get("teams", [])
+        if not teams:
+            self.report.add_error("JSON", "No teams defined in organizationalUnits. Both employee models require teams.", "demand.organizationalUnits.teams")
+        else:
+            # Check for duplicate team codes
+            codes = [t.get("code") for t in teams if t.get("code")]
             if len(codes) != len(set(codes)):
-                self.report.add_error("JSON", "Duplicate competency codes in organizationalUnits.competencies", "demand.organizationalUnits.competencies")
+                self.report.add_error("JSON", "Duplicate team codes in organizationalUnits.teams", "demand.organizationalUnits.teams")
 
         # Validate shifts
         shifts = demand.get("shifts")
@@ -825,31 +813,19 @@ class SchemaValidator:
                         "demand.csv:shift"
                     )
 
-            # Get organizational units from JSON
+            # Get organizational units from JSON (both models use teams)
             org_units = demand.get("organizationalUnits", {})
-            if model == "team":
-                json_teams = set(org_units.get("teams", []))
-                csv_teams = set(self.demand_df["team"].unique())
+            teams_list = org_units.get("teams", [])
+            json_team_codes = {t.get("code") for t in teams_list if t.get("code")}
+            csv_team_codes = set(self.demand_df["team"].unique())
 
-                missing_teams = csv_teams - json_teams
-                if missing_teams:
-                    self.report.add_error(
-                        "Cross-validation",
-                        f"Team codes in demand.csv not found in JSON organizationalUnits.teams: {missing_teams}",
-                        "demand.csv:team"
-                    )
-            else:  # competency model
-                competencies = org_units.get("competencies", [])
-                json_comp_codes = {c.get("code") for c in competencies if c.get("code")}
-                csv_comp_codes = set(self.demand_df["team"].unique())
-
-                missing_comps = csv_comp_codes - json_comp_codes
-                if missing_comps:
-                    self.report.add_error(
-                        "Cross-validation",
-                        f"Competency codes in demand.csv not found in JSON organizationalUnits.competencies: {missing_comps}",
-                        "demand.csv:team (competency codes)"
-                    )
+            missing_teams = csv_team_codes - json_team_codes
+            if missing_teams:
+                self.report.add_error(
+                    "Cross-validation",
+                    f"Team codes in demand.csv not found in JSON organizationalUnits.teams: {missing_teams}",
+                    "demand.csv:team"
+                )
 
             # Validate dates in demand.csv are within temporal scope
             temporal = self.problem_data.get("temporalScope", {})
@@ -910,12 +886,9 @@ class SchemaValidator:
         shifts = demand.get("shifts", [])
         stats["num_shifts"] = len(shifts) if shifts else 0
 
-        # Organizational unit stats
+        # Organizational unit stats (both models use teams)
         org_units = demand.get("organizationalUnits", {})
-        if model == "team":
-            stats["num_teams"] = len(org_units.get("teams", []))
-        else:
-            stats["num_competencies"] = len(org_units.get("competencies", []))
+        stats["num_teams"] = len(org_units.get("teams", []))
 
         # CSV stats
         if self.demand_df is not None:

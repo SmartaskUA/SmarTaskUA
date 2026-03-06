@@ -198,14 +198,17 @@ All contract constraints are optional. Define them only when needed for your use
 **v2.2:** Employee references contract via `contractType` - work hours come from contract definition
 
 ### Competency Model (model="competency")
+
+Employees are assigned to **teams with competency levels** indicating proficiency:
+
 ```json
 "competency": [
   {
     "id": "20072412",
     "name": "Emp_20072412",
-    "competencies": [
-      {"code": "EG", "level": 1, "description": "Management level 1"},
-      {"code": "CAJ", "level": 2, "description": "Cashier level 2"}
+    "teams": [
+      {"code": "Engineering", "name": "Engineering Team", "level": 2},
+      {"code": "Support", "name": "Support Team", "level": 1}
     ],
     "contractType": "fullTime_8h",
     "contractPeriods": [
@@ -222,7 +225,10 @@ All contract constraints are optional. Define them only when needed for your use
 
 **Key Notes:**
 - `id` must be unique and match CSV employee_id column
-- `competencies.level`: 1 = highest skill, higher numbers = lower skill
+- `teams`: Array of team assignments with competency levels
+  - `code`: Team identifier (must match organizational units)
+  - `name`: Human-readable team name
+  - `level`: Competency/proficiency level (1=junior, 2=mid, 3=senior, etc.)
 - **v2.2:** `contractType` references contract ID from `contracts.definitions`
 - **v2.2:** `contractPeriods[].contractType` allows contract changes over time
   - Employee can transition from part-time to full-time contracts
@@ -247,16 +253,25 @@ All contract constraints are optional. Define them only when needed for your use
 | **flexible** | Shifts with multiple start time options | Variable start times within constraints |
 
 ### Organizational Units
+
+Teams are used in **both employee models**:
+
 ```json
 "organizationalUnits": {
-  "teams": ["A", "B"],  // for team model
-  "competencies": [     // for competency model
-    {"code": "EG", "name": "Management Team"},
-    {"code": "CAJ", "name": "Cashier"},
-    {"code": "ALM", "name": "Warehouse"}
+  "teams": [
+    {"code": "Engineering", "name": "Engineering Team"},
+    {"code": "Support", "name": "Support Team"},
+    {"code": "Sales", "name": "Sales Team"}
   ]
 }
 ```
+
+**Key Notes:**
+- Always use `teams` array (for both team-based and competency-based models)
+- **Team-based model**: Employees assigned to teams as simple codes
+- **Competency-based model**: Employees assigned to teams with competency levels
+- `code`: Unique identifier used in CSVs and demand specifications
+- `name`: Human-readable team name for UI display
 
 ### Work Period Definitions (Fixed Model)
 ```json
@@ -288,38 +303,45 @@ All contract constraints are optional. Define them only when needed for your use
 
 ### Priority Hierarchy (Optional)
 
-**Available for both simple and competency models**. Enable with `features.usePriorityHierarchy=true`.
+**Available for both employee models**. Enable with `features.usePriorityHierarchy=true`.
 
-**For Simple/Team Model:**
+**For Team-Based Model:**
 ```json
 "priorityHierarchy": [
   {
     "rank": 1,
-    "team": "ALM",
-    "description": "Warehouse operations - Highest priority"
+    "team": "Engineering",
+    "description": "Engineering team - Highest priority"
   },
   {
     "rank": 2,
-    "team": "EG",
-    "description": "Management Team - Medium priority"
+    "team": "Support",
+    "description": "Support team - Medium priority"
   }
 ]
 ```
 
-**For Competency Model:**
+**For Competency-Based Model:**
+- Use the same `team` field
+- Optionally specify `level` constraint for competency-based prioritization
 ```json
 "priorityHierarchy": [
   {
     "rank": 1,
-    "competency": "ALM",
-    "level": "N≥1",
-    "description": "RESP WAREHOUSE N≥1 MaxAlarm"
+    "team": "Engineering",
+    "level": "N≥2",
+    "description": "Senior engineers (level 2+) - Highest priority"
   },
   {
     "rank": 2,
-    "competency": "EG",
+    "team": "Engineering",
     "level": "N=1",
-    "description": "RESP - MANAGEMENT TEAM N=1"
+    "description": "Junior engineers (level 1) - Medium priority"
+  },
+  {
+    "rank": 3,
+    "team": "Support",
+    "description": "Support team (all levels) - Lower priority"
   }
 ]
 ```
@@ -659,13 +681,13 @@ date,workPeriod,team,minimum,ideal,estimated
       {
         "id": "20072412",
         "name": "Emp_20072412",
-        "competencies": [{"code": "Management", "level": 1}],
+        "teams": [{"code": "Management", "name": "Management Team", "level": 1}],
         "contractType": "fullTime_8h"
       },
       {
         "id": "20066543",
         "name": "Emp_20066543",
-        "competencies": [{"code": "Checkout", "level": 1}],
+        "teams": [{"code": "Checkout", "name": "Checkout Team", "level": 1}],
         "contractType": "partTime_4h"
       }
     ]

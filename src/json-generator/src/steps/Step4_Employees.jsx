@@ -29,8 +29,7 @@ const Step4_Employees = () => {
   // Get state values
   const employeeModel = state.employees.model;
   const employees = employeeModel === 'team' ? state.employees.simple : state.employees.competency;
-  const teams = state.organizationalUnits.teams || [];  // Now [{code, name}]
-  const competencies = state.organizationalUnits.competencies || [];
+  const teams = state.organizationalUnits.teams || [];  // Always use teams for both models
   const contracts = state.contracts.definitions.map(c => c.id);
 
   // Handlers
@@ -45,22 +44,13 @@ const Step4_Employees = () => {
     setCsvData(data);
     setCsvError('');
 
-    // Initialize column mappings based on model
-    if (employeeModel === 'team') {
-      setColumnMappings({
-        employee_id: '',
-        name: '',
-        teams: '',
-        contract_type: ''
-      });
-    } else {
-      setColumnMappings({
-        employee_id: '',
-        name: '',
-        competencies: '',
-        contract_type: ''
-      });
-    }
+    // Initialize column mappings (always use "teams" for both models)
+    setColumnMappings({
+      employee_id: '',
+      name: '',
+      teams: '',
+      contract_type: ''
+    });
   };
 
   const handleImportCsv = () => {
@@ -70,9 +60,7 @@ const Step4_Employees = () => {
     }
 
     // Validate mappings
-    const requiredFields = ['employee_id', 'contract_type'];
-    const orgField = employeeModel === 'team' ? 'teams' : 'competencies';
-    requiredFields.push(orgField);
+    const requiredFields = ['employee_id', 'contract_type', 'teams'];  // Always require teams
 
     const missingMappings = requiredFields.filter(field => !columnMappings[field]);
     if (missingMappings.length > 0) {
@@ -98,13 +86,14 @@ const Step4_Employees = () => {
           contractType: contractType
         };
 
-        // Model-specific processing
+        // Parse teams (format depends on employee model)
+        const teamsStr = row[columnMappings.teams];
+        if (!teamsStr) {
+          throw new Error(`Row ${index + 1}: Teams field is empty`);
+        }
+
         if (employeeModel === 'team') {
-          const teamsStr = row[columnMappings.teams];
-          if (!teamsStr) {
-            throw new Error(`Row ${index + 1}: Teams field is empty`);
-          }
-          // Parse teams: "A,B,C" or "A, B, C"
+          // Team model: Parse teams as simple codes "A,B,C"
           employee.teams = teamsStr.split(',').map(t => t.trim()).filter(t => t);
           if (employee.teams.length === 0) {
             throw new Error(`Row ${index + 1}: No valid teams found`);
@@ -116,30 +105,29 @@ const Step4_Employees = () => {
             throw new Error(`Row ${index + 1}: Invalid team codes: ${invalidTeams.join(', ')}. Valid teams: ${validTeamCodes.join(', ')}`);
           }
         } else {
-          const compStr = row[columnMappings.competencies];
-          if (!compStr) {
-            throw new Error(`Row ${index + 1}: Competencies field is empty`);
-          }
-          // Parse competencies: "EG:1,CAJ:2" or "EG:1, CAJ:2"
-          employee.competencies = compStr.split(',').map(c => {
-            const parts = c.trim().split(':');
+          // Competency model: Parse teams with levels "EG:1,CAJ:2"
+          employee.teams = teamsStr.split(',').map(t => {
+            const parts = t.trim().split(':');
             if (parts.length !== 2) {
-              throw new Error(`Row ${index + 1}: Invalid competency format "${c.trim()}". Expected format: CODE:LEVEL`);
+              throw new Error(`Row ${index + 1}: Invalid team format "${t.trim()}". Expected format: CODE:LEVEL`);
             }
             const code = parts[0].trim();
             const level = parseInt(parts[1].trim());
             if (isNaN(level) || level < 1) {
-              throw new Error(`Row ${index + 1}: Invalid competency level for "${code}"`);
+              throw new Error(`Row ${index + 1}: Invalid competency level for team "${code}"`);
             }
-            const compInfo = competencies.find(comp => comp.code === code);
+            const teamInfo = teams.find(team => team.code === code);
+            if (!teamInfo) {
+              throw new Error(`Row ${index + 1}: Unknown team code "${code}". Valid teams: ${teams.map(t => t.code).join(', ')}`);
+            }
             return {
               code: code,
-              level: level,
-              description: compInfo ? compInfo.name : ''
+              name: teamInfo.name,
+              level: level
             };
           });
-          if (employee.competencies.length === 0) {
-            throw new Error(`Row ${index + 1}: No valid competencies found`);
+          if (employee.teams.length === 0) {
+            throw new Error(`Row ${index + 1}: No valid teams found`);
           }
         }
 
@@ -158,23 +146,23 @@ const Step4_Employees = () => {
   };
 
   const handleDownloadTemplate = () => {
-    let headers, sampleRow;
+    // Always use "teams" column for both models
+    const headers = ['employee_id', 'name', 'teams', 'contract_type'];
 
+    let sampleTeams;
     if (employeeModel === 'team') {
-      headers = ['employee_id', 'name', 'teams', 'contract_type'];
-      // Use actual team codes from defined teams, or fallback to example
-      const exampleTeams = teams.length > 0
+      // Team model: Use team codes from defined teams (e.g., "A,B")
+      sampleTeams = teams.length > 0
         ? teams.slice(0, 2).map(t => t.code).join(',')
         : 'A,B';
-      sampleRow = ['EMP001', 'John Doe', exampleTeams, contracts[0] || 'fullTime_8h'];
     } else {
-      headers = ['employee_id', 'name', 'competencies', 'contract_type'];
-      // Use actual competency codes from defined competencies, or fallback to example
-      const exampleComps = competencies.length > 0
-        ? competencies.slice(0, 2).map(c => `${c.code}:1`).join(',')
+      // Competency model: Use team codes with levels (e.g., "EG:1,CAJ:2")
+      sampleTeams = teams.length > 0
+        ? teams.slice(0, 2).map(t => `${t.code}:1`).join(',')
         : 'EG:1,CAJ:2';
-      sampleRow = ['EMP001', 'John Doe', exampleComps, contracts[0] || 'fullTime_8h'];
     }
+
+    const sampleRow = ['EMP001', 'John Doe', sampleTeams, contracts[0] || 'fullTime_8h'];
 
     const csv = Papa.unparse({
       fields: headers,
@@ -243,7 +231,6 @@ const Step4_Employees = () => {
                 onChange={handleEmployeesChange}
                 employeeModel={employeeModel}
                 availableTeams={teams}
-                availableCompetencies={competencies}
                 availableContracts={contracts}
                 error={error}
               />
@@ -281,7 +268,7 @@ const Step4_Employees = () => {
                       csvColumns={csvData.columns}
                       fieldMappings={columnMappings}
                       onMappingChange={setColumnMappings}
-                      requiredFields={['employee_id', 'contract_type', employeeModel === 'team' ? 'teams' : 'competencies']}
+                      requiredFields={['employee_id', 'contract_type', 'teams']}
                     />
                   </Box>
 
@@ -302,10 +289,13 @@ const Step4_Employees = () => {
                     ) : (
                       <>
                         <Typography variant="body2">
-                          • <strong>Competencies</strong>: CODE:LEVEL pairs separated by commas (e.g., "EG:1,CAJ:2")
+                          • <strong>Teams</strong>: CODE:LEVEL pairs separated by commas (e.g., "EG:1,CAJ:2")
                         </Typography>
                         <Typography variant="body2" sx={{ mt: 0.5 }}>
-                          Valid competency codes: {competencies.map(c => c.code).join(', ') || 'None defined yet'}
+                          Valid team codes: {teams.map(t => t.code).join(', ') || 'None defined yet'}
+                        </Typography>
+                        <Typography variant="body2" sx={{ mt: 0.5 }}>
+                          Levels indicate competency proficiency for each team
                         </Typography>
                       </>
                     )}

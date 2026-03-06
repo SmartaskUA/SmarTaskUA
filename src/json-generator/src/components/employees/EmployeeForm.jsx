@@ -25,7 +25,9 @@ import CompetencyBuilder from './CompetencyBuilder';
  * EmployeeForm Component
  *
  * Dialog for adding/editing employees.
- * Adapts fields based on employee model (team vs competency).
+ * Both models use teams field:
+ * - Team model: teams is array of strings (team codes)
+ * - Competency model: teams is array of {code, name, level}
  */
 const EmployeeForm = ({
   open,
@@ -35,14 +37,12 @@ const EmployeeForm = ({
   employeeModel,  // 'team' or 'competency'
   existingIds = [],
   availableTeams = [],
-  availableCompetencies = [],
   availableContracts = []
 }) => {
   const [formData, setFormData] = useState({
     id: '',
     name: '',
-    teams: [],  // For team model
-    competencies: [],  // For competency model
+    teams: [],  // Always teams (format depends on model)
     contractType: ''
   });
   const [errors, setErrors] = useState({});
@@ -56,7 +56,6 @@ const EmployeeForm = ({
         id: '',
         name: '',
         teams: [],
-        competencies: [],
         contractType: ''
       });
     }
@@ -90,15 +89,9 @@ const EmployeeForm = ({
       newErrors.contractType = 'Invalid contract type';
     }
 
-    // Model-specific validation
-    if (employeeModel === 'team') {
-      if (formData.teams.length === 0) {
-        newErrors.teams = 'At least one team is required';
-      }
-    } else if (employeeModel === 'competency') {
-      if (formData.competencies.length === 0) {
-        newErrors.competencies = 'At least one competency is required';
-      }
+    // Teams validation (always required for both models)
+    if (formData.teams.length === 0) {
+      newErrors.teams = 'At least one team is required';
     }
 
     setErrors(newErrors);
@@ -110,15 +103,9 @@ const EmployeeForm = ({
       const employeeData = {
         id: formData.id.trim(),
         name: formData.name.trim() || formData.id.trim(),  // Use ID as name if no name provided
+        teams: formData.teams,  // Always include teams (format depends on model)
         contractType: formData.contractType
       };
-
-      // Add model-specific fields
-      if (employeeModel === 'team') {
-        employeeData.teams = formData.teams;
-      } else if (employeeModel === 'competency') {
-        employeeData.competencies = formData.competencies;
-      }
 
       onSave(employeeData);
       onClose();
@@ -241,22 +228,22 @@ const EmployeeForm = ({
             </Grid>
           )}
 
-          {/* COMPETENCY MODEL: Competency Builder */}
+          {/* COMPETENCY MODEL: Team Assignment with Levels */}
           {employeeModel === 'competency' && (
             <Grid item xs={12}>
               <Box sx={{ width: '100%' }}>
                 <CompetencyBuilder
-                  competencies={formData.competencies}
-                  availableCompetencies={availableCompetencies}
-                  onChange={(newCompetencies) => handleChange('competencies', newCompetencies)}
-                  error={errors.competencies}
+                  competencies={formData.teams}
+                  availableCompetencies={availableTeams}
+                  onChange={(newTeams) => handleChange('teams', newTeams)}
+                  error={errors.teams}
                 />
               </Box>
             </Grid>
           )}
 
           {/* General Errors */}
-          {Object.keys(errors).length > 0 && !errors.competencies && !errors.teams && (
+          {Object.keys(errors).length > 0 && !errors.teams && (
             <Grid item xs={12}>
               <Alert severity="error">
                 Please fix the errors above before saving.

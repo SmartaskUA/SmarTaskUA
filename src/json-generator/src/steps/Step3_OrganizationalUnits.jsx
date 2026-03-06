@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Typography, Box, Alert } from '@mui/material';
 import StepCard from '../components/wizard/StepCard';
 import NavigationButtons from '../components/wizard/NavigationButtons';
@@ -6,47 +6,29 @@ import OrganizationalUnitTable from '../components/organizational/Organizational
 import { useWizard } from '../context/WizardContext';
 
 /**
- * Step 3: Organizational Units
+ * Step 3: Organizational Units (Teams)
  *
- * Define teams (team model) or competencies (competency model).
- * Since both now share the same {code, name} structure, we use a
- * configuration-based approach to minimize conditional logic.
+ * Define teams for your organization. Teams are used in both employee models:
+ * - Team-based model: Employees are assigned to teams
+ * - Competency-based model: Employees are assigned to teams with competency levels
  */
 const Step3_OrganizationalUnits = () => {
   const { state, updateState } = useWizard();
   const [error, setError] = useState('');
 
   const employeeModel = state.employees.model;
+  const teams = state.organizationalUnits.teams || [];
 
-  // Compute configuration based on employee model
-  // This eliminates the need for if/else throughout the component
-  const config = useMemo(() => {
-    const isTeamModel = employeeModel === 'team';
-
-    return {
-      // State management
-      stateKey: isTeamModel ? 'organizationalUnits.teams' : 'organizationalUnits.competencies',
-      data: isTeamModel ? state.organizationalUnits.teams : state.organizationalUnits.competencies,
-
-      // Labels
-      labelLower: isTeamModel ? 'teams' : 'competencies',
-      labelSingular: isTeamModel ? 'team' : 'competency',
-
-      // Entity type for the generic component
-      entityType: employeeModel
-    };
-  }, [employeeModel, state.organizationalUnits.teams, state.organizationalUnits.competencies]);
-
-  // Single unified handler for both teams and competencies
+  // Handler for team data changes
   const handleDataChange = (newData) => {
-    updateState(config.stateKey, newData);
+    updateState('organizationalUnits.teams', newData);
     if (error) setError('');
   };
 
-  // Unified validation
+  // Validation
   const validate = () => {
-    if (config.data.length === 0) {
-      setError(`At least one ${config.labelSingular} is required`);
+    if (teams.length === 0) {
+      setError('At least one team is required');
       return false;
     }
     return true;
@@ -88,10 +70,11 @@ const Step3_OrganizationalUnits = () => {
       {/* HEADER - Fixed */}
       <Box sx={{ flexShrink: 0, mb: 2 }}>
         <Typography variant="h4" gutterBottom fontWeight={600}>
-          Organizational Units
+          Teams
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Define {config.labelLower} for your organization.
+          Define teams for your organization.
+          {employeeModel === 'competency' && ' In Step 4, you will assign employees to teams with competency levels.'}
         </Typography>
       </Box>
 
@@ -105,12 +88,11 @@ const Step3_OrganizationalUnits = () => {
         }}
       >
         <StepCard>
-          {/* Single table component rendered dynamically */}
+          {/* Single table component for teams */}
           <OrganizationalUnitTable
-            items={config.data}
+            items={teams}
             onChange={handleDataChange}
             error={error}
-            entityType={config.entityType}
           />
         </StepCard>
       </Box>
@@ -119,7 +101,7 @@ const Step3_OrganizationalUnits = () => {
       <Box sx={{ flexShrink: 0, mt: 2 }}>
         <NavigationButtons
           onNext={handleNext}
-          nextDisabled={config.data.length === 0}
+          nextDisabled={teams.length === 0}
         />
       </Box>
     </Box>

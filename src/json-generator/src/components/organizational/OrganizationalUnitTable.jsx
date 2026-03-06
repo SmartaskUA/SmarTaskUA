@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Button,
@@ -24,29 +24,16 @@ import OrganizationalUnitForm from './OrganizationalUnitForm';
 /**
  * OrganizationalUnitTable Component
  *
- * Generic table with CRUD operations for organizational units (teams or competencies).
- * Configurable based on entityType prop.
+ * Table with CRUD operations for teams.
+ * Teams are used in both employee models (team-based and competency-based).
  */
 const OrganizationalUnitTable = ({
   items = [],
   onChange,
-  error,
-  entityType = 'team' // 'team' or 'competency'
+  error
 }) => {
   const [openDialog, setOpenDialog] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
-
-  // Configuration based on entity type
-  const config = useMemo(() => {
-    const isTeam = entityType === 'team';
-
-    return {
-      entityName: isTeam ? 'Team' : 'Competency',
-      entityNamePlural: isTeam ? 'Teams' : 'Competencies',
-      entityNameLower: isTeam ? 'team' : 'competency',
-      entityNamePluralLower: isTeam ? 'teams' : 'competencies'
-    };
-  }, [entityType]);
 
   const handleAdd = () => {
     setEditingItem(null);
@@ -83,14 +70,14 @@ const OrganizationalUnitTable = ({
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6">
-          {config.entityNamePlural} ({items.length})
+          Teams ({items.length})
         </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={handleAdd}
         >
-          Add {config.entityName}
+          Add Team
         </Button>
       </Box>
 
@@ -104,7 +91,7 @@ const OrganizationalUnitTable = ({
       {/* Table */}
       {items.length === 0 ? (
         <Alert severity="info">
-          No {config.entityNamePluralLower} defined yet. Click "Add {config.entityName}" to create your first {config.entityNameLower}.
+          No teams defined yet. Click "Add Team" to create your first team.
         </Alert>
       ) : (
         <TableContainer component={Paper} variant="outlined">
@@ -155,7 +142,6 @@ const OrganizationalUnitTable = ({
         onSave={handleSave}
         editingItem={editingItem}
         existingCodes={existingCodes}
-        entityType={entityType}
       />
     </Box>
   );

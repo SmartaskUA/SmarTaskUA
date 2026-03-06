@@ -234,10 +234,10 @@
         },
         "competency": {
           "type": "array",
-          "description": "Competency-based employee list (when model='competency')",
+          "description": "Competency-based employee list (when model='competency'). Employees are assigned to teams with competency/proficiency levels.",
           "items": {
             "type": "object",
-            "required": ["id", "competencies"],
+            "required": ["id", "teams"],
             "properties": {
               "id": {
                 "type": "string",
@@ -247,7 +247,7 @@
                 "type": "string",
                 "description": "Employee name"
               },
-              "competencies": {
+              "teams": {
                 "type": "array",
                 "items": {
                   "type": "object",
@@ -255,20 +255,20 @@
                   "properties": {
                     "code": {
                       "type": "string",
-                      "description": "Competency code (e.g., 'EG', 'CAJ', 'ALM')"
+                      "description": "Team code - must match organizationalUnits.teams[].code"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Team name (human-readable)"
                     },
                     "level": {
                       "type": "integer",
                       "minimum": 1,
-                      "description": "Skill level (1=highest, increasing numbers=lower skill)"
-                    },
-                    "description": {
-                      "type": "string",
-                      "description": "Human-readable description"
+                      "description": "Competency/proficiency level (1=junior, 2=mid, 3=senior, etc.)"
                     }
                   }
                 },
-                "description": "List of competencies and skill levels"
+                "description": "List of team assignments with competency levels"
               },
               "contractType": {
                 "type": "string",
@@ -335,7 +335,7 @@
         },
         "dataFile": {
           "type": "string",
-          "description": "Path to demand.csv with daily coverage requirements. Format: date,workPeriod,team,minimum,ideal,estimated. The 'team' column contains team codes (team model) or competency codes (competency model). See FORMAT.md for validation rules."
+          "description": "Path to demand.csv with daily coverage requirements. Format: date,workPeriod,team,minimum,ideal,estimated. The 'team' column always contains team codes for both employee models. See FORMAT.md for validation rules."
         },
         "organizationalUnits": {
           "type": "object",
@@ -350,19 +350,7 @@
                   "name": {"type": "string"}
                 }
               },
-              "description": "List of team definitions with code and name (when using team model)"
-            },
-            "competencies": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "required": ["code", "name"],
-                "properties": {
-                  "code": {"type": "string"},
-                  "name": {"type": "string"}
-                }
-              },
-              "description": "List of competency definitions (when using competency model)"
+              "description": "List of team definitions with code and name. Used for both employee models: team-based (simple assignment) and competency-based (assignment with proficiency levels)."
             }
           }
         },
@@ -481,7 +469,7 @@
         },
         "priorityHierarchy": {
           "type": "array",
-          "description": "Optional priority ordering for allocation. For team model: defines team priority (use 'team' field). For competency model: defines skill-level priority (use 'competency'+'level' fields). Enable with features.usePriorityHierarchy=true",
+          "description": "Optional priority ordering for allocation. Both models use 'team' field. For competency model: optionally add 'level' constraint to prioritize by competency level. Enable with features.usePriorityHierarchy=true",
           "items": {
             "type": "object",
             "required": ["rank"],
@@ -493,15 +481,11 @@
               },
               "team": {
                 "type": "string",
-                "description": "Team code (for simple/team model) - defines which team has this priority"
-              },
-              "competency": {
-                "type": "string",
-                "description": "Competency code (for multiLevel/competency model)"
+                "description": "Team code - defines which team has this priority. Required for both employee models."
               },
               "level": {
                 "type": "string",
-                "description": "Level specification (for competency model, e.g., 'N=1', 'N>=2')"
+                "description": "Optional level specification for competency model (e.g., 'N=1', 'N>=2', 'N<3'). When specified, only employees with matching competency levels are prioritized."
               },
               "description": {
                 "type": "string",

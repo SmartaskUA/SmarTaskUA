@@ -25,14 +25,15 @@ import EmployeeForm from './EmployeeForm';
  * EmployeeTable Component
  *
  * Table displaying all employees with CRUD operations.
- * Adapts columns based on employee model (team vs competency).
+ * Shows teams for both employee models:
+ * - Team model: teams as simple codes
+ * - Competency model: teams with competency levels
  */
 const EmployeeTable = ({
   employees = [],
   onChange,
   employeeModel,
   availableTeams = [],
-  availableCompetencies = [],
   availableContracts = [],
   error
 }) => {
@@ -104,8 +105,7 @@ const EmployeeTable = ({
               <TableRow>
                 <TableCell>ID</TableCell>
                 <TableCell>Name</TableCell>
-                {employeeModel === 'team' && <TableCell>Teams</TableCell>}
-                {employeeModel === 'competency' && <TableCell>Competencies</TableCell>}
+                <TableCell>Teams</TableCell>
                 <TableCell>Contract</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
@@ -120,36 +120,31 @@ const EmployeeTable = ({
                     <Typography>{employee.name || employee.id}</Typography>
                   </TableCell>
 
-                  {/* Team Model: Show teams with names */}
-                  {employeeModel === 'team' && (
-                    <TableCell>
-                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                        {employee.teams?.map((teamCode) => {
+                  {/* Teams column: Show teams with optional levels */}
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                      {employeeModel === 'team' ? (
+                        // Team model: teams is array of strings
+                        employee.teams?.map((teamCode) => {
                           const team = availableTeams.find(t => t.code === teamCode);
                           const label = team ? `${team.code} - ${team.name}` : teamCode;
                           return (
                             <Chip key={teamCode} label={label} size="small" color="info" />
                           );
-                        })}
-                      </Box>
-                    </TableCell>
-                  )}
-
-                  {/* Competency Model: Show competencies with levels */}
-                  {employeeModel === 'competency' && (
-                    <TableCell>
-                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                        {employee.competencies?.map((comp) => (
+                        })
+                      ) : (
+                        // Competency model: teams is array of {code, name, level}
+                        employee.teams?.map((team) => (
                           <Chip
-                            key={comp.code}
-                            label={`${comp.code} (L${comp.level})`}
+                            key={team.code}
+                            label={`${team.code} - ${team.name} (L${team.level})`}
                             size="small"
                             color="success"
                           />
-                        ))}
-                      </Box>
-                    </TableCell>
-                  )}
+                        ))
+                      )}
+                    </Box>
+                  </TableCell>
 
                   <TableCell>
                     <Typography variant="body2">{employee.contractType}</Typography>
@@ -186,7 +181,6 @@ const EmployeeTable = ({
         employeeModel={employeeModel}
         existingIds={existingIds}
         availableTeams={availableTeams}
-        availableCompetencies={availableCompetencies}
         availableContracts={availableContracts}
       />
     </Box>

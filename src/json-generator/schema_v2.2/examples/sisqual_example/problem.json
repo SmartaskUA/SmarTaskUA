@@ -5,7 +5,7 @@
   "metadata": {
     "problemId": "SISQUAL_OCTOBER_2025",
     "createdAt": "2026-02-02T16:00:00Z",
-    "description": "Sisqual October 2025 employee scheduling - Competency-based model with 15 employees across 3 teams (Storage, Checkout, Management)",
+    "description": "Sisqual October 2025 employee scheduling - Competency-based model with 15 employees assigned to 3 teams with competency levels (Storage, Checkout, Management)",
     "source": "sisqual_example"
   },
 
@@ -56,8 +56,8 @@
       {
         "id": "20072412",
         "name": "Emp_20072412",
-        "competencies": [
-          {"code": "Management", "level": 1, "description": "Management Level 1"}
+        "teams": [
+          {"code": "Management", "name": "Management Team", "level": 1}
         ],
         "contractType": "fullTime_8h",
         "contractPeriods": [
@@ -67,8 +67,8 @@
       {
         "id": "20066543",
         "name": "Emp_20066543",
-        "competencies": [
-          {"code": "Management", "level": 2, "description": "Management Level 2"}
+        "teams": [
+          {"code": "Management", "name": "Management Team", "level": 2}
         ],
         "contractType": "fullTime_8h",
         "contractPeriods": [
@@ -78,9 +78,9 @@
       {
         "id": "20067009",
         "name": "Emp_20067009",
-        "competencies": [
-          {"code": "Checkout", "level": 1, "description": "Checkout Level 1"},
-          {"code": "Management", "level": 3, "description": "Management Level 3"}
+        "teams": [
+          {"code": "Checkout", "name": "Checkout Team", "level": 1},
+          {"code": "Management", "name": "Management Team", "level": 3}
         ],
         "contractType": "partTime_5h",
         "contractPeriods": [
@@ -90,9 +90,9 @@
       {
         "id": "20054956",
         "name": "Emp_20054956",
-        "competencies": [
-          {"code": "Checkout", "level": 2, "description": "Checkout Level 2"},
-          {"code": "Management", "level": 4, "description": "Management Level 4"}
+        "teams": [
+          {"code": "Checkout", "name": "Checkout Team", "level": 2},
+          {"code": "Management", "name": "Management Team", "level": 4}
         ],
         "contractType": "partTime_4h",
         "contractPeriods": [
@@ -102,8 +102,8 @@
       {
         "id": "20056459",
         "name": "Emp_20056459",
-        "competencies": [
-          {"code": "Checkout", "level": 1, "description": "Checkout Level 1"}
+        "teams": [
+          {"code": "Checkout", "name": "Checkout Team", "level": 1}
         ],
         "contractType": "partTime_4h",
         "contractPeriods": [
@@ -113,9 +113,9 @@
       {
         "id": "20062688",
         "name": "Emp_20062688",
-        "competencies": [
-          {"code": "Checkout", "level": 3, "description": "Checkout Level 3"},
-          {"code": "Management", "level": 4, "description": "Management Level 4"}
+        "teams": [
+          {"code": "Checkout", "name": "Checkout Team", "level": 3},
+          {"code": "Management", "name": "Management Team", "level": 4}
         ],
         "contractType": "partTime_4h",
         "contractPeriods": [
@@ -125,8 +125,8 @@
       {
         "id": "20067696",
         "name": "Emp_20067696",
-        "competencies": [
-          {"code": "Checkout", "level": 2, "description": "Checkout Level 2"}
+        "teams": [
+          {"code": "Checkout", "name": "Checkout Team", "level": 2}
         ],
         "contractType": "partTime_4h",
         "contractPeriods": [
@@ -136,8 +136,8 @@
       {
         "id": "20058959",
         "name": "Emp_20058959",
-        "competencies": [
-          {"code": "Checkout", "level": 2, "description": "Checkout Level 2"}
+        "teams": [
+          {"code": "Checkout", "name": "Checkout Team", "level": 2}
         ],
         "contractType": "partTime_4h",
         "contractPeriods": [
@@ -147,8 +147,8 @@
       {
         "id": "20068397",
         "name": "Emp_20068397",
-        "competencies": [
-          {"code": "Checkout", "level": 2, "description": "Checkout Level 2"}
+        "teams": [
+          {"code": "Checkout", "name": "Checkout Team", "level": 2}
         ],
         "contractType": "partTime_4h",
         "contractPeriods": [
@@ -158,8 +158,8 @@
       {
         "id": "20038706",
         "name": "Emp_20038706",
-        "competencies": [
-          {"code": "Checkout", "level": 2, "description": "Checkout Level 2"}
+        "teams": [
+          {"code": "Checkout", "name": "Checkout Team", "level": 2}
         ],
         "contractType": "partTime_5h",
         "contractPeriods": [
@@ -169,8 +169,8 @@
       {
         "id": "20066338",
         "name": "Emp_20066338",
-        "competencies": [
-          {"code": "Checkout", "level": 3, "description": "Checkout Level 3"}
+        "teams": [
+          {"code": "Checkout", "name": "Checkout Team", "level": 3}
         ],
         "contractType": "partTime_5h",
         "contractPeriods": [
@@ -180,8 +180,8 @@
       {
         "id": "900027719",
         "name": "Emp_900027719",
-        "competencies": [
-          {"code": "Checkout", "level": 4, "description": "Checkout Level 4"}
+        "teams": [
+          {"code": "Checkout", "name": "Checkout Team", "level": 4}
         ],
         "contractType": "partTime_5h",
         "contractPeriods": [
@@ -191,8 +191,8 @@
       {
         "id": "20051291",
         "name": "Emp_20051291",
-        "competencies": [
-          {"code": "Storage", "level": 1, "description": "Storage Level 1"}
+        "teams": [
+          {"code": "Storage", "name": "Storage Team", "level": 1}
         ],
         "contractType": "partTime_7h",
         "contractPeriods": [
@@ -202,8 +202,8 @@
       {
         "id": "20055066",
         "name": "Emp_20055066",
-        "competencies": [
-          {"code": "Checkout", "level": 4, "description": "Checkout Level 4"}
+        "teams": [
+          {"code": "Checkout", "name": "Checkout Team", "level": 4}
         ],
         "contractType": "partTime_4h",
         "contractPeriods": [
@@ -213,8 +213,8 @@
       {
         "id": "900027718",
         "name": "Emp_900027718",
-        "competencies": [
-          {"code": "Checkout", "level": 5, "description": "Checkout Level 5"}
+        "teams": [
+          {"code": "Checkout", "name": "Checkout Team", "level": 5}
         ],
         "contractType": "partTime_4h",
         "contractPeriods": [
@@ -228,7 +228,7 @@
     "workPeriodModel": "fixed",
     "dataFile": "demand.csv",
     "organizationalUnits": {
-      "competencies": [
+      "teams": [
         {"code": "Storage", "name": "Storage Team"},
         {"code": "Checkout", "name": "Checkout Team"},
         {"code": "Management", "name": "Management Team"}
@@ -311,17 +311,17 @@
     "priorityHierarchy": [
       {
         "rank": 1,
-        "competency": "Management",
+        "team": "Management",
         "description": "Management Team - Highest priority"
       },
       {
         "rank": 2,
-        "competency": "Checkout",
+        "team": "Checkout",
         "description": "Checkout Team - Medium priority"
       },
       {
         "rank": 3,
-        "competency": "Storage",
+        "team": "Storage",
         "description": "Storage Team - Standard priority"
       }
     ]

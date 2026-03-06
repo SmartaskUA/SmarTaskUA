@@ -6,7 +6,7 @@
 # COLUMNS:
 #   date      = Date for this requirement (format: YYYY-MM-DD)
 #   shift     = Shift/work period code (must match demand.shifts[].code in JSON)
-#   team      = Team/competency code (must match organizationalUnits in JSON)
+#   team      = Team code (must match organizationalUnits.teams[].code in JSON)
 #   minimum   = Minimum people required (HARD constraint - must be met)
 #   ideal     = Ideal number of people (SOFT target - algorithm tries to achieve)
 #   estimated = Estimated/expected demand (for KPI analysis only)
@@ -15,8 +15,8 @@
 #
 # NOTES:
 # - One row per date/shift/team combination
-# - For competency model: "team" column contains competency codes
-# - For team model: "team" column contains team codes
+# - The "team" column always contains team codes for both employee models
+# - Both team-based and competency-based models use the same demand format
 #
 # EXAMPLES:
 # - Basic demand: Need 2-3 people for Morning shift, Team A:

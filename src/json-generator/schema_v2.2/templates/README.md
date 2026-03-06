@@ -94,7 +94,7 @@ Specifies daily coverage requirements - how many people are needed.
 **Columns:**
 - `date` - Date for requirement (YYYY-MM-DD)
 - `shift` - Shift code (M, T, N, etc.)
-- `team` - Team or competency code
+- `team` - Team code (used for both employee models)
 - `minimum` - Minimum people (hard constraint)
 - `ideal` - Ideal people (soft target)
 - `estimated` - Expected demand (for KPIs)
@@ -113,7 +113,7 @@ Create `problem.json` with:
 - Contract definitions (workHoursPerDay, constraints)
 - Employee list with contract references
 - Shift/work period definitions
-- Organizational units (teams or competencies)
+- Organizational units (teams - used for both employee models)
 - **v2.2:** Custom constraint definitions in markingTypes
 
 See `examples/` directory for complete examples.

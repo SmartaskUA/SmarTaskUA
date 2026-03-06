@@ -18,14 +18,15 @@ import {
 } from '@mui/icons-material';
 
 /**
- * CompetencyBuilder Component
+ * CompetencyBuilder Component (Actually: Team Assignment with Levels)
  *
- * UI for building an employee's competency list with levels.
+ * UI for building an employee's team assignments with competency levels.
  * Used in EmployeeForm for competency-based model.
+ * Despite the component name, it now works with teams + levels.
  */
 const CompetencyBuilder = ({
-  competencies = [],  // Selected competencies for this employee: [{code, level, description}]
-  availableCompetencies = [],  // All competencies from Step 3: [{code, name}]
+  competencies = [],  // Selected teams for this employee: [{code, level, name}]
+  availableCompetencies = [],  // All teams from Step 3: [{code, name}]
   onChange,
   error
 }) => {
@@ -36,7 +37,7 @@ const CompetencyBuilder = ({
   const handleAdd = () => {
     // Validation
     if (!selectedCode) {
-      setAddError('Please select a competency');
+      setAddError('Please select a team');
       return;
     }
 
@@ -45,23 +46,23 @@ const CompetencyBuilder = ({
       return;
     }
 
-    // Check if competency already added
+    // Check if team already added
     if (competencies.some(c => c.code === selectedCode)) {
-      setAddError('This competency is already added');
+      setAddError('This team is already added');
       return;
     }
 
-    // Find competency name from available competencies
-    const competencyInfo = availableCompetencies.find(c => c.code === selectedCode);
-    const description = competencyInfo ? competencyInfo.name : '';
+    // Find team name from available teams
+    const teamInfo = availableCompetencies.find(c => c.code === selectedCode);
+    const name = teamInfo ? teamInfo.name : '';
 
-    // Add competency
+    // Add team with level
     onChange([
       ...competencies,
       {
         code: selectedCode,
         level: parseInt(level),
-        description: description
+        name: name
       }
     ]);
 
@@ -75,33 +76,33 @@ const CompetencyBuilder = ({
     onChange(competencies.filter(c => c.code !== codeToDelete));
   };
 
-  // Get available competencies that haven't been added yet
+  // Get available teams that haven't been added yet
   const remainingCompetencies = availableCompetencies.filter(
     ac => !competencies.some(c => c.code === ac.code)
   );
 
   return (
     <Box>
-      {/* Add Competency Form */}
+      {/* Add Team with Competency Level Form */}
       <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
         <Typography variant="subtitle2" gutterBottom>
-          Add Competency
+          Add Team with Competency Level
         </Typography>
 
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           <FormControl sx={{ flexGrow: 1, minWidth: 0 }}>
-            <InputLabel>Competency</InputLabel>
+            <InputLabel>Team</InputLabel>
             <Select
               value={selectedCode}
               onChange={(e) => {
                 setSelectedCode(e.target.value);
                 if (addError) setAddError('');
               }}
-              label="Competency"
+              label="Team"
             >
               {remainingCompetencies.length === 0 ? (
                 <MenuItem value="">
-                  <em>All competencies added</em>
+                  <em>All teams added</em>
                 </MenuItem>
               ) : (
                 remainingCompetencies.map((comp) => (
@@ -123,6 +124,7 @@ const CompetencyBuilder = ({
             }}
             inputProps={{ min: 1, step: 1 }}
             sx={{ width: 120, flexShrink: 0, flexGrow: 0 }}
+            helperText="Competency level"
           />
 
           <IconButton
@@ -158,15 +160,15 @@ const CompetencyBuilder = ({
         </Alert>
       )}
 
-      {/* Current Competencies List */}
+      {/* Current Teams List */}
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Typography variant="subtitle2" gutterBottom>
-          Employee Competencies ({competencies.length})
+          Employee Teams ({competencies.length})
         </Typography>
 
         {competencies.length === 0 ? (
           <Typography variant="body2" color="text.secondary">
-            No competencies added yet. Add at least one competency above.
+            No teams added yet. Add at least one team with competency level above.
           </Typography>
         ) : (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -188,10 +190,10 @@ const CompetencyBuilder = ({
                   <Chip label={comp.code} size="small" color="primary" />
                   <Box>
                     <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {comp.description || comp.code}
+                      {comp.name || comp.code}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Level: {comp.level}
+                      Competency Level: {comp.level}
                     </Typography>
                   </Box>
                 </Box>

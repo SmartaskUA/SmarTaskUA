@@ -69,16 +69,15 @@ const initialState = {
     // Each definition: { id, name, workHoursPerDay, constraints }
   },
   
-  // Step 3: Organizational Units (depends on model)
+  // Step 3: Organizational Units (always teams regardless of model)
   employees: {
     model: 'team', // 'team' or 'competency'
-    simple: [],    // for team model
-    competency: [] // for competency model
+    simple: [],    // for team model: [{id, name, teams: ['A', 'B'], contractType}]
+    competency: [] // for competency model: [{id, name, teams: [{code, name, level}], contractType}]
   },
-  
+
   organizationalUnits: {
-    teams: [],        // for team model: [{code: 'A', name: 'Team A'}]
-    competencies: []  // for competency model: [{code, name}]
+    teams: []  // Always teams: [{code: 'A', name: 'Team A'}]. Both models use this.
   },
   
   // Step 4: Employees
@@ -107,18 +106,25 @@ const initialState = {
     workPeriodModel: 'fixed', // 'fixed' or 'flexible'
     workPeriods: [],
     // Each work period: { code, name, order, timeRange: {start, end} } or { duration, allowedStartTimes }
-    organizationalUnits: {
-      teams: [],
-      competencies: []
-    },
     dataFile: 'demand.csv',
-    demandData: [], // Array of { date, workPeriod, team, minimum, ideal, estimated }
+
+    // Step 7: Weekly Template (Phase 1)
+    weeklyTemplate: {
+      monday: [],
+      tuesday: [],
+      wednesday: [],
+      thursday: [],
+      friday: [],
+      saturday: [],
+      sunday: []
+      // Each day array contains blocks: { id, team, workPeriod, timeRange, coverage: {min, ideal, est}, color }
+    },
+
+    // Step 7: Demand Data (Phase 2)
+    demandData: [], // Array of { date, workPeriod, team, minimum, ideal, estimated, timeRange }
     priorityHierarchy: [] // Optional priority ordering
   },
-  
-  // Step 7: Demand Calendar
-  // (stored in demand.demandData above)
-  
+
   // Step 8: Constraints
   constraints: {
     hard: [
@@ -286,9 +292,7 @@ export const WizardProvider = ({ children }) => {
       demand: {
         workPeriodModel: state.demand.workPeriodModel,
         workPeriods: state.demand.workPeriods,
-        organizationalUnits: state.employees.model === 'team'
-          ? { teams: state.organizationalUnits.teams }
-          : { competencies: state.organizationalUnits.competencies },
+        organizationalUnits: { teams: state.organizationalUnits.teams }, // Always use teams
         dataFile: state.demand.dataFile,
         priorityHierarchy: state.demand.priorityHierarchy
       },
