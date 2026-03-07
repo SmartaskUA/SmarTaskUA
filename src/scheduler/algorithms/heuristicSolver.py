@@ -172,6 +172,26 @@ def _employee_score(e, d, is_special, total_work, total_special, target_workdays
     return score
 
 
+def _coverage_score(min_required, ideal_required, assigned, w_min=100, w_ideal=1):
+    """
+    Return weighted shortage score (lower is better).
+    """
+    min_short = 0
+    for key, req in min_required.items():
+        cov = assigned.get(key, 0)
+        if cov < req:
+            min_short += req - cov
+
+    ideal_short = 0
+    for key, req in ideal_required.items():
+        cov = assigned.get(key, 0)
+        if cov < req:
+            ideal_short += req - cov
+
+    score = (w_min * min_short) + (w_ideal * ideal_short)
+    return score, min_short, ideal_short
+
+
 # Main heuristic solver
 
 def solve_heuristic(
@@ -184,6 +204,7 @@ def solve_heuristic(
     rules=None,
     target_workdays=223,
     special_cap=22,
+    iterations=100,
 ):
     """
     Heuristic schedule generator.
@@ -246,35 +267,125 @@ def solve_heuristic(
     # Special days (Sundays + holidays)
     special_days = _build_special_days(year, num_days=num_days)
 
-    # State variables
-    work = [[0] * (num_days + 1) for _ in Employees]   # work[e][d] ∈ {0,1}
-    shift = [[0] * (num_days + 1) for _ in Employees]  # shift[e][d] ∈ {0..S}
-    team = [[None] * (num_days + 1) for _ in Employees]  # team[e][d] ∈ team_id or None
+    def _run_once():
+        # State variables
+        work = [[0] * (num_days + 1) for _ in Employees]   # work[e][d] ∈ {0,1}
+        shift = [[0] * (num_days + 1) for _ in Employees]  # shift[e][d] ∈ {0..S}
+        team = [[None] * (num_days + 1) for _ in Employees]  # team[e][d] ∈ team_id or None
 
-    total_work = [0] * n_employees
-    total_special = [0] * n_employees
+        total_work = [0] * n_employees
+        total_special = [0] * n_employees
 
-    # Coverage tracking
-    assigned_min = defaultdict(int)  # (d,s,t) -> count assigned for min-coverage phase
-    assigned = defaultdict(int)      # (d,s,t) -> overall coverage
+        # Coverage tracking
+        assigned_min = defaultdict(int)  # (d,s,t) -> count assigned for min-coverage phase
+        assigned = defaultdict(int)      # (d,s,t) -> overall coverage
 
-    # =====================================================
-    # PASS 1: Satisfy minimum coverage greedily
-    # =====================================================
+        # =====================================================
+        # PASS 1: Satisfy minimum coverage greedily
+        # =====================================================
 
-    for d in D:
-        for s in S:
-            # Determine teams that require coverage on this (d,s)
-            teams_here = [
-                t for (dd, ss, t) in min_required.keys() if dd == d and ss == s
-            ]
-            for t in teams_here:
-                req = min_required[(d, s, t)]
-                while assigned_min[(d, s, t)] < req:
-                    candidates = []
-                    for e in Employees:
-                        if t not in allowed_teams_per_emp[e]:
+        for d in D:
+            for s in S:
+                # Determine teams that require coverage on this (d,s)
+                teams_here = [
+                    t for (dd, ss, t) in min_required.keys() if dd == d and ss == s
+                ]
+                for t in teams_here:
+                    req = min_required[(d, s, t)]
+                    while assigned_min[(d, s, t)] < req:
+                        candidates = []
+                        for e in Employees:
+                            if t not in allowed_teams_per_emp[e]:
+                                continue
+                            if not _is_feasible_assignment(
+                                e,
+                                d,
+                                s,
+                                t,
+                                work,
+                                shift,
+                                total_work,
+                                total_special,
+                                vac_mask,
+                                special_days,
+                                target_workdays,
+                                special_cap,
+                            ):
+                                continue
+                            candidates.append(e)
+
+                        if not candidates:
+                            # Cannot meet this minimum; leave shortage here
+                            break
+
+                        best_e = min(
+                            candidates,
+                            key=lambda e: _employee_score(
+                                e, d, d in special_days, total_work, total_special, target_workdays
+                            ),
+                        )
+
+                        work[best_e][d] = 1
+                        shift[best_e][d] = s
+                        team[best_e][d] = t
+                        total_work[best_e] += 1
+                        if d in special_days:
+                            total_special[best_e] += 1
+                        assigned_min[(d, s, t)] += 1
+                        assigned[(d, s, t)] += 1
+
+        # =====================================================
+        # PASS 2: Move toward ideal coverage and 223 workdays
+        # =====================================================
+
+        for e in Employees:
+            deficit = target_workdays - total_work[e]
+            if deficit <= 0:
+                continue
+
+            # Two rounds:
+            # 1) Assign only where coverage < ideal (if ideal defined) or < minimum if no ideal
+            # 2) Assign anywhere feasible (even if over ideal / no requirement)
+            for round_idx in (1, 2):
+                if deficit <= 0:
+                    break
+
+                for d in D:
+                    if deficit <= 0:
+                        break
+                    if work[e][d] == 1:
+                        continue
+                    if vac_mask[(e, d)]:
+                        continue
+
+                    # Build candidate slots for this day
+                    slots = []
+                    for s in S:
+                        for t in allowed_teams_per_emp[e]:
+                            key = (d, s, t)
+                            slots.append((s, t, key))
+
+                    if round_idx == 1:
+                        # Filter to where coverage < ideal or (ideal absent and coverage < min)
+                        filtered = []
+                        for s, t, key in slots:
+                            cov = assigned[key]
+                            ideal = ideal_required.get(key, None)
+                            minreq = min_required.get(key, 0)
+                            if ideal is not None:
+                                if cov < ideal:
+                                    filtered.append((s, t, key))
+                            else:
+                                if cov < minreq:
+                                    filtered.append((s, t, key))
+                        slots = filtered
+                        if not slots:
                             continue
+
+                    # Try slots in random order to diversify
+                    random.shuffle(slots)
+
+                    for s, t, key in slots:
                         if not _is_feasible_assignment(
                             e,
                             d,
@@ -290,43 +401,25 @@ def solve_heuristic(
                             special_cap,
                         ):
                             continue
-                        candidates.append(e)
 
-                    if not candidates:
-                        # Cannot meet this minimum; leave shortage here
-                        break
+                        work[e][d] = 1
+                        shift[e][d] = s
+                        team[e][d] = t
+                        total_work[e] += 1
+                        if d in special_days:
+                            total_special[e] += 1
+                        assigned[key] += 1
+                        deficit -= 1
+                        break  # next day
 
-                    best_e = min(
-                        candidates,
-                        key=lambda e: _employee_score(
-                            e, d, d in special_days, total_work, total_special, target_workdays
-                        ),
-                    )
+        # =====================================================
+        # PASS 3: Fill remaining deficit anywhere feasible, even if overstaffing
+        # =====================================================
 
-                    work[best_e][d] = 1
-                    shift[best_e][d] = s
-                    team[best_e][d] = t
-                    total_work[best_e] += 1
-                    if d in special_days:
-                        total_special[best_e] += 1
-                    assigned_min[(d, s, t)] += 1
-                    assigned[(d, s, t)] += 1
-
-    # =====================================================
-    # PASS 2: Move toward ideal coverage and 223 workdays
-    # =====================================================
-
-    for e in Employees:
-        deficit = target_workdays - total_work[e]
-        if deficit <= 0:
-            continue
-
-        # Two rounds:
-        # 1) Assign only where coverage < ideal (if ideal defined) or < minimum if no ideal
-        # 2) Assign anywhere feasible (even if over ideal / no requirement)
-        for round_idx in (1, 2):
+        for e in Employees:
+            deficit = target_workdays - total_work[e]
             if deficit <= 0:
-                break
+                continue
 
             for d in D:
                 if deficit <= 0:
@@ -336,41 +429,21 @@ def solve_heuristic(
                 if vac_mask[(e, d)]:
                     continue
 
-                # Build candidate slots for this day
                 slots = []
                 for s in S:
                     for t in allowed_teams_per_emp[e]:
-                        key = (d, s, t)
-                        slots.append((s, t, key))
+                        slots.append((s, t))
 
-                if round_idx == 1:
-                    # Filter to where coverage < ideal or (ideal absent and coverage < min)
-                    filtered = []
-                    for s, t, key in slots:
-                        cov = assigned[key]
-                        ideal = ideal_required.get(key, None)
-                        minreq = min_required.get(key, 0)
-                        if ideal is not None:
-                            if cov < ideal:
-                                filtered.append((s, t, key))
-                        else:
-                            if cov < minreq:
-                                filtered.append((s, t, key))
-                    slots = filtered
-                    if not slots:
-                        continue
-
-                # Try slots in random order to diversify
                 random.shuffle(slots)
 
-                for s, t, key in slots:
+                for s, t in slots:
                     if not _is_feasible_assignment(
                         e,
                         d,
                         s,
                         t,
                         work,
-                       shift,
+                        shift,
                         total_work,
                         total_special,
                         vac_mask,
@@ -386,92 +459,69 @@ def solve_heuristic(
                     total_work[e] += 1
                     if d in special_days:
                         total_special[e] += 1
-                    assigned[key] += 1
+                    assigned[(d, s, t)] += 1
                     deficit -= 1
-                    break  # next day
+                    break
 
-    # =====================================================
-    # PASS 3: Fill remaining deficit anywhere feasible, even if overstaffing
-    # =====================================================
+        # =====================================================
+        # Build assignment structure
+        # =====================================================
 
-    for e in Employees:
-        deficit = target_workdays - total_work[e]
-        if deficit <= 0:
-            continue
+        assign = defaultdict(list)  # emp_id -> list[(day, s, t)]
+        for e in Employees:
+            emp_id = e + 1
+            for d in D:
+                if work[e][d] == 1:
+                    s = shift[e][d]
+                    t = team[e][d]
+                    if s > 0 and t is not None:
+                        assign[emp_id].append((d, s, t))
 
-        for d in D:
-            if deficit <= 0:
-                break
-            if work[e][d] == 1:
-                continue
-            if vac_mask[(e, d)]:
-                continue
+        class View:
+            pass
 
-            slots = []
-            for s in S:
-                for t in allowed_teams_per_emp[e]:
-                    slots.append((s, t))
+        v = View()
+        v.employees = list(range(1, n_employees + 1))
+        v.vacs = {emp_id: vacs_dict.get(emp_id, []) for emp_id in v.employees}
+        v.assignment = assign
 
-            random.shuffle(slots)
+        score, min_short, ideal_short = _coverage_score(
+            min_required=min_required,
+            ideal_required=ideal_required,
+            assigned=assigned,
+            w_min=100,
+            w_ideal=1,
+        )
 
-            for s, t in slots:
-                if not _is_feasible_assignment(
-                    e,
-                    d,
-                    s,
-                    t,
-                    work,
-                    shift,
-                    total_work,
-                    total_special,
-                    vac_mask,
-                    special_days,
-                    target_workdays,
-                    special_cap,
-                ):
-                    continue
+        table = schedule_to_table(
+            employees=v.employees,
+            vacs=v.vacs,
+            assignment=v.assignment,
+            num_days=num_days,
+            shifts=int(shifts),
+        )
 
-                work[e][d] = 1
-                shift[e][d] = s
-                team[e][d] = t
-                total_work[e] += 1
-                if d in special_days:
-                    total_special[e] += 1
-                assigned[(d, s, t)] += 1
-                deficit -= 1
-                break
+        return v, table, score, min_short, ideal_short
 
-    # =====================================================
-    # Build assignment structure and export
-    # =====================================================
+    if isinstance(rules, dict) and rules.get("iterations"):
+        iterations = int(rules["iterations"])
 
-    assign = defaultdict(list)  # emp_id -> list[(day, s, t)]
-    for e in Employees:
-        emp_id = e + 1
-        for d in D:
-            if work[e][d] == 1:
-                s = shift[e][d]
-                t = team[e][d]
-                if s > 0 and t is not None:
-                    assign[emp_id].append((d, s, t))
+    iterations = max(1, int(iterations))
 
-    class View:
-        pass
+    best_v = None
+    best_table = None
+    best_score = None
 
-    v = View()
-    v.employees = list(range(1, n_employees + 1))
-    v.vacs = {emp_id: vacs_dict.get(emp_id, []) for emp_id in v.employees}
-    v.assignment = assign
+    for _ in range(iterations):
+        v, table, score, _min_short, _ideal_short = _run_once()
+        if best_score is None or score < best_score:
+            best_score = score
+            best_v = v
+            best_table = table
 
-    export_schedule_to_csv(v, "schedule_heuristic.csv", num_days=num_days)
+    export_schedule_to_csv(best_v, "schedule_heuristic.csv", num_days=num_days)
 
-    return schedule_to_table(
-        employees=v.employees,
-        vacs=v.vacs,
-        assignment=v.assignment,
-        num_days=num_days,
-        shifts=int(shifts),
-    )
+    return best_table
 
 
 # ============================================================

@@ -31,6 +31,7 @@ from algorithms.general.csp_general import solve as csp_general_solver
 from algorithms.ILP_4_Half_Intervals import solve as ILP_4_Half_Intervals
 from algorithms.COP_2_Half_Intervals import solve as COP_2_Half_Intervals_Solver
 from algorithms.COP_1_Half_Intervals import solve as COP_1_Half_Intervals_solver
+from algorithms.general.heuristic_general import solve as heuristic_general_solver
 
 class TaskManager:
     def __init__(self):
@@ -62,6 +63,7 @@ class TaskManager:
             "GRHC_ENGINE": grhc_engine_solver,
             "Greedy Randomized Engine": greedy_randomized_engine_solver,
             "Heuristic Solver": heuristic_solver,
+            "Heuristic General": heuristic_general_solver,
             "ilp_greedy": ilp_greedy,
             "CSP_Afonso_Hours": CSP_Afonso_Hours_solver,
             "COP_1_Half_Intervals": COP_1_Half_Intervals_solver,
@@ -122,6 +124,7 @@ class TaskManager:
             "CSPv2",
             "CSP General",
             "Heuristic Solver",
+            "Heuristic Solver Restarts",
             "ilp_greedy",
         ]
         if algorithm_name in algs_with_shifts:

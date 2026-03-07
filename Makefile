@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs clean
+.PHONY: help build up down restart logs clean validate-general-rules
 .PHONY: build-api build-scheduler build-analyzer build-frontend
 .PHONY: logs-api logs-scheduler logs-analyzer logs-frontend
 
@@ -33,6 +33,9 @@ help: ## Show this help message
 	@echo "  make logs-scheduler  - View scheduler logs"
 	@echo "  make logs-analyzer   - View analyzer logs"
 	@echo "  make logs-frontend   - View frontend logs"
+	@echo ""
+	@echo "$(GREEN)Validation:$(NC)"
+	@echo "  make validate-general-rules - Ensure general algorithms cover all rules in rules.json"
 	@echo ""
 	@echo "$(YELLOW)Access Points:$(NC)"
 	@echo "  Web UI:          http://localhost:5173"
@@ -123,6 +126,9 @@ logs-analyzer: ## View analyzer logs
 
 logs-frontend: ## View frontend logs
 	@docker compose -f $(COMPOSE_FILE) logs -f frontend
+
+validate-general-rules: ## Validate rules coverage for general algorithms
+	@python3 scripts/validate_general_rules.py data/problems/SMARTASK_SIMPLE_2025/problem.json
 
 # Internal helper (not shown in help)
 _show_access_points:

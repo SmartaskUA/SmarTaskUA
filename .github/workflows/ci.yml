@@ -116,6 +116,9 @@ jobs:
           flake8 src/analyzer --count --select=E9,F63,F7,F82 --show-source --statistics || true
         continue-on-error: true
 
+      - name: Validate general algorithm rule coverage
+        run: python3 scripts/validate_general_rules.py data/problems/SMARTASK_SIMPLE_2025/problem.json
+
   docker-build-test:
     name: Test Docker Builds
     runs-on: ubuntu-latest
