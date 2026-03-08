@@ -18,7 +18,7 @@ import { getTeamColor } from '../../utils/helpers/colorHelpers';
 const generateId = () => `block_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
 /**
- * Calculate duration between two times (handles overnight shifts)
+ * Calculate duration between two times (handles overnight work periods)
  */
 const calculateDuration = (startTime, endTime) => {
   if (!startTime || !endTime) return 0;
@@ -29,7 +29,7 @@ const calculateDuration = (startTime, endTime) => {
   let startMinutes = startHour * 60 + startMin;
   let endMinutes = endHour * 60 + endMin;
 
-  // If end is before start, it's an overnight shift - add 24 hours
+  // If end is before start, it's an overnight work period - add 24 hours
   if (endMinutes < startMinutes) {
     endMinutes += 24 * 60;
   }
@@ -180,7 +180,7 @@ const DemandBlockDialog = ({
     } else if (formData.timeRange.start === formData.timeRange.end) {
       newErrors.timeRange = 'Start and end time cannot be the same';
     }
-    // Note: We allow end < start for overnight shifts (e.g., 22:00-06:00 next day)
+    // Note: We allow end < start for overnight work periods (e.g., 22:00-06:00 next day)
 
     const { minimum, ideal, estimated } = formData.coverage;
     if (minimum === '' || ideal === '' || estimated === '') {
@@ -290,11 +290,11 @@ const DemandBlockDialog = ({
               />
             </Grid>
 
-            {/* Overnight shift indicator */}
+            {/* Overnight work period indicator */}
             {formData.timeRange.start && formData.timeRange.end && formData.timeRange.start > formData.timeRange.end && (
               <Grid item xs={12}>
                 <Alert severity="warning" sx={{ fontSize: '0.85rem' }}>
-                  <strong>Overnight Shift:</strong> This shift spans across midnight (ends next day). Duration: {calculateDuration(formData.timeRange.start, formData.timeRange.end)} hours.
+                  <strong>Overnight Work Period:</strong> This work period spans across midnight (ends next day). Duration: {calculateDuration(formData.timeRange.start, formData.timeRange.end)} hours.
                 </Alert>
               </Grid>
             )}
@@ -306,7 +306,7 @@ const DemandBlockDialog = ({
                 </Alert>
               ) : (
                 <Alert severity="success" sx={{ fontSize: '0.85rem' }}>
-                  <strong>Flexible Work Periods:</strong> Time range is auto-filled from the selected work period, but you can edit it to any 30-minute slot. Overnight shifts (e.g., 22:00-06:00) are supported.
+                  <strong>Flexible Work Periods:</strong> Time range is auto-filled from the selected work period, but you can edit it to any 30-minute slot. Overnight work periods (e.g., 22:00-06:00) are supported.
                 </Alert>
               )}
             </Grid>

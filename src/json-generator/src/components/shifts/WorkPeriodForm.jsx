@@ -302,7 +302,7 @@ const WorkPeriodForm = ({
                 </LocalizationProvider>
               </Box>
               <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                Overnight shifts are supported (e.g., 22:00-06:00 means 10 PM to 6 AM next day)
+                Overnight work periods are supported (e.g., 22:00-06:00 means 10 PM to 6 AM next day)
               </Typography>
             </Box>
           )}
@@ -317,7 +317,7 @@ const WorkPeriodForm = ({
                 value={formData.duration}
                 onChange={(e) => handleChange('duration', e.target.value)}
                 error={touched.duration && !!errors.flexible}
-                helperText={touched.duration && errors.flexible ? errors.flexible : 'How many hours this shift lasts'}
+                helperText={touched.duration && errors.flexible ? errors.flexible : 'How many hours this work period lasts'}
                 required
                 inputProps={{ min: 1, max: 24, step: 0.5 }}
                 sx={{ maxWidth: '200px', mb: 3 }}

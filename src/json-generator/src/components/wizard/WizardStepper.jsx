@@ -61,7 +61,7 @@ const steps = [
   { label: 'Org Units', description: 'Teams/Competencies' },
   { label: 'Employees', description: 'Employee roster' },
   { label: 'Schedule Input', description: 'Availability matrix' },
-  { label: 'Work Periods', description: 'Shift definitions' },
+  { label: 'Work Periods', description: 'Work period definitions' },
   { label: 'Demand', description: 'Coverage requirements' },
   { label: 'Constraints', description: 'Rules & constraints' },
   { label: 'Optimization', description: 'Solver settings' },

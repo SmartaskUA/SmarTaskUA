@@ -1,5 +1,5 @@
 /**
- * Work Period Validator - Validation logic for work periods (shifts) and breaks
+ * Work Period Validator - Validation logic for work periods and breaks
  *
  * Validates:
  * - Work period codes, names, orders
@@ -92,7 +92,7 @@ export function validateFixedTimeRange(start, end) {
     return { valid: false, error: 'Start and end time cannot be the same' };
   }
 
-  // Overnight shifts are supported (e.g., 22:00-06:00 means 10 PM to 6 AM next day)
+  // Overnight work periods are supported (e.g., 22:00-06:00 means 10 PM to 6 AM next day)
 
   return { valid: true, error: null };
 }
@@ -215,7 +215,7 @@ export function validateBreaks(breaks, workPeriod) {
 
   if (workPeriod.workPeriodModel === 'fixed' && workPeriod.timeRange) {
     const { start, end } = workPeriod.timeRange;
-    const workDuration = calculateDuration(start, end); // Handles overnight shifts
+    const workDuration = calculateDuration(start, end); // Handles overnight work periods
 
     if (totalBreakMinutes >= workDuration) {
       return {

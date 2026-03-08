@@ -1,11 +1,11 @@
 {
-  "schemaVersion": "2.2",
+  "schemaVersion": "2.5",
   "problemType": "employee_scheduling",
 
   "metadata": {
     "problemId": "SISQUAL_OCTOBER_2025",
     "createdAt": "2026-02-02T16:00:00Z",
-    "description": "Sisqual October 2025 employee scheduling - Competency-based model with 15 employees assigned to 3 teams with competency levels (Storage, Checkout, Management)",
+    "description": "Sisqual October 2025 employee scheduling - v2.5 with operating hours. Competency-based model with 15 employees assigned to 3 teams with competency levels (Storage, Checkout, Management)",
     "source": "sisqual_example"
   },
 
@@ -22,6 +22,20 @@
       "start": "2025-10-01",
       "end": "2025-10-31",
       "includeBufferWeeks": false
+    }
+  },
+
+  "operatingHours": {
+    "enabled": true,
+    "dataFile": "operating_hours.csv",
+    "enforcement": "hard",
+    "validation": {
+      "requireAllDates": true,
+      "enforceWorkPeriodsWithinHours": true,
+      "enforceDemandWithinHours": true
+    },
+    "options": {
+      "allowMultipleTeamHours": true
     }
   },
 

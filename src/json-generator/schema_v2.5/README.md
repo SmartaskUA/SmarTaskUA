@@ -1,8 +1,79 @@
-# JSON + CSV Hybrid Problem Definition System (v2.2)
+# JSON + CSV Hybrid Problem Definition System (v2.5)
 
-## What's New in v2.2 🆕
+## What's New in v2.5 🆕
 
-Version 2.2 introduces a **centralized contract system** that eliminates duplication and enables reusable contract definitions with optional constraints:
+Version 2.5 introduces **operating hours management** that defines when facilities/teams are open for business:
+
+### Primary Feature: Operating Hours 🎯
+
+**The Problem:** Previous versions had no way to specify when the store/facility is actually open. This led to:
+- ❌ Potentially scheduling employees outside business hours
+- ❌ No distinction between facility hours and work period availability
+- ❌ Inability to model team-specific hours (e.g., storage opens earlier)
+
+**v2.5 Solution:** Dedicated `operating_hours.csv` file
+
+```csv
+date,team,open,close
+2025-10-01,ALL,08:00,22:00
+2025-10-02,Storage,06:00,23:00
+2025-10-02,Checkout,08:00,22:00
+2025-12-25,ALL,10:00,16:00
+2025-12-26,ALL,CLOSED,CLOSED
+```
+
+### Key Benefits
+
+| Benefit | Description |
+|---------|-------------|
+| **Explicit Hours** | Clear definition of when facility is open |
+| **Hard Constraints** | Algorithm enforces operating hours (no work when closed) |
+| **Team-Specific** | Different departments can have different hours |
+| **Holiday Support** | CLOSED days for holidays or special events |
+| **Validation** | Prevents invalid schedules outside operating hours |
+
+### v2.5 Features
+
+| Feature | Description |
+|---------|-------------|
+| **operating_hours.csv** | date,team,open,close format (4 columns) |
+| **Complete Coverage** | Must define hours for all dates in temporal scope |
+| **Team Override** | Specific teams override ALL (store-wide) hours |
+| **CLOSED Support** | Use CLOSED,CLOSED for non-operating days |
+| **Hard/Soft Enforcement** | Choose strict (hard) or preferential (soft) enforcement |
+
+### Example: Operating Hours in Action
+
+**problem.json:**
+```json
+{
+  "schemaVersion": "2.5",
+  "operatingHours": {
+    "enabled": true,
+    "dataFile": "operating_hours.csv",
+    "enforcement": "hard"
+  }
+}
+```
+
+**operating_hours.csv:**
+```csv
+date,team,open,close
+2025-10-01,ALL,08:00,22:00
+2025-10-02,Storage,06:00,23:00
+2025-10-02,Checkout,08:00,22:00
+```
+
+**Result:**
+- Oct-01: All teams 08:00-22:00
+- Oct-02: Storage opens early (06:00), Checkout normal hours
+- Algorithm cannot schedule employees outside these hours
+
+---
+
+## What's New in v2.2 (Previous Release)
+
+Version 2.2 introduced a **centralized contract system** that eliminates duplication and enables reusable contract definitions with optional constraints:
 
 ### Primary Feature: Contract System 🎯
 
@@ -149,15 +220,17 @@ JSON (problem.json)          CSV Files
 
 ---
 
-## When to Use v2.2 vs v2.1 vs v2.0
+## When to Use v2.5 vs v2.2 vs v2.1 vs v2.0
 
 | Use Case | Version | Why |
 |----------|---------|-----|
-| Contract-based hours | **v2.2 (Hybrid + Contracts)** | Employees have different default hours |
-| Variable hour requirements | **v2.2 (Hybrid + Contracts)** | Need specific hours on some days (4h, 6h, 8h) |
-| Large problems (365 days) | v2.2 or v2.1 (Hybrid) | Schedule matrix too large for JSON |
+| **Operating hours constraints** | **v2.5 (Latest)** | Need to enforce store/facility operating hours |
+| **Team-specific hours** | **v2.5 (Latest)** | Different departments have different operating hours |
+| Contract-based hours | v2.5 or v2.2 | Employees have different default hours (v2.2 feature) |
+| Variable hour requirements | v2.5 or v2.2 | Need specific hours on some days (v2.2 feature: 4h, 6h, 8h) |
+| Large problems (365 days) | v2.5, v2.2, or v2.1 | Schedule matrix too large for JSON |
 | Small problems (<30 days) | v2.0 (Pure JSON) | Everything fits in JSON comfortably |
-| Existing Excel schedules | v2.2 or v2.1 (Hybrid) | Easy conversion to CSV |
+| Existing Excel schedules | v2.5, v2.2, or v2.1 | Easy conversion to CSV |
 | API-only workflows | v2.0 (Pure JSON) | No CSV file management needed |
 
 ---
@@ -311,26 +384,32 @@ python problem_transformer.py --json problem.json --csv schedule_input.csv
 ## File Structure
 
 ```
-schema_v2.2/
-├── README.md                    # This file - overview and quick start
-├── FORMAT.md                    # Complete parameter reference (v2.2)
-├── schema.json                  # JSON Schema definition (v2.2)
+schema_v2.5/
+├── README.md                       # This file - overview and quick start
+├── FORMAT.md                       # Complete parameter reference (v2.5)
+├── schema.json                     # JSON Schema definition (v2.5)
 │
-├── validator/                   # Validation tools
-│   ├── validator.py             # v2.2 validator
+├── validator/                      # Validation tools
+│   ├── validator.py                # v2.5 validator with operating hours support
 │   └── requirements.txt
 │
-├── templates/                   # CSV templates for users
+├── templates/                      # CSV templates for users
 │   ├── demand_template.csv
 │   ├── schedule_input_template.csv
+│   ├── operating_hours_template.csv  # NEW in v2.5
 │   └── README.md
 │
-└── examples/                    # Working examples
+└── examples/                       # Working examples
     ├── README.md
-    └── contract_hours_example/  # v2.2 example with contracts
+    ├── sisqual_example/            # v2.5 example with operating hours
+    │   ├── problem.json
+    │   ├── demand.csv
+    │   ├── schedule_input.csv
+    │   ├── operating_hours.csv     # NEW in v2.5
+    │   └── README.md
+    └── time_constraints_example/   # v2.5 time window example
         ├── problem.json
-        ├── demand.csv
-        ├── schedule_input.csv
+        ├── operating_hours.csv     # NEW in v2.5
         └── README.md
 ```
 
@@ -490,35 +569,38 @@ Priority hierarchy defines team assignment preferences for both employee models:
 
 ---
 
-## Differences from v2.1
+## Differences Between Versions
 
-| Feature | v2.1 | v2.2 |
-|---------|------|------|
-| Schema version | `"2.1"` | `"2.2"` |
-| "A" in schedule_input.csv | Available (constraint) | Auto-allocate from contract |
-| Numbers in schedule_input.csv | Invalid (error) | Valid (specific hours 1-16) |
-| workHoursPerDay field | Not present | New field in employee definitions |
-| Contract defaults | N/A | 8h for fullTime, 4h for partTime |
-| Mixed hour allocation | Not supported | Supported (mix A and numbers) |
+| Feature | v2.1 | v2.2 | v2.5 |
+|---------|------|------|------|
+| Schema version | `"2.1"` | `"2.2"` | `"2.5"` |
+| Operating hours | Not available | Not available | **New:** operating_hours.csv |
+| Team-specific hours | N/A | N/A | **New:** Supported via CSV |
+| "A" in schedule_input.csv | Available (constraint) | Auto-allocate from contract | Same as v2.2 |
+| Numbers in schedule_input.csv | Invalid (error) | Valid (specific hours 1-16) | Same as v2.2 |
+| workHoursPerDay field | Not present | New field | Same as v2.2 |
+| Contract defaults | N/A | 8h for fullTime, 4h for partTime | Same as v2.2 |
+| CSV files | 2 (schedule, demand) | 2 (schedule, demand) | **3 (+ operating_hours)** |
 
 ---
 
-## Differences from v2.0
+## Differences from v2.0 (Pure JSON)
 
-| Feature | v2.0 (Pure JSON) | v2.2 (Hybrid + Contracts) |
-|---------|------------------|---------------------------|
+| Feature | v2.0 | v2.5 |
+|---------|------|------|
+| Operating hours | Not supported | **operating_hours.csv** |
 | Schedule constraints | In JSON as arrays | In schedule_input.csv |
-| Work hour specification | Not supported | **v2.2: A and numbers in CSV** |
-| Contract hours | Not supported | **v2.2: workHoursPerDay in JSON** |
-| Demand requirements | In JSON as arrays | In demand.csv (optional) |
-| File count | 1 (JSON only) | 2-3 (JSON + CSVs) |
+| Work hour specification | Not supported | A and numbers in CSV (v2.2) |
+| Contract hours | Not supported | workHoursPerDay in JSON (v2.2) |
+| Demand requirements | In JSON as arrays | In demand.csv |
+| File count | 1 (JSON only) | 3-4 (JSON + CSVs) |
 | Max problem size | ~30 days practical | 365+ days no problem |
 | Excel compatibility | Requires conversion | Direct CSV export |
 | Human editing | Difficult (nested arrays) | Easy (open CSVs in Excel) |
 
 ---
 
-## Example: From Excel to Hybrid (v2.2)
+## Example: From Excel to Hybrid (v2.5)
 
 **Excel Input (2030Exemplo2.xlsx):**
 - Sheet1: Employee schedules (ID, Name, Teams, Contract Hours, 31 day columns)

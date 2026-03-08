@@ -192,7 +192,7 @@ const Step1_Setup = () => {
       title: 'Fixed Time Ranges',
       description: 'Specific start and end times',
       icon: ScheduleIcon,
-      tooltip: 'Each work period has specific start and end times (e.g., Morning: 08:00-16:00). Best for organizations with fixed shift times.',
+      tooltip: 'Each work period has specific start and end times (e.g., Morning: 08:00-16:00). Best for organizations with fixed work period schedules.',
       color: 'primary.main'
     },
     {
@@ -200,7 +200,7 @@ const Step1_Setup = () => {
       title: 'Flexible Duration',
       description: 'Duration + allowed start times',
       icon: HourglassIcon,
-      tooltip: 'Each work period has a duration and multiple allowed start times (e.g., 8 hours, can start 06:00-08:00). More flexible for variable shift patterns.',
+      tooltip: 'Each work period has a duration and multiple allowed start times (e.g., 8 hours, can start 06:00-08:00). More flexible for variable work period patterns.',
       color: 'primary.main'
     }
   ];
@@ -404,7 +404,7 @@ const Step1_Setup = () => {
                 Work Period Model
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                Choose how work periods (shifts) are defined:
+                Choose how work periods are defined:
               </Typography>
 
               {errors.workPeriodModel && (

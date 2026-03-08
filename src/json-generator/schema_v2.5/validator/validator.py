@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 """
-Schema v2.2 Validator for Employee Scheduling Problems
+Schema v2.5 Validator for Employee Scheduling Problems
 
-Validates that problem.json, demand.csv, and schedule_input.csv are consistent
-and can be used together for scheduling. v2.2 adds support for:
+Validates that problem.json and all CSV files are consistent
+and can be used together for scheduling.
+
+v2.5 adds support for:
+- Operating hours management via operating_hours.csv
+- Team-specific operating hours
+- Hard constraint enforcement for operating hours
+
+v2.2 features:
 - Contract-based hour allocation (A)
 - Specific hour requirements (1-16)
 - Time window constraints using Allen Interval Algebra (EQUALS:, INCLUDE:, EXCEPT:)
@@ -108,9 +115,14 @@ def validate_time_format(time_str: str) -> Tuple[bool, Optional[str]]:
     return True, None
 
 
-def validate_time_range(time_range_str: str) -> Tuple[bool, Optional[str]]:
+def validate_time_range(time_range_str: str, allow_cross_midnight: bool = True) -> Tuple[bool, Optional[str]]:
     """
-    Validate time range format HH:MM-HH:MM with proper ranges and start < end.
+    Validate time range format HH:MM-HH:MM with proper ranges.
+
+    Args:
+        time_range_str: Time range in format HH:MM-HH:MM
+        allow_cross_midnight: If True, allows ranges like 22:00-06:30 (crosses midnight).
+                             If False, requires start < end.
 
     Returns:
         (is_valid, error_message): True if valid, False with error message if invalid
@@ -134,12 +146,16 @@ def validate_time_range(time_range_str: str) -> Tuple[bool, Optional[str]]:
     if end_mins > 59:
         return False, f"Invalid end minutes '{end_mins}' in '{time_range_str}' (must be 00-59)"
 
-    # Check start < end (convert to minutes for comparison)
+    # Check start != end (same time is invalid)
     start_total_mins = start_hours * 60 + start_mins
     end_total_mins = end_hours * 60 + end_mins
 
-    if start_total_mins >= end_total_mins:
-        return False, f"Start time must be before end time in '{time_range_str}'"
+    if start_total_mins == end_total_mins:
+        return False, f"Start and end time cannot be the same in '{time_range_str}'"
+
+    # If cross-midnight not allowed, check start < end
+    if not allow_cross_midnight and start_total_mins > end_total_mins:
+        return False, f"Start time must be before end time in '{time_range_str}' (cross-midnight ranges not allowed in this context)"
 
     return True, None
 
@@ -174,7 +190,7 @@ def validate_time_window_constraint(constraint_str: str) -> Tuple[bool, Optional
 
 
 class SchemaValidator:
-    """Validates schema v2.2 JSON and CSV files"""
+    """Validates schema v2.5 JSON and CSV files"""
 
     def __init__(self, problem_json_path: str):
         self.problem_json_path = Path(problem_json_path)
@@ -183,6 +199,7 @@ class SchemaValidator:
         self.problem_data: Optional[Dict] = None
         self.demand_df: Optional[pd.DataFrame] = None
         self.schedule_df: Optional[pd.DataFrame] = None
+        self.operating_hours_df: Optional[pd.DataFrame] = None  # v2.5: operating hours data
         self.employee_work_hours: Dict[str, float] = {}  # v2.2: employee_id -> workHoursPerDay
         self.contract_definitions: Dict[str, Dict] = {}  # v2.2: contract_id -> contract_data
 
@@ -257,8 +274,8 @@ class SchemaValidator:
 
         # Check schema version
         schema_version = self.problem_data.get("schemaVersion")
-        if schema_version != "2.2":
-            self.report.add_error("JSON", f"Invalid schema version: expected '2.2', got '{schema_version}'", "schemaVersion")
+        if schema_version != "2.5":
+            self.report.add_error("JSON", f"Invalid schema version: expected '2.5', got '{schema_version}'", "schemaVersion")
 
         # Check problem type
         problem_type = self.problem_data.get("problemType")
@@ -450,10 +467,10 @@ class SchemaValidator:
         """Validate demand configuration in JSON"""
         demand = self.problem_data.get("demand", {})
 
-        # Check shift model
-        shift_model = demand.get("shiftModel")
-        if shift_model not in ["fixed", "flexible"]:
-            self.report.add_error("JSON", f"Invalid shift model: {shift_model}", "demand.shiftModel")
+        # v2.5: Check work period model (was shiftModel in v2.2)
+        work_period_model = demand.get("workPeriodModel")
+        if work_period_model not in ["fixed", "flexible"]:
+            self.report.add_error("JSON", f"Invalid work period model: {work_period_model}", "demand.workPeriodModel")
 
         # Check organizational units (both models use teams)
         org_units = demand.get("organizationalUnits", {})
@@ -466,30 +483,21 @@ class SchemaValidator:
             if len(codes) != len(set(codes)):
                 self.report.add_error("JSON", "Duplicate team codes in organizationalUnits.teams", "demand.organizationalUnits.teams")
 
-        # Validate shifts
-        shifts = demand.get("shifts")
-        if shifts is not None:
-            shift_codes = set()
-            shift_orders = set()
-            for idx, shift in enumerate(shifts):
-                code = shift.get("code")
+        # v2.5: Validate work periods (was shifts in v2.2)
+        work_periods = demand.get("workPeriods")
+        if work_periods is not None:
+            wp_codes = set()
+            for idx, wp in enumerate(work_periods):
+                code = wp.get("code")
                 if not code:
-                    self.report.add_error("JSON", f"Shift missing 'code' field", f"demand.shifts[{idx}]")
-                elif code in shift_codes:
-                    self.report.add_error("JSON", f"Duplicate shift code: {code}", f"demand.shifts[{idx}].code")
+                    self.report.add_error("JSON", f"Work period missing 'code' field", f"demand.workPeriods[{idx}]")
+                elif code in wp_codes:
+                    self.report.add_error("JSON", f"Duplicate work period code: {code}", f"demand.workPeriods[{idx}].code")
                 else:
-                    shift_codes.add(code)
+                    wp_codes.add(code)
 
-                # Check order uniqueness
-                order = shift.get("order")
-                if order is not None:
-                    if order in shift_orders:
-                        self.report.add_error("JSON", f"Duplicate shift order: {order}", f"demand.shifts[{idx}].order")
-                    else:
-                        shift_orders.add(order)
-
-                # Validate time range if present (for fixed shift model)
-                time_range = shift.get("timeRange")
+                # Validate time range (required for work periods)
+                time_range = wp.get("timeRange")
                 if time_range:
                     start_time = time_range.get("start")
                     end_time = time_range.get("end")
@@ -497,28 +505,33 @@ class SchemaValidator:
                     if start_time:
                         is_valid, error_msg = validate_time_format(start_time)
                         if not is_valid:
-                            self.report.add_error("JSON", error_msg, f"demand.shifts[{idx}].timeRange.start")
+                            self.report.add_error("JSON", error_msg, f"demand.workPeriods[{idx}].timeRange.start")
 
                     if end_time:
                         is_valid, error_msg = validate_time_format(end_time)
                         if not is_valid:
-                            self.report.add_error("JSON", error_msg, f"demand.shifts[{idx}].timeRange.end")
+                            self.report.add_error("JSON", error_msg, f"demand.workPeriods[{idx}].timeRange.end")
 
                     # Check start < end
                     if start_time and end_time:
                         combined_range = f"{start_time}-{end_time}"
                         is_valid, error_msg = validate_time_range(combined_range)
                         if not is_valid:
-                            self.report.add_error("JSON", f"Shift time range validation failed: {error_msg}", f"demand.shifts[{idx}].timeRange")
+                            self.report.add_error("JSON", f"Work period time range validation failed: {error_msg}", f"demand.workPeriods[{idx}].timeRange")
 
     def _validate_csv_files(self):
         """Load and validate CSV files"""
         if not self.problem_data:
             return
 
-        # Get CSV file paths - BOTH ARE REQUIRED
+        # Get CSV file paths - demand and schedule are REQUIRED
         demand_file = self.problem_data.get("demand", {}).get("dataFile")
         schedule_file = self.problem_data.get("scheduleInput", {}).get("dataFile")
+
+        # v2.5: Operating hours is OPTIONAL (only if enabled)
+        operating_hours_config = self.problem_data.get("operatingHours", {})
+        operating_hours_enabled = operating_hours_config.get("enabled", False)
+        operating_hours_file = operating_hours_config.get("dataFile")
 
         # Check that demand.csv is specified and exists (REQUIRED)
         if not demand_file:
@@ -534,6 +547,14 @@ class SchemaValidator:
             schedule_path = self.problem_dir / schedule_file
             self._validate_schedule_input_csv(schedule_path)
 
+        # v2.5: Check operating_hours.csv if enabled
+        if operating_hours_enabled:
+            if not operating_hours_file:
+                self.report.add_error("CSV", "operatingHours.enabled=true but operatingHours.dataFile is not specified", "operatingHours.dataFile")
+            else:
+                operating_hours_path = self.problem_dir / operating_hours_file
+                self._validate_operating_hours_csv(operating_hours_path)
+
     def _validate_demand_csv(self, csv_path: Path):
         """Validate demand.csv file"""
         if not csv_path.exists():
@@ -546,8 +567,8 @@ class SchemaValidator:
             self.report.add_error("CSV", f"Error reading demand CSV: {e}", str(csv_path))
             return
 
-        # Check required columns
-        required_cols = ["date", "shift", "team", "minimum", "ideal", "estimated"]
+        # v2.5: Check required columns (workPeriod instead of shift)
+        required_cols = ["date", "workPeriod", "team", "minimum", "ideal", "estimated"]
         missing_cols = [col for col in required_cols if col not in self.demand_df.columns]
         if missing_cols:
             self.report.add_error("CSV", f"Demand CSV missing required columns: {missing_cols}", str(csv_path))
@@ -586,14 +607,14 @@ class SchemaValidator:
                     f"{csv_path.name}:row {idx+2}"
                 )
 
-        # Check for duplicate rows
-        duplicates = self.demand_df[self.demand_df.duplicated(subset=["date", "shift", "team"], keep=False)]
+        # v2.5: Check for duplicate rows
+        duplicates = self.demand_df[self.demand_df.duplicated(subset=["date", "workPeriod", "team"], keep=False)]
         if not duplicates.empty:
             dup_rows = duplicates.index + 2
-            self.report.add_error("CSV", f"Duplicate rows (same date/shift/team) at rows: {list(dup_rows)}", str(csv_path.name))
+            self.report.add_error("CSV", f"Duplicate rows (same date/workPeriod/team) at rows: {list(dup_rows)}", str(csv_path.name))
 
     def _validate_schedule_input_csv(self, csv_path: Path):
-        """Validate schedule_input.csv file (v2.2: supports A and numeric values)"""
+        """Validate schedule_input.csv file (v2.5: supports A, numeric values, and time constraints)"""
         if not csv_path.exists():
             self.report.add_error("CSV", f"Schedule input CSV file not found: {csv_path}", "scheduleInput.dataFile")
             return
@@ -720,6 +741,118 @@ class SchemaValidator:
                     f"{csv_path.name}:employee {emp_id}"
                 )
 
+    def _validate_operating_hours_csv(self, csv_path: Path):
+        """Validate operating_hours.csv file (v2.5)"""
+        if not csv_path.exists():
+            self.report.add_error("CSV", f"Operating hours CSV file not found: {csv_path}", "operatingHours.dataFile")
+            return
+
+        try:
+            self.operating_hours_df = pd.read_csv(csv_path, encoding='utf-8')
+        except Exception as e:
+            self.report.add_error("CSV", f"Error reading operating hours CSV: {e}", str(csv_path))
+            return
+
+        # Check required columns (NO description column in v2.5)
+        required_cols = ["date", "team", "open", "close"]
+        missing_cols = [col for col in required_cols if col not in self.operating_hours_df.columns]
+        if missing_cols:
+            self.report.add_error("CSV", f"Operating hours CSV missing required columns: {missing_cols}. Required: date,team,open,close", str(csv_path))
+            return
+
+        # Validate each row
+        dates_covered = set()
+        for idx, row in self.operating_hours_df.iterrows():
+            row_num = idx + 2  # +2 because CSV has header and is 1-indexed
+
+            # Validate date format
+            date_str = str(row["date"])
+            try:
+                parse_date(date_str)
+                dates_covered.add(date_str)
+            except Exception:
+                self.report.add_error("CSV", f"Invalid date format: {date_str}", f"{csv_path.name}:row {row_num}")
+                continue
+
+            # Validate team (can be "ALL" or any team code)
+            team = str(row["team"]).strip()
+            if not team:
+                self.report.add_error("CSV", "Team column cannot be empty", f"{csv_path.name}:row {row_num}")
+
+            # Validate open/close times
+            open_time = str(row["open"]).strip()
+            close_time = str(row["close"]).strip()
+
+            # Check if CLOSED (both must be CLOSED together)
+            if open_time.upper() == "CLOSED" or close_time.upper() == "CLOSED":
+                if open_time.upper() != "CLOSED" or close_time.upper() != "CLOSED":
+                    self.report.add_error(
+                        "CSV",
+                        f"When using CLOSED, both open and close must be 'CLOSED' (found: open='{open_time}', close='{close_time}')",
+                        f"{csv_path.name}:row {row_num}"
+                    )
+            else:
+                # Validate time format
+                is_valid_open, error_msg = validate_time_format(open_time)
+                if not is_valid_open:
+                    self.report.add_error("CSV", f"Invalid open time: {error_msg}", f"{csv_path.name}:row {row_num}")
+
+                is_valid_close, error_msg = validate_time_format(close_time)
+                if not is_valid_close:
+                    self.report.add_error("CSV", f"Invalid close time: {error_msg}", f"{csv_path.name}:row {row_num}")
+
+                # Check that open < close
+                if is_valid_open and is_valid_close:
+                    try:
+                        open_parts = open_time.split(":")
+                        close_parts = close_time.split(":")
+                        open_minutes = int(open_parts[0]) * 60 + int(open_parts[1])
+                        close_minutes = int(close_parts[0]) * 60 + int(close_parts[1])
+
+                        if open_minutes >= close_minutes:
+                            self.report.add_error(
+                                "CSV",
+                                f"Opening time ({open_time}) must be before closing time ({close_time})",
+                                f"{csv_path.name}:row {row_num}"
+                            )
+                    except Exception:
+                        pass  # Already reported time format error above
+
+        # v2.5: Check that all dates in temporalScope are covered (if requireAllDates=true)
+        operating_hours_config = self.problem_data.get("operatingHours", {})
+        validation_config = operating_hours_config.get("validation", {})
+        require_all_dates = validation_config.get("requireAllDates", True)
+
+        if require_all_dates and self.problem_data:
+            temporal_scope = self.problem_data.get("temporalScope", {})
+            target_period = temporal_scope.get("targetPeriod", {})
+            start_date_str = target_period.get("start")
+            end_date_str = target_period.get("end")
+
+            if start_date_str and end_date_str:
+                try:
+                    start_date = parse_date(start_date_str).date()
+                    end_date = parse_date(end_date_str).date()
+
+                    # Generate all expected dates
+                    expected_dates = set()
+                    current_date = start_date
+                    while current_date <= end_date:
+                        expected_dates.add(current_date.isoformat())
+                        current_date += timedelta(days=1)
+
+                    # Check coverage
+                    missing_dates = expected_dates - dates_covered
+                    if missing_dates:
+                        missing_sample = sorted(missing_dates)[:5]  # Show first 5
+                        self.report.add_error(
+                            "CSV",
+                            f"Operating hours CSV does not cover all dates in temporalScope.targetPeriod. Missing {len(missing_dates)} dates. First few: {missing_sample}",
+                            str(csv_path)
+                        )
+                except Exception as e:
+                    self.report.add_warning("CSV", f"Could not validate date coverage: {e}", str(csv_path))
+
     def _cross_validate(self):
         """Cross-validate JSON and CSV data"""
         if not self.problem_data:
@@ -797,20 +930,20 @@ class SchemaValidator:
 
         # Cross-validate with demand.csv
         if self.demand_df is not None:
-            # Get shift codes from JSON
+            # v2.5: Get work period codes from JSON (was shifts in v2.2)
             demand = self.problem_data.get("demand", {})
-            shifts = demand.get("shifts", [])
-            json_shift_codes = {s.get("code") for s in shifts if s.get("code")}
+            work_periods = demand.get("workPeriods", [])
+            json_wp_codes = {wp.get("code") for wp in work_periods if wp.get("code")}
 
-            # Check all CSV shift codes exist in JSON
-            if json_shift_codes:  # Only validate if shifts are defined
-                csv_shift_codes = set(self.demand_df["shift"].unique())
-                missing_shifts = csv_shift_codes - json_shift_codes
-                if missing_shifts:
+            # Check all CSV work period codes exist in JSON
+            if json_wp_codes:  # Only validate if work periods are defined
+                csv_wp_codes = set(self.demand_df["workPeriod"].unique())
+                missing_wps = csv_wp_codes - json_wp_codes
+                if missing_wps:
                     self.report.add_error(
                         "Cross-validation",
-                        f"Shift codes in demand.csv not found in JSON shifts: {missing_shifts}",
-                        "demand.csv:shift"
+                        f"Work period codes in demand.csv not found in JSON workPeriods: {missing_wps}",
+                        "demand.csv:workPeriod"
                     )
 
             # Get organizational units from JSON (both models use teams)
@@ -850,6 +983,78 @@ class SchemaValidator:
                 except Exception as e:
                     self.report.add_warning("Cross-validation", f"Could not validate demand dates: {e}")
 
+        # v2.5: Cross-validate operating_hours.csv with JSON
+        if self.operating_hours_df is not None:
+            # Get organizational units (teams)
+            demand = self.problem_data.get("demand", {})
+            org_units = demand.get("organizationalUnits", {})
+            teams_list = org_units.get("teams", [])
+            json_team_codes = {t.get("code") for t in teams_list if t.get("code")}
+            json_team_codes.add("ALL")  # "ALL" is always valid
+
+            # Check all team codes in operating hours exist in JSON
+            csv_team_codes = set(self.operating_hours_df["team"].unique())
+            invalid_teams = csv_team_codes - json_team_codes
+            if invalid_teams:
+                self.report.add_error(
+                    "Cross-validation",
+                    f"Team codes in operating_hours.csv not found in JSON organizationalUnits.teams (or 'ALL'): {invalid_teams}",
+                    "operating_hours.csv:team"
+                )
+
+            # v2.5: Validate work periods fit within operating hours (if enabled)
+            operating_hours_config = self.problem_data.get("operatingHours", {})
+            validation_config = operating_hours_config.get("validation", {})
+            enforce_work_periods = validation_config.get("enforceWorkPeriodsWithinHours", True)
+
+            if enforce_work_periods and demand:
+                work_periods = demand.get("workPeriods", [])
+                for wp in work_periods:
+                    wp_code = wp.get("code")
+                    time_range = wp.get("timeRange", {})
+                    wp_start = time_range.get("start")
+                    wp_end = time_range.get("end")
+
+                    if wp_start and wp_end:
+                        # For each date in operating hours, check if work period fits
+                        # This is a simplified check - assumes work periods should fit within at least some operating hours
+                        # Full validation would require checking per-team and per-date
+                        self.report.add_warning(
+                            "Cross-validation",
+                            f"Work period '{wp_code}' ({wp_start}-{wp_end}) defined. Ensure it fits within operating hours defined in operating_hours.csv. Full per-date/per-team validation requires algorithm implementation.",
+                            "demand.workPeriods vs operating_hours.csv"
+                        )
+
+            # v2.5: Check demand is not specified when facility is CLOSED (if enabled)
+            enforce_demand = validation_config.get("enforceDemandWithinHours", True)
+            if enforce_demand and self.demand_df is not None:
+                # Build a set of (date, team) that are CLOSED
+                closed_days = set()
+                for idx, row in self.operating_hours_df.iterrows():
+                    if str(row["open"]).upper() == "CLOSED":
+                        date_str = str(row["date"])
+                        team = str(row["team"])
+                        if team == "ALL":
+                            # If ALL is closed, all teams are closed
+                            for t in json_team_codes:
+                                if t != "ALL":
+                                    closed_days.add((date_str, t))
+                        else:
+                            closed_days.add((date_str, team))
+
+                # Check if demand specifies coverage on closed days
+                for idx, row in self.demand_df.iterrows():
+                    date_str = str(row["date"])
+                    team = str(row["team"])
+                    if (date_str, team) in closed_days:
+                        minimum = row.get("minimum", 0)
+                        if minimum > 0:
+                            self.report.add_error(
+                                "Cross-validation",
+                                f"Demand specifies minimum={minimum} for team '{team}' on {date_str}, but facility is CLOSED on this day according to operating_hours.csv",
+                                f"demand.csv:row {idx+2} vs operating_hours.csv"
+                            )
+
     def _generate_stats(self):
         """Generate statistics about the problem"""
         if not self.problem_data:
@@ -881,10 +1086,10 @@ class SchemaValidator:
         stats["target_period_start"] = temporal.get("targetPeriod", {}).get("start")
         stats["target_period_end"] = temporal.get("targetPeriod", {}).get("end")
 
-        # Shift stats
+        # v2.5: Work period stats (was shifts in v2.2)
         demand = self.problem_data.get("demand", {})
-        shifts = demand.get("shifts", [])
-        stats["num_shifts"] = len(shifts) if shifts else 0
+        work_periods = demand.get("workPeriods", [])
+        stats["num_work_periods"] = len(work_periods) if work_periods else 0
 
         # Organizational unit stats (both models use teams)
         org_units = demand.get("organizationalUnits", {})
@@ -899,13 +1104,24 @@ class SchemaValidator:
             stats["schedule_csv_employees"] = len(self.schedule_df)
             stats["schedule_csv_days"] = len(self.schedule_df.columns) - 1
 
+        # v2.5: Operating hours stats
+        if self.operating_hours_df is not None:
+            stats["operating_hours_csv_rows"] = len(self.operating_hours_df)
+            stats["operating_hours_csv_unique_dates"] = len(self.operating_hours_df["date"].unique())
+            stats["operating_hours_csv_unique_teams"] = len(self.operating_hours_df["team"].unique())
+            # Count CLOSED days
+            closed_count = len(self.operating_hours_df[
+                self.operating_hours_df["open"].astype(str).str.upper() == "CLOSED"
+            ])
+            stats["operating_hours_closed_days"] = closed_count
+
         self.report.stats = stats
 
 
 def print_report(report: ValidationReport, verbose: bool = False):
     """Print validation report in human-readable format"""
     print("\n" + "=" * 80)
-    print("  SCHEMA v2.2 VALIDATION REPORT")
+    print("  SCHEMA v2.5 VALIDATION REPORT")
     print("=" * 80)
 
     if report.success:
@@ -947,7 +1163,7 @@ def print_report(report: ValidationReport, verbose: bool = False):
 def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(
-        description="Validate Schema v2.2 employee scheduling problem files (JSON + CSVs)"
+        description="Validate Schema v2.5 employee scheduling problem files (JSON + CSVs)"
     )
     parser.add_argument(
         "problem_json",

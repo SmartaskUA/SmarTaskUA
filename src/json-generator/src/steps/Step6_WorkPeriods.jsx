@@ -16,7 +16,7 @@ import { validateWorkPeriodsExist } from '../utils/validators/workPeriodValidato
 /**
  * Step 6: Work Periods
  *
- * Define work period types (shifts), time ranges, and break rules.
+ * Define work period types, time ranges, and break rules.
  * Supports two models:
  * - Fixed: Specific time ranges (e.g., Morning: 08:00-16:00)
  * - Flexible: Duration + allowed start times (e.g., 8h, can start 06:00-08:00)
@@ -90,7 +90,7 @@ const Step6_WorkPeriods = () => {
           Work Period Definitions
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Define shift types, time ranges, and break rules for your scheduling problem.
+          Define work period types, time ranges, and break rules for your scheduling problem.
         </Typography>
       </Box>
 

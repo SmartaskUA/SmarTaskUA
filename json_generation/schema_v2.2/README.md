@@ -117,7 +117,7 @@ JSON (problem.json)          CSV Files
 ├─ Contract definitions      schedule_input.csv (Requirements & Constraints)
 ├─ Employee list             ├─ Work hour requirements (A, 4, 6, 8)
 ├─ Priority hierarchy        ├─ Availability constraints (VAC, DL, DLF)
-├─ Shifts & competencies     └─ Values: A, 1-16, VAC, DL
+├─ Shifts & teams            └─ Values: A, 1-16, VAC, DL
 ├─ Constraints
 └─ Optimization settings     demand.csv (Coverage Requirements)
                              ├─ Daily coverage needs
@@ -139,8 +139,8 @@ JSON (problem.json)          CSV Files
 ### What Goes in CSV
 ✅ **schedule_input.csv** - Work requirements and availability constraints
   - When employees should work (A = auto from contract, 4/6/8 = specific hours)
-  - When employees are NOT available (VAC, DL, EnfD)
-  - Pre-assigned time windows (optional)
+  - When employees are NOT available (VAC, NOT, custom constraints)
+  - Time window constraints (EQUALS/INCLUDE/EXCEPT with Allen Interval Algebra)
 
 ✅ **demand.csv** - Daily coverage requirements
   - How many people needed per day/shift/team
@@ -216,13 +216,13 @@ Start with `examples/contract_hours_example/problem.json` and modify:
       {
         "id": "EMP001",
         "name": "John Smith - Full Time",
-        "competencies": [{"code": "TeamA", "level": 1}],
+        "teams": [{"code": "TeamA", "name": "Team A", "level": 1}],
         "contractType": "fullTime_8h"
       },
       {
         "id": "EMP002",
         "name": "Jane Doe - Part Time",
-        "competencies": [{"code": "TeamA", "level": 2}],
+        "teams": [{"code": "TeamA", "name": "Team A", "level": 2}],
         "contractType": "partTime_4h"
       }
     ]
@@ -259,13 +259,20 @@ EMP003,6,VAC,VAC,A,...
 - `A` = Auto-allocate from contract (uses workHoursPerDay)
 - `4`, `6`, `8`, etc. = Work exactly this many hours (1-16)
 
-**Constraints (unchanged):**
-- `DL` = Day off (cannot work)
+**Standard Constraints (always valid):**
 - `VAC` = Vacation (cannot work)
-- `DLF` = Fixed day off (cannot swap)
-- `EnfD` = Sick leave (cannot work)
 - `NOT` = Unavailable (cannot work)
-- `10:00-14:00` = Pre-assigned time window (optional constraint)
+
+**Custom Constraints (must be defined in scheduleInput.markingTypes):**
+- `DL` = Day off (example custom constraint)
+- `DLF` = Fixed day off (example custom constraint)
+- `EnfD` = Sick leave (example custom constraint)
+- Any project-specific codes you define
+
+**Time Window Constraints (Allen Interval Algebra):**
+- `EQUALS:08:00-16:00` = Must work exactly 8 AM-4 PM
+- `INCLUDE:09:00-17:00` = Must cover 9 AM-5 PM minimum
+- `EXCEPT:14:00-22:00` = Cannot work 2 PM-10 PM
 
 **v2.2 Important:** This CSV now contains BOTH work requirements (A, numbers) AND constraints (DL, VAC, etc.)
 
@@ -279,7 +286,7 @@ cp templates/demand_template.csv my_demand.csv
 
 **Option B: Create from scratch**
 ```csv
-date,shift,team,minimum,ideal,estimated
+date,workPeriod,team,minimum,ideal,estimated
 2025-01-01,M,TeamA,2,3,2
 2025-01-01,T,TeamA,2,2,2
 2025-01-01,M,TeamB,1,2,1
@@ -287,7 +294,7 @@ date,shift,team,minimum,ideal,estimated
 
 **Purpose:** Tell the algorithm HOW MANY people are needed each day/shift/team
 
-**Note:** The "team" column contains team codes (for team model) or competency codes (for competency model) - same CSV format works for both!
+**Note:** The "team" column always contains team codes for both employee models. In the competency-based model, employees are assigned to teams with proficiency levels, but demand is specified at the team level only (not per level).
 
 ### 4. Validate & Use
 
@@ -378,7 +385,11 @@ EMP002,4,A,DL
 
 ### 3. Team-Based or Competency-Based Employee Model
 
-**Simple/Team Model:**
+Both models use **teams**, but differ in how team assignments work:
+
+**Team-Based Model:**
+- Employees are assigned to teams as simple codes
+- Teams represent departments, groups, or work areas
 ```json
 {
   "employees": {
@@ -387,15 +398,18 @@ EMP002,4,A,DL
       {
         "id": "EMP001",
         "name": "John Smith",
-        "teams": ["TeamA"],
-        "workHoursPerDay": 8
+        "teams": ["TeamA", "TeamB"],
+        "contractType": "fullTime_8h"
       }
     ]
   }
 }
 ```
 
-**Competency Model:**
+**Competency-Based Model:**
+- Employees are assigned to teams with **competency levels**
+- Levels indicate proficiency/expertise (e.g., 1=junior, 2=mid, 3=senior)
+- Enables skill-based scheduling and training progression
 ```json
 {
   "employees": {
@@ -403,11 +417,12 @@ EMP002,4,A,DL
     "competency": [
       {
         "id": "EMP001",
-        "competencies": [
-          {"code": "Management", "level": 1}
+        "name": "John Smith",
+        "teams": [
+          {"code": "Engineering", "name": "Engineering Team", "level": 2},
+          {"code": "Support", "name": "Support Team", "level": 1}
         ],
-        "contractType": "fullTime",
-        "workHoursPerDay": 8
+        "contractType": "fullTime_8h"
       }
     ]
   }
@@ -416,33 +431,45 @@ EMP002,4,A,DL
 
 ### 4. Optional Priority Hierarchy
 
-Priority hierarchy works for both team and competency models:
+Priority hierarchy defines team assignment preferences for both employee models:
 
-**For Team Model:**
+**For Team-Based Model:**
 ```json
 {
   "demand": {
     "priorityHierarchy": [
       {
         "rank": 1,
-        "team": "TeamA",
-        "description": "Critical operations"
+        "team": "Engineering",
+        "description": "Engineering team has highest priority"
+      },
+      {
+        "rank": 2,
+        "team": "Support",
+        "description": "Support team secondary priority"
       }
     ]
   }
 }
 ```
 
-**For Competency Model:**
+**For Competency-Based Model:**
+- Priority hierarchy uses the same `team` field
+- Optionally specify `level` to prioritize by competency level
 ```json
 {
   "demand": {
     "priorityHierarchy": [
       {
         "rank": 1,
-        "competency": "Management",
-        "level": "N=1",
-        "description": "Management team priority"
+        "team": "Engineering",
+        "level": "N>=2",
+        "description": "Senior engineers (level 2+) highest priority"
+      },
+      {
+        "rank": 2,
+        "team": "Engineering",
+        "description": "All engineering levels secondary priority"
       }
     ]
   }
@@ -519,7 +546,7 @@ The validator performs:
 - **CSV format validation** (dates, columns, values)
 - **v2.2: Numeric value validation** (1-16 hours)
 - **v2.2: Contract validation** (workHoursPerDay when "A" is used)
-- **Cross-validation** (employee IDs, shift codes, date ranges match)
+- **Cross-validation** (employee IDs, work period codes, date ranges match)
 
 **Quick validation:**
 ```bash
@@ -556,15 +583,22 @@ python3 validator/validator.py examples/contract_hours_example/problem.json --js
 If you have existing v2.1 files and want to use v2.2 features:
 
 1. **Update schemaVersion** from `"2.1"` to `"2.2"` in JSON
-2. **Add workHoursPerDay** to employees:
+2. **Add contracts and update employees:**
    ```json
-   "competency": [
-     {
-       "id": "EMP001",
-       "contractType": "fullTime",
-       "workHoursPerDay": 8  // Add this
-     }
-   ]
+   "contracts": {
+     "definitions": [
+       {"id": "fullTime", "name": "Full Time", "workHoursPerDay": 8}
+     ]
+   },
+   "employees": {
+     "competency": [
+       {
+         "id": "EMP001",
+         "teams": [{"code": "TeamA", "name": "Team A", "level": 1}],
+         "contractType": "fullTime"
+       }
+     ]
+   }
    ```
 3. **Review schedule_input.csv:**
    - "A" now means "auto-allocate from contract" (not just "available")

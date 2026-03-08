@@ -1,6 +1,11 @@
-# JSON + CSV Hybrid Format Reference (v2.2)
+# JSON + CSV Hybrid Format Reference (v2.5)
 
 Quick reference guide for the hybrid scheduling problem format.
+
+**What's New in v2.5:**
+- 🆕 **Operating Hours Management** via `operating_hours.csv` - Define when facility/teams are open
+- 🆕 **Team-Specific Operating Hours** - Different teams can have different operating hours
+- 🆕 **Hard Constraint Enforcement** - Algorithm respects operating hours (no work when closed)
 
 **What's New in v2.2:**
 - 🆕 **"A" in schedule_input.csv** now means "Auto-allocate based on contract" (reads workHoursPerDay from employee JSON)
@@ -13,11 +18,13 @@ Quick reference guide for the hybrid scheduling problem format.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `schemaVersion` | string | ✓ | Must be `"2.2"` |
+| `schemaVersion` | string | ✓ | Must be `"2.5"` |
 | `problemType` | string | ✓ | Must be `"employee_scheduling"` |
 | `metadata` | object | ✓ | Problem identification |
 | `features` | object | - | Feature flags (defaults to all false) |
 | `temporalScope` | object | ✓ | Time period definition |
+| `operatingHours` | object | - | Operating hours configuration (v2.5) |
+| `contracts` | object | ✓ | Contract definitions (v2.2) |
 | `employees` | object | ✓ | Employee definitions |
 | `demand` | object | ✓ | Coverage requirements |
 | `scheduleInput` | object | - | Reference to CSV schedule data |
@@ -95,6 +102,108 @@ Controls which optional modules are enabled:
   }
 }
 ```
+
+---
+
+## Operating Hours (v2.5)
+
+### Purpose
+Define when the facility/store is open for business. Employees can only be scheduled during operating hours. Supports team-specific hours (e.g., storage opens earlier than checkout).
+
+### JSON Configuration
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `enabled` | boolean | - | Enable operating hours constraints (default: false) |
+| `dataFile` | string | ✓* | Path to operating_hours.csv (*required when enabled=true) |
+| `enforcement` | string | - | "hard" or "soft" (default: "hard") |
+| `validation.requireAllDates` | boolean | - | Require hours for all dates (default: true) |
+| `validation.enforceWorkPeriodsWithinHours` | boolean | - | Work periods must fit within hours (default: true) |
+| `validation.enforceDemandWithinHours` | boolean | - | No demand when closed (default: true) |
+| `options.allowMultipleTeamHours` | boolean | - | Teams can have different hours (default: true) |
+
+**Example:**
+```json
+{
+  "operatingHours": {
+    "enabled": true,
+    "dataFile": "operating_hours.csv",
+    "enforcement": "hard",
+    "validation": {
+      "requireAllDates": true,
+      "enforceWorkPeriodsWithinHours": true,
+      "enforceDemandWithinHours": true
+    },
+    "options": {
+      "allowMultipleTeamHours": true
+    }
+  }
+}
+```
+
+### CSV Format (operating_hours.csv)
+
+**Purpose:** Define daily operating hours for the facility or specific teams.
+
+**Structure:**
+```csv
+date,team,open,close
+2025-10-01,ALL,08:00,22:00
+2025-10-02,ALL,08:00,22:00
+2025-10-03,Storage,06:00,21:00
+2025-10-03,Checkout,09:00,20:00
+2025-10-03,Management,09:00,20:00
+2025-10-25,ALL,10:00,16:00
+2025-12-26,ALL,CLOSED,CLOSED
+```
+
+**Column Specifications:**
+
+| Column | Type | Description | Example Values |
+|--------|------|-------------|----------------|
+| `date` | ISO date | Date (YYYY-MM-DD) | `2025-10-01` |
+| `team` | string | Team code or `ALL` for store-wide | `ALL`, `Storage`, `Checkout` |
+| `open` | time | Opening time (HH:MM) or `CLOSED` | `08:00`, `CLOSED` |
+| `close` | time | Closing time (HH:MM) or `CLOSED` | `22:00`, `CLOSED` |
+
+**Rules:**
+1. **Complete Coverage**: Must have entry for every date in `temporalScope.targetPeriod`
+2. **Team Resolution**:
+   - `team=ALL` applies to all teams (store-wide hours)
+   - Specific team entries override `ALL` for that team
+   - If team-specific hours exist, they take precedence
+3. **CLOSED Days**: Use `CLOSED,CLOSED` for both open and close when facility is not operating
+4. **Time Format**: HH:MM in 24-hour format (00:00 to 23:59)
+5. **Validation**: `open < close` when not CLOSED
+
+**Example with Team-Specific Hours:**
+```csv
+date,team,open,close
+2025-10-01,ALL,08:00,22:00
+2025-10-02,Storage,06:00,23:00
+2025-10-02,Checkout,08:00,22:00
+2025-10-02,Management,08:00,22:00
+2025-12-25,ALL,10:00,16:00
+2025-12-26,ALL,CLOSED,CLOSED
+```
+
+**Interpretation:**
+- Oct-01: All teams operate 08:00-22:00
+- Oct-02: Storage opens early (06:00-23:00), others normal hours
+- Dec-25: Reduced hours for all teams (10:00-16:00)
+- Dec-26: Facility closed (no work possible)
+
+### Integration with Algorithm
+
+**Hard Constraint (enforcement="hard"):**
+- Employees cannot be assigned to work periods outside operating hours
+- No shifts scheduled when facility is CLOSED
+- Work periods must fit within team's operating hours
+
+**Validation:**
+- Work periods in JSON must be compatible with operating hours
+- Demand CSV cannot specify coverage when team is CLOSED
+- Employee time constraints must respect operating hours
 
 ---
 
@@ -732,20 +841,56 @@ date,workPeriod,competency,level,minimum,ideal,estimated
 
 ---
 
-## Differences from v2.1 Format
+## Differences Between Versions
 
-| Field | v2.1 | v2.2 |
-|-------|------|------|
-| `schemaVersion` | `"2.1"` | `"2.2"` |
-| `employees[].workHoursPerDay` | Not present | **New:** Default hours when "A" is used in CSV |
-| `scheduleInput` CSV "A" value | Available (constraint) | **Changed:** Auto-allocate from contract |
-| `scheduleInput` CSV numeric values | Invalid (error) | **New:** Valid (specific hours 1-16) |
-| `scheduleInput` CSV time constraints | Not available | **New:** EQUALS/INCLUDE/EXCEPT:HH:MM-HH:MM for time window control (Allen Interval Algebra) |
-| Employee contract defaults | N/A | Defaults: 8h fullTime, 4h partTime |
+| Field | v2.1 | v2.2 | v2.5 |
+|-------|------|------|------|
+| `schemaVersion` | `"2.1"` | `"2.2"` | `"2.5"` |
+| `operatingHours` | Not available | Not available | **New:** Operating hours management via CSV |
+| `operatingHours.csv` | N/A | N/A | **New:** date,team,open,close format |
+| `employees[].workHoursPerDay` | Not present | **New:** Contract-based hours | Same as v2.2 |
+| `scheduleInput` CSV "A" value | Available (constraint) | **Changed:** Auto-allocate | Same as v2.2 |
+| `scheduleInput` CSV numeric values | Invalid (error) | **New:** Valid (1-16) | Same as v2.2 |
+| `scheduleInput` CSV time constraints | Not available | **New:** EQUALS/INCLUDE/EXCEPT | Same as v2.2 |
 
 ---
 
-## Migration Guide: v2.1 → v2.2
+## Migration Guide: v2.2 → v2.5
+
+### Required Changes:
+1. **Update schemaVersion** from `"2.2"` to `"2.5"` in JSON
+2. **Add operatingHours section** to JSON (optional, but recommended)
+3. **Create operating_hours.csv** with daily operating hours for all dates
+
+### Example Addition:
+
+**problem.json (add after temporalScope):**
+```json
+{
+  "operatingHours": {
+    "enabled": true,
+    "dataFile": "operating_hours.csv",
+    "enforcement": "hard"
+  }
+}
+```
+
+**operating_hours.csv (new file):**
+```csv
+date,team,open,close
+2025-10-01,ALL,08:00,22:00
+2025-10-02,ALL,08:00,22:00
+...
+```
+
+### Optional Enhancements:
+1. Define team-specific hours (e.g., Storage opens earlier)
+2. Specify CLOSED days for holidays
+3. Enable validation options for stricter checking
+
+---
+
+## Migration Guide: v2.1 → v2.2 (Legacy)
 
 ### Required Changes:
 1. **Update schemaVersion** from `"2.1"` to `"2.2"` in JSON

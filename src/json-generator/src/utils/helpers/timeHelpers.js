@@ -150,7 +150,7 @@ export function calculateDuration(start, end) {
 
   if (startMinutes === null || endMinutes === null) return null;
 
-  // Handle overnight shifts (end < start)
+  // Handle overnight work periods (end < start)
   if (endMinutes < startMinutes) {
     return (1440 - startMinutes) + endMinutes;
   }

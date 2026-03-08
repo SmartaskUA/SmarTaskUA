@@ -1,14 +1,14 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://smartask.ua/schemas/scheduling-problem-v2.2.json",
-  "title": "Employee Scheduling Problem Definition (Hybrid JSON + CSV) - v2.2",
-  "description": "Hybrid schema for employee scheduling: JSON for structure/metadata, CSV for large data matrices. Supports team-based and competency-based models. v2.2 adds contract-based hour allocation and numeric hour specification in schedule_input.csv. See FORMAT.md for CSV validation rules and detailed specifications.",
+  "$id": "https://smartask.ua/schemas/scheduling-problem-v2.5.json",
+  "title": "Employee Scheduling Problem Definition (Hybrid JSON + CSV) - v2.5",
+  "description": "Hybrid schema for employee scheduling: JSON for structure/metadata, CSV for large data matrices. Supports team-based and competency-based models. v2.5 adds operating hours management via operating_hours.csv. v2.2 added contract-based hour allocation and numeric hour specification in schedule_input.csv. See FORMAT.md for CSV validation rules and detailed specifications.",
   "type": "object",
   "required": ["schemaVersion", "problemType", "metadata", "temporalScope", "contracts", "employees", "demand", "constraints", "optimization"],
   "properties": {
     "schemaVersion": {
       "type": "string",
-      "const": "2.2",
+      "const": "2.5",
       "description": "Schema version identifier"
     },
     "problemType": {
@@ -93,6 +93,59 @@
               "type": "boolean",
               "default": false,
               "description": "Whether to include buffer weeks before/after target period"
+            }
+          }
+        }
+      }
+    },
+    "operatingHours": {
+      "type": "object",
+      "description": "Facility operating hours configuration. v2.5: Defines when the store/facility is open for business. Supports team-specific hours and hard constraint enforcement.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether operating hours constraints are enabled"
+        },
+        "dataFile": {
+          "type": "string",
+          "description": "Path to operating_hours.csv file containing daily operating hours (relative to JSON file). Format: date,team,open,close. Required when enabled=true."
+        },
+        "enforcement": {
+          "type": "string",
+          "enum": ["hard", "soft"],
+          "default": "hard",
+          "description": "How to enforce operating hours: 'hard' = employees cannot work outside hours (strict), 'soft' = preference but can violate with penalty"
+        },
+        "validation": {
+          "type": "object",
+          "description": "Validation options for operating hours",
+          "properties": {
+            "requireAllDates": {
+              "type": "boolean",
+              "default": true,
+              "description": "Whether operating hours must be defined for all dates in temporalScope"
+            },
+            "enforceWorkPeriodsWithinHours": {
+              "type": "boolean",
+              "default": true,
+              "description": "Whether work periods must fit within operating hours"
+            },
+            "enforceDemandWithinHours": {
+              "type": "boolean",
+              "default": true,
+              "description": "Whether demand can only be specified during operating hours"
+            }
+          }
+        },
+        "options": {
+          "type": "object",
+          "description": "Additional configuration options",
+          "properties": {
+            "allowMultipleTeamHours": {
+              "type": "boolean",
+              "default": true,
+              "description": "Whether different teams can have different operating hours on the same day"
             }
           }
         }

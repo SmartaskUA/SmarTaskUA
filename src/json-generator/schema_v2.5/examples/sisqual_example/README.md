@@ -1,4 +1,17 @@
-# Sisqual Example
+# Sisqual Example (v2.5)
+
+This example demonstrates a competency-based employee scheduling problem using schema v2.5 with operating hours management.
+
+## Features Demonstrated
+
+- **v2.5 Operating Hours**: Team-specific hours defined in `operating_hours.csv`
+  - Storage: Opens earlier (06:00-23:00 weekdays, 07:00-21:00 weekends)
+  - Checkout/Management: Standard hours (08:00-22:00 weekdays, later on weekends)
+- **v2.2 Contracts**: Multiple contract types (fullTime_8h, partTime_7h, partTime_5h, partTime_4h)
+- **Competency Model**: 15 employees across 3 teams with skill levels (1-5)
+- **Priority Hierarchy**: Management > Checkout > Storage
+- **Advanced Constraints**: Day-off swapping, time constraints
+
 ## Work Period Possibilities per Team
 - Storage
     - 8:30 // 15:30

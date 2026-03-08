@@ -292,7 +292,7 @@ const WeeklyTemplateBuilder = ({
                     />
                   ))}
 
-                  {/* Continuation blocks from previous day's overnight shifts */}
+                  {/* Continuation blocks from previous day's overnight work periods */}
                   {overnightBlocks.map((block) => (
                     <DemandBlock
                       key={`continuation-${block.id}`}

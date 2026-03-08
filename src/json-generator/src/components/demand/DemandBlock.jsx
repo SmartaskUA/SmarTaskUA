@@ -15,7 +15,7 @@ import { Edit as EditIcon, Delete as DeleteIcon, DragIndicator as DragIcon } fro
  * @param {Function} onEdit - Called when edit is clicked
  * @param {Function} onDelete - Called when delete is clicked
  * @param {number} slotHeight - Height of each 30-min time slot (for positioning)
- * @param {boolean} isContinuation - True if this is the "next day" portion of an overnight shift
+ * @param {boolean} isContinuation - True if this is the "next day" portion of an overnight work period
  */
 const DemandBlock = ({ block, onEdit, onDelete, slotHeight = 30, isContinuation = false }) => {
   if (!block) return null;
@@ -35,22 +35,22 @@ const DemandBlock = ({ block, onEdit, onDelete, slotHeight = 30, isContinuation 
     const [startHour, startMin] = timeRange.start.split(':').map(Number);
     const [endHour, endMin] = timeRange.end.split(':').map(Number);
 
-    // Check if this is an overnight shift (end < start)
+    // Check if this is an overnight work period (end < start)
     const isOvernight = timeRange.end < timeRange.start;
 
     let startSlot, endSlot;
 
     if (isContinuation) {
-      // This is the "next day" portion of an overnight shift
+      // This is the "next day" portion of an overnight work period
       // Start from 00:00 and go to the end time
       startSlot = 0;
       endSlot = endHour * 2 + (endMin >= 30 ? 1 : 0);
     } else {
-      // Normal block or first part of overnight shift
+      // Normal block or first part of overnight work period
       startSlot = startHour * 2 + (startMin >= 30 ? 1 : 0);
       endSlot = endHour * 2 + (endMin >= 30 ? 1 : 0);
 
-      // For overnight shifts (first part), extend to end of day (24:00 = slot 48)
+      // For overnight work periods (first part), extend to end of day (24:00 = slot 48)
       if (isOvernight) {
         endSlot = 48; // 24:00 in 30-min slots
       }
