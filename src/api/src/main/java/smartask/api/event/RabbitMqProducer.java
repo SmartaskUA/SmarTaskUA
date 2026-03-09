@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class RabbitMqProducer {
@@ -56,6 +57,10 @@ public class RabbitMqProducer {
 
         try {
             String taskId = schedule.getTaskId();
+            if (taskId == null || taskId.isBlank()) {
+                taskId = UUID.randomUUID().toString();
+                schedule.setTaskId(taskId);
+            }
 
             TaskStatus taskStatus = new TaskStatus(
                 taskId,
@@ -73,7 +78,7 @@ public class RabbitMqProducer {
 
             // ✅ Prepare message payload with all data
             Map<String, Object> payload = new HashMap<>();
-            payload.put("taskId", schedule.getTaskId());
+            payload.put("taskId", taskId);
             payload.put("title", schedule.getTitle());
             payload.put("algorithm", schedule.getAlgorithm());
             payload.put("year", schedule.getYear());

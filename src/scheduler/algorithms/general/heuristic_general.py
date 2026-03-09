@@ -3,6 +3,10 @@ from collections import defaultdict
 import holidays as hl
 
 from algorithms.general.constraints import parse_constraints
+from algorithms.general.days_off_rules import (
+    compile_fixed_days_off_targets,
+    effective_period_off_target,
+)
 from algorithms.utils import (
     build_allowed_teams,
     build_calendar,
@@ -113,6 +117,76 @@ def _employee_score(e, total_work, total_special, target_workdays):
     return score
 
 
+def _build_period_work_targets(
+    fixed_days_off_targets,
+    employees_idx,
+    vac_mask,
+    weekly_rule_params,
+    monthly_rule_params,
+):
+    # Greedy builds assignments as WORK decisions, so we convert OFF targets into WORK bounds.
+    # per-period WORK bound = period_days - target_off_days.
+    period_work_target = {}  # (employee, kind, label) -> max/equal worked days allowed
+    # Marks periods where exact OFF is impossible because vacations already exceed OFF target.
+    period_relaxed_to_min_off = {}  # (employee, kind, label) -> True => OFF >= target (WORK <= bound)
+    # Reverse index to quickly know which periods include a given employee/day pair.
+    day_membership = defaultdict(list)  # (employee, day) -> [(kind, label), ...]
+
+    for employee in employees_idx:
+        # Iterate compiled weekly and monthly targets for this employee.
+        for kind, periods in (
+            ("weekly", fixed_days_off_targets.weekly.get(employee, [])),
+            ("monthly", fixed_days_off_targets.monthly.get(employee, [])),
+        ):
+            for period in periods:
+                # Day indices belonging to current period (already in scheduling horizon).
+                period_days = list(period.day_indices)
+                # Rule id string used by shared target helper.
+                rule_type = (
+                    "fixed_days_off_per_week"
+                    if kind == "weekly"
+                    else "fixed_days_off_per_month"
+                )
+                # Select parameter bag of weekly or monthly rule.
+                rule_params = weekly_rule_params if kind == "weekly" else monthly_rule_params
+                # Reuse same target conversion as CSP/ILP.
+                # Passing full period size means vacation days count as OFF in this rule.
+                target_off = effective_period_off_target(
+                    rule_params=rule_params,
+                    base_target_off_days=period.target_off_days,
+                    period_total_days=len(period.day_indices),
+                    available_non_vacation_days=len(period.day_indices),
+                    rule_type=rule_type,
+                )
+                # Composite key used consistently across counters/maps.
+                key = (employee, kind, str(period.label))
+                # Maximum/equal WORK allowed in period after applying OFF target.
+                period_work_target[key] = len(period_days) - target_off
+                # Count forced OFF from vacations; if this already exceeds target_off,
+                # we can only enforce OFF >= target (equivalent to WORK <= bound).
+                forced_vac_off = sum(1 for d in period_days if vac_mask[(employee, d)])
+                period_relaxed_to_min_off[key] = forced_vac_off > target_off
+                # Register membership so when assigning day d we can update all affected periods.
+                for d in period_days:
+                    day_membership[(employee, d)].append((kind, str(period.label)))
+
+    return period_work_target, day_membership, period_relaxed_to_min_off
+
+
+def _respects_period_work_targets(employee, day, period_work_target, period_work_count, day_membership):
+    # Reject assignments that would overshoot the work quota of any week/month this day belongs to.
+    for kind, label in day_membership.get((employee, day), []):
+        key = (employee, kind, label)
+        if period_work_count[key] + 1 > period_work_target[key]:
+            return False
+    return True
+
+
+def _record_period_work(employee, day, period_work_count, day_membership):
+    for kind, label in day_membership.get((employee, day), []):
+        period_work_count[(employee, kind, label)] += 1
+
+
 # ============================================================
 # Main heuristic solver (general)
 # ============================================================
@@ -172,6 +246,13 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
                 ideal_required[(d, s, t)] = req
 
     special_days = _build_special_days(resolved_year, num_days, dias_ano, sundays_1based)
+    # Compile employee-specific week/month folga targets once from JSON params.
+    fixed_days_off_targets = compile_fixed_days_off_targets(
+        plan,
+        employees,
+        dias_ano,
+        employee_index_base=0,
+    )
 
     work = [[0] * (num_days + 1) for _ in Employees]
     shift = [[0] * (num_days + 1) for _ in Employees]
@@ -179,6 +260,15 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
 
     total_work = [0] * n_employees
     total_special = [0] * n_employees
+    # Convert exact OFF='0' constraints into exact WORK counts for greedy feasibility checks.
+    period_work_target, day_membership, period_relaxed_to_min_off = _build_period_work_targets(
+        fixed_days_off_targets,
+        Employees,
+        vac_mask,
+        plan.fixed_days_off_per_week,
+        plan.fixed_days_off_per_month,
+    )
+    period_work_count = defaultdict(int)
 
     assigned_min = defaultdict(int)
     assigned = defaultdict(int)
@@ -216,6 +306,10 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
                             enforce_no_earlier,
                         ):
                             continue
+                        if not _respects_period_work_targets(
+                            e, d, period_work_target, period_work_count, day_membership
+                        ):
+                            continue
                         candidates.append(e)
 
                     if not candidates:
@@ -232,6 +326,7 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
                     total_work[best_e] += 1
                     if d in special_days:
                         total_special[best_e] += 1
+                    _record_period_work(best_e, d, period_work_count, day_membership)
                     assigned_min[(d, s, t)] += 1
                     assigned[(d, s, t)] += 1
 
@@ -291,6 +386,10 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
                         enforce_no_earlier,
                     ):
                         continue
+                    if not _respects_period_work_targets(
+                        e, d, period_work_target, period_work_count, day_membership
+                    ):
+                        continue
 
                     work[e][d] = 1
                     shift[e][d] = s
@@ -298,6 +397,7 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
                     total_work[e] += 1
                     if d in special_days:
                         total_special[e] += 1
+                    _record_period_work(e, d, period_work_count, day_membership)
                     assigned[key] += 1
                     deficit -= 1
                     break
@@ -337,6 +437,10 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
                     enforce_no_earlier,
                 ):
                     continue
+                if not _respects_period_work_targets(
+                    e, d, period_work_target, period_work_count, day_membership
+                ):
+                    continue
 
                 work[e][d] = 1
                 shift[e][d] = s
@@ -344,9 +448,64 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
                 total_work[e] += 1
                 if d in special_days:
                     total_special[e] += 1
+                _record_period_work(e, d, period_work_count, day_membership)
                 assigned[(d, s, t)] += 1
                 deficit -= 1
                 break
+
+    # Final consistency check for fixed OFF rules:
+    # - normal periods: require exact WORK quota (thus exact OFF target)
+    # - relaxed periods: require WORK <= quota (thus OFF >= target)
+    for key, required_work in period_work_target.items():
+        # Work counted by greedy for this employee/period.
+        actual_work = period_work_count.get(key, 0)
+        # True only when vacations forced too many OFF days for exact equality.
+        relaxed_to_min_off = period_relaxed_to_min_off.get(key, False)
+        if relaxed_to_min_off:
+            # In relaxed mode, too much work means too few OFFs (< target), so fail.
+            if actual_work > required_work:
+                employee, kind, label = key
+                raise ValueError(
+                    f"Heuristic General exceeded relaxed {kind} fixed days-off bound for employee index "
+                    f"{employee} in period {label}: actual_work={actual_work}, max_work={required_work}"
+                )
+            # Valid relaxed period: skip exact-equality check below.
+            continue
+
+        # Standard mode: exact work count must match exact target-derived quota.
+        if actual_work != required_work:
+            employee, kind, label = key
+            target_off = None
+            if kind == "weekly":
+                # Recover target_off for weekly period to show actionable debug message.
+                for p in fixed_days_off_targets.weekly.get(employee, []):
+                    if str(p.label) == label:
+                        period_days = list(p.day_indices)
+                        target_off = effective_period_off_target(
+                            rule_params=plan.fixed_days_off_per_week,
+                            base_target_off_days=p.target_off_days,
+                            period_total_days=len(p.day_indices),
+                            available_non_vacation_days=len(period_days),
+                            rule_type="fixed_days_off_per_week",
+                        )
+                        break
+            else:
+                # Recover target_off for monthly period to show actionable debug message.
+                for p in fixed_days_off_targets.monthly.get(employee, []):
+                    if str(p.label) == label:
+                        period_days = list(p.day_indices)
+                        target_off = effective_period_off_target(
+                            rule_params=plan.fixed_days_off_per_month,
+                            base_target_off_days=p.target_off_days,
+                            period_total_days=len(p.day_indices),
+                            available_non_vacation_days=len(period_days),
+                            rule_type="fixed_days_off_per_month",
+                        )
+                        break
+            raise ValueError(
+                f"Heuristic General could not satisfy {kind} fixed days-off rule for employee index {employee} "
+                f"in period {label}: target_off={target_off}, actual_work={actual_work}, required_work={required_work}"
+            )
 
     assign = defaultdict(list)
     for e in Employees:

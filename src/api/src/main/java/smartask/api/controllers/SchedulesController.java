@@ -115,6 +115,7 @@ public class SchedulesController {
                                               @RequestParam("minimunsTemplate") String minimunsTemplate,
                                               @RequestParam("employees") String employees,
                                               @RequestParam("year") String year,
+                                              @RequestParam(value = "rules", required = false) String rules,
                                               @RequestParam(value = "scheduleType", required = false) String scheduleType,
                                               @RequestParam(value = "hourGranularity", required = false) String hourGranularity) {
         try {
@@ -147,6 +148,9 @@ public class SchedulesController {
             message.put("minimunsTemplate", minimunsTemplate);
             message.put("employees", employees);
             message.put("year", year);
+            if (rules != null && !rules.isBlank()) {
+                message.put("rules", rules);
+            }
             if (scheduleType != null && !scheduleType.isBlank()) {
                 message.put("scheduleType", scheduleType);
             }

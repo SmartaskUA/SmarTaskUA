@@ -237,7 +237,7 @@
           "description": "Competency-based employee list (when model='competency')",
           "items": {
             "type": "object",
-            "required": ["id", "competencies"],
+            "required": ["id"],
             "properties": {
               "id": {
                 "type": "string",
@@ -269,6 +269,29 @@
                   }
                 },
                 "description": "List of competencies and skill levels"
+              },
+              "teams": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["code", "level"],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "description": "Team code used by competency-based examples with team-based demand"
+                    },
+                    "level": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "Team level / priority"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Human-readable team name"
+                    }
+                  }
+                },
+                "description": "Alternative to competencies for competency-model examples that still encode demand by team."
               },
               "contractType": {
                 "type": "string",
@@ -326,12 +349,17 @@
     },
     "demand": {
       "type": "object",
-      "required": ["organizationalUnits", "shiftModel"],
+      "required": ["organizationalUnits"],
       "properties": {
         "shiftModel": {
           "type": "string",
           "enum": ["fixed", "flexible"],
           "description": "Scheduling paradigm: 'fixed'=predefined shifts with fixed times, 'flexible'=shifts with variable start times"
+        },
+        "workPeriodModel": {
+          "type": "string",
+          "enum": ["fixed", "flexible"],
+          "description": "Work-period scheduling paradigm for example files that use work periods instead of shift codes."
         },
         "dataFile": {
           "type": "string",
@@ -342,8 +370,20 @@
           "properties": {
             "teams": {
               "type": "array",
-              "items": {"type": "string"},
-              "description": "List of team codes (when using team model)"
+              "items": {
+                "oneOf": [
+                  {"type": "string"},
+                  {
+                    "type": "object",
+                    "required": ["code", "name"],
+                    "properties": {
+                      "code": {"type": "string"},
+                      "name": {"type": "string"}
+                    }
+                  }
+                ]
+              },
+              "description": "List of team codes or team objects (when using team or competency models with team-based demand)"
             },
             "competencies": {
               "type": "array",
@@ -476,6 +516,32 @@
             }
           },
           "description": "Shift definitions - FLEXIBLE: define any shifts needed (M/T/N, DAY/NIGHT, custom codes, etc.). CSV must reference these codes."
+        },
+        "workPeriods": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "object",
+            "required": ["code", "name"],
+            "properties": {
+              "code": {"type": "string"},
+              "name": {"type": "string"},
+              "timeRange": {
+                "type": "object",
+                "properties": {
+                  "start": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+                  },
+                  "end": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+                  }
+                },
+                "required": ["start", "end"]
+              }
+            }
+          },
+          "description": "Work-period definitions for fixed work-period examples."
         },
         "priorityHierarchy": {
           "type": "array",

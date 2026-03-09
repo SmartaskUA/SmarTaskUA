@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.text.Normalizer;
 
@@ -44,6 +45,9 @@ public class SchedulesService {
     private ReferenceTemplateRepository referenceTemplateRepository;
 
     public String requestScheduleGeneration(ScheduleRequest schedule) {
+        if (schedule.getTaskId() == null || schedule.getTaskId().isBlank()) {
+            schedule.setTaskId(UUID.randomUUID().toString());
+        }
 
         boolean exists = schedulerepository.existsByTitleAndAlgorithm(schedule.getTitle(), schedule.getAlgorithm());    
 

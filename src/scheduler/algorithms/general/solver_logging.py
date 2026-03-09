@@ -43,6 +43,21 @@ class SolutionTracker(cp_model.CpSolverSolutionCallback):
               f"| Obj: {self.best_objective} | Gap: {gap:.2%}")
 
 
+def solve_cp_with_tracker(solver, model, tracker):
+    """
+    OR-Tools compatibility helper.
+
+    Some versions accept `solution_callback=` on `CpSolver.Solve`, while others only
+    support a positional callback or `SolveWithSolutionCallback`.
+    """
+    try:
+        return solver.Solve(model, solution_callback=tracker)
+    except TypeError:
+        if hasattr(solver, "SolveWithSolutionCallback"):
+            return solver.SolveWithSolutionCallback(model, tracker)
+        return solver.Solve(model, tracker)
+
+
 def write_csp_log(*, tracker, solver, status, n_employees, max_time=None, log_dir="."):
     base_name = f"logs_{n_employees}_employees_scenario"
     filename = _next_log_filename(base_name, log_dir=log_dir)

@@ -22,6 +22,7 @@ from algorithms.CSP_Afonso_Hours import solve as CSP_Afonso_Hours_solver
 from algorithms.ILP_Half_Hour import solve as ILP_13_Half_Intervals_solver
 from algorithms.CSP_Extra import solve as CSP_Extra_Hours_solver
 from algorithms.ILP_Extra import solve as ILP_Extra_Hours_solver
+from algorithms.ILP_Sisqual_Hours import solve as ILP_Sisqual_Hours_solver
 from algorithms.general.ilp_general import solve as ilp_general_solver
 from algorithms.general.csp_general import solve as csp_general_solver
 from algorithms.general.heuristic_general import solve as heuristic_general_solver
@@ -54,9 +55,10 @@ class TaskManager:
             "ILP_Half_Hour": ILP_13_Half_Intervals_solver,
             "CSP_Extra_Hours": CSP_Extra_Hours_solver,
             "ILP_Extra_Hours": ILP_Extra_Hours_solver,
+            "ILP_Sisqual_Hours": ILP_Sisqual_Hours_solver,
         }
 
-    def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13):
+    def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13, problem_path=None):
         print(f"\n[DEBUG] Vacations received:\n{vacations}")
         print(f"[DEBUG] Minimuns received:\n{minimuns}")
         print(f"[DEBUG] Rules received:\n{json.dumps(rules, indent=2) if rules else 'None'}")
@@ -67,7 +69,7 @@ class TaskManager:
         print(f"[TaskManager] Executing algorithm '{algorithm_name}' with Task ID: {task_id}")
         algorithm = self.algorithms[algorithm_name]
 
-        no_rules_algorithms = {"ILP General", "CSP General"}
+        no_rules_algorithms = {"ILP General", "CSP General", "ILP_Sisqual_Hours"}
         uses_rules = algorithm_name not in no_rules_algorithms
         rules_json = None
         if uses_rules:
@@ -111,6 +113,8 @@ class TaskManager:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, rules=rules_json)
             else:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, constraints=rules)
+        elif algorithm_name in ["ILP_Sisqual_Hours"]:
+            schedule_data = algorithm(problem_path=problem_path, maxTime=maxTime)
         else:
             schedule_data = algorithm()
         end_time = time.time()

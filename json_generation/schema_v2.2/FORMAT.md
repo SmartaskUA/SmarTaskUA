@@ -492,6 +492,89 @@ date,shift,team,minimum,ideal,estimated
 - `min_rest_hours` - Minimum rest between shifts
 - `vacation_block` - Vacation days cannot be worked
 
+### Custom Fixed Days-Off Rules (General Solvers)
+
+The general solvers also support custom per-period folga constraints:
+- `fixed_days_off_per_week`
+- `fixed_days_off_per_month`
+
+Current implementation notes:
+- `countMode` currently supports only `"exact"`
+- Only schedule value `"0"` is counted as folga (`dayOffCounting.countOnlyScheduleValues = ["0"]`)
+- Both **legacy** (`perEmployee`) and **compact** (`default`/`defaultByMonth` + `overrides`) JSON shapes are accepted
+
+**Weekly (legacy `perEmployee`)**
+```json
+{
+  "id": "fixed-days-off-per-week",
+  "type": "fixed_days_off_per_week",
+  "params": {
+    "countMode": "exact",
+    "weekStart": "monday",
+    "applyToPartialWeeks": false,
+    "dayOffCounting": {"countOnlyScheduleValues": ["0"]},
+    "perEmployee": {
+      "Employee 1": 2,
+      "Employee 8": 1
+    }
+  },
+  "enabled": true
+}
+```
+
+**Weekly (compact `default` + `overrides`)**
+```json
+{
+  "id": "fixed-days-off-per-week",
+  "type": "fixed_days_off_per_week",
+  "params": {
+    "countMode": "exact",
+    "weekStart": "monday",
+    "applyToPartialWeeks": false,
+    "dayOffCounting": {"countOnlyScheduleValues": ["0"]},
+    "default": 2,
+    "overrides": {
+      "Employee 8": 1
+    }
+  },
+  "enabled": true
+}
+```
+
+**Monthly (legacy `perEmployee`)**
+```json
+{
+  "id": "fixed-days-off-per-month",
+  "type": "fixed_days_off_per_month",
+  "params": {
+    "countMode": "exact",
+    "dayOffCounting": {"countOnlyScheduleValues": ["0"]},
+    "perEmployee": {
+      "Employee 1": {"2025-01": 10, "2025-02": 8},
+      "Employee 11": {"2025-01": 10, "2025-02": 7}
+    }
+  },
+  "enabled": true
+}
+```
+
+**Monthly (compact `defaultByMonth` + `overrides`)**
+```json
+{
+  "id": "fixed-days-off-per-month",
+  "type": "fixed_days_off_per_month",
+  "params": {
+    "countMode": "exact",
+    "dayOffCounting": {"countOnlyScheduleValues": ["0"]},
+    "defaultByMonth": {"2025-01": 10, "2025-02": 8},
+    "overrides": {
+      "Employee 11": {"2025-02": 7}
+    }
+  },
+  "enabled": true
+}
+```
+
 ### Soft Constraints (with penalties)
 ```json
 "soft": [

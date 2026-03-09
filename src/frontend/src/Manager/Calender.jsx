@@ -106,6 +106,9 @@ const Calendar = () => {
       fd.append("minimunsTemplate", metadata?.minimunsTemplateData || "");
       fd.append("employees", JSON.stringify(metadata?.employeesTeamInfo || []));
       fd.append("year", String(metadata?.year || new Date().getFullYear()));
+      if (metadata?.rules) {
+        fd.append("rules", JSON.stringify(metadata.rules));
+      }
       const scheduleType = inferScheduleType(metadata);
       if (scheduleType) {
         fd.append("scheduleType", scheduleType);

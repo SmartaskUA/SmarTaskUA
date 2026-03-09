@@ -25,6 +25,9 @@ class ConstraintPlan:
     min_coverage_hard: bool
     ideal_coverage_weight: int
     ideal_coverage_hard: bool
+    # Raw params are kept here; solvers compile them into calendar periods separately.
+    fixed_days_off_per_week: Optional[dict]
+    fixed_days_off_per_month: Optional[dict]
     unknown: List[ConstraintIR] = field(default_factory=list)
 
 
@@ -97,6 +100,8 @@ def _default_plan():
         min_coverage_hard=False,
         ideal_coverage_weight=1,
         ideal_coverage_hard=False,
+        fixed_days_off_per_week=None,
+        fixed_days_off_per_month=None,
         unknown=[],
     )
 
@@ -115,6 +120,8 @@ def _empty_plan():
         min_coverage_hard=False,
         ideal_coverage_weight=0,
         ideal_coverage_hard=False,
+        fixed_days_off_per_week=None,
+        fixed_days_off_per_month=None,
         unknown=[],
     )
 
@@ -181,6 +188,11 @@ def build_constraint_plan(constraints):
         elif ir.type == "ideal_coverage":
             plan.ideal_coverage_weight = _penalty_from_constraint(ir, 1)
             plan.ideal_coverage_hard = ir.kind == "hard"
+        elif ir.type == "fixed_days_off_per_week" and ir.kind == "hard":
+            # Stored as raw params so all solvers can compile against their own calendar/indexing.
+            plan.fixed_days_off_per_week = dict(ir.params or {})
+        elif ir.type == "fixed_days_off_per_month" and ir.kind == "hard":
+            plan.fixed_days_off_per_month = dict(ir.params or {})
         else:
             plan.unknown.append(ir)
 

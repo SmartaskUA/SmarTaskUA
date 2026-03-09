@@ -58,6 +58,10 @@ const metricInfo = {
     label: "Team Satisfaction Level",
     description: "Median distribution of work between primary and secondary team for employees assigned to two teams.",
   },
+  fixedDaysOffViolations: {
+    label: "Fixed Days-Off Violations",
+    description: "Number of employee week/month periods where OFF='0' days do not match the configured target after vacation adjustment (prorate/strict).",
+  },
 
   // ============ HOURLY METRICS (kpiVerification_unified_v3.py) ============                             
   workDaysTargetDeviation: {                                                                              
@@ -128,6 +132,7 @@ const KPIReport = ({ metrics = {}, scheduleType }) => {
     "singleTeamViolations",
     "shiftBalance",
     "teamSatisfactionLevel",
+    "fixedDaysOffViolations",
   ];
 
   // Hourly metrics (from kpiVerification_unified_v3.py)       
@@ -144,7 +149,10 @@ const KPIReport = ({ metrics = {}, scheduleType }) => {
     "excessStaffing",                                                                                     
   ]; 
 
-  const displayMetrics = isHourly ? hourlyMetrics : shiftMetrics;
+  const optionalMetrics = new Set(["fixedDaysOffViolations"]);
+  const displayMetrics = (isHourly ? hourlyMetrics : shiftMetrics).filter(
+    (key) => !optionalMetrics.has(key) || metrics[key] !== undefined
+  );
   const percentMetrics = new Set(["shiftBalance", "teamSatisfactionLevel", "staffingCoverageRate"]);
 
   // Filter out metrics that shouldn't count as issues 

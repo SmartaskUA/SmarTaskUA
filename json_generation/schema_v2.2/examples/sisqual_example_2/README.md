@@ -1,0 +1,246 @@
+# Sisqual Example
+## Work Period Possibilities per Team
+- Storage
+    - 8:30 // 15:30
+- Checkout
+    - 10:00 // 11:00
+    - 11:00 // 21:00
+    - 21:00 // 22:00
+- Management
+    - 10:00 // 11:00
+    - 11:00 // 14:00
+    - 14:00 // 19:00
+    - 19:00 // 21:00
+    - 21:00 // 22:00
+- Employees
+    - 09:00 // 10:00
+    - 10:00 // 11:00
+    - 11:00 // 12:00
+    - 12:00 // 13:00
+    - 13:00 // 14:00
+    - 14:00 // 15:00
+    - 15:00 // 16:00
+    - 16:00 // 17:00
+    - 17:00 // 18:00
+    - 18:00 // 19:00
+    - 19:00 // 20:00
+    - 20:00 // 21:00
+    - 21:00 // 22:00
+
+## Employees
+- Emp_20072412	(Management - 1)
+- Emp_20066543	(Management - 2)
+- Emp_20067009	(Checkout - 1)(Management - 3)
+- Emp_20054956	(Checkout - 2)(Management - 4)
+- Emp_20056459	(Checkout - 1)
+- Emp_20062688	(Checkout - 3)(Management - 4)
+- Emp_20067696	(Checkout - 2)
+- Emp_20058959	(Checkout - 2)
+- Emp_20068397	(Checkout - 2)
+- Emp_20038706	(Checkout - 2)
+- Emp_20066338	(Checkout - 3)
+- Emp_900027719	(Checkout - 4)
+- Emp_20051291	(Storage - 1)
+- Emp_20055066	(Checkout - 4)
+- Emp_900027718	(Checkout - 5)
+
+All employees also carry the `Employees` category so the top `E-Empleados` minimums can live in the same `demand.csv`.
+
+## Minimium per work period per team
+- Storage
+    - Weekday
+        - 8:30 // 15:30 -> 1
+- Checkout
+    - Weekday
+        - 10:00 // 11:00 -> 1
+        - 11:00 // 21:00 -> 1
+        - 21:00 // 22:00 -> 1
+    - Weekend
+        - 11:00 // 21:00 -> 1
+- Management
+    - Weekday
+        - 10:00 // 11:00 -> 1
+        - 11:00 // 14:00 -> 1
+        - 14:00 // 19:00 -> 1
+        - 19:00 // 21:00 -> 1
+        - 21:00 // 22:00 -> 1
+    - Saturday
+        - 11:00 // 14:00 -> 1
+        - 14:00 // 19:00 -> 1
+        - 19:00 // 21:00 -> 1
+    - Sunday
+        - 11:00 // 14:00 -> 1
+        - 19:00 // 21:00 -> 1
+
+## Demand
+- `demand.csv` now contains both:
+    - responsibility-based minimums for `Storage`, `Checkout`, and `Management`
+    - hourly `Employees` rows copied from the workbook `E-Empleados` line
+- `Employees` is modeled as a normal category in the same file, not as a separate demand subsystem.
+
+## Time Frame
+- **Start Day**: 1 october (year unknown) // wednesday
+- **End Day**: 31 october (year unknown) // friday
+
+## Types of Unavailability 
+- Unavaliable (NOT)
+- Holidays (HOL)
+- Forced Day Off (FDO)
+- Day Off (DO)
+- Time Constraint (HH:MM-HH:MM)
+- Medical Reason (Med)
+
+## Employee Work Time per Day
+- Emp_20072412 -> 8
+- Emp_20066543 -> 8
+- Emp_20067009 -> 5
+- Emp_20054956 -> 4
+- Emp_20056459 -> 4
+- Emp_20062688 -> 4
+- Emp_20067696 -> 4
+- Emp_20058959 -> 4
+- Emp_20068397 -> 4
+- Emp_20038706 -> 5
+- Emp_20066338 -> 5
+- Emp_900027719 -> 5
+- Emp_20051291 -> 7
+- Emp_20055066 -> 4
+- Emp_900027718 -> 4
+
+## Schedule Unavailability
+- Emp_20072412
+    - Holidays
+        - 13 oct - 19 oct
+    - Day Off
+        - 5 oct
+        - 7 oct
+        - 12 oct
+        - 21 oct
+        - 26 oct
+- Emp_20066543
+    - Holidays
+        - 20 oct - 26 oct
+    - Day Off
+        - 1 oct
+        - 5 oct
+        - 9 oct
+        - 12 oct
+        - 16 oct
+        - 19 oct
+        - 30 oct
+- Emp_20067009
+    - Day Off
+        - 1 oct
+        - 3 oct
+        - 7 oct
+        - 11 oct
+        - 15 oct
+        - 17 oct
+        - 22 oct
+        - 24 oct
+        - 29 oct
+        - 31 oct
+- Emp_20054956
+    - Unavailable
+        - 5 oct
+    - Holidays
+        - 27 oct - 31 oct
+    - Day Off
+        - 11 oct - 13 oct
+        - 19 oct- 20 oct
+        - 26 oct
+- Emp_20056459
+    - Time Constraint
+        - 7 oct (EQUALS:10:00-14:00)
+    - Forced Day Off
+        - 10 oct
+    - Day Off
+        - 6 oct
+        - 13 oct - 14 oct
+        - 20 oct - 21 oct
+        - 27 oct - 28 oct
+- Emp_20062688
+    - Holidays
+        - 2 oct - 12 oct
+        - 27 oct - 31 oct
+    - Day Off
+        - 17 oct
+        - 19 oct
+        - 24 oct
+        - 26 oct
+- Emp_20067696
+    - Day Off
+        - 2 oct
+        - 5 oct
+        - 11 oct 
+        - 14 oct
+        - 16 oct
+        - 21 oct
+        - 23 oct
+        - 28 oct
+        - 30 oct
+- Emp_20058959
+    - Unavailable
+        - 1 oct 
+    - Day Off
+        - 4 oct - 5 oct
+        - 11 oct - 12 oct
+        - 18 oct - 19 oct
+        - 25 oct - 26 oct
+- Emp_20068397
+    - Day Off
+        - 1 oct - 2 oct
+        - 6 oct - 9 oct
+        - 13 oct - 16 oct
+        - 20 oct - 23 oct
+        - 27 oct - 30 oct
+- Emp_20038706
+    - Day Off
+        - 1 oct - 3 oct
+        - 6 oct - 10 oct
+        - 13 oct - 17 oct
+        - 20 oct - 24 oct
+        - 27 oct - 31 oct
+- Emp_20066338
+    - Time Constraint
+        - 4 oct (11:00-16:00)
+    - Day Off
+        - 1 oct - 3 oct
+        - 6 oct - 10 oct
+        - 13 oct - 17 oct
+        - 20 oct - 24 oct
+        - 27 oct - 31 oct
+- Emp_900027719
+    - Day Off
+        - 1 oct - 3 oct
+        - 6 oct - 10 oct
+        - 13 oct - 17 oct
+        - 20 oct - 24 oct
+        - 27 oct - 31 oct
+- Emp_20051291
+    - Holidays
+        - 28 oct - 31 oct
+    - Unavailable
+        - 27 oct
+    - Day Off
+        - 4 oct - 5 oct
+        - 11 oct - 12 oct
+        - 18 oct - 19 oct
+        - 25 oct - 26 oct
+- Emp_20055066
+    - Medical Reason
+        - 1 oct - 12 oct
+    - Day Off
+        - 14 oct
+        - 16 oct
+        - 21 oct
+        - 23 oct
+        - 28 oct
+        - 30 oct
+- Emp_900027718
+    - Day Off
+        - 1 oct - 2 oct
+        - 6 oct - 9 oct
+        - 13 oct - 16 oct
+        - 20 oct - 23 oct
+        - 27 oct - 30 oct

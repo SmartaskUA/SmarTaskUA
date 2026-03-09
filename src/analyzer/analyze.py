@@ -157,6 +157,13 @@ def callback(ch, method, properties, body):
         employees = message.get("employees", "[]")
         year = int(message.get("year", 2025))
         employees = json.loads(employees)
+        rules = message.get("rules")
+        if isinstance(rules, str):
+            try:
+                rules = json.loads(rules)
+            except Exception:
+                print("[WARN] Failed to parse rules payload for KPI analysis; ignoring.")
+                rules = None
 
         if not files:
             print("[ERROR] No files received.")
@@ -223,7 +230,10 @@ def callback(ch, method, properties, body):
                 print(f"[DEBUG] Preparing holidays for shifts verification for year {year}")
                 holidays = hl.country_holidays("PT", years=[year])
 
-            result = verifier(files[0], holidays, mins, employees, year)
+            if problem_type == "shifts":
+                result = verifier(files[0], holidays, mins, employees, year, rules=rules)
+            else:
+                result = verifier(files[0], holidays, mins, employees, year)
 
             print("[DEBUG] KPI verification result:", result)
 
