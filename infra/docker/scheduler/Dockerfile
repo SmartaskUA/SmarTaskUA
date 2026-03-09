@@ -15,6 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy master rules.json from config/
 COPY config/rules.json ./rules.json
 
+# Copy bundled problem definitions used by problem-native solvers.
+COPY data/problems ./data/problems
+
 # Copy the entire scheduler service (from src/scheduler/)
 COPY src/scheduler/ .
 

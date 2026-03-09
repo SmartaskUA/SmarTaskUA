@@ -1,8 +1,10 @@
 import pika
 import json
 import time
+import csv
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 from MongoDBClient import MongoDBClient
 from TaskManager import TaskManager
 
@@ -60,6 +62,41 @@ class RabbitMQClient:
         channel = connection.channel()
         return connection, channel
 
+    def load_problem_bundle_metadata(self, problem_path):
+        if not problem_path:
+            return {}
+
+        try:
+            resolved_path = Path(problem_path)
+            if not resolved_path.is_absolute():
+                resolved_path = (Path.cwd() / resolved_path).resolve()
+
+            if not resolved_path.is_file():
+                print(f"[WARN] Problem path not found for metadata extraction: {resolved_path}")
+                return {}
+
+            with resolved_path.open(encoding="utf-8") as fh:
+                problem = json.load(fh)
+
+            demand_config = problem.get("demand", {})
+            demand_file = demand_config.get("dataFile", "demand.csv")
+            demand_path = (resolved_path.parent / demand_file).resolve()
+
+            demand_rows = []
+            if demand_path.is_file():
+                with demand_path.open(newline="", encoding="utf-8") as fh:
+                    demand_rows = list(csv.DictReader(fh))
+
+            return {
+                "problemId": problem.get("metadata", {}).get("problemId"),
+                "problemDemandData": demand_rows,
+                "problemWorkPeriods": demand_config.get("workPeriods", []),
+                "problemTeams": demand_config.get("organizationalUnits", {}).get("teams", []),
+            }
+        except Exception as exc:
+            print(f"[WARN] Failed to load problem bundle metadata from {problem_path}: {exc}")
+            return {}
+
 
     def consume_messages(self):
         def callback(ch, method, properties, body):
@@ -70,31 +107,9 @@ class RabbitMQClient:
 
                 task_id = message.get("taskId", "No Task ID")
                 title = message.get("title")
-
-                # -------- Vacation template --------
+                problem_path = message.get("problemPath")
                 vacation_template_name = message.get("vacationTemplate")
-                fetched_vacation = self.mongodb_client.fetch_vacation_by_name(vacation_template_name)
-                vacations_data = fetched_vacation.get("vacations", {}) if fetched_vacation else {}
-
-                # Names in vacation template (first column of each row)
-                vacation_rows = vacations_data if isinstance(vacations_data, list) else []
-                employee_names_in_template = set()
-                for row in vacation_rows:
-                    if isinstance(row, list) and row:
-                        name = str(row[0]).replace("\uFEFF", "").strip()
-                        if name:
-                            employee_names_in_template.add(name)
-                print(f"[INFO] Employees in vacation template: {employee_names_in_template}")
-
-                # -------- Minimums --------
                 minimuns = message.get("minimuns")
-                fetched_reference = self.mongodb_client.fetch_reference_by_name(minimuns)
-                minimuns_data = fetched_reference.get("minimuns", {}) if fetched_reference else {}
-
-                # -------- Group filtering (NEW) --------
-                group_name = message.get("groupName")  # <-- comes from your producer
-                print(f"[INFO] groupName in message: {group_name}")
-
                 employees_override = message.get("employees")
                 if isinstance(employees_override, str):
                     try:
@@ -102,39 +117,68 @@ class RabbitMQClient:
                     except json.JSONDecodeError:
                         employees_override = None
 
-                if isinstance(employees_override, list) and employees_override:
+                if problem_path:
+                    vacations_data = {}
+                    minimuns_data = {}
+                    employees_data = employees_override if isinstance(employees_override, list) else []
+                    print(f"[INFO] Using bundle-native problem path: {problem_path}")
+                else:
+                    # -------- Vacation template --------
+                    fetched_vacation = self.mongodb_client.fetch_vacation_by_name(vacation_template_name)
+                    vacations_data = fetched_vacation.get("vacations", {}) if fetched_vacation else {}
+
+                    # Names in vacation template (first column of each row)
+                    vacation_rows = vacations_data if isinstance(vacations_data, list) else []
+                    employee_names_in_template = set()
+                    for row in vacation_rows:
+                        if isinstance(row, list) and row:
+                            name = str(row[0]).replace("\uFEFF", "").strip()
+                            if name:
+                                employee_names_in_template.add(name)
+                    print(f"[INFO] Employees in vacation template: {employee_names_in_template}")
+
+                    # -------- Minimums --------
+                    fetched_reference = self.mongodb_client.fetch_reference_by_name(minimuns)
+                    minimuns_data = fetched_reference.get("minimuns", {}) if fetched_reference else {}
+
+                    # -------- Group filtering --------
+                    group_name = message.get("groupName")
+                    print(f"[INFO] groupName in message: {group_name}")
+
+                    if isinstance(employees_override, list) and employees_override:
+                        employees_data = employees_override
+                        print(f"[INFO] Using {len(employees_data)} employees from problem payload.")
+                    else:
+                        all_employees = self.mongodb_client.fetch_employees()
+
+                        if group_name:
+                            teams_in_group = self.mongodb_client.fetch_teams_by_group(group_name)
+                            team_emp_ids = set()
+                            for t in teams_in_group:
+                                for eid in t.get("employeeIds", []):
+                                    team_emp_ids.add(eid)
+
+                            employees_in_group = [
+                                e for e in all_employees if str(e.get("_id")) in {str(eid) for eid in team_emp_ids}
+                            ]
+                            print(f"[INFO] Found {len(employees_in_group)} employees in group '{group_name}'.")
+
+                            employees_data = [
+                                e for e in employees_in_group
+                                if e.get("name", "").strip() in employee_names_in_template
+                            ]
+
+                            print(f"[INFO] Using {len(employees_data)} employees from group '{group_name}' (intersected with vacation template).")
+                        else:
+                            employees_data = [
+                                emp for emp in all_employees
+                                if emp.get("name", "").strip() in employee_names_in_template
+                            ]
+                            print(f"[INFO] Using {len(employees_data)} employees (no groupName provided; filtered only by template).")
+
+                if isinstance(employees_override, list) and employees_override and problem_path:
                     employees_data = employees_override
                     print(f"[INFO] Using {len(employees_data)} employees from problem payload.")
-                else:
-                    all_employees = self.mongodb_client.fetch_employees()
-
-                    if group_name:
-                        # 1) get all teams in the group
-                        teams_in_group = self.mongodb_client.fetch_teams_by_group(group_name)
-                        team_emp_ids = set()
-                        for t in teams_in_group:
-                            for eid in t.get("employeeIds", []):
-                                team_emp_ids.add(eid)
-
-                        # 2) restrict employees to that group
-                        employees_in_group = [
-                            e for e in all_employees if str(e.get("_id")) in {str(eid) for eid in team_emp_ids}
-                        ]
-                        print(f"[INFO] Found {len(employees_in_group)} employees in group '{group_name}'.")
-
-                        # 3) finally intersect with the vacation template names
-                        employees_data = [
-                            e for e in employees_in_group
-                            if e.get("name", "").strip() in employee_names_in_template
-                        ]
-
-                        print(f"[INFO] Using {len(employees_data)} employees from group '{group_name}' (intersected with vacation template).")
-                    else:
-                        employees_data = [
-                            emp for emp in all_employees
-                            if emp.get("name", "").strip() in employee_names_in_template
-                        ]
-                        print(f"[INFO] Using {len(employees_data)} employees (no groupName provided; filtered only by template).")
 
                 year = message.get("year")
                 shifts = message.get("shifts", [])
@@ -159,7 +203,8 @@ class RabbitMQClient:
                     year,
                     maxTime,
                     shifts,
-                    rules
+                    rules,
+                    problem_path
                 )
 
                 ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -193,7 +238,8 @@ class RabbitMQClient:
             year,
             maxTime,
             shifts,
-            rules
+            rules,
+            problem_path=None
     ):
 
         self.send_task_status(task_id, "IN_PROGRESS")
@@ -209,10 +255,12 @@ class RabbitMQClient:
                 maxTime=maxTime,
                 year=year,
                 shifts=shifts,
-                rules=rules
+                rules=rules,
+                problem_path=problem_path
             )
 
             print("ELAPSED TIME:", elapsed_time)
+            problem_metadata = self.load_problem_bundle_metadata(problem_path) if problem_path else {}
             metadata = {
                 "scheduleName": title,
                 "algorithmType": algorithm_name,
@@ -224,8 +272,10 @@ class RabbitMQClient:
                 "vacationTemplateData": vacations_data,
                 "minimunsTemplateData": minimuns_data,
                 "shifts": shifts,
-                "rules": rules
+                "rules": rules,
+                "problemPath": problem_path
             }
+            metadata.update(problem_metadata)
 
             self.mongodb_client.insert_schedule(
                 data=schedule_data,

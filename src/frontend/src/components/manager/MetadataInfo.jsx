@@ -51,12 +51,25 @@ const MetadataInfo = ({ metadata }) => {
     employeesTeamInfo,
     year,
   } = metadata;
+  const hasMinimumsTemplate =
+    Array.isArray(minimunsTemplateData) && minimunsTemplateData.length > 0;
+  const hasVacationTemplate =
+    Array.isArray(vacationTemplateData) && vacationTemplateData.length > 0;
 
   const allTeams = employeesTeamInfo?.reduce((acc, emp) => {
-    acc.push(...emp.teams);
+    const teamLabels = Array.isArray(emp?.teams)
+      ? emp.teams
+          .map((team) =>
+            typeof team === "string"
+              ? team
+              : String(team?.name || team?.code || team?.id || "").trim()
+          )
+          .filter(Boolean)
+      : [];
+    acc.push(...teamLabels);
     return acc;
   }, []);
-  const teamColors = generateTeamColors(allTeams);
+  const teamColors = generateTeamColors(allTeams || []);
 
   return (
     <Box mt={4}>
@@ -73,21 +86,25 @@ const MetadataInfo = ({ metadata }) => {
           {showInfo ? "Hide Information" : "Show Information"}
         </Button>
 
-        <Button
-          variant={showMinimums ? "contained" : "outlined"}
-          color="success"
-          onClick={() => setShowMinimums(!showMinimums)}
-        >
-          {showMinimums ? "Hide Minimums" : "Show Minimums"}
-        </Button>
+        {hasMinimumsTemplate && (
+          <Button
+            variant={showMinimums ? "contained" : "outlined"}
+            color="success"
+            onClick={() => setShowMinimums(!showMinimums)}
+          >
+            {showMinimums ? "Hide Minimums" : "Show Minimums"}
+          </Button>
+        )}
 
-        <Button
-          variant={showVacation ? "contained" : "outlined"}
-          color="warning"
-          onClick={() => setShowVacation(!showVacation)}
-        >
-          {showVacation ? "Hide Vacation" : "Show Vacation"}
-        </Button>
+        {hasVacationTemplate && (
+          <Button
+            variant={showVacation ? "contained" : "outlined"}
+            color="warning"
+            onClick={() => setShowVacation(!showVacation)}
+          >
+            {showVacation ? "Hide Vacation" : "Show Vacation"}
+          </Button>
+        )}
       </Box>
 
       {showInfo && (
@@ -129,17 +146,23 @@ const MetadataInfo = ({ metadata }) => {
             <TableBody>
               {employeesTeamInfo?.map((emp, idx) => (
                 <TableRow key={idx}>
-                  <TableCell>{emp.name}</TableCell>
+                  <TableCell>{emp.name || emp.id || `Employee ${idx + 1}`}</TableCell>
                   <TableCell>
-                    {emp.teams.map((team, i) => (
+                    {(emp.teams || []).map((team, i) => {
+                      const label =
+                        typeof team === "string"
+                          ? team
+                          : String(team?.name || team?.code || team?.id || "").trim();
+                      return (
                       <Chip
                         key={i}
-                        label={team}
+                        label={label}
                         size="small"
-                        color={teamColors[team] || "default"}
+                        color={teamColors[label] || "default"}
                         sx={{ mr: 1 }}
                       />
-                    ))}
+                      );
+                    })}
                   </TableCell>
                 </TableRow>
               ))}
@@ -149,7 +172,7 @@ const MetadataInfo = ({ metadata }) => {
       )}
 
       {showMinimums && (
-        <MinimumsTemplate name={minimunsTemplateName} data={minimunsTemplateData} />
+        <MinimumsTemplate name={minimunsTemplateName} data={minimunsTemplateData} year={year} />
       )}
 
       {showVacation && (

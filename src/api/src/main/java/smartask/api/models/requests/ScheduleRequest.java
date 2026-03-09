@@ -25,6 +25,7 @@ public class ScheduleRequest {
     private Map<String, Object> constraints;
     private Integer hours;
     private String groupName;
+    private String problemPath;
     private List<Map<String, Object>> employees;
     // Construtor explícito
     public ScheduleRequest(String taskId, String year, String algorithm, String title, String maxTime, LocalDateTime requestedAt, String vacationTemplate, String minimuns, Integer shifts, Integer hours, String groupName) {

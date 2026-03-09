@@ -138,11 +138,15 @@ const CreateCalendar = () => {
     }
     const temporal = problemJson.temporalScope || {};
     const demand = problemJson.demand || {};
-    const shiftCount = Array.isArray(demand.shifts) ? demand.shifts.length : null;
+    const shiftCount = Array.isArray(demand.shifts) && demand.shifts.length ? demand.shifts.length : null;
+    const hasWorkPeriods = Array.isArray(demand.workPeriods) && demand.workPeriods.length > 0;
 
     if (shiftCount != null) {
       setScheduleType("Turno");
       setShifts(shiftCount);
+    } else if (hasWorkPeriods) {
+      setScheduleType("Horas");
+      setShifts("");
     } else {
       setScheduleType("");
       setShifts("");
@@ -251,33 +255,53 @@ const CreateCalendar = () => {
     setMaxDurationError(!intValue || intValue <= 0 || !/^\d+$/.test(value));
   };
 
-
-  const generalAlgorithms = [
+  const problemShiftAlgorithms = [
     { value: "ILP General", label: "ILP General" },
     { value: "CSP General", label: "CSP General" },
   ];
+  const problemHourAlgorithms = [
+    { value: "ILP_Sisqual_Hours", label: "ILP Sisqual Hours" },
+  ];
 
-  // Algoritmos separados
-  const turnoAlgorithms = [
+  const manualShiftAlgorithms = [
     { value: "hill climbing", label: "Hill Climbing" },
     { value: "Greedy Randomized", label: "Greedy Randomized" },
     { value: "Greedy Randomized + Hill Climbing", label: "Greedy Randomized + Hill Climbing" },
-    { value: "genetic_algorithm", label: "Genetic Algorithm" },
     { value: "CSP Scheduling", label: "CSP Scheduling" },
     { value: "linear programming", label: "Integer Linear Programming" },
     { value: "linear programming 2", label: "Integer Linear Programming 2" },
-    { value: "ILP General", label: "ILP General" },
-    { value: "CSP General", label: "CSP General" },
-    ];
-  const horasAlgorithms = [
+  ];
+  const manualHourAlgorithms = [
     { value: "ILP_13Hours", label: "Integer Linear Programming 13 Hours" },
     { value: "CSP_13Hours", label: "CSP 13 Hours" },
     { value: "CSP_Afonso_Hours", label: "CSP Afonso 13 Hours" },
     { value: "ILP_13_Half_Intervals", label: "Integer Linear Programming 13 Hours Half Intervals" },
     { value: "CSP_Extra_Hours", label: "CSP Extra Hours" },
     { value: "ILP_Extra_Hours", label: "ILP Extra Hours" },
-    // Adicione outros algoritmos de horas aqui se existirem
   ];
+
+  const availableAlgorithms = useMemo(() => {
+    if (mode === "problem") {
+      if (!problemJson) {
+        return [];
+      }
+      const demand = problemJson.demand || {};
+      if (Array.isArray(demand.shifts) && demand.shifts.length > 0) {
+        return problemShiftAlgorithms;
+      }
+      if (Array.isArray(demand.workPeriods) && demand.workPeriods.length > 0) {
+        return problemHourAlgorithms;
+      }
+      return [];
+    }
+    if (scheduleType === "Turno") {
+      return manualShiftAlgorithms;
+    }
+    if (scheduleType === "Horas") {
+      return manualHourAlgorithms;
+    }
+    return [];
+  }, [mode, problemJson, scheduleType]);
 
   return (
     <div className="admin-container">
@@ -345,7 +369,7 @@ const CreateCalendar = () => {
                     }
                   }}
                 >
-                  <MenuItem value="problem">Problem (General)</MenuItem>
+                  <MenuItem value="problem">Problem</MenuItem>
                   <MenuItem value="manual">Manual</MenuItem>
                 </Select>
               </FormControl>
@@ -455,10 +479,7 @@ const CreateCalendar = () => {
                     label="Algoritmo"
                     onChange={(e) => setSelectedAlgorithm(e.target.value)}
                   >
-                    {(mode === "problem"
-                      ? generalAlgorithms
-                      : (scheduleType === "Turno" ? turnoAlgorithms : horasAlgorithms)
-                    ).map((alg) => (
+                    {availableAlgorithms.map((alg) => (
                       <MenuItem key={alg.value} value={alg.value}>{alg.label}</MenuItem>
                     ))}
                   </Select>

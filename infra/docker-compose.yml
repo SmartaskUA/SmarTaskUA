@@ -49,6 +49,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     volumes:
+      - ../data/problems:/app/data/problems
       - shared_tmp:/shared_tmp
     healthcheck:
       test: ["CMD", "pgrep", "-f", "RabbitMQClient"]
@@ -73,6 +74,7 @@ services:
       - RABBITMQ_USERNAME=guest
       - RABBITMQ_PASSWORD=guest
     volumes:
+      - ../data/problems:/app/data/problems
       - shared_tmp:/shared_tmp
     healthcheck:
       test: ["CMD", "pgrep", "-f", "analyze"]

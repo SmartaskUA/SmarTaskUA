@@ -6,6 +6,10 @@ import os
 from pymongo import MongoClient
 from kpiVerification import analyze as verifyKpis                                                        
 from kpiVerification_unified_v3 import analyze as verifyKpis_Unified
+from kpiVerification_sisqual_bundle import (
+    analyze as verifyKpis_SisqualBundle,
+    is_bundle_native_hour_problem,
+)
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 import pandas as pd
 import holidays as hl
@@ -152,6 +156,7 @@ def callback(ch, method, properties, body):
         files = message.get("files", [])
         vacs = message.get("vacationTemplate")
         mins = message.get("minimunsTemplate")
+        problem_path = message.get("problemPath")
         print(f"[DEBUG] Received message for requestId={request_id} with {len(files)} files.")
         print(f"[DEBUG] Minimums Template: {mins}")
         employees = message.get("employees", "[]")
@@ -194,6 +199,11 @@ def callback(ch, method, properties, body):
             problem_type = "shifts"
             hour_granularity = None
         print(f"[DEBUG] Detected problem type: {problem_type} (hour granularity: {hour_granularity})")
+        use_sisqual_bundle_verifier = (
+            problem_type == "hours"
+            and problem_path
+            and is_bundle_native_hour_problem(problem_path)
+        )
         verifier = select_kpi_verifier(problem_type, hour_granularity)
 
 
@@ -205,7 +215,9 @@ def callback(ch, method, properties, body):
         if len(files) == 1:
             print("[DEBUG] Running KPI verification for file:", files[0])
 
-            if problem_type == "hours":
+            if use_sisqual_bundle_verifier:
+                result = verifyKpis_SisqualBundle(files[0], problem_path, employees, year)
+            elif problem_type == "hours":
                 print(f"[DEBUG] Preparing holidays for hours verification for year {year}")
                 holidays = {
                     date(2022, 1, 1): "New Year's Day", 
@@ -230,7 +242,9 @@ def callback(ch, method, properties, body):
                 print(f"[DEBUG] Preparing holidays for shifts verification for year {year}")
                 holidays = hl.country_holidays("PT", years=[year])
 
-            if problem_type == "shifts":
+            if use_sisqual_bundle_verifier:
+                print(f"[DEBUG] Using Sisqual bundle-native KPI verifier for {problem_path}")
+            elif problem_type == "shifts":
                 result = verifier(files[0], holidays, mins, employees, year, rules=rules)
             else:
                 result = verifier(files[0], holidays, mins, employees, year)
@@ -278,7 +292,9 @@ def callback(ch, method, properties, body):
         elif len(files) >= 2:
 
             # 🔹 Definir holidays com base no problem_type
-            if problem_type == "hours":
+            if use_sisqual_bundle_verifier:
+                holidays = None
+            elif problem_type == "hours":
                 holidays = {
                     date(2022, 1, 1): "New Year's Day",
                     date(2022, 1, 6): 'Epiphany',
@@ -306,7 +322,10 @@ def callback(ch, method, properties, body):
 
             for f in files:
                 print(f"[DEBUG] Comparing file: {f}")
-                results[f] = verifier(f, holidays, mins, employees, year)
+                if use_sisqual_bundle_verifier:
+                    results[f] = verifyKpis_SisqualBundle(f, problem_path, employees, year)
+                else:
+                    results[f] = verifier(f, holidays, mins, employees, year)
 
             print("[DEBUG] KPI comparison results:", results)
 

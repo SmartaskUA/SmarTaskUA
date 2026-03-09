@@ -117,7 +117,8 @@ public class SchedulesController {
                                               @RequestParam("year") String year,
                                               @RequestParam(value = "rules", required = false) String rules,
                                               @RequestParam(value = "scheduleType", required = false) String scheduleType,
-                                              @RequestParam(value = "hourGranularity", required = false) String hourGranularity) {
+                                              @RequestParam(value = "hourGranularity", required = false) String hourGranularity,
+                                              @RequestParam(value = "problemPath", required = false) String problemPath) {
         try {
             log.info("Received request to analyze {} files", files.size());
             String requestId = UUID.randomUUID().toString();
@@ -156,6 +157,9 @@ public class SchedulesController {
             }
             if (hourGranularity != null && !hourGranularity.isBlank()) {
                 message.put("hourGranularity", hourGranularity);
+            }
+            if (problemPath != null && !problemPath.isBlank()) {
+                message.put("problemPath", problemPath);
             }
             log.info("Publishing message to comparison-exchange: {}", message);
             log.info("Year: {}", year);

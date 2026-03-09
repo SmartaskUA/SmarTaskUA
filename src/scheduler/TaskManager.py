@@ -40,6 +40,7 @@ class TaskManager:
             "Greedy Randomized": greedy_randomized_solver,
             "Greedy Randomized + Hill Climbing": greedy_climbing_solver,
             "CSP": csp_solver,
+            "CSP Scheduling": csp_solver,
             "CSPv2": cspv2_solver,
             "CSP General": csp_general_solver,
             "CSP_ENGINE": csp_engine_solver,
