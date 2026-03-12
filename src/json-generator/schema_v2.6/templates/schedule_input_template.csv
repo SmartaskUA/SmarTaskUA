@@ -1,0 +1,76 @@
+# Schedule Input Template (v2.2)
+# This template demonstrates how to specify work requirements and availability constraints
+# for each employee in your scheduling problem.
+#
+# FORMAT: CSV file with one row per employee
+# - Column 1: employee_id (must match employees[].id in JSON)
+# - Columns 2+: One column per date (format: YYYY-MM-DD)
+#
+# CELL VALUES (v2.2):
+#
+# 1. WORK REQUIREMENTS (algorithm will allocate):
+#    A           = Auto-allocate hours from employee's contract (uses workHoursPerDay)
+#    4, 6, 8, etc = Work exactly this many hours (1-16 hours allowed)
+#
+# 2. TIME WINDOW CONSTRAINTS (Allen Interval Algebra):
+#    EQUALS:HH:MM-HH:MM   = Must work EXACTLY this time range (no earlier start, no later end)
+#                           Example: EQUALS:08:00-16:00 means work exactly 8 AM to 4 PM
+#                           Use for: Fixed schedules, legal restrictions, equipment access
+#
+#    INCLUDE:HH:MM-HH:MM  = Must work ENTIRE range minimum (can start earlier or end later)
+#                           Example: INCLUDE:09:00-17:00 means must be present 9 AM-5 PM
+#                           Use for: Core hours, coverage requirements, supervision overlap
+#
+#    EXCEPT:HH:MM-HH:MM   = Completely UNAVAILABLE during this time window (cannot work)
+#                           Example: EXCEPT:14:00-22:00 means cannot work 2 PM-10 PM
+#                           Use for: Personal unavailability, avoiding shifts, partial availability
+#
+# 3. STANDARD AVAILABILITY CONSTRAINTS (always valid):
+#    VAC   = Vacation
+#    NOT   = Unavailable (general)
+#
+# 4. CUSTOM CONSTRAINTS (must be defined in JSON scheduleInput.markingTypes):
+#    DL    = Day off (generic) - MUST define in JSON
+#    DLF   = Fixed day off (cannot swap) - MUST define in JSON
+#    DLV   = Variable day off (can swap within week) - MUST define in JSON
+#    DO    = Day off (alias) - MUST define in JSON
+#    EnfD  = Sick leave - MUST define in JSON
+#    Med   = Medical reason - MUST define in JSON
+#
+#    Example JSON definition:
+#    "scheduleInput": {
+#      "dataFile": "schedule_input.csv",
+#      "markingTypes": {
+#        "DL": "Day Off - Generic",
+#        "DLF": "Fixed Day Off - Cannot swap",
+#        "DO": "Day Off - Swappable with penalty"
+#      }
+#    }
+#
+# EXAMPLES:
+# - Employee with 8h contract, flexible schedule:
+#   EMP001,A,A,A,A,VAC,VAC,A
+#
+# - Employee needs exactly 6 hours on some days:
+#   EMP002,6,A,6,A,NOT,A,A
+#
+# - Employee with fixed schedule requirement:
+#   EMP003,EQUALS:08:00-16:00,EQUALS:08:00-16:00,NOT,A,A,VAC,VAC
+#
+# - Employee must cover core hours (9-5) but can work longer:
+#   EMP004,INCLUDE:09:00-17:00,A,A,NOT,INCLUDE:09:00-17:00,VAC,VAC
+#
+# - Employee unavailable afternoons/evenings:
+#   EMP005,EXCEPT:14:00-22:00,A,NOT,EXCEPT:14:00-22:00,A,VAC,A
+#
+# - Mix different constraint types:
+#   EMP006,A,EQUALS:08:00-16:00,8,INCLUDE:09:00-17:00,NOT,EXCEPT:14:00-22:00,VAC
+#
+# DELETE ALL COMMENT LINES (lines starting with #) before using this template!
+# Replace the example data below with your actual employee schedules.
+#
+employee_id,2030-10-01,2030-10-02,2030-10-03,2030-10-04,2030-10-05,2030-10-06,2030-10-07
+EMP001,A,A,8,NOT,EQUALS:08:00-16:00,A,VAC
+EMP002,INCLUDE:09:00-17:00,A,6,A,EQUALS:14:00-22:00,A,NOT
+EMP003,EXCEPT:14:00-22:00,A,NOT,A,A,EQUALS:08:30-16:30,A
+EMP004,NOT,INCLUDE:10:00-15:00,4,A,EXCEPT:06:00-14:00,VAC,A
