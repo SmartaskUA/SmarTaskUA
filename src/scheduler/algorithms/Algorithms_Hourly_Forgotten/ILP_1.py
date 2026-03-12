@@ -107,6 +107,11 @@ class HourlyILPStrictScheduler:
         # closed days set (if any team has -1 at some hour, we treat day as closed for all)
         self.closed_days = {d for (d, h, t), v in self.minimos.items() if v == -1}
 
+        # Br Blocos que influenciam o dia seguinte
+        self.Ar = self._Ar_Builder(self.work_blocks, rest_hours=12)
+        print(f"Dictionary Ar de blocos dependentes para descanso de 12h: {self.Ar}")
+        
+
         # model placeholders
         self.model = None
         self.z = {}            # z[f,d,b] binary: employee f works block b on day d
@@ -123,12 +128,33 @@ class HourlyILPStrictScheduler:
         hours = set(range(start, break_start))
         hours |= set(range(break_start + 1, end))
         return hours
+    
+    def _Ar_Builder(self, work_Blocks, rest_hours):
 
-    def _validate_block_transition(self, block_today, block_tomorrow):
-        end_today = block_today[2]
-        start_tomorrow = block_tomorrow[0]
-        rest_hours = (24 - end_today) + start_tomorrow
-        return rest_hours >= 12
+        """
+        Return a dictionary of blocks that are dependent on the previous day's block for Xh rest.
+        {(9, 13, 18): [(12, 16, 21), (12, 17, 21), (12, 18, 21), (13, 17, 22), (13, 18, 22), (13, 19, 22)],
+        (9, 14, 18): [(12, 16, 21), (12, 17, 21), (12, 18, 21), (13, 17, 22), (13, 18, 22), (13, 19, 22)],
+        (9, 15, 18): [(12, 16, 21), (12, 17, 21), (12, 18, 21), (13, 17, 22), (13, 18, 22), (13, 19, 22)], 
+        (10, 14, 19): [(13, 17, 22), (13, 18, 22), (13, 19, 22)], 
+        (10, 15, 19): [(13, 17, 22), (13, 18, 22), (13, 19, 22)], 
+        (10, 16, 19): [(13, 17, 22), (13, 18, 22), (13, 19, 22)]}
+        ....
+        """
+
+        Non_Rest_Hours = 24 - rest_hours + 1
+        Ar = {} # {() : [(), (), ()]} Key - Block a ; Value - Set of Blocks b that depend on a
+        for b in work_Blocks:
+            (start_b, break_b, end_b) = b
+            for a in work_Blocks:
+                (start_a, break_a, end_a) = a
+                if start_b + round(Non_Rest_Hours) <= end_a:
+                    if b not in Ar:
+                        Ar[b] = []
+                    Ar[(b)].append(a)
+                    print(f"Adicionando bloco {b} em Ar pois e dependente de {a} com {rest_hours}h de descanso")
+        return Ar
+
 
     def build_model(self):
         model = pulp.LpProblem("Hourly_Strict_ILP", pulp.LpMinimize)
@@ -138,6 +164,8 @@ class HourlyILPStrictScheduler:
         blocos = list(range(self.num_blocks))
         horas = list(range(9, 22))
         teams = list(self.teams.keys())
+
+# ------------------------------------------------------------------------------
 
         # 1) Variables
         # z[f][d][b] binary: chosen block b for f on day d
@@ -191,49 +219,92 @@ class HourlyILPStrictScheduler:
                     ub = max(0, len(self.employees) * 2)
                     self.shortage[(d, h, tc)] = pulp.LpVariable(name, lowBound=0, upBound=ub, cat="Continuous")
 
+# ------------------------------------------------------------------------------
+
+
         # 2) Constraints
         # Link z and x: x[f,d,b,tc] <= z[f,d,b] and sum_tc x == z (if z==1 one tc must be 1)
         for f in funcionarios:
             for d in dias:
                 for b in blocos:
-                    # if day is a vacation for f -> z==0, x==0
+
                     if d in self.vacations_dates.get(f, set()):
                         model += (self.z[f][d][b] == 0, f"vac_z_f{f}_{d.strftime('%Y%m%d')}_b{b}")
-                        for tc in self.emp_team_code[f]:
-                            model += (self.x[f][d][b][tc] == 0, f"vac_x_f{f}_{d.strftime('%Y%m%d')}_b{b}_{tc}")
                         continue
 
-                    # if day is closed -> no work
                     if d in self.closed_days:
                         model += (self.z[f][d][b] == 0, f"closed_z_f{f}_{d.strftime('%Y%m%d')}_b{b}")
-                        for tc in self.emp_team_code[f]:
-                            model += (self.x[f][d][b][tc] == 0, f"closed_x_f{f}_{d.strftime('%Y%m%d')}_b{b}_{tc}")
                         continue
 
-                    # x <= z for each team
                     for tc in self.emp_team_code[f]:
-                        model += (self.x[f][d][b][tc] <= self.z[f][d][b],
+                        model += (self.x[f][d][b][tc] <= self.z[f][d][b], # Significa que se z==0 então x==0, se nao esta no bloco, x nao pode estar 
                                   f"x_le_z_f{f}_{d.strftime('%Y%m%d')}_b{b}_{tc}")
 
-                    # sum_tc x == z  (if z==1 then exactly one team must be selected)
-                    # but if employee has only 1 allowed team this forces that x==z
                     model += (
                         pulp.lpSum(self.x[f][d][b][tc] for tc in self.emp_team_code[f]) == self.z[f][d][b],
                         f"one_team_if_work_f{f}_{d.strftime('%Y%m%d')}_b{b}"
                     )
 
-        # Workday linking: workday[f,d] >= z[f,d,b] for all b, and workday <= sum z (so equals OR)
+
         for f in funcionarios:
             for d in dias:
+                for b in blocos:
+                    if d in self.vacations_dates.get(f, set()) or d in self.closed_days:
+                        model += (self.z[f][d][b] == 0, f"no_work_f{f}_{d.strftime('%Y%m%d')}_b{b}")
+                        for tc in self.emp_team_code[f]:
+                            model += (self.x[f][d][b][tc] == 0)
+                        continue
+
+                    for tc in self.emp_team_code[f]:
+                        model += (self.x[f][d][b][tc] <= self.z[f][d][b])
+
+                    model += (
+                        pulp.lpSum(self.x[f][d][b][tc] for tc in self.emp_team_code[f]) == self.z[f][d][b],
+                        f"one_team_f{f}_{d.strftime('%Y%m%d')}_b{b}"
+                    )
+
+
+
+        for d in dias:
+            for h in horas:
+                for tc in teams:
+                    team_id = get_team_id(tc)
+                    # FIX: Look up with FLOAT h
+                    if self.minimos.get((d, h, team_id), 0) == -1:
+                        model += (self.y[d][h][tc] == 0, f"y_closed_{d.strftime('%Y%m%d')}_h{h}_{tc}")
+                        continue
+                    
+                    terms = []
+                    for f in self.teams.get(tc, set()):
+                        for b in blocos:
+                            # FIX: Compare rounded floats
+                            if round(h, 1) in [round(bh, 1) for bh in self.block_hours[b]]:
+                                if tc in self.emp_team_code[f]:
+                                    terms.append(self.x[f][d][b][tc])
+                    
+                    # if terms:
+                    model += (self.y[d][h][tc] == pulp.lpSum(terms))
+                    # else:
+                    #     model += (self.y[d][h][tc] == 0)
+
+
+        # Workday linking: workday[f,d] >= z[f,d,b] for all b, and workday <= sum z (so equals OR)
+        # One Block per day
+        for f in funcionarios:
+            for d in dias:
+                
                 model += (
                     pulp.lpSum(self.z[f][d][b] for b in blocos) <= 1,
                     f"at_most_one_block_f{f}_{d.strftime('%Y%m%d')}"
                 )
-                # workday equals sum z (since sum z ∈ {0,1})
+
                 model += (
                     self.workday[f][d] == pulp.lpSum(self.z[f][d][b] for b in blocos),
                     f"workday_def_f{f}_{d.strftime('%Y%m%d')}"
                 )
+
+
+
 
         # Total working days = 223
         for f in funcionarios:
@@ -242,54 +313,6 @@ class HourlyILPStrictScheduler:
                 f"total_223_f{f}"
             )
 
-        # Closed days: force no work any employee
-        for d in self.closed_days:
-            for f in funcionarios:
-                model += (
-                    pulp.lpSum(self.z[f][d][b] for b in blocos) == 0,
-                    f"closed_no_work_f{f}_{d.strftime('%Y%m%d')}"
-                )
-
-        # Link y with x: y[d,h,tc] == sum_{f,b} x[f,d,b,tc] for blocks that cover h
-        for d in dias:
-            for h in horas:
-                hora_str = f"{h:02d}-{h+1:02d}"
-                for tc in teams:
-                    # if closed for this team-hour, then y forced to 0
-                    if self.minimos.get((d, hora_str, tc), 0) == -1:
-                        model += (self.y[d][h][tc] == 0, f"y_closed_d{d.strftime('%Y%m%d')}_h{h}_{tc}")
-                        continue
-                    # sum x over employees and blocks covering hour h
-                    terms = []
-                    for f in self.teams.get(tc, set()):
-                        for b in blocos:
-                            if h in self.block_hours[b]:
-                                # x exist only if tc allowed for f
-                                if tc in self.emp_team_code[f]:
-                                    terms.append(self.x[f][d][b][tc])
-                    if terms:
-                        model += (self.y[d][h][tc] == pulp.lpSum(terms),
-                                  f"y_def_d{d.strftime('%Y%m%d')}_h{h}_{tc}")
-                    else:
-                        # no possible members -> y == 0
-                        model += (self.y[d][h][tc] == 0, f"y_zero_d{d.strftime('%Y%m%d')}_h{h}_{tc}")
-
-        # Shortage linking and minimum constraints
-        for d in dias:
-            for h in horas:
-                hora_str = f"{h:02d}-{h+1:02d}"
-                for tc in teams:
-                    minimo = self.minimos.get((d, hora_str, tc), 0)
-                    if minimo == -1:
-                        continue
-                    # shortage >= minimo - y
-                    s_var = self.shortage.get((d, h, tc), None)
-                    if s_var is None:
-                        # create if missing (unlikely)
-                        name = f"short_d{d.strftime('%Y%m%d')}_h{h}_{tc}"
-                        s_var = pulp.LpVariable(name, lowBound=0, cat="Continuous")
-                        self.shortage[(d, h, tc)] = s_var
-                    model += (s_var + self.y[d][h][tc] >= minimo, f"short_def_d{d.strftime('%Y%m%d')}_h{h}_{tc}")
 
         # Max 5 consecutive working days (window 6)
         for f in funcionarios:
@@ -300,42 +323,62 @@ class HourlyILPStrictScheduler:
                     f"max5_consec_f{f}_{dias[i].strftime('%Y%m%d')}"
                 )
 
-        # Valid transitions (12h rest) using z variables (strict)
+
+        # Valid transitions (12h rest) - aggregate constraint
+        # Equation: sum_{b∈B_a} z_edb + sum_{a∈A_r} z_{e,d+1,a} ≤ 1
+        # If employee works late block (B_a) today, cannot work early block (A_r) tomorrow
         for f in funcionarios:
-            for i in range(0, len(dias) - 1):
+            for i in range(len(dias) - 1):
                 d_today = dias[i]
                 d_next = dias[i + 1]
-                for b in blocos:
-                    for a in blocos:
-                        # if transition invalid (end_today->start_tomorrow < 12h) then forbid z[f,d_today,b] + z[f,d_next,a] > 1
-                        if not self._validate_block_transition(self.work_blocks[b], self.work_blocks[a]):
-                            model += (
-                                self.z[f][d_today][b] + self.z[f][d_next][a] <= 1,
-                                f"invalid_trans_f{f}_{d_today.strftime('%Y%m%d')}_b{b}_a{a}"
-                            )
+                for a, ba in self.Ar.items():  # a ∈ A_r e b ∈ B_a
+                    Ba = set()
+                    for b in ba:
+                        Ba.add(b)
+                    team_codes = self.emp_team_code[f]
+                    sum_next = pulp.lpSum(
+                        self.x[f][d_next][self.work_blocks.index(a)][tc]
+                        for tc in team_codes
+                    )
+                    sum_today = pulp.lpSum(
+                        self.x[f][d_today][self.work_blocks.index(b)][tc]
+                        for b in Ba
+                        for tc in team_codes
+                    )
+                    model += (
+                        sum_today + sum_next <= 1,
+                        f"rest_12h_f{f}_{d_today.strftime('%Y%m%d')}_a{a}"
+                    )
 
-        # (Optional) Enforce team eligibility was already implicitly enforced by not creating x entries for disallowed team codes.
-        # But also we can ensure x==0 for disallowed teams (defensive)
-        for f in funcionarios:
-            allowed = set(self.emp_team_code[f])
-            for d in dias:
-                for b in blocos:
-                    for tc in list(self.teams.keys()):
-                        if tc not in allowed:
-                            # if variable exists, set to 0 (safe-guard)
-                            if tc in self.x[f][d][b]:
-                                model += (self.x[f][d][b][tc] == 0,
-                                          f"disallow_team_f{f}_{d.strftime('%Y%m%d')}_b{b}_{tc}")
+
+
 
         # 3) Objective: minimize sum of weighted shortages
-        weight_shortage = 100  # tune as needed
         obj_terms = []
         for (d, h, tc), s_var in self.shortage.items():
-            obj_terms.append(weight_shortage * s_var)
-        model += pulp.lpSum(obj_terms), "Minimize_total_shortage"
+            obj_terms.append(s_var)
+        model += pulp.lpSum(obj_terms), "Minimize_total_shortage" # Funcao objetivo poris nao existe qualquer comparacao
+
 
         self.model = model
         print("[HourlyILPStrict] Model built (variables: z,x,workday,y,shortage)")
+
+
+
+
+
+
+
+
+
+
+
+# ------------------------------------------------------------------------------
+
+
+
+
+
 
     def solve(self, gap_rel=0.01):
         if self.model is None:
@@ -360,6 +403,7 @@ class HourlyILPStrictScheduler:
             msg=1,           # Enable output messages
             timeLimit=time_limit,
             gapRel=gap_rel,
+            threads=8,
             options=['logLevel=2']  # Detailed logging
         )
         

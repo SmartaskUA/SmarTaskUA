@@ -1,0 +1,12 @@
+provided=True
+max_consecutive_window=6
+max_consecutive_worked=5
+special_cap=22
+total_workdays_min=223
+total_workdays_max=223
+enforce_no_earlier=True
+enforce_vacation=True
+min_coverage_weight=100
+min_coverage_hard=False
+ideal_coverage_weight=1
+ideal_coverage_hard=False

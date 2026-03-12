@@ -71,7 +71,7 @@ const metricInfo = {
   },                                                                                                      
   holidayWorkLimitViolations: {                                                                           
     label: "Holiday Work Limit Violations",                                                               
-    description: "Total number of holiday/weekend workdays beyond the legal limit of 22, summed across employees.",                                                                                              
+    description: "Total number of holiday/sunday workdays beyond the legal limit of 22, summed across employees.",                                                                                              
   },                                                                                                      
   consecutiveDaysViolations: {                                                                            
     label: "Consecutive Days Violations",                                                                 
@@ -88,14 +88,18 @@ const metricInfo = {
   totalIdealGap: {                                                                                        
     label: "Total Ideal Gap",                                                                             
     description: "Total missing staff compared to ideal staffing levels across all teams, time slots and days (N/A when no ideal requirements are provided).",                                                     
-  },                                                                                                      
+  },
+  staffingRobustnessGap: {
+    label: "Staffing Robustness Gap",
+    description: "Total missing staff compared to synthetic ideal levels (minimum + 1) across all teams, time slots and days. Measures schedule buffer above minimum requirements.",
+  },                                                                             
   excessStaffing: {                                                                                       
     label: "Excess Staffing",                                                                             
     description: "Total extra staff assigned beyond required minimums across all teams, time slots and days.",                                                                                                   
   },                                                                                                      
   minRestViolations: {                                                                                    
     label: "Minimum Rest Violations",                                                                     
-    description: "Number of shift-to-shift transitions where the rest time between consecutive working days is less than 11 hours (should be 0 if the schedule is valid).",                                      
+    description: "Number of shift-to-shift transitions where the rest time between consecutive working days is less than 12 hours (should be 0 if the schedule is valid).",                                      
   },                                                                                               
 };                                            
 
@@ -134,6 +138,7 @@ const KPIReport = ({ metrics = {}, scheduleType }) => {
     "consecutiveDaysViolations",                                                                          
     "minRestViolations",                                                                                  
     "totalStaffingGap",
+    "staffingRobustnessGap",
     "staffingCoverageRate",                                                                                  
     "totalIdealGap",                                                                                      
     "excessStaffing",                                                                                     
