@@ -6,6 +6,8 @@ pandas
 deap
 pika
 pulp
+highspy
+gurobipy
 holidays
 tabulate
 tenacity

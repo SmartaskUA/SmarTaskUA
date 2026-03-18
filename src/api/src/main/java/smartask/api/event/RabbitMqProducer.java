@@ -100,6 +100,7 @@ public class RabbitMqProducer {
             payload.put("year", schedule.getYear());
             payload.put("maxTime", schedule.getMaxTime());
             payload.put("shifts", schedule.getShifts());
+            payload.put("hours", schedule.getHours());
             payload.put("groupName", schedule.getGroupName());
             if (!usesProblemBundle) {
                 payload.put("vacationTemplate", vactemp.get().getName());
@@ -107,6 +108,7 @@ public class RabbitMqProducer {
             } else {
                 payload.put("problemPath", schedule.getProblemPath());
             }
+            payload.put("solver", schedule.getSolver());  // "CBC" or "GUROBI"
             if (schedule.getEmployees() != null) {
                 payload.put("employees", schedule.getEmployees());
             }

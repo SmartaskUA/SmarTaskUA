@@ -80,13 +80,19 @@ public class SchedulingAlgorithmRegistry {
         register(specs, "Heuristic General", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
         register(specs, "ilp_greedy", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
 
-        register(specs, "ILP_13Hours", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
-        register(specs, "CSP_13Hours", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
         register(specs, "CSP_Afonso_Hours", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
-        register(specs, "ILP_13_Half_Intervals", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
-        register(specs, "ILP_Half_Hour", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
-        register(specs, "CSP_Extra_Hours", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
-        register(specs, "ILP_Extra_Hours", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "ILP_2", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "ILP_2_Half_Intervals", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "ILP_3", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "ILP_3_Half_Intervals", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "ILP_4", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "ILP_4_Half_Intervals", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "COP_1", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "COP_1_Half_Intervals", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "COP_2", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "COP_2_Half_Intervals", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "Heuristica_1", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "Heuristica_Half_Intervals", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
 
         algorithmsByKey = Collections.unmodifiableMap(specs);
     }

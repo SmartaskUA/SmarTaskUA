@@ -182,12 +182,16 @@ class RabbitMQClient:
 
                 year = message.get("year")
                 shifts = message.get("shifts", [])
+                hours = message.get("hours")
+                if hours is None:
+                    hours = shifts
                 maxTime = message.get("maxTime")
                 algorithm_name = message.get("algorithm", "CSP Scheduling")
                 rules = message.get("rules")
+                solver = message.get("solver", "CBC")  # Default to CBC
 
                 print(f"\n[Received Task] Task ID: {task_id}")
-                print(f"Algorithm: {algorithm_name}, Shifts: {shifts}, Year: {year}")
+                print(f"Algorithm: {algorithm_name}, Intervals: {shifts}, Year: {year}, Solver: {solver}")
 
                 # --- Submit task to executor ---
                 self.executor.submit(
@@ -203,7 +207,9 @@ class RabbitMQClient:
                     year,
                     maxTime,
                     shifts,
+                    hours,
                     rules,
+                    solver,
                     problem_path
                 )
 
@@ -238,7 +244,9 @@ class RabbitMQClient:
             year,
             maxTime,
             shifts,
+            hours,
             rules,
+            solver="CBC",
             problem_path=None
     ):
 
@@ -255,7 +263,9 @@ class RabbitMQClient:
                 maxTime=maxTime,
                 year=year,
                 shifts=shifts,
+                hours=hours,
                 rules=rules,
+                solver=solver,
                 problem_path=problem_path
             )
 
@@ -266,6 +276,7 @@ class RabbitMQClient:
                 "algorithmType": algorithm_name,
                 "year": year,
                 "maxTime": maxTime,
+                "hours": hours,
                 "vacationTemplateName": vacation_template_name,
                 "minimunsTemplateName": minimuns_template_name,
                 "employeesTeamInfo": employees_data,
@@ -273,6 +284,7 @@ class RabbitMQClient:
                 "minimunsTemplateData": minimuns_data,
                 "shifts": shifts,
                 "rules": rules,
+                "solver": solver,
                 "problemPath": problem_path
             }
             metadata.update(problem_metadata)

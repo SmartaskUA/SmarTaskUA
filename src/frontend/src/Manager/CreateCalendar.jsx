@@ -23,13 +23,6 @@ const CreateCalendar = () => {
   const initialMode = initialProblemId ? "problem" : "manual";
   const [mode, setMode] = useState(initialMode);
   const [title, setTitle] = useState("");
-  const [year, setYear] = useState("");
-  const [maxDuration, setMaxDuration] = useState("");
-  const [scheduleType, setScheduleType] = useState(""); // "Turno" ou "Horas"
-  const [selectedAlgorithm, setSelectedAlgorithm] = useState("");
-  const [shifts, setShifts] = useState("");
-  const [vacationTemplate, setVacationTemplate] = useState("");
-  const [minimumTemplate, setMinimumTemplate] = useState("");
   const [groupNames, setGroupNames] = useState([]); 
   const [selectedGroup, setSelectedGroup] = useState("");
   const [problems, setProblems] = useState([]);
@@ -41,6 +34,22 @@ const CreateCalendar = () => {
   const problemSelected = mode === "problem" && Boolean(selectedProblem);
   const [problemJson, setProblemJson] = useState(null);
   const [problemJsonLoading, setProblemJsonLoading] = useState(false);
+  const [year, setYear] = useState("2021");
+  const [maxDuration, setMaxDuration] = useState("100");
+  const [scheduleType, setScheduleType] = useState("Horas"); // "Turno" ou "Horas"
+  const [selectedAlgorithm, setSelectedAlgorithm] = useState("Heuristica");
+  const [shifts, setShifts] = useState("13");
+  const [vacationTemplate, setVacationTemplate] = useState("VacationTemplate_Case1_21");
+  const [minimumTemplate, setMinimumTemplate] = useState("Mins_R10-R62_30min.");
+  const [selectedSolver, setSelectedSolver] = useState("CBC"); // "CBC" ou "GUROBI"
+
+  // NEW: ruleset selection
+  const [ruleSets, setRuleSets] = useState([]); // [{name, description, ...}]
+  const [ruleSetName, setRuleSetName] = useState("");
+  const selectedRuleSet = useMemo(
+    () => ruleSets.find((r) => r.name === ruleSetName),
+    [ruleSets, ruleSetName]
+  );
 
   const [templateOptions, setTemplateOptions] = useState([]);
   const [minimumOptions, setMinimumOptions] = useState([]);
@@ -192,8 +201,10 @@ const CreateCalendar = () => {
           requestedAt: new Date().toISOString(),
           vacationTemplate: vacationTemplate,
           minimuns: minimumTemplate,
-          shifts: shifts,
+          shifts: safeShifts,
+          hours: safeHours,
           groupName: selectedGroup,
+          solver: scheduleType === "Horas" ? selectedSolver : null,
         };
 
         const response = await axios.post(`${baseurl}/schedules/generate`, data);
@@ -272,12 +283,19 @@ const CreateCalendar = () => {
     { value: "linear programming 2", label: "Integer Linear Programming 2" },
   ];
   const manualHourAlgorithms = [
-    { value: "ILP_13Hours", label: "Integer Linear Programming 13 Hours" },
-    { value: "CSP_13Hours", label: "CSP 13 Hours" },
     { value: "CSP_Afonso_Hours", label: "CSP Afonso 13 Hours" },
-    { value: "ILP_13_Half_Intervals", label: "Integer Linear Programming 13 Hours Half Intervals" },
-    { value: "CSP_Extra_Hours", label: "CSP Extra Hours" },
-    { value: "ILP_Extra_Hours", label: "ILP Extra Hours" },
+    { value: "ILP_2", label: "Integer Linear Programming 2" },
+    { value: "ILP_2_Half_Intervals", label: "Integer Linear Programming 2 Half Intervals" },
+    { value: "ILP_3", label: "Integer Linear Programming 3" },
+    { value: "ILP_3_Half_Intervals", label: "Integer Linear Programming 3 Half Intervals" },
+    { value: "ILP_4", label: "Integer Linear Programming 4" },
+    { value: "ILP_4_Half_Intervals", label: "Integer Linear Programming 4 Half Intervals" },
+    { value: "COP_1", label: "Constraint Optimization Problem 1" },
+    { value: "COP_1_Half_Intervals", label: "Constraint Optimization Problem 1 Half Intervals" },
+    { value: "COP_2", label: "Constraint Optimization Problem 2" },
+    { value: "COP_2_Half_Intervals", label: "Constraint Optimization Problem 2 Half Intervals" },
+    { value: "Heuristica_1", label: "Heurística 1" },
+    { value: "Heuristica_Half_Intervals", label: "Heurística Half Intervals" },
   ];
 
   const availableAlgorithms = useMemo(() => {
@@ -351,8 +369,9 @@ const CreateCalendar = () => {
                 value={maxDuration}
                 onChange={handleMaxDurationChange}
                 margin="normal"
+                inputProps={{ min: 1, max: 1000 }}
                 error={maxDurationError}
-                helperText={maxDurationError ? "Duration must be a positive integer" : ""}
+                helperText={maxDurationError ? "Duration must be a positive integer (até 1000)" : ""}
               />
 
               <FormControl fullWidth margin="normal">
@@ -465,6 +484,7 @@ const CreateCalendar = () => {
                     onChange={(e) => setShifts(e.target.value)}
                   >
                     <MenuItem value={13}>13 Horas</MenuItem>
+                    <MenuItem value={26}>26 Horas</MenuItem>
                   </Select>
                 </FormControl>
               )}
@@ -482,6 +502,21 @@ const CreateCalendar = () => {
                     {availableAlgorithms.map((alg) => (
                       <MenuItem key={alg.value} value={alg.value}>{alg.label}</MenuItem>
                     ))}
+                  </Select>
+                </FormControl>
+              )}
+
+              {mode === "manual" && ["ILP_2", "ILP_2_Half_Intervals", "ILP_3", "ILP_3_Half_Intervals", "ILP_4", "ILP_4_Half_Intervals"].includes(selectedAlgorithm) && (
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="solver-select-label">Solver</InputLabel>
+                  <Select
+                    labelId="solver-select-label"
+                    value={selectedSolver}
+                    label="Solver"
+                    onChange={(e) => setSelectedSolver(e.target.value)}
+                  >
+                    <MenuItem value="CBC">CBC (Open Source)</MenuItem>
+                    <MenuItem value="GUROBI">Gurobi (Commercial)</MenuItem>
                   </Select>
                 </FormControl>
               )}
