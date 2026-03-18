@@ -223,7 +223,8 @@ const KPIReport = ({ metrics = {}, scheduleType }) => {
 
                 const value = Number.isFinite(Number(rawValue)) ? Number(rawValue) : 0;
                 const isPercentage = percentMetrics.has(key);
-                const displayValue = isPercentage ? `${value}%` : value;
+                const normalizedValue = key === "shiftBalance" ? parseFloat((value * 2).toFixed(2)) : value;
+                const displayValue = isPercentage ? `${normalizedValue}%` : normalizedValue;
                 const isViolation = !isPercentage && value > 0;
                 return (
                   <Grid item xs={12} sm={6} md={3} key={key}>
