@@ -78,3 +78,4 @@
 - Service specifics: See READMEs in `src/api/`, `src/frontend/`, `src/scheduler/`, `src/analyzer/`
 - Infrastructure: See `infra/README.md`
 - Configuration: See `config/README.md`
+- problem.json flow to solvers: See `docs/architecture/problem-json-flow.md`

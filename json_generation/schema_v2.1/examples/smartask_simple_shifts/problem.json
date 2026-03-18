@@ -43,6 +43,10 @@
     ]
   },
 
+  "vacations": {
+    "dataFile": "vacations.csv"
+  },
+
   "demand": {
     "shiftModel": "fixed",
     "dataFile": "demand.csv",

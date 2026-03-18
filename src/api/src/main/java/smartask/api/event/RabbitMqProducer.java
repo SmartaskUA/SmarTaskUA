@@ -82,6 +82,7 @@ public class RabbitMqProducer {
             payload.put("minimuns", mins.get().getName());
             payload.put("shifts", schedule.getShifts());
             payload.put("groupName", schedule.getGroupName());
+            payload.put("solver", schedule.getSolver());  // "CBC" or "GUROBI"
             if (schedule.getEmployees() != null) {
                 payload.put("employees", schedule.getEmployees());
             }
