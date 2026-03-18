@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "2.1",
+  "schemaVersion": "2.2",
   "problemType": "employee_scheduling",
 
   "metadata": {
@@ -25,22 +25,36 @@
     }
   },
 
+  "contracts": {
+    "definitions": [
+      {
+        "id": "fullTime_8h",
+        "name": "Full-time 8h",
+        "workHoursPerDay": 8
+      }
+    ]
+  },
+
   "employees": {
     "model": "team",
     "simple": [
-      {"id": "Employee 1", "name": "Employee 1", "teams": ["A"]},
-      {"id": "Employee 2", "name": "Employee 2", "teams": ["A"]},
-      {"id": "Employee 3", "name": "Employee 3", "teams": ["A"]},
-      {"id": "Employee 4", "name": "Employee 4", "teams": ["A"]},
-      {"id": "Employee 5", "name": "Employee 5", "teams": ["A"]},
-      {"id": "Employee 6", "name": "Employee 6", "teams": ["A"]},
-      {"id": "Employee 7", "name": "Employee 7", "teams": ["A"]},
-      {"id": "Employee 8", "name": "Employee 8", "teams": ["A", "B"]},
-      {"id": "Employee 9", "name": "Employee 9", "teams": ["A", "B"]},
-      {"id": "Employee 10", "name": "Employee 10", "teams": ["A", "B"]},
-      {"id": "Employee 11", "name": "Employee 11", "teams": ["B"]},
-      {"id": "Employee 12", "name": "Employee 12", "teams": ["B"]}
+      {"id": "Employee 1", "name": "Employee 1", "teams": ["A"], "contractType": "fullTime_8h"},
+      {"id": "Employee 2", "name": "Employee 2", "teams": ["A"], "contractType": "fullTime_8h"},
+      {"id": "Employee 3", "name": "Employee 3", "teams": ["A"], "contractType": "fullTime_8h"},
+      {"id": "Employee 4", "name": "Employee 4", "teams": ["A"], "contractType": "fullTime_8h"},
+      {"id": "Employee 5", "name": "Employee 5", "teams": ["A"], "contractType": "fullTime_8h"},
+      {"id": "Employee 6", "name": "Employee 6", "teams": ["A"], "contractType": "fullTime_8h"},
+      {"id": "Employee 7", "name": "Employee 7", "teams": ["A"], "contractType": "fullTime_8h"},
+      {"id": "Employee 8", "name": "Employee 8", "teams": ["A", "B"], "contractType": "fullTime_8h"},
+      {"id": "Employee 9", "name": "Employee 9", "teams": ["A", "B"], "contractType": "fullTime_8h"},
+      {"id": "Employee 10", "name": "Employee 10", "teams": ["A", "B"], "contractType": "fullTime_8h"},
+      {"id": "Employee 11", "name": "Employee 11", "teams": ["B"], "contractType": "fullTime_8h"},
+      {"id": "Employee 12", "name": "Employee 12", "teams": ["B"], "contractType": "fullTime_8h"}
     ]
+  },
+
+  "vacations": {
+    "dataFile": "vacations.csv"
   },
 
   "demand": {
@@ -132,5 +146,8 @@
         "enabled": true
       }
     ]
+  },
+  "vacations": {
+    "dataFile": "vacations.csv"
   }
 }
