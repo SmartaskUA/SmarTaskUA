@@ -33,12 +33,22 @@ const formatTeamLabel = (team) => {
   return String(team).trim();
 };
 
+export const formatLocalDateKey = (date) => {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return "";
+  }
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 export const buildScheduleColumns = (headerRow = [], fallbackYear = new Date().getFullYear()) => {
   const labels = Array.isArray(headerRow) ? headerRow.slice(1) : [];
   return labels.map((label, index) => {
     const date = parseScheduleDate(label, fallbackYear, index + 1);
     return {
-      key: `${date.toISOString().slice(0, 10)}-${index}`,
+      key: `${formatLocalDateKey(date)}-${index}`,
       raw: label,
       date,
       month: date.getMonth() + 1,
@@ -290,4 +300,3 @@ const formatDecimalHour = (value) => {
   const minutes = Math.round((numeric - hours) * 60);
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 };
-

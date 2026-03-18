@@ -10,13 +10,6 @@ import {
   Chip,
   Grid,
   Tooltip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Stack,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ErrorIcon from "@mui/icons-material/Error";
@@ -169,6 +162,11 @@ const metricInfo = {
     description:
       "Share of employee-days that respect the daily duration or exact time rule defined in schedule_input.csv.",
   },
+  demandedHoursComplianceRate: {
+    label: "Demanded Hours Compliance",
+    description:
+      "Share of working-rule employee-days where assigned hours exactly match the hours requested in schedule_input.csv.",
+  },
   fragmentedWorkDays: {
     label: "Fragmented Work Days",
     description:
@@ -182,7 +180,7 @@ const metricInfo = {
   availabilityViolations: {
     label: "Availability Violations",
     description:
-      "Count of employee-days where the generated schedule violates the schedule_input.csv availability rule.",
+      "Count of employee-days where the generated schedule violates the employee's stated availability constraints.",
   },
 };
 
@@ -218,10 +216,7 @@ const sisqualSummaryMetrics = [
   "criticalUnderfilledPeriods",
   "maxPeriodShortage",
   "totalMinimumGap",
-  "totalOverstaff",
-  "intraDayTeamSwitches",
-  "primaryTeamUtilizationRate",
-  "durationComplianceRate",
+  "demandedHoursComplianceRate",
 ];
 
 const optionalMetrics = new Set(["fixedDaysOffViolations"]);
@@ -232,6 +227,7 @@ const percentMetrics = new Set([
   "weightedMinimumCoverageRate",
   "primaryTeamUtilizationRate",
   "durationComplianceRate",
+  "demandedHoursComplianceRate",
 ]);
 const sisqualIssueMetrics = [
   "criticalUnderfilledPeriods",
@@ -249,140 +245,47 @@ const formatMetricValue = (key, rawValue) => {
   return percentMetrics.has(key) ? `${rounded}%` : rounded;
 };
 
-const metricSeverity = (key, rawValue) => {
-  if (rawValue === null || rawValue === undefined) return "neutral";
-  const numeric = Number(rawValue);
-  if (!Number.isFinite(numeric)) return "neutral";
-  if (percentMetrics.has(key)) {
-    if (numeric >= 100) return "good";
-    if (numeric >= 95) return "neutral";
-    return "bad";
-  }
-  return numeric > 0 ? "bad" : "good";
-};
-
-const severityPalette = (severity) => {
-  if (severity === "good") {
-    return { border: "#bbf7d0", bg: "#f0fdf4", text: "#166534" };
-  }
-  if (severity === "bad") {
-    return { border: "#fecaca", bg: "#fef2f2", text: "#991b1b" };
-  }
-  return { border: "#dbe4f0", bg: "#ffffff", text: "#0f172a" };
-};
-
-const MetricCard = ({ metricKey, value }) => {
-  const info = metricInfo[metricKey] || { label: metricKey, description: "" };
-  const severity = metricSeverity(metricKey, value);
-  const palette = severityPalette(severity);
+const renderMetric = (key, rawValue, isViolation, isPercentage = false) => {
+  const info = metricInfo[key] || { label: key, description: "" };
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        height: "100%",
-        p: 2,
-        borderRadius: 2,
-        border: `1px solid ${palette.border}`,
-        backgroundColor: palette.bg,
-      }}
-    >
-      <Typography variant="subtitle2" fontWeight={800} color="#0f172a" gutterBottom>
+    <Box>
+      <Typography variant="subtitle1" fontWeight="bold" color="primary" gutterBottom>
         <Tooltip title={info.description || ""} arrow>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-            {info.label}
+          <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            {info.label || key}
             <HelpOutlineIcon fontSize="inherit" />
           </span>
         </Tooltip>
       </Typography>
-      <Typography variant="h5" fontWeight={800} color={palette.text}>
-        {formatMetricValue(metricKey, value)}
+      <Typography
+        color={
+          isPercentage
+            ? "text.primary"
+            : isViolation
+            ? "error.main"
+            : "success.main"
+        }
+      >
+        {formatMetricValue(key, rawValue)}
       </Typography>
-    </Paper>
+    </Box>
   );
 };
 
 const SummaryGrid = ({ metricKeys, metrics }) => (
-  <Grid container spacing={2.5}>
+  <Grid container spacing={3}>
     {metricKeys.map((key) => (
       <Grid item xs={12} sm={6} md={3} key={key}>
-        <MetricCard metricKey={key} value={metrics[key]} />
+        {renderMetric(
+          key,
+          metrics[key],
+          !percentMetrics.has(key) && Number(metrics[key] || 0) > 0,
+          percentMetrics.has(key)
+        )}
       </Grid>
     ))}
   </Grid>
 );
-
-const SupportChip = ({ metricKey, value }) => {
-  const info = metricInfo[metricKey] || { label: metricKey, description: "" };
-  const severity = metricSeverity(metricKey, value);
-  const palette = severityPalette(severity);
-  return (
-    <Tooltip title={info.description || ""} arrow>
-      <Chip
-        label={`${info.label}: ${formatMetricValue(metricKey, value)}`}
-        sx={{
-          border: `1px solid ${palette.border}`,
-          backgroundColor: palette.bg,
-          color: palette.text,
-          fontWeight: 700,
-        }}
-      />
-    </Tooltip>
-  );
-};
-
-const DrilldownTable = ({ title, subtitle, columns, rows, emptyMessage, maxRows }) => {
-  const visibleRows = Array.isArray(rows) ? rows.slice(0, maxRows || rows.length) : [];
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 2,
-        borderRadius: 2,
-        border: "1px solid #dbe4f0",
-        backgroundColor: "#fff",
-      }}
-    >
-      <Typography variant="subtitle1" fontWeight={800} color="#0f172a">
-        {title}
-      </Typography>
-      {subtitle ? (
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-          {subtitle}
-        </Typography>
-      ) : null}
-      {!visibleRows.length ? (
-        <Typography variant="body2" color="text.secondary">
-          {emptyMessage}
-        </Typography>
-      ) : (
-        <TableContainer sx={{ border: "1px solid #e2e8f0", borderRadius: 2 }}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                {columns.map((column) => (
-                  <TableCell key={column.key} sx={{ fontWeight: 800, backgroundColor: "#f8fafc" }}>
-                    {column.label}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {visibleRows.map((row, index) => (
-                <TableRow key={`${title}-${index}`} hover>
-                  {columns.map((column) => (
-                    <TableCell key={column.key}>
-                      {column.render ? column.render(row[column.key], row) : row[column.key]}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-    </Paper>
-  );
-};
 
 const getStatusChip = (hasIssues) =>
   hasIssues ? (
@@ -424,7 +327,7 @@ const renderSisqualReport = (metrics) => {
           {getStatusChip(hasIssues)}
         </AccordionSummary>
         <AccordionDetails>
-          <Paper elevation={0} sx={{ p: 3, backgroundColor: "#f8fafc", borderRadius: 3 }}>
+          <Paper elevation={0} sx={{ p: 3 }}>
             <Typography variant="subtitle1" fontWeight={800} color="#0f172a" sx={{ mb: 2 }}>
               Coverage and Assignment Summary
             </Typography>
@@ -434,58 +337,18 @@ const renderSisqualReport = (metrics) => {
               <Typography variant="subtitle1" fontWeight={800} color="#0f172a" sx={{ mb: 1.5 }}>
                 Rule Checks
               </Typography>
-              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                <SupportChip metricKey="consecutiveDaysViolations" value={metrics.consecutiveDaysViolations} />
-                <SupportChip metricKey="minRestViolations" value={metrics.minRestViolations} />
-                <SupportChip metricKey="availabilityViolations" value={metrics.availabilityViolations} />
-                <SupportChip metricKey="fragmentedWorkDays" value={metrics.fragmentedWorkDays} />
-                <SupportChip metricKey="nonPrimaryTeamHours" value={metrics.nonPrimaryTeamHours} />
-              </Stack>
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6} md={4}>
+                  {renderMetric("consecutiveDaysViolations", metrics.consecutiveDaysViolations, Number(metrics.consecutiveDaysViolations || 0) > 0)}
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                  {renderMetric("minRestViolations", metrics.minRestViolations, Number(metrics.minRestViolations || 0) > 0)}
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                  {renderMetric("availabilityViolations", metrics.availabilityViolations, Number(metrics.availabilityViolations || 0) > 0)}
+                </Grid>
+              </Grid>
             </Box>
-
-            <Grid container spacing={2.5} sx={{ mt: 1 }}>
-              <Grid item xs={12} lg={6}>
-                <DrilldownTable
-                  title="Coverage by Team"
-                  subtitle="Weighted coverage against minimum demand using 30-minute coverage slots."
-                  rows={metrics.teamCoverageBreakdown}
-                  emptyMessage="No team coverage data was produced for this schedule."
-                  columns={[
-                    { key: "team", label: "Team" },
-                    { key: "required", label: "Required" },
-                    { key: "actual", label: "Actual" },
-                    { key: "gap", label: "Gap" },
-                    { key: "overstaff", label: "Over" },
-                    {
-                      key: "weightedMinimumCoverageRate",
-                      label: "Coverage",
-                      render: (value) => formatMetricValue("weightedMinimumCoverageRate", value),
-                    },
-                  ]}
-                />
-              </Grid>
-              <Grid item xs={12} lg={6}>
-                <DrilldownTable
-                  title="Worst Underfilled Periods"
-                  subtitle="Lowest-filled work periods, sorted by shortage size."
-                  rows={metrics.underfilledPeriods}
-                  maxRows={12}
-                  emptyMessage="All minimum work periods were fully covered."
-                  columns={[
-                    { key: "date", label: "Date" },
-                    { key: "team", label: "Team" },
-                    {
-                      key: "timeWindow",
-                      label: "Window",
-                      render: (_, row) => `${row.start}-${row.end}`,
-                    },
-                    { key: "required", label: "Required" },
-                    { key: "actual", label: "Actual" },
-                    { key: "shortage", label: "Shortage" },
-                  ]}
-                />
-              </Grid>
-            </Grid>
           </Paper>
         </AccordionDetails>
       </Accordion>

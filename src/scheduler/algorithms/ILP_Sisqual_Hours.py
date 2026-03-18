@@ -1,60 +1,67 @@
+"""
+Hour-based ILP for the Sisqual bundle.
+
+This solver implements the first mathematical model from
+`MathematicalDefinition4.docx` for the current bundle format:
+  - choose one daily assignment per employee/day when the template says they work
+  - assign one skill/team to each covered half-hour slot
+  - minimize shortage against the demand minimums
+
+The bundle is work-period based, but the model itself runs on a 30-minute grid
+so long work periods and exact-time requirements can be expressed uniformly.
+"""
+
 import argparse
 import csv
-import json
-from collections import defaultdict
-from dataclasses import dataclass
-from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import pulp
 
-
-OFF_MARKERS = {"DO", "FDO", "VAC", "NOT", "MED"}
-
-
-@dataclass(frozen=True)
-class TimeSlot:
-    index: int
-    start_min: int
-    end_min: int
-
-    @property
-    def label(self) -> str:
-        return f"{minutes_to_hhmm(self.start_min)}-{minutes_to_hhmm(self.end_min)}"
-
-
-@dataclass(frozen=True)
-class Assignment:
-    key: str
-    start_min: int
-    end_min: int
-    slot_indices: Tuple[int, ...]
-
-    @property
-    def label(self) -> str:
-        return f"{minutes_to_hhmm(self.start_min)}-{minutes_to_hhmm(self.end_min)}"
+from algorithms.sisqual_hours_utils import (
+    OFF_MARKERS,
+    build_assignments,
+    build_half_hour_slots,
+    build_period_slot_map,
+    load_problem_json,
+    minutes_to_hhmm,
+    normalize_marker,
+    parse_contract_hours,
+    parse_days,
+    parse_demand_minimums,
+    parse_employees,
+    parse_max_time_seconds,
+    parse_schedule_input,
+    parse_skill_codes,
+    parse_work_periods,
+)
 
 
 class SisqualProblem1ILP:
     """Hour-based ILP for the sisqual bundle using the first model from MathematicalDefinition4."""
 
     def __init__(self, problem_json_path: str, max_time_minutes=None):
+        self.staff_team_code = "Employees"
         self.problem_json_path = Path(problem_json_path).resolve()
         self.base_dir = self.problem_json_path.parent
-        self.problem = self._load_json(self.problem_json_path)
+        self.problem = load_problem_json(self.problem_json_path)
         self.max_time_seconds = parse_max_time_seconds(max_time_minutes)
+        self.min_rest_hours = self._parse_min_rest_hours()
 
-        self.contract_hours = self._parse_contract_hours()
-        self.work_periods = self._parse_work_periods()
-        self.employees = self._parse_employees()
-        self.days = self._parse_days()
-        self.schedule_markers = self._parse_schedule_input()
-        self.skills = self._parse_skill_codes()
-        self.time_slots = self._build_half_hour_slots()
-        self.coverage_by_period = self._build_period_slot_map()
-        self.alpha = self._parse_demand_minimums()
-        self.assignments = self._build_assignments()
+        self.contract_hours = parse_contract_hours(self.problem)  # {"fullTime_8h": 8, "partTime_4h": 4, ...}
+        self.work_periods = parse_work_periods(self.problem)  # {"CHECKOUT_1100_2100": (660, 1260), ...}
+        self.employees = parse_employees(self.problem, self.contract_hours)  # [{"id": "20067009", "skills": (...), ...}, ...]
+        for employee in self.employees:
+            employee["assignable_skills"] = tuple(
+                skill for skill in employee["skills"] if skill != self.staff_team_code
+            )  # "Employees" is staff-level coverage, not an assignable task team.
+        self.days = parse_days(self.problem)  # ["2025-10-01", "2025-10-02", ...]
+        self.schedule_markers = parse_schedule_input(self.base_dir, self.problem, self.days)  # {"20056459": {"2025-10-07": "EQUALS:10:00-14:00", ...}, ...}
+        self.skills = parse_skill_codes(self.problem)  # ["Storage", "Checkout", "Management", "Employees"]
+        self.time_slots = build_half_hour_slots(self.work_periods)  # 08:30-09:00, 09:00-09:30, ...
+        self.coverage_by_period = build_period_slot_map(self.work_periods, self.time_slots)  # {"STORAGE_0830_1530": (0, 1, 2, ..., 13), ...}
+        self.alpha = parse_demand_minimums(self.base_dir, self.problem, self.coverage_by_period)  # minimum demand by (day, slot, skill), e.g. ("2025-10-01", 3, "Storage") -> 1
+        self.assignments = build_assignments(self.employees, self.days, self.schedule_markers, self.time_slots)  # feasible daily blocks; marker "4" means every 4h contiguous block on the half-hour grid
 
         self.model = None
         self.x = {}
@@ -63,199 +70,21 @@ class SisqualProblem1ILP:
         self.status = None
         self.objective_value = None
 
-    def _load_json(self, path: Path) -> Dict:
-        with path.open() as f:
-            return json.load(f)
-
-    def _parse_contract_hours(self) -> Dict[str, int]:
-        definitions = self.problem.get("contracts", {}).get("definitions", [])
-        result = {}
-        for item in definitions:
-            contract_id = str(item.get("id", "")).strip()
-            hours = item.get("workHoursPerDay")
-            if contract_id and hours is not None:
-                result[contract_id] = int(hours)
-        return result
-
-    def _parse_work_periods(self) -> Dict[str, Tuple[int, int]]:
-        result = {}
-        for period in self.problem.get("demand", {}).get("workPeriods", []):
-            code = str(period.get("code", "")).strip()
-            time_range = period.get("timeRange", {})
-            start = parse_hhmm(str(time_range.get("start", "")))
-            end = parse_hhmm(str(time_range.get("end", "")))
-            if code:
-                result[code] = (start, end)
-        return result
-
-    def _parse_employees(self) -> List[Dict]:
-        raw_employees = self.problem.get("employees", {}).get("competency", [])
-        employees = []
-        for raw in raw_employees:
-            employee_id = str(raw.get("id", "")).strip()
-            contract_type = str(raw.get("contractType", "")).strip()
-            skills = []
-            for team in raw.get("teams", []):
-                code = str(team.get("code", "")).strip()
-                if code:
-                    skills.append(code)
-            employees.append(
-                {
-                    "id": employee_id,
-                    "name": raw.get("name", employee_id),
-                    "contract_type": contract_type,
-                    "contract_hours": self.contract_hours.get(contract_type),
-                    "skills": tuple(dict.fromkeys(skills)),
-                }
-            )
-        return employees
-
-    def _parse_days(self) -> List[str]:
-        target = self.problem.get("temporalScope", {}).get("targetPeriod", {})
-        start = datetime.strptime(target["start"], "%Y-%m-%d").date()
-        end = datetime.strptime(target["end"], "%Y-%m-%d").date()
-        days = []
-        current = start
-        while current <= end:
-            days.append(current.isoformat())
-            current += timedelta(days=1)
-        return days
-
-    def _parse_schedule_input(self) -> Dict[str, Dict[str, str]]:
-        schedule_path = self.base_dir / self.problem.get("scheduleInput", {}).get("dataFile", "schedule_input.csv")
-        with schedule_path.open(newline="", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            rows = {}
-            for row in reader:
-                employee_id = str(row.get("employee_id", "")).strip()
-                rows[employee_id] = {day: str(row.get(day, "")).strip() for day in self.days}
-        return rows
-
-    def _parse_skill_codes(self) -> List[str]:
-        teams = self.problem.get("demand", {}).get("organizationalUnits", {}).get("teams", [])
-        codes = []
-        for item in teams:
-            if isinstance(item, dict):
-                code = item.get("code")
-            else:
-                code = item
-            if code:
-                codes.append(str(code).strip())
-        return list(dict.fromkeys(codes))
-
-    def _build_half_hour_slots(self) -> List[TimeSlot]:
-        if not self.work_periods:
-            raise ValueError("No work periods defined in problem.json")
-        min_start = min(start for start, _ in self.work_periods.values())
-        max_end = max(end for _, end in self.work_periods.values())
-        slots = []
-        idx = 0
-        current = min_start
-        while current < max_end:
-            slots.append(TimeSlot(index=idx, start_min=current, end_min=current + 30))
-            idx += 1
-            current += 30
-        return slots
-
-    def _build_period_slot_map(self) -> Dict[str, Tuple[int, ...]]:
-        result = {}
-        for code, (start_min, end_min) in self.work_periods.items():
-            covered = []
-            for slot in self.time_slots:
-                if slot.start_min >= start_min and slot.end_min <= end_min:
-                    covered.append(slot.index)
-            result[code] = tuple(covered)
-        return result
-
-    def _parse_demand_minimums(self) -> Dict[Tuple[str, int, str], int]:
-        demand_path = self.base_dir / self.problem.get("demand", {}).get("dataFile", "demand.csv")
-        alpha = defaultdict(int)
-        with demand_path.open(newline="", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                date_str = str(row.get("date", "")).strip()
-                period_code = str(row.get("workPeriod", "")).strip()
-                skill = str(row.get("team", "")).strip()
-                minimum_text = str(row.get("minimum", "")).strip()
-                if not date_str or not period_code or not skill or not minimum_text:
-                    continue
-                minimum = int(minimum_text)
-                for slot_idx in self.coverage_by_period.get(period_code, ()):
-                    alpha[(date_str, slot_idx, skill)] += minimum
-        return dict(alpha)
-
-    def _build_assignments(self) -> Dict[Tuple[str, str], List[Assignment]]:
-        assignments = {}
-        first_slot_start = self.time_slots[0].start_min
-        last_slot_end = self.time_slots[-1].end_min
-        num_slots = len(self.time_slots)
-
-        for employee in self.employees:
-            employee_id = employee["id"]
-            for day in self.days:
-                marker = self.schedule_markers.get(employee_id, {}).get(day, "")
-                normalized = normalize_marker(marker)
-                key = (employee_id, day)
-                day_assignments = []
-
-                if normalized in OFF_MARKERS or not normalized:
-                    assignments[key] = day_assignments
-                    continue
-
-                if normalized.startswith("EQUALS:"):
-                    time_range = normalized.split(":", 1)[1]
-                    start_text, end_text = time_range.split("-", 1)
-                    start_min = parse_hhmm(start_text)
-                    end_min = parse_hhmm(end_text)
-                    slot_indices = tuple(
-                        slot.index
-                        for slot in self.time_slots
-                        if slot.start_min >= start_min and slot.end_min <= end_min
-                    )
-                    if not slot_indices:
-                        raise ValueError(f"No slots found for exact marker '{marker}' on {employee_id} {day}")
-                    day_assignments.append(
-                        Assignment(
-                            key=f"{employee_id}_{day}_exact_{start_min}_{end_min}",
-                            start_min=start_min,
-                            end_min=end_min,
-                            slot_indices=slot_indices,
-                        )
-                    )
-                    assignments[key] = day_assignments
-                    continue
-
-                if not normalized.isdigit():
-                    raise ValueError(f"Unsupported schedule marker '{marker}' for {employee_id} on {day}")
-
-                hours = int(normalized)
-                required_slots = hours * 2
-                if required_slots <= 0:
-                    assignments[key] = day_assignments
-                    continue
-                for start_idx in range(0, num_slots - required_slots + 1):
-                    covered = tuple(range(start_idx, start_idx + required_slots))
-                    start_min = self.time_slots[start_idx].start_min
-                    end_min = self.time_slots[start_idx + required_slots - 1].end_min
-                    if start_min < first_slot_start or end_min > last_slot_end:
-                        continue
-                    day_assignments.append(
-                        Assignment(
-                            key=f"{employee_id}_{day}_{start_idx}_{required_slots}",
-                            start_min=start_min,
-                            end_min=end_min,
-                            slot_indices=covered,
-                        )
-                    )
-                if not day_assignments:
-                    raise ValueError(f"No feasible assignments generated for {employee_id} on {day} with marker '{marker}'")
-                assignments[key] = day_assignments
-        return assignments
+    def _parse_min_rest_hours(self) -> float:
+        constraints = self.problem.get("constraints", {}).get("hard", [])
+        for constraint in constraints:
+            if constraint.get("type") != "min_rest_hours" or not constraint.get("enabled", True):
+                continue
+            hours = constraint.get("params", {}).get("hours")
+            if isinstance(hours, (int, float)):
+                return float(hours)
+        return 11.0
 
     def build_model(self):
         model = pulp.LpProblem("SisqualProblem1HourlyILP", pulp.LpMinimize)
 
-        # x_{w,d,h}
+        # For every employee, every day, and every feasible daily block, create one binary
+        # variable that says whether that whole assignment was chosen.
         for employee in self.employees:
             employee_id = employee["id"]
             for day in self.days:
@@ -265,10 +94,11 @@ class SisqualProblem1ILP:
                         cat="Binary",
                     )
 
-        # y_{w,d,t,s}
+        # For every employee/day/slot/allowed-skill combination, create the slot-level skill
+        # assignment variable used to decide what the employee is doing in each half-hour.
         for employee in self.employees:
             employee_id = employee["id"]
-            skills = employee["skills"]
+            skills = employee["assignable_skills"]  # y_{w,d,t,s} only exists for real task teams; "Employees" is aggregate staff coverage.
             for day in self.days:
                 if not self.assignments[(employee_id, day)]:
                     continue
@@ -279,15 +109,20 @@ class SisqualProblem1ILP:
                             cat="Binary",
                         )
 
-        # z_{d,t,s}
+        # For every demanded (day, slot, skill) tuple, create the shortage variable that will
+        # absorb unmet coverage.
         for (day, slot_idx, skill), minimum in self.alpha.items():
             self.shortage[(day, slot_idx, skill)] = pulp.LpVariable(
-                f"z_{day.replace('-', '')}_{slot_idx}_{skill}",
+                f"z_{day.replace('-', '')}_{slot_idx}_{skill}",  # z_{d,t,s}: uncovered demand for skill s at slot t on day d.
                 lowBound=0,
                 cat="Integer",
             )
 
-        # (2) Fixed day template: exactly one assignment on work days, none otherwise.
+        # Constraint (2)
+        # "each worker w∈W can be assigned on each day d∈D with at most one
+        # working daily assignment h∈Hwd."
+        # The bundle's fixed day markers tighten this to exactly one assignment on
+        # work days and zero assignments on off/unavailable days.
         for employee in self.employees:
             employee_id = employee["id"]
             for day in self.days:
@@ -295,14 +130,17 @@ class SisqualProblem1ILP:
                 x_vars = [self.x[(employee_id, day, assignment.key)] for assignment in self.assignments[(employee_id, day)]]
                 if marker in OFF_MARKERS or not marker:
                     if x_vars:
-                        model += pulp.lpSum(x_vars) == 0, f"off_{employee_id}_{day}"
+                        model += pulp.lpSum(x_vars) == 0, f"off_{employee_id}_{day}"  # (2) Off / unavailable days cannot receive an assignment.
                 else:
-                    model += pulp.lpSum(x_vars) == 1, f"work_{employee_id}_{day}"
+                    model += pulp.lpSum(x_vars) == 1, f"work_{employee_id}_{day}"  # (2) Work days must choose exactly one candidate assignment.
 
-        # (3) Assign exactly one skill to every covered timeslot of the selected daily assignment.
+        # Constraint (3)
+        # "each worker w∈W assigned on day d∈D with a working daily assignment
+        # h∈Hwd that covers timeslot t∈Td must be assigned in timeslot t with
+        # one of its skills Sw."
         for employee in self.employees:
             employee_id = employee["id"]
-            skills = employee["skills"]
+            skills = employee["assignable_skills"]
             assignment_list = {
                 day: self.assignments[(employee_id, day)]
                 for day in self.days
@@ -316,9 +154,11 @@ class SisqualProblem1ILP:
                         if slot.index in assignment.slot_indices:
                             rhs_terms.append(self.x[(employee_id, day, assignment.key)])
                     lhs_terms = [self.y[(employee_id, day, slot.index, skill)] for skill in skills]
-                    model += pulp.lpSum(lhs_terms) == pulp.lpSum(rhs_terms), f"skill_cover_{employee_id}_{day}_{slot.index}"
+                    model += pulp.lpSum(lhs_terms) == pulp.lpSum(rhs_terms), f"skill_cover_{employee_id}_{day}_{slot.index}"  # (3) Covered slots get exactly one skill; uncovered slots get none.
 
-        # (4) No more than 5 work days in any 6 consecutive days.
+        # Constraint (4)
+        # "each worker w∈W cannot be assigned with more than 5 working days in
+        # any set of 6 consecutive days."
         for employee in self.employees:
             employee_id = employee["id"]
             for start in range(0, len(self.days) - 5):
@@ -328,20 +168,56 @@ class SisqualProblem1ILP:
                         self.x[(employee_id, day, assignment.key)]
                         for day in window
                         for assignment in self.assignments[(employee_id, day)]
-                    ) <= 5,
+                    ) <= 5,  # (4) No more than 5 worked days in any 6-day window.
                     f"max5in6_{employee_id}_{start}",
                 )
 
-        # (5) Shortage definition.
+        # Extra constraint
+        # forbid consecutive-day assignment pairs whose overnight rest is below
+        # the configured minimum rest hours in problem.json.
+        for employee in self.employees:
+            employee_id = employee["id"]
+            for day, next_day in zip(self.days, self.days[1:]):
+                today_assignments = self.assignments[(employee_id, day)]
+                next_day_assignments = self.assignments[(employee_id, next_day)]
+                if not today_assignments or not next_day_assignments:
+                    continue
+                for today_assignment in today_assignments:
+                    for next_assignment in next_day_assignments:
+                        rest_hours = ((24 * 60 - today_assignment.end_min) + next_assignment.start_min) / 60.0
+                        if rest_hours < self.min_rest_hours:
+                            model += (
+                                self.x[(employee_id, day, today_assignment.key)]
+                                + self.x[(employee_id, next_day, next_assignment.key)]
+                                <= 1,
+                                f"min_rest_{employee_id}_{day.replace('-', '')}_{today_assignment.key}_{next_day.replace('-', '')}_{next_assignment.key}",
+                            )
+
+        # Constraint (5)
+        # "the value of variable z_dts is at least the number of workers below
+        # the required value α_dts for each day d∈D, each timeslot t∈Td and
+        # each skill s∈S."
         for (day, slot_idx, skill), minimum in self.alpha.items():
             coverage_terms = []
-            for employee in self.employees:
-                employee_id = employee["id"]
-                y_key = (employee_id, day, slot_idx, skill)
-                if skill in employee["skills"] and y_key in self.y:
-                    coverage_terms.append(self.y[y_key])
-            model += self.shortage[(day, slot_idx, skill)] + pulp.lpSum(coverage_terms) >= minimum, f"shortage_{day}_{slot_idx}_{skill}"
+            if skill == self.staff_team_code:
+                # Staff-level demand counts any employee who is present in that slot, regardless
+                # of the operational team they are assigned to.
+                for employee in self.employees:
+                    employee_id = employee["id"]
+                    for assignment in self.assignments[(employee_id, day)]:
+                        if slot_idx in assignment.slot_indices:
+                            coverage_terms.append(self.x[(employee_id, day, assignment.key)])
+            else:
+                for employee in self.employees:
+                    employee_id = employee["id"]
+                    y_key = (employee_id, day, slot_idx, skill)
+                    if skill in employee["assignable_skills"] and y_key in self.y:
+                        coverage_terms.append(self.y[y_key])
+            model += self.shortage[(day, slot_idx, skill)] + pulp.lpSum(coverage_terms) >= minimum, f"shortage_{day}_{slot_idx}_{skill}"  # (5) Shortage absorbs unmet slot demand.
 
+        # Objective (1) from MathematicalDefinition4.docx:
+        # minimize the sum of workers below the required value for all days,
+        # timeslots, and skills.
         model += pulp.lpSum(self.shortage.values()), "minimize_total_shortage"
         self.model = model
 
@@ -362,6 +238,8 @@ class SisqualProblem1ILP:
 
     def build_output_rows(self) -> List[List[str]]:
         rows = [["employee_id", *self.days]]
+        # Rebuild the final CSV one employee row at a time, preserving the original day markers
+        # for non-working days and decoding x/y back into readable time@skill segments.
         for employee in self.employees:
             employee_id = employee["id"]
             row = [employee_id]
@@ -369,7 +247,7 @@ class SisqualProblem1ILP:
                 marker = self.schedule_markers[employee_id][day]
                 normalized = normalize_marker(marker)
                 if normalized in OFF_MARKERS or not normalized:
-                    row.append(marker or "OFF")
+                    row.append(marker or "OFF")  # Preserve the original non-working marker in the exported schedule.
                     continue
                 chosen = None
                 for assignment in self.assignments[(employee_id, day)]:
@@ -384,18 +262,23 @@ class SisqualProblem1ILP:
                 current_skill = None
                 current_start = None
                 current_end = None
+                # Walk the chosen half-hour slots in order and merge adjacent slots with the
+                # same skill into one exported segment.
                 for slot_idx in chosen.slot_indices:
                     slot = self.time_slots[slot_idx]
                     assigned_skill = None
-                    for skill in employee["skills"]:
+                    for skill in employee["assignable_skills"]:
                         value = pulp.value(self.y.get((employee_id, day, slot_idx, skill)))
                         if value is not None and value > 0.5:
                             assigned_skill = skill
                             break
                     if assigned_skill is None:
-                        assigned_skill = employee["skills"][0]
+                        if employee["assignable_skills"]:
+                            assigned_skill = employee["assignable_skills"][0]
+                        else:
+                            assigned_skill = self.staff_team_code
                     if current_skill == assigned_skill:
-                        current_end = slot.end_min
+                        current_end = slot.end_min  # Merge consecutive slots with the same chosen skill into one readable segment.
                     else:
                         if current_skill is not None:
                             segments.append(f"{minutes_to_hhmm(current_start)}-{minutes_to_hhmm(current_end)}@{current_skill}")
@@ -414,48 +297,10 @@ class SisqualProblem1ILP:
             writer = csv.writer(f)
             writer.writerows(rows)
 
-    def shortage_summary(self) -> Dict[str, int]:
-        summary = defaultdict(int)
-        for (day, slot_idx, skill), var in self.shortage.items():
-            value = pulp.value(var)
-            if value:
-                summary[skill] += int(round(value))
-        return dict(summary)
-
-
-def parse_hhmm(value: str) -> int:
-    hour, minute = value.strip().split(":", 1)
-    return int(hour) * 60 + int(minute)
-
-
-def minutes_to_hhmm(value: int) -> str:
-    hour = value // 60
-    minute = value % 60
-    return f"{hour:02d}:{minute:02d}"
-
-
-def normalize_marker(value: str) -> str:
-    text = str(value or "").strip()
-    if text.upper().startswith("EQUALS:"):
-        return "EQUALS:" + text.split(":", 1)[1]
-    return text.upper()
-
-
-def parse_max_time_seconds(value) -> int | None:
-    if value is None or value == "":
-        return None
-    try:
-        minutes = float(value)
-    except (TypeError, ValueError):
-        return None
-    if minutes <= 0:
-        return None
-    return int(minutes * 60)
-
-
 def solve(problem_path=None, maxTime=None, **kwargs):
     if not problem_path:
         raise ValueError("This solver requires 'problem_path' pointing to problem.json")
+    # TaskManager uses this thin wrapper so the algorithm matches the common scheduler API.
     scheduler = SisqualProblem1ILP(problem_path, max_time_minutes=maxTime)
     scheduler.build_model()
     scheduler.solve()
@@ -476,7 +321,6 @@ def main():
 
     print(f"Status: {pulp.LpStatus.get(status, 'Unknown')}")
     print(f"Objective: {scheduler.objective_value}")
-    print(f"Shortage summary: {scheduler.shortage_summary()}")
 
     if args.output:
         scheduler.export_csv(args.output)

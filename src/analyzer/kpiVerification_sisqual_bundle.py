@@ -11,6 +11,7 @@ EXACT_PATTERN = re.compile(r"^EQUALS:(\d{1,2}:\d{2})-(\d{1,2}:\d{2})$", re.IGNOR
 SEGMENT_PATTERN = re.compile(r"^(\d{1,2}:\d{2})-(\d{1,2}:\d{2})@(.+)$")
 DEFAULT_MAX_CONSECUTIVE_DAYS = 5
 DEFAULT_MIN_REST_HOURS = 11
+STAFF_TEAM_CODE = "Employees"
 
 
 def analyze(file_path, problem_path, employees=None, year=None):
@@ -48,6 +49,7 @@ def analyze(file_path, problem_path, employees=None, year=None):
         "primaryTeamUtilizationRate": assignment_metrics["primaryTeamUtilizationRate"],
         "nonPrimaryTeamHours": assignment_metrics["nonPrimaryTeamHours"],
         "durationComplianceRate": assignment_metrics["durationComplianceRate"],
+        "demandedHoursComplianceRate": assignment_metrics["demandedHoursComplianceRate"],
         "consecutiveDaysViolations": assignment_metrics["consecutiveDaysViolations"],
         "minRestViolations": assignment_metrics["minRestViolations"],
         "availabilityViolations": assignment_metrics["availabilityViolations"],
@@ -267,6 +269,8 @@ def build_slot_coverage(schedule):
             for segment in segments:
                 for slot_start in build_half_hour_slots(segment["start"], segment["end"]):
                     slot_coverage[(day, segment["team"], slot_start)] += 1
+                    if segment["team"] != STAFF_TEAM_CODE:
+                        slot_coverage[(day, STAFF_TEAM_CODE, slot_start)] += 1
     return slot_coverage
 
 
@@ -382,6 +386,8 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
     total_worked_minutes = 0
     total_compliant_days = 0
     total_evaluated_days = 0
+    total_hours_match_days = 0
+    total_hours_evaluated_days = 0
     total_availability_violations = 0
     total_consecutive_violations = 0
     total_min_rest_violations = 0
@@ -401,6 +407,8 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
         worked_minutes = 0
         compliant_days = 0
         evaluated_days = 0
+        hours_match_days = 0
+        hours_evaluated_days = 0
         availability_violations = 0
         consecutive_violations = 0
         min_rest_violations = 0
@@ -433,6 +441,11 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
                     compliant_days += 1
                 else:
                     availability_violations += 1
+                demanded_minutes = get_demanded_minutes(rule)
+                if demanded_minutes is not None:
+                    hours_evaluated_days += 1
+                    if day_minutes == demanded_minutes:
+                        hours_match_days += 1
 
             if worked:
                 streak += 1
@@ -457,6 +470,7 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
 
         non_primary_minutes = max(worked_minutes - primary_minutes, 0)
         duration_rate = round((compliant_days / evaluated_days) * 100, 2) if evaluated_days else 100.0
+        demanded_hours_rate = round((hours_match_days / hours_evaluated_days) * 100, 2) if hours_evaluated_days else 100.0
         primary_rate = round((primary_minutes / worked_minutes) * 100, 2) if worked_minutes else 100.0
 
         total_team_switches += team_switches
@@ -465,6 +479,8 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
         total_worked_minutes += worked_minutes
         total_compliant_days += compliant_days
         total_evaluated_days += evaluated_days
+        total_hours_match_days += hours_match_days
+        total_hours_evaluated_days += hours_evaluated_days
         total_availability_violations += availability_violations
         total_consecutive_violations += consecutive_violations
         total_min_rest_violations += min_rest_violations
@@ -480,6 +496,7 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
                 "teamSwitches": team_switches,
                 "fragmentedWorkDays": fragmented_days,
                 "durationComplianceRate": duration_rate,
+                "demandedHoursComplianceRate": demanded_hours_rate,
                 "availabilityViolations": availability_violations,
                 "consecutiveDaysViolations": consecutive_violations,
                 "minRestViolations": min_rest_violations,
@@ -489,6 +506,7 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
     employee_rows.sort(key=lambda item: (-item["availabilityViolations"], -item["teamSwitches"], item["employeeId"]))
     primary_team_utilization_rate = round((total_primary_minutes / total_worked_minutes) * 100, 2) if total_worked_minutes else 100.0
     duration_compliance_rate = round((total_compliant_days / total_evaluated_days) * 100, 2) if total_evaluated_days else 100.0
+    demanded_hours_compliance_rate = round((total_hours_match_days / total_hours_evaluated_days) * 100, 2) if total_hours_evaluated_days else 100.0
 
     return {
         "intraDayTeamSwitches": total_team_switches,
@@ -496,6 +514,7 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
         "primaryTeamUtilizationRate": primary_team_utilization_rate,
         "nonPrimaryTeamHours": round(max(total_worked_minutes - total_primary_minutes, 0) / 60.0, 2),
         "durationComplianceRate": duration_compliance_rate,
+        "demandedHoursComplianceRate": demanded_hours_compliance_rate,
         "availabilityViolations": total_availability_violations,
         "consecutiveDaysViolations": total_consecutive_violations,
         "minRestViolations": total_min_rest_violations,
@@ -571,6 +590,31 @@ def parse_allowed_hours(text):
         except ValueError:
             continue
     return allowed
+
+
+def get_demanded_minutes(rule):
+    text = str(rule or "").strip()
+    if not text:
+        return None
+
+    exact_match = EXACT_PATTERN.match(text)
+    if exact_match:
+        expected_start = parse_minutes(exact_match.group(1))
+        expected_end = parse_minutes(exact_match.group(2))
+        if expected_start is None or expected_end is None or expected_end <= expected_start:
+            return None
+        return expected_end - expected_start
+
+    normalized = text.upper()
+    if normalized in OFF_MARKERS:
+        return None
+
+    allowed_hours = parse_allowed_hours(text)
+    if not allowed_hours:
+        return None
+    if len(allowed_hours) == 1:
+        return int(round(allowed_hours[0] * 60))
+    return None
 
 
 def total_segment_minutes(segments):

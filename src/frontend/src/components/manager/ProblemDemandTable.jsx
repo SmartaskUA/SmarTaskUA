@@ -14,7 +14,13 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { classifyScheduleCell, isHolidayColumn } from "../../utils/scheduleCalendar";
+import {
+  classifyScheduleCell,
+  formatLocalDateKey,
+  isHolidayColumn,
+} from "../../utils/scheduleCalendar";
+
+const STAFF_TEAM_CODE = "Employees";
 
 const metricConfig = {
   minimum: {
@@ -22,24 +28,18 @@ const metricConfig = {
     activeBg: "#dbeafe",
     activeBorder: "#60a5fa",
     activeText: "#1d4ed8",
-    cellBg: "#eff6ff",
-    cellBorder: "#bfdbfe",
   },
   estimated: {
     label: "Estimated",
     activeBg: "#fef3c7",
     activeBorder: "#f59e0b",
     activeText: "#92400e",
-    cellBg: "#fffbeb",
-    cellBorder: "#fde68a",
   },
   ideal: {
     label: "Ideal",
     activeBg: "#dcfce7",
     activeBorder: "#4ade80",
     activeText: "#166534",
-    cellBg: "#f0fdf4",
-    cellBorder: "#bbf7d0",
   },
 };
 
@@ -54,6 +54,12 @@ const parseMinutes = (value) => {
     return Number.MAX_SAFE_INTEGER;
   }
   return hour * 60 + minute;
+};
+
+const formatTime = (minutes) => {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
 };
 
 const normalizeTeamOption = (team) => {
@@ -161,7 +167,7 @@ const ProblemDemandTable = ({
 
   const selectedMetricConfig = metricConfig[selectedMetric] || metricConfig.minimum;
   const monthDateKeys = useMemo(
-    () => monthColumns.map((column) => column.date.toISOString().slice(0, 10)),
+    () => monthColumns.map((column) => formatLocalDateKey(column.date)),
     [monthColumns]
   );
 
@@ -185,25 +191,13 @@ const ProblemDemandTable = ({
     [demandData, monthDateKeys, selectedTeam]
   );
 
-  const demandIndex = useMemo(() => {
-    const mapped = new Map();
-    filteredRows.forEach((row) => {
-      const workPeriodCode = String(row?.workPeriod || "").trim();
-      const date = String(row?.date || "").trim();
-      if (workPeriodCode && date) {
-        mapped.set(`${workPeriodCode}|${date}`, row);
-      }
-    });
-    return mapped;
-  }, [filteredRows]);
-
   const coverageIndex = useMemo(() => {
     const mapped = new Map();
     const rows = Array.isArray(scheduleData) ? scheduleData.slice(1) : [];
 
     rows.forEach((row) => {
       monthColumns.forEach((column) => {
-        const dateKey = column.date.toISOString().slice(0, 10);
+        const dateKey = formatLocalDateKey(column.date);
         const cell = classifyScheduleCell(row?.[column.index + 1]);
         if (cell.kind !== "hourly") {
           return;
@@ -219,6 +213,10 @@ const ProblemDemandTable = ({
           buildHalfHourSlots(range.start, range.end).forEach((slotStart) => {
             const key = `${dateKey}|${segment.team}|${slotStart}`;
             mapped.set(key, (mapped.get(key) || 0) + 1);
+            if (segment.team !== STAFF_TEAM_CODE) {
+              const staffKey = `${dateKey}|${STAFF_TEAM_CODE}|${slotStart}`;
+              mapped.set(staffKey, (mapped.get(staffKey) || 0) + 1);
+            }
           });
         });
       });
@@ -227,64 +225,60 @@ const ProblemDemandTable = ({
     return mapped;
   }, [scheduleData, monthColumns]);
 
-  const visibleWorkPeriods = useMemo(() => {
-    const codes = Array.from(
-      new Set(filteredRows.map((row) => String(row?.workPeriod || "").trim()).filter(Boolean))
-    );
-    return codes
-      .map((code) => {
-        const config = workPeriodMap.get(code);
-        const start = parseMinutes(config?.timeRange?.start);
-        const end = parseMinutes(config?.timeRange?.end);
-        return {
-          code,
-          label: config?.name || code,
-          startLabel: config?.timeRange?.start || null,
-          endLabel: config?.timeRange?.end || null,
-          start,
-          end,
-          slots:
-            Number.isFinite(start) && Number.isFinite(end) && end > start
-              ? buildHalfHourSlots(start, end)
-              : [],
-        };
-      })
-      .sort((left, right) => {
-        if (left.start !== right.start) {
-          return left.start - right.start;
-        }
-        if (left.end !== right.end) {
-          return left.end - right.end;
-        }
-        return left.label.localeCompare(right.label);
+  const slotDemandIndex = useMemo(() => {
+    const mapped = new Map();
+    filteredRows.forEach((row) => {
+      const config = workPeriodMap.get(String(row?.workPeriod || "").trim());
+      const date = String(row?.date || "").trim();
+      const start = parseMinutes(config?.timeRange?.start);
+      const end = parseMinutes(config?.timeRange?.end);
+      const required = Number(row?.[selectedMetric]);
+      if (!date || !Number.isFinite(start) || !Number.isFinite(end) || end <= start || !Number.isFinite(required)) {
+        return;
+      }
+      buildHalfHourSlots(start, end).forEach((slotStart) => {
+        const key = `${date}|${slotStart}`;
+        mapped.set(key, (mapped.get(key) || 0) + required);
       });
+    });
+    return mapped;
+  }, [filteredRows, selectedMetric, workPeriodMap]);
+
+  const visibleSlotRows = useMemo(() => {
+    const slotStarts = new Set();
+    filteredRows.forEach((row) => {
+      const config = workPeriodMap.get(String(row?.workPeriod || "").trim());
+      const start = parseMinutes(config?.timeRange?.start);
+      const end = parseMinutes(config?.timeRange?.end);
+      if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+        return;
+      }
+      buildHalfHourSlots(start, end).forEach((slotStart) => slotStarts.add(slotStart));
+    });
+    return Array.from(slotStarts)
+      .sort((left, right) => left - right)
+      .map((slotStart) => ({
+        key: `slot-${slotStart}`,
+        slotStart,
+        label: `${formatTime(slotStart)}-${formatTime(slotStart + 30)}`,
+      }));
   }, [filteredRows, workPeriodMap]);
 
   const activeTeam = teamOptions.find((option) => option.code === selectedTeam) || null;
+
   const coverageSummary = useMemo(() => {
     let exact = 0;
     let over = 0;
     let under = 0;
 
-    visibleWorkPeriods.forEach((period) => {
+    visibleSlotRows.forEach((slotRow) => {
       monthColumns.forEach((column) => {
-        const dateKey = column.date.toISOString().slice(0, 10);
-        const row = demandIndex.get(`${period.code}|${dateKey}`);
-        if (!row) {
-          return;
-        }
-        const required = Number(row?.[selectedMetric]);
+        const dateKey = formatLocalDateKey(column.date);
+        const required = slotDemandIndex.get(`${dateKey}|${slotRow.slotStart}`);
         if (!Number.isFinite(required)) {
           return;
         }
-        const actual = period.slots.length
-          ? Math.min(
-              ...period.slots.map(
-                (slotStart) =>
-                  coverageIndex.get(`${dateKey}|${selectedTeam}|${slotStart}`) || 0
-              )
-            )
-          : 0;
+        const actual = coverageIndex.get(`${dateKey}|${selectedTeam}|${slotRow.slotStart}`) || 0;
         const delta = actual - required;
         if (delta < 0) {
           under += 1;
@@ -297,7 +291,7 @@ const ProblemDemandTable = ({
     });
 
     return { exact, over, under };
-  }, [coverageIndex, demandIndex, monthColumns, selectedMetric, selectedTeam, visibleWorkPeriods]);
+  }, [coverageIndex, monthColumns, selectedTeam, slotDemandIndex, visibleSlotRows]);
 
   if (!monthColumns.length) {
     return null;
@@ -322,26 +316,14 @@ const ProblemDemandTable = ({
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {activeTeam
-                ? `${selectedMetricConfig.label} demand for ${activeTeam.label}`
-                : "Select a team to inspect demand by day and work period."}
+                ? `${selectedMetricConfig.label} demand for ${activeTeam.label} in 30-minute slots`
+                : "Select a team to inspect demand by day and 30-minute slot."}
             </Typography>
             {activeTeam && (
               <Box display="flex" gap={1} flexWrap="wrap" mt={1}>
-                <Chip
-                  size="small"
-                  label={`${coverageSummary.exact} exact`}
-                  sx={{ backgroundColor: "#eff6ff", color: "#1d4ed8" }}
-                />
-                <Chip
-                  size="small"
-                  label={`${coverageSummary.over} over`}
-                  sx={{ backgroundColor: "#f0fdf4", color: "#166534" }}
-                />
-                <Chip
-                  size="small"
-                  label={`${coverageSummary.under} under`}
-                  sx={{ backgroundColor: "#fef2f2", color: "#991b1b" }}
-                />
+                <Chip size="small" label={`${coverageSummary.exact} exact`} sx={{ backgroundColor: "#eff6ff", color: "#1d4ed8" }} />
+                <Chip size="small" label={`${coverageSummary.over} over`} sx={{ backgroundColor: "#f0fdf4", color: "#166534" }} />
+                <Chip size="small" label={`${coverageSummary.under} under`} sx={{ backgroundColor: "#fef2f2", color: "#991b1b" }} />
               </Box>
             )}
           </Box>
@@ -390,7 +372,7 @@ const ProblemDemandTable = ({
         </Box>
       </Paper>
 
-      {selectedTeam && !visibleWorkPeriods.length ? (
+      {selectedTeam && !visibleSlotRows.length ? (
         <Paper
           elevation={0}
           sx={{
@@ -428,7 +410,7 @@ const ProblemDemandTable = ({
                     borderRight: "1px solid #1e293b",
                   }}
                 >
-                  Work Period
+                  30-Min Slot
                 </TableCell>
                 {monthColumns.map((column) => {
                   const isHoliday = isHolidayColumn(column, holidayMap);
@@ -441,11 +423,7 @@ const ProblemDemandTable = ({
                         minWidth: 64,
                         px: 0.5,
                         py: 1,
-                        backgroundColor: isHoliday
-                          ? "#7c3aed"
-                          : isSunday
-                            ? "#1d4ed8"
-                            : "#2563eb",
+                        backgroundColor: isHoliday ? "#7c3aed" : isSunday ? "#1d4ed8" : "#2563eb",
                         color: "#fff",
                       }}
                     >
@@ -461,8 +439,8 @@ const ProblemDemandTable = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {visibleWorkPeriods.map((period) => (
-                <TableRow key={period.code} hover>
+              {visibleSlotRows.map((slotRow) => (
+                <TableRow key={slotRow.key} hover>
                   <TableCell
                     sx={{
                       position: "sticky",
@@ -473,47 +451,29 @@ const ProblemDemandTable = ({
                     }}
                   >
                     <Typography fontSize={13} fontWeight={800} color="#0f172a">
-                      {period.startLabel && period.endLabel
-                        ? `${period.startLabel}-${period.endLabel}`
-                        : period.label}
-                    </Typography>
-                    <Typography fontSize={11} color="#64748b">
-                      {period.label}
+                      {slotRow.label}
                     </Typography>
                   </TableCell>
                   {monthColumns.map((column) => {
-                    const dateKey = column.date.toISOString().slice(0, 10);
-                    const row = demandIndex.get(`${period.code}|${dateKey}`);
-                    const rawValue = row?.[selectedMetric];
-                    const required =
-                      rawValue === undefined || rawValue === null || rawValue === ""
-                        ? null
-                        : Number(rawValue);
-                    const actual =
-                      row && period.slots.length
-                        ? Math.min(
-                            ...period.slots.map(
-                              (slotStart) =>
-                                coverageIndex.get(`${dateKey}|${selectedTeam}|${slotStart}`) || 0
-                            )
-                          )
-                        : row
-                          ? 0
-                          : null;
-                    const delta =
-                      required === null || actual === null ? null : actual - required;
+                    const dateKey = formatLocalDateKey(column.date);
+                    const rawValue = slotDemandIndex.get(`${dateKey}|${slotRow.slotStart}`);
+                    const required = rawValue === undefined || rawValue === null ? null : Number(rawValue);
+                    const actual = required === null
+                      ? null
+                      : coverageIndex.get(`${dateKey}|${selectedTeam}|${slotRow.slotStart}`) || 0;
+                    const delta = required === null || actual === null ? null : actual - required;
                     const palette = diffPalette(delta);
                     const isHoliday = isHolidayColumn(column, holidayMap);
                     return (
                       <TableCell
-                        key={`${period.code}-${column.key}`}
+                        key={`${slotRow.key}-${column.key}`}
                         align="center"
                         sx={{
                           px: 0.5,
                           py: 0.75,
                           backgroundColor: isHoliday ? "#faf5ff" : "#fff",
                         }}
-                        title={row ? `${selectedMetricConfig.label}: ${rawValue}` : "No demand"}
+                        title={required !== null ? `${selectedMetricConfig.label}: ${rawValue}` : "No demand"}
                       >
                         <Box
                           sx={{
@@ -526,12 +486,9 @@ const ProblemDemandTable = ({
                             alignItems: "center",
                             justifyContent: "center",
                             gap: 0.15,
-                            backgroundColor:
-                              required === null ? "#f8fafc" : palette.bg,
+                            backgroundColor: required === null ? "#f8fafc" : palette.bg,
                             color: required === null ? "#94a3b8" : palette.text,
-                            border: `1px solid ${
-                              required === null ? "#e2e8f0" : palette.border
-                            }`,
+                            border: `1px solid ${required === null ? "#e2e8f0" : palette.border}`,
                           }}
                         >
                           <Typography fontSize={12} fontWeight={800}>
