@@ -1,0 +1,54 @@
+# Demand Template (v2.6)
+# This template shows how to specify daily coverage requirements for your scheduling problem.
+#
+# FORMAT: CSV file specifying HOW MANY people are needed each day/shift/team
+#
+# COLUMNS:
+#   date      = Date for this requirement (format: YYYY-MM-DD)
+#   workPeriod = Work period code (must match demand.workPeriods[].code in JSON)
+#   team      = Team code (must match organizationalUnits.teams[].code in JSON)
+#   minimum   = Minimum people required (HARD constraint - must be met)
+#   ideal     = Ideal number of people (SOFT target - algorithm tries to achieve)
+#   estimated = Estimated/expected demand (for KPI analysis only)
+#   open      = OPTIONAL: Work period start time override (HH:MM, empty = use JSON default)
+#   close     = OPTIONAL: Work period end time override (HH:MM, empty = use JSON default)
+#
+# LOGICAL ORDER: minimum ≤ estimated ≤ ideal
+#
+# v2.6 OPEN/CLOSE BEHAVIOR:
+# - Empty open/close = Use work period times from JSON workPeriods[].timeRange (default)
+# - Specified open/close = Override times for THIS specific workPeriod/date/team
+# - Missing row = Shift not operating that day (no need for CLOSED keyword)
+#
+# NOTES:
+# - One row per date/workPeriod/team combination
+# - The "team" column always contains team codes for both employee models
+# - Both team-based and competency-based models use the same demand format
+# - open/close are per-row overrides - each row is independent
+#
+# EXAMPLES:
+#
+# - Basic demand (uses JSON defaults for times):
+#   2030-10-01,M,TeamA,2,3,2,,
+#   2030-10-01,T,TeamA,2,2,2,,
+#
+# - Early morning shift (Storage opens earlier):
+#   2030-10-02,M,Storage,2,3,2,06:00,14:00
+#   2030-10-02,M,Checkout,2,3,2,,
+#
+# - Holiday reduced hours:
+#   2030-12-25,M,ALL,1,1,1,10:00,14:00
+#
+# - Closed day (just omit all rows for that date):
+#   # 2030-12-26 - no rows = facility closed
+#
+# DELETE ALL COMMENT LINES (lines starting with #) before using this template!
+# Replace the example data below with your actual demand requirements.
+#
+date,workPeriod,team,minimum,ideal,estimated,open,close
+2030-10-01,M,TeamA,2,3,2,,
+2030-10-01,T,TeamA,2,2,2,,
+2030-10-01,N,TeamA,1,2,1,,
+2030-10-02,M,TeamA,2,3,2,06:00,14:00
+2030-10-02,T,TeamA,2,3,2,,
+2030-10-02,N,TeamA,1,2,1,,

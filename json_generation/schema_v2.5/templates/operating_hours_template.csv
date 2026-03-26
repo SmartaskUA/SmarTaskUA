@@ -1,0 +1,64 @@
+# Operating Hours Template (v2.5)
+#
+# Purpose: Define daily operating hours for your facility/teams
+#
+# CSV Format: date,team,open,close
+#   - date: ISO date (YYYY-MM-DD)
+#   - team: Team code or "ALL" for store-wide hours
+#   - open: Opening time (HH:MM) or "CLOSED"
+#   - close: Closing time (HH:MM) or "CLOSED"
+#
+# Rules:
+#   1. Must have entry for EVERY date in temporalScope.targetPeriod
+#   2. team=ALL applies to all teams (store-wide)
+#   3. Team-specific entries override ALL for that team
+#   4. Use CLOSED,CLOSED for non-operating days
+#   5. Time format: HH:MM in 24-hour (00:00 to 23:59)
+#   6. open must be < close (when not CLOSED)
+#
+# Example Patterns:
+#
+# PATTERN 1: Store-wide hours (same for all teams)
+#   2025-10-01,ALL,08:00,22:00
+#   2025-10-02,ALL,08:00,22:00
+#
+# PATTERN 2: Team-specific hours (different departments)
+#   2025-10-01,Storage,06:00,23:00      # Storage opens early
+#   2025-10-01,Checkout,08:00,22:00     # Checkout normal hours
+#   2025-10-01,Management,08:00,22:00   # Management normal hours
+#
+# PATTERN 3: Weekend hours (different from weekdays)
+#   2025-10-05,ALL,10:00,20:00          # Sunday - reduced hours
+#   2025-10-06,ALL,08:00,22:00          # Monday - back to normal
+#
+# PATTERN 4: Holiday hours (reduced or closed)
+#   2025-12-25,ALL,10:00,16:00          # Christmas - reduced hours
+#   2025-12-26,ALL,CLOSED,CLOSED        # Boxing Day - closed
+#
+# PATTERN 5: Special events (extended hours)
+#   2025-11-29,ALL,06:00,23:59          # Black Friday - extended
+#
+# Complete Example (7 days):
+#
+date,team,open,close
+2025-10-01,ALL,08:00,22:00
+2025-10-02,ALL,08:00,22:00
+2025-10-03,ALL,08:00,22:00
+2025-10-04,Storage,06:00,21:00
+2025-10-04,Checkout,09:00,20:00
+2025-10-04,Management,09:00,20:00
+2025-10-05,Storage,07:00,20:00
+2025-10-05,Checkout,10:00,20:00
+2025-10-05,Management,10:00,20:00
+2025-10-06,ALL,08:00,22:00
+2025-10-07,ALL,08:00,22:00
+#
+# DELETE ALL COMMENT LINES (starting with #) before using!
+#
+# Instructions:
+#   1. Copy this template
+#   2. Delete all lines starting with #
+#   3. Replace dates with your actual date range
+#   4. Set appropriate hours for your facility
+#   5. Add team-specific entries as needed
+#   6. Validate with: python3 validator/validator.py problem.json -v
