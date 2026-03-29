@@ -128,9 +128,9 @@ const metricInfo = {
       "Fulfilled required headcount divided by total required headcount across all 30-minute team slots.",
   },
   criticalUnderfilledPeriods: {
-    label: "Critical Underfilled Periods",
+    label: "Critical Underfilled Slots",
     description:
-      "Count of date, team, work-period cells where actual coverage is below the required minimum.",
+      "Count of 30-minute date, team, slot cells where actual coverage is below the required minimum.",
   },
   maxPeriodShortage: {
     label: "Max Period Shortage",

@@ -18,6 +18,7 @@ from algorithms.ilp_greedy import solve as ilp_greedy
 from algorithms.CSPv2 import solve as cspv2_solver
 from algorithms.CSP_Afonso_Hours import solve as CSP_Afonso_Hours_solver
 from algorithms.ILP_Sisqual_Hours import solve as ILP_Sisqual_Hours_solver
+from algorithms.CSP_Sisqual_Hours import solve as CSP_Sisqual_Hours_solver
 from algorithms.ILP_2 import solve as ILP_2
 from algorithms.ILP_2_Half_Intervals import solve as ILP_2_Half_Intervals
 from algorithms.ILP_3 import solve as ILP_3
@@ -68,6 +69,7 @@ class TaskManager:
             "Heuristic General": heuristic_general_solver,
             "ilp_greedy": ilp_greedy,
             "ILP_Sisqual_Hours": ILP_Sisqual_Hours_solver,
+            "CSP_Sisqual_Hours": CSP_Sisqual_Hours_solver,
             "COP_1_Half_Intervals": COP_1_Half_Intervals_solver,
             "COP_2_Half_Intervals": COP_2_Half_Intervals_Solver,
         }
@@ -93,7 +95,7 @@ class TaskManager:
         print(f"[TaskManager] Executing algorithm '{algorithm_name}' with Task ID: {task_id}")
         algorithm = self.algorithms[algorithm_name]
 
-        no_rules_algorithms = {"ILP General", "CSP General", "ILP_Sisqual_Hours"}
+        no_rules_algorithms = {"ILP General", "CSP General", "ILP_Sisqual_Hours", "CSP_Sisqual_Hours"}
         uses_rules = algorithm_name not in no_rules_algorithms
         rules_json = None
         if uses_rules:
@@ -139,7 +141,7 @@ class TaskManager:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, rules=rules_json)
             else:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, constraints=rules)
-        elif algorithm_name in ["ILP_Sisqual_Hours"]:
+        elif algorithm_name in ["ILP_Sisqual_Hours", "CSP_Sisqual_Hours"]:
             schedule_data = algorithm(problem_path=problem_path, maxTime=maxTime)
         elif algorithm_name in [
             "ILP_2",

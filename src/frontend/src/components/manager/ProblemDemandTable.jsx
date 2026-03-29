@@ -491,18 +491,26 @@ const ProblemDemandTable = ({
                             border: `1px solid ${required === null ? "#e2e8f0" : palette.border}`,
                           }}
                         >
-                          <Typography fontSize={12} fontWeight={800}>
-                            {required === null ? "-" : required}
-                          </Typography>
                           {required !== null && (
                             <>
                               <Typography fontSize={10} color="#64748b" fontWeight={700}>
-                                actual {actual}
+                                current
+                              </Typography>
+                              <Typography fontSize={14} fontWeight={900} lineHeight={1.1}>
+                                {actual}
+                              </Typography>
+                              <Typography fontSize={10} color="#64748b" fontWeight={700}>
+                                asked {required}
                               </Typography>
                               <Typography fontSize={10} color={palette.accent} fontWeight={800}>
-                                {delta > 0 ? `+${delta}` : String(delta)}
+                                difference {delta > 0 ? `+${delta}` : String(delta)}
                               </Typography>
                             </>
+                          )}
+                          {required === null && (
+                            <Typography fontSize={12} fontWeight={800}>
+                              -
+                            </Typography>
                           )}
                         </Box>
                       </TableCell>

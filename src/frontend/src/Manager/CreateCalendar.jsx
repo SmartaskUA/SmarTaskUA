@@ -272,6 +272,7 @@ const CreateCalendar = () => {
   ];
   const problemHourAlgorithms = [
     { value: "ILP_Sisqual_Hours", label: "ILP Sisqual Hours" },
+    { value: "CSP_Sisqual_Hours", label: "CSP Sisqual Hours" },
   ];
 
   const manualShiftAlgorithms = [

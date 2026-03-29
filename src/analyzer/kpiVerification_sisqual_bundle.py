@@ -306,9 +306,10 @@ def compute_coverage_metrics(demand_rows, work_periods, slot_coverage):
         slot_values = [slot_coverage.get((date_key, team, slot_start), 0) for slot_start in slots]
         period_actual = min(slot_values) if slot_values else 0
         period_shortage = max(required - period_actual, 0)
+        underfilled_slot_count = sum(1 for actual in slot_values if actual < required)
 
         if period_shortage > 0:
-            critical_underfilled_periods += 1
+            critical_underfilled_periods += underfilled_slot_count
             max_period_shortage = max(max_period_shortage, period_shortage)
             underfilled_periods.append(
                 {
