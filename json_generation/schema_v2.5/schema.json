@@ -1,0 +1,738 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://smartask.ua/schemas/scheduling-problem-v2.5.json",
+  "title": "Employee Scheduling Problem Definition (Hybrid JSON + CSV) - v2.5",
+  "description": "Hybrid schema for employee scheduling: JSON for structure/metadata, CSV for large data matrices. Supports team-based and competency-based models. v2.5 adds operating hours management via operating_hours.csv. v2.2 added contract-based hour allocation and numeric hour specification in schedule_input.csv. See FORMAT.md for CSV validation rules and detailed specifications.",
+  "type": "object",
+  "required": ["schemaVersion", "problemType", "metadata", "temporalScope", "contracts", "employees", "demand", "constraints", "optimization"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "2.5",
+      "description": "Schema version identifier"
+    },
+    "problemType": {
+      "type": "string",
+      "const": "employee_scheduling",
+      "description": "Type of scheduling problem"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["problemId", "createdAt"],
+      "properties": {
+        "problemId": {
+          "type": "string",
+          "description": "Unique identifier for this problem instance"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of problem creation"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the problem"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source document or reference"
+        }
+      }
+    },
+    "features": {
+      "type": "object",
+      "description": "Feature flags to enable optional modules",
+      "properties": {
+        "useWorkPeriodBasedScheduling": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable work period-based scheduling (true) or interval-based scheduling (false)"
+        },
+        "useAdvancedConstraints": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable day-off swapping, break rules, etc."
+        },
+        "usePriorityHierarchy": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable priority-based allocation ordering. Works for both team model (team priorities) and competency model (skill-level priorities)"
+        }
+      }
+    },
+    "temporalScope": {
+      "type": "object",
+      "required": ["year", "numDays"],
+      "properties": {
+        "year": {
+          "type": "integer",
+          "minimum": 2020,
+          "maximum": 2100,
+          "description": "Year for scheduling"
+        },
+        "numDays": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 366,
+          "description": "Number of days in the scheduling period"
+        },
+        "targetPeriod": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "string",
+              "format": "date",
+              "description": "Start date of primary scheduling period (ISO 8601)"
+            },
+            "end": {
+              "type": "string",
+              "format": "date",
+              "description": "End date of primary scheduling period (ISO 8601)"
+            },
+            "includeBufferWeeks": {
+              "type": "boolean",
+              "default": false,
+              "description": "Whether to include buffer weeks before/after target period"
+            }
+          }
+        }
+      }
+    },
+    "operatingHours": {
+      "type": "object",
+      "description": "Facility operating hours configuration. v2.5: Defines when the store/facility is open for business. Supports team-specific hours and hard constraint enforcement.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether operating hours constraints are enabled"
+        },
+        "dataFile": {
+          "type": "string",
+          "description": "Path to operating_hours.csv file containing daily operating hours (relative to JSON file). Format: date,team,open,close. Required when enabled=true."
+        },
+        "enforcement": {
+          "type": "string",
+          "enum": ["hard", "soft"],
+          "default": "hard",
+          "description": "How to enforce operating hours: 'hard' = employees cannot work outside hours (strict), 'soft' = preference but can violate with penalty"
+        },
+        "validation": {
+          "type": "object",
+          "description": "Validation options for operating hours",
+          "properties": {
+            "requireAllDates": {
+              "type": "boolean",
+              "default": true,
+              "description": "Whether operating hours must be defined for all dates in temporalScope"
+            },
+            "enforceWorkPeriodsWithinHours": {
+              "type": "boolean",
+              "default": true,
+              "description": "Whether work periods must fit within operating hours"
+            },
+            "enforceDemandWithinHours": {
+              "type": "boolean",
+              "default": true,
+              "description": "Whether demand can only be specified during operating hours"
+            }
+          }
+        },
+        "options": {
+          "type": "object",
+          "description": "Additional configuration options",
+          "properties": {
+            "allowMultipleTeamHours": {
+              "type": "boolean",
+              "default": true,
+              "description": "Whether different teams can have different operating hours on the same day"
+            }
+          }
+        }
+      }
+    },
+    "contracts": {
+      "type": "object",
+      "required": ["definitions"],
+      "description": "Contract definitions for employees. v2.2: Centralized contract types with work hours and optional constraints.",
+      "properties": {
+        "definitions": {
+          "type": "array",
+          "minItems": 1,
+          "description": "List of contract type definitions",
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "workHoursPerDay"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique contract identifier (e.g., 'fullTime_8h', 'partTime_4h')"
+              },
+              "name": {
+                "type": "string",
+                "description": "Human-readable contract name"
+              },
+              "workHoursPerDay": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 24,
+                "description": "Default work hours per day when 'A' is used in schedule_input.csv"
+              },
+              "constraints": {
+                "type": "object",
+                "description": "Optional contract-specific constraints",
+                "properties": {
+                  "weekendsOnly": {
+                    "type": "boolean",
+                    "description": "Employee can only work Saturday and Sunday"
+                  },
+                  "weekdaysOnly": {
+                    "type": "boolean",
+                    "description": "Employee can only work Monday through Friday"
+                  },
+                  "availableDays": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+                    },
+                    "description": "Specific days employee can work"
+                  },
+                  "maxHoursPerWeek": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Maximum hours employee can work per week"
+                  },
+                  "maxConsecutiveDays": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Maximum number of consecutive work days"
+                  },
+                  "minRestDaysPerWeek": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 7,
+                    "description": "Minimum number of rest days per week"
+                  },
+                  "flexibleHours": {
+                    "type": "boolean",
+                    "description": "Whether employee can work variable hours"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "employees": {
+      "type": "object",
+      "required": ["model"],
+      "properties": {
+        "model": {
+          "type": "string",
+          "enum": ["team", "competency"],
+          "description": "Employee organization model: 'team' for fixed teams, 'competency' for skill-based"
+        },
+        "simple": {
+          "type": "array",
+          "description": "Simple employee list (when model='team')",
+          "items": {
+            "type": "object",
+            "required": ["id", "teams"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique employee identifier"
+              },
+              "name": {
+                "type": "string",
+                "description": "Employee name"
+              },
+              "teams": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "List of team codes this employee can work in"
+              },
+              "contractType": {
+                "type": "string",
+                "description": "Contract type ID - must reference a contract defined in contracts.definitions[].id"
+              },
+              "contractPeriods": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["start"],
+                  "properties": {
+                    "start": {
+                      "type": "string",
+                      "format": "date",
+                      "description": "Contract start date"
+                    },
+                    "end": {
+                      "type": ["string", "null"],
+                      "format": "date",
+                      "description": "Contract end date (null = ongoing)"
+                    },
+                    "contractType": {
+                      "type": "string",
+                      "description": "Contract type ID for this period - must reference contracts.definitions[].id. Allows contract changes over time."
+                    }
+                  }
+                },
+                "description": "Contract period history - supports changing contract types over time"
+              }
+            }
+          }
+        },
+        "competency": {
+          "type": "array",
+          "description": "Competency-based employee list (when model='competency'). Employees are assigned to teams with competency/proficiency levels.",
+          "items": {
+            "type": "object",
+            "required": ["id", "teams"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique employee identifier"
+              },
+              "name": {
+                "type": "string",
+                "description": "Employee name"
+              },
+              "teams": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["code", "level"],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "description": "Team code - must match organizationalUnits.teams[].code"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Team name (human-readable)"
+                    },
+                    "level": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "Competency/proficiency level (1=junior, 2=mid, 3=senior, etc.)"
+                    }
+                  }
+                },
+                "description": "List of team assignments with competency levels"
+              },
+              "contractType": {
+                "type": "string",
+                "description": "Contract type ID - must reference a contract defined in contracts.definitions[].id"
+              },
+              "contractPeriods": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["start"],
+                  "properties": {
+                    "start": {
+                      "type": "string",
+                      "format": "date",
+                      "description": "Contract start date"
+                    },
+                    "end": {
+                      "type": ["string", "null"],
+                      "format": "date",
+                      "description": "Contract end date (null = ongoing)"
+                    },
+                    "contractType": {
+                      "type": "string",
+                      "description": "Contract type ID for this period - must reference contracts.definitions[].id. Allows contract changes over time."
+                    }
+                  }
+                },
+                "description": "Contract period history - supports changing contract types over time"
+              },
+              "restrictions": {
+                "type": "object",
+                "properties": {
+                  "cannotSwapDayOffs": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether day-offs cannot be swapped (typically true for part-time)"
+                  },
+                  "preferredWorkPeriods": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of preferred work period codes"
+                  },
+                  "blackoutDates": {
+                    "type": "array",
+                    "items": {"type": "string", "format": "date"},
+                    "description": "Dates where employee cannot work"
+                  }
+                },
+                "description": "Employee-specific restrictions"
+              }
+            }
+          }
+        }
+      }
+    },
+    "demand": {
+      "type": "object",
+      "required": ["organizationalUnits", "workPeriodModel"],
+      "properties": {
+        "workPeriodModel": {
+          "type": "string",
+          "enum": ["fixed", "flexible"],
+          "description": "Scheduling paradigm: 'fixed'=predefined work periods with fixed times, 'flexible'=work periods with variable start times"
+        },
+        "dataFile": {
+          "type": "string",
+          "description": "Path to demand.csv with daily coverage requirements. Format: date,workPeriod,team,minimum,ideal,estimated. The 'team' column always contains team codes for both employee models. See FORMAT.md for validation rules."
+        },
+        "organizationalUnits": {
+          "type": "object",
+          "properties": {
+            "teams": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["code", "name"],
+                "properties": {
+                  "code": {"type": "string"},
+                  "name": {"type": "string"}
+                }
+              },
+              "description": "List of team definitions with code and name. Used for both employee models: team-based (simple assignment) and competency-based (assignment with proficiency levels)."
+            }
+          }
+        },
+        "workPeriods": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "object",
+            "required": ["code", "name"],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Work period code (e.g., 'M', 'T_A', 'MORNING_8H')"
+              },
+              "name": {
+                "type": "string",
+                "description": "Human-readable work period name"
+              },
+              "timeRange": {
+                "type": "object",
+                "description": "Fixed start and end times (for workPeriodModel='fixed')",
+                "properties": {
+                  "start": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+                    "description": "Work period start time (HH:MM)"
+                  },
+                  "end": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+                    "description": "Work period end time (HH:MM)"
+                  }
+                },
+                "required": ["start", "end"]
+              },
+              "duration": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Work period duration in hours (for workPeriodModel='flexible')"
+              },
+              "allowedStartTimes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+                },
+                "description": "Allowed start times for flexible work periods (for workPeriodModel='flexible')"
+              },
+              "breaks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["type", "duration"],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["meal", "rest", "other"],
+                      "description": "Type of break"
+                    },
+                    "duration": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "Break duration in minutes"
+                    },
+                    "timing": {
+                      "type": "object",
+                      "required": ["mode"],
+                      "properties": {
+                        "mode": {
+                          "type": "string",
+                          "enum": ["fixed", "window", "afterWork"],
+                          "description": "How break timing is determined"
+                        },
+                        "fixedTime": {
+                          "type": "string",
+                          "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+                          "description": "Fixed break time (required if mode='fixed')"
+                        },
+                        "window": {
+                          "type": "object",
+                          "properties": {
+                            "start": {"type": "string", "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"},
+                            "end": {"type": "string", "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"}
+                          },
+                          "required": ["start", "end"],
+                          "description": "Time window for break (required if mode='window')"
+                        },
+                        "afterMinutes": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Minutes after work period start to take break (required if mode='afterWork')"
+                        }
+                      }
+                    },
+                    "paid": {
+                      "type": "boolean",
+                      "default": false,
+                      "description": "Whether break is paid time"
+                    },
+                    "required": {
+                      "type": "boolean",
+                      "default": true,
+                      "description": "Whether break is mandatory"
+                    },
+                    "canStagger": {
+                      "type": "boolean",
+                      "default": true,
+                      "description": "Whether break can be staggered across employees for coverage"
+                    }
+                  }
+                },
+                "description": "Break definitions for this work period"
+              }
+            }
+          },
+          "description": "Work period definitions - FLEXIBLE: define any work periods needed (M/T/N, DAY/NIGHT, custom codes, etc.). CSV must reference these codes."
+        },
+        "priorityHierarchy": {
+          "type": "array",
+          "description": "Optional priority ordering for allocation. Both models use 'team' field. For competency model: optionally add 'level' constraint to prioritize by competency level. Enable with features.usePriorityHierarchy=true",
+          "items": {
+            "type": "object",
+            "required": ["rank"],
+            "properties": {
+              "rank": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Priority rank (1=highest priority)"
+              },
+              "team": {
+                "type": "string",
+                "description": "Team code - defines which team has this priority. Required for both employee models."
+              },
+              "level": {
+                "type": "string",
+                "description": "Optional level specification for competency model (e.g., 'N=1', 'N>=2', 'N<3'). When specified, only employees with matching competency levels are prioritized."
+              },
+              "description": {
+                "type": "string",
+                "description": "Human-readable description of this priority level"
+              }
+            }
+          }
+        }
+      }
+    },
+    "scheduleInput": {
+      "type": "object",
+      "description": "Employee availability constraints from CSV file. v2.2: supports 'A' for auto-allocation from employee's contract workHoursPerDay, numeric values (1-16) for specific hour requirements, and time window constraints with EQUALS/INCLUDE/EXCEPT modifiers (Allen Interval Algebra).",
+      "properties": {
+        "dataFile": {
+          "type": "string",
+          "description": "Path to CSV file containing schedule matrix (relative to JSON file)"
+        },
+        "markingTypes": {
+          "type": "object",
+          "additionalProperties": {"type": "string"},
+          "description": "Mapping of custom constraint codes to descriptions. v2.2: Standard constraints 'VAC' (vacation) and 'NOT' (unavailable) are always valid. All other constraints (DL, DLF, DLV, DO, EnfD, Med, etc.) must be defined here. Work requirements: 'A' = auto-allocate from contract, numbers (1-16) = specific hours. Time window constraints (Allen Interval Algebra): 'EQUALS:HH:MM-HH:MM' = must work exactly this time range, 'INCLUDE:HH:MM-HH:MM' = must work at minimum this entire range (can extend), 'EXCEPT:HH:MM-HH:MM' = unavailable during this time window."
+        }
+      }
+    },
+    "vacations": {
+      "type": "object",
+      "description": "Vacation template data from CSV file",
+      "properties": {
+        "dataFile": {
+          "type": "string",
+          "description": "Path to CSV file containing vacation template (relative to JSON file)"
+        }
+      }
+    },
+    "minimuns": {
+      "type": "object",
+      "description": "Minimum staffing levels from CSV file",
+      "properties": {
+        "dataFile": {
+          "type": "string",
+          "description": "Path to CSV file containing minimums (relative to JSON file)"
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "required": ["hard"],
+      "properties": {
+        "hard": {
+          "type": "array",
+          "description": "Hard constraints that must be satisfied",
+          "items": {
+            "type": "object",
+            "required": ["id", "type"],
+            "properties": {
+              "id": {"type": "string"},
+              "type": {"type": "string"},
+              "params": {"type": "object"},
+              "enabled": {"type": "boolean", "default": true}
+            }
+          }
+        },
+        "soft": {
+          "type": "array",
+          "description": "Soft constraints with penalty weights",
+          "items": {
+            "type": "object",
+            "required": ["id", "type"],
+            "properties": {
+              "id": {"type": "string"},
+              "type": {"type": "string"},
+              "params": {"type": "object"},
+              "weight": {"type": "number", "minimum": 0},
+              "enabled": {"type": "boolean", "default": true}
+            }
+          }
+        },
+        "advanced": {
+          "type": "object",
+          "description": "Advanced constraint configurations (requires useAdvancedConstraints=true)",
+          "properties": {
+            "dayOffSwapping": {
+              "type": "object",
+              "properties": {
+                "enabled": {"type": "boolean"},
+                "rules": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                },
+                "weekDefinition": {
+                  "type": "string",
+                  "enum": ["monday-sunday", "sunday-saturday"]
+                }
+              }
+            },
+            "breaks": {
+              "type": "object",
+              "properties": {
+                "enabled": {"type": "boolean"},
+                "mode": {
+                  "type": "string",
+                  "enum": ["with_breaks", "without_breaks"]
+                },
+                "rules": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "minWorkPeriodHours": {"type": "number"},
+                      "breakMinutes": {"type": "integer"},
+                      "breakType": {"type": "string"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "optimization": {
+      "type": "object",
+      "required": ["algorithm"],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "enum": ["ILP", "ILPv2", "CSP", "CSPv2", "ILP Engine", "CSP_ENGINE", "Greedy Randomized", "Greedy Randomized Engine", "Greedy Randomized + Hill Climbing", "GRHC_ENGINE"],
+          "description": "Algorithm to use for solving"
+        },
+        "maxTimeMinutes": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 10,
+          "description": "Maximum solver time in minutes"
+        },
+        "objectives": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["goal", "weight"],
+            "properties": {
+              "goal": {
+                "type": "string",
+                "description": "Optimization goal identifier"
+              },
+              "weight": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Relative weight for this objective"
+              },
+              "priority": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Priority level (1=highest)"
+              }
+            }
+          },
+          "description": "Optimization objectives and weights"
+        },
+        "challenges": {
+          "type": "object",
+          "description": "Challenge-specific configurations",
+          "properties": {
+            "multiCompetencyAllocation": {
+              "type": "object",
+              "properties": {
+                "enabled": {"type": "boolean"},
+                "strategy": {
+                  "type": "string",
+                  "enum": ["priority_first", "level_first", "hybrid"]
+                },
+                "weights": {
+                  "type": "object",
+                  "properties": {
+                    "priorityWeight": {"type": "number"},
+                    "levelWeight": {"type": "number"}
+                  }
+                },
+                "considerLongTerm": {"type": "boolean"}
+              }
+            },
+            "competencyOrdering": {
+              "type": "object",
+              "properties": {
+                "enabled": {"type": "boolean"},
+                "respectResourceRule": {"type": "boolean"},
+                "dynamicOrdering": {"type": "boolean"},
+                "rule": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,40 @@
+# Demand Template (v2.2)
+# This template shows how to specify daily coverage requirements for your scheduling problem.
+#
+# FORMAT: CSV file specifying HOW MANY people are needed each day/shift/team
+#
+# COLUMNS:
+#   date      = Date for this requirement (format: YYYY-MM-DD)
+#   shift     = Shift/work period code (must match demand.shifts[].code in JSON)
+#   team      = Team code (must match organizationalUnits.teams[].code in JSON)
+#   minimum   = Minimum people required (HARD constraint - must be met)
+#   ideal     = Ideal number of people (SOFT target - algorithm tries to achieve)
+#   estimated = Estimated/expected demand (for KPI analysis only)
+#
+# LOGICAL ORDER: minimum ≤ estimated ≤ ideal
+#
+# NOTES:
+# - One row per date/shift/team combination
+# - The "team" column always contains team codes for both employee models
+# - Both team-based and competency-based models use the same demand format
+#
+# EXAMPLES:
+# - Basic demand: Need 2-3 people for Morning shift, Team A:
+#   2030-10-01,M,TeamA,2,3,2
+#
+# - High demand day: Need more people:
+#   2030-10-15,M,TeamA,3,5,4
+#
+# - Low demand: Weekend with reduced staffing:
+#   2030-10-06,M,TeamA,1,2,1
+#
+# DELETE ALL COMMENT LINES (lines starting with #) before using this template!
+# Replace the example data below with your actual demand requirements.
+#
+date,shift,team,minimum,ideal,estimated
+2030-10-01,M,TeamA,2,3,2
+2030-10-01,T,TeamA,2,2,2
+2030-10-01,N,TeamA,1,2,1
+2030-10-02,M,TeamA,2,3,2
+2030-10-02,T,TeamA,2,3,2
+2030-10-02,N,TeamA,1,2,1

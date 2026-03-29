@@ -43,10 +43,10 @@
       "type": "object",
       "description": "Feature flags to enable optional modules",
       "properties": {
-        "useShiftBasedScheduling": {
+        "useWorkPeriodBasedScheduling": {
           "type": "boolean",
           "default": true,
-          "description": "Enable shift-based scheduling (true) or interval-based scheduling (false)"
+          "description": "Enable work period-based scheduling (true) or interval-based scheduling (false)"
         },
         "useAdvancedConstraints": {
           "type": "boolean",
@@ -234,7 +234,7 @@
         },
         "competency": {
           "type": "array",
-          "description": "Competency-based employee list (when model='competency')",
+          "description": "Competency-based employee list (when model='competency'). Employees are typically assigned to teams with competency/proficiency levels.",
           "items": {
             "type": "object",
             "required": ["id"],
@@ -268,7 +268,7 @@
                     }
                   }
                 },
-                "description": "List of competencies and skill levels"
+                "description": "Optional competency list for legacy competency-model examples."
               },
               "teams": {
                 "type": "array",
@@ -278,20 +278,20 @@
                   "properties": {
                     "code": {
                       "type": "string",
-                      "description": "Team code used by competency-based examples with team-based demand"
+                      "description": "Team code - must match organizationalUnits.teams[].code"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Team name (human-readable)"
                     },
                     "level": {
                       "type": "integer",
                       "minimum": 1,
-                      "description": "Team level / priority"
-                    },
-                    "name": {
-                      "type": "string",
-                      "description": "Human-readable team name"
+                      "description": "Competency/proficiency level (1=junior, 2=mid, 3=senior, etc.)"
                     }
                   }
                 },
-                "description": "Alternative to competencies for competency-model examples that still encode demand by team."
+                "description": "List of team assignments with competency levels. Preferred representation for v2.2 examples."
               },
               "contractType": {
                 "type": "string",
@@ -329,10 +329,10 @@
                     "default": false,
                     "description": "Whether day-offs cannot be swapped (typically true for part-time)"
                   },
-                  "preferredShifts": {
+                  "preferredWorkPeriods": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "List of preferred shift codes"
+                    "description": "List of preferred work period codes"
                   },
                   "blackoutDates": {
                     "type": "array",
@@ -359,11 +359,11 @@
         "workPeriodModel": {
           "type": "string",
           "enum": ["fixed", "flexible"],
-          "description": "Work-period scheduling paradigm for example files that use work periods instead of shift codes."
+          "description": "Work-period scheduling paradigm for example files that use work periods instead of shift codes"
         },
         "dataFile": {
           "type": "string",
-          "description": "Path to demand.csv with daily coverage requirements. Format: date,shift,team,minimum,ideal,estimated. The 'team' column contains team codes (team model) or competency codes (competency model). See FORMAT.md for validation rules."
+          "description": "Path to demand.csv with daily coverage requirements. Supported formats: date,shift,team,minimum,ideal,estimated or date,workPeriod,team,minimum,ideal,estimated. See FORMAT.md for validation rules."
         },
         "organizationalUnits": {
           "type": "object",
@@ -383,7 +383,7 @@
                   }
                 ]
               },
-              "description": "List of team codes or team objects (when using team or competency models with team-based demand)"
+              "description": "List of team codes or team objects. Team strings are supported for simple/team examples; object form is preferred for competency and work-period examples."
             },
             "competencies": {
               "type": "array",
@@ -395,7 +395,7 @@
                   "name": {"type": "string"}
                 }
               },
-              "description": "List of competency definitions (when using competency model)"
+              "description": "List of competency definitions for legacy competency-model examples."
             }
           }
         },
@@ -515,7 +515,7 @@
               }
             }
           },
-          "description": "Shift definitions - FLEXIBLE: define any shifts needed (M/T/N, DAY/NIGHT, custom codes, etc.). CSV must reference these codes."
+          "description": "Shift definitions. CSV files using the legacy/simple format must reference these codes in the 'shift' column."
         },
         "workPeriods": {
           "type": ["array", "null"],
@@ -523,29 +523,116 @@
             "type": "object",
             "required": ["code", "name"],
             "properties": {
-              "code": {"type": "string"},
-              "name": {"type": "string"},
+              "code": {
+                "type": "string",
+                "description": "Work period code (e.g., 'M', 'T_A', 'MORNING_8H')"
+              },
+              "name": {
+                "type": "string",
+                "description": "Human-readable work period name"
+              },
               "timeRange": {
                 "type": "object",
+                "description": "Fixed start and end times (for workPeriodModel='fixed')",
                 "properties": {
                   "start": {
                     "type": "string",
-                    "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+                    "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+                    "description": "Work period start time (HH:MM)"
                   },
                   "end": {
                     "type": "string",
-                    "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+                    "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+                    "description": "Work period end time (HH:MM)"
                   }
                 },
                 "required": ["start", "end"]
+              },
+              "duration": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Work period duration in hours (for workPeriodModel='flexible')"
+              },
+              "allowedStartTimes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+                },
+                "description": "Allowed start times for flexible work periods (for workPeriodModel='flexible')"
+              },
+              "breaks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["type", "duration"],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["meal", "rest", "other"],
+                      "description": "Type of break"
+                    },
+                    "duration": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "Break duration in minutes"
+                    },
+                    "timing": {
+                      "type": "object",
+                      "required": ["mode"],
+                      "properties": {
+                        "mode": {
+                          "type": "string",
+                          "enum": ["fixed", "window", "afterWork"],
+                          "description": "How break timing is determined"
+                        },
+                        "fixedTime": {
+                          "type": "string",
+                          "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+                          "description": "Fixed break time (required if mode='fixed')"
+                        },
+                        "window": {
+                          "type": "object",
+                          "properties": {
+                            "start": {"type": "string", "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"},
+                            "end": {"type": "string", "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"}
+                          },
+                          "required": ["start", "end"],
+                          "description": "Time window for break (required if mode='window')"
+                        },
+                        "afterMinutes": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Minutes after work period start to take break (required if mode='afterWork')"
+                        }
+                      }
+                    },
+                    "paid": {
+                      "type": "boolean",
+                      "default": false,
+                      "description": "Whether break is paid time"
+                    },
+                    "required": {
+                      "type": "boolean",
+                      "default": true,
+                      "description": "Whether break is mandatory"
+                    },
+                    "canStagger": {
+                      "type": "boolean",
+                      "default": true,
+                      "description": "Whether break can be staggered across employees for coverage"
+                    }
+                  }
+                },
+                "description": "Break definitions for this work period"
               }
             }
           },
-          "description": "Work-period definitions for fixed work-period examples."
+          "description": "Work period definitions. CSV files using the Sisqual/hourly format must reference these codes in the 'workPeriod' column."
         },
         "priorityHierarchy": {
           "type": "array",
-          "description": "Optional priority ordering for allocation. For team model: defines team priority (use 'team' field). For competency model: defines skill-level priority (use 'competency'+'level' fields). Enable with features.usePriorityHierarchy=true",
+          "description": "Optional priority ordering for allocation. Both models typically use 'team'. Legacy competency-based configurations may also use 'competency' together with 'level'. Enable with features.usePriorityHierarchy=true",
           "items": {
             "type": "object",
             "required": ["rank"],
@@ -557,15 +644,15 @@
               },
               "team": {
                 "type": "string",
-                "description": "Team code (for simple/team model) - defines which team has this priority"
+                "description": "Team code - defines which team has this priority"
               },
               "competency": {
                 "type": "string",
-                "description": "Competency code (for multiLevel/competency model)"
+                "description": "Optional competency code for legacy competency-based priorities"
               },
               "level": {
-                "type": "string",
-                "description": "Level specification (for competency model, e.g., 'N=1', 'N>=2')"
+                "type": ["string", "integer"],
+                "description": "Optional level specification for competency model (e.g., 'N=1', 'N>=2', 'N<3', or 1)"
               },
               "description": {
                 "type": "string",
@@ -578,7 +665,7 @@
     },
     "scheduleInput": {
       "type": "object",
-      "description": "Employee availability constraints from CSV file. v2.2: supports 'A' for auto-allocation from employee's contract workHoursPerDay, and numeric values (1-16) for specific hour requirements.",
+      "description": "Employee availability constraints from CSV file. v2.2: supports 'A' for auto-allocation from employee's contract workHoursPerDay, numeric values (1-16) for specific hour requirements, and time window constraints with EQUALS/INCLUDE/EXCEPT modifiers (Allen Interval Algebra).",
       "properties": {
         "dataFile": {
           "type": "string",
@@ -587,7 +674,7 @@
         "markingTypes": {
           "type": "object",
           "additionalProperties": {"type": "string"},
-          "description": "Mapping of marking codes to descriptions. v2.2: 'A' = auto-allocate from employee's contract (reads contracts.definitions[].workHoursPerDay), numbers = specific hours (e.g., '8' = 8 hours), 'DL' = Day off, 'VAC' = Vacation, etc."
+          "description": "Mapping of custom constraint codes to descriptions. v2.2: Standard constraints 'VAC' (vacation) and 'NOT' (unavailable) are always valid. All other constraints (DL, DLF, DLV, DO, EnfD, Med, etc.) must be defined here. Work requirements: 'A' = auto-allocate from contract, numbers (1-16) = specific hours. Time window constraints (Allen Interval Algebra): 'EQUALS:HH:MM-HH:MM' = must work exactly this time range, 'INCLUDE:HH:MM-HH:MM' = must work at minimum this entire range (can extend), 'EXCEPT:HH:MM-HH:MM' = unavailable during this time window."
         }
       }
     },
@@ -675,7 +762,7 @@
                   "items": {
                     "type": "object",
                     "properties": {
-                      "minShiftHours": {"type": "number"},
+                      "minWorkPeriodHours": {"type": "number"},
                       "breakMinutes": {"type": "integer"},
                       "breakType": {"type": "string"}
                     }
