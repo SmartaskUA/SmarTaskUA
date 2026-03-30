@@ -15,6 +15,7 @@ import { Client } from "@stomp/stompjs";
 import axios from "axios";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { inferHourGranularity, inferScheduleType } from "../utils/scheduleType";
+import BaseUrl from "../components/BaseUrl";
 
 const metricInfo = {
   tmFails: {
@@ -118,7 +119,7 @@ export default function CompareCalendar() {
   const reqToCalRef = useRef({});
 
   useEffect(() => {
-    const socket = new SockJS("http://localhost:8081/ws");
+    const socket = new SockJS(`${BaseUrl}/ws`);
     const stompClient = new Client({
       webSocketFactory: () => socket,
       onConnect: () => {
@@ -149,7 +150,7 @@ export default function CompareCalendar() {
 
   useEffect(() => {
     axios
-      .get("/schedules/fetch")
+      .get(`${BaseUrl}/schedules/fetch`)
       .then((res) => setCalendars(res.data))
       .catch(() => setError("Error fetching calendars."));
   }, []);
@@ -186,8 +187,8 @@ export default function CompareCalendar() {
 
     try {
       const [res1, res2] = await Promise.all([
-        axios.post("/schedules/analyze", buildFd(cal1)),
-        axios.post("/schedules/analyze", buildFd(cal2)),
+        axios.post(`${BaseUrl}/schedules/analyze`, buildFd(cal1)),
+        axios.post(`${BaseUrl}/schedules/analyze`, buildFd(cal2)),
       ]);
       reqToCalRef.current[res1.data.requestId] = cal1.id;
       reqToCalRef.current[res2.data.requestId] = cal2.id;

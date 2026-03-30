@@ -13,7 +13,7 @@ services:
     networks:
       - rabbitmq_network
     healthcheck:
-      test: ["CMD", "mongo", "--username", "admin", "--password", "password", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--username", "admin", "--password", "password", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -42,8 +42,11 @@ services:
     container_name: scheduler
     command: python3 RabbitMQClient.py
     depends_on:
-      - rabbitmq
-      - mongo
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    restart: on-failure
     networks:
       - rabbitmq_network
     environment:
@@ -54,7 +57,13 @@ services:
       - shared_tmp:/shared_tmp
       - /home/hugo/gurobi.lic:/app/gurobi.lic:ro
     healthcheck:
-      test: ["CMD", "pgrep", "-f", "RabbitMQClient"]
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import socket; socket.create_connection(('rabbitmq', 5672), 5).close()",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -66,8 +75,11 @@ services:
     container_name: analyzer
     command: python3 analyze.py
     depends_on:
-      - rabbitmq
-      - mongo
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    restart: on-failure
     networks:
       - rabbitmq_network
     environment:
@@ -79,7 +91,13 @@ services:
       - ../data/problems:/app/data/problems
       - shared_tmp:/shared_tmp
     healthcheck:
-      test: ["CMD", "pgrep", "-f", "analyze"]
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import socket; socket.create_connection(('rabbitmq', 5672), 5).close()",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -124,7 +142,7 @@ services:
       scheduler:
         condition: service_started
       mongo:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - ../src/api/src/main/resources/application.properties:/app/application.properties
       - ../data/problems:/app/data/problems
@@ -132,7 +150,7 @@ services:
     networks:
       - rabbitmq_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8081/schedules/fetch"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -191,7 +209,7 @@ services:
     networks:
       - rabbitmq_network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/"]
       interval: 10s
       timeout: 5s
       retries: 5
