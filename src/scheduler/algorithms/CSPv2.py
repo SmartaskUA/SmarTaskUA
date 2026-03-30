@@ -3,7 +3,7 @@ import numpy as np
 from collections import defaultdict
 import holidays as hl
 
-from algorithms.general.solver_logging import SolutionTracker, write_csp_log
+from algorithms.general.solver_logging import SolutionTracker, solve_cp_with_tracker, write_csp_log
 from algorithms.utils import (
     rows_to_vac_dict,
     rows_to_req_dicts,
@@ -177,7 +177,7 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
 
     # Attach the tracker
     tracker = SolutionTracker()
-    status = solver.Solve(m, solution_callback=tracker)
+    status = solve_cp_with_tracker(solver, m, tracker)
     write_csp_log(
         tracker=tracker,
         solver=solver,

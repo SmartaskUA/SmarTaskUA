@@ -17,6 +17,8 @@ from algorithms.heuristicSolver import solve as heuristic_solver
 from algorithms.ilp_greedy import solve as ilp_greedy
 from algorithms.CSPv2 import solve as cspv2_solver
 from algorithms.CSP_Afonso_Hours import solve as CSP_Afonso_Hours_solver
+from algorithms.ILP_Sisqual_Hours import solve as ILP_Sisqual_Hours_solver
+from algorithms.CSP_Sisqual_Hours import solve as CSP_Sisqual_Hours_solver
 from algorithms.ILP_2 import solve as ILP_2
 from algorithms.ILP_2_Half_Intervals import solve as ILP_2_Half_Intervals
 from algorithms.ILP_3 import solve as ILP_3
@@ -46,6 +48,7 @@ class TaskManager:
             "Greedy Randomized": greedy_randomized_solver,
             "Greedy Randomized + Hill Climbing": greedy_climbing_solver,
             "CSP": csp_solver,
+            "CSP Scheduling": csp_solver,
             "CSPv2": cspv2_solver,
             "CSP_Afonso_Hours": CSP_Afonso_Hours_solver,
             "ILP_2": ILP_2,
@@ -65,17 +68,18 @@ class TaskManager:
             "Heuristic Solver": heuristic_solver,
             "Heuristic General": heuristic_general_solver,
             "ilp_greedy": ilp_greedy,
-            "CSP_Afonso_Hours": CSP_Afonso_Hours_solver,
+            "ILP_Sisqual_Hours": ILP_Sisqual_Hours_solver,
+            "CSP_Sisqual_Hours": CSP_Sisqual_Hours_solver,
             "COP_1_Half_Intervals": COP_1_Half_Intervals_solver,
             "COP_2_Half_Intervals": COP_2_Half_Intervals_Solver,
         }
 
-    def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13, solver="CBC"):
-        # print(f"\n[DEBUG] Vacations received:\n{vacations}")
-        # print(f"[DEBUG] Minimuns received:\n{minimuns}")
-        # print(f"[DEBUG] Employees received:\n{employees}")
-        # print(f"[DEBUG] Rules received:\n{json.dumps(rules, indent=2) if rules else 'None'}")
-        # print(f"[DEBUG] Solver received: {solver}")
+    def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13, solver="CBC", problem_path=None):
+        print(f"\n[DEBUG] Vacations received:\n{vacations}")
+        print(f"[DEBUG] Minimuns received:\n{minimuns}")
+        print(f"[DEBUG] Rules received:\n{json.dumps(rules, indent=2) if rules else 'None'}")
+        print(f"[DEBUG] Solver received: {solver}")
+        print(f"[DEBUG] Problem path received: {problem_path}")
 
         if algorithm_name not in self.algorithms:
             raise ValueError(f"Algorithm '{algorithm_name}' not found.")
@@ -91,7 +95,7 @@ class TaskManager:
         print(f"[TaskManager] Executing algorithm '{algorithm_name}' with Task ID: {task_id}")
         algorithm = self.algorithms[algorithm_name]
 
-        no_rules_algorithms = {"ILP General", "CSP General"}
+        no_rules_algorithms = {"ILP General", "CSP General", "ILP_Sisqual_Hours", "CSP_Sisqual_Hours"}
         uses_rules = algorithm_name not in no_rules_algorithms
         rules_json = None
         if uses_rules:
@@ -132,7 +136,13 @@ class TaskManager:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, rules=rules_json)
             else:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, constraints=rules)
-            
+        elif algorithm_name == "CSP_Afonso_Hours":
+            if uses_rules:
+                schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, rules=rules_json)
+            else:
+                schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, constraints=rules)
+        elif algorithm_name in ["ILP_Sisqual_Hours", "CSP_Sisqual_Hours"]:
+            schedule_data = algorithm(problem_path=problem_path, maxTime=maxTime)
         elif algorithm_name in [
             "ILP_2",
             "ILP_2_Half_Intervals",

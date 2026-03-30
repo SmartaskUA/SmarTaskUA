@@ -234,10 +234,10 @@
         },
         "competency": {
           "type": "array",
-          "description": "Competency-based employee list (when model='competency'). Employees are assigned to teams with competency/proficiency levels.",
+          "description": "Competency-based employee list (when model='competency'). Employees are typically assigned to teams with competency/proficiency levels.",
           "items": {
             "type": "object",
-            "required": ["id", "teams"],
+            "required": ["id"],
             "properties": {
               "id": {
                 "type": "string",
@@ -246,6 +246,29 @@
               "name": {
                 "type": "string",
                 "description": "Employee name"
+              },
+              "competencies": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["code", "level"],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "description": "Competency code (e.g., 'EG', 'CAJ', 'ALM')"
+                    },
+                    "level": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "Skill level (1=highest, increasing numbers=lower skill)"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Human-readable description"
+                    }
+                  }
+                },
+                "description": "Optional competency list for legacy competency-model examples."
               },
               "teams": {
                 "type": "array",
@@ -268,7 +291,7 @@
                     }
                   }
                 },
-                "description": "List of team assignments with competency levels"
+                "description": "List of team assignments with competency levels. Preferred representation for v2.2 examples."
               },
               "contractType": {
                 "type": "string",
@@ -326,21 +349,43 @@
     },
     "demand": {
       "type": "object",
-      "required": ["organizationalUnits", "workPeriodModel"],
+      "required": ["organizationalUnits"],
       "properties": {
+        "shiftModel": {
+          "type": "string",
+          "enum": ["fixed", "flexible"],
+          "description": "Scheduling paradigm: 'fixed'=predefined shifts with fixed times, 'flexible'=shifts with variable start times"
+        },
         "workPeriodModel": {
           "type": "string",
           "enum": ["fixed", "flexible"],
-          "description": "Scheduling paradigm: 'fixed'=predefined work periods with fixed times, 'flexible'=work periods with variable start times"
+          "description": "Work-period scheduling paradigm for example files that use work periods instead of shift codes"
         },
         "dataFile": {
           "type": "string",
-          "description": "Path to demand.csv with daily coverage requirements. Format: date,workPeriod,team,minimum,ideal,estimated. The 'team' column always contains team codes for both employee models. See FORMAT.md for validation rules."
+          "description": "Path to demand.csv with daily coverage requirements. Supported formats: date,shift,team,minimum,ideal,estimated or date,workPeriod,team,minimum,ideal,estimated. See FORMAT.md for validation rules."
         },
         "organizationalUnits": {
           "type": "object",
           "properties": {
             "teams": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {"type": "string"},
+                  {
+                    "type": "object",
+                    "required": ["code", "name"],
+                    "properties": {
+                      "code": {"type": "string"},
+                      "name": {"type": "string"}
+                    }
+                  }
+                ]
+              },
+              "description": "List of team codes or team objects. Team strings are supported for simple/team examples; object form is preferred for competency and work-period examples."
+            },
+            "competencies": {
               "type": "array",
               "items": {
                 "type": "object",
@@ -350,9 +395,127 @@
                   "name": {"type": "string"}
                 }
               },
-              "description": "List of team definitions with code and name. Used for both employee models: team-based (simple assignment) and competency-based (assignment with proficiency levels)."
+              "description": "List of competency definitions for legacy competency-model examples."
             }
           }
+        },
+        "shifts": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "object",
+            "required": ["code", "name", "order"],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Shift code (e.g., 'M', 'T_A', 'MORNING_8H')"
+              },
+              "name": {
+                "type": "string",
+                "description": "Human-readable shift name"
+              },
+              "order": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Shift ordering (1=earliest, higher=later)"
+              },
+              "timeRange": {
+                "type": "object",
+                "description": "Fixed start and end times (for shiftModel='fixed')",
+                "properties": {
+                  "start": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+                    "description": "Shift start time (HH:MM)"
+                  },
+                  "end": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+                    "description": "Shift end time (HH:MM)"
+                  }
+                },
+                "required": ["start", "end"]
+              },
+              "duration": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Shift duration in hours (for shiftModel='flexible')"
+              },
+              "allowedStartTimes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+                },
+                "description": "Allowed start times for flexible shifts (for shiftModel='flexible')"
+              },
+              "breaks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["type", "duration"],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["meal", "rest", "other"],
+                      "description": "Type of break"
+                    },
+                    "duration": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "Break duration in minutes"
+                    },
+                    "timing": {
+                      "type": "object",
+                      "required": ["mode"],
+                      "properties": {
+                        "mode": {
+                          "type": "string",
+                          "enum": ["fixed", "window", "afterWork"],
+                          "description": "How break timing is determined"
+                        },
+                        "fixedTime": {
+                          "type": "string",
+                          "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+                          "description": "Fixed break time (required if mode='fixed')"
+                        },
+                        "window": {
+                          "type": "object",
+                          "properties": {
+                            "start": {"type": "string", "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"},
+                            "end": {"type": "string", "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"}
+                          },
+                          "required": ["start", "end"],
+                          "description": "Time window for break (required if mode='window')"
+                        },
+                        "afterMinutes": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Minutes after shift start to take break (required if mode='afterWork')"
+                        }
+                      }
+                    },
+                    "paid": {
+                      "type": "boolean",
+                      "default": false,
+                      "description": "Whether break is paid time"
+                    },
+                    "required": {
+                      "type": "boolean",
+                      "default": true,
+                      "description": "Whether break is mandatory"
+                    },
+                    "canStagger": {
+                      "type": "boolean",
+                      "default": true,
+                      "description": "Whether break can be staggered across employees for coverage"
+                    }
+                  }
+                },
+                "description": "Break definitions for this shift"
+              }
+            }
+          },
+          "description": "Shift definitions. CSV files using the legacy/simple format must reference these codes in the 'shift' column."
         },
         "workPeriods": {
           "type": ["array", "null"],
@@ -465,11 +628,11 @@
               }
             }
           },
-          "description": "Work period definitions - FLEXIBLE: define any work periods needed (M/T/N, DAY/NIGHT, custom codes, etc.). CSV must reference these codes."
+          "description": "Work period definitions. CSV files using the Sisqual/hourly format must reference these codes in the 'workPeriod' column."
         },
         "priorityHierarchy": {
           "type": "array",
-          "description": "Optional priority ordering for allocation. Both models use 'team' field. For competency model: optionally add 'level' constraint to prioritize by competency level. Enable with features.usePriorityHierarchy=true",
+          "description": "Optional priority ordering for allocation. Both models typically use 'team'. Legacy competency-based configurations may also use 'competency' together with 'level'. Enable with features.usePriorityHierarchy=true",
           "items": {
             "type": "object",
             "required": ["rank"],
@@ -481,11 +644,15 @@
               },
               "team": {
                 "type": "string",
-                "description": "Team code - defines which team has this priority. Required for both employee models."
+                "description": "Team code - defines which team has this priority"
+              },
+              "competency": {
+                "type": "string",
+                "description": "Optional competency code for legacy competency-based priorities"
               },
               "level": {
-                "type": "string",
-                "description": "Optional level specification for competency model (e.g., 'N=1', 'N>=2', 'N<3'). When specified, only employees with matching competency levels are prioritized."
+                "type": ["string", "integer"],
+                "description": "Optional level specification for competency model (e.g., 'N=1', 'N>=2', 'N<3', or 1)"
               },
               "description": {
                 "type": "string",

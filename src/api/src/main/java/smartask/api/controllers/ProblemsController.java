@@ -46,7 +46,7 @@ public class ProblemsController {
         if (request.getAlgorithm() == null || request.getAlgorithm().isBlank()) {
             return ResponseEntity.badRequest().body("Missing required field: algorithm");
         }
-        if (!problemService.isGeneralAlgorithm(request.getAlgorithm())) {
+        if (!problemService.isProblemAlgorithm(request.getAlgorithm())) {
             return ResponseEntity.badRequest().body("Unsupported algorithm for problem solve.");
         }
 

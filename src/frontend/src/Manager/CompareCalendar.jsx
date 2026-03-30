@@ -170,8 +170,8 @@ export default function CompareCalendar() {
       const blob = new Blob([toCsvString(cal.data)], { type: "text/csv;charset=utf-8" });
       const fd = new FormData();
       fd.append("files", blob, `${cal.id}.csv`);
-      fd.append("vacationTemplate", cal.metadata.vacationTemplateData);
-      fd.append("minimunsTemplate", cal.metadata.minimunsTemplateData);
+      fd.append("vacationTemplate", cal.metadata.vacationTemplateName || "");
+      fd.append("minimunsTemplate", cal.metadata.minimunsTemplateName || "");
       fd.append("employees", JSON.stringify(cal.metadata.employeesTeamInfo));
       fd.append("year", String(cal.metadata.year));
       const scheduleType = inferScheduleType(cal.metadata);

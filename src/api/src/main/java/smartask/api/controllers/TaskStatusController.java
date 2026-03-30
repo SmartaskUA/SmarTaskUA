@@ -20,7 +20,7 @@ public class TaskStatusController {
 
     @GetMapping("/{taskId}")
     public ResponseEntity<?> getTaskStatus(@PathVariable String taskId) {
-        Optional<TaskStatus> taskOpt = taskStatusRepository.findByTaskId(taskId);
+        Optional<TaskStatus> taskOpt = taskStatusRepository.findById(taskId);
 
         if (taskOpt.isPresent()) {
             return ResponseEntity.ok(taskOpt.get());
@@ -36,4 +36,3 @@ public class TaskStatusController {
         return ResponseEntity.ok(tasks);
     }
 }
-
