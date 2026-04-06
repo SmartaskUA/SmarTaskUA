@@ -13,7 +13,7 @@ services:
     networks:
       - rabbitmq_network
     healthcheck:
-      test: ["CMD", "mongo", "--username", "admin", "--password", "password", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--username", "admin", "--password", "password", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -42,18 +42,28 @@ services:
     container_name: scheduler
     command: python3 RabbitMQClient.py
     depends_on:
-      - rabbitmq
-      - mongo
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    restart: on-failure
     networks:
       - rabbitmq_network
     environment:
       - PYTHONUNBUFFERED=1
       - GRB_LICENSE_FILE=/app/gurobi.lic
     volumes:
+      - ../data/problems:/app/data/problems
       - shared_tmp:/shared_tmp
       - /home/hugo/gurobi.lic:/app/gurobi.lic:ro
     healthcheck:
-      test: ["CMD", "pgrep", "-f", "RabbitMQClient"]
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import socket; socket.create_connection(('rabbitmq', 5672), 5).close()",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -65,8 +75,11 @@ services:
     container_name: analyzer
     command: python3 analyze.py
     depends_on:
-      - rabbitmq
-      - mongo
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    restart: on-failure
     networks:
       - rabbitmq_network
     environment:
@@ -75,9 +88,16 @@ services:
       - RABBITMQ_USERNAME=guest
       - RABBITMQ_PASSWORD=guest
     volumes:
+      - ../data/problems:/app/data/problems
       - shared_tmp:/shared_tmp
     healthcheck:
-      test: ["CMD", "pgrep", "-f", "analyze"]
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import socket; socket.create_connection(('rabbitmq', 5672), 5).close()",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -87,8 +107,6 @@ services:
       context: ..
       dockerfile: infra/docker/api/Dockerfile
     container_name: api
-    ports:
-      - "8081:8081"
     environment:
       SPRING_APPLICATION_NAME: api
       SPRING_SERVER_PORT: 8081
@@ -124,7 +142,7 @@ services:
       scheduler:
         condition: service_started
       mongo:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - ../src/api/src/main/resources/application.properties:/app/application.properties
       - ../data/problems:/app/data/problems
@@ -132,7 +150,7 @@ services:
     networks:
       - rabbitmq_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8081/schedules/fetch"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -144,8 +162,6 @@ services:
       dockerfile: infra/docker/frontend/Dockerfile
     depends_on:
       - api
-    ports:
-      - "5173:5173"
     networks:
       - rabbitmq_network
     environment:
@@ -155,6 +171,45 @@ services:
       - /app/node_modules
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:5173/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  json-generator:
+    container_name: json-generator
+    build:
+      context: ..
+      dockerfile: infra/docker/json-generator/Dockerfile
+    depends_on:
+      - api
+    networks:
+      - rabbitmq_network
+    environment:
+      - CHOKIDAR_USEPOLLING=1
+    volumes:
+      - ../src/json-generator:/app
+      - /app/node_modules
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:5174/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    container_name: nginx
+    build:
+      context: ..
+      dockerfile: infra/docker/nginx/Dockerfile
+    depends_on:
+      - frontend
+      - json-generator
+      - api
+    ports:
+      - "80:80"
+    networks:
+      - rabbitmq_network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/"]
       interval: 10s
       timeout: 5s
       retries: 5

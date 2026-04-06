@@ -25,6 +25,7 @@ public class ScheduleRequest {
     private Map<String, Object> constraints;
     private Integer hours;
     private String groupName;
+    private String problemPath;
     private List<Map<String, Object>> employees;
     private String solver;  // "CBC" or "GUROBI"
     // Construtor explícito

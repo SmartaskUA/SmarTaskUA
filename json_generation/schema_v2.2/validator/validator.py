@@ -3,8 +3,10 @@
 Schema v2.2 Validator for Employee Scheduling Problems
 
 Validates that problem.json, demand.csv, and schedule_input.csv are consistent
-and can be used together for scheduling. v2.2 adds support for contract-based
-hour allocation (A) and specific hour requirements (1-16).
+and can be used together for scheduling. v2.2 adds support for:
+- Contract-based hour allocation (A)
+- Specific hour requirements (1-16)
+- Time window constraints using Allen Interval Algebra (EQUALS:, INCLUDE:, EXCEPT:)
 
 Usage:
     python validator.py <path_to_problem.json> [--verbose] [--json]
@@ -142,6 +144,35 @@ def validate_time_range(time_range_str: str) -> Tuple[bool, Optional[str]]:
     return True, None
 
 
+def validate_time_window_constraint(constraint_str: str) -> Tuple[bool, Optional[str]]:
+    """
+    Validate time window constraint format with Allen Interval Algebra operators.
+
+    Supported formats (v2.2):
+    - EQUALS:HH:MM-HH:MM - Must work exactly this time range
+    - INCLUDE:HH:MM-HH:MM - Must cover this entire range minimum (can extend)
+    - EXCEPT:HH:MM-HH:MM - Unavailable during this time window
+
+    Returns:
+        (is_valid, error_message): True if valid, False with error message if invalid
+    """
+    pattern = re.compile(r'^(EQUALS|INCLUDE|EXCEPT):(\d{2}:\d{2}-\d{2}:\d{2})$')
+    match = pattern.match(constraint_str)
+
+    if not match:
+        return False, f"Invalid time window constraint '{constraint_str}' (expected EQUALS:HH:MM-HH:MM, INCLUDE:HH:MM-HH:MM, or EXCEPT:HH:MM-HH:MM)"
+
+    operator = match.group(1)
+    time_range = match.group(2)
+
+    # Validate the time range part
+    is_valid, error_msg = validate_time_range(time_range)
+    if not is_valid:
+        return False, f"Time window constraint '{constraint_str}' has invalid time range: {error_msg}"
+
+    return True, None
+
+
 class SchemaValidator:
     """Validates schema v2.2 JSON and CSV files"""
 
@@ -154,6 +185,31 @@ class SchemaValidator:
         self.schedule_df: Optional[pd.DataFrame] = None
         self.employee_work_hours: Dict[str, float] = {}  # v2.2: employee_id -> workHoursPerDay
         self.contract_definitions: Dict[str, Dict] = {}  # v2.2: contract_id -> contract_data
+
+    def _extract_codes(self, items: Optional[List[Any]]) -> List[str]:
+        """Extract code strings from either a list of strings or a list of objects with 'code'."""
+        codes: List[str] = []
+        for item in items or []:
+            if isinstance(item, dict):
+                code = item.get("code")
+            else:
+                code = item
+            if code is None:
+                continue
+            code_str = str(code).strip()
+            if code_str:
+                codes.append(code_str)
+        return codes
+
+    def _detect_demand_key_column(self, df: Optional[pd.DataFrame]) -> Optional[str]:
+        """Return the primary time/granularity column for a demand CSV."""
+        if df is None:
+            return None
+        if "shift" in df.columns:
+            return "shift"
+        if "workPeriod" in df.columns:
+            return "workPeriod"
+        return None
 
     def validate(self) -> ValidationReport:
         """Main validation entry point"""
@@ -414,38 +470,36 @@ class SchemaValidator:
                     self.report.add_warning("JSON", f"Employee {emp_id} has no teams assigned", f"employees[{idx}].teams")
             else:  # competency
                 competencies = emp.get("competencies", [])
-                if not competencies:
-                    self.report.add_warning("JSON", f"Employee {emp_id} has no competencies assigned", f"employees[{idx}].competencies")
+                teams = emp.get("teams", [])
+                if not competencies and not teams:
+                    self.report.add_warning("JSON", f"Employee {emp_id} has no competencies or team assignments", f"employees[{idx}]")
 
     def _validate_demand_config(self):
         """Validate demand configuration in JSON"""
         demand = self.problem_data.get("demand", {})
 
-        # Check shift model
+        # Check scheduling model
         shift_model = demand.get("shiftModel")
-        if shift_model not in ["fixed", "flexible"]:
+        work_period_model = demand.get("workPeriodModel")
+        if shift_model is None and work_period_model is None:
+            self.report.add_error("JSON", "Demand configuration must define either shiftModel or workPeriodModel", "demand")
+        if shift_model is not None and shift_model not in ["fixed", "flexible"]:
             self.report.add_error("JSON", f"Invalid shift model: {shift_model}", "demand.shiftModel")
+        if work_period_model is not None and work_period_model not in ["fixed", "flexible"]:
+            self.report.add_error("JSON", f"Invalid work period model: {work_period_model}", "demand.workPeriodModel")
 
         # Check organizational units
         org_units = demand.get("organizationalUnits", {})
-        employees = self.problem_data.get("employees", {})
-        model = employees.get("model")
+        teams = self._extract_codes(org_units.get("teams", []))
+        competencies = org_units.get("competencies", [])
+        competency_codes = [c.get("code") for c in competencies if isinstance(c, dict) and c.get("code")]
 
-        if model == "team":
-            teams = org_units.get("teams", [])
-            if not teams:
-                self.report.add_error("JSON", "No teams defined in organizationalUnits for team model", "demand.organizationalUnits.teams")
-            # Check for duplicate teams
-            if len(teams) != len(set(teams)):
-                self.report.add_error("JSON", "Duplicate team codes in organizationalUnits.teams", "demand.organizationalUnits.teams")
-        else:  # competency
-            competencies = org_units.get("competencies", [])
-            if not competencies:
-                self.report.add_error("JSON", "No competencies defined in organizationalUnits for competency model", "demand.organizationalUnits.competencies")
-            # Check for duplicate competency codes
-            codes = [c.get("code") for c in competencies if c.get("code")]
-            if len(codes) != len(set(codes)):
-                self.report.add_error("JSON", "Duplicate competency codes in organizationalUnits.competencies", "demand.organizationalUnits.competencies")
+        if not teams and not competency_codes:
+            self.report.add_error("JSON", "No teams or competencies defined in demand.organizationalUnits", "demand.organizationalUnits")
+        if len(teams) != len(set(teams)):
+            self.report.add_error("JSON", "Duplicate team codes in organizationalUnits.teams", "demand.organizationalUnits.teams")
+        if len(competency_codes) != len(set(competency_codes)):
+            self.report.add_error("JSON", "Duplicate competency codes in organizationalUnits.competencies", "demand.organizationalUnits.competencies")
 
         # Validate shifts
         shifts = demand.get("shifts")
@@ -492,13 +546,48 @@ class SchemaValidator:
                         if not is_valid:
                             self.report.add_error("JSON", f"Shift time range validation failed: {error_msg}", f"demand.shifts[{idx}].timeRange")
 
+        # Validate work periods for work-period based examples
+        work_periods = demand.get("workPeriods")
+        if work_periods is not None:
+            work_period_codes = set()
+            for idx, work_period in enumerate(work_periods):
+                code = work_period.get("code")
+                if not code:
+                    self.report.add_error("JSON", "Work period missing 'code' field", f"demand.workPeriods[{idx}]")
+                elif code in work_period_codes:
+                    self.report.add_error("JSON", f"Duplicate work period code: {code}", f"demand.workPeriods[{idx}].code")
+                else:
+                    work_period_codes.add(code)
+
+                time_range = work_period.get("timeRange")
+                if time_range:
+                    start_time = time_range.get("start")
+                    end_time = time_range.get("end")
+
+                    if start_time:
+                        is_valid, error_msg = validate_time_format(start_time)
+                        if not is_valid:
+                            self.report.add_error("JSON", error_msg, f"demand.workPeriods[{idx}].timeRange.start")
+
+                    if end_time:
+                        is_valid, error_msg = validate_time_format(end_time)
+                        if not is_valid:
+                            self.report.add_error("JSON", error_msg, f"demand.workPeriods[{idx}].timeRange.end")
+
+                    if start_time and end_time:
+                        combined_range = f"{start_time}-{end_time}"
+                        is_valid, error_msg = validate_time_range(combined_range)
+                        if not is_valid:
+                            self.report.add_error("JSON", f"Work period time range validation failed: {error_msg}", f"demand.workPeriods[{idx}].timeRange")
+
     def _validate_csv_files(self):
         """Load and validate CSV files"""
         if not self.problem_data:
             return
 
         # Get CSV file paths - BOTH ARE REQUIRED
-        demand_file = self.problem_data.get("demand", {}).get("dataFile")
+        demand_config = self.problem_data.get("demand", {})
+        demand_file = demand_config.get("dataFile")
         schedule_file = self.problem_data.get("scheduleInput", {}).get("dataFile")
 
         # Check that demand.csv is specified and exists (REQUIRED)
@@ -528,7 +617,12 @@ class SchemaValidator:
             return
 
         # Check required columns
-        required_cols = ["date", "shift", "team", "minimum", "ideal", "estimated"]
+        key_col = self._detect_demand_key_column(self.demand_df)
+        required_cols = ["date", "team", "minimum", "ideal", "estimated"]
+        if key_col is None:
+            self.report.add_error("CSV", "Demand CSV must include either a 'shift' or 'workPeriod' column", str(csv_path))
+            return
+        required_cols.append(key_col)
         missing_cols = [col for col in required_cols if col not in self.demand_df.columns]
         if missing_cols:
             self.report.add_error("CSV", f"Demand CSV missing required columns: {missing_cols}", str(csv_path))
@@ -568,10 +662,10 @@ class SchemaValidator:
                 )
 
         # Check for duplicate rows
-        duplicates = self.demand_df[self.demand_df.duplicated(subset=["date", "shift", "team"], keep=False)]
+        duplicates = self.demand_df[self.demand_df.duplicated(subset=["date", key_col, "team"], keep=False)]
         if not duplicates.empty:
             dup_rows = duplicates.index + 2
-            self.report.add_error("CSV", f"Duplicate rows (same date/shift/team) at rows: {list(dup_rows)}", str(csv_path.name))
+            self.report.add_error("CSV", f"Duplicate rows (same date/{key_col}/team) at rows: {list(dup_rows)}", str(csv_path.name))
 
     def _validate_schedule_input_csv(self, csv_path: Path):
         """Validate schedule_input.csv file (v2.2: supports A and numeric values)"""
@@ -632,8 +726,9 @@ class SchemaValidator:
             # If markingTypes are defined, use those as valid values (excluding numeric which are always valid in v2.2)
             valid_values = set(marking_types.keys())
         else:
-            # Default valid values based on templates and documentation
-            valid_values = {"A", "VAC", "DL", "DLF", "DLV", "EnfD", "DO", "NOT", "Med", "DC-E"}
+            # Only normalized/standard constraints are valid by default
+            # All other constraints (DL, DLF, DO, EnfD, Med, etc.) must be defined in scheduleInput.markingTypes
+            valid_values = {"A", "VAC", "NOT"}
 
         for col in date_columns:
             for idx, value in enumerate(self.schedule_df[col]):
@@ -664,10 +759,22 @@ class SchemaValidator:
                 if value_str in valid_values:
                     continue
 
-                # Check if it's a time range
+                # Check if it's a time window constraint (v2.2: EQUALS/INCLUDE/EXCEPT)
+                time_window_pattern = re.compile(r'^(EQUALS|INCLUDE|EXCEPT):\d{2}:\d{2}-\d{2}:\d{2}$')
+                if time_window_pattern.match(value_str):
+                    # Validate time window constraint properly
+                    is_valid, error_msg = validate_time_window_constraint(value_str)
+                    if not is_valid:
+                        self.report.add_error(
+                            "CSV",
+                            f"Invalid time window constraint in cell: {error_msg}",
+                            f"{csv_path.name}:row {idx+2}, col {col}"
+                        )
+                    continue
+
+                # Check if it's a direct time range shorthand HH:MM-HH:MM
                 time_range_pattern = re.compile(r'^\d{2}:\d{2}-\d{2}:\d{2}$')
                 if time_range_pattern.match(value_str):
-                    # Validate time range properly
                     is_valid, error_msg = validate_time_range(value_str)
                     if not is_valid:
                         self.report.add_error(
@@ -675,20 +782,20 @@ class SchemaValidator:
                             f"Invalid time range in cell: {error_msg}",
                             f"{csv_path.name}:row {idx+2}, col {col}"
                         )
+                    continue
+
+                if marking_types:
+                    self.report.add_error(
+                        "CSV",
+                        f"Invalid cell value: '{value_str}' (must be 'A', 1-16, one of {valid_values} defined in scheduleInput.markingTypes, a time window constraint EQUALS/INCLUDE/EXCEPT:HH:MM-HH:MM, or a valid time range HH:MM-HH:MM)",
+                        f"{csv_path.name}:row {idx+2}, col {col}"
+                    )
                 else:
-                    # Not a valid marking, number, or time range
-                    if marking_types:
-                        self.report.add_error(
-                            "CSV",
-                            f"Invalid cell value: '{value_str}' (must be 'A', 1-16, one of {valid_values} defined in scheduleInput.markingTypes, or a valid time range HH:MM-HH:MM)",
-                            f"{csv_path.name}:row {idx+2}, col {col}"
-                        )
-                    else:
-                        self.report.add_error(
-                            "CSV",
-                            f"Invalid cell value: '{value_str}' (must be 'A', 1-16, one of {valid_values}, or a valid time range HH:MM-HH:MM)",
-                            f"{csv_path.name}:row {idx+2}, col {col}"
-                        )
+                    self.report.add_error(
+                        "CSV",
+                        f"Invalid cell value: '{value_str}' (must be 'A', 1-16, one of {valid_values}, a time window constraint EQUALS/INCLUDE/EXCEPT:HH:MM-HH:MM, or a valid time range HH:MM-HH:MM)",
+                        f"{csv_path.name}:row {idx+2}, col {col}"
+                    )
 
         # v2.2: Validate employees using "A" have contract with workHoursPerDay
         for emp_id in employees_using_A:
@@ -776,47 +883,47 @@ class SchemaValidator:
 
         # Cross-validate with demand.csv
         if self.demand_df is not None:
-            # Get shift codes from JSON
             demand = self.problem_data.get("demand", {})
-            shifts = demand.get("shifts", [])
-            json_shift_codes = {s.get("code") for s in shifts if s.get("code")}
+            key_col = self._detect_demand_key_column(self.demand_df)
 
-            # Check all CSV shift codes exist in JSON
-            if json_shift_codes:  # Only validate if shifts are defined
-                csv_shift_codes = set(self.demand_df["shift"].unique())
-                missing_shifts = csv_shift_codes - json_shift_codes
-                if missing_shifts:
+            if key_col == "shift":
+                json_codes = {s.get("code") for s in demand.get("shifts", []) if s.get("code")}
+                location = "demand.csv:shift"
+                label = "Shift codes in demand.csv not found in JSON shifts"
+            elif key_col == "workPeriod":
+                json_codes = {wp.get("code") for wp in demand.get("workPeriods", []) if wp.get("code")}
+                location = "demand.csv:workPeriod"
+                label = "Work period codes in demand.csv not found in JSON workPeriods"
+            else:
+                json_codes = set()
+                location = "demand.csv"
+                label = "Demand key codes not found in JSON"
+
+            if json_codes and key_col is not None:
+                csv_codes = set(self.demand_df[key_col].dropna().astype(str))
+                missing_codes = csv_codes - json_codes
+                if missing_codes:
                     self.report.add_error(
                         "Cross-validation",
-                        f"Shift codes in demand.csv not found in JSON shifts: {missing_shifts}",
-                        "demand.csv:shift"
+                        f"{label}: {missing_codes}",
+                        location
                     )
 
             # Get organizational units from JSON
             org_units = demand.get("organizationalUnits", {})
-            if model == "team":
-                json_teams = set(org_units.get("teams", []))
-                csv_teams = set(self.demand_df["team"].unique())
-
-                missing_teams = csv_teams - json_teams
-                if missing_teams:
-                    self.report.add_error(
-                        "Cross-validation",
-                        f"Team codes in demand.csv not found in JSON organizationalUnits.teams: {missing_teams}",
-                        "demand.csv:team"
-                    )
-            else:  # competency model
+            json_team_codes = set(self._extract_codes(org_units.get("teams", [])))
+            if not json_team_codes:
                 competencies = org_units.get("competencies", [])
-                json_comp_codes = {c.get("code") for c in competencies if c.get("code")}
-                csv_comp_codes = set(self.demand_df["team"].unique())
+                json_team_codes = {c.get("code") for c in competencies if c.get("code")}
 
-                missing_comps = csv_comp_codes - json_comp_codes
-                if missing_comps:
-                    self.report.add_error(
-                        "Cross-validation",
-                        f"Competency codes in demand.csv not found in JSON organizationalUnits.competencies: {missing_comps}",
-                        "demand.csv:team (competency codes)"
-                    )
+            csv_teams = set(self.demand_df["team"].dropna().astype(str))
+            missing_teams = csv_teams - json_team_codes
+            if missing_teams:
+                self.report.add_error(
+                    "Cross-validation",
+                    f"Team codes in demand.csv not found in JSON demand.organizationalUnits: {missing_teams}",
+                    "demand.csv:team"
+                )
 
             # Validate dates in demand.csv are within temporal scope
             temporal = self.problem_data.get("temporalScope", {})
@@ -876,18 +983,26 @@ class SchemaValidator:
         demand = self.problem_data.get("demand", {})
         shifts = demand.get("shifts", [])
         stats["num_shifts"] = len(shifts) if shifts else 0
+        work_periods = demand.get("workPeriods", [])
+        if work_periods:
+            stats["num_work_periods"] = len(work_periods)
 
         # Organizational unit stats
         org_units = demand.get("organizationalUnits", {})
-        if model == "team":
-            stats["num_teams"] = len(org_units.get("teams", []))
-        else:
-            stats["num_competencies"] = len(org_units.get("competencies", []))
+        team_codes = self._extract_codes(org_units.get("teams", []))
+        if team_codes:
+            stats["num_teams"] = len(team_codes)
+        competency_codes = [c.get("code") for c in org_units.get("competencies", []) if isinstance(c, dict) and c.get("code")]
+        if competency_codes:
+            stats["num_competencies"] = len(competency_codes)
 
         # CSV stats
         if self.demand_df is not None:
             stats["demand_csv_rows"] = len(self.demand_df)
             stats["demand_csv_unique_dates"] = len(self.demand_df["date"].unique())
+            demand_key_col = self._detect_demand_key_column(self.demand_df)
+            if demand_key_col:
+                stats[f"demand_csv_unique_{demand_key_col}s"] = len(self.demand_df[demand_key_col].unique())
 
         if self.schedule_df is not None:
             stats["schedule_csv_employees"] = len(self.schedule_df)

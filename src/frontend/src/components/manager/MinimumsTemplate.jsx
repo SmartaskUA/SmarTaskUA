@@ -20,32 +20,19 @@ const getRowColor = (index, type) => {
 };
 
 const monthLabels = [
-  { name: "January", days: 31 },
-  { name: "February", days: 28 },
-  { name: "March", days: 31 },
-  { name: "April", days: 30 },
-  { name: "May", days: 31 },
-  { name: "June", days: 30 },
-  { name: "July", days: 31 },
-  { name: "August", days: 31 },
-  { name: "September", days: 30 },
-  { name: "October", days: 31 },
-  { name: "November", days: 30 },
-  { name: "December", days: 31 },
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
-
-const startMonth = "November"; // Add
-const startIndex = monthLabels.findIndex((m) => m.name === startMonth);
-const rotatedMonths = [
-  ...monthLabels.slice(startIndex),
-  ...monthLabels.slice(0, startIndex),
-];
-
-const monthBoundaries = rotatedMonths.reduce((acc, month, idx) => {
-  const start = acc.length === 0 ? 0 : acc[idx - 1].end;
-  acc.push({ start, end: start + month.days });
-  return acc;
-}, []);
 
 
 const detectSlotPrecision = (label) => {
@@ -80,6 +67,7 @@ const MinimumsTemplate = ({
   mode = "all",
   showDiff = false,
   selectedMonth,
+  year = new Date().getFullYear(),
 }) => {
   if (!data || data.length === 0) return null;
 
@@ -158,15 +146,32 @@ const MinimumsTemplate = ({
     mode === "ideal" ? "ideal" : mode === "min" ? "min" : "all";
   const showTypeColumn = hasIdeals && normalizedMode === "all";
   const leadingColumns = showTypeColumn ? 3 : 2;
+  const calendarMonths = useMemo(
+    () =>
+      monthLabels.map((name, index) => ({
+        name,
+        days: new Date(year, index + 1, 0).getDate(),
+      })),
+    [year]
+  );
   const monthIndex =
     Number.isFinite(Number(selectedMonth)) && Number(selectedMonth) > 0
       ? Number(selectedMonth) - 1
       : null;
-  const isMonthScoped = monthIndex !== null && monthIndex < rotatedMonths.length;
+  const isMonthScoped = monthIndex !== null && monthIndex < calendarMonths.length;
   const monthStartOffset = isMonthScoped
-    ? rotatedMonths.slice(0, monthIndex).reduce((sum, month) => sum + month.days, 0)
+    ? calendarMonths.slice(0, monthIndex).reduce((sum, month) => sum + month.days, 0)
     : 0;
-  const activeMonths = isMonthScoped ? [rotatedMonths[monthIndex]] : rotatedMonths;
+  const activeMonths = isMonthScoped ? [calendarMonths[monthIndex]] : calendarMonths;
+  const monthBoundaries = useMemo(
+    () =>
+      calendarMonths.reduce((acc, month, idx) => {
+        const start = acc.length === 0 ? 0 : acc[idx - 1].end;
+        acc.push({ start, end: start + month.days });
+        return acc;
+      }, []),
+    [calendarMonths]
+  );
 
   const formatSlot = (startMin, endMin) => {
     const pad = (value) => String(value).padStart(2, "0");
@@ -231,7 +236,16 @@ const MinimumsTemplate = ({
         const text = String(cell || "").trim();
         if (!text) return;
         const upper = text.toUpperCase();
-        if (upper === "0" || upper === "OFF" || upper === "F" || upper === "VACATION") {
+        if (
+          upper === "0" ||
+          upper === "OFF" ||
+          upper === "DO" ||
+          upper === "FDO" ||
+          upper === "F" ||
+          upper === "VACATION" ||
+          upper === "NOT" ||
+          upper === "MED"
+        ) {
           return;
         }
 
@@ -320,20 +334,14 @@ const MinimumsTemplate = ({
   
     activeMonths.forEach((month, monthIndex) => {
       for (let i = 1; i <= month.days; i++) {
-
-        const originalIndex = monthLabels.findIndex(m => m.name === month.name);
-        // 👉 Define o ano correto consoante o mês
-        const year =
-          month.name === "November" || month.name === "December" ? 2021 : 2022;
-      
-        // 👉 Usa o índice correto (monthIndex) e o ano definido
+        const originalIndex = monthLabels.findIndex((m) => m === month.name);
         const date = new Date(year, originalIndex, i);
         const weekday = date
           .toLocaleDateString("pt-PT", { weekday: "short" })
-          .replace(".", ""); // remove o ponto final
-      
+          .replace(".", "");
+
         const isLastDay = i === month.days;
-      
+
         cells.push(
           <TableCell
             key={`day-${month.name}-${i}`}

@@ -16,6 +16,8 @@ const LegendBox = ({ scheduleType, teamLegends = [] }) => {
   const hourlyLegends = [
     { label: "Vacation", color: "#ffe5e5" },
     { label: "Off", color: "#f5f7fa" },
+    { label: "Unavailable", color: "#fef3c7" },
+    { label: "Unassigned", color: "#ffe4e6" },
     ...teamLegends,
   ];
 

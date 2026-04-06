@@ -55,7 +55,7 @@ Controls which optional modules are enabled:
 
 | Feature | Default | Description |
 |---------|---------|-------------|
-| `useShiftBasedScheduling` | true | Enable shift-based (true) or interval-based (false) scheduling |
+| `useWorkPeriodBasedScheduling` | true | Enable shift-based (true) or interval-based (false) scheduling |
 | `useAdvancedConstraints` | false | Enable day-off swapping, breaks, etc. |
 | `usePriorityHierarchy` | false | Enable priority-based allocation ordering |
 
@@ -63,7 +63,7 @@ Controls which optional modules are enabled:
 ```json
 {
   "features": {
-    "useShiftBasedScheduling": true,
+    "useWorkPeriodBasedScheduling": true,
     "useAdvancedConstraints": false,
     "usePriorityHierarchy": true
   }
@@ -198,14 +198,17 @@ All contract constraints are optional. Define them only when needed for your use
 **v2.2:** Employee references contract via `contractType` - work hours come from contract definition
 
 ### Competency Model (model="competency")
+
+Employees are assigned to **teams with competency levels** indicating proficiency:
+
 ```json
 "competency": [
   {
     "id": "20072412",
     "name": "Emp_20072412",
-    "competencies": [
-      {"code": "EG", "level": 1, "description": "Management level 1"},
-      {"code": "CAJ", "level": 2, "description": "Cashier level 2"}
+    "teams": [
+      {"code": "Engineering", "name": "Engineering Team", "level": 2},
+      {"code": "Support", "name": "Support Team", "level": 1}
     ],
     "contractType": "fullTime_8h",
     "contractPeriods": [
@@ -213,7 +216,7 @@ All contract constraints are optional. Define them only when needed for your use
     ],
     "restrictions": {
       "cannotSwapDayOffs": false,
-      "preferredShifts": ["M"],
+      "preferredWorkPeriods": ["M"],
       "blackoutDates": []
     }
   }
@@ -222,7 +225,10 @@ All contract constraints are optional. Define them only when needed for your use
 
 **Key Notes:**
 - `id` must be unique and match CSV employee_id column
-- `competencies.level`: 1 = highest skill, higher numbers = lower skill
+- `teams`: Array of team assignments with competency levels
+  - `code`: Team identifier (must match organizational units)
+  - `name`: Human-readable team name
+  - `level`: Competency/proficiency level (1=junior, 2=mid, 3=senior, etc.)
 - **v2.2:** `contractType` references contract ID from `contracts.definitions`
 - **v2.2:** `contractPeriods[].contractType` allows contract changes over time
   - Employee can transition from part-time to full-time contracts
@@ -233,34 +239,43 @@ All contract constraints are optional. Define them only when needed for your use
 
 ## Demand Requirements
 
-### Shift Model Selection
+### Work Period Model Selection
 
 ```json
 "demand": {
-  "shiftModel": "fixed" | "flexible"
+  "workPeriodModel": "fixed" | "flexible"
 }
 ```
 
 | Model | Description | Use Case |
 |-------|-------------|----------|
-| **fixed** | Predefined shifts with fixed times | Traditional shift work (most common) |
+| **fixed** | Predefined shifts with fixed times | Traditional work period work (most common) |
 | **flexible** | Shifts with multiple start time options | Variable start times within constraints |
 
 ### Organizational Units
+
+Teams are used in **both employee models**:
+
 ```json
 "organizationalUnits": {
-  "teams": ["A", "B"],  // for team model
-  "competencies": [     // for competency model
-    {"code": "EG", "name": "Management Team"},
-    {"code": "CAJ", "name": "Cashier"},
-    {"code": "ALM", "name": "Warehouse"}
+  "teams": [
+    {"code": "Engineering", "name": "Engineering Team"},
+    {"code": "Support", "name": "Support Team"},
+    {"code": "Sales", "name": "Sales Team"}
   ]
 }
 ```
 
-### Shift Definitions (Fixed Model)
+**Key Notes:**
+- Always use `teams` array (for both team-based and competency-based models)
+- **Team-based model**: Employees assigned to teams as simple codes
+- **Competency-based model**: Employees assigned to teams with competency levels
+- `code`: Unique identifier used in CSVs and demand specifications
+- `name`: Human-readable team name for UI display
+
+### Work Period Definitions (Fixed Model)
 ```json
-"shifts": [
+"workPeriods": [
   {
     "code": "M",
     "name": "Morning",
@@ -288,38 +303,45 @@ All contract constraints are optional. Define them only when needed for your use
 
 ### Priority Hierarchy (Optional)
 
-**Available for both simple and competency models**. Enable with `features.usePriorityHierarchy=true`.
+**Available for both employee models**. Enable with `features.usePriorityHierarchy=true`.
 
-**For Simple/Team Model:**
+**For Team-Based Model:**
 ```json
 "priorityHierarchy": [
   {
     "rank": 1,
-    "team": "ALM",
-    "description": "Warehouse operations - Highest priority"
+    "team": "Engineering",
+    "description": "Engineering team - Highest priority"
   },
   {
     "rank": 2,
-    "team": "EG",
-    "description": "Management Team - Medium priority"
+    "team": "Support",
+    "description": "Support team - Medium priority"
   }
 ]
 ```
 
-**For Competency Model:**
+**For Competency-Based Model:**
+- Use the same `team` field
+- Optionally specify `level` constraint for competency-based prioritization
 ```json
 "priorityHierarchy": [
   {
     "rank": 1,
-    "competency": "ALM",
-    "level": "N≥1",
-    "description": "RESP WAREHOUSE N≥1 MaxAlarm"
+    "team": "Engineering",
+    "level": "N≥2",
+    "description": "Senior engineers (level 2+) - Highest priority"
   },
   {
     "rank": 2,
-    "competency": "EG",
+    "team": "Engineering",
     "level": "N=1",
-    "description": "RESP - MANAGEMENT TEAM N=1"
+    "description": "Junior engineers (level 1) - Medium priority"
+  },
+  {
+    "rank": 3,
+    "team": "Support",
+    "description": "Support team (all levels) - Lower priority"
   }
 ]
 ```
@@ -336,6 +358,9 @@ All contract constraints are optional. Define them only when needed for your use
   "markingTypes": {
     "A": "Auto-allocate hours from contract (v2.2)",
     "8": "Work exactly 8 hours (v2.2 - any number 1-16)",
+    "EQUALS:08:00-16:00": "Must work exactly 8 AM to 4 PM (v2.2)",
+    "INCLUDE:09:00-17:00": "Must cover 9 AM to 5 PM minimum (v2.2)",
+    "EXCEPT:14:00-22:00": "Unavailable from 2 PM to 10 PM (v2.2)",
     "DL": "Day Off - Generic day off",
     "DLF": "Fixed day off (cannot change)",
     "DLV": "Variable day off (can swap)",
@@ -372,42 +397,128 @@ EMP003,VAC,VAC,4,...
 |-------|------|-------------|---------|
 | **`A`** | Auto-allocate | Algorithm allocates hours from employee's `workHoursPerDay` | Employee with `workHoursPerDay: 8` gets 8 hours |
 | **`4`, `6`, `8`, etc.** | Specific hours | Employee must work exactly this many hours | `8` = work 8 hours that day |
-| **`DL`** | Constraint | Day off (cannot work) | Standard day off |
-| **`DLF`** | Constraint | Fixed day off (cannot work, cannot swap) | Contract-mandated day off |
-| **`DLV`** | Constraint | Variable day off (can swap within week) | Flexible day off |
-| **`VAC`** | Constraint | Vacation (cannot work) | Approved vacation |
-| **`EnfD`** | Constraint | Sick leave (cannot work) | Medical absence |
-| **`NOT`** | Constraint | Unavailable (cannot work) | General unavailability |
-| **`Med`** | Constraint | Medical reason (cannot work) | Medical appointment/leave |
-| **`10:00-14:00`** | Time window | Pre-assigned time window | Must work during this window |
+| **`EQUALS:HH:MM-HH:MM`** | Time constraint | Must work EXACTLY this time range (no earlier/later) | `EQUALS:08:00-16:00` = work 8 AM to 4 PM only |
+| **`INCLUDE:HH:MM-HH:MM`** | Time constraint | Must work entire range minimum (can start earlier/end later) | `INCLUDE:09:00-17:00` = must cover 9-5, could work 8-6 |
+| **`EXCEPT:HH:MM-HH:MM`** | Time constraint | Completely unavailable during this time window | `EXCEPT:14:00-22:00` = cannot work 2 PM to 10 PM |
+| **`VAC`** | Standard constraint | Vacation (cannot work) | Always valid - approved vacation |
+| **`NOT`** | Standard constraint | Unavailable (cannot work) | Always valid - general unavailability |
+
+**Custom Constraints (must be defined in JSON scheduleInput.markingTypes):**
+
+Common custom constraints that must be explicitly defined in your problem.json:
+- `DL` = Day off (generic)
+- `DLF` = Fixed day off (cannot swap)
+- `DLV` = Variable day off (can swap within week)
+- `DO` = Day off (alias for DL)
+- `EnfD` = Sick leave
+- `Med` = Medical reason
+- Any project-specific constraint codes you need
 
 **IMPORTANT v2.2 Changes:**
 - ✅ **"A" now means AUTO-ALLOCATE** from contract (not just "available")
 - ✅ **Numbers 1-16 are WORK HOURS** (algorithm must allocate exactly this many hours)
+- ✅ **Time window constraints** with EQUALS/INCLUDE/EXCEPT modifiers (Allen Interval Algebra) for precise time control
 - ✅ **All other markings remain CONSTRAINTS** (days employee cannot work)
 
-**Example CSV (v2.2):**
+**Example CSV (v2.2 with Time Constraints):**
 ```csv
 employee_id,2030-10-01,2030-10-02,2030-10-03,2030-10-04,2030-10-05
-20072412,A,A,8,DL,A
-20066543,DL,A,6,A,DL
-20067009,DL,4,DL,A,A
+20072412,A,A,8,DL,EQUALS:08:00-16:00
+20066543,DL,INCLUDE:09:00-17:00,6,A,DL
+20067009,EXCEPT:14:00-22:00,4,DL,A,A
 20062688,VAC,VAC,VAC,VAC,VAC
 ```
 
 **Interpretation:**
-- Employee 20072412: Oct-01=auto (uses workHoursPerDay), Oct-02=auto, Oct-03=exactly 8 hours, Oct-04=day off, Oct-05=auto
-- Employee 20066543: Oct-01=day off, Oct-02=auto, Oct-03=exactly 6 hours, Oct-04=auto, Oct-05=day off
-- Employee 20067009: Oct-01=day off, Oct-02=exactly 4 hours, Oct-03=day off, Oct-04=auto, Oct-05=auto
+- Employee 20072412: Oct-01=auto (uses workHoursPerDay), Oct-02=auto, Oct-03=exactly 8 hours, Oct-04=day off, Oct-05=must work exactly 8 AM-4 PM
+- Employee 20066543: Oct-01=day off, Oct-02=must cover 9 AM-5 PM minimum (could work longer), Oct-03=exactly 6 hours, Oct-04=auto, Oct-05=day off
+- Employee 20067009: Oct-01=unavailable 2 PM-10 PM (can work morning), Oct-02=exactly 4 hours, Oct-03=day off, Oct-04=auto, Oct-05=auto
 - Employee 20062688: Vacation all week
+
+### Time Window Constraints (v2.2 Feature)
+
+Time window constraints allow precise control over when employees work using three modifiers:
+
+#### EQUALS:HH:MM-HH:MM
+**Semantics:** Employee must work EXACTLY this time range. Cannot start earlier or end later.
+
+**Use Cases:**
+- Fixed schedule employees: "I can only work 9 AM to 5 PM"
+- Legal restrictions: "Part-time staff must finish by 6 PM"
+- Equipment access: "Lab work only during 10 AM-2 PM window"
+
+**Example:** `EQUALS:08:00-16:00`
+- ✅ Valid: Assign to work period 08:00-16:00
+- ❌ Invalid: Assign to 07:00-16:00 (starts too early)
+- ❌ Invalid: Assign to 08:00-17:00 (ends too late)
+
+#### INCLUDE:HH:MM-HH:MM
+**Semantics:** Employee must work the ENTIRE specified range as a minimum. Can start earlier or end later.
+
+**Use Cases:**
+- Coverage requirements: "Must be present during core hours 10 AM-3 PM"
+- Supervision needs: "Must overlap with manager's 9 AM-5 PM shift"
+- Peak periods: "Must cover lunch rush 12 PM-2 PM"
+
+**Example:** `INCLUDE:09:00-17:00`
+- ✅ Valid: Assign to 09:00-17:00 (exact match)
+- ✅ Valid: Assign to 08:00-18:00 (covers and extends)
+- ✅ Valid: Assign to 07:00-17:00 (starts earlier, same end)
+- ❌ Invalid: Assign to 10:00-17:00 (missing 9-10 AM coverage)
+- ❌ Invalid: Assign to 09:00-16:00 (missing 4-5 PM coverage)
+
+#### EXCEPT:HH:MM-HH:MM
+**Semantics:** Employee is completely UNAVAILABLE during this time window. Cannot work at all during this period.
+
+**Use Cases:**
+- Personal constraints: "Cannot work evenings (6 PM-10 PM)"
+- Avoiding specific shifts: "Unavailable during night shift hours"
+- Partial day availability: "Not available mornings (before 12 PM)"
+
+**Example:** `EXCEPT:14:00-22:00`
+- ✅ Valid: Assign to 06:00-14:00 (ends exactly at exclusion start)
+- ✅ Valid: Assign to 08:00-12:00 (completely before exclusion)
+- ❌ Invalid: Assign to 10:00-18:00 (overlaps with 14:00-18:00)
+- ❌ Invalid: Assign to 14:00-22:00 (exactly matches exclusion)
+- ❌ Invalid: Assign to 20:00-23:00 (overlaps with 20:00-22:00)
+
+#### Interaction with Work Periods
+
+Time window constraints work alongside your defined work periods:
+
+1. **Work periods define available shifts** (e.g., Morning=08:30-16:30, Afternoon=14:00-22:00)
+2. **Time constraints filter which shifts employees can be assigned to**
+3. **The algorithm must respect BOTH** work period definitions AND time constraints
+
+**Example:**
+```
+Work Periods: M=08:30-16:30, T=14:00-22:00, N=22:00-06:30
+Employee constraint: EXCEPT:14:00-22:00
+Result: Employee can only be assigned to M (Morning) shift
+```
+
+#### Mixing Constraint Types
+
+You can mix different constraint types across days in the same schedule:
+
+```csv
+employee_id,2030-10-01,2030-10-02,2030-10-03,2030-10-04
+EMP001,A,EQUALS:08:00-16:00,8,INCLUDE:09:00-17:00
+EMP002,EXCEPT:14:00-22:00,DL,6,A
+```
 
 **Validation Rules (v2.2):**
 1. First column must be named `employee_id`
 2. All employee IDs must exist in JSON
 3. Date columns must be consecutive and match `temporalScope`
-4. Valid values: A, integers 1-16, DL, DLF, DLV, VAC, EnfD, NOT, Med, DC-E, or time ranges HH:MM-HH:MM
-5. If "A" is used, employee should have `workHoursPerDay` defined (defaults to 8 for fullTime, 4 for partTime)
-6. No duplicate employee IDs
+4. Valid values: A, integers 1-16, VAC, NOT, or custom codes defined in scheduleInput.markingTypes
+5. Time window constraints: EQUALS:HH:MM-HH:MM, INCLUDE:HH:MM-HH:MM, EXCEPT:HH:MM-HH:MM
+   - Time format: HH must be 00-23, MM must be 00-59
+   - Start time must be before end time
+   - Times should align with or overlap defined work periods
+6. If "A" is used, employee should have `workHoursPerDay` defined (defaults to 8 for fullTime, 4 for partTime)
+7. No duplicate employee IDs
+8. No contradictory constraints on same day (e.g., both EQUALS:08:00-16:00 and EXCEPT:08:00-16:00)
 
 ---
 
@@ -416,12 +527,12 @@ employee_id,2030-10-01,2030-10-02,2030-10-03,2030-10-04,2030-10-05
 ### JSON Configuration
 ```json
 "demand": {
-  "shiftModel": "fixed",
+  "workPeriodModel": "fixed",
   "dataFile": "demand.csv",
   "organizationalUnits": {
     "teams": ["TeamA", "TeamB", "TeamC"]
   },
-  "shifts": [
+  "workPeriods": [
     {"code": "M", "name": "Morning", "timeRange": {"start": "08:30", "end": "16:30"}},
     {"code": "T", "name": "Afternoon", "timeRange": {"start": "14:00", "end": "22:00"}}
   ],
@@ -438,7 +549,7 @@ employee_id,2030-10-01,2030-10-02,2030-10-03,2030-10-04,2030-10-05
 
 **Structure:**
 ```csv
-date,shift,team,minimum,ideal,estimated
+date,workPeriod,team,minimum,ideal,estimated
 2030-10-01,M,TeamA,2,3,2
 2030-10-01,T,TeamA,2,2,2
 2030-10-01,M,TeamB,1,2,1
@@ -449,7 +560,7 @@ date,shift,team,minimum,ideal,estimated
 | Column | Type | Description | Example Values |
 |--------|------|-------------|----------------|
 | `date` | ISO date | Date for this requirement | `2030-10-01` |
-| `shift` | string | Shift code (must match shifts[].code in JSON) | `M`, `T`, `N` |
+| `shift` | string | Work period code (must match shifts[].code in JSON) | `M`, `T`, `N` |
 | `team` | string | Team identifier (must match organizationalUnits.teams[] in JSON) | `TeamA`, `TeamB` |
 | `minimum` | integer | Minimum people required (hard constraint) | `1`, `2`, `3` |
 | `ideal` | integer | Ideal number of people (soft target) | `2`, `3`, `4` |
@@ -457,7 +568,7 @@ date,shift,team,minimum,ideal,estimated
 
 **Validation Rules:**
 1. All dates must be within `temporalScope.targetPeriod`
-2. Shift codes must exist in `demand.shifts[].code`
+2. Work period codes must exist in `demand.shifts[].code`
 3. Team codes must exist in `demand.organizationalUnits.teams[]`
 4. `minimum ≤ estimated ≤ ideal` (logical constraint)
 5. No duplicate rows (same date/shift/team combination)
@@ -488,9 +599,92 @@ date,shift,team,minimum,ideal,estimated
 - `max_consecutive_days` - Max work days in rolling window
 - `total_workdays` - Annual workday limits (min/max)
 - `max_special_days` - Max Sundays/holidays per year
-- `no_earlier_shift_next_day` - No backward shift transitions
+- `no_earlier_shift_next_day` - No backward work period transitions
 - `min_rest_hours` - Minimum rest between shifts
 - `vacation_block` - Vacation days cannot be worked
+
+### Custom Fixed Days-Off Rules (General Solvers)
+
+The general solvers also support custom per-period folga constraints:
+- `fixed_days_off_per_week`
+- `fixed_days_off_per_month`
+
+Current implementation notes:
+- `countMode` currently supports only `"exact"`
+- Only schedule value `"0"` is counted as folga (`dayOffCounting.countOnlyScheduleValues = ["0"]`)
+- Both **legacy** (`perEmployee`) and **compact** (`default`/`defaultByMonth` + `overrides`) JSON shapes are accepted
+
+**Weekly (legacy `perEmployee`)**
+```json
+{
+  "id": "fixed-days-off-per-week",
+  "type": "fixed_days_off_per_week",
+  "params": {
+    "countMode": "exact",
+    "weekStart": "monday",
+    "applyToPartialWeeks": false,
+    "dayOffCounting": {"countOnlyScheduleValues": ["0"]},
+    "perEmployee": {
+      "Employee 1": 2,
+      "Employee 8": 1
+    }
+  },
+  "enabled": true
+}
+```
+
+**Weekly (compact `default` + `overrides`)**
+```json
+{
+  "id": "fixed-days-off-per-week",
+  "type": "fixed_days_off_per_week",
+  "params": {
+    "countMode": "exact",
+    "weekStart": "monday",
+    "applyToPartialWeeks": false,
+    "dayOffCounting": {"countOnlyScheduleValues": ["0"]},
+    "default": 2,
+    "overrides": {
+      "Employee 8": 1
+    }
+  },
+  "enabled": true
+}
+```
+
+**Monthly (legacy `perEmployee`)**
+```json
+{
+  "id": "fixed-days-off-per-month",
+  "type": "fixed_days_off_per_month",
+  "params": {
+    "countMode": "exact",
+    "dayOffCounting": {"countOnlyScheduleValues": ["0"]},
+    "perEmployee": {
+      "Employee 1": {"2025-01": 10, "2025-02": 8},
+      "Employee 11": {"2025-01": 10, "2025-02": 7}
+    }
+  },
+  "enabled": true
+}
+```
+
+**Monthly (compact `defaultByMonth` + `overrides`)**
+```json
+{
+  "id": "fixed-days-off-per-month",
+  "type": "fixed_days_off_per_month",
+  "params": {
+    "countMode": "exact",
+    "dayOffCounting": {"countOnlyScheduleValues": ["0"]},
+    "defaultByMonth": {"2025-01": 10, "2025-02": 8},
+    "overrides": {
+      "Employee 11": {"2025-02": 7}
+    }
+  },
+  "enabled": true
+}
+```
 
 ### Soft Constraints (with penalties)
 ```json
@@ -570,23 +764,23 @@ date,shift,team,minimum,ideal,estimated
       {
         "id": "20072412",
         "name": "Emp_20072412",
-        "competencies": [{"code": "Management", "level": 1}],
+        "teams": [{"code": "Management", "name": "Management Team", "level": 1}],
         "contractType": "fullTime_8h"
       },
       {
         "id": "20066543",
         "name": "Emp_20066543",
-        "competencies": [{"code": "Checkout", "level": 1}],
+        "teams": [{"code": "Checkout", "name": "Checkout Team", "level": 1}],
         "contractType": "partTime_4h"
       }
     ]
   },
 
   "demand": {
-    "shiftModel": "fixed",
+    "workPeriodModel": "fixed",
     "dataFile": "demand.csv",
     "organizationalUnits": {...},
-    "shifts": [...],
+    "workPeriods": [...],
     "priorityHierarchy": [...]
   },
 
@@ -614,7 +808,7 @@ employee_id,2030-10-01,2030-10-02,2030-10-03
 
 And `demand.csv`:
 ```csv
-date,shift,competency,level,minimum,ideal,estimated
+date,workPeriod,competency,level,minimum,ideal,estimated
 2030-10-01,M,Management,1,1,2,1
 2030-10-01,M,Checkout,1,2,3,2
 ```
@@ -629,6 +823,7 @@ date,shift,competency,level,minimum,ideal,estimated
 | `employees[].workHoursPerDay` | Not present | **New:** Default hours when "A" is used in CSV |
 | `scheduleInput` CSV "A" value | Available (constraint) | **Changed:** Auto-allocate from contract |
 | `scheduleInput` CSV numeric values | Invalid (error) | **New:** Valid (specific hours 1-16) |
+| `scheduleInput` CSV time constraints | Not available | **New:** EQUALS/INCLUDE/EXCEPT:HH:MM-HH:MM for time window control (Allen Interval Algebra) |
 | Employee contract defaults | N/A | Defaults: 8h fullTime, 4h partTime |
 
 ---
@@ -645,6 +840,8 @@ date,shift,competency,level,minimum,ideal,estimated
 ### Optional Enhancements:
 1. Use numeric values (4, 6, 8) for specific hour requirements instead of "A"
 2. Mix "A" (auto) and numbers (specific) in the same schedule for flexibility
+3. Use time window constraints (EQUALS/INCLUDE/EXCEPT:HH:MM-HH:MM) for precise time control (Allen Interval Algebra)
+4. Combine all constraint types for maximum flexibility (A, numbers, and time windows)
 
 ### Example Migration:
 
@@ -686,8 +883,12 @@ In v2.2:
 3. **Use ISO date format** (YYYY-MM-DD) for column headers
 4. **Define workHoursPerDay** in JSON for employees using "A"
 5. **Use numbers (1-16) for specific hours**, "A" for contract-based allocation
-6. **Document markings** in `scheduleInput.markingTypes`
-7. **Mix "A" and numbers** for flexible scheduling (e.g., "A" on regular days, "8" when specific hours needed)
+6. **Use time window constraints** when you need precise time control:
+   - EQUALS:HH:MM-HH:MM for fixed schedules
+   - INCLUDE:HH:MM-HH:MM for minimum coverage requirements
+   - EXCEPT:HH:MM-HH:MM for unavailability periods
+7. **Document markings** in `scheduleInput.markingTypes`
+8. **Mix constraint types** for flexible scheduling (A, numbers, and time windows as needed)
 
 ### For demand.csv:
 1. **Use UTF-8 encoding** for international characters
@@ -719,6 +920,11 @@ In v2.2:
 - [ ] Date columns match `temporalScope` period
 - [ ] All values are valid: A, integers 1-16, DL, DLF, DLV, VAC, EnfD, NOT, Med, or time ranges
 - [ ] Numeric values are within 1-16 range
+- [ ] Time window constraints use valid format: EQUALS:HH:MM-HH:MM, INCLUDE:HH:MM-HH:MM, EXCEPT:HH:MM-HH:MM
+- [ ] Time window constraints have valid times (HH: 00-23, MM: 00-59)
+- [ ] Time window constraints have start time before end time
+- [ ] No contradictory time constraints on same day
+- [ ] Time window constraints align with or overlap defined work periods
 - [ ] No missing columns for any date
 - [ ] No duplicate employee IDs
 - [ ] UTF-8 encoding
@@ -726,7 +932,7 @@ In v2.2:
 ### demand.csv Validation
 - [ ] All required columns present (date, shift, team, minimum, ideal, estimated)
 - [ ] All dates within `temporalScope.targetPeriod`
-- [ ] All shift codes exist in JSON `demand.shifts[]`
+- [ ] All work period codes exist in JSON `demand.shifts[]`
 - [ ] All team/competency codes exist in JSON `organizationalUnits`
 - [ ] Logical order: minimum ≤ estimated ≤ ideal
 - [ ] No duplicate rows
@@ -737,7 +943,7 @@ In v2.2:
 - [ ] Number of date columns in schedule_input.csv = `temporalScope.numDays`
 - [ ] Date range in schedule_input.csv matches `temporalScope.targetPeriod`
 - [ ] Employees with "A" have `workHoursPerDay` defined or valid defaults
-- [ ] demand.csv references match JSON shift and team/competency definitions
+- [ ] demand.csv references match JSON work period and team/competency definitions
 
 ---
 

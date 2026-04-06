@@ -11,11 +11,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import smartask.api.repositories.ReferenceTemplateRepository;
 import smartask.api.repositories.TaskStatusRepository;
 import smartask.api.repositories.VacationTemplateRepository;
+import smartask.api.services.SchedulingAlgorithmRegistry;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class RabbitMqProducer {
@@ -38,24 +40,43 @@ public class RabbitMqProducer {
     @Autowired
     private ReferenceTemplateRepository referenceTemplateRepository;
 
+    @Autowired
+    private SchedulingAlgorithmRegistry schedulingAlgorithmRegistry;
+
 
     public String requestScheduleMessage(ScheduleRequest schedule) {
-        //Verify the existence of the vacationTemplate
         String res;
-
-        final Optional<VacationTemplate> vactemp = vacationTemplateRepository.findByName(schedule.getVacationTemplate());
-        if (vactemp.isEmpty()) {
-            return "Vacation template not found";
+        SchedulingAlgorithmRegistry.AlgorithmSpec algorithmSpec = schedulingAlgorithmRegistry.find(schedule.getAlgorithm())
+                .orElse(null);
+        if (algorithmSpec == null) {
+            return "Unsupported algorithm";
         }
 
-        // ✅ Validate minimums template
-        final Optional<ReferenceTemplate> mins = referenceTemplateRepository.findByName(schedule.getMinimuns());
-        if (mins.isEmpty()) {
-            return "Minimums template not found";
+        boolean usesProblemBundle =
+                algorithmSpec.getInputKind() == SchedulingAlgorithmRegistry.InputKind.PROBLEM_BUNDLE;
+
+        Optional<VacationTemplate> vactemp = Optional.empty();
+        Optional<ReferenceTemplate> mins = Optional.empty();
+        if (!usesProblemBundle) {
+            vactemp = vacationTemplateRepository.findByName(schedule.getVacationTemplate());
+            if (vactemp.isEmpty()) {
+                return "Vacation template not found";
+            }
+
+            mins = referenceTemplateRepository.findByName(schedule.getMinimuns());
+            if (mins.isEmpty()) {
+                return "Minimums template not found";
+            }
+        } else if (schedule.getProblemPath() == null || schedule.getProblemPath().isBlank()) {
+            return "Problem path is required for problem-bundle algorithms";
         }
 
         try {
             String taskId = schedule.getTaskId();
+            if (taskId == null || taskId.isBlank()) {
+                taskId = UUID.randomUUID().toString();
+                schedule.setTaskId(taskId);
+            }
 
             TaskStatus taskStatus = new TaskStatus(
                 taskId,
@@ -73,15 +94,20 @@ public class RabbitMqProducer {
 
             // ✅ Prepare message payload with all data
             Map<String, Object> payload = new HashMap<>();
-            payload.put("taskId", schedule.getTaskId());
+            payload.put("taskId", taskId);
             payload.put("title", schedule.getTitle());
             payload.put("algorithm", schedule.getAlgorithm());
             payload.put("year", schedule.getYear());
             payload.put("maxTime", schedule.getMaxTime());
-            payload.put("vacationTemplate", vactemp.get().getName());
-            payload.put("minimuns", mins.get().getName());
             payload.put("shifts", schedule.getShifts());
+            payload.put("hours", schedule.getHours());
             payload.put("groupName", schedule.getGroupName());
+            if (!usesProblemBundle) {
+                payload.put("vacationTemplate", vactemp.get().getName());
+                payload.put("minimuns", mins.get().getName());
+            } else {
+                payload.put("problemPath", schedule.getProblemPath());
+            }
             payload.put("solver", schedule.getSolver());  // "CBC" or "GUROBI"
             if (schedule.getEmployees() != null) {
                 payload.put("employees", schedule.getEmployees());

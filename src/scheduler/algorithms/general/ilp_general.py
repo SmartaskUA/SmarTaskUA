@@ -24,6 +24,10 @@ from collections import defaultdict
 import holidays as hl
 
 from algorithms.general.constraints import parse_constraints
+from algorithms.general.days_off_rules import (
+    compile_fixed_days_off_targets,
+    effective_period_off_target,
+)
 from algorithms.general.solver_logging import parse_cbc_log, write_ilp_log
 from algorithms.utils import (
     TEAM_ID_TO_CODE,
@@ -44,7 +48,8 @@ class ILPSchedulerWeighted:
                  max_consecutive_window=6, max_consecutive_worked=5,
                  special_cap=22, total_workdays_min=223, total_workdays_max=223,
                  enforce_no_earlier=True, enforce_vacation=True,
-                 min_coverage_hard=False, ideal_coverage_hard=False):
+                 min_coverage_hard=False, ideal_coverage_hard=False,
+                 constraint_plan=None):
         """
         Weighted ILP scheduler.
 
@@ -73,6 +78,7 @@ class ILPSchedulerWeighted:
         self.enforce_vacation = enforce_vacation
         self.min_coverage_hard = min_coverage_hard
         self.ideal_coverage_hard = ideal_coverage_hard
+        self.constraint_plan = constraint_plan
 
         # === Preprocessing ===
         self.teams = self._build_teams(self.employee_rows)
@@ -130,6 +136,18 @@ class ILPSchedulerWeighted:
 
         # Containers filled after solving
         self.assignment = defaultdict(list)
+        self.fixed_days_off_targets = (
+            # Compile once with the ILP's internal employee indexing (1..N) and calendar.
+            compile_fixed_days_off_targets(
+                self.constraint_plan,
+                self.employee_rows,
+                self.dates,
+                employee_index_base=1,
+            )
+            if self.constraint_plan is not None
+            else None
+        )
+        self.status_str = None
 
     # ------------------------------------------------------------
     # Helpers
@@ -160,6 +178,16 @@ class ILPSchedulerWeighted:
             for t in ids:
                 teams.setdefault(t, set()).add(i)
         return teams
+
+    def _employee_label(self, emp_id):
+        idx = int(emp_id) - 1
+        if 0 <= idx < len(self.employee_rows):
+            employee_row = self.employee_rows[idx]
+            if isinstance(employee_row, dict):
+                raw_id = employee_row.get("id")
+                if raw_id is not None and str(raw_id).strip():
+                    return str(raw_id)
+        return str(emp_id)
 
     # ------------------------------------------------------------
     # MODEL CREATION
@@ -392,6 +420,76 @@ class ILPSchedulerWeighted:
                                     f"forbid_{s_prev}_to_{s_next}_f{f}_{d_today_str}"
                                 )
 
+        # (7) Fixed OFF='0' count per week/month.
+        # self.fixed_days_off_targets can be weekly and/or monthly, and is precompiled from the original constraint plan with actual dates and employee IDs
+
+        if self.fixed_days_off_targets is not None:
+            for f in funcionarios:
+                # Team domain for this employee; variables x[f][d][t][team] only exist for these teams.
+                emp_teams = self.emp_allowed_teams[f]
+                # Concrete vacation dates for this employee, used to detect forced OFF overflow.
+                vac_dates = self.vacations_dates.get(f, set()) if self.enforce_vacation else set()
+
+                # Process weekly and monthly compiled targets with same pattern.
+                for rule_name, periods in (
+                    ("weekly", self.fixed_days_off_targets.weekly.get(f, [])),
+                    ("monthly", self.fixed_days_off_targets.monthly.get(f, [])),
+                ):
+                    for period in periods:
+                        # Convert 1-based period indices to actual date objects used as model keys.
+                        period_dates = [
+                            self.dates[day_idx - 1]
+                            for day_idx in period.day_indices
+                            if 1 <= day_idx <= self.num_days
+                        ]
+                        # Rule type key used by helper/validation messages.
+                        rule_type = (
+                            "fixed_days_off_per_week"
+                            if rule_name == "weekly"
+                            else "fixed_days_off_per_month"
+                        )
+                        # Raw params for the current weekly/monthly rule.
+                        rule_params = (
+                            self.constraint_plan.fixed_days_off_per_week
+                            if rule_name == "weekly"
+                            else self.constraint_plan.fixed_days_off_per_month
+                        )
+                        try:
+                            # Number of OFF days for this period of time
+                            target_off_days = effective_period_off_target(
+                                rule_params=rule_params,
+                                base_target_off_days=period.target_off_days,
+                                period_total_days=len(period.day_indices),
+                                available_non_vacation_days=len(period.day_indices),
+                                rule_type=rule_type,
+                            )
+                        except ValueError as exc:
+                            raise ValueError(
+                                f"ILP General invalid {rule_type} target for "
+                                f"employee {self._employee_label(f)} period {period.label}: {exc}"
+                            ) from exc
+                        safe_label = str(period.label).replace("-", "_")
+                        # Number of vacation days in this period, which are automatically OFF
+                        forced_vac_off = sum(1 for d in period_dates if d in vac_dates)
+                        # Total OFF count for the period (vacation + assigned OFF)
+                        period_off_sum = pulp.lpSum(
+                            self.x[f][d][0][team]
+                            for d in period_dates
+                            for team in emp_teams
+                        )
+                        # If there are vacation days that already exceed the target OFF for the period, we can't make it ==
+                        if forced_vac_off > target_off_days:
+                            model += (
+                                period_off_sum >= target_off_days,
+                                f"fixed_off_min_{rule_name}_f{f}_{safe_label}"
+                            )
+                        # Otherwise the model meets the target OFF days 
+                        else:
+                            model += (
+                                period_off_sum == target_off_days,
+                                f"fixed_off_{rule_name}_f{f}_{safe_label}"
+                            )
+
         # === Objective: weighted combination ===
         w_min = self.w_min
         w_ideal = self.w_ideal
@@ -449,6 +547,7 @@ class ILPSchedulerWeighted:
 
         wall_time = time.time() - start
         status_str = pulp.LpStatus[self.model.status]
+        self.status_str = status_str
         print(f"✅ Solver status: {status_str} | wall time: {wall_time:.2f}s")
 
         # Parse solver log
@@ -501,7 +600,10 @@ class ILPSchedulerWeighted:
         self.final_obj = final_obj
         self.final_bound = final_bound
         self.final_gap = final_gap
-        self._extract_assignments()
+        self.assignment.clear()
+        if status_str not in {"Infeasible", "Unbounded", "Undefined"}:
+            self._extract_assignments()
+        return status_str
 
     def _extract_assignments(self):
         """
@@ -595,8 +697,14 @@ def solve(vacations, minimuns, employees, maxTime, year=2025, shifts=2, rules=No
         enforce_vacation=plan.enforce_vacation,
         min_coverage_hard=plan.min_coverage_hard,
         ideal_coverage_hard=plan.ideal_coverage_hard,
+        constraint_plan=plan,
     )
     ilp.build_model()
-    ilp.solve(gap_rel=0.001, log_to_file=True)
+    status_str = ilp.solve(gap_rel=0.001, log_to_file=True)
+    if status_str in {"Infeasible", "Unbounded", "Undefined"}:
+        raise RuntimeError(
+            "ILP General could not find a feasible schedule "
+            f"(status={status_str})."
+        )
     ilp.export_csv("schedule_weighted.csv")
     return ilp.to_table()
