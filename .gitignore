@@ -83,3 +83,6 @@ src/scheduler/rules.json
 /*.pdf
 /Combinacoes
 /Processed_Extract
+
+# Model Checkpoint files
+*.pth
