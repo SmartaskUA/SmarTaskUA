@@ -253,7 +253,7 @@ class RabbitMQClient:
         self.send_task_status(task_id, "IN_PROGRESS")
         try:
             print(f"[RabbitMQClient] Delegando execução da task {task_id} para TaskManager...")
-            schedule_data, elapsed_time = self.task_manager.run_task(
+            result, elapsed_time = self.task_manager.run_task(
                 task_id=task_id,
                 title=title,
                 algorithm_name=algorithm_name,
@@ -268,6 +268,15 @@ class RabbitMQClient:
                 solver=solver,
                 problem_path=problem_path
             )
+
+            # Support both old return format (raw schedule rows) and new format
+            # where TaskManager returns {"schedule": rows, "kpis": {...}}
+            if isinstance(result, dict) and "schedule" in result:
+                schedule_data = result.get("schedule")
+                kpis = result.get("kpis")
+            else:
+                schedule_data = result
+                kpis = None
 
             print("ELAPSED TIME:", elapsed_time)
             problem_metadata = self.load_problem_bundle_metadata(problem_path) if problem_path else {}
@@ -287,6 +296,10 @@ class RabbitMQClient:
                 "solver": solver,
                 "problemPath": problem_path
             }
+            # If KPIs were produced by the scheduler, include them in metadata
+            if kpis is not None:
+                metadata.setdefault("analysis", {})
+                metadata["analysis"]["kpis"] = kpis
             metadata.update(problem_metadata)
 
             self.mongodb_client.insert_schedule(
