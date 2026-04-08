@@ -1,0 +1,111 @@
+{
+  "schemaVersion": "2.2",
+  "problemType": "employee_scheduling",
+  "metadata": {
+    "problemId": "SISQUAL_MD5_OBJ4_DAY_OFF_SWAP",
+    "createdAt": "2026-04-08T12:00:00Z",
+    "description": "Sisqual fixture for ObjectiveFunction4 preferred day-off swapping under coverage pressure",
+    "source": "MD5 objective fixture"
+  },
+  "features": {
+    "useWorkPeriodBasedScheduling": true,
+    "useAdvancedConstraints": true,
+    "usePriorityHierarchy": false
+  },
+  "temporalScope": {
+    "year": 2025,
+    "numDays": 7,
+    "targetPeriod": {
+      "start": "2025-10-06",
+      "end": "2025-10-12",
+      "includeBufferWeeks": false
+    }
+  },
+  "contracts": {
+    "definitions": [
+      {
+        "id": "fourHours",
+        "name": "Four hours",
+        "workHoursPerDay": 4
+      }
+    ]
+  },
+  "employees": {
+    "model": "competency",
+    "competency": [
+      {
+        "id": "E1",
+        "name": "Employee 1",
+        "teams": [
+          {"code": "Checkout", "level": 1},
+          {"code": "Employees", "level": 6}
+        ],
+        "contractType": "fourHours"
+      }
+    ]
+  },
+  "demand": {
+    "dataFile": "demand.csv",
+    "organizationalUnits": {
+      "teams": ["Checkout", "Employees"]
+    },
+    "workPeriods": [
+      {
+        "code": "CHECKOUT_1000_1400",
+        "name": "Checkout 10:00-14:00",
+        "timeRange": {"start": "10:00", "end": "14:00"}
+      },
+      {
+        "code": "EMPLOYEES_1000_1400",
+        "name": "Employees 10:00-14:00",
+        "timeRange": {"start": "10:00", "end": "14:00"}
+      }
+    ]
+  },
+  "scheduleInput": {
+    "dataFile": "schedule_input.csv",
+    "markingTypes": {
+      "4": "Work exactly 4 hours",
+      "DO": "Preferred day-off",
+      "VAC": "Vacation",
+      "NOT": "Unavailable"
+    }
+  },
+  "constraints": {
+    "hard": [
+      {
+        "id": "min-rest-hours",
+        "type": "min_rest_hours",
+        "params": {"hours": 11},
+        "enabled": true
+      }
+    ],
+    "soft": [
+      {
+        "id": "min-coverage",
+        "type": "min_coverage",
+        "weight": 1000,
+        "enabled": true
+      },
+      {
+        "id": "preferred-day-off",
+        "type": "day_off_swap_penalty",
+        "weight": 100,
+        "enabled": true
+      }
+    ],
+    "advanced": {
+      "dayOffSwapping": {
+        "enabled": true,
+        "weekDefinition": "monday-sunday",
+        "rules": [
+          "DO can be swapped within week with penalty 100"
+        ]
+      }
+    }
+  },
+  "optimization": {
+    "algorithm": "ILP_Sisqual_Hours_MathematicalDefinition5",
+    "maxTimeMinutes": 1
+  }
+}

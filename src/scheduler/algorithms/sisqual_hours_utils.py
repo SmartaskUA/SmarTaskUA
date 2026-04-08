@@ -4,10 +4,43 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, Iterable, List, Tuple
 
 
 OFF_MARKERS = {"DO", "FDO", "VAC", "NOT", "MED"}
+OBJECTIVE_SOFT_TYPES = {
+    "coverage_shortage": {
+        "min_coverage",
+        "coverage_shortage",
+        "objective1",
+        "minimize_shortages",
+        "minimize_total_shortage",
+        "minimize_coverage_shortage",
+    },
+    "average_competence": {
+        "average_competence",
+        "average_competence_level",
+        "minimize_average_competence_level",
+        "objective3",
+        "competence_score",
+        "competency_score",
+    },
+    "preferred_day_off": {
+        "day_off_swap_penalty",
+        "preferred_day_off",
+        "preferred_day_off_work",
+        "minimize_preferred_day_off_work",
+        "objective4",
+        "minimize_day_off_changes",
+    },
+}
+OBJECTIVE2_GOALS = {
+    "objective2",
+    "competence_level_shortage",
+    "competency_level_shortage",
+    "minimize_competence_level_shortage",
+    "minimize_competency_level_shortage",
+}
 
 
 @dataclass(frozen=True)
@@ -84,6 +117,41 @@ def parse_employees(problem: Dict, contract_hours: Dict[str, int]) -> List[Dict]
     return employees
 
 
+def parse_employees_with_levels(
+    problem: Dict,
+    contract_hours: Dict[str, int],
+    staff_team_code: str = "Employees",
+) -> List[Dict]:
+    raw_employees = problem.get("employees", {}).get("competency", [])
+    employees = []
+    for raw in raw_employees:
+        employee_id = str(raw.get("id", "")).strip()
+        contract_type = str(raw.get("contractType", "")).strip()
+        skill_levels = {}
+        for team in raw.get("teams", []):
+            code = str(team.get("code", "")).strip()
+            if not code:
+                continue
+            level = parse_level_value(team.get("level"))
+            if level is None:
+                raise ValueError(f"Missing or invalid level for {employee_id} skill '{code}'")
+            skill_levels[code] = level
+        employees.append(
+            {
+                "id": employee_id,
+                "name": raw.get("name", employee_id),
+                "contract_type": contract_type,
+                "contract_hours": contract_hours.get(contract_type),
+                "skills": tuple(skill_levels.keys()),
+                "skill_levels": dict(skill_levels),
+                "assignable_skills": tuple(
+                    skill for skill in skill_levels.keys() if skill != staff_team_code
+                ),
+            }
+        )
+    return employees
+
+
 def parse_days(problem: Dict) -> List[str]:
     target = problem.get("temporalScope", {}).get("targetPeriod", {})
     start = datetime.strptime(target["start"], "%Y-%m-%d").date()
@@ -105,6 +173,17 @@ def parse_schedule_input(base_dir: Path, problem: Dict, days: List[str]) -> Dict
             employee_id = str(row.get("employee_id", "")).strip()
             rows[employee_id] = {day: str(row.get(day, "")).strip() for day in days}
     return rows
+
+
+def parse_min_rest_hours(problem: Dict, default_hours: float = 11.0) -> float:
+    constraints = problem.get("constraints", {}).get("hard", [])
+    for constraint in constraints:
+        if constraint.get("type") != "min_rest_hours" or not constraint.get("enabled", True):
+            continue
+        hours = constraint.get("params", {}).get("hours")
+        if isinstance(hours, (int, float)):
+            return float(hours)
+    return default_hours
 
 
 def parse_skill_codes(problem: Dict) -> List[str]:
@@ -266,3 +345,308 @@ def parse_max_time_seconds(value) -> int | None:
     if minutes <= 0:
         return None
     return int(minutes * 60)
+
+
+def parse_int_value(value) -> int | None:
+    try:
+        if value is None or value == "":
+            return None
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def parse_level_value(value) -> int | None:
+    if value is None or value == "":
+        return None
+    if isinstance(value, int):
+        return value
+    text = str(value).strip()
+    if text.isdigit():
+        return int(text)
+    digits = "".join(ch for ch in text if ch.isdigit())
+    if digits:
+        return int(digits)
+    return None
+
+
+def parse_open_days(days: List[str], alpha: Dict[Tuple[str, int, str], int]) -> List[str]:
+    open_days = sorted({day for (day, _, _) in alpha.keys()})
+    return open_days or list(days)
+
+
+def parse_soft_constraint_weight(constraint: Dict) -> float:
+    params = constraint.get("params", {}) or {}
+    for value in (
+        constraint.get("weight"),
+        params.get("weight"),
+        params.get("penalty"),
+        params.get("penalty_per_missing"),
+        params.get("penalty_within_week"),
+        params.get("penalty_outside_week"),
+    ):
+        if value is None:
+            continue
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return 0.0
+    return 0.0
+
+
+def parse_soft_objectives(problem: Dict) -> Tuple[float, Dict[Tuple[str, int], float], float, float]:
+    objective1_weight = 0.0
+    objective2_weight_map = {}
+    objective3_weight = 0.0
+    objective4_weight = 0.0
+
+    for constraint in problem.get("constraints", {}).get("soft", []):
+        if not constraint.get("enabled", True):
+            continue
+        type_name = str(
+            constraint.get("type")
+            or constraint.get("id")
+            or ""
+        ).strip().lower()
+        params = constraint.get("params", {}) or {}
+        weight = parse_soft_constraint_weight(constraint)
+        if weight <= 0:
+            continue
+
+        if type_name in OBJECTIVE_SOFT_TYPES["coverage_shortage"]:
+            objective1_weight = weight
+        elif type_name in OBJECTIVE2_GOALS:
+            skill = str(
+                constraint.get("skill")
+                or constraint.get("team")
+                or constraint.get("competency")
+                or params.get("skill")
+                or params.get("team")
+                or params.get("competency")
+                or ""
+            ).strip()
+            level = parse_level_value(
+                constraint.get("level", params.get("level"))
+            )
+            if not skill or level is None:
+                continue
+            objective2_weight_map[(skill, level)] = weight
+        elif type_name in OBJECTIVE_SOFT_TYPES["average_competence"]:
+            objective3_weight = weight
+        elif type_name in OBJECTIVE_SOFT_TYPES["preferred_day_off"]:
+            objective4_weight = weight
+
+    return objective1_weight, objective2_weight_map, objective3_weight, objective4_weight
+
+
+def parse_json_mapping(value, label: str = "mapping") -> Dict:
+    if value is None:
+        return {}
+    if isinstance(value, dict):
+        return dict(value)
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return {}
+        parsed = json.loads(text)
+        if not isinstance(parsed, dict):
+            raise ValueError(f"Expected {label} to be a JSON object")
+        return parsed
+    raise ValueError(f"Expected {label} as dict or JSON object string")
+
+
+def parse_objective2_weight_map(value) -> Dict[Tuple[str, int], float]:
+    if value is None:
+        return {}
+
+    if isinstance(value, dict):
+        items = value.items()
+    elif isinstance(value, str):
+        items = parse_json_mapping(value, "objective2_weights").items()
+    else:
+        raise ValueError("Objective 2 weights must be provided as dict or JSON object string")
+
+    result = {}
+    for key, weight in items:
+        if isinstance(key, tuple) and len(key) == 2:
+            skill = str(key[0]).strip()
+            level = parse_level_value(key[1])
+        else:
+            text = str(key).strip()
+            if ":" not in text:
+                raise ValueError(
+                    "Objective 2 weight keys must use 'skill:level', for example 'Checkout:1'"
+                )
+            skill, level_text = text.split(":", 1)
+            skill = skill.strip()
+            level = parse_level_value(level_text)
+        if not skill or level is None:
+            raise ValueError(f"Invalid Objective 2 weight key '{key}'")
+        try:
+            result[(skill, level)] = float(weight)
+        except (TypeError, ValueError):
+            result[(skill, level)] = 0.0
+    return result
+
+
+def resolve_beta_requirements_path(
+    base_dir: Path,
+    problem: Dict,
+    beta_requirements_path,
+) -> Path | None:
+    candidate = beta_requirements_path
+    if candidate is None:
+        demand_cfg = problem.get("demand", {})
+        candidate = (
+            demand_cfg.get("betaRequirementsFile")
+            or demand_cfg.get("levelRequirementsFile")
+            or demand_cfg.get("competencyRequirementsFile")
+        )
+    if not candidate:
+        return None
+    path = Path(candidate)
+    if not path.is_absolute():
+        path = (base_dir / path).resolve()
+    return path
+
+
+def parse_beta_csv(
+    path: Path,
+    coverage_by_period: Dict[str, Tuple[int, ...]],
+    time_slots: List[TimeSlot],
+) -> Dict[Tuple[str, int, str, int], int]:
+    beta = defaultdict(int)
+    with path.open(newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            date_str = str(row.get("date", "")).strip()
+            skill = str(
+                row.get("team")
+                or row.get("skill")
+                or row.get("competency")
+                or ""
+            ).strip()
+            level = parse_level_value(row.get("level"))
+            minimum = parse_int_value(
+                row.get("minimum")
+                or row.get("minimo")
+                or row.get("beta")
+            )
+            if not date_str or not skill or level is None or minimum is None:
+                continue
+
+            period_code = str(row.get("workPeriod", "")).strip()
+            if period_code:
+                for slot_idx in coverage_by_period.get(period_code, ()):
+                    beta[(date_str, slot_idx, skill, level)] += minimum
+                continue
+
+            start_text = str(row.get("start", "")).strip()
+            end_text = str(row.get("end", "")).strip()
+            if not start_text or not end_text:
+                continue
+            start_min = parse_hhmm(start_text)
+            end_min = parse_hhmm(end_text)
+            for slot in time_slots:
+                if slot.start_min >= start_min and slot.end_min <= end_min:
+                    beta[(date_str, slot.index, skill, level)] += minimum
+
+    return dict(beta)
+
+
+def parse_inline_beta_requirements(
+    requirements: Iterable[Dict],
+    time_slots: List[TimeSlot],
+    open_days: List[str],
+) -> Dict[Tuple[str, int, str, int], int]:
+    beta = defaultdict(int)
+    for requirement in requirements:
+        skill = str(
+            requirement.get("competency")
+            or requirement.get("team")
+            or requirement.get("skill")
+            or ""
+        ).strip()
+        level = parse_level_value(requirement.get("level"))
+        minimum = parse_int_value(
+            requirement.get("minimo")
+            or requirement.get("minimum")
+            or requirement.get("beta")
+        )
+        time_window = requirement.get("timeWindow", {})
+        start_text = str(time_window.get("start", "")).strip()
+        end_text = str(time_window.get("end", "")).strip()
+
+        if not skill or level is None or minimum is None or not start_text or not end_text:
+            continue
+
+        start_min = parse_hhmm(start_text)
+        end_min = parse_hhmm(end_text)
+        applicable_days = _resolve_beta_requirement_days(requirement.get("applies", {}), open_days)
+
+        for day in applicable_days:
+            for slot in time_slots:
+                if slot.start_min >= start_min and slot.end_min <= end_min:
+                    beta[(day, slot.index, skill, level)] += minimum
+
+    return dict(beta)
+
+
+def parse_beta_requirements(
+    base_dir: Path,
+    problem: Dict,
+    coverage_by_period: Dict[str, Tuple[int, ...]],
+    time_slots: List[TimeSlot],
+    open_days: List[str],
+    objective2_weights: Dict[Tuple[str, int], float],
+    beta_requirements_path=None,
+) -> Dict[Tuple[str, int, str, int], int]:
+    if not objective2_weights:
+        return {}
+
+    beta = defaultdict(int)
+    csv_path = resolve_beta_requirements_path(base_dir, problem, beta_requirements_path)
+    if csv_path is not None:
+        beta.update(parse_beta_csv(csv_path, coverage_by_period, time_slots))
+
+    inline_requirements = problem.get("demand", {}).get("multiLevel", {}).get("requirements", [])
+    if inline_requirements:
+        for key, value in parse_inline_beta_requirements(inline_requirements, time_slots, open_days).items():
+            beta[key] += value
+
+    if not beta:
+        formatted_pairs = ", ".join(
+            f"{skill}:{level}" for skill, level in sorted(objective2_weights)
+        )
+        raise ValueError(
+            "ObjectiveFunction2 received weights but no beta requirements were found. "
+            f"Expected CSV or inline requirements for: {formatted_pairs}"
+        )
+
+    missing_pairs = sorted(
+        pair
+        for pair in objective2_weights
+        if not any(skill == pair[0] and level == pair[1] for (_, _, skill, level) in beta)
+    )
+    if missing_pairs:
+        formatted_pairs = ", ".join(f"{skill}:{level}" for skill, level in missing_pairs)
+        raise ValueError(
+            "ObjectiveFunction2 received weights for pairs with no beta requirements: "
+            f"{formatted_pairs}"
+        )
+
+    return dict(beta)
+
+
+def _resolve_beta_requirement_days(applies: Dict, open_days: List[str]) -> List[str]:
+    dates = applies.get("dates")
+    if dates:
+        open_days_set = set(open_days)
+        return [day for day in dates if day in open_days_set]
+
+    day_type = str(applies.get("dayType", "all")).strip().lower()
+    if day_type == "weekday":
+        return [day for day in open_days if datetime.strptime(day, "%Y-%m-%d").date().weekday() < 5]
+    if day_type == "weekend":
+        return [day for day in open_days if datetime.strptime(day, "%Y-%m-%d").date().weekday() >= 5]
+    return list(open_days)
