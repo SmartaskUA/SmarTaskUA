@@ -5,6 +5,7 @@ import Sidebar_Manager from "../components/Sidebar_Manager";
 import CalendarTable from "../components/manager/CalendarTable";
 import CalendarHeader from "../components/manager/CalendarHeader";
 import KPIReport from "../components/manager/KPIReport";
+import SisqualKPIReport from "./SisqualKPIReport";
 import BaseUrl from "../components/BaseUrl";
 import MetadataInfo from "../components/manager/MetadataInfo";
 import MinimumsTemplate from "../components/manager/MinimumsTemplate";
@@ -55,6 +56,11 @@ const Calendar = () => {
           const elapsed_time = responseData?.elapsed_time || null;
           setData(scheduleData);
           setMetadata(responseData.metadata);
+          // If KPIs were produced server-side (e.g. Sisqual) they may be
+          // present in `metadata.analysis.kpis` — load them into state.
+          if (responseData.metadata?.analysis?.kpis) {
+            setKpiSummary(responseData.metadata.analysis.kpis);
+          }
           setElapsedTime(elapsed_time);
           console.log("Elapsed time:", elapsed_time);
           fetchNationalHolidays(responseData.metadata?.year || new Date().getFullYear());
@@ -84,8 +90,16 @@ const Calendar = () => {
             data.forEach((item) => {
               const mappedCalId = reqToCalRef.current[item.requestId];
               if (mappedCalId === calendarId) {
-                console.log("KPI recebido:", item.result);
-                setKpiSummary(item.result);
+                console.log("KPI recebido via WebSocket:", item.result);
+                setKpiSummary((prev) => {
+                  // Se já temos KPIs Sisqual (calculados em memória),
+                  // não deixar o WebSocket legacy sobrescrever
+                  if (prev && prev["Total_Shortage"] !== undefined) {
+                    console.log("KPIs Sisqual já presentes — ignorando WebSocket.");
+                    return prev;
+                  }
+                  return item.result;
+                });
               }
             });
           } catch (e) {
@@ -356,7 +370,13 @@ const Calendar = () => {
         )}
 
         <MetadataInfo metadata={metadata} />
-        <KPIReport metrics={kpiSummary || {}} scheduleType={scheduleType} />
+
+        {kpiSummary?.["Total_Shortage"] !== undefined ? (
+          <SisqualKPIReport kpis={kpiSummary} />
+        ) : (
+          <KPIReport metrics={kpiSummary || {}} scheduleType={scheduleType} />
+        )}
+        
       </div>
     </div>
   );
