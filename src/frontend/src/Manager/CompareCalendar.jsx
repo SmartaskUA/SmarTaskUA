@@ -15,6 +15,7 @@ import { Client } from "@stomp/stompjs";
 import axios from "axios";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { inferHourGranularity, inferScheduleType } from "../utils/scheduleType";
+import BaseUrl from "../components/BaseUrl";
 
 const metricInfo = {
   tmFails: {
@@ -35,37 +36,77 @@ const metricInfo = {
   missedVacationDays: {
     label: "Missed Vacation Days",
     description:
-      "Total variance between actual and target vacation days for all employees, expressed as the number of days above or below the target.",
+      "Total variance between actual and target vacation days for all employees.",
   },
   missedWorkDays: {
     label: "Missed Working Days",
     description:
-      "Total variance between actual and target working days for all employees, expressed as the number of days above or below the target.",
+      "Total variance between actual and target working days for all employees.",
   },
   missedTeamMin: {
     label: "Missed Minimums",
     description:
       "Each team, shift, and day, the count of employees below the required minimum staffing level.",
   },
+  missedTeamIdeal: {
+    label: "Missed Ideals",
+    description: "Each team, shift, and day, the count of employees below the ideal staffing level.",
+  },
   singleTeamViolations: {
     label: "Single Team Violations",
     description:
-      "Number of employees that are allowed to work for only one team and end up working for more than one.",
+      "Number of employees allowed to work only one team but worked in more than one.",
   },
   shiftBalance: {
     label: "Shift Balance",
     description:
       "Percentage deviation of the most unbalanced shift distribution exhibited by any employee.",
   },
-  twoTeamPreferenceLevel: {
-    label: "Two Team Preference Level",
-    description:
-      "Among employees assigned to exactly two teams, the median distribution of work between their primary (preferred) team and their secondary team.",
+  teamSatisfactionLevel: {
+    label: "Team Satisfaction Level",
+    description: "Median distribution of work between primary and secondary team for employees assigned to two teams.",
   },
-  twoTeamShiftDistribution: {
-    label: "Two-Team Shift Distribution",
-    description:
-      "Breakdown of shifts between team A and B by employee.",
+
+  // ── Hourly metrics ──────────────────────────────────────────────
+  workDaysTargetDeviation: {
+    label: "Work Days Target Deviation",
+    description: "Total absolute deviation from the target of 223 workdays per year, summed across all employees.",
+  },
+  vacationDaysQuotaDeviation: {
+    label: "Vacation Days Quota Deviation",
+    description: "Total absolute deviation from the mandatory vacation days per year, across all employees.",
+  },
+  holidayWorkLimitViolations: {
+    label: "Holiday Work Limit Violations",
+    description: "Total number of holiday/sunday workdays beyond the legal limit of 22, summed across employees.",
+  },
+  consecutiveDaysViolations: {
+    label: "Consecutive Days Violations",
+    description: "Total count of violations where an employee worked 6 or more consecutive days without a rest day.",
+  },
+  minRestViolations: {
+    label: "Minimum Rest Violations",
+    description: "Number of shift-to-shift transitions where rest time between consecutive working days is less than 12 hours.",
+  },
+  totalStaffingGap: {
+    label: "Total Staffing Gap",
+    description: "Total missing staff compared to required minimums across all teams, time slots and days.",
+  },
+  staffingRobustnessGap: {
+    label: "Staffing Robustness Gap",
+    description: "Total missing staff compared to synthetic ideal levels (minimum + 1) across all teams, time slots and days.",
+  },
+  staffingCoverageRate: {
+    label: "Staffing Coverage Rate",
+    description: "Percentage of time slots where the minimum staffing requirement was met (100% means all minimums were satisfied).",
+  },
+  totalIdealGap: {
+    label: "Total Ideal Gap",
+    description: "Total missing staff compared to ideal staffing levels across all teams, time slots and days.",
+  },
+  excessStaffing: {
+    label: "Excess Staffing",
+    description: "Total extra staff assigned beyond required minimums across all teams, time slots and days.",
   },
 };
 
@@ -78,7 +119,7 @@ export default function CompareCalendar() {
   const reqToCalRef = useRef({});
 
   useEffect(() => {
-    const socket = new SockJS("http://localhost:8081/ws");
+    const socket = new SockJS(`${BaseUrl}/ws`);
     const stompClient = new Client({
       webSocketFactory: () => socket,
       onConnect: () => {
@@ -109,7 +150,7 @@ export default function CompareCalendar() {
 
   useEffect(() => {
     axios
-      .get("/schedules/fetch")
+      .get(`${BaseUrl}/schedules/fetch`)
       .then((res) => setCalendars(res.data))
       .catch(() => setError("Error fetching calendars."));
   }, []);
@@ -130,8 +171,8 @@ export default function CompareCalendar() {
       const blob = new Blob([toCsvString(cal.data)], { type: "text/csv;charset=utf-8" });
       const fd = new FormData();
       fd.append("files", blob, `${cal.id}.csv`);
-      fd.append("vacationTemplate", cal.metadata.vacationTemplateData);
-      fd.append("minimunsTemplate", cal.metadata.minimunsTemplateData);
+      fd.append("vacationTemplate", cal.metadata.vacationTemplateName || "");
+      fd.append("minimunsTemplate", cal.metadata.minimunsTemplateName || "");
       fd.append("employees", JSON.stringify(cal.metadata.employeesTeamInfo));
       fd.append("year", String(cal.metadata.year));
       const scheduleType = inferScheduleType(cal.metadata);
@@ -146,8 +187,8 @@ export default function CompareCalendar() {
 
     try {
       const [res1, res2] = await Promise.all([
-        axios.post("/schedules/analyze", buildFd(cal1)),
-        axios.post("/schedules/analyze", buildFd(cal2)),
+        axios.post(`${BaseUrl}/schedules/analyze`, buildFd(cal1)),
+        axios.post(`${BaseUrl}/schedules/analyze`, buildFd(cal2)),
       ]);
       reqToCalRef.current[res1.data.requestId] = cal1.id;
       reqToCalRef.current[res2.data.requestId] = cal2.id;
@@ -160,17 +201,45 @@ export default function CompareCalendar() {
   const r1 = comparisonResults.result[selected1];
   const r2 = comparisonResults.result[selected2];
 
-  const orderedMetrics = [
-    "missedWorkDays",
-    "missedVacationDays",
-    "workHolidays",
-    "tmFails",
-    "consecutiveDays",
-    "singleTeamViolations",
-    "missedTeamMin",
-    "shiftBalance",
-    "twoTeamPreferenceLevel"
-  ];
+  const cal1 = calendars.find((c) => c.id === selected1);
+  const cal2 = calendars.find((c) => c.id === selected2);
+
+  const isHourly =
+    inferScheduleType(cal1?.metadata) === "Horas" ||
+    inferScheduleType(cal2?.metadata) === "Horas" ||
+    [r1, r2].some((r) =>
+      r && (
+        r.totalStaffingGap !== undefined ||
+        r.excessStaffing !== undefined ||
+        r.workDaysTargetDeviation !== undefined
+      )
+    );
+
+  const orderedMetrics = isHourly
+    ? [
+        "workDaysTargetDeviation",
+        "vacationDaysQuotaDeviation",
+        "holidayWorkLimitViolations",
+        "consecutiveDaysViolations",
+        "minRestViolations",
+        "totalStaffingGap",
+        "staffingRobustnessGap",
+        "staffingCoverageRate",
+        "totalIdealGap",
+        "excessStaffing",
+      ]
+    : [
+        "missedWorkDays",
+        "missedVacationDays",
+        "workHolidays",
+        "tmFails",
+        "consecutiveDays",
+        "singleTeamViolations",
+        "missedTeamMin",
+        "shiftBalance",
+        "missedTeamIdeal",
+        "teamSatisfactionLevel",
+      ];
 
   return (
     <div className="admin-container">
@@ -221,20 +290,40 @@ export default function CompareCalendar() {
               </thead>
               <tbody>
                 {orderedMetrics.map((metric, i) => {
-                  const val1 = r1[metric] ?? 0;
-                  const val2 = r2[metric] ?? 0;
+                  const raw1 = r1[metric];
+                  const raw2 = r2[metric];
+                  const isNull1 = raw1 === null || raw1 === undefined;
+                  const isNull2 = raw2 === null || raw2 === undefined;
+                  const val1 = isNull1 ? 0 : raw1;
+                  const val2 = isNull2 ? 0 : raw2;
                   const diff = val2 - val1;
-                  const isPercentage = metric === "shiftBalance" || metric === "twoTeamPreferenceLevel";
+                  const isPercentage = metric === "shiftBalance" || metric === "teamSatisfactionLevel" || metric === "staffingCoverageRate";
 
-                  const displayVal = (v) => isPercentage ? `${parseFloat(v).toFixed(2)}%` : v;
-                  const diffDisplay = diff === 0 ? "Equal" :
-                    isPercentage ? `${parseFloat(diff).toFixed(2)}%` : `${diff > 0 ? "+" : ""}${diff}`;
+                  const normalize = (v) => metric === "shiftBalance" ? parseFloat((v * 2).toFixed(2)) : v;
 
-                  const valueColor = (val) => {
-                    if (isPercentage) return "#000";
+                  const displayVal = (v, isNullVal) => {
+                    if (isNullVal) return "N/A";
+                    return isPercentage ? `${parseFloat(normalize(v)).toFixed(2)}%` : v;
+                  };
+                  const normalizedDiff = metric === "shiftBalance" ? parseFloat((diff * 2).toFixed(2)) : diff;
+                  const diffDisplay = (isNull1 || isNull2) ? "N/A" :
+                    normalizedDiff === 0 ? "Equal" :
+                    isPercentage ? `${normalizedDiff > 0 ? "+" : ""}${parseFloat(normalizedDiff).toFixed(2)}%` : `${diff > 0 ? "+" : ""}${diff}`;
+
+                  const higherIsBetter = new Set(["staffingCoverageRate", "teamSatisfactionLevel", "shiftBalance"]);
+
+                  const valueColor = (val, isNullVal) => {
+                    if (isNullVal || isPercentage) return "#000";
                     if (val > 0) return "#d32f2f";
                     if (val < 0) return "#2e7d32";
                     return "#2e7d32";
+                  };
+
+                  const diffColor = () => {
+                    if (diffDisplay === "N/A" || diffDisplay === "Equal") return "#000";
+                    const positive = diff > 0;
+                    const good = higherIsBetter.has(metric) ? positive : !positive;
+                    return good ? "#2e7d32" : "#d32f2f";
                   };
 
                   return (
@@ -247,9 +336,9 @@ export default function CompareCalendar() {
                           </span>
                         </Tooltip>
                       </td>
-                      <td style={{ padding: 12, color: valueColor(val1) }}>{displayVal(val1)}</td>
-                      <td style={{ padding: 12, color: valueColor(val2) }}>{displayVal(val2)}</td>
-                      <td style={{ padding: 12, color: "#1976D2" }}>{diffDisplay}</td>
+                      <td style={{ padding: 12, color: valueColor(val1, isNull1) }}>{displayVal(val1, isNull1)}</td>
+                      <td style={{ padding: 12, color: valueColor(val2, isNull2) }}>{displayVal(val2, isNull2)}</td>
+                      <td style={{ padding: 12, color: diffColor() }}>{diffDisplay}</td>
                     </tr>
                   );
                 })}

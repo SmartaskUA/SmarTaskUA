@@ -1,5 +1,5 @@
 # Sisqual Example
-## Shift Possibilities per Team
+## Work Period Possibilities per Team
 - Storage
     - 8:30 // 15:30
 - Checkout
@@ -30,7 +30,7 @@
 - Emp_20055066	(Checkout - 4)
 - Emp_900027718	(Checkout - 5)
 
-## Minimium per shift per team
+## Minimium per work period per team
 - Storage
     - Weekday
         - 8:30 // 15:30 -> 1
@@ -129,7 +129,7 @@
         - 26 oct
 - Emp_20056459
     - Time Constraint
-        - 7 oct (10:00-14:00)
+        - 7 oct (EQUALS:10:00-14:00)
     - Forced Day Off
         - 10 oct
     - Day Off

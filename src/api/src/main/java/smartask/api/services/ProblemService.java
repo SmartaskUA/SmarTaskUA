@@ -36,11 +36,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ProblemService {
-
-    private static final Set<String> GENERAL_ALGORITHMS = Set.of(
-            "ilp general",
-            "csp general"
-    );
     private static final List<String> VACATION_KEYWORDS = List.of(
             "vacation",
             "vacations",
@@ -63,6 +58,7 @@ public class ProblemService {
     private final ProblemRepository problemRepository;
     private final VacationTemplateRepository vacationTemplateRepository;
     private final ReferenceTemplateRepository referenceTemplateRepository;
+    private final SchedulingAlgorithmRegistry schedulingAlgorithmRegistry;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public List<Map<String, Object>> getAllProblemListItems() {
@@ -115,6 +111,12 @@ public class ProblemService {
     }
 
     public ScheduleRequest buildScheduleRequest(ProblemDefinition problem, ProblemSolveRequest request) {
+        SchedulingAlgorithmRegistry.AlgorithmSpec algorithmSpec = schedulingAlgorithmRegistry.find(request.getAlgorithm())
+                .orElseThrow(() -> new IllegalStateException("Unsupported algorithm for problem solve."));
+        if (algorithmSpec.getUiMode() != SchedulingAlgorithmRegistry.UiMode.PROBLEM) {
+            throw new IllegalStateException("Algorithm '" + request.getAlgorithm() + "' is not available in problem mode.");
+        }
+
         Map<String, Object> root = loadProblemJson(problem);
         if (root == null) {
             throw new IllegalStateException("Problem definition is missing problem.json data.");
@@ -123,6 +125,13 @@ public class ProblemService {
         Map<String, Object> temporal = getMap(root, "temporalScope");
         Map<String, Object> demand = getMap(root, "demand");
         Map<String, Object> constraints = getMap(root, "constraints");
+        SchedulingAlgorithmRegistry.Granularity problemGranularity = resolveProblemGranularity(demand);
+
+        if (algorithmSpec.getGranularity() != problemGranularity) {
+            throw new IllegalStateException(
+                    "Algorithm '" + request.getAlgorithm() + "' is not compatible with this problem demand."
+            );
+        }
 
         String problemId = resolveValue(getString(metadata, "problemId"), problem.getProblemId());
         if (problemId == null || problemId.isBlank()) {
@@ -151,7 +160,6 @@ public class ProblemService {
         List<String> bundleFiles = listBundleFiles(problemPath);
         List<String> dataFiles = mergeDataFiles(resolvedDataFiles, bundleFiles);
 
-        TemplateNames templateNames = ensureProblemTemplates(problemId, problem.getProblemPath(), year, dataFiles);
         ScheduleRequest scheduleRequest = new ScheduleRequest();
         scheduleRequest.setTaskId(UUID.randomUUID().toString());
         scheduleRequest.setAlgorithm(request.getAlgorithm());
@@ -159,13 +167,18 @@ public class ProblemService {
         scheduleRequest.setMaxTime(request.getMaxTime() == null || request.getMaxTime().isBlank() ? "45" : request.getMaxTime());
         scheduleRequest.setRequestedAt(LocalDateTime.now());
         scheduleRequest.setYear(resolveValue(request.getYear(), year));
-        scheduleRequest.setVacationTemplate(templateNames.vacationsName);
-        scheduleRequest.setMinimuns(templateNames.minimunsName);
+        scheduleRequest.setProblemPath(problem.getProblemPath());
         scheduleRequest.setShifts(request.getShifts() == null ? shifts : request.getShifts());
         scheduleRequest.setHours(request.getHours());
         scheduleRequest.setGroupName(null);
 
-        if (shouldUseConstraints(request.getAlgorithm(), constraints)) {
+        if (algorithmSpec.getInputKind() == SchedulingAlgorithmRegistry.InputKind.CONVERTED_TEMPLATE) {
+            TemplateNames templateNames = ensureProblemTemplates(problemId, problem.getProblemPath(), year, dataFiles);
+            scheduleRequest.setVacationTemplate(templateNames.vacationsName);
+            scheduleRequest.setMinimuns(templateNames.minimunsName);
+        }
+
+        if (shouldUseConstraints(algorithmSpec, constraints)) {
             scheduleRequest.setConstraints(constraints);
         }
 
@@ -177,11 +190,43 @@ public class ProblemService {
         return scheduleRequest;
     }
 
-    public boolean isGeneralAlgorithm(String algorithm) {
-        if (algorithm == null) {
-            return false;
+    public boolean isProblemAlgorithm(String algorithm) {
+        return schedulingAlgorithmRegistry.isProblemAlgorithm(algorithm);
+    }
+
+    public Map<String, Object> loadProblemBundleMetadata(String problemPathValue) {
+        Path problemPath = resolveAbsolutePath(problemPathValue);
+        if (problemPath == null || !Files.isRegularFile(problemPath)) {
+            return Map.of();
         }
-        return GENERAL_ALGORITHMS.contains(algorithm.trim().toLowerCase());
+
+        Map<String, Object> root = readProblemJson(problemPath);
+        if (root == null) {
+            return Map.of();
+        }
+
+        Map<String, Object> metadata = getMap(root, "metadata");
+        Map<String, Object> demand = getMap(root, "demand");
+        Map<String, Object> organizationalUnits = getMap(demand, "organizationalUnits");
+
+        String demandFile = getString(demand, "dataFile");
+        if (demandFile == null || demandFile.isBlank()) {
+            demandFile = "demand.csv";
+        }
+
+        Path demandPath = problemPath.getParent() == null
+                ? resolveAbsolutePath(demandFile)
+                : problemPath.getParent().resolve(demandFile).normalize();
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        String problemId = getString(metadata, "problemId");
+        if (problemId != null && !problemId.isBlank()) {
+            result.put("problemId", problemId);
+        }
+        result.put("problemDemandData", readCsvObjects(demandPath));
+        result.put("problemWorkPeriods", coerceObjectList(demand.get("workPeriods")));
+        result.put("problemTeams", coerceObjectList(organizationalUnits.get("teams")));
+        return result;
     }
 
     public void seedDefaultProblems() {
@@ -214,15 +259,33 @@ public class ProblemService {
         }
     }
 
-    private boolean shouldUseConstraints(String algorithm, Map<String, Object> constraints) {
+    private boolean shouldUseConstraints(
+            SchedulingAlgorithmRegistry.AlgorithmSpec algorithmSpec,
+            Map<String, Object> constraints
+    ) {
         if (constraints == null || constraints.isEmpty()) {
             return false;
         }
-        if (algorithm == null) {
+        if (algorithmSpec == null) {
             return false;
         }
-        String normalized = algorithm.trim().toLowerCase();
-        return GENERAL_ALGORITHMS.contains(normalized);
+        return algorithmSpec.getInputKind() == SchedulingAlgorithmRegistry.InputKind.CONVERTED_TEMPLATE;
+    }
+
+    private SchedulingAlgorithmRegistry.Granularity resolveProblemGranularity(Map<String, Object> demand) {
+        Object shiftsNode = demand.get("shifts");
+        Object workPeriodsNode = demand.get("workPeriods");
+
+        boolean hasShifts = shiftsNode instanceof List<?> list && !list.isEmpty();
+        boolean hasWorkPeriods = workPeriodsNode instanceof List<?> list && !list.isEmpty();
+
+        if (hasShifts == hasWorkPeriods) {
+            throw new IllegalStateException("Problem must define exactly one of demand.shifts or demand.workPeriods.");
+        }
+
+        return hasShifts
+                ? SchedulingAlgorithmRegistry.Granularity.SHIFT
+                : SchedulingAlgorithmRegistry.Granularity.HOURS;
     }
 
     private String resolveTitle(ProblemDefinition problem, String requestedTitle, String algorithm) {
@@ -373,23 +436,22 @@ public class ProblemService {
         }
         try {
             Map<String, Object> root = objectMapper.readValue(problemPath.toFile(), Map.class);
-            return extractTeamEmployees(root);
+            return extractProblemEmployees(root);
         } catch (IOException e) {
             return List.of();
         }
     }
 
-    private List<Map<String, Object>> extractTeamEmployees(Map<String, Object> root) {
+    private List<Map<String, Object>> extractProblemEmployees(Map<String, Object> root) {
         Map<String, Object> employeesNode = getMap(root, "employees");
         if (employeesNode.isEmpty()) {
             return List.of();
         }
-        String model = getString(employeesNode, "model");
-        if (model != null && !model.isBlank() && !"team".equalsIgnoreCase(model)) {
-            return List.of();
+        List<Map<String, Object>> simpleEmployees = coerceEmployeeList(employeesNode.get("simple"));
+        if (!simpleEmployees.isEmpty()) {
+            return simpleEmployees;
         }
-        Object simple = employeesNode.get("simple");
-        return coerceEmployeeList(simple);
+        return coerceEmployeeList(employeesNode.get("competency"));
     }
 
     @SuppressWarnings("unchecked")
@@ -906,6 +968,43 @@ public class ProblemService {
             throw new IllegalStateException("Failed to read CSV at " + path, e);
         }
         return rows;
+    }
+
+    private List<Map<String, String>> readCsvObjects(Path path) {
+        if (path == null || !Files.isRegularFile(path)) {
+            return List.of();
+        }
+        List<List<String>> rows = readCsvRows(path, false);
+        if (rows.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> header = rows.get(0);
+        List<Map<String, String>> objects = new ArrayList<>();
+        for (int rowIndex = 1; rowIndex < rows.size(); rowIndex++) {
+            List<String> row = rows.get(rowIndex);
+            Map<String, String> item = new LinkedHashMap<>();
+            for (int col = 0; col < header.size(); col++) {
+                String key = header.get(col);
+                if (key == null || key.isBlank()) {
+                    continue;
+                }
+                String value = col < row.size() ? row.get(col) : "";
+                item.put(key, value);
+            }
+            if (!item.isEmpty()) {
+                objects.add(item);
+            }
+        }
+        return objects;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Object> coerceObjectList(Object value) {
+        if (!(value instanceof List<?> list)) {
+            return List.of();
+        }
+        return new ArrayList<>((List<Object>) list);
     }
 
     private String resolveProblemFile(Path problemPath, String dataFile) {

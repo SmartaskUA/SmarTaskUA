@@ -5,8 +5,321 @@ import json
 import holidays as hl
 import os
 import re
+import math
 
-def analyze(file, holidays, mins, employees, year=2025):
+def _normalize_rule_entries(rules):
+    if rules is None:
+        return []
+    if isinstance(rules, dict):
+        if "hard" in rules or "soft" in rules:
+            entries = []
+            for bucket in ("hard", "soft"):
+                for rule in rules.get(bucket, []) or []:
+                    if isinstance(rule, dict) and rule.get("enabled", True):
+                        entries.append(rule)
+            return entries
+        if "rules" in rules:
+            return [
+                rule for rule in (rules.get("rules") or [])
+                if isinstance(rule, dict) and rule.get("enabled", True)
+            ]
+        return []
+    if isinstance(rules, list):
+        return [rule for rule in rules if isinstance(rule, dict) and rule.get("enabled", True)]
+    return []
+
+
+def _extract_fixed_days_off_rule_params(rules):
+    weekly = None
+    monthly = None
+    for rule in _normalize_rule_entries(rules):
+        rule_type = str(rule.get("type") or rule.get("id") or "").strip()
+        params = rule.get("params") or {}
+        if not isinstance(params, dict):
+            continue
+        if rule_type == "fixed_days_off_per_week":
+            weekly = params
+        elif rule_type == "fixed_days_off_per_month":
+            monthly = params
+    return weekly, monthly
+
+
+def _supports_exact_zero_only(params):
+    if params is None:
+        return False
+    count_mode = str(params.get("countMode", "exact")).strip().lower()
+    if count_mode != "exact":
+        return False
+    counting = params.get("dayOffCounting") or {}
+    values = counting.get("countOnlyScheduleValues")
+    return values is None or values == ["0"]
+
+
+def _normalize_vacation_adjustment(params):
+    raw_mode = (params or {}).get("vacationAdjustment")
+    if raw_mode is None:
+        raw_mode = (params or {}).get("vacationHandling")
+    mode = str(raw_mode if raw_mode is not None else "prorate").strip().lower()
+    if mode not in {"prorate", "strict"}:
+        return None
+    return mode
+
+
+def _supports_fixed_days_off_rule(params):
+    if not _supports_exact_zero_only(params):
+        return False
+    return _normalize_vacation_adjustment(params) is not None
+
+
+def _normalize_employee_ref(value):
+    if value is None:
+        return None
+    text = str(value).strip()
+    if text.endswith(".0") and text[:-2].isdigit():
+        return text[:-2]
+    match = re.search(r"(\d+)\s*$", text)
+    if match:
+        return match.group(1)
+    return text
+
+
+def _to_int_or_none(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _resolve_weekly_targets(params, employee_keys):
+    per_employee = params.get("perEmployee")
+    if isinstance(per_employee, dict):
+        out = {}
+        for emp_id, target in per_employee.items():
+            key = _normalize_employee_ref(emp_id)
+            if key in employee_keys:
+                target_int = _to_int_or_none(target)
+                if target_int is not None:
+                    out[key] = target_int
+        return out
+
+    out = {}
+    default_target = _to_int_or_none(params.get("default"))
+    if default_target is not None:
+        for key in employee_keys:
+            out[key] = default_target
+    overrides = params.get("overrides") or {}
+    if isinstance(overrides, dict):
+        for emp_id, target in overrides.items():
+            key = _normalize_employee_ref(emp_id)
+            if key in employee_keys:
+                target_int = _to_int_or_none(target)
+                if target_int is not None:
+                    out[key] = target_int
+    return out
+
+
+def _resolve_monthly_targets(params, employee_keys):
+    per_employee = params.get("perEmployee")
+    if isinstance(per_employee, dict):
+        out = {}
+        for emp_id, month_map in per_employee.items():
+            key = _normalize_employee_ref(emp_id)
+            if key not in employee_keys or not isinstance(month_map, dict):
+                continue
+            parsed = {}
+            for month_key, target in month_map.items():
+                target_int = _to_int_or_none(target)
+                if target_int is not None:
+                    parsed[str(month_key)] = target_int
+            out[key] = parsed
+        return out
+
+    out = {}
+    default_by_month = params.get("defaultByMonth") or {}
+    if isinstance(default_by_month, dict):
+        parsed_defaults = {}
+        for month_key, target in default_by_month.items():
+            target_int = _to_int_or_none(target)
+            if target_int is not None:
+                parsed_defaults[str(month_key)] = target_int
+        if parsed_defaults:
+            for key in employee_keys:
+                out[key] = dict(parsed_defaults)
+
+    overrides = params.get("overrides") or {}
+    if isinstance(overrides, dict):
+        for emp_id, month_map in overrides.items():
+            key = _normalize_employee_ref(emp_id)
+            if key not in employee_keys or not isinstance(month_map, dict):
+                continue
+            out.setdefault(key, {})
+            for month_key, target in month_map.items():
+                target_int = _to_int_or_none(target)
+                if target_int is not None:
+                    out[key][str(month_key)] = target_int
+    return out
+
+
+def _is_off_zero(value):
+    text = str(value).strip()
+    return text == "0" or text == "0.0"
+
+
+def _is_vacation(value):
+    return str(value).strip().upper() == "F"
+
+
+def _round_half_up(value):
+    if value >= 0:
+        return int(math.floor(value + 0.5))
+    return int(math.ceil(value - 0.5))
+
+
+def _effective_period_target(rule_params, base_target_off_days, period_total_days, available_non_vacation_days):
+    """
+    Mirror solver semantics for vacation-aware fixed days-off rules.
+
+    - strict: keep configured target even if vacations make it impossible.
+    - prorate (default): scale target by available non-vacation days in the period.
+    """
+    base_target = _to_int_or_none(base_target_off_days)
+    total_days = _to_int_or_none(period_total_days)
+    available_days = _to_int_or_none(available_non_vacation_days)
+    if base_target is None or total_days is None or available_days is None:
+        return None
+    if base_target < 0 or total_days < 0 or available_days < 0:
+        return None
+    if total_days and available_days > total_days:
+        return None
+
+    adjustment_mode = _normalize_vacation_adjustment(rule_params)
+    if adjustment_mode is None:
+        return None
+    if adjustment_mode == "strict":
+        return base_target
+
+    if total_days == 0 or available_days == 0:
+        return 0
+    prorated_target = _round_half_up(base_target * (available_days / float(total_days)))
+    return max(0, min(available_days, prorated_target))
+
+
+def _build_week_periods(day_entries, week_start="monday", apply_to_partial_weeks=True):
+    if not day_entries:
+        return []
+    week_start = str(week_start or "monday").strip().lower()
+    if week_start == "monday":
+        week_start_idx = 0
+    elif week_start == "sunday":
+        week_start_idx = 6
+    else:
+        return []
+
+    buckets = {}
+    for day_num, col_name, current_date in day_entries:
+        offset = (current_date.weekday() - week_start_idx) % 7
+        period_start = (current_date - pd.Timedelta(days=offset)).date().isoformat()
+        buckets.setdefault(period_start, []).append((day_num, col_name, current_date))
+
+    periods = []
+    for label in sorted(buckets.keys()):
+        entries = buckets[label]
+        if not apply_to_partial_weeks and len(entries) != 7:
+            continue
+        periods.append((label, entries))
+    return periods
+
+
+def _compute_fixed_days_off_violations(df, year, rules):
+    weekly_rule, monthly_rule = _extract_fixed_days_off_rule_params(rules)
+    weekly_supported = _supports_fixed_days_off_rule(weekly_rule)
+    monthly_supported = _supports_fixed_days_off_rule(monthly_rule)
+    if not weekly_supported and not monthly_supported:
+        return None
+
+    day_entries = []
+    for col in df.columns:
+        match = re.match(r"^Dia\s+(\d+)$", str(col))
+        if not match:
+            continue
+        day_num = int(match.group(1))
+        current_date = (pd.Timestamp(f"{int(year)}-01-01") + pd.Timedelta(days=day_num - 1)).to_pydatetime()
+        day_entries.append((day_num, col, current_date))
+    day_entries.sort(key=lambda x: x[0])
+    if not day_entries or "funcionario" not in df.columns:
+        return None
+
+    row_emp_keys = {}
+    employee_keys = set()
+    for row_idx, row in df.iterrows():
+        key = _normalize_employee_ref(row.get("funcionario"))
+        if key is None:
+            continue
+        row_emp_keys[row_idx] = key
+        employee_keys.add(key)
+
+    violations = 0
+
+    if weekly_supported:
+        week_start = weekly_rule.get("weekStart", "monday")
+        apply_partial = bool(weekly_rule.get("applyToPartialWeeks", True))
+        weekly_targets = _resolve_weekly_targets(weekly_rule, employee_keys)
+        weekly_periods = _build_week_periods(
+            day_entries,
+            week_start=week_start,
+            apply_to_partial_weeks=apply_partial,
+        )
+        for row_idx, row in df.iterrows():
+            emp_key = row_emp_keys.get(row_idx)
+            if emp_key not in weekly_targets:
+                continue
+            base_target = weekly_targets[emp_key]
+            for _, entries in weekly_periods:
+                available_entries = [entry for entry in entries if not _is_vacation(row[entry[1]])]
+                target = _effective_period_target(
+                    weekly_rule,
+                    base_target,
+                    period_total_days=len(entries),
+                    available_non_vacation_days=len(available_entries),
+                )
+                if target is None:
+                    continue
+                actual = sum(1 for _, col_name, _ in available_entries if _is_off_zero(row[col_name]))
+                if actual != target:
+                    violations += 1
+
+    if monthly_supported:
+        monthly_targets = _resolve_monthly_targets(monthly_rule, employee_keys)
+        month_periods = {}
+        for day_num, col_name, current_date in day_entries:
+            month_periods.setdefault(current_date.strftime("%Y-%m"), []).append(
+                (day_num, col_name, current_date)
+            )
+        for row_idx, row in df.iterrows():
+            emp_key = row_emp_keys.get(row_idx)
+            if emp_key not in monthly_targets:
+                continue
+            for month_key, base_target in monthly_targets[emp_key].items():
+                entries = month_periods.get(str(month_key))
+                if not entries:
+                    continue
+                available_entries = [entry for entry in entries if not _is_vacation(row[entry[1]])]
+                target = _effective_period_target(
+                    monthly_rule,
+                    base_target,
+                    period_total_days=len(entries),
+                    available_non_vacation_days=len(available_entries),
+                )
+                if target is None:
+                    continue
+                actual = sum(1 for _, col_name, _ in available_entries if _is_off_zero(row[col_name]))
+                if actual != target:
+                    violations += 1
+
+    return violations
+
+
+def analyze(file, holidays, mins, employees, year=2025, rules=None):
     print(f"Analyzing file: {file}")
     df = pd.read_csv(file, encoding='ISO-8859-1')
 
@@ -193,7 +506,7 @@ def analyze(file, holidays, mins, employees, year=2025):
         missed_team_ideal += int(missing)
 
 
-    return {
+    result = {
         "missedWorkDays": missed_work_days,
         "missedVacationDays": missed_vacation_days,
         "workHolidays": workHolidays,
@@ -205,6 +518,15 @@ def analyze(file, holidays, mins, employees, year=2025):
         "shiftBalance": shift_balance,
         "teamSatisfactionLevel": team_satisfaction
     }
+
+    # Optional KPI for fixed folga rules.
+    # Uses the same vacation-aware target semantics as the solvers:
+    # strict target or prorated target (default) when vacation days reduce period size.
+    fixed_days_off_violations = _compute_fixed_days_off_violations(df, year, rules)
+    if fixed_days_off_violations is not None:
+        result["fixedDaysOffViolations"] = fixed_days_off_violations
+
+    return result
 
 def parse_requirements(requirements_text):
     """

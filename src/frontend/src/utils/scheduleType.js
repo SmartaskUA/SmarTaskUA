@@ -1,9 +1,19 @@
 export const inferScheduleType = (metadata) => {
   if (!metadata) return "";
-  const shifts = Number(metadata.shifts);
-  if (Number.isFinite(shifts)) {
-    if (shifts <= 3) return "Turno";
-    if (shifts > 3) return "Horas";
+  const rawShifts = metadata.shifts;
+  const hasExplicitShifts =
+    rawShifts !== null &&
+    rawShifts !== undefined &&
+    String(rawShifts).trim() !== "";
+  if (hasExplicitShifts) {
+    const shifts = Number(rawShifts);
+    if (Number.isFinite(shifts) && shifts > 0) {
+      if (shifts <= 3) return "Turno";
+      if (shifts > 3) return "Horas";
+    }
+  }
+  if (Array.isArray(metadata.problemWorkPeriods) && metadata.problemWorkPeriods.length > 0) {
+    return "Horas";
   }
   const algorithm = String(metadata.algorithmType || "").toLowerCase();
   if (algorithm.includes("hour") || algorithm.includes("half")) return "Horas";

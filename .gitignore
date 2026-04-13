@@ -81,6 +81,7 @@ src/scheduler/rules.json
 # Test output files in root directory
 /*.csv
 /*.pdf
+/logs*.txt
 /Combinacoes
 /Processed_Extract
 

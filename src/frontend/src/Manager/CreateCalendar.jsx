@@ -23,13 +23,6 @@ const CreateCalendar = () => {
   const initialMode = initialProblemId ? "problem" : "manual";
   const [mode, setMode] = useState(initialMode);
   const [title, setTitle] = useState("");
-  const [year, setYear] = useState("");
-  const [maxDuration, setMaxDuration] = useState("");
-  const [scheduleType, setScheduleType] = useState(""); // "Turno" ou "Horas"
-  const [selectedAlgorithm, setSelectedAlgorithm] = useState("");
-  const [shifts, setShifts] = useState("");
-  const [vacationTemplate, setVacationTemplate] = useState("");
-  const [minimumTemplate, setMinimumTemplate] = useState("");
   const [groupNames, setGroupNames] = useState([]); 
   const [selectedGroup, setSelectedGroup] = useState("");
   const [problems, setProblems] = useState([]);
@@ -41,6 +34,22 @@ const CreateCalendar = () => {
   const problemSelected = mode === "problem" && Boolean(selectedProblem);
   const [problemJson, setProblemJson] = useState(null);
   const [problemJsonLoading, setProblemJsonLoading] = useState(false);
+  const [year, setYear] = useState("2021");
+  const [maxDuration, setMaxDuration] = useState("100");
+  const [scheduleType, setScheduleType] = useState("Horas"); // "Turno" ou "Horas"
+  const [selectedAlgorithm, setSelectedAlgorithm] = useState("Heuristica");
+  const [shifts, setShifts] = useState("13");
+  const [vacationTemplate, setVacationTemplate] = useState("VacationTemplate_Case1_21");
+  const [minimumTemplate, setMinimumTemplate] = useState("Mins_R10-R62_30min.");
+  const [selectedSolver, setSelectedSolver] = useState("CBC"); // "CBC" ou "GUROBI"
+
+  // NEW: ruleset selection
+  const [ruleSets, setRuleSets] = useState([]); // [{name, description, ...}]
+  const [ruleSetName, setRuleSetName] = useState("");
+  const selectedRuleSet = useMemo(
+    () => ruleSets.find((r) => r.name === ruleSetName),
+    [ruleSets, ruleSetName]
+  );
 
   const [templateOptions, setTemplateOptions] = useState([]);
   const [minimumOptions, setMinimumOptions] = useState([]);
@@ -138,11 +147,15 @@ const CreateCalendar = () => {
     }
     const temporal = problemJson.temporalScope || {};
     const demand = problemJson.demand || {};
-    const shiftCount = Array.isArray(demand.shifts) ? demand.shifts.length : null;
+    const shiftCount = Array.isArray(demand.shifts) && demand.shifts.length ? demand.shifts.length : null;
+    const hasWorkPeriods = Array.isArray(demand.workPeriods) && demand.workPeriods.length > 0;
 
     if (shiftCount != null) {
       setScheduleType("Turno");
       setShifts(shiftCount);
+    } else if (hasWorkPeriods) {
+      setScheduleType("Horas");
+      setShifts("");
     } else {
       setScheduleType("");
       setShifts("");
@@ -188,8 +201,10 @@ const CreateCalendar = () => {
           requestedAt: new Date().toISOString(),
           vacationTemplate: vacationTemplate,
           minimuns: minimumTemplate,
-          shifts: shifts,
+          shifts: safeShifts,
+          hours: safeHours,
           groupName: selectedGroup,
+          solver: scheduleType === "Horas" ? selectedSolver : null,
         };
 
         const response = await axios.post(`${baseurl}/schedules/generate`, data);
@@ -251,33 +266,61 @@ const CreateCalendar = () => {
     setMaxDurationError(!intValue || intValue <= 0 || !/^\d+$/.test(value));
   };
 
-
-  const generalAlgorithms = [
+  const problemShiftAlgorithms = [
     { value: "ILP General", label: "ILP General" },
     { value: "CSP General", label: "CSP General" },
   ];
+  const problemHourAlgorithms = [
+    { value: "ILP_Sisqual_Hours", label: "ILP Sisqual Hours" },
+    { value: "CSP_Sisqual_Hours", label: "CSP Sisqual Hours" },
+  ];
 
-  // Algoritmos separados
-  const turnoAlgorithms = [
+  const manualShiftAlgorithms = [
     { value: "hill climbing", label: "Hill Climbing" },
     { value: "Greedy Randomized", label: "Greedy Randomized" },
     { value: "Greedy Randomized + Hill Climbing", label: "Greedy Randomized + Hill Climbing" },
-    { value: "genetic_algorithm", label: "Genetic Algorithm" },
     { value: "CSP Scheduling", label: "CSP Scheduling" },
     { value: "linear programming", label: "Integer Linear Programming" },
     { value: "linear programming 2", label: "Integer Linear Programming 2" },
-    { value: "ILP General", label: "ILP General" },
-    { value: "CSP General", label: "CSP General" },
-    ];
-  const horasAlgorithms = [
-    { value: "ILP_13Hours", label: "Integer Linear Programming 13 Hours" },
-    { value: "CSP_13Hours", label: "CSP 13 Hours" },
-    { value: "CSP_Afonso_Hours", label: "CSP Afonso 13 Hours" },
-    { value: "ILP_13_Half_Intervals", label: "Integer Linear Programming 13 Hours Half Intervals" },
-    { value: "CSP_Extra_Hours", label: "CSP Extra Hours" },
-    { value: "ILP_Extra_Hours", label: "ILP Extra Hours" },
-    // Adicione outros algoritmos de horas aqui se existirem
   ];
+  const manualHourAlgorithms = [
+    { value: "CSP_Afonso_Hours", label: "CSP Afonso 13 Hours" },
+    { value: "ILP_2", label: "Integer Linear Programming 2" },
+    { value: "ILP_2_Half_Intervals", label: "Integer Linear Programming 2 Half Intervals" },
+    { value: "ILP_3", label: "Integer Linear Programming 3" },
+    { value: "ILP_3_Half_Intervals", label: "Integer Linear Programming 3 Half Intervals" },
+    { value: "ILP_4", label: "Integer Linear Programming 4" },
+    { value: "ILP_4_Half_Intervals", label: "Integer Linear Programming 4 Half Intervals" },
+    { value: "COP_1", label: "Constraint Optimization Problem 1" },
+    { value: "COP_1_Half_Intervals", label: "Constraint Optimization Problem 1 Half Intervals" },
+    { value: "COP_2", label: "Constraint Optimization Problem 2" },
+    { value: "COP_2_Half_Intervals", label: "Constraint Optimization Problem 2 Half Intervals" },
+    { value: "Heuristica_1", label: "Heurística 1" },
+    { value: "Heuristica_Half_Intervals", label: "Heurística Half Intervals" },
+  ];
+
+  const availableAlgorithms = useMemo(() => {
+    if (mode === "problem") {
+      if (!problemJson) {
+        return [];
+      }
+      const demand = problemJson.demand || {};
+      if (Array.isArray(demand.shifts) && demand.shifts.length > 0) {
+        return problemShiftAlgorithms;
+      }
+      if (Array.isArray(demand.workPeriods) && demand.workPeriods.length > 0) {
+        return problemHourAlgorithms;
+      }
+      return [];
+    }
+    if (scheduleType === "Turno") {
+      return manualShiftAlgorithms;
+    }
+    if (scheduleType === "Horas") {
+      return manualHourAlgorithms;
+    }
+    return [];
+  }, [mode, problemJson, scheduleType]);
 
   return (
     <div className="admin-container">
@@ -327,8 +370,9 @@ const CreateCalendar = () => {
                 value={maxDuration}
                 onChange={handleMaxDurationChange}
                 margin="normal"
+                inputProps={{ min: 1, max: 1000 }}
                 error={maxDurationError}
-                helperText={maxDurationError ? "Duration must be a positive integer" : ""}
+                helperText={maxDurationError ? "Duration must be a positive integer (até 1000)" : ""}
               />
 
               <FormControl fullWidth margin="normal">
@@ -345,7 +389,7 @@ const CreateCalendar = () => {
                     }
                   }}
                 >
-                  <MenuItem value="problem">Problem (General)</MenuItem>
+                  <MenuItem value="problem">Problem</MenuItem>
                   <MenuItem value="manual">Manual</MenuItem>
                 </Select>
               </FormControl>
@@ -441,6 +485,7 @@ const CreateCalendar = () => {
                     onChange={(e) => setShifts(e.target.value)}
                   >
                     <MenuItem value={13}>13 Horas</MenuItem>
+                    <MenuItem value={26}>26 Horas</MenuItem>
                   </Select>
                 </FormControl>
               )}
@@ -455,12 +500,24 @@ const CreateCalendar = () => {
                     label="Algoritmo"
                     onChange={(e) => setSelectedAlgorithm(e.target.value)}
                   >
-                    {(mode === "problem"
-                      ? generalAlgorithms
-                      : (scheduleType === "Turno" ? turnoAlgorithms : horasAlgorithms)
-                    ).map((alg) => (
+                    {availableAlgorithms.map((alg) => (
                       <MenuItem key={alg.value} value={alg.value}>{alg.label}</MenuItem>
                     ))}
+                  </Select>
+                </FormControl>
+              )}
+
+              {mode === "manual" && ["ILP_2", "ILP_2_Half_Intervals", "ILP_3", "ILP_3_Half_Intervals", "ILP_4", "ILP_4_Half_Intervals"].includes(selectedAlgorithm) && (
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="solver-select-label">Solver</InputLabel>
+                  <Select
+                    labelId="solver-select-label"
+                    value={selectedSolver}
+                    label="Solver"
+                    onChange={(e) => setSelectedSolver(e.target.value)}
+                  >
+                    <MenuItem value="CBC">CBC (Open Source)</MenuItem>
+                    <MenuItem value="GUROBI">Gurobi (Commercial)</MenuItem>
                   </Select>
                 </FormControl>
               )}

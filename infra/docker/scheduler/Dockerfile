@@ -15,8 +15,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy master rules.json from config/
 COPY config/rules.json ./rules.json
 
+# Copy bundled problem definitions used by problem-native solvers.
+COPY data/problems ./data/problems
+
 # Copy the entire scheduler service (from src/scheduler/)
 COPY src/scheduler/ .
+
+# Ensure analyzer package is available inside the scheduler container
+COPY src/analyzer/ ./analyzer
 
 # The command will be specified in docker-compose.yml
 CMD ["python3", "RabbitMQClient.py"]

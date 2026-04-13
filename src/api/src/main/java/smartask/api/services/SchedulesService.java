@@ -12,10 +12,12 @@ import smartask.api.models.requests.ScheduleRequest;
 import smartask.api.repositories.*;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.text.Normalizer;
 
@@ -24,6 +26,8 @@ import java.text.Normalizer;
 public class SchedulesService {
 
     private final FShandler FShandler = new FShandler();
+    private final SchedulingAlgorithmRegistry schedulingAlgorithmRegistry;
+    private final ProblemService problemService;
 
     @Autowired
     private SchedulesRepository schedulerepository;
@@ -44,12 +48,34 @@ public class SchedulesService {
     private ReferenceTemplateRepository referenceTemplateRepository;
 
     public String requestScheduleGeneration(ScheduleRequest schedule) {
+        if (schedule.getTaskId() == null || schedule.getTaskId().isBlank()) {
+            schedule.setTaskId(UUID.randomUUID().toString());
+        }
+
+        SchedulingAlgorithmRegistry.AlgorithmSpec algorithmSpec = schedulingAlgorithmRegistry.find(schedule.getAlgorithm())
+                .orElse(null);
+        if (algorithmSpec == null) {
+            return "Unsupported algorithm '" + schedule.getAlgorithm() + "'.";
+        }
+
+        boolean problemRequest = schedule.getProblemPath() != null && !schedule.getProblemPath().isBlank();
+        if (algorithmSpec.getUiMode() == SchedulingAlgorithmRegistry.UiMode.PROBLEM && !problemRequest) {
+            return "Algorithm '" + schedule.getAlgorithm() + "' is only available in problem mode.";
+        }
+        if (algorithmSpec.getUiMode() == SchedulingAlgorithmRegistry.UiMode.MANUAL && problemRequest) {
+            return "Algorithm '" + schedule.getAlgorithm() + "' is not available for problem solve.";
+        }
 
         boolean exists = schedulerepository.existsByTitleAndAlgorithm(schedule.getTitle(), schedule.getAlgorithm());    
 
 
         if (exists) {
             return "Schedule with the same title and algorithm exists!";
+        }
+
+        if (algorithmSpec.getInputKind() == SchedulingAlgorithmRegistry.InputKind.PROBLEM_BUNDLE) {
+            final String res = producer.requestScheduleMessage(schedule);
+            return res.equals("Sent task request") ? "Sent task request" : res;
         }
 
         // Validação do VacationTemplate
@@ -112,9 +138,18 @@ public class SchedulesService {
         Integer inferredHourCount = inferHourCount(minRows);
         
         if (isHourly) {
+
+            System.out.println("[INFO] Template de mínimos por HORA detetado.");
+
             if (inferredHourCount == null || inferredHourCount == 0) {
                 return "Unable to infer hourly minimums from template '" + schedule.getMinimuns() +
                        "'. Make sure the CSV has a 'Hora' column (e.g., 09-10, 10-11, ...).";
+            }
+            
+            try {
+                Thread.sleep(2000); // Espera 2 segundos
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         
             System.out.println("[INFO] Detetado template de mínimos por HORA com " + inferredHourCount + " intervalos.");
@@ -134,9 +169,14 @@ public class SchedulesService {
 
         if (isHourly) {
 
-            if (!inferredHourCount.equals(schedule.getShifts())) {
-                return "Selected shifts (" + schedule.getShifts() + ") does not match minimums template '" +
-                       schedule.getMinimuns() + "' (found " + inferredShiftCount + ").";
+            // Para templates de horas, validar schedule.getHours() em vez de shifts
+            Integer requestedHours = schedule.getHours();
+            if (requestedHours == null) {
+                // Se hours não está definido, assume que está correto (skip validation)
+                System.out.println("[INFO] Hours not specified, skipping hourly validation.");
+            } else if (!inferredHourCount.equals(requestedHours)) {
+                return "Selected hours (" + requestedHours + ") does not match minimums template '" +
+                       schedule.getMinimuns() + "' (found " + inferredHourCount + " hour slots).";
             }
 
         } else {
@@ -159,9 +199,9 @@ public class SchedulesService {
                 .map(s -> s == null ? "" : s.trim().toLowerCase())
                 .collect(Collectors.toList());
 
-        // Procura uma coluna chamada "hora" ou que contenha intervalos tipo "09-10"
+        // Procura uma coluna chamada "hora" ou que contenha intervalos tipo "09-10" ou "09:00-09:30"
         return header.contains("hora") || rows.stream()
-                .anyMatch(r -> r.size() > 1 && r.get(1).matches(".*\\d{2}-\\d{2}.*"));
+                .anyMatch(r -> r.size() > 1 && (r.get(1).matches(".*\\d{2}:\\d{2}-\\d{2}:\\d{2}.*") || r.get(1).matches(".*\\d{2}-\\d{2}.*")));
     }
 
     /**
@@ -192,7 +232,7 @@ public class SchedulesService {
         return count == 0 ? null : count;
     }
 
-    /** Conta o número de intervalos horários únicos definidos (09-10, 10-11, etc.) */
+    /** Conta o número de intervalos horários únicos definidos (09-10, 10-11, 09:00-09:30, etc.) */
 
     private Integer inferHourCount(List<List<String>> rows) {
         if (rows == null || rows.isEmpty()) return null;
@@ -200,7 +240,7 @@ public class SchedulesService {
         Set<String> hours = rows.stream()
                 .filter(r -> r.size() > 1)
                 .map(r -> r.get(1).trim())
-                .filter(s -> s.matches("\\d{2}-\\d{2}"))
+                .filter(s -> s.matches("\\d{2}:\\d{2}-\\d{2}:\\d{2}") || s.matches("\\d{2}-\\d{2}"))
                 .collect(Collectors.toSet());
 
         System.out.println("[DEBUG] Detetados intervalos horários: " + hours);
@@ -237,7 +277,9 @@ public class SchedulesService {
     }
 
     public Optional<Schedule> getByTitle(String title) {
-        return schedulerepository.findByTitle(title);
+        return schedulerepository.findAllByTitle(title).stream()
+                .max(java.util.Comparator.comparing(Schedule::getTimestamp))
+                .map(this::enrichProblemBundleMetadata);
     }
 
     public List<String[]> readex1() {
@@ -276,7 +318,7 @@ public class SchedulesService {
     }
 
     public Optional<Schedule> getScheduleById(String id) {
-        return schedulerepository.findById(id);
+        return schedulerepository.findById(id).map(this::enrichProblemBundleMetadata);
     }
 
     public boolean deleteScheduleById(String id) {
@@ -307,6 +349,36 @@ public class SchedulesService {
             return true;
         }
         return false;
+    }
+
+    private Schedule enrichProblemBundleMetadata(Schedule schedule) {
+        if (schedule == null) {
+            return null;
+        }
+        Map<String, Object> metadata = schedule.getMetadata();
+        if (metadata == null || metadata.isEmpty()) {
+            return schedule;
+        }
+
+        Object problemPathValue = metadata.get("problemPath");
+        if (problemPathValue == null || String.valueOf(problemPathValue).isBlank()) {
+            return schedule;
+        }
+
+        Object demandData = metadata.get("problemDemandData");
+        if (demandData instanceof List<?> list && !list.isEmpty()) {
+            return schedule;
+        }
+
+        Map<String, Object> bundleMetadata = problemService.loadProblemBundleMetadata(String.valueOf(problemPathValue));
+        if (bundleMetadata.isEmpty()) {
+            return schedule;
+        }
+
+        Map<String, Object> merged = new LinkedHashMap<>(metadata);
+        merged.putAll(bundleMetadata);
+        schedule.setMetadata(merged);
+        return schedule;
     }
 
 

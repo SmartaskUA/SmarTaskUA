@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "2.5",
+  "problemType": "employee_scheduling",
+
+  "metadata": {
+    "problemId": "TIME_CONSTRAINTS_EXAMPLE",
+    "createdAt": "2026-03-08T00:00:00Z",
+    "description": "v2.5 example demonstrating time window constraints (EQUALS/INCLUDE/EXCEPT) with operating hours",
+    "source": "time_constraints_example"
+  },
+
+  "features": {
+    "useWorkPeriodBasedScheduling": true,
+    "useAdvancedConstraints": false,
+    "usePriorityHierarchy": false
+  },
+
+  "temporalScope": {
+    "year": 2030,
+    "numDays": 7,
+    "targetPeriod": {
+      "start": "2030-10-01",
+      "end": "2030-10-07",
+      "includeBufferWeeks": false
+    }
+  },
+
+  "operatingHours": {
+    "enabled": true,
+    "dataFile": "operating_hours.csv",
+    "enforcement": "hard"
+  },
+
+  "contracts": {
+    "definitions": [
+      {
+        "id": "fullTime_8h",
+        "name": "Full Time - 8 hours/day",
+        "workHoursPerDay": 8
+      }
+    ]
+  },
+
+  "employees": {
+    "model": "team",
+    "simple": [
+      {"id": "EMP001", "name": "Employee 001", "teams": ["TeamA"], "contractType": "fullTime_8h"},
+      {"id": "EMP002", "name": "Employee 002", "teams": ["TeamA"], "contractType": "fullTime_8h"},
+      {"id": "EMP003", "name": "Employee 003", "teams": ["TeamA"], "contractType": "fullTime_8h"},
+      {"id": "EMP004", "name": "Employee 004", "teams": ["TeamA"], "contractType": "fullTime_8h"},
+      {"id": "EMP005", "name": "Employee 005", "teams": ["TeamA"], "contractType": "fullTime_8h"},
+      {"id": "EMP006", "name": "Employee 006", "teams": ["TeamA"], "contractType": "fullTime_8h"},
+      {"id": "EMP007", "name": "Employee 007", "teams": ["TeamA"], "contractType": "fullTime_8h"},
+      {"id": "EMP008", "name": "Employee 008", "teams": ["TeamA"], "contractType": "fullTime_8h"}
+    ]
+  },
+
+  "demand": {
+    "workPeriodModel": "fixed",
+    "dataFile": "demand.csv",
+    "organizationalUnits": {
+      "teams": [
+        {"code": "TeamA", "name": "Team A"}
+      ]
+    },
+    "workPeriods": [
+      {
+        "code": "MORNING",
+        "name": "Morning Shift",
+        "timeRange": {"start": "08:30", "end": "16:30"}
+      },
+      {
+        "code": "AFTERNOON",
+        "name": "Afternoon Shift",
+        "timeRange": {"start": "14:00", "end": "22:00"}
+      },
+      {
+        "code": "NIGHT",
+        "name": "Night Shift",
+        "timeRange": {"start": "22:00", "end": "06:30"}
+      }
+    ]
+  },
+
+  "scheduleInput": {
+    "dataFile": "schedule_input.csv",
+    "markingTypes": {
+      "DL": "Day Off",
+      "VAC": "Vacation"
+    }
+  },
+
+  "constraints": {
+    "hard": [
+      {
+        "id": "time-constraints",
+        "type": "time_constraint",
+        "params": {},
+        "enabled": true
+      }
+    ],
+    "soft": []
+  },
+
+  "optimization": {
+    "algorithm": "CSPv2",
+    "maxTimeMinutes": 10,
+    "objectives": [
+      {
+        "goal": "minimize_shortages",
+        "weight": 1000,
+        "priority": 1
+      }
+    ]
+  }
+}

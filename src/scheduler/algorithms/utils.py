@@ -5,6 +5,8 @@ import re
 from datetime import date, time
 import pandas as pd
 from collections import defaultdict
+from time import sleep
+import math
 
 TEAM_CODE_TO_ID = {'A': 1, 'B': 2} # will be updated if there are more teams
 TEAM_ID_TO_CODE = {v: k for k, v in TEAM_CODE_TO_ID.items()}
@@ -143,36 +145,6 @@ def parse_requirements_file(file_path: str):
 
     return mins, ideals
 
-def rows_to_req_dicts(req_rows):
-    """
-    req_rows: rows like ['Equipa A','Minimo','M', <day1>, ...]
-    Supports 'Equipa C', 'Team D', or just 'C' as the last token.
-    """
-    mins, ideals = {}, {}
-    for row in req_rows:
-        team_label, kind, shift_code, *counts = row
-
-        # robust final token as team code (A, B, C, D, ...):
-        team_code = team_label.strip().split()[-1].upper()
-        team_id = get_team_id(team_code)
-
-        code = shift_code.strip().upper()
-        if code.startswith('M'):
-            shift = 1
-        elif code.startswith('T') or code.startswith('A'):
-            shift = 2
-        elif code.startswith('N'):
-            shift = 3
-        else:
-            continue
-
-        target = mins if kind.strip().lower().startswith('min') else ideals
-        for day, value in enumerate(counts, start=1):
-            v = str(value).strip()
-            if v:
-                target[(day, shift, team_id)] = int(v)
-    return mins, ideals
-
 
 def rows_to_req_dicts_any(req_rows, year=None):
     """
@@ -184,6 +156,7 @@ def rows_to_req_dicts_any(req_rows, year=None):
     if _looks_like_demand_rows(req_rows):
         return rows_to_req_dicts_from_demand(req_rows, year=year)
     return rows_to_req_dicts(req_rows)
+
 
 def infer_shift_count_from_dicts(mins_raw, ideals_raw):
     shift_values = [
@@ -385,59 +358,75 @@ def rows_to_req_dicts_Half_Hour(req_rows):
       mins[(day, hora_ou_turno, team_id)] e ideals[(day, hora_ou_turno, team_id)]
     """
     mins, ideals = {}, {}
-    for row in req_rows:
+    print(f"[DEBUG rows_to_req_dicts_Half_Hour] Processing {len(req_rows)} rows")
+    
+    for row_idx, row in enumerate(req_rows):
         if not row or not row[0].strip():
+            print(f"[DEBUG] Row {row_idx}: SKIPPED (empty)")
             continue
         
-        #print(f"Processing row: {row}, from")
+        print(f"\n[DEBUG] Row {row_idx}: {row[:5]}...")  # Primeiros 5 elementos
         team_label = row[0].strip()
-        #print(f"team_label: {team_label}")
+        print(f"  team_label: '{team_label}'")
         kind = row[1].strip().lower()
-        #print(f"kind: {kind}")
+        print(f"  kind: '{kind}'")
 
         # Detecta se é por hora (ex: '09-10') ou por turno ('M', 'T', 'N')
-        thirdShifts = row[2].strip()
+        thirdShifts = row[2].strip() if len(row) > 2 else ""
         thirdHours = row[1].strip()
-        #print(f"third_Shifts: {thirdShifts}")
-        #print(f"third_Hours: {thirdHours}")
+        print(f"  thirdShifts: '{thirdShifts}'")
+        print(f"  thirdHours: '{thirdHours}'")
+        
         countsHours = row[2:]
         countsShifts = row[3:]
-        #print(f"counts: {counts}")
+        print(f"  countsHours length: {len(countsHours)}")
 
         team_code = get_team_code(team_label)
         team_id = get_team_id(team_code)
-        #print(f"team_code: {team_code}, team_id: {team_id}")
-        #time.sleep(15)  # para debug sequencial
+        print(f"  team_code: '{team_code}', team_id: {team_id}")
 
         
         hour_label = thirdHours
-        # print(f"hour_label: {hour_label}")
+        print(f"  hour_label: '{hour_label}'")
         target = ideals if kind.startswith('min') else mins
+        print(f"  target: {'ideals' if kind.startswith('min') else 'mins'}")
+        
         # Dividir a hora em 2 períodos de 30 minutos
         # Ex: '09-10' → [(9.0, 9.5), (9.5, 10.0)]
         hour_parts = hour_label.split('-')
+        if len(hour_parts) != 2:
+            print(f"  [WARNING] Invalid hour format: '{hour_label}', skipping row")
+            continue
+            
         start_hour = int(hour_parts[0])
         end_hour = int(hour_parts[1])
+        print(f"  Parsed: start_hour={start_hour}, end_hour={end_hour}")
+        
+        entries_created = 0
         for day, val in enumerate(countsHours, start=1):
             v = str(val).strip()
-            if v:
+            if v and v != '0':
                 val_int = int(v)
                 # Criar 2 entradas: uma para cada meia hora
-                # Ex: (1, '9.0-9.5', 1) e (1, '9.5-10.0', 1)
-                first_half = f"{start_hour}.0-{start_hour}.5"
-                second_half = f"{start_hour}.5-{end_hour}.0"
+                # Format: "09.0-09.5" to match ILP lookup format
+                first_half = f"{float(start_hour):04.1f}-{float(start_hour)+0.5:04.1f}"
+                second_half = f"{float(start_hour)+0.5:04.1f}-{float(end_hour):04.1f}"
                 
                 target[(day, first_half, team_id)] = val_int
                 target[(day, second_half, team_id)] = val_int
+                entries_created += 2
+                
+                if day <= 3:  # Debug primeiros 3 dias
+                    print(f"    Day {day}: '{first_half}' = {val_int}, '{second_half}' = {val_int}")
+        
+        print(f"  Total entries created: {entries_created}")
 
+    print(f"\n[DEBUG FINAL] mins keys: {len(mins)}, ideals keys: {len(ideals)}")
+    print(f"[DEBUG FINAL] Sample mins (first 5): {dict(list(mins.items())[:5])}")
+    print(f"[DEBUG FINAL] Sample ideals (first 5): {dict(list(ideals.items())[:5])}")
 
-    # print(f"Current mins: {mins}")
-    # print(f"Current ideals: {ideals}")
-    # time.sleep(15)  # para debug sequencial
-
+    # sleep(1500)  # para debug sequencial
     return mins, ideals
-
-
 
 
 def export_schedule_to_csv_shifts(scheduler, filename="schedule.csv", num_days=365):
@@ -575,31 +564,6 @@ def schedule_to_table(*, employees: list, vacs: dict, assignment: dict, num_days
         rows.append(line)
     return rows
 
-def to_table(*, employees: list, vacs: dict, assignment: dict, num_days: int, work_blocks: list):
-        """Return schedule as table for display."""
-        header = ["Employee"] + [f"Day{i}" for i in range(1, num_days + 1)]
-        rows = [header]
-        
-        for emp_id in sorted([i + 1 for i in employees]):
-            vac_days = set(vacs.get(emp_id, []))
-            day_to_block = {d: (b, t) for (d, b, t) in assignment.get(emp_id, [])}
-            
-            line = [f"Emp{emp_id}"]
-            for d in range(1, num_days + 1):
-                if d in vac_days:
-                    line.append("F")
-                elif d in day_to_block:
-                    block_idx, team_id = day_to_block[d]
-                    block = work_blocks[block_idx]
-                    team_code = TEAM_ID_TO_CODE.get(team_id, 'A')
-                    line.append(f"{block[0]}-{block[1]}-{block[2]}_{team_code}")
-                else:
-                    line.append("OFF")
-            
-            rows.append(line)
-        
-        return rows
-
 def to_table_hours(*, employees, vacs, assignment, num_days, work_blocks):
     """
     Constrói uma tabela (lista de listas) com o horário por horas.
@@ -660,14 +624,21 @@ def create_Blocks(interval_in_hours, inicial_Hour, final_Hour):
     Retorna uma lista de tuplos (start, break, end).
     """
     blocks = []
-    start_hour = inicial_Hour
+    start_hour = float(inicial_Hour)
+    final_Hour = float(final_Hour)
+    interval_in_hours = float(interval_in_hours)
+    
     while start_hour + 9 <= final_Hour:
         end_hour = start_hour + 9
-        for i in range(0,3):
+        for i in range(0, 3):
             break_hour = start_hour + 5 + i
             blocks.append((start_hour, break_hour, end_hour))
+            print(f"Created block: {start_hour}-{break_hour}-{end_hour}")
         start_hour += interval_in_hours
+
+    # sleep(1000)  # para debug sequencial
     return blocks
+
 
 def drange(x, y, jump):
     while x < y:
@@ -699,164 +670,143 @@ def drange_indexed(start, stop, step):
         x += step
 
 def drange_indexed_h(start, stop, step):
-    # print(f"drange_indexed: start={start}, stop={stop}, step={step}")
-    x = start
+    x = float(start)  # Force float to avoid int/float mixing
+    list_indices = set()
 
     while x < stop:
-        # Geramos um índice inteiro (ex: 9.0 -> 18, 9.5 -> 19)
-        # Multiplicamos por 2 e convertemos para int
-        yield x
-        
-        # print(f"drange_indexed: counter={counter}, x={x}, index={index}")
+        # Round to 1 decimal to avoid floating point precision issues
+        list_indices.add(round(x, 1))
         x += step
 
 
-def compute_lower_bound_and_report(scheduler, csv_filename="csp_lb_report.csv", verbose=True):
+
+
+def count_minimum_failures(scheduler):
+        """
+        Conta o número total de falhas aos mínimos necessários na solução atribuída.
+        Para cada (dia, hora, equipa), verifica se o número de funcionários atribuídos < mínimo.
+        
+        Suporta dois formatos de chaves:
+        - COP: (Timestamp, float, team_code) ex: (Timestamp, 9.0, 'A')
+        - Heurística: (Timestamp, str, team_code) ex: (Timestamp, '09-10', 'A')
+        """
+        # Obter o dicionário de mínimos correto (theta em COP_1, minimos em COP_2/Heuristica)
+        minimos_dict = getattr(scheduler, 'minimos', None) or getattr(scheduler, 'theta', {})
+        
+        if not minimos_dict:
+            return 0
+        
+        # Detectar formato das chaves: float ou string?
+        sample_key = next(iter(minimos_dict.keys()), None)
+        if sample_key is None:
+            return 0
+        
+        use_string_hours = isinstance(sample_key[1], str)
+        
+        # Reconstruir cobertura por (dia, hora, equipa)
+        coverage = {}
+        for emp_id, assignments in scheduler.assignment.items():
+            for (day_idx, block_idx, team_id) in assignments:
+                date = scheduler.dates[day_idx - 1]
+                block = scheduler.work_blocks[block_idx]
+                team_code = TEAM_ID_TO_CODE.get(team_id, 'A')
+                hours = scheduler._get_working_hours(block)
+                for h in hours:
+                    if use_string_hours:
+                        # Formato Heurística: '09-10' (hora inteira)
+                        h_int = int(h)
+                        hour_key = f"{h_int:02d}-{h_int+1:02d}"
+                    else:
+                        # Formato COP: float (9.0, 9.5, etc.)
+                        hour_key = round(float(h), 1)
+                    
+                    key = (date, hour_key, team_code)
+                    coverage[key] = coverage.get(key, 0) + 1
+        
+        failures = 0
+        for key, minimo in minimos_dict.items():
+            if minimo > 0:
+                covered = coverage.get(key, 0)
+                if covered < minimo:
+                    failures += 1
+        return failures
+
+def check_5_consecutive_days(table):
+    violations = []
+    for row in table[1:]:  # Ignora header
+        emp = row[0]
+        work_streak = 0
+        start_idx = None
+        for i, cell in enumerate(row[1:], 1):
+            if cell not in ("OFF", "F", "VACATION"):
+                if work_streak == 0:
+                    start_idx = i
+                work_streak += 1
+                if work_streak > 5:
+                    violations.append((emp, start_idx, i))
+            else:
+                work_streak = 0
+                start_idx = None
+    return violations
+
+
+def rows_to_req_dicts_FIXED(req_rows):
     """
-    Calcula um lower bound (LB) válido para as shortages e gera relatório.
-    LB por slot (dia,hora,team) = max(0, minimo - capacidade_maxima_disponivel).
-    capacidade_maxima_disponivel = número de empregados que:
-        - pertencem àquela equipa (podem trabalhar nessa equipa),
-        - não estão de férias nesse dia,
-        - o dia não é fechado para essa equipa (mínimo != -1).
-    Retorna dicionário com LB_total, objective (valor da solução), quality_pct, e paths do csv.
+    FIXED: Store minimums with FLOAT keys (not strings)
+    Key format: (pd.Timestamp, float, int)
+    Example: (Timestamp('2021-11-02'), 9.0, 1)
     """
-    # 1) recolhe inputs do scheduler
-    dates = scheduler.dates
-    hours = scheduler.hours
-    teams = list(scheduler.teams.keys())  # códigos ('A','B',...)
-    emp_team_code = scheduler.emp_team_code  # {f_idx: (teams...)}
-    vacations = scheduler.vacations_dates     # {f_idx: set(dates)}
-    minimos = scheduler.minimos               # {(date, "HH-HH", team_code): val}
-    objective = None
-    # tenta ler objective do solver/relatório
-    try:
-        # se tens o valor guardado em scheduler.solver e model -> cp-sat
-        objective = float(scheduler.solver.ObjectiveValue()) if scheduler.solver is not None else None
-    except Exception:
-        # fallback: procura scheduler.attribute
-        objective = getattr(scheduler, "objective_value", None) or getattr(scheduler, "last_objective", None) or None
+    mins = {}
+    dates = pd.date_range(start="2021-11-01", end="2022-10-31").to_list()
 
-    # Se não conseguimos objective programaticamente, podes passar como argumento:
-    if objective is None:
-        # tenta usar scheduler.calculated_shortages (se soma represente objective)
-        if hasattr(scheduler, "calculated_shortages"):
-            # assumimos que objective = soma(shortage * weight). Não ideal; prefer passar objective explícito.
-            pass
+    for row in req_rows:
+        if not row or len(row) < 3:
+            continue
+        
+        team_label = row[0].strip()
+        if not team_label.upper().startswith('EQUIPA'):
+            continue
+        
+        second_col = row[1].strip()
+        team_code = get_team_code(team_label)
+        team_id = get_team_id(team_code)
 
-    # 2) calcula disponibilidade máxima por (date,h,team)
-    lb_per_slot = {}
-    total_minimos = 0
-    total_lb = 0
+        if '-' not in second_col:
+            continue
+            
+        hour_label = second_col
+        counts = row[2:]
 
-    # Precompute: lista de empregados por equipa (indice interno)
-    team_members = {tc: set() for tc in teams}
-    for f, tcs in emp_team_code.items():
-        for tc in tcs:
-            if tc in team_members:
-                team_members[tc].add(f)
+        # Parse hour to FLOAT
+        if ':' in hour_label:
+            try:
+                start_str, _ = hour_label.split('-')
+                start_hour, start_min = map(int, start_str.split(':'))
+                start_float = round(float(start_hour) + (0.5 if start_min == 30 else 0.0), 1)
+            except (ValueError, IndexError) as e:
+                print(f"[ERROR] Failed to parse hour '{hour_label}': {e}")
+                continue
+        else:
+            try:
+                parts = hour_label.split('-')
+                start_float = round(float(parts[0]), 1)
+            except (ValueError, IndexError) as e:
+                print(f"[ERROR] Failed to parse hour '{hour_label}': {e}")
+                continue
+        
+        # Store with (Timestamp, FLOAT, team_id) format
+        for day_num, val in enumerate(counts, start=1):
+            v = str(val).strip()
+            if not v:
+                continue
+            try:
+                val_int = int(v)
+            except ValueError:
+                continue
+            
+            if 1 <= day_num <= len(dates):
+                date_key = dates[day_num - 1]
+                # KEY FIX: Store as (date, FLOAT, team_id)
+                mins[(date_key, start_float, team_id)] = val_int
 
-    for d_idx, d in enumerate(dates):
-        for h in hours:
-            hour_label = f"{h:02d}-{h+1:02d}"
-            for tc in teams:
-                key = (d, hour_label, tc)
-                minimo = minimos.get(key, None)
-                if minimo is None:
-                    # se não existe requisito, assumimos 0 (nenhuma necessidade)
-                    minimo = 0
-                if minimo == -1:
-                    # dia fechado -> não contam para requisitos
-                    lb_per_slot[(d_idx+1, hour_label, tc)] = {'minimo': -1, 'capacity': 0, 'lb': 0}
-                    continue
-
-                # conta empregados potencialmente disponíveis naquele dia para aquela equipa
-                members = team_members.get(tc, set())
-                avail = 0
-                for f in members:
-                    # funcionário f disponível? (não em férias nesse dia)
-                    if d not in vacations.get(f, set()):
-                        # NOTA: estamos a ignorar limites globais (223 dias por empregado)
-                        # porque isso tornaria o LB ainda mais complexo. Este LB é válido.
-                        avail += 1
-
-                capacity = avail
-                lb_here = max(0, int(minimo) - capacity)
-                lb_per_slot[(d_idx+1, hour_label, tc)] = {
-                    'minimo': int(minimo),
-                    'capacity': capacity,
-                    'lb': lb_here
-                }
-                total_minimos += max(0, int(minimo))
-                total_lb += lb_here
-
-    # 3) calcula quality (usar objective passado se disponível)
-    # Se objective não está disponível, tenta ler scheduler.calculated_shortages somando
-    if objective is None:
-        # tenta somar shortages reais (se guardaste as variáveis)
-        real_shortages = 0
-        for k, v in getattr(scheduler, "calculated_shortages", {}).items():
-            if v is not None:
-                real_shortages += int(v)
-        objective = real_shortages
-
-    # Evita divisão por zero
-    if objective == 0:
-        quality = 0.0
-    else:
-        # fórmula: quality = 1 - (objective - LB)/objective = LB/objective
-        quality = float(total_lb) / float(objective) if objective > 0 else 0.0
-
-    quality_pct = quality * 100.0
-
-    # 4) escreve CSV com detalhes por slot
-    with open(csv_filename, 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(["DayIndex", "Date", "Hour", "Team", "Minimo", "Capacity", "LB_slot"])
-        for (d_idx, hour_label, tc), info in sorted(lb_per_slot.items(), key=lambda x: (x[0][0], x[0][1], x[0][2])):
-            date_str = dates[d_idx-1].strftime("%Y-%m-%d")
-            writer.writerow([d_idx, date_str, hour_label, tc, info['minimo'], info['capacity'], info['lb']])
-
-    # 5) resumo por equipa e por dia / top piores
-    lb_by_team = defaultdict(int)
-    min_by_team = defaultdict(int)
-    for (d_idx, hour_label, tc), info in lb_per_slot.items():
-        if info['minimo'] >= 0:
-            lb_by_team[tc] += info['lb']
-            min_by_team[tc] += info['minimo']
-
-    team_stats = []
-    for tc in teams:
-        team_stats.append((tc, min_by_team.get(tc,0), lb_by_team.get(tc,0),
-                           (1 - ( (min_by_team.get(tc,0)-lb_by_team.get(tc,0)) / max(1, min_by_team.get(tc,0)) )) if min_by_team.get(tc,0)>0 else 1.0))
-
-    # 6) imprime resumo
-    if verbose:
-        print("===== LB REPORT =====")
-        print(f"Objective (solution) = {objective}")
-        print(f"Lower bound (sum of slot LBs) = {total_lb}")
-        print(f"Total mínimos (sum of requisitos positivos) = {total_minimos}")
-        print(f"Quality (LB/objective) = {quality_pct:.2f}%")
-        print(f"CSV detalhado escrito em: {csv_filename}")
-        print("")
-        print("Per-team summary (team, total_min, total_LB, approx_coverage):")
-        for tc, totmin, totlb, approx_cov in sorted(team_stats, key=lambda x: x[2], reverse=True):
-            cov_pct = 100.0 * (1.0 - ( (totmin - totlb) / max(1, totmin) )) if totmin>0 else 100.0
-            print(f"  Team {tc}: min={totmin}  LB={totlb}  approx_coverage={cov_pct:.2f}%")
-        # top worst slots (largest LB)
-        worst_slots = sorted([(k,v['lb']) for k,v in lb_per_slot.items()], key=lambda x: -x[1])[:10]
-        print("")
-        print("Top 10 slots com maior LB (dayindex, hour, team, LB):")
-        for (d_idx, hour_label, tc), lb_val in worst_slots:
-            print(f"  Day {d_idx} {hour_label} Team {tc} -> LB = {lb_val}")
-
-    result = {
-        'objective': objective,
-        'total_lb': total_lb,
-        'total_minimos': total_minimos,
-        'quality_pct': quality_pct,
-        'csv': csv_filename,
-        'per_slot': lb_per_slot,
-        'team_stats': team_stats
-    }
-    return result
+    return mins, {}

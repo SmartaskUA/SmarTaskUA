@@ -4,7 +4,11 @@ from collections import defaultdict
 import holidays as hl
 
 from algorithms.general.constraints import parse_constraints
-from algorithms.general.solver_logging import SolutionTracker, write_csp_log
+from algorithms.general.days_off_rules import (
+    compile_fixed_days_off_targets,
+    effective_period_off_target,
+)
+from algorithms.general.solver_logging import SolutionTracker, solve_cp_with_tracker, write_csp_log
 from algorithms.utils import (
     build_allowed_teams,
     infer_shift_count_from_dicts,
@@ -71,6 +75,23 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
             for d in days:
                 if 1 <= d <= num_days:
                     vac_mask[(i, d)] = True
+
+    # Pre-compile week/month periods from the JSON rule so the CSP model only adds equalities.
+    fixed_days_off_targets = compile_fixed_days_off_targets(
+        plan,
+        employees,
+        dias_ano,
+        employee_index_base=0,
+    )
+
+    def _employee_label(employee_idx):
+        if 0 <= employee_idx < len(employees):
+            employee_row = employees[employee_idx]
+            if isinstance(employee_row, dict):
+                emp_id = employee_row.get("id")
+                if emp_id is not None and str(emp_id).strip():
+                    return str(emp_id)
+        return str(employee_idx + 1)
 
 
     m = cp_model.CpModel()
@@ -182,6 +203,76 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
             else:
                 m.Add(total_work <= total_max)
 
+    # Fixed number of OFF days per week/month.
+    # Important semantics in this block:
+    # 1) Vacation days are also OFF (off var = 1), so they enter the period sum.
+    # 2) We try to keep the configured target as equality whenever possible.
+    # 3) If vacations alone already exceed the target, equality would be impossible,
+    #    so we relax only that period to OFF >= target.
+    for employee in Employees:
+        # Iterate the weekly targets compiled for this employee.
+        # If employee has no weekly rule entry, .get(..., []) returns empty list.
+        for period in fixed_days_off_targets.weekly.get(employee, []):
+            # Calendar day indices (1..365/366) that belong to this weekly bucket.
+            period_days = list(period.day_indices)
+            try:
+                # Reuse shared target calculation helper.
+                # We pass full period size as "available" days so vacations are counted as OFF here.
+                target_off_days = effective_period_off_target(
+                    rule_params=plan.fixed_days_off_per_week,
+                    base_target_off_days=period.target_off_days,
+                    period_total_days=len(period.day_indices),
+                    available_non_vacation_days=len(period.day_indices),
+                    rule_type="fixed_days_off_per_week",
+                )
+            except ValueError as exc:
+                # Raise a contextual error to show employee and period that produced invalid params.
+                raise ValueError(
+                    "CSP General invalid fixed_days_off_per_week target for "
+                    f"employee {_employee_label(employee)} period {period.label}: {exc}"
+                ) from exc
+            # Count how many OFFs are already forced by vacation in this period.
+            # Those OFFs cannot be reduced by the solver.
+            forced_vac_off = sum(1 for d in period_days if vac_mask[(employee, d)])
+            # Symbolic sum of OFF vars for all days in the period.
+            period_off_sum = sum(off[(employee, d)] for d in period_days)
+            # If forced vacations already exceed target, equality is impossible.
+            # In that special case, enforce only minimum OFF count.
+            if forced_vac_off > target_off_days:
+                m.Add(period_off_sum >= target_off_days)
+            else:
+                # Normal case: keep exact OFF count.
+                m.Add(period_off_sum == target_off_days)
+        # Same logic for monthly compiled targets.
+        for period in fixed_days_off_targets.monthly.get(employee, []):
+            # Calendar day indices that belong to this month bucket.
+            period_days = list(period.day_indices)
+            try:
+                # Monthly effective target with same semantics as weekly block.
+                target_off_days = effective_period_off_target(
+                    rule_params=plan.fixed_days_off_per_month,
+                    base_target_off_days=period.target_off_days,
+                    period_total_days=len(period.day_indices),
+                    available_non_vacation_days=len(period.day_indices),
+                    rule_type="fixed_days_off_per_month",
+                )
+            except ValueError as exc:
+                # Same contextual error style for monthly target parsing issues.
+                raise ValueError(
+                    "CSP General invalid fixed_days_off_per_month target for "
+                    f"employee {_employee_label(employee)} period {period.label}: {exc}"
+                ) from exc
+            # Forced OFF due to vacation days in this monthly period.
+            forced_vac_off = sum(1 for d in period_days if vac_mask[(employee, d)])
+            # Symbolic OFF count for all days in the monthly period.
+            period_off_sum = sum(off[(employee, d)] for d in period_days)
+            # Relax only impossible equalities caused by forced vacations.
+            if forced_vac_off > target_off_days:
+                m.Add(period_off_sum >= target_off_days)
+            else:
+                # Keep exact monthly OFF target in regular feasible cases.
+                m.Add(period_off_sum == target_off_days)
+
 
     w_unmet_min = min_cov_weight
     w_unmet_ideal = ideal_cov_weight
@@ -201,7 +292,7 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
 
     # Attach the tracker
     tracker = SolutionTracker()
-    status = solver.Solve(m, solution_callback=tracker)
+    status = solve_cp_with_tracker(solver, m, tracker)
     write_csp_log(
         tracker=tracker,
         solver=solver,
@@ -210,23 +301,28 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
         max_time=maxTime,
     )
 
+    if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+        raise RuntimeError(
+            "CSP General could not find a feasible schedule "
+            f"(status={solver.StatusName(status)})."
+        )
+
     # --- EXPORT SCHEDULE ---
     assign = defaultdict(list)
-    if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-        for employee in Employees:
-            emp_id = employee + 1
-            for day in D:
-                if solver.Value(off[(employee, day)]) == 0:
-                    s_val = solver.Value(shift_id[(employee, day)])
-                    if s_val > 0:
-                        team_val = None
-                        for t in allowed_teams_per_emp[employee]:
-                            v = y.get((employee, day, s_val, t))
-                            if v is not None and solver.Value(v) == 1:
-                                team_val = t
-                                break
-                        if team_val is not None:
-                            assign[emp_id].append((day, s_val, team_val))
+    for employee in Employees:
+        emp_id = employee + 1
+        for day in D:
+            if solver.Value(off[(employee, day)]) == 0:
+                s_val = solver.Value(shift_id[(employee, day)])
+                if s_val > 0:
+                    team_val = None
+                    for t in allowed_teams_per_emp[employee]:
+                        v = y.get((employee, day, s_val, t))
+                        if v is not None and solver.Value(v) == 1:
+                            team_val = t
+                            break
+                    if team_val is not None:
+                        assign[emp_id].append((day, s_val, team_val))
 
     class View: pass
     v = View()

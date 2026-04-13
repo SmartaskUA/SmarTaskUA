@@ -8,15 +8,25 @@ const CalendarHeader = ({
   downloadCSV,
   calendarTitle,
   algorithmName,
+  scheduleType,
   viewMode,
-  onToggleView
+  onToggleView,
+  toggleViewLabel = "View Minimums",
 }) => {
+  const selectedIndex = months.findIndex((month) => month.value === selectedMonth);
+  const canGoPrev = selectedIndex > 0;
+  const canGoNext = selectedIndex >= 0 && selectedIndex < months.length - 1;
+
   const handlePrevMonth = () => {
-    setSelectedMonth(prev => Math.max(prev - 1, 1));
+    if (canGoPrev) {
+      setSelectedMonth(months[selectedIndex - 1].value);
+    }
   };
 
   const handleNextMonth = () => {
-    setSelectedMonth(prev => Math.min(prev + 1, 12));
+    if (canGoNext) {
+      setSelectedMonth(months[selectedIndex + 1].value);
+    }
   };
 
   return (
@@ -44,6 +54,22 @@ const CalendarHeader = ({
             {algorithmName}
           </span>
         )}
+        {scheduleType && (
+          <span
+            style={{
+              backgroundColor: scheduleType === "Horas" ? "#ecfeff" : "#eff6ff",
+              color: "#0f172a",
+              padding: "4px 10px",
+              borderRadius: "999px",
+              fontSize: "0.9rem",
+              fontWeight: "700",
+              display: "inline-block",
+              border: "1px solid rgba(15, 23, 42, 0.12)",
+            }}
+          >
+            {scheduleType}
+          </span>
+        )}
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -59,8 +85,10 @@ const CalendarHeader = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            transition: "background 0.3s"
+            transition: "background 0.3s",
+            opacity: canGoPrev ? 1 : 0.45
           }}
+          disabled={!canGoPrev}
         >
           <ChevronLeft color="white" size={20} />
         </button>
@@ -77,9 +105,9 @@ const CalendarHeader = ({
             fontSize: "14px",
           }}
         >
-          {months.map((month, index) => (
-            <option key={index + 1} value={index + 1}>
-              {month}
+          {months.map((month) => (
+            <option key={month.value} value={month.value}>
+              {month.label}
             </option>
           ))}
         </select>
@@ -96,8 +124,10 @@ const CalendarHeader = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            transition: "background 0.3s"
+            transition: "background 0.3s",
+            opacity: canGoNext ? 1 : 0.45
           }}
+          disabled={!canGoNext}
         >
           <ChevronRight color="white" size={20} />
         </button>
@@ -131,7 +161,7 @@ const CalendarHeader = ({
               transition: "background 0.3s"
             }}
           >
-            {viewMode === "minimums" ? "View Schedule" : "View Minimums"}
+            {viewMode === "minimums" ? "View Schedule" : toggleViewLabel}
           </button>
         )}
       </div>

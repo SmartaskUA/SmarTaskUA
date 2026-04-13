@@ -6,10 +6,12 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      "/schedules": {
+      "/api": {
         target: "http://api:8081",
         changeOrigin: true,
         secure: false,
+        ws: true,
+        rewrite: (path) => path.replace(/^\/api/, ""),
       },
     },
     watch: {
