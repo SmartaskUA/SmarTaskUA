@@ -1,104 +1,70 @@
-# PPO-Based Employee Scheduling (REINFORCE-full-problem)
+# Two-Phase PPO Employee Scheduling with GNN Actor-Critic
 
-This notebook frames the employee scheduling problem as a Reinforcement Learning task and solves it using **Proximal Policy Optimization (PPO)** with an MLP Actor-Critic network.
+This notebook solves the employee scheduling problem using **Proximal Policy Optimization (PPO)** with a **GNN (Graph Neural Network) Actor-Critic**. The environment is modeled as a Gym where the agent makes one shift-assignment decision per (employee, day) pair, split across two phases.
 
-## Problem Formulation
-
-The goal is to assign shifts to employees across an entire year while respecting hard constraints:
+## Problem Constraints
 
 - **223 workdays** per employee per year
 - Max **5 consecutive** workdays
 - Max **22 special day** (holiday/weekend) assignments
 - Employees can only be assigned to **their own teams**
-- No backward shift transitions (e.g., Afternoon -> Morning the next day)
+- No backward shift transitions (e.g., Afternoon → Morning the next day)
 - Respect **vacation days**
 - Meet **minimum staffing demand** per shift/team each day
 
-The problem is modeled as a **Gym environment** where the RL agent makes one decision per (employee, day) pair sequentially.
+## Environment (ScheduleEnv)
+
+### Two-Phase Design
+
+Each episode runs in two sequential phases:
+
+**Phase 1 — Coverage Assignment:** The agent processes all (employee, day) pairs in a shuffled day order. A **hard coverage mask** prevents assigning shifts where `daily_coverage >= min_demand` — the agent can only fill actual gaps or choose REST. This phase focuses on meeting minimum staffing demand.
+
+**Phase 2 — Gap Filling & Budget Completion:** After Phase 1, the environment collects all (employee, day) pairs where the employee is resting and still has budget remaining. **Shortfall days come first** (priority), then non-shortfall days. The agent decides whether to assign a shift or keep resting, targeting: (1) reduce remaining shortfall, (2) bring all employees to 223 working days.
 
 ```python
-    def __init__(self, data_dir: str = "../../../data/problems/SMARTASK_SIMPLE_2025"):
-        super().__init__()
-        base = Path(data_dir)
+def _build_phase2_steps(self):
+    """Build list of (emp, day) pairs for Phase 2.
+    Shortfall days first (priority), then non-shortfall days (fill to 223)."""
+    shortfall_steps = []
+    fill_steps = []
 
-        with open(base / "problem.json") as f:
-            prob = json.load(f)
+    for day in range(self.num_days):
+        has_gap = False
+        for s in range(2):
+            for t in range(2):
+                if self.daily_coverage[day, s, t] < self.min_demand[day, s, t]:
+                    has_gap = True
+                    break
+            if has_gap:
+                break
 
-        self.num_days = prob["temporalScope"]["numDays"]
-        self.year = prob["temporalScope"]["year"]
-        employees = prob["employees"]["simple"]
-        self.num_employees = len(employees)
-        self.employee_teams = [set(emp.get("teams", [])) for emp in employees]
+        for emp in range(self.num_employees):
+            if self.days_worked[emp] >= self.max_days_per_year:
+                continue
+            row = self._row(emp, day)
+            slot = self.state[row, 2:]
+            if slot[0] != 1:  # not resting
+                continue
 
-        vac_df = pd.read_csv(base / "vacations.csv", header=None)
-        self.vac_mask = vac_df.iloc[:, 1:].values.astype(bool)
+            if has_gap:
+                shortfall_steps.append((emp, day))
+            else:
+                fill_steps.append((emp, day))
 
-        dem_df = pd.read_csv(base / "demand.csv")
-        dem_df["date"] = pd.to_datetime(dem_df["date"])
-        start_ts = pd.Timestamp(f"{self.year}-01-01")
-        dem_df["day_idx"] = (dem_df["date"] - start_ts).dt.days
-
-        self.min_demand = np.zeros((self.num_days, 2, 2), dtype=int)
-        _shift_idx = {"M": 0, "T": 1}
-        _team_idx  = {"A": 0, "B": 1}
-        for _, row in dem_df.iterrows():
-            d = int(row["day_idx"])
-            s = _shift_idx[row["shift"]]
-            t = _team_idx[row["team"]]
-            self.min_demand[d, s, t] = int(row["minimum"])
-
-        self.special_days = _build_special_days(self.year, self.num_days)
-
-        self.max_days_per_year = 223
-        self.max_consecutive_days = 5
-        self.special_days_cap = 22
-
-        self.total_steps  = self.num_employees * self.num_days
-        self.num_features = 2
-
-        self.observation_space = gym.spaces.Box(
-            low=-1.0, high=10.0,
-            shape=(self.total_steps, self.num_features + self.NUM_ACTIONS),
-            dtype=np.float32,
-        )
-        self.action_space = gym.spaces.Discrete(self.NUM_ACTIONS)
-        self.reset()
+    return shortfall_steps + fill_steps
 ```
-
-## Environment (ScheduleEnv)
 
 ### State Representation
 
-The state is a **day-major matrix** of shape `(num_employees x num_days, num_features + num_actions)`. All employees for day 0 come first, then day 1, etc.:
+The state is a **day-major matrix** of shape `(num_employees × num_days, 2 + 5)`. Day order is shuffled each episode via `np.random.permutation`:
 
 ```
-Row  | emp | day | action columns (one-hot)
------+-----+-----+------------------------
-  0  |  0  |  0  |  0  0  0  0  0
-  1  |  1  |  0  |  0  0  0  0  0
-  2  |  2  |  0  |  0  0  0  0  0
-  -- day boundary --
-  3  |  0  |  1  |  0  0  0  0  0
+Row  | emp | day | REST  M-A  T-A  M-B  T-B
+-----+-----+-----+---------------------------
+  0  |  0  | d0  |  0    0    0    0    0
+  1  |  1  | d0  |  0    0    0    0    0
   ...
-```
-
-The agent processes the schedule **one day at a time**, assigning shifts to all employees on day 0 before moving to day 1. This is natural because shift assignments for a given day are interdependent (they must meet that day's demand).
-
-```python
-    def _build_initial_matrix(self):
-        """Sequential calendar-order day-major matrix."""
-        matrix = np.zeros(
-            (self.total_steps, self.num_features + self.NUM_ACTIONS), dtype=np.float32
-        )
-        self.emp_day_to_row = {}
-        row = 0
-        for day in range(self.num_days):
-            for emp in range(self.num_employees):
-                matrix[row, 0] = emp
-                matrix[row, 1] = day
-                self.emp_day_to_row[(emp, day)] = row
-                row += 1
-        return matrix
 ```
 
 ### Action Space
@@ -109,344 +75,248 @@ The agent processes the schedule **one day at a time**, assigning shifts to all 
 |--------|---------|
 | 0 | Rest (day off) |
 | 1 | Morning shift, Team A |
-| 2 | Tarde shift, Team A |
+| 2 | Afternoon shift, Team A |
 | 3 | Morning shift, Team B |
-| 4 | Tarde shift, Team B |
+| 4 | Afternoon shift, Team B |
 
-Illegal actions are masked (set to probability 0) before sampling, enforcing hard constraints at the network level.
+Illegal actions are masked (set to `-inf` before softmax) so the agent can never pick them.
 
-### Reward Function
+### Action Masking
 
-The reward balances **demand satisfaction** and **workload pacing**:
+Both phases enforce the same base constraints:
+
+- Vacation days → only REST
+- Max 223 days reached → only REST
+- Max 5 consecutive days → only REST
+- Special day cap (22) reached → only REST
+- Shift transitions (no Afternoon → Morning next day)
+- Team eligibility (employees only assigned to their teams)
+
+**Phase 1 additionally** masks any shift-team where `daily_coverage >= min_demand`, preventing over-assignment.
+
+### Reward Functions
+
+#### Phase 1 — Step Reward
 
 | Scenario | Reward | Rationale |
 |----------|--------|-----------|
-| Work & demand still needs filling | +2.0 | Directly satisfies a constraint |
-| Work & demand already met | -1.0 | Wastes the employee's 223-day budget |
-| Work & too far ahead of pace | -0.3 to -2.0 | Prevents burning budget too early |
-| Rest & ahead of pace | +0.25 to +1.0 | Conserves budget for later |
-| Rest & behind pace, demand unmet, can work | -1.5 | Missed opportunity to fill demand |
-| End of day, all demand met | +3.0 | Strong bonus for fully covered day |
-| End of day, demand unmet | -2.0 x shortfall | Heaviest penalty, per missing person |
+| Work & dual-team employee picks team B | +0.5 | Encourages flexible team B usage |
+| End of day, all demand met | +3.0 | Bonus for fully covered day |
+| End of day, demand unmet | -2.0 × shortfall | Penalty per missing slot |
 
-**Pacing** is tracked by comparing each employee's days worked against the ideal linear pace (~0.611 days worked per calendar day = 223/365).
+The coverage mask already prevents over-assignment, so every work action in Phase 1 fills a real gap.
 
-```python
-    def _calculate_reward(self, emp_id, day_id, action):
-        remaining_days_in_year = self.num_days - day_id - 1
-        remaining_budget = self.max_days_per_year - self.days_worked[emp_id]
-        ideal_pace = self.max_days_per_year / self.num_days  # ~0.611
-        reward = 0.0
+#### Phase 2 — Step Reward (Tiered)
 
-        # How many days ahead/behind the linear schedule
-        expected_worked = (day_id + 1) * ideal_pace
-        ahead_by = self.days_worked[emp_id] - expected_worked
+| Scenario | Reward | Rationale |
+|----------|--------|-----------|
+| Fill a shortfall gap (cov <= demand) | +3.0 | Primary goal — reduce shortfall |
+| Work on non-shortfall day (toward 223) | +1.0 | Secondary goal — reach 223 days |
+| Rest on shortfall day | -0.5 | Missed opportunity to close gap |
+| Rest on non-shortfall day | -0.1 | Mild penalty |
+| Dual-team employee picks team B | +0.5 | Same bonus as Phase 1 |
 
-        if action != 0:
-            shift, team = ACTION_TO_SHIFT_TEAM[action]
-            s = 0 if shift == "M" else 1
-            t = 0 if team  == "A" else 1
-            cov = self.daily_coverage[day_id, s, t]
-            mn = self.min_demand[day_id, s, t]
-
-            if cov <= mn:
-                reward += 2.0
-            else:
-                reward -= 1.0
-
-            # Proportional pacing penalty when ahead of schedule
-            if ahead_by > 3:
-                reward -= min(2.0, 0.3 * (ahead_by - 3))
-
-        else:
-            # REST
-            day_shortfall = np.maximum(0, self.min_demand[day_id] - self.daily_coverage[day_id]).sum()
-
-            if ahead_by > 2:
-                # Ahead of pace: resting is good, save budget for later
-                reward += min(1.0, 0.25 * (ahead_by - 2))
-            elif day_shortfall > 0 and remaining_budget > 0:
-                # Behind pace with unmet demand: resting is bad
-                if remaining_days_in_year > 0:
-                    pace = remaining_budget / remaining_days_in_year
-                    if pace >= ideal_pace:
-                        reward -= 1.5
-
-        # End-of-day signal after last employee on this day
-        is_last_emp_today = (
-            self.current_step >= self.total_steps or
-            int(self.state[self.current_step, 1]) != day_id
-        )
-        if is_last_emp_today:
-            day_shortfall = np.maximum(0, self.min_demand[day_id] - self.daily_coverage[day_id]).sum()
-            if day_shortfall == 0:
-                reward += 3.0
-            else:
-                reward -= day_shortfall * 2.0
-
-        return reward
-
-    def _calculate_final_reward(self):
-        reward = 0.0
-        total_shortfall = 0
-        for day in range(self.num_days):
-            for s in range(2):
-                for t in range(2):
-                    shortfall = self.min_demand[day, s, t] - self.daily_coverage[day, s, t]
-                    if shortfall > 0:
-                        total_shortfall += shortfall
-        reward -= total_shortfall * 5.0
-
-        for emp in range(self.num_employees):
-            miss = self.max_days_per_year - self.days_worked[emp]
-            if miss > 0:
-                reward -= miss * 3.0
-
-        if total_shortfall == 0:
-            reward += 500.0
-        return reward
-```
-
-## Network Architecture (MLPActorCritic)
-
-An MLP Actor-Critic with a **shared trunk** and two separate heads:
-
-```
-Input (39 dims) --> Shared MLP (128 hidden) --> Actor Head --> action probabilities (5)
-                                             --> Critic Head --> state value (1)
-```
-
-### Input Features (39 dimensions)
-
-| Component | Dims | Description |
-|-----------|------|-------------|
-| Employee embedding | 16 | Learned vector per employee (captures team membership, individual traits) |
-| Day projection | 16 | Static day features (normalized demand, special day flag, position in year) projected from 6 to 16 dims |
-| Coverage gaps | 4 | `min_demand - current_coverage` per shift/team (M-A, T-A, M-B, T-B) |
-| Dynamic features | 3 | days_worked (/ 223), consecutive_days (/ 5), pace_ratio (remaining_budget / remaining_calendar_days) |
-
-### Actor Head
-
-Outputs 5 logits, one per action. Illegal actions are masked to `-inf` before softmax, producing a valid probability distribution over legal actions only.
-
-### Critic Head
-
-Outputs a single scalar estimating the expected future reward from the current state. Used to compute advantages during training.
-
+#### Final Reward (end of episode)
 
 ```python
-class MLPActorCritic(nn.Module):
-    """
-    MLP Actor-Critic for PPO + GAE.
-    Input per step: emp_emb + day_feat + cov_gap(4) + dyn_feats(3).
-    dyn_feats = [days_worked, consecutive_days, pace_ratio].
-    pace_ratio = remaining_budget / remaining_calendar_days.
-    """
-    DAY_FEAT_DIM = 6
+def _calculate_final_reward(self):
+    reward = 0.0
+    total_shortfall = 0
+    for day in range(self.num_days):
+        for s in range(2):
+            for t in range(2):
+                shortfall = self.min_demand[day, s, t] - self.daily_coverage[day, s, t]
+                if shortfall > 0:
+                    total_shortfall += shortfall
+    reward -= total_shortfall * 10.0       # Primary: penalize unmet demand
 
-    def __init__(self, num_employees, day_features, num_actions=5, emb_dim=16, hidden_dim=128):
-        super().__init__()
-        self.num_days = day_features.shape[0]
+    if total_shortfall == 0:
+        reward += 500.0                    # Bonus for perfect coverage
 
-        self.emp_emb = nn.Embedding(num_employees, emb_dim)
-        self.register_buffer("day_feat_table", day_features)
-        self.day_proj = nn.Linear(self.DAY_FEAT_DIM, emb_dim)
+    # Secondary: penalize distance from 223 target
+    for emp in range(self.num_employees):
+        deficit = self.max_days_per_year - self.days_worked[emp]
+        if deficit > 0:
+            reward -= deficit * 1.0
 
-        in_dim = emb_dim * 2 + 4 + 3 
-        
-        self.shared = nn.Sequential(
-            nn.Linear(in_dim, hidden_dim),
-            nn.Tanh(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.Tanh(),
-        )
-        self.actor_head = nn.Sequential(
-            nn.Linear(hidden_dim, 64),
-            nn.Tanh(),
-            nn.Linear(64, num_actions),
-        )
-        self.critic_head = nn.Sequential(
-            nn.Linear(hidden_dim, 64),
-            nn.Tanh(),
-            nn.Linear(64, 1),
-        )
-
-    def _process_inputs(self, emp_ids, day_ids, cov_gaps, dyn_feats):
-        e_emb = self.emp_emb(emp_ids)
-        d_emb = self.day_proj(self.day_feat_table[day_ids])
-
-        norm_dyn = dyn_feats.clone()
-        norm_dyn[..., 0] /= 223.0
-        norm_dyn[..., 1] /= 5.0
-
-        return torch.cat([e_emb, d_emb, cov_gaps, norm_dyn], dim=-1)
-
-    def forward(self, emp_ids, day_ids, cov_gaps, dyn_feats, action_masks):
-        x = self._process_inputs(emp_ids, day_ids, cov_gaps, dyn_feats)
-        shared_feat = self.shared(x)
-
-        values = self.critic_head(shared_feat).squeeze(-1)
-
-        logits = self.actor_head(shared_feat)
-        masks_bool = torch.as_tensor(action_masks, dtype=torch.bool)
-        if not masks_bool.any():
-            masks_bool[..., 0] = True
-        logits = logits.masked_fill(~masks_bool, float("-inf"))
-        probs  = F.softmax(logits, dim=-1)
-
-        return probs, values
+    return reward
 ```
 
+Weight ratio: 10.0 (shortfall) vs 1.0 (223-deficit) ensures shortfall minimization remains the primary objective.
 
-### Change from GNN to MLP
+## Network Architecture (GNNActorCritic)
 
-The Initial GNN Approach: The environment was mapped as a bipartite heterograph of employees and days.
+The network has two distinct paths that merge at the actor/critic heads:
 
-The Problem (Over-smoothing): Because the initial state matrix included all possible (employee, day) combinations, it formed a complete bipartite graph. The SAGEConv("mean") layers averaged everything together, destroying structural variance and producing uniform, uninformative "mush" embeddings.
+1. **GNN path** — processes graph node features through message passing, producing embeddings that capture relational context across all employees and days. Updated **once per day**.
+2. **Direct path** — live per-step features (coverage gaps, dynamic features, phase) that bypass the GNN entirely and go straight to the heads. Updated **every step**.
 
-The Solution: Fixing the GNN would have required expensive dynamic edge-building at every step or complex attention mechanisms. Instead, it was changed to a highly efficient MLP Actor-Critic model.
+```
+GNN path:     emp_node_feats(3) → GNN layers → emp_emb(64) ──┐
+              day_node_feats(6) → GNN layers → day_emb(64) ──┤
+                                                              ├─ concat(135) → Actor → action probs
+Direct path:  cov_gap(4) ────────────────────────────────────┤                Critic → value
+              dyn_feat(2) ───────────────────────────────────┤
+              phase(1) ──────────────────────────────────────┘
+```
 
-Why it Works: By feeding the MLP carefully engineered features—learnable ID embeddings, real-time coverage gaps, and dynamic pacing signals—the network successfully learns the exact same relational patterns with a fraction of the computational overhead.
+### GNN Path (updated once per day)
+
+#### Graph Structure
+
+A **bipartite heterograph** built once at initialization:
+- **12 employee nodes** ←→ **365 day nodes**
+- Every employee connected to every day via `assigned_to` / `staffed_by` edges
+
+#### Node Features
+
+These are set by `update_graph_features(graph, env)`, which runs **once per day change** during trajectory collection. They represent a snapshot of the environment state at that point.
+
+**Employee nodes (3 features):**
+
+| Feature | Value | Description |
+|---------|-------|-------------|
+| days_worked / 223 | 0.0 → 1.0 | How much of the work budget is used |
+| consecutive_streak / 5 | 0.0 → 1.0 | How many working consecutive days  |
+| is_dual_team | 0.0 or 1.0 | Static — whether the employee belongs to both teams |
+
+**Day nodes (6 features):**
+
+| Feature | Value range | Description |
+|---------|-------------|-------------|
+| cov_gap_MA | -N to +3 | `min_demand - coverage` for Morning, Team A |
+| cov_gap_TA | -N to +3 | `min_demand - coverage` for Afternoon, Team A |
+| cov_gap_MB | -N to +3 | `min_demand - coverage` for Morning, Team B |
+| cov_gap_TB | -N to +3 | `min_demand - coverage` for Afternoon, Team B |
+| is_special | 0.0 or 1.0 | Static — holiday or weekend |
+| day_position | 0.0 → 1.0 | Static — normalized position in year (day / 365) |
+
+#### Message Passing (2 layers)
+
+Raw node features are first projected to a shared hidden dimension:
+
+```
+Employee feats (3) → Linear(3, 32)
+Day feats (6)      → Linear(6, 32)
+```
+
+Then two rounds of message passing via `HeteroGraphConv` with `SAGEConv(mean)`:
+
+- **Layer 1** (32 → 32): Each employee node receives the mean of all 365 day vectors and updates itself. Each day node receives the mean of all 12 employee vectors and updates itself. ReLU activation.
+- **Layer 2** (32 → 64): Same process, output expands to 64 dimensions. ReLU activation.
+
+The result: every employee has a **64-dim embedding** that's informed by all days, and every day has a **64-dim embedding** informed by all employees. These embeddings capture global relational context — e.g., an employee's embedding "knows" not just its own budget usage, but also how much demand remains across all days.
+
+#### Caching
+
+The GNN forward pass runs **once per day change**, and the resulting embeddings are cached:
+
+```python
+if day_id != cached_day_id:
+    update_graph_features(graph, env)
+    cached_emp_emb, cached_day_emb = model.gnn_forward(graph)
+    cached_day_id = day_id
+```
+
+When processing day 50 with 12 employees, the GNN runs once before employee 0, then employees 1–11 reuse the same cached embeddings. This means the embeddings become slightly stale within a day (e.g., the GNN thinks day 50's Morning-A gap is 3, but after 2 assignments it's actually 1). The direct path compensates for this.
+
+### Direct Path (updated every step)
+
+These features are computed **fresh from the environment at every step**, right before each action decision:
+
+```python
+cov_gap = [
+    env.min_demand[day_id, 0, 0] - env.daily_coverage[day_id, 0, 0],  # M-A gap
+    env.min_demand[day_id, 1, 0] - env.daily_coverage[day_id, 1, 0],  # T-A gap
+    env.min_demand[day_id, 0, 1] - env.daily_coverage[day_id, 0, 1],  # M-B gap
+    env.min_demand[day_id, 1, 1] - env.daily_coverage[day_id, 1, 1],  # T-B gap
+]
+consec = _get_consecutive_days(env, emp_id, day_id)
+dyn_feat = [env.days_worked[emp_id], consec]
+```
+
+| Feature | Dims | Updated | Purpose |
+|---------|------|---------|---------|
+| Coverage gaps | 4 | Every step | Exact current gaps for today's shift-teams |
+| days_worked | 1 | Every step | Employee's current budget usage |
+| consecutive_days | 1 | Every step | Real consecutive work streak (computed from schedule) |
+| phase | 1 | At phase transition | 0.0 for Phase 1, 1.0 for Phase 2 |
+
+These bypass the GNN and go directly to the heads. They **correct for the staleness** of the cached GNN embeddings — most importantly the coverage gaps, which can change multiple times within a single day as employees get assigned.
+
+### Actor-Critic Heads
+
+The heads receive the concatenation of both paths:
+
+```
+cached_emp_emb[emp_id]   (64)  — from GNN, updated per day
+cached_day_emb[day_id]   (64)  — from GNN, updated per day
+cov_gap                   (4)  — live, updated per step
+dyn_feat                  (2)  — live, updated per step
+phase                     (1)  — live
+────────────────────────────────
+total                   (135)
+```
+
+Dynamic features are normalized before concatenation: `days_worked / 223`, `consecutive_days / 5`.
+
+Then two separate heads:
+
+- **Actor**: `Linear(135, 64) → Tanh → Linear(64, 5)` → 5 logits. Illegal actions are masked to `-inf`, then softmax produces action probabilities.
+- **Critic**: `Linear(135, 64) → Tanh → Linear(64, 1)` → single scalar estimating expected future reward from this state.
+
+### Why GNN over MLP?
+
+An MLP would use learned `nn.Embedding(num_employees, dim)` — a fixed vector per employee ID. This works for one problem instance but breaks if you change the number of employees, swap team assignments, or use a different year.
+
+The GNN computes embeddings from **features** (days_worked, is_dual_team) through message passing. It learns patterns like "employees with high remaining budget connected to days with large gaps should behave like X." A new employee with similar features gets a similar embedding without retraining — the GNN **generalizes across problem instances**.
 
 ## Training Loop (PPO)
 
-Training alternates between two phases:
+**Proximal Policy Optimization (PPO)** is an on-policy RL algorithm. Each training iteration collects a full trajectory using the current policy, updates the weights, then discards the trajectory — no replay buffer.
 
-### Phase 1: Collect Trajectory
+### Trajectory Collection
 
-The agent plays through an **entire episode** (all days x all employees) using the current policy, with no gradients. Every step records:
+The agent plays through an **entire episode** (Phase 1 + Phase 2) with gradients disabled. Every step records:
 
-- State inputs (employee, day, coverage gaps, dynamic features, action mask)
-- Action taken (sampled stochastically from the policy)
-- Log-probability of that action under the current policy
-- Reward received
-- Critic's value estimate
+- **Inputs**: employee ID, day ID, coverage gaps, dynamic features, action mask, phase
+- **Action**: sampled stochastically from the policy distribution
+- **Log-probability** of the chosen action (needed for importance sampling during updates)
+- **Reward** and **value estimate** from the critic
+- **Graph feature snapshots**: employee and day node features at that moment, so the GNN can be accurately re-evaluated during PPO updates
 
-```python
-def collect_trajectory(env, model):
-    model.eval()
-    traj = Trajectory()
-    env.reset()
-    terminated = truncated = False
+A single trajectory is approximately `12 × 365 = 4,380` Phase 1 steps plus `~2,000` Phase 2 steps, totaling ~6,000–7,000 steps per episode.
 
-    with torch.no_grad():
-        while not (terminated or truncated):
-            emp_id = int(env.state[env.current_step, 0])
-            day_id = int(env.state[env.current_step, 1])
+### PPO Update
 
-            cov_gap = [
-                env.min_demand[day_id, 0, 0] - env.daily_coverage[day_id, 0, 0],
-                env.min_demand[day_id, 1, 0] - env.daily_coverage[day_id, 1, 0],
-                env.min_demand[day_id, 0, 1] - env.daily_coverage[day_id, 0, 1],
-                env.min_demand[day_id, 1, 1] - env.daily_coverage[day_id, 1, 1],
-            ]
+Once the trajectory is collected, advantages are computed using **Generalized Advantage Estimation (GAE)**. GAE measures how much better or worse each action was compared to the critic's prediction, using a weighted combination of short-term and long-term reward signals controlled by λ. With **γ = 1.0** (no discounting), all future rewards matter equally — appropriate since early scheduling decisions affect the entire year. Advantages are normalized to stabilize training.
 
-            remaining_budget = env.max_days_per_year - env.days_worked[emp_id]
-            remaining_cal = max(1, env.num_days - day_id)
-            pace_ratio = remaining_budget / remaining_cal
+The trajectory is then reused for **K = 4 epochs**. In each epoch, the steps are shuffled into random **mini-batches of 512**. For each mini-batch:
 
-            dyn_feat = [env.days_worked[emp_id], env.consecutive_days[emp_id], pace_ratio]
-            action_mask = env.get_action_mask()
+1. **Restores graph features** from snapshots and re-runs the GNN to get fresh embeddings under current weights
+2. Computes the **importance sampling ratio** between the new and old policy — correcting for the fact that actions were sampled under older weights
+3. Applies the **clipped actor loss** — the core PPO mechanism that prevents the policy from changing too drastically per update by clamping the ratio to [0.8, 1.2]
+4. Adds an **entropy bonus** that encourages exploration early in training (decays from 0.05 to 0.005 over episodes)
+5. Computes **critic loss** (smooth L1) to improve value predictions that feed into future advantage estimates
+6. Clips gradients to max norm 0.5 for stability
 
-            emp_id_t = torch.tensor([emp_id], dtype=torch.long)
-            day_id_t = torch.tensor([day_id], dtype=torch.long)
-            cov_gap_t = torch.tensor([cov_gap], dtype=torch.float32)
-            dyn_feat_t = torch.tensor([dyn_feat], dtype=torch.float32)
-            mask_t = torch.tensor(action_mask.tolist(), dtype=torch.bool).unsqueeze(0)
-
-            probs, values = model(emp_id_t, day_id_t, cov_gap_t, dyn_feat_t, mask_t)
-
-            dist = Categorical(probs=probs[0])
-            action = dist.sample()
-
-            _, reward, terminated, truncated, _ = env.step(action.item())
-
-            traj.emp_ids.append(emp_id)
-            traj.day_ids.append(day_id)
-            traj.coverage_gaps.append(cov_gap_t[0])
-            traj.dyn_emp_feats.append(dyn_feat_t[0])
-            traj.action_masks.append(mask_t[0])
-            traj.actions.append(action.item())
-            traj.log_probs_old.append(dist.log_prob(action).item())
-            traj.rewards.append(float(reward))
-            traj.values.append(values[0].item())
-
-    return traj
-```
-
-### Phase 2: Update Weights
-
-The recorded trajectory is used to improve the network:
-
-1. **Compute advantages** using Generalized Advantage Estimation (GAE, lambda=0.95, gamma=1.0)
-2. **Train for K=4 epochs**, shuffling the trajectory into random mini-batches of 512
-3. Each mini-batch update computes:
-   - **Importance sampling ratio**: `r = pi_new(a|s) / pi_old(a|s)` -- corrects for the fact that data was collected with older weights
-   - **Clipped actor loss**: `min(r * A, clip(r, 0.8, 1.2) * A)` -- prevents the policy from changing too drastically
-   - **Entropy bonus**: encourages exploration by rewarding spread-out action distributions
-   - **Critic loss**: smooth L1 loss between predicted and actual returns
-
-The schedule itself is never reused -- it only serves as training data. With improved weights, a new episode is collected and the cycle repeats.
-
-```python
-def ppo_update(model, optimizer, batch, advantages, returns, clip_eps=0.2, value_coeff=0.5, entropy_coeff=0.01, K_epochs=4, mini_batch_size=512):
-    T = batch["actions"].shape[0]
-    losses = []
-    track_entropy = []
-    model.train()
-
-    for _ in range(K_epochs):
-        for index in BatchSampler(SubsetRandomSampler(range(T)), mini_batch_size, False):
-            idx = torch.tensor(index)
-
-            probs_new, values_new = model(
-                batch["emp_ids"][idx],
-                batch["day_ids"][idx],
-                batch["coverage_gaps"][idx],
-                batch["dyn_emp_feats"][idx],
-                batch["action_masks"][idx],
-            )
-
-            dist_now = Categorical(probs=probs_new)
-            a_logprob_now = dist_now.log_prob(batch["actions"][idx])
-            dist_entropy = dist_now.entropy()
-
-            ratios = torch.exp(a_logprob_now - batch["log_probs_old"][idx])
-            adv = advantages[idx]
-            surr1 = ratios * adv
-            surr2 = torch.clamp(ratios, 1.0 - clip_eps, 1.0 + clip_eps) * adv
-            actor_loss = -torch.min(surr1, surr2).mean() - entropy_coeff * dist_entropy.mean()
-
-            critic_loss = F.smooth_l1_loss(values_new, returns[idx])
-
-            loss = actor_loss + value_coeff * critic_loss
-
-            track_entropy.append(dist_entropy.mean().item())
-
-            optimizer.zero_grad()
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5)
-            optimizer.step()
-            losses.append(loss.item())
-
-    return float(np.mean(losses)), float(np.mean(track_entropy))
-```
+Mini-batches are used instead of full-trajectory updates for three reasons: lower memory usage, more frequent weight updates (~12 per epoch instead of 1), and decorrelation of consecutive steps (same-day steps are highly correlated; shuffling produces more independent gradients).
 
 ### Key Hyperparameters
 
 | Parameter | Value | Purpose |
 |-----------|-------|---------|
 | Episodes | 10,000 | Total training episodes |
-| Gamma | 1.0 | No discounting (entire year matters equally) |
-| Lambda (GAE) | 0.95 | Bias-variance tradeoff for advantage estimation |
+| Gamma (γ) | 1.0 | No discounting — entire year matters equally |
+| Lambda (λ) | 0.95 | GAE bias-variance tradeoff |
 | Clip epsilon | 0.2 | PPO clipping range [0.8, 1.2] |
 | K epochs | 4 | Reuse each trajectory 4 times |
 | Mini-batch size | 512 | Random mini-batches for gradient updates |
-| Learning rate | 3e-4 | Adam optimizer |
-| Entropy coeff | 0.02 -> 0.002 | Decays over training (explore less as policy improves) |
+| Learning rate | 1e-5 | Adam optimizer |
+| Entropy coeff | 0.05 → 0.005 | Decays via `0.05 × 0.999^episode` |
+| Gradient clip | 0.5 | Max gradient norm |
+| Value coeff | 0.5 | Weight of critic loss in total loss |
 
-### Why Mini-Batches Instead of Full Trajectory?
+### Evaluation
 
-- **Memory**: computing gradients for all steps at once requires storing all intermediate activations
-- **More frequent updates**: ~14 updates per epoch instead of 1, so later mini-batches benefit from earlier updates
-- **Shuffling breaks correlation**: consecutive steps (same day) are correlated; random batches give more independent gradient estimates
+**Best-of-N stochastic sampling**: run N episodes sampling from the policy distribution, keep the schedule with the best reward. This outperforms greedy (`argmax`) because the policy was trained with stochastic rollouts — sampling explores alternative assignment orders that produce globally better schedules in this highly constrained combinatorial problem.
