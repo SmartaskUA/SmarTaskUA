@@ -181,8 +181,10 @@ def compute_fitness(schedule: np.ndarray, problem_data: dict) -> float:
 def random_schedule(problem_data: dict) -> np.ndarray:
     """
     Generate a demand-aware random schedule.
-    Iterates day-first with a shuffled employee order each day so no employee
-    is systematically favoured to fill minimum coverage slots.
+    Iterates day-first. Within each day, single-team employees are processed
+    first (shuffled among themselves), then dual-team employees (shuffled among
+    themselves). This ensures the flexible employees fill coverage gaps left by
+    the fixed-team employees rather than competing for the same slots.
     For each employee on a given day:
       - Vacation day → GENE_OFF.
       - Any allowed gene (excluding OFF) covers a slot still below min_demand
@@ -199,13 +201,18 @@ def random_schedule(problem_data: dict) -> np.ndarray:
     allowed_genes = problem_data["allowed_genes"]
     min_demand    = problem_data["min_demand"]
 
+    # Split employees into single-team (fixed) and dual-team (flexible)
+    single_team = [i for i in range(n_emp) if len(allowed_genes[i]) <= 3]  # [0, shift_A] or [0, shift_B]
+    dual_team   = [i for i in range(n_emp) if len(allowed_genes[i]) > 3]   # [0, 1, 2, 3, 4]
+
     schedule = np.zeros((n_emp, n_days), dtype=int)
     coverage = np.zeros((n_days, 2, 2), dtype=int)
-    emp_indices = list(range(n_emp))
 
     for d in range(n_days):
-        random.shuffle(emp_indices)
-        for i in emp_indices:
+        # Process single-team employees first, then dual-team
+        random.shuffle(single_team)
+        random.shuffle(dual_team)
+        for i in single_team + dual_team:
             if vac_mask[i, d]:
                 schedule[i, d] = GENE_OFF
                 continue
@@ -224,9 +231,6 @@ def random_schedule(problem_data: dict) -> np.ndarray:
                 coverage[d, SHIFT_IDX[s_code], TEAM_IDX[t_code]] += 1
 
     return schedule
-    
-
-#ideia futura: primeiro empregados que so estao numa equipa e depois os que estao em ambas
 
 
 def decode_schedule(flat: np.ndarray, problem_data: dict) -> np.ndarray:
