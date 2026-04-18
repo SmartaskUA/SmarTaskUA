@@ -283,24 +283,35 @@ def _repair_no_backward_shift(schedule: np.ndarray, problem_data: dict) -> np.nd
 def _repair_6day_window(schedule: np.ndarray, problem_data: dict) -> np.ndarray:
     """
     In any rolling window of WINDOW_SIZE days, at most WINDOW_MAX may be worked.
-    When a window has too many, the most recent worked day in the window is set
-    to OFF (vacation days are never touched).
+    When a window has too many, a worked day in the window is set to OFF
+    (vacation days are never touched).
     Repeated until no window violates the constraint.
+
+    Direction is randomised per employee (50/50):
+      - Forward  (start = 0 … end): removes the last  worked day in the window.
+      - Backward (start = end … 0): removes the first worked day in the window.
+    This avoids a systematic bias where the same end of the year always absorbs
+    the surplus days.
     """
     n_emp    = problem_data["n_employees"]
     n_days   = problem_data["n_days"]
     vac_mask = problem_data["vac_mask"]
 
     for i in range(n_emp):
+        forward = random.random() < 0.5
+        starts  = (range(n_days - WINDOW_SIZE + 1)
+                   if forward
+                   else range(n_days - WINDOW_SIZE, -1, -1))
         changed = True
         while changed:
             changed = False
-            for start in range(n_days - WINDOW_SIZE + 1):
+            for start in starts:
                 window = range(start, start + WINDOW_SIZE)
                 worked = [d for d in window if schedule[i, d] > 0]
                 if len(worked) > WINDOW_MAX:
-                    # Turn off the last worked day that is not a vacation
-                    for d in reversed(worked):
+                    # Forward → remove last worked day; Backward → remove first
+                    candidates = reversed(worked) if forward else iter(worked)
+                    for d in candidates:
                         if not vac_mask[i, d]:
                             schedule[i, d] = GENE_OFF
                             changed = True
