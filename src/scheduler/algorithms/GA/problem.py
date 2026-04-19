@@ -2,18 +2,20 @@
 problem.py — Shared problem definition for SmarTask scheduling GA prototypes.
 
 Chromosome encoding per (employee, day):
-  0  →  OFF
-  1  →  Morning   + Team A
-  2  →  Afternoon + Team A
-  3  →  Morning   + Team B
-  4  →  Afternoon + Team B
+  0        →  OFF
+  1, 2     →  Morning / Afternoon + Team A
+  3, 4     →  Morning / Afternoon + Team B
+  2k-1, 2k →  Morning / Afternoon + Team k   (generalises to N teams)
+
+The exact gene→(shift, team) mapping is built dynamically from problem.json
+and stored inside problem_data so that any number of teams is supported.
 
 Phase 1 constraints (penalty-based):
   - Min coverage       (weight: 100 per missing worker-day)
   - Ideal coverage     (weight: 1   per missing worker-day)
 
 Phase 2 constraints (repair operators — always feasible before fitness evaluation):
-  - Vacation blocking  (forced OFF on vacation days)  ← also locked in gene_space
+  - Vacation blocking  (forced OFF on vacation days)
   - No backward shift on consecutive days
   - Max 5 worked days in any 6-day window
   - Max 22 special days (Sundays + PT holidays)
@@ -27,24 +29,10 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
-# ── Encoding constants ────────────────────────────────────────────────────────
-GENE_OFF = 0
-SHIFT_TEAM_TO_GENE = {
-    ("M", "A"): 1,
-    ("T", "A"): 2,
-    ("M", "B"): 3,
-    ("T", "B"): 4,
-}
-GENE_TO_SHIFT_TEAM = {v: k for k, v in SHIFT_TEAM_TO_GENE.items()}
-
+# ── Constants that do NOT depend on the number of teams ──────────────────────
+GENE_OFF  = 0
 SHIFTS    = ["M", "T"]
-TEAMS     = ["A", "B"]
 SHIFT_IDX = {"M": 0, "T": 1}
-TEAM_IDX  = {"A": 0, "B": 1}
-
-# ── Shift ordering (for no-backward-shift repair) ────────────────────────────
-# Morning = order 1, Afternoon = order 2, OFF = 0 (ignored in comparisons)
-GENE_SHIFT_ORDER = {0: 0, 1: 1, 2: 2, 3: 1, 4: 2}
 
 # ── Phase 2 hard constraint parameters ───────────────────────────────────────
 TARGET_WORKDAYS  = 223
@@ -53,8 +41,8 @@ WINDOW_MAX       = 5
 SPECIAL_DAYS_CAP = 22
 
 # ── Penalty weights ───────────────────────────────────────────────────────────
-W_MIN_COVER   = 100     # soft: below minimum coverage
-W_IDEAL_COVER = 1       # soft: below ideal coverage
+W_MIN_COVER   = 100
+W_IDEAL_COVER = 1
 
 
 # ── Special days ──────────────────────────────────────────────────────────────
@@ -62,8 +50,6 @@ W_IDEAL_COVER = 1       # soft: below ideal coverage
 def _build_special_days(year: int, n_days: int) -> set:
     """
     Return a set of 0-based day indices that are Sundays or PT public holidays.
-    Uses the `holidays` library so it adapts automatically to any year
-    (moveable feasts like Easter change each year).
     """
     import holidays as hl
 
@@ -73,12 +59,50 @@ def _build_special_days(year: int, n_days: int) -> set:
 
     for d in range(n_days):
         date = start + datetime.timedelta(days=d)
-        if date.weekday() == 6:          # Sunday
+        if date.weekday() == 6:
             special.add(d)
-        if date in pt_holidays:          # PT national holiday
+        if date in pt_holidays:
             special.add(d)
 
     return special
+
+
+def _build_encoding(teams: list[str]) -> dict:
+    """
+    Build gene encoding lookups for a given list of teams.
+
+    Returns a dict with:
+        shift_team_to_gene  : {(shift, team) -> int}
+        gene_to_shift_team  : {int -> (shift, team)}
+        team_idx            : {team -> int}
+        gene_shift_order    : {gene -> int}  (0=OFF, 1=Morning, 2=Afternoon)
+        gene_label          : {gene -> str}  human-readable
+    """
+    shift_team_to_gene: dict[tuple, int] = {}
+    gene_idx = 1
+    for team in teams:
+        for shift in SHIFTS:
+            shift_team_to_gene[(shift, team)] = gene_idx
+            gene_idx += 1
+
+    gene_to_shift_team = {v: k for k, v in shift_team_to_gene.items()}
+    team_idx           = {team: i for i, team in enumerate(teams)}
+
+    gene_shift_order = {GENE_OFF: 0}
+    for gene, (shift, _) in gene_to_shift_team.items():
+        gene_shift_order[gene] = SHIFTS.index(shift) + 1   # M→1, T→2
+
+    gene_label = {GENE_OFF: "OFF"}
+    for gene, (shift, team) in gene_to_shift_team.items():
+        gene_label[gene] = f"{shift}-{team}"
+
+    return {
+        "shift_team_to_gene": shift_team_to_gene,
+        "gene_to_shift_team": gene_to_shift_team,
+        "team_idx":           team_idx,
+        "gene_shift_order":   gene_shift_order,
+        "gene_label":         gene_label,
+    }
 
 
 # ── Data loading ──────────────────────────────────────────────────────────────
@@ -91,10 +115,17 @@ def load_problem(data_dir: str = "SMARTASK_SIMPLE_2025") -> dict:
     with open(base / "problem.json") as f:
         prob = json.load(f)
 
-    n_days      = prob["temporalScope"]["numDays"]   # 365
-    year        = prob["temporalScope"]["year"]       # 2025
+    n_days      = prob["temporalScope"]["numDays"]
+    year        = prob["temporalScope"]["year"]
     employees   = prob["employees"]["simple"]
     n_employees = len(employees)
+    teams       = prob["demand"]["organizationalUnits"]["teams"]
+    n_teams     = len(teams)
+
+    # Build gene encoding for this scenario
+    enc = _build_encoding(teams)
+    shift_team_to_gene = enc["shift_team_to_gene"]
+    team_idx           = enc["team_idx"]
 
     # Allowed gene values per employee (from team membership)
     allowed_genes = []
@@ -102,7 +133,7 @@ def load_problem(data_dir: str = "SMARTASK_SIMPLE_2025") -> dict:
         vals = [GENE_OFF]
         for shift in SHIFTS:
             for team in emp.get("teams", []):
-                gene = SHIFT_TEAM_TO_GENE.get((shift, team))
+                gene = shift_team_to_gene.get((shift, team))
                 if gene is not None:
                     vals.append(gene)
         allowed_genes.append(sorted(set(vals)))
@@ -117,27 +148,30 @@ def load_problem(data_dir: str = "SMARTASK_SIMPLE_2025") -> dict:
     start             = pd.Timestamp(f"{year}-01-01")
     dem_df["day_idx"] = (dem_df["date"] - start).dt.days
 
-    min_demand   = np.zeros((n_days, 2, 2), dtype=int)
-    ideal_demand = np.zeros((n_days, 2, 2), dtype=int)
+    min_demand   = np.zeros((n_days, len(SHIFTS), n_teams), dtype=int)
+    ideal_demand = np.zeros((n_days, len(SHIFTS), n_teams), dtype=int)
     for _, row in dem_df.iterrows():
         d = int(row["day_idx"])
         s = SHIFT_IDX[row["shift"]]
-        t = TEAM_IDX[row["team"]]
+        t = team_idx[row["team"]]
         min_demand[d, s, t]   = int(row["minimum"])
         ideal_demand[d, s, t] = int(row["ideal"])
 
     special_days = _build_special_days(year, n_days)
 
     return {
-        "n_employees":   n_employees,
-        "n_days":        n_days,
-        "year":          year,
-        "employees":     employees,
-        "allowed_genes": allowed_genes,   # list[list[int]], per employee
-        "vac_mask":      vac_mask,        # ndarray bool  (n_employees, n_days)
-        "min_demand":    min_demand,      # ndarray int   (n_days, 2, 2)
-        "ideal_demand":  ideal_demand,    # ndarray int   (n_days, 2, 2)
-        "special_days":  special_days,    # set of 0-based day indices
+        "n_employees":       n_employees,
+        "n_days":            n_days,
+        "year":              year,
+        "teams":             teams,
+        "employees":         employees,
+        "allowed_genes":     allowed_genes,
+        "vac_mask":          vac_mask,
+        "min_demand":        min_demand,
+        "ideal_demand":      ideal_demand,
+        "special_days":      special_days,
+        # encoding lookups
+        **enc,
     }
 
 
@@ -150,13 +184,17 @@ def _compute_penalties(schedule: np.ndarray, problem_data: dict) -> tuple:
     Returns:
         (min_unmet, ideal_unmet)  — all non-negative ints
     """
-    min_demand   = problem_data["min_demand"]
-    ideal_demand = problem_data["ideal_demand"]
+    min_demand         = problem_data["min_demand"]
+    ideal_demand       = problem_data["ideal_demand"]
+    teams              = problem_data["teams"]
+    shift_team_to_gene = problem_data["shift_team_to_gene"]
+    team_idx           = problem_data["team_idx"]
 
     min_unmet = ideal_unmet = 0
     for s_idx, s_code in enumerate(SHIFTS):
-        for t_idx, t_code in enumerate(TEAMS):
-            gene_val = SHIFT_TEAM_TO_GENE[(s_code, t_code)]
+        for t_code in teams:
+            t_idx    = team_idx[t_code]
+            gene_val = shift_team_to_gene[(s_code, t_code)]
             assigned = np.sum(schedule == gene_val, axis=0)  # (n_days,)
             min_unmet   += int(np.sum(np.maximum(0, min_demand[:, s_idx, t_idx]   - assigned)))
             ideal_unmet += int(np.sum(np.maximum(0, ideal_demand[:, s_idx, t_idx] - assigned)))
@@ -167,10 +205,6 @@ def _compute_penalties(schedule: np.ndarray, problem_data: dict) -> tuple:
 def compute_fitness(schedule: np.ndarray, problem_data: dict) -> float:
     """
     Evaluate a schedule. Higher (less negative) = better. 0 = perfect.
-
-    Args:
-        schedule: int array (n_employees, n_days), values 0–4
-        problem_data: dict from load_problem()
     """
     m, i = _compute_penalties(schedule, problem_data)
     return -float(m * W_MIN_COVER + i * W_IDEAL_COVER)
@@ -195,21 +229,24 @@ def random_schedule(problem_data: dict) -> np.ndarray:
     Returns:
         int array (n_employees, n_days)
     """
-    n_emp         = problem_data["n_employees"]
-    n_days        = problem_data["n_days"]
-    vac_mask      = problem_data["vac_mask"]
-    allowed_genes = problem_data["allowed_genes"]
-    min_demand    = problem_data["min_demand"]
+    n_emp              = problem_data["n_employees"]
+    n_days             = problem_data["n_days"]
+    n_teams            = len(problem_data["teams"])
+    vac_mask           = problem_data["vac_mask"]
+    allowed_genes      = problem_data["allowed_genes"]
+    min_demand         = problem_data["min_demand"]
+    gene_to_shift_team = problem_data["gene_to_shift_team"]
+    team_idx           = problem_data["team_idx"]
 
-    # Split employees into single-team (fixed) and dual-team (flexible)
-    single_team = [i for i in range(n_emp) if len(allowed_genes[i]) <= 3]  # [0, shift_A] or [0, shift_B]
-    dual_team   = [i for i in range(n_emp) if len(allowed_genes[i]) > 3]   # [0, 1, 2, 3, 4]
+    # Single-team employees have exactly 1 shift×team pair (2 genes + OFF)
+    n_shifts = len(SHIFTS)
+    single_team = [i for i in range(n_emp) if len(allowed_genes[i]) <= n_shifts + 1]
+    dual_team   = [i for i in range(n_emp) if len(allowed_genes[i]) >  n_shifts + 1]
 
     schedule = np.zeros((n_emp, n_days), dtype=int)
-    coverage = np.zeros((n_days, 2, 2), dtype=int)
+    coverage = np.zeros((n_days, n_shifts, n_teams), dtype=int)
 
     for d in range(n_days):
-        # Process single-team employees first, then dual-team
         random.shuffle(single_team)
         random.shuffle(dual_team)
         for i in single_team + dual_team:
@@ -219,16 +256,17 @@ def random_schedule(problem_data: dict) -> np.ndarray:
 
             greedy_genes = [
                 g for g in allowed_genes[i]
-                if g != GENE_OFF and coverage[d, SHIFT_IDX[GENE_TO_SHIFT_TEAM[g][0]], TEAM_IDX[GENE_TO_SHIFT_TEAM[g][1]]]
-                                     < min_demand[d, SHIFT_IDX[GENE_TO_SHIFT_TEAM[g][0]], TEAM_IDX[GENE_TO_SHIFT_TEAM[g][1]]]
+                if g != GENE_OFF
+                and coverage[d, SHIFT_IDX[gene_to_shift_team[g][0]], team_idx[gene_to_shift_team[g][1]]]
+                    < min_demand[d, SHIFT_IDX[gene_to_shift_team[g][0]], team_idx[gene_to_shift_team[g][1]]]
             ]
 
             gene = random.choice(greedy_genes if greedy_genes else allowed_genes[i])
             schedule[i, d] = gene
 
             if gene != GENE_OFF:
-                s_code, t_code = GENE_TO_SHIFT_TEAM[gene]
-                coverage[d, SHIFT_IDX[s_code], TEAM_IDX[t_code]] += 1
+                s_code, t_code = gene_to_shift_team[gene]
+                coverage[d, SHIFT_IDX[s_code], team_idx[t_code]] += 1
 
     return schedule
 
@@ -260,9 +298,12 @@ def _repair_no_backward_shift(schedule: np.ndarray, problem_data: dict) -> np.nd
     same shift tier (Afternoon) keeping the same team.
     If the upgrade gene is not in the employee's allowed set, set day d+1 OFF.
     """
-    n_emp         = problem_data["n_employees"]
-    n_days        = problem_data["n_days"]
-    allowed_genes = problem_data["allowed_genes"]
+    n_emp              = problem_data["n_employees"]
+    n_days             = problem_data["n_days"]
+    allowed_genes      = problem_data["allowed_genes"]
+    gene_shift_order   = problem_data["gene_shift_order"]
+    gene_to_shift_team = problem_data["gene_to_shift_team"]
+    shift_team_to_gene = problem_data["shift_team_to_gene"]
 
     for i in range(n_emp):
         for d in range(n_days - 1):
@@ -270,10 +311,10 @@ def _repair_no_backward_shift(schedule: np.ndarray, problem_data: dict) -> np.nd
             g_tomorrow = schedule[i, d + 1]
             if g_today == GENE_OFF or g_tomorrow == GENE_OFF:
                 continue
-            if GENE_SHIFT_ORDER[g_tomorrow] < GENE_SHIFT_ORDER[g_today]:
+            if gene_shift_order[g_tomorrow] < gene_shift_order[g_today]:
                 # Upgrade tomorrow to Afternoon keeping its team
-                team        = GENE_TO_SHIFT_TEAM[g_tomorrow][1]
-                upgraded    = SHIFT_TEAM_TO_GENE[("T", team)]
+                team     = gene_to_shift_team[g_tomorrow][1]
+                upgraded = shift_team_to_gene[("T", team)]
                 schedule[i, d + 1] = (
                     upgraded if upgraded in allowed_genes[i] else GENE_OFF
                 )
@@ -309,7 +350,6 @@ def _repair_6day_window(schedule: np.ndarray, problem_data: dict) -> np.ndarray:
                 window = range(start, start + WINDOW_SIZE)
                 worked = [d for d in window if schedule[i, d] > 0]
                 if len(worked) > WINDOW_MAX:
-                    # Forward → remove last worked day; Backward → remove first
                     candidates = reversed(worked) if forward else iter(worked)
                     for d in candidates:
                         if not vac_mask[i, d]:
@@ -330,7 +370,7 @@ def _repair_special_days(schedule: np.ndarray, problem_data: dict) -> np.ndarray
 
     for i in range(n_emp):
         worked_special = [d for d in special_days if schedule[i, d] > 0]
-        random.shuffle(worked_special)          # random order so removal is fair
+        random.shuffle(worked_special)
         while len(worked_special) > SPECIAL_DAYS_CAP:
             d = worked_special.pop()
             if not vac_mask[i, d]:
@@ -344,23 +384,22 @@ def _workday_candidates(schedule_row: np.ndarray, i: int, problem_data: dict) ->
     without violating the 6-day window, special-day cap, or backward-shift constraint.
     Called by _repair_workday_count when the employee is short of TARGET_WORKDAYS.
     """
-    n_days        = problem_data["n_days"]
-    vac_mask      = problem_data["vac_mask"]
-    special_days  = problem_data["special_days"]
-    allowed_genes = problem_data["allowed_genes"]
+    n_days           = problem_data["n_days"]
+    vac_mask         = problem_data["vac_mask"]
+    special_days     = problem_data["special_days"]
+    allowed_genes    = problem_data["allowed_genes"]
+    gene_shift_order = problem_data["gene_shift_order"]
 
     worked_special = sum(1 for d in special_days if schedule_row[d] > 0)
     candidates = []
 
     for d in range(n_days):
         if schedule_row[d] > 0 or vac_mask[i, d]:
-            continue  # already worked or on vacation
+            continue
 
-        # Special-day cap: skip if this is a special day and cap is already reached
         if d in special_days and worked_special >= SPECIAL_DAYS_CAP:
             continue
 
-        # 6-day window: adding day d must not push any overlapping window above WINDOW_MAX
         window_ok = True
         for ws in range(max(0, d - WINDOW_SIZE + 1),
                         min(n_days - WINDOW_SIZE + 1, d + 1)):
@@ -374,14 +413,13 @@ def _workday_candidates(schedule_row: np.ndarray, i: int, problem_data: dict) ->
         if not window_ok:
             continue
 
-        # Backward-shift: collect gene values compatible with both neighbours
         g_prev = schedule_row[d - 1] if d > 0 else GENE_OFF
         g_next = schedule_row[d + 1] if d < n_days - 1 else GENE_OFF
         valid_genes = [
             g for g in allowed_genes[i]
             if g != GENE_OFF
-            and (g_prev == GENE_OFF or GENE_SHIFT_ORDER[g] >= GENE_SHIFT_ORDER[g_prev])
-            and (g_next == GENE_OFF or GENE_SHIFT_ORDER[g_next] >= GENE_SHIFT_ORDER[g])
+            and (g_prev == GENE_OFF or gene_shift_order[g] >= gene_shift_order[g_prev])
+            and (g_next == GENE_OFF or gene_shift_order[g_next] >= gene_shift_order[g])
         ]
         if valid_genes:
             candidates.append((d, valid_genes))
@@ -392,14 +430,12 @@ def _workday_candidates(schedule_row: np.ndarray, i: int, problem_data: dict) ->
 def _repair_workday_count(schedule: np.ndarray, problem_data: dict) -> np.ndarray:
     """
     Enforce exactly TARGET_WORKDAYS worked days per employee.
-    - Too many → randomly remove surplus worked days (removal never creates new violations).
-    - Too few  → add days only from a constraint-safe candidate pool so that no
-                 6-day window, special-day cap, or backward-shift violation is introduced.
-                 If the pool is exhausted before reaching TARGET_WORKDAYS the employee
-                 keeps fewer days (hard feasibility limit — very rare with real data).
+    - Too many → randomly remove surplus worked days.
+    - Too few  → add days only from a constraint-safe candidate pool.
     """
-    n_emp  = problem_data["n_employees"]
-    n_days = problem_data["n_days"]
+    n_emp            = problem_data["n_employees"]
+    n_days           = problem_data["n_days"]
+    gene_shift_order = problem_data["gene_shift_order"]
 
     for i in range(n_emp):
         row    = schedule[i]
@@ -412,15 +448,10 @@ def _repair_workday_count(schedule: np.ndarray, problem_data: dict) -> np.ndarra
             worked.remove(d)
 
         # ── Too few: add from constraint-aware candidate pool ─────────────────
-        # Build the pool once (O(n_days)), shuffle, then iterate.
-        # Before committing each addition, re-check window and backward-shift
-        # against the *current* row — earlier additions may have changed the
-        # local context and made a pre-approved candidate temporarily invalid.
         if len(worked) < TARGET_WORKDAYS:
-            n_days         = problem_data["n_days"]
             special_days   = problem_data["special_days"]
             worked_special = sum(1 for d in special_days if row[d] > 0)
-            candidates = _workday_candidates(row, i, problem_data)
+            candidates     = _workday_candidates(row, i, problem_data)
             random.shuffle(candidates)
             for d, valid_genes in candidates:
                 if len(worked) >= TARGET_WORKDAYS:
@@ -428,7 +459,6 @@ def _repair_workday_count(schedule: np.ndarray, problem_data: dict) -> np.ndarra
                 if row[d] > 0:
                     continue
 
-                # Re-check 6-day window with current row state
                 window_ok = True
                 for ws in range(max(0, d - WINDOW_SIZE + 1),
                                 min(n_days - WINDOW_SIZE + 1, d + 1)):
@@ -439,23 +469,21 @@ def _repair_workday_count(schedule: np.ndarray, problem_data: dict) -> np.ndarra
                 if not window_ok:
                     continue
 
-                # Re-check special days cap with running counter
                 if d in special_days and worked_special >= SPECIAL_DAYS_CAP:
                     continue
 
-                # Re-check backward-shift with current neighbours
                 g_prev = row[d - 1] if d > 0 else GENE_OFF
                 g_next = row[d + 1] if d < n_days - 1 else GENE_OFF
                 valid_now = [
                     g for g in valid_genes
-                    if (g_prev == GENE_OFF or GENE_SHIFT_ORDER[g] >= GENE_SHIFT_ORDER[g_prev])
-                    and (g_next == GENE_OFF or GENE_SHIFT_ORDER[g_next] >= GENE_SHIFT_ORDER[g])
+                    if (g_prev == GENE_OFF or gene_shift_order[g] >= gene_shift_order[g_prev])
+                    and (g_next == GENE_OFF or gene_shift_order[g_next] >= gene_shift_order[g])
                 ]
                 if not valid_now:
                     continue
 
                 gene = random.choice(valid_now)
-                schedule[i, d] = gene   # row is a view — updates row[d] too
+                schedule[i, d] = gene
                 worked.append(d)
                 if d in special_days:
                     worked_special += 1
@@ -471,10 +499,6 @@ def repair_schedule(schedule: np.ndarray, problem_data: dict) -> np.ndarray:
       3. Special days cap   (sets excess special days to OFF)
       4. 6-day window cap   (sets excess days to OFF)
       5. Workday count      (rebalances total; adds only constraint-safe days)
-
-    Because _repair_workday_count checks window, special-day, and
-    backward-shift constraints before adding any day, a single pass is
-    guaranteed to produce a fully feasible schedule.
     """
     schedule = _repair_vacations(schedule, problem_data)
     schedule = _repair_no_backward_shift(schedule, problem_data)
@@ -489,34 +513,31 @@ def compute_phase2_violations(schedule: np.ndarray, problem_data: dict) -> dict:
     Count Phase 2 constraint violations in a schedule (for reporting).
     Returns a dict with counts per constraint.
     """
-    n_emp        = problem_data["n_employees"]
-    n_days       = problem_data["n_days"]
-    special_days = problem_data["special_days"]
-    vac_mask     = problem_data["vac_mask"]
+    n_emp            = problem_data["n_employees"]
+    n_days           = problem_data["n_days"]
+    special_days     = problem_data["special_days"]
+    vac_mask         = problem_data["vac_mask"]
+    gene_shift_order = problem_data["gene_shift_order"]
 
     vacation = int(np.sum((schedule > 0) & vac_mask))
     backward = window = special = workday = 0
 
     for i in range(n_emp):
-        # Workday count
         worked = sum(1 for d in range(n_days) if schedule[i, d] > 0)
         if worked != TARGET_WORKDAYS:
             workday += abs(worked - TARGET_WORKDAYS)
 
-        # Special days cap
         worked_special = sum(1 for d in special_days if schedule[i, d] > 0)
         if worked_special > SPECIAL_DAYS_CAP:
             special += worked_special - SPECIAL_DAYS_CAP
 
         for d in range(n_days):
-            # No backward shift
             if d < n_days - 1:
                 g0, g1 = schedule[i, d], schedule[i, d + 1]
                 if g0 != GENE_OFF and g1 != GENE_OFF:
-                    if GENE_SHIFT_ORDER[g1] < GENE_SHIFT_ORDER[g0]:
+                    if gene_shift_order[g1] < gene_shift_order[g0]:
                         backward += 1
 
-        # 6-day window
         for start in range(n_days - WINDOW_SIZE + 1):
             w = sum(1 for d in range(start, start + WINDOW_SIZE) if schedule[i, d] > 0)
             if w > WINDOW_MAX:
@@ -533,16 +554,6 @@ def compute_phase2_violations(schedule: np.ndarray, problem_data: dict) -> dict:
 
 # ── Reporting & Export ────────────────────────────────────────────────────────
 
-# Human-readable labels for each gene value
-GENE_LABEL = {
-    0: "OFF",
-    1: "M-A",
-    2: "T-A",
-    3: "M-B",
-    4: "T-B",
-}
-
-
 def export_schedule(
     schedule: np.ndarray,
     problem_data: dict,
@@ -552,22 +563,21 @@ def export_schedule(
     Export the schedule to two CSV files:
 
     1. <path>  — wide format (employees × days), one cell per day.
-       Columns are dates (2025-01-01 … 2025-12-31).
-       Cell values: OFF | M-A | T-A | M-B | T-B
-
     2. <path stem>_coverage.csv — daily coverage check per (shift, team).
-       Columns: date, shift, team, assigned, minimum, ideal, min_unmet, ideal_unmet
     """
-    import pandas as pd
     from pathlib import Path
 
-    n_emp    = problem_data["n_employees"]
-    n_days   = problem_data["n_days"]
-    employees = problem_data["employees"]
-    min_demand   = problem_data["min_demand"]
-    ideal_demand = problem_data["ideal_demand"]
+    n_emp              = problem_data["n_employees"]
+    n_days             = problem_data["n_days"]
+    year               = problem_data["year"]
+    employees          = problem_data["employees"]
+    teams              = problem_data["teams"]
+    min_demand         = problem_data["min_demand"]
+    ideal_demand       = problem_data["ideal_demand"]
+    gene_label         = problem_data["gene_label"]
+    shift_team_to_gene = problem_data["shift_team_to_gene"]
+    team_idx           = problem_data["team_idx"]
 
-    year       = 2025
     start_date = pd.Timestamp(f"{year}-01-01")
     dates      = [start_date + pd.Timedelta(days=d) for d in range(n_days)]
     date_strs  = [d.strftime("%Y-%m-%d") for d in dates]
@@ -577,7 +587,7 @@ def export_schedule(
     for i, emp in enumerate(employees):
         row = {"Employee": emp["name"]}
         for d in range(n_days):
-            row[date_strs[d]] = GENE_LABEL[schedule[i, d]]
+            row[date_strs[d]] = gene_label[schedule[i, d]]
         rows.append(row)
 
     df_schedule = pd.DataFrame(rows).set_index("Employee")
@@ -588,8 +598,9 @@ def export_schedule(
     coverage_rows = []
     for d in range(n_days):
         for s_idx, s_code in enumerate(SHIFTS):
-            for t_idx, t_code in enumerate(TEAMS):
-                gene_val  = SHIFT_TEAM_TO_GENE[(s_code, t_code)]
+            for t_code in teams:
+                t_idx     = team_idx[t_code]
+                gene_val  = shift_team_to_gene[(s_code, t_code)]
                 assigned  = int(np.sum(schedule[:, d] == gene_val))
                 min_req   = int(min_demand[d, s_idx, t_idx])
                 ideal_req = int(ideal_demand[d, s_idx, t_idx])
