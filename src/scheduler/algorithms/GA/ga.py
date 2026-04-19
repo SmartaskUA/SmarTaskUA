@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 from problem import (
     load_problem, compute_fitness, random_schedule,
     decode_schedule, print_summary, export_schedule, repair_schedule,
-    GENE_OFF, GENE_TO_SHIFT_TEAM, SHIFT_IDX, TEAM_IDX,
+    GENE_OFF, SHIFTS, SHIFT_IDX,
 )
 
 DATA_DIR = "SMARTASK_SIMPLE_2025"
@@ -86,7 +86,7 @@ def cx_day_point(ind1, ind2, n_emp, n_days):
     return ind1, ind2
 
 
-def _coverage_contribution(row_arr, coverage, min_demand, ideal_demand):
+def _coverage_contribution(row_arr, coverage, min_demand, ideal_demand, problem_data):
     """
     Score how much this employee's row helps cover unmet demand.
     - Each day below minimum counts W_MIN (100) — matches the fitness weight.
@@ -96,10 +96,12 @@ def _coverage_contribution(row_arr, coverage, min_demand, ideal_demand):
     tying at 0 and defaulting to the same parent.
     Vectorised per gene value to avoid slow Python day-by-day loops.
     """
+    gene_to_shift_team = problem_data["gene_to_shift_team"]
+    team_idx           = problem_data["team_idx"]
     score = 0
-    for gene_val, (s_code, t_code) in GENE_TO_SHIFT_TEAM.items():
+    for gene_val, (s_code, t_code) in gene_to_shift_team.items():
         s_idx = SHIFT_IDX[s_code]
-        t_idx = TEAM_IDX[t_code]
+        t_idx = team_idx[t_code]
         days  = np.where(row_arr == gene_val)[0]
         if not len(days):
             continue
@@ -111,11 +113,13 @@ def _coverage_contribution(row_arr, coverage, min_demand, ideal_demand):
     return score
 
 
-def _update_coverage(row_arr, coverage):
+def _update_coverage(row_arr, coverage, problem_data):
     """Add one employee row's worked assignments to the running coverage array."""
-    for gene_val, (s_code, t_code) in GENE_TO_SHIFT_TEAM.items():
+    gene_to_shift_team = problem_data["gene_to_shift_team"]
+    team_idx           = problem_data["team_idx"]
+    for gene_val, (s_code, t_code) in gene_to_shift_team.items():
         s_idx = SHIFT_IDX[s_code]
-        t_idx = TEAM_IDX[t_code]
+        t_idx = team_idx[t_code]
         days  = np.where(row_arr == gene_val)[0]
         if len(days):
             coverage[days, s_idx, t_idx] += 1
@@ -148,8 +152,8 @@ def cx_nbts(ind1, ind2, n_emp, n_days, problem_data):
     # always default to the same parent.
     cov1 = np.zeros_like(min_demand)
     for i in range(n_emp):
-        s1  = _coverage_contribution(arr1[i], cov1, min_demand, ideal_demand)
-        s2  = _coverage_contribution(arr2[i], cov1, min_demand, ideal_demand)
+        s1  = _coverage_contribution(arr1[i], cov1, min_demand, ideal_demand, problem_data)
+        s2  = _coverage_contribution(arr2[i], cov1, min_demand, ideal_demand, problem_data)
         if s1 > s2:
             row = arr1[i]
         elif s2 > s1:
@@ -157,15 +161,15 @@ def cx_nbts(ind1, ind2, n_emp, n_days, problem_data):
         else:
             row = arr1[i] if random.random() < 0.5 else arr2[i]  # random tie-break
         child1[i] = row
-        _update_coverage(row, cov1)
+        _update_coverage(row, cov1, problem_data)
 
     # child2: backward greedy with reversed preference — different evaluation
     # order yields a different partial coverage context at each step, so the
     # same parent rows may be ranked differently, producing a distinct child.
     cov2 = np.zeros_like(min_demand)
     for i in range(n_emp - 1, -1, -1):
-        s1  = _coverage_contribution(arr1[i], cov2, min_demand, ideal_demand)
-        s2  = _coverage_contribution(arr2[i], cov2, min_demand, ideal_demand)
+        s1  = _coverage_contribution(arr1[i], cov2, min_demand, ideal_demand, problem_data)
+        s2  = _coverage_contribution(arr2[i], cov2, min_demand, ideal_demand, problem_data)
         if s2 > s1:
             row = arr2[i]
         elif s1 > s2:
@@ -173,7 +177,7 @@ def cx_nbts(ind1, ind2, n_emp, n_days, problem_data):
         else:
             row = arr2[i] if random.random() < 0.5 else arr1[i]  # random tie-break
         child2[i] = row
-        _update_coverage(row, cov2)
+        _update_coverage(row, cov2, problem_data)
 
     ind1["genes"] = child1.flatten().tolist()
     ind2["genes"] = child2.flatten().tolist()
@@ -261,11 +265,15 @@ def mut_demand_guided(individual, problem_data, indpb):
     min_demand    = problem_data["min_demand"]
     ideal_demand  = problem_data["ideal_demand"]
 
+    gene_to_shift_team = problem_data["gene_to_shift_team"]
+    team_idx           = problem_data["team_idx"]
+    n_teams            = len(problem_data["teams"])
+
     schedule = np.array(individual["genes"], dtype=int).reshape(n_emp, n_days)
-    coverage = np.zeros((n_days, 2, 2), dtype=int)
-    for gene_val, (s_code, t_code) in GENE_TO_SHIFT_TEAM.items():
+    coverage = np.zeros((n_days, len(SHIFTS), n_teams), dtype=int)
+    for gene_val, (s_code, t_code) in gene_to_shift_team.items():
         s_idx = SHIFT_IDX[s_code]
-        t_idx = TEAM_IDX[t_code]
+        t_idx = team_idx[t_code]
         coverage[:, s_idx, t_idx] += np.sum(schedule == gene_val, axis=0)
 
     for i in range(n_emp):
@@ -280,8 +288,8 @@ def mut_demand_guided(individual, problem_data, indpb):
             # Remove current gene's contribution from coverage
             old_gene = individual["genes"][idx]
             if old_gene != GENE_OFF:
-                s_code, t_code = GENE_TO_SHIFT_TEAM[old_gene]
-                coverage[d, SHIFT_IDX[s_code], TEAM_IDX[t_code]] -= 1
+                s_code, t_code = gene_to_shift_team[old_gene]
+                coverage[d, SHIFT_IDX[s_code], team_idx[t_code]] -= 1
 
             # Score each allowed gene by how much it covers unmet demand
             genes  = allowed_genes[i]
@@ -290,9 +298,9 @@ def mut_demand_guided(individual, problem_data, indpb):
                 if g == GENE_OFF:
                     scores.append(0)
                 else:
-                    s_code, t_code = GENE_TO_SHIFT_TEAM[g]
+                    s_code, t_code = gene_to_shift_team[g]
                     s_idx = SHIFT_IDX[s_code]
-                    t_idx = TEAM_IDX[t_code]
+                    t_idx = team_idx[t_code]
                     cov = coverage[d, s_idx, t_idx]
                     mn  = int(min_demand[d, s_idx, t_idx])
                     id_ = int(ideal_demand[d, s_idx, t_idx])
@@ -307,8 +315,8 @@ def mut_demand_guided(individual, problem_data, indpb):
 
             individual["genes"][idx] = chosen
             if chosen != GENE_OFF:
-                s_code, t_code = GENE_TO_SHIFT_TEAM[chosen]
-                coverage[d, SHIFT_IDX[s_code], TEAM_IDX[t_code]] += 1
+                s_code, t_code = gene_to_shift_team[chosen]
+                coverage[d, SHIFT_IDX[s_code], team_idx[t_code]] += 1
 
     individual["fitness"] = None
 
