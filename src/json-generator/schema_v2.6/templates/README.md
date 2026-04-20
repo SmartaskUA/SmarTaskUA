@@ -26,7 +26,7 @@ This directory contains template files to help you create your own scheduling pr
 ## What's New in v2.6
 
 **Mutable Work Periods:**
-- demand.csv now includes optional `open` and `close` columns
+- demand.csv now includes optional `start` and `end` columns
 - Work period times can vary by date/team (CSV overrides JSON defaults)
 - Simplified structure: 2 CSVs instead of 3 (eliminated operating_hours.csv)
 - Only specify times when different from JSON defaults
@@ -95,7 +95,7 @@ EMP002,INCLUDE:09:00-17:00,A,6,A,VAC,A,NOT
 EMP003,EXCEPT:14:00-22:00,A,NOT,A,A,A,A
 ```
 
-### demand_template.csv (v2.6 - with optional open/close)
+### demand_template.csv (v2.6 - with optional start/end)
 
 Specifies daily coverage requirements - how many people are needed.
 
@@ -106,12 +106,12 @@ Specifies daily coverage requirements - how many people are needed.
 - `minimum` - Minimum people (hard constraint)
 - `ideal` - Ideal people (soft target)
 - `estimated` - Expected demand (for KPIs)
-- `open` - OPTIONAL: Work period start time override (HH:MM)
-- `close` - OPTIONAL: Work period end time override (HH:MM)
+- `start` - OPTIONAL: Work period start time override (HH:MM)
+- `end` - OPTIONAL: Work period end time override (HH:MM)
 
-**v2.6 Open/Close Behavior:**
-- Empty open/close = Use JSON workPeriods[].timeRange defaults
-- Specified open/close = Override for this specific workPeriod/date/team
+**v2.6 Start/End Behavior:**
+- Empty start/end = Use JSON workPeriods[].timeRange defaults
+- Specified start/end = Override for this specific workPeriod/date/team
 - Missing row = Shift not operating (no need for CLOSED keyword)
 
 **Example rows:**
@@ -124,7 +124,7 @@ Specifies daily coverage requirements - how many people are needed.
 
 **Interpretation:**
 - Oct-01: Both shifts use JSON defaults
-- Oct-02 M: Storage opens early (06:00-14:00)
+- Oct-02 M: Storage starts early (06:00-14:00)
 - Dec-25: Holiday reduced hours (10:00-14:00)
 - Dec-26: (omit all rows = facility closed)
 
@@ -161,14 +161,14 @@ See `examples/` directory for complete examples.
 2. Add one row per date/workPeriod/team combination
 3. Specify minimum, ideal, and estimated requirements
 4. Ensure: minimum ≤ estimated ≤ ideal
-5. **OPTIONAL:** Add open/close columns to override work period times
+5. **OPTIONAL:** Add start/end columns to override work period times
    - Leave empty to use JSON defaults
    - Specify HH:MM times when work period times vary by date/team
    - Omit rows for closed days (no need for CLOSED keyword)
 
 **Example with overrides:**
 ```csv
-date,workPeriod,team,minimum,ideal,estimated,open,close
+date,workPeriod,team,minimum,ideal,estimated,start,end
 2025-10-01,M,Storage,2,3,2,,
 2025-10-02,M,Storage,2,3,2,06:00,14:00
 ```
@@ -184,8 +184,8 @@ The validator checks:
 - JSON structure and schema compliance
 - CSV format and data types
 - Cross-validation (employee IDs, dates, workPeriods, teams)
-- **Optional open/close columns format (v2.6)**
-- **open < close when specified (v2.6)**
+- **Optional start/end columns format (v2.6)**
+- **start < end when specified (v2.6)**
 - Time window constraint format (v2.2)
 - Contract references (v2.2)
 - Custom constraint definitions (v2.2)
@@ -362,8 +362,8 @@ Before running the scheduler:
 - [ ] Team codes in demand.csv match JSON `organizationalUnits`
 - [ ] Demand values follow order: minimum ≤ estimated ≤ ideal
 - [ ] No duplicate rows in demand.csv (same date/workPeriod/team)
-- [ ] **Optional open/close columns in demand.csv: both or neither specified per row (v2.6)**
-- [ ] **open < close when specified (v2.6)**
+- [ ] **Optional start/end columns in demand.csv: both or neither specified per row (v2.6)**
+- [ ] **start < end when specified (v2.6)**
 - [ ] **Custom constraints are defined in JSON `scheduleInput.markingTypes`**
 - [ ] UTF-8 encoding used for all files
 

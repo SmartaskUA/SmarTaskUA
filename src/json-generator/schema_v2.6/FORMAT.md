@@ -3,9 +3,9 @@
 Quick reference guide for the hybrid scheduling problem format.
 
 **What's New in v2.6:**
-- 🆕 **Mutable Work Periods** - Work period times can vary by date/team via optional `open/close` columns in demand.csv
+- 🆕 **Mutable Work Periods** - Work period times can vary by date/team via optional `start/end` columns in demand.csv
 - 🆕 **Simplified File Structure** - Eliminated separate operating_hours.csv (now integrated into demand.csv)
-- 🆕 **Optional Per-Row Overrides** - Specify open/close only when different from JSON defaults
+- 🆕 **Optional Per-Row Overrides** - Specify start/end only when different from JSON defaults
 - 🆕 **Absence Pattern** - Missing rows = shift not needed (cleaner CSVs)
 
 **What's New in v2.2:**
@@ -556,7 +556,7 @@ EMP002,EXCEPT:14:00-22:00,DL,6,A
 
 **Structure:**
 ```csv
-date,workPeriod,team,minimum,ideal,estimated,open,close
+date,workPeriod,team,minimum,ideal,estimated,start,end
 2030-10-01,M,TeamA,2,3,2,,
 2030-10-01,T,TeamA,2,2,2,,
 2030-10-02,M,TeamA,2,3,2,06:00,14:00
@@ -573,21 +573,21 @@ date,workPeriod,team,minimum,ideal,estimated,open,close
 | `minimum` | integer | Minimum people required (hard constraint) | `1`, `2`, `3` |
 | `ideal` | integer | Ideal number of people (soft target) | `2`, `3`, `4` |
 | `estimated` | integer | Estimated/expected demand (for KPI analysis) | `1`, `2`, `3` |
-| `open` | time (optional) | Work period start time override (HH:MM) - overrides JSON timeRange | `06:00`, `08:00`, empty |
-| `close` | time (optional) | Work period end time override (HH:MM) - overrides JSON timeRange | `14:00`, `22:00`, empty |
+| `start` | time (optional) | Work period start time override (HH:MM) - overrides JSON timeRange | `06:00`, `08:00`, empty |
+| `end` | time (optional) | Work period end time override (HH:MM) - overrides JSON timeRange | `14:00`, `22:00`, empty |
 
-**v2.6 Open/Close Behavior:**
-- **Empty open/close**: Use work period times from JSON `workPeriods[].timeRange` (default)
-- **Specified open/close**: Override times for this specific work period/date/team combination
+**v2.6 Start/End Behavior:**
+- **Empty start/end**: Use work period times from JSON `workPeriods[].timeRange` (default)
+- **Specified start/end**: Override times for this specific work period/date/team combination
 - **Missing row**: Shift not needed that day (equivalent to minimum=0)
 - **Per-row override**: Each row can have different times - no cascading effects
 
 **Example:**
 ```csv
-date,workPeriod,team,minimum,ideal,estimated,open,close
+date,workPeriod,team,minimum,ideal,estimated,start,end
 2025-10-01,M,Storage,2,3,2,,                    # Uses JSON default (e.g., 08:00-16:00)
 2025-10-01,T,Storage,1,2,1,,                    # Uses JSON default (e.g., 14:00-22:00)
-2025-10-02,M,Storage,2,3,2,06:00,14:00          # Override M to open early (06:00-14:00)
+2025-10-02,M,Storage,2,3,2,06:00,14:00          # Override M to start early (06:00-14:00)
 2025-10-02,T,Storage,1,2,1,,                    # T still uses JSON default
 2025-12-25,M,ALL,1,1,1,10:00,14:00              # Holiday reduced hours
 # 2025-12-26 rows omitted = facility closed (no shifts operating)
@@ -599,7 +599,7 @@ date,workPeriod,team,minimum,ideal,estimated,open,close
 3. Team codes must exist in `demand.organizationalUnits.teams[]`
 4. `minimum ≤ estimated ≤ ideal` (logical constraint)
 5. No duplicate rows (same date/workPeriod/team combination)
-6. When `open/close` specified: must be valid HH:MM format and `open < close`
+6. When `start/end` specified: must be valid HH:MM format and `start < end`
 7. Missing rows = shift not operating (cleaner than CLOSED keyword)
 
 ---
@@ -755,9 +755,9 @@ employee_id,2030-10-01,2030-10-02,2030-10-03
 20066543,DL,A,4
 ```
 
-And `demand.csv` (v2.6 with optional open/close):
+And `demand.csv` (v2.6 with optional start/end):
 ```csv
-date,workPeriod,team,minimum,ideal,estimated,open,close
+date,workPeriod,team,minimum,ideal,estimated,start,end
 2030-10-01,M,Management,1,2,1,,
 2030-10-01,M,Checkout,2,3,2,,
 2030-10-02,M,Management,1,2,1,06:00,14:00
@@ -772,7 +772,7 @@ date,workPeriod,team,minimum,ideal,estimated,open,close
 |-------|------|------|------|------|
 | `schemaVersion` | `"2.1"` | `"2.2"` | `"2.5"` | `"2.6"` |
 | Operating hours | Not available | Not available | Separate CSV | **In demand.csv** |
-| `demand.csv` columns | 6 columns | 6 columns | 6 columns | **8 columns (+ open/close)** |
+| `demand.csv` columns | 6 columns | 6 columns | 6 columns | **8 columns (+ start/end)** |
 | Work period times | Fixed in JSON | Fixed in JSON | Fixed in JSON | **Mutable (CSV overrides)** |
 | Missing demand rows | N/A | N/A | N/A | **= shift not operating** |
 | `employees[].workHoursPerDay` | Not present | **New:** Contract-based | Same as v2.2 | Same as v2.2 |
@@ -807,7 +807,7 @@ date,workPeriod,team,minimum,ideal,estimated,open,close
 
 `operating_hours.csv`:
 ```csv
-date,team,open,close
+date,team,start,end
 2025-10-01,ALL,08:00,22:00
 2025-10-02,Storage,06:00,23:00
 ```
@@ -831,7 +831,7 @@ date,workPeriod,team,minimum,ideal,estimated
 
 `demand.csv` (consolidated):
 ```csv
-date,workPeriod,team,minimum,ideal,estimated,open,close
+date,workPeriod,team,minimum,ideal,estimated,start,end
 2025-10-01,M,Storage,2,3,2,,
 2025-10-02,M,Storage,2,3,2,06:00,14:00
 ```
@@ -944,13 +944,13 @@ In v2.2:
 
 ### demand.csv Validation (v2.6)
 - [ ] All required columns present (date, workPeriod, team, minimum, ideal, estimated)
-- [ ] Optional columns (open, close) present but can be empty
+- [ ] Optional columns (start, end) present but can be empty
 - [ ] All dates within `temporalScope.targetPeriod`
 - [ ] All work period codes exist in JSON `demand.workPeriods[]`
 - [ ] All team codes exist in JSON `organizationalUnits.teams[]`
 - [ ] Logical order: minimum ≤ estimated ≤ ideal
 - [ ] No duplicate rows (same date/workPeriod/team)
-- [ ] When open/close specified: valid HH:MM format and open < close
+- [ ] When start/end specified: valid HH:MM format and start < end
 - [ ] UTF-8 encoding
 
 ### Cross-Validation

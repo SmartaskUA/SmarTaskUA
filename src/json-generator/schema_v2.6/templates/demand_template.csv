@@ -10,21 +10,21 @@
 #   minimum   = Minimum people required (HARD constraint - must be met)
 #   ideal     = Ideal number of people (SOFT target - algorithm tries to achieve)
 #   estimated = Estimated/expected demand (for KPI analysis only)
-#   open      = OPTIONAL: Work period start time override (HH:MM, empty = use JSON default)
-#   close     = OPTIONAL: Work period end time override (HH:MM, empty = use JSON default)
+#   start     = OPTIONAL: Work period start time override (HH:MM, empty = use JSON default)
+#   end       = OPTIONAL: Work period end time override (HH:MM, empty = use JSON default)
 #
 # LOGICAL ORDER: minimum ≤ estimated ≤ ideal
 #
-# v2.6 OPEN/CLOSE BEHAVIOR:
-# - Empty open/close = Use work period times from JSON workPeriods[].timeRange (default)
-# - Specified open/close = Override times for THIS specific workPeriod/date/team
+# v2.6 START/END BEHAVIOR:
+# - Empty start/end = Use work period times from JSON workPeriods[].timeRange (default)
+# - Specified start/end = Override times for THIS specific workPeriod/date/team
 # - Missing row = Shift not operating that day (no need for CLOSED keyword)
 #
 # NOTES:
 # - One row per date/workPeriod/team combination
 # - The "team" column always contains team codes for both employee models
 # - Both team-based and competency-based models use the same demand format
-# - open/close are per-row overrides - each row is independent
+# - start/end are per-row overrides - each row is independent
 #
 # EXAMPLES:
 #
@@ -45,7 +45,7 @@
 # DELETE ALL COMMENT LINES (lines starting with #) before using this template!
 # Replace the example data below with your actual demand requirements.
 #
-date,workPeriod,team,minimum,ideal,estimated,open,close
+date,workPeriod,team,minimum,ideal,estimated,start,end
 2030-10-01,M,TeamA,2,3,2,,
 2030-10-01,T,TeamA,2,2,2,,
 2030-10-01,N,TeamA,1,2,1,,

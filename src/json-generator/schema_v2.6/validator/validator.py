@@ -6,7 +6,7 @@ Validates that problem.json and all CSV files are consistent
 and can be used together for scheduling.
 
 v2.6 adds support for:
-- Mutable work periods via optional open/close columns in demand.csv
+- Mutable work periods via optional start/end columns in demand.csv
 - Eliminates need for separate operating_hours.csv file
 - Per-row time overrides (independent work period times)
 
@@ -542,7 +542,7 @@ class SchemaValidator:
             self._validate_schedule_input_csv(schedule_path)
 
     def _validate_demand_csv(self, csv_path: Path):
-        """Validate demand.csv file (v2.6: includes optional open/close columns)"""
+        """Validate demand.csv file (v2.6: includes optional start/end columns)"""
         if not csv_path.exists():
             self.report.add_error("CSV", f"Demand CSV file not found: {csv_path}", "demand.dataFile")
             return
@@ -560,9 +560,9 @@ class SchemaValidator:
             self.report.add_error("CSV", f"Demand CSV missing required columns: {missing_cols}", str(csv_path))
             return
 
-        # v2.6: Check for optional open/close columns
-        has_open = "open" in self.demand_df.columns
-        has_close = "close" in self.demand_df.columns
+        # v2.6: Check for optional start/end columns
+        has_start = "start" in self.demand_df.columns
+        has_end = "end" in self.demand_df.columns
 
         # Validate date format
         for idx, row in self.demand_df.iterrows():
@@ -597,47 +597,47 @@ class SchemaValidator:
                     f"{csv_path.name}:row {idx+2}"
                 )
 
-        # v2.6: Validate optional open/close columns
-        if has_open and has_close:
+        # v2.6: Validate optional start/end columns
+        if has_start and has_end:
             for idx, row in self.demand_df.iterrows():
-                open_str = str(row["open"]).strip()
-                close_str = str(row["close"]).strip()
+                start_str = str(row["start"]).strip()
+                end_str = str(row["end"]).strip()
                 row_num = idx + 2
 
                 # Skip empty values (use JSON defaults)
-                if open_str in ["", "nan"] and close_str in ["", "nan"]:
+                if start_str in ["", "nan"] and end_str in ["", "nan"]:
                     continue
 
                 # Both must be specified together
-                if (open_str in ["", "nan"]) != (close_str in ["", "nan"]):
+                if (start_str in ["", "nan"]) != (end_str in ["", "nan"]):
                     self.report.add_error(
                         "CSV",
-                        f"Both open and close must be specified together or both empty (found: open='{open_str}', close='{close_str}')",
+                        f"Both start and end must be specified together or both empty (found: start='{start_str}', end='{end_str}')",
                         f"{csv_path.name}:row {row_num}"
                     )
                     continue
 
                 # Validate time format
-                is_valid_open, error_msg = validate_time_format(open_str)
-                if not is_valid_open:
-                    self.report.add_error("CSV", f"Invalid open time: {error_msg}", f"{csv_path.name}:row {row_num}")
+                is_valid_start, error_msg = validate_time_format(start_str)
+                if not is_valid_start:
+                    self.report.add_error("CSV", f"Invalid start time: {error_msg}", f"{csv_path.name}:row {row_num}")
 
-                is_valid_close, error_msg = validate_time_format(close_str)
-                if not is_valid_close:
-                    self.report.add_error("CSV", f"Invalid close time: {error_msg}", f"{csv_path.name}:row {row_num}")
+                is_valid_end, error_msg = validate_time_format(end_str)
+                if not is_valid_end:
+                    self.report.add_error("CSV", f"Invalid end time: {error_msg}", f"{csv_path.name}:row {row_num}")
 
-                # Check that open < close
-                if is_valid_open and is_valid_close:
+                # Check that start < end
+                if is_valid_start and is_valid_end:
                     try:
-                        open_parts = open_str.split(":")
-                        close_parts = close_str.split(":")
-                        open_minutes = int(open_parts[0]) * 60 + int(open_parts[1])
-                        close_minutes = int(close_parts[0]) * 60 + int(close_parts[1])
+                        start_parts = start_str.split(":")
+                        end_parts = end_str.split(":")
+                        start_minutes = int(start_parts[0]) * 60 + int(start_parts[1])
+                        end_minutes = int(end_parts[0]) * 60 + int(end_parts[1])
 
-                        if open_minutes >= close_minutes:
+                        if start_minutes >= end_minutes:
                             self.report.add_error(
                                 "CSV",
-                                f"Opening time ({open_str}) must be before closing time ({close_str})",
+                                f"Start time ({start_str}) must be before end time ({end_str})",
                                 f"{csv_path.name}:row {row_num}"
                             )
                     except Exception:

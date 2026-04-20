@@ -11,10 +11,10 @@ Version 2.6 introduces **mutable work periods** with optional time overrides dir
 - ❌ Separate operating_hours.csv file increased complexity
 - ❌ Repetitive data across multiple CSVs
 
-**v2.6 Solution:** Optional `open/close` columns in `demand.csv`
+**v2.6 Solution:** Optional `start/end` columns in `demand.csv`
 
 ```csv
-date,workPeriod,team,minimum,ideal,estimated,open,close
+date,workPeriod,team,minimum,ideal,estimated,start,end
 2025-10-01,M,Storage,2,3,2,,
 2025-10-02,M,Storage,2,3,2,06:00,14:00
 2025-10-02,T,Storage,1,2,1,,
@@ -34,9 +34,9 @@ date,workPeriod,team,minimum,ideal,estimated,open,close
 
 | Feature | Description |
 |---------|-------------|
-| **Optional open/close** | Add to demand.csv to override work period times |
+| **Optional start/end** | Add to demand.csv to override work period times |
 | **JSON Defaults** | Work periods in JSON provide standard times |
-| **CSV Exceptions** | Specify open/close only when needed |
+| **CSV Exceptions** | Specify start/end only when needed |
 | **No CLOSED keyword** | Simply omit rows for non-operating days |
 | **Independent rows** | Each row can have different times |
 
@@ -57,7 +57,7 @@ date,workPeriod,team,minimum,ideal,estimated,open,close
 
 **demand.csv:**
 ```csv
-date,workPeriod,team,minimum,ideal,estimated,open,close
+date,workPeriod,team,minimum,ideal,estimated,start,end
 2025-10-01,M,Storage,2,3,2,,
 2025-10-01,T,Storage,1,2,1,,
 2025-10-02,M,Storage,2,3,2,06:00,14:00
@@ -67,7 +67,7 @@ date,workPeriod,team,minimum,ideal,estimated,open,close
 **Result:**
 - Oct-01 M: Uses JSON default (08:00-16:00)
 - Oct-01 T: Uses JSON default (14:00-22:00)
-- Oct-02 M: Override to early open (06:00-14:00)
+- Oct-02 M: Override to early start (06:00-14:00)
 - Oct-02 T: Still uses JSON default (14:00-22:00)
 
 ---
@@ -395,7 +395,7 @@ schema_v2.6/
 │   └── requirements.txt
 │
 ├── templates/                      # CSV templates for users
-│   ├── demand_template.csv         # v2.6: includes optional open/close columns
+│   ├── demand_template.csv         # v2.6: includes optional start/end columns
 │   ├── schedule_input_template.csv
 │   └── README.md
 │
@@ -403,7 +403,7 @@ schema_v2.6/
     ├── README.md
     ├── sisqual_example/            # v2.6 example with mutable work periods
     │   ├── problem.json
-    │   ├── demand.csv              # v2.6: includes open/close overrides
+    │   ├── demand.csv              # v2.6: includes start/end overrides
     │   ├── schedule_input.csv
     │   └── README.md
     └── time_constraints_example/   # v2.6 time window example
@@ -578,7 +578,7 @@ Priority hierarchy defines team assignment preferences for both employee models:
 | Numbers in schedule_input.csv | Invalid | Valid (1-16) | Same | Same |
 | workHoursPerDay field | Not present | New field | Same | Same |
 | CSV files | 2 files | 2 files | 3 files | **2 files** |
-| demand.csv columns | 6 columns | 6 columns | 6 columns | **8 columns (+ open/close)** |
+| demand.csv columns | 6 columns | 6 columns | 6 columns | **8 columns (+ start/end)** |
 
 ---
 
@@ -609,7 +609,7 @@ Priority hierarchy defines team assignment preferences for both employee models:
 **Hybrid Output:**
 - `problem.json`: Employees with workHoursPerDay, teams, shifts (with default times), constraints
 - `schedule_input.csv`: Work requirements (A, 4, 6, 8) and constraints (VAC, DL per employee/day)
-- `demand.csv`: Daily requirements (minimum/ideal/estimated per day/shift/team) with optional open/close overrides
+- `demand.csv`: Daily requirements (minimum/ideal/estimated per day/shift/team) with optional start/end overrides
 
 ---
 
@@ -626,7 +626,7 @@ python3 validator/validator.py path/to/problem.json -v
 The validator performs:
 - **JSON validation** against schema.json (v2.6)
 - **CSV format validation** (dates, columns, values)
-- **v2.6: Open/close validation** (optional columns, HH:MM format, open < close)
+- **v2.6: Start/end validation** (optional columns, HH:MM format, start < end)
 - **v2.2: Numeric value validation** (1-16 hours)
 - **v2.2: Contract validation** (workHoursPerDay when "A" is used)
 - **Cross-validation** (employee IDs, work period codes, date ranges match)
@@ -670,8 +670,8 @@ If you have existing v2.5 files:
 
 1. **Update schemaVersion** from `"2.5"` to `"2.6"` in JSON
 2. **Remove operatingHours section** from JSON
-3. **Add open/close columns to demand.csv:**
-   - Add two columns: `open,close`
+3. **Add start/end columns to demand.csv:**
+   - Add two columns: `start,end`
    - Migrate operating_hours.csv data to demand.csv rows
    - Leave empty for rows using JSON defaults
 4. **Delete operating_hours.csv file**
@@ -681,7 +681,7 @@ If you have existing v2.5 files:
 Before (v2.5):
 ```csv
 # operating_hours.csv
-date,team,open,close
+date,team,start,end
 2025-10-02,Storage,06:00,23:00
 
 # demand.csv
@@ -692,7 +692,7 @@ date,workPeriod,team,minimum,ideal,estimated
 After (v2.6):
 ```csv
 # demand.csv (operating_hours.csv deleted)
-date,workPeriod,team,minimum,ideal,estimated,open,close
+date,workPeriod,team,minimum,ideal,estimated,start,end
 2025-10-02,M,Storage,2,3,2,06:00,14:00
 ```
 

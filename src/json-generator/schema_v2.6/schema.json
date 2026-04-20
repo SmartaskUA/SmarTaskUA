@@ -335,7 +335,7 @@
         },
         "dataFile": {
           "type": "string",
-          "description": "Path to demand.csv with daily coverage requirements. Format: date,workPeriod,team,minimum,ideal,estimated,open,close. The 'team' column always contains team codes for both employee models. Optional 'open' and 'close' columns override work period times from JSON timeRange definitions. See FORMAT.md for validation rules."
+          "description": "Path to demand.csv with daily coverage requirements. Format: date,workPeriod,team,minimum,ideal,estimated,start,end. The 'team' column always contains team codes for both employee models. Optional 'start' and 'end' columns override work period times from JSON timeRange definitions. See FORMAT.md for validation rules."
         },
         "organizationalUnits": {
           "type": "object",

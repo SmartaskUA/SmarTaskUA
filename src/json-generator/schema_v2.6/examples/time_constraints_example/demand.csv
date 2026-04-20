@@ -1,4 +1,4 @@
-date,workPeriod,team,minimum,ideal,estimated,open,close
+date,workPeriod,team,minimum,ideal,estimated,start,end
 2030-10-01,MORNING,TeamA,1,2,2,,
 2030-10-01,AFTERNOON,TeamA,1,2,2,,
 2030-10-01,NIGHT,TeamA,1,1,1,,
