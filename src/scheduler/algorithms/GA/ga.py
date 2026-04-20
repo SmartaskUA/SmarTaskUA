@@ -17,6 +17,7 @@ import time
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+from multiprocessing import Pool
 
 from problem import (
     load_problem, compute_fitness, random_schedule,
@@ -362,6 +363,24 @@ def clone(ind):
     return {"genes": ind["genes"][:], "fitness": ind["fitness"]}
 
 
+# ── Parallel evaluation helpers ───────────────────────────────────────────────
+# Defined after evaluate() so the worker process can resolve the name on import.
+# problem_data is loaded once per worker via the pool initializer — not
+# re-serialised on every individual evaluation call.
+
+_worker_problem_data = None
+
+def _init_worker(problem_data):
+    global _worker_problem_data
+    _worker_problem_data = problem_data
+
+def _evaluate_worker(genes):
+    """Repair + fitness for one individual. Runs inside a worker process."""
+    individual = {"genes": genes, "fitness": None}
+    individual["fitness"] = evaluate(individual, _worker_problem_data)
+    return individual["genes"], individual["fitness"]
+
+
 # ── Core GA runner ────────────────────────────────────────────────────────────
 
 def run_ga(problem_data, params):
@@ -390,6 +409,7 @@ def run_ga(problem_data, params):
     crossover_type       = params.get("crossover_type",       "row_swap")
     mutation_type        = params.get("mutation_type",        "respect_constraints")
     indpb_emp            = params.get("indpb_emp",            0.3)
+    n_workers            = params.get("n_workers",            None)  # None = all cores
 
     n_emp  = problem_data["n_employees"]
     n_days = problem_data["n_days"]
@@ -402,76 +422,87 @@ def run_ga(problem_data, params):
     else:
         cx = lambda a, b: cx_row_swap(a, b, n_emp, n_days)
 
-    # Generate and evaluate initial population
-    pop = [make_individual(problem_data) for _ in range(pop_size)]
-    for ind in pop:
-        ind["fitness"] = evaluate(ind, problem_data)
+    def _eval_population(pool, individuals):
+        """Evaluate a list of individuals in parallel (only those with fitness=None)."""
+        to_eval = [ind for ind in individuals if ind["fitness"] is None]
+        if not to_eval:
+            return
+        results = pool.map(_evaluate_worker, [ind["genes"] for ind in to_eval])
+        for ind, (genes, fitness) in zip(to_eval, results):
+            ind["genes"]   = genes
+            ind["fitness"] = fitness
 
-    # Hall of fame — single best individual seen across all generations
-    hof = max(pop, key=lambda ind: ind["fitness"])
-    hof = clone(hof)
+    with Pool(processes=n_workers,
+              initializer=_init_worker,
+              initargs=(problem_data,)) as pool:
 
-    logbook = []
-    fitnesses = [ind["fitness"] for ind in pop]
-    logbook.append({"gen": 0, "best": max(fitnesses), "mean": np.mean(fitnesses)})
+        # Generate and evaluate initial population
+        pop = [make_individual(problem_data) for _ in range(pop_size)]
+        _eval_population(pool, pop)
 
-    # Early stopping state
-    best_so_far = hof["fitness"]
-    no_improve  = 0
-    stopped_at  = num_generations
+        # Hall of fame — single best individual seen across all generations
+        hof = max(pop, key=lambda ind: ind["fitness"])
+        hof = clone(hof)
 
-    for gen in range(1, num_generations + 1):
-        # Tournament selection: picks pop_size - elite_size individuals.
-        # Randomly draws tournsize candidates, best one wins. Repeat k times.
-        # Better individuals win more often — this is selection pressure.
-        offspring = select_tournament(pop, len(pop) - elite_size, tournament_size)
-
-        # Clone so crossover/mutation don't corrupt the current population.
-        offspring = [clone(ind) for ind in offspring]
-
-        # Crossover: pair up offspring, each pair has crossover_prob chance of mating.
-        # Operators set fitness=None on modified individuals.
-        for c1, c2 in zip(offspring[::2], offspring[1::2]):
-            if random.random() < crossover_prob:
-                cx(c1, c2)
-
-        # Mutation: every offspring runs through mutation (probability=1.0).
-        for mutant in offspring:
-            if random.random() < mutation_prob:
-                if mutation_type == "swap":
-                    mut_swap_days(mutant, problem_data, indpb_emp)
-                elif mutation_type == "both":
-                    mut_respect_constraints(mutant, problem_data, gene_mut_prob)
-                    mut_swap_days(mutant, problem_data, indpb_emp)
-                elif mutation_type == "demand_guided":
-                    mut_demand_guided(mutant, problem_data, gene_mut_prob)
-                else:
-                    mut_respect_constraints(mutant, problem_data, gene_mut_prob)
-
-        # Evaluate only individuals whose fitness was invalidated.
-        for ind in offspring:
-            if ind["fitness"] is None:
-                ind["fitness"] = evaluate(ind, problem_data)
-
-        # Elitism: always carry the all-time best into the new population.
-        current_best = max(offspring, key=lambda ind: ind["fitness"])
-        if current_best["fitness"] > hof["fitness"]:
-            hof = clone(current_best)
-        pop = [clone(hof)] + offspring
-
+        logbook = []
         fitnesses = [ind["fitness"] for ind in pop]
-        record = {"gen": gen, "best": max(fitnesses), "mean": np.mean(fitnesses)}
-        logbook.append(record)
+        logbook.append({"gen": 0, "best": max(fitnesses), "mean": np.mean(fitnesses)})
 
-        # Early stopping: halt if no meaningful improvement for patience generations.
-        if record["best"] > best_so_far + early_stop_min_delta:
-            best_so_far = record["best"]
-            no_improve  = 0
-        else:
-            no_improve += 1
-        if no_improve >= early_stop_patience:
-            stopped_at = gen
-            break
+        # Early stopping state
+        best_so_far = hof["fitness"]
+        no_improve  = 0
+        stopped_at  = num_generations
+
+        for gen in range(1, num_generations + 1):
+            # Tournament selection: picks pop_size - elite_size individuals.
+            # Randomly draws tournsize candidates, best one wins. Repeat k times.
+            # Better individuals win more often — this is selection pressure.
+            offspring = select_tournament(pop, len(pop) - elite_size, tournament_size)
+
+            # Clone so crossover/mutation don't corrupt the current population.
+            offspring = [clone(ind) for ind in offspring]
+
+            # Crossover: pair up offspring, each pair has crossover_prob chance of mating.
+            # Operators set fitness=None on modified individuals.
+            for c1, c2 in zip(offspring[::2], offspring[1::2]):
+                if random.random() < crossover_prob:
+                    cx(c1, c2)
+
+            # Mutation: every offspring runs through mutation (probability=1.0).
+            for mutant in offspring:
+                if random.random() < mutation_prob:
+                    if mutation_type == "swap":
+                        mut_swap_days(mutant, problem_data, indpb_emp)
+                    elif mutation_type == "both":
+                        mut_respect_constraints(mutant, problem_data, gene_mut_prob)
+                        mut_swap_days(mutant, problem_data, indpb_emp)
+                    elif mutation_type == "demand_guided":
+                        mut_demand_guided(mutant, problem_data, gene_mut_prob)
+                    else:
+                        mut_respect_constraints(mutant, problem_data, gene_mut_prob)
+
+            # Evaluate only individuals whose fitness was invalidated.
+            _eval_population(pool, offspring)
+
+            # Elitism: always carry the all-time best into the new population.
+            current_best = max(offspring, key=lambda ind: ind["fitness"])
+            if current_best["fitness"] > hof["fitness"]:
+                hof = clone(current_best)
+            pop = [clone(hof)] + offspring
+
+            fitnesses = [ind["fitness"] for ind in pop]
+            record = {"gen": gen, "best": max(fitnesses), "mean": np.mean(fitnesses)}
+            logbook.append(record)
+
+            # Early stopping: halt if no meaningful improvement for patience generations.
+            if record["best"] > best_so_far + early_stop_min_delta:
+                best_so_far = record["best"]
+                no_improve  = 0
+            else:
+                no_improve += 1
+            if no_improve >= early_stop_patience:
+                stopped_at = gen
+                break
 
     return hof, hof["fitness"], logbook, stopped_at
 
