@@ -96,6 +96,21 @@ def _enforce_ideal_bounds(df_scaled, day_cols, cap=None):
         df_scaled.loc[ideal_idx[0], day_cols] = ideal
 
 
+def _team_label(t: int) -> str:
+    """
+    Convert a 0-based team index to a label: A, B, ..., Z, AA, AB, ...
+    Supports any number of teams beyond 26.
+    """
+    label = ""
+    n = t
+    while True:
+        label = chr(65 + n % 26) + label
+        n = n // 26 - 1
+        if n < 0:
+            break
+    return label
+
+
 def generate_scaled_minimums(df_pattern, teams_target, employees_target):
     base_emp_per_team = 10
     target_emp_per_team = employees_target / teams_target
@@ -111,7 +126,7 @@ def generate_scaled_minimums(df_pattern, teams_target, employees_target):
     teams = []
     for t in range(teams_target):
         df_team = base_scaled.copy()
-        df_team["Equipa"] = f"Equipa {chr(65 + t)}"
+        df_team["Equipa"] = f"Equipa {_team_label(t)}"
 
         if enable_variation:
             shape = df_team[day_cols].shape

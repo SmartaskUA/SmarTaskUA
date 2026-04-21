@@ -26,7 +26,8 @@ from ga import run_ga
 
 DATA_DIR   = "SMARTASK_SIMPLE_2025"
 N_RUNS     = 10
-OUTPUT_DIR = "results_final_08"
+#OUTPUT_DIR = "results_final_08"
+OUTPUT_DIR = "results_final_08_w/new_6dayrepair"
 CONV_DIR   = os.path.join(OUTPUT_DIR, "convergence")
 
 PARAMS = {
