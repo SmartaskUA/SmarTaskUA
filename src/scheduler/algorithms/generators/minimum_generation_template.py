@@ -41,6 +41,7 @@ targets = [
     (4, 24),
     (8, 48),
     (16, 96),
+    (32, 192),
 ]
 
 # Adds small random ±1 variation to avoid identical rows
