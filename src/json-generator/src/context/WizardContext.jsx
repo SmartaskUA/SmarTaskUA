@@ -231,6 +231,30 @@ export const WizardProvider = ({ children }) => {
     setState(initialState);
   };
 
+  // Save current state as a named project in localStorage
+  const saveProject = (name) => {
+    const projects = JSON.parse(localStorage.getItem('wizardProjects') || '[]');
+    const existing = projects.findIndex(p => p.name === name);
+    const entry = { name, savedAt: new Date().toISOString(), state };
+    if (existing >= 0) {
+      projects[existing] = entry;
+    } else {
+      projects.push(entry);
+    }
+    localStorage.setItem('wizardProjects', JSON.stringify(projects));
+  };
+
+  // Delete a named project from localStorage
+  const deleteProject = (name) => {
+    const projects = JSON.parse(localStorage.getItem('wizardProjects') || '[]');
+    localStorage.setItem('wizardProjects', JSON.stringify(projects.filter(p => p.name !== name)));
+  };
+
+  // Load a previously saved project state
+  const loadProject = (projectState) => {
+    setState(projectState);
+  };
+
   // Validate current step
   const validateCurrentStep = () => {
     return validateStep(state.currentStep, state);
@@ -308,6 +332,9 @@ export const WizardProvider = ({ children }) => {
     goToStep,
     completeStep,
     resetWizard,
+    saveProject,
+    deleteProject,
+    loadProject,
     exportData,
     updateFeatureFlags,
     validateCurrentStep,

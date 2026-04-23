@@ -5,11 +5,15 @@ import {
   StepLabel,
   StepButton,
   Box,
-  Typography
+  Typography,
+  Badge,
+  Tooltip as MuiTooltip
 } from '@mui/material';
+import { Warning } from '@mui/icons-material';
 import { useWizard } from '../../context/WizardContext';
 import { themeConfig } from '../../theme.config';
 import { VISIBLE_STEPS } from '../../constants/wizardSteps';
+import { validateStep } from '../../utils/validators/stepValidators';
 
 const WizardStepper = () => {
   const { state, goToStep } = useWizard();
@@ -21,17 +25,26 @@ const WizardStepper = () => {
   const visibleIndex = VISIBLE_STEPS.findIndex(s => s.realIndex === currentStep);
   const activeVisibleStep = visibleIndex >= 0 ? visibleIndex : -1;
 
+  // For completed steps, check validation errors to show indicator
+  const stepHasErrors = (realIndex) => {
+    if (!stepCompleted[realIndex]) return false;
+    const result = validateStep(realIndex, state);
+    return !result.valid;
+  };
+
   const getStepIcon = (realIndex, isCurrent) => {
     const Icon = VISIBLE_STEPS.find(s => s.realIndex === realIndex)?.icon;
     if (!Icon) return null;
 
     const isCompleted = stepCompleted[realIndex];
+    const hasErrors = stepHasErrors(realIndex);
 
     let color = themeConfig.custom.stepperInactive;
-    if (isCompleted) color = themeConfig.custom.stepperCompleted;
+    if (hasErrors) color = '#d32f2f'; // error red
+    else if (isCompleted) color = themeConfig.custom.stepperCompleted;
     else if (isCurrent) color = primary;
 
-    return (
+    const iconEl = (
       <Box
         sx={{
           display: 'flex',
@@ -44,6 +57,30 @@ const WizardStepper = () => {
         <Icon fontSize="inherit" />
       </Box>
     );
+
+    if (hasErrors) {
+      return (
+        <MuiTooltip title="This step has validation errors" placement="top">
+          <Badge
+            badgeContent={<Warning sx={{ fontSize: 11, color: '#fff' }} />}
+            sx={{
+              '& .MuiBadge-badge': {
+                backgroundColor: '#d32f2f',
+                minWidth: 16,
+                height: 16,
+                padding: 0,
+                top: 2,
+                right: 2
+              }
+            }}
+          >
+            {iconEl}
+          </Badge>
+        </MuiTooltip>
+      );
+    }
+
+    return iconEl;
   };
 
   return (
