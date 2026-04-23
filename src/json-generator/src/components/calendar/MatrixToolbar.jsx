@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Box,
   Button,
@@ -24,6 +24,17 @@ const MatrixToolbar = ({
   onClearAll
 }) => {
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleImportClick = () => fileInputRef.current?.click();
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onImportCsv(file);
+      e.target.value = '';
+    }
+  };
 
   const handleClearAll = () => {
     setConfirmClearOpen(false);
@@ -44,7 +55,7 @@ const MatrixToolbar = ({
         <ButtonGroup variant="outlined" size="small">
           <Button
             startIcon={<FileUploadIcon />}
-            onClick={onImportCsv}
+            onClick={handleImportClick}
           >
             Import CSV
           </Button>
@@ -66,6 +77,15 @@ const MatrixToolbar = ({
           Clear All
         </Button>
       </Box>
+
+      {/* Hidden file input for CSV import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
 
       {/* Confirm Clear Dialog */}
       <Dialog
