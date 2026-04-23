@@ -93,29 +93,10 @@ const DownloadPanel = ({ files, problemId }) => {
     <Card>
       <CardContent>
         <Typography variant="h6" gutterBottom fontWeight={600}>
-          Download Files
+          Download Individual Files
         </Typography>
 
         <Stack spacing={2}>
-          {/* Main ZIP Download */}
-          <Button
-            variant="contained"
-            size="large"
-            startIcon={downloading ? <CircularProgress size={20} color="inherit" /> : <Download />}
-            onClick={downloadZip}
-            disabled={downloading}
-            fullWidth
-          >
-            {downloading ? 'Creating ZIP...' : 'Download as ZIP (Recommended)'}
-          </Button>
-
-          <Divider />
-
-          {/* Individual Downloads */}
-          <Typography variant="subtitle2" color="text.secondary">
-            Individual Files
-          </Typography>
-
           <Stack direction="row" spacing={1} flexWrap="wrap">
             <Button
               variant="outlined"
@@ -143,23 +124,7 @@ const DownloadPanel = ({ files, problemId }) => {
             </Button>
           </Stack>
 
-          <Divider />
-
-          {/* Copy to Clipboard */}
-          <Button
-            variant="text"
-            size="small"
-            startIcon={<ContentCopy />}
-            onClick={copyJsonToClipboard}
-            color={copied ? "success" : "primary"}
-          >
-            {copied ? 'Copied!' : 'Copy JSON to Clipboard'}
-          </Button>
         </Stack>
-
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
-          💡 Download the ZIP file to get all files at once, or download individual files separately.
-        </Typography>
       </CardContent>
     </Card>
   );

@@ -69,10 +69,6 @@ const JsonPreview = ({ json }) => {
       >
         {jsonString}
       </Box>
-
-      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-        💡 Use the copy button to copy the entire JSON to clipboard
-      </Typography>
     </Box>
   );
 };

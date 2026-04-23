@@ -97,12 +97,6 @@ const CsvPreview = ({ csv, filename }) => {
           </TableBody>
         </Table>
       </TableContainer>
-
-      {truncated && (
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-          ℹ️ Only showing first 50 rows. Download the file to view all {data.length} rows.
-        </Typography>
-      )}
     </Box>
   );
 };

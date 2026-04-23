@@ -175,18 +175,8 @@ export function validateStep4(state) {
  * @returns {object} {valid: boolean, errors: string[]}
  */
 export function validateStep5(state) {
-  const errors = [];
-
-  // Optional validation: Check if schedule matrix has data
-  // For now, schedule input is optional, so we just warn if empty
-  if (!state.scheduleInput.dataMatrix || Object.keys(state.scheduleInput.dataMatrix).length === 0) {
-    errors.push('Schedule input matrix is empty (this is optional, but you may want to add employee availability)');
-  }
-
-  return {
-    valid: errors.length === 0,
-    errors
-  };
+  // Schedule input is entirely optional — no validation errors/warnings needed
+  return { valid: true, errors: [] };
 }
 
 /**

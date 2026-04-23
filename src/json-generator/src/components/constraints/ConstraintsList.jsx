@@ -7,8 +7,7 @@ import {
   Alert,
   Chip,
   Switch,
-  FormControlLabel,
-  Divider
+  FormControlLabel
 } from '@mui/material';
 import ConstraintCard from './ConstraintCard';
 
@@ -75,9 +74,9 @@ const ConstraintsList = ({ constraints, onChange }) => {
             variant={enabledSoftCount > 0 ? 'filled' : 'outlined'}
           />
           <Chip
-            label={`Advanced: ${advanced.dayOffSwapping?.enabled || advanced.breaks?.enabled ? 'Active' : 'Inactive'}`}
-            color={advanced.dayOffSwapping?.enabled || advanced.breaks?.enabled ? 'primary' : 'default'}
-            variant={advanced.dayOffSwapping?.enabled || advanced.breaks?.enabled ? 'filled' : 'outlined'}
+            label={`Advanced: ${advanced.dayOffSwapping?.enabled ? 'Active' : 'Inactive'}`}
+            color={advanced.dayOffSwapping?.enabled ? 'primary' : 'default'}
+            variant={advanced.dayOffSwapping?.enabled ? 'filled' : 'outlined'}
           />
         </Box>
       </Box>
@@ -219,47 +218,28 @@ const ConstraintsList = ({ constraints, onChange }) => {
               )}
             </Box>
 
+            {/* Break Rules — not yet implemented in the solver; hidden until available
             <Divider sx={{ my: 3 }} />
-
-            {/* Breaks */}
             <Box sx={{ mb: 3, p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                 <Box>
-                  <Typography variant="h6" fontSize={16} fontWeight={600}>
-                    Break Rules
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Apply break rules defined in work periods
-                  </Typography>
+                  <Typography variant="h6" fontSize={16} fontWeight={600}>Break Rules</Typography>
+                  <Typography variant="body2" color="text.secondary">Apply break rules defined in work periods</Typography>
                 </Box>
                 <FormControlLabel
-                  control={
-                    <Switch
-                      checked={advanced.breaks?.enabled || false}
-                      onChange={(e) =>
-                        handleAdvancedChange('breaks', {
-                          ...(advanced.breaks || {}),
-                          enabled: e.target.checked
-                        })
-                      }
-                    />
-                  }
+                  control={<Switch checked={advanced.breaks?.enabled || false} onChange={(e) => handleAdvancedChange('breaks', { ...(advanced.breaks || {}), enabled: e.target.checked })} />}
                   label={advanced.breaks?.enabled ? 'Enabled' : 'Disabled'}
                   labelPlacement="start"
                 />
               </Box>
-
               {advanced.breaks?.enabled && (
                 <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Mode: {advanced.breaks?.mode || 'with_breaks'}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                    Breaks configured in Step 6 (Work Periods) will be applied during scheduling.
-                  </Typography>
+                  <Typography variant="caption" color="text.secondary">Mode: {advanced.breaks?.mode || 'with_breaks'}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>Breaks configured in Step 6 (Work Periods) will be applied during scheduling.</Typography>
                 </Box>
               )}
             </Box>
+            */}
 
             <Alert severity="warning" sx={{ mt: 2 }}>
               <Typography variant="body2">

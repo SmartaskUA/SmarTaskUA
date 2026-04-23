@@ -386,32 +386,22 @@ const WorkPeriodForm = ({
             </Box>
           )}
 
-          {/* Breaks (Optional) */}
+          {/* Breaks — not yet implemented in the solver; hidden until available
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography fontWeight={600}>
-                  Breaks (Optional)
-                </Typography>
+                <Typography fontWeight={600}>Breaks (Optional)</Typography>
                 {formData.breaks?.length > 0 && (
                   <Chip label={`${formData.breaks.length} break${formData.breaks.length > 1 ? 's' : ''}`} size="small" />
                 )}
               </Box>
             </AccordionSummary>
             <AccordionDetails>
-              <BreakBuilder
-                breaks={formData.breaks}
-                onChange={handleBreaksChange}
-              />
+              <BreakBuilder breaks={formData.breaks} onChange={handleBreaksChange} />
             </AccordionDetails>
           </Accordion>
-
-          {/* Breaks validation error */}
-          {errors.breaks && (
-            <Alert severity="error">
-              {errors.breaks}
-            </Alert>
-          )}
+          {errors.breaks && <Alert severity="error">{errors.breaks}</Alert>}
+          */}
         </Box>
       </DialogContent>
 

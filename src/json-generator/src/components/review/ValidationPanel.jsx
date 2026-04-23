@@ -149,7 +149,7 @@ const ValidationPanel = ({ results, onRevalidate }) => {
               ))}
             </List>
             <Typography variant="caption" color="error" sx={{ display: 'block', mt: 1 }}>
-              ⚠️ Fix these errors to enable file download.
+              Fix these errors to enable file download.
             </Typography>
           </Alert>
         )}
@@ -181,7 +181,7 @@ const ValidationPanel = ({ results, onRevalidate }) => {
               ))}
             </List>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-              ℹ️ Warnings don't prevent file download, but you should review them.
+              Warnings don't prevent file download, but you should review them.
             </Typography>
           </Alert>
         )}

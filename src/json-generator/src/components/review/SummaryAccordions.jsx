@@ -63,18 +63,7 @@ const SummaryAccordions = ({ state, onJumpToStep }) => {
       status: getStep7Status(state),
       summary: <Step7Summary demand={state.demand} />
     },
-    {
-      step: 8,
-      title: 'Constraints',
-      status: getStep8Status(state),
-      summary: <Step8Summary constraints={state.constraints} />
-    },
-    {
-      step: 9,
-      title: 'Optimization',
-      status: getStep9Status(state),
-      summary: <Step9Summary optimization={state.optimization} />
-    }
+    /* Constraints (step 8) and Optimization (step 9) are hidden — not yet in the solver */
   ];
 
   return (

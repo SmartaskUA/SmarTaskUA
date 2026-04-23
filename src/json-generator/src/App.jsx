@@ -4,6 +4,7 @@ import { CssBaseline, Container, Box, Typography, AppBar, Toolbar } from '@mui/m
 import { WizardProvider, useWizard } from './context/WizardContext';
 import theme from './theme';
 import WizardStepper from './components/wizard/WizardStepper';
+import { getVisibleStepNumber, TOTAL_VISIBLE } from './constants/wizardSteps';
 
 // Import steps
 import Step1_Setup from './steps/Step1_Setup';
@@ -58,7 +59,7 @@ const WizardContent = () => {
             JSON Generator - Schema v2.2
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.8 }}>
-            Step {currentStep + 1} of 10
+            Step {getVisibleStepNumber(currentStep)} of {TOTAL_VISIBLE}
           </Typography>
         </Toolbar>
       </AppBar>

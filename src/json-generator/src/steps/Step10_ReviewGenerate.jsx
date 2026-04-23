@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Typography, Box, Alert, CircularProgress, Button } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 import StepCard from '../components/wizard/StepCard';
 import NavigationButtons from '../components/wizard/NavigationButtons';
 import SummaryAccordions from '../components/review/SummaryAccordions';
@@ -29,6 +31,7 @@ const Step10_ReviewGenerate = () => {
   const [validationResults, setValidationResults] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [zipping, setZipping] = useState(false);
 
   /**
    * Generate files on mount
@@ -91,6 +94,28 @@ const Step10_ReviewGenerate = () => {
   };
 
   /**
+   * Download all files as ZIP — called by the "Generate Files" NavigationButton
+   */
+  const handleGenerateFiles = async () => {
+    if (!generatedFiles) return false;
+    try {
+      setZipping(true);
+      const zip = new JSZip();
+      zip.file('problem.json', JSON.stringify(generatedFiles.problemJson, null, 2));
+      zip.file('demand.csv', generatedFiles.demandCsv);
+      zip.file('schedule_input.csv', generatedFiles.scheduleInputCsv);
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const filename = `${state.metadata.problemId || 'problem'}_scheduling_problem.zip`;
+      saveAs(blob, filename);
+    } catch (err) {
+      console.error('ZIP creation failed:', err);
+    } finally {
+      setZipping(false);
+    }
+    return false; // stay on this step
+  };
+
+  /**
    * Handle jumping to a specific step from summary
    */
   const handleJumpToStep = (stepIndex) => {
@@ -122,7 +147,7 @@ const Step10_ReviewGenerate = () => {
         </Box>
 
         <Box sx={{ flexShrink: 0, mt: 2 }}>
-          <NavigationButtons showNext={false} />
+          <NavigationButtons nextDisabled />
         </Box>
       </Box>
     );
@@ -160,7 +185,7 @@ const Step10_ReviewGenerate = () => {
         </Box>
 
         <Box sx={{ flexShrink: 0, mt: 2 }}>
-          <NavigationButtons showNext={false} />
+          <NavigationButtons nextDisabled />
         </Box>
       </Box>
     );
@@ -208,7 +233,7 @@ const Step10_ReviewGenerate = () => {
           {validationResults && !validationResults.valid && (
             <Alert severity="warning" sx={{ mt: 2 }}>
               <Typography variant="body2">
-                ⚠️ Please fix validation errors before downloading files.
+                Please fix validation errors before downloading files.
                 You can still preview the generated files, but they may not work correctly with the scheduler.
               </Typography>
             </Alert>
@@ -219,18 +244,9 @@ const Step10_ReviewGenerate = () => {
       {/* NAVIGATION - Fixed at bottom */}
       <Box sx={{ flexShrink: 0, mt: 2 }}>
         <NavigationButtons
-          showNext={false}
-          customNextButton={
-            validationResults?.valid ? (
-              <Typography variant="body2" color="success.main" fontWeight={600}>
-                ✓ Ready to download!
-              </Typography>
-            ) : (
-              <Typography variant="body2" color="warning.main">
-                ⚠ Fix errors to complete
-              </Typography>
-            )
-          }
+          onNext={generatedFiles ? handleGenerateFiles : undefined}
+          nextDisabled={!generatedFiles || zipping}
+          nextLabel={zipping ? 'Creating ZIP…' : 'Generate Files'}
         />
       </Box>
     </Box>

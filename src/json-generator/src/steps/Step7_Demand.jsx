@@ -127,6 +127,12 @@ const Step7_Demand = () => {
     updateState('demand.demandData', updatedData);
   };
 
+  // Handle demand addition from day-click modal
+  const handleAddDemand = (newEntry) => {
+    updateState('demand.demandData', [...demandData, newEntry]);
+    setSnackbar({ open: true, message: 'Demand entry added', severity: 'success' });
+  };
+
   // Handle demand deletion from calendar grid
   const handleDeleteDemand = (entryToDelete) => {
     const teamField = employeeModel === 'team' ? 'team' : 'competency';
@@ -345,8 +351,11 @@ const Step7_Demand = () => {
                   dates={allDates}
                   demandData={demandData}
                   workPeriods={workPeriods}
+                  teams={teams}
+                  workPeriodModel={workPeriodModel}
                   onUpdate={handleUpdateDemand}
                   onDelete={handleDeleteDemand}
+                  onAdd={handleAddDemand}
                   employeeModel={employeeModel}
                 />
               ) : (

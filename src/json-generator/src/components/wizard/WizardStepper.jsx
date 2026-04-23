@@ -7,46 +7,9 @@ import {
   Box,
   Typography
 } from '@mui/material';
-import {
-  Info,
-  Assignment,
-  Business,
-  People,
-  CalendarMonth,
-  AccessTime,
-  EventNote,
-  Rule,
-  Settings,
-  Preview
-} from '@mui/icons-material';
 import { useWizard } from '../../context/WizardContext';
 import { themeConfig } from '../../theme.config';
-
-const stepIcons = {
-  0: Info,
-  1: Assignment,
-  2: Business,
-  3: People,
-  4: CalendarMonth,
-  5: AccessTime,
-  6: EventNote,
-  7: Rule,
-  8: Settings,
-  9: Preview
-};
-
-const steps = [
-  { label: 'Setup',          description: 'Metadata & models & dates' },
-  { label: 'Contracts',      description: 'Contract types' },
-  { label: 'Org Units',      description: 'Teams/Competencies' },
-  { label: 'Employees',      description: 'Employee roster' },
-  { label: 'Schedule Input', description: 'Availability matrix' },
-  { label: 'Work Periods',   description: 'Work period definitions' },
-  { label: 'Demand',         description: 'Coverage requirements' },
-  { label: 'Constraints',    description: 'Rules & constraints' },
-  { label: 'Optimization',   description: 'Solver settings' },
-  { label: 'Review',         description: 'Generate files' }
-];
+import { VISIBLE_STEPS } from '../../constants/wizardSteps';
 
 const WizardStepper = () => {
   const { state, goToStep } = useWizard();
@@ -54,10 +17,15 @@ const WizardStepper = () => {
 
   const primary = themeConfig.custom.stepperActive;
 
-  const getStepIcon = (index) => {
-    const Icon = stepIcons[index];
-    const isCompleted = stepCompleted[index];
-    const isCurrent = currentStep === index;
+  // Map real step index to visible index (-1 when on a hidden step)
+  const visibleIndex = VISIBLE_STEPS.findIndex(s => s.realIndex === currentStep);
+  const activeVisibleStep = visibleIndex >= 0 ? visibleIndex : -1;
+
+  const getStepIcon = (realIndex, isCurrent) => {
+    const Icon = VISIBLE_STEPS.find(s => s.realIndex === realIndex)?.icon;
+    if (!Icon) return null;
+
+    const isCompleted = stepCompleted[realIndex];
 
     let color = themeConfig.custom.stepperInactive;
     if (isCompleted) color = themeConfig.custom.stepperCompleted;
@@ -80,15 +48,16 @@ const WizardStepper = () => {
 
   return (
     <Box sx={{ width: '100%', mb: 4 }}>
-      <Stepper activeStep={currentStep} alternativeLabel nonLinear sx={{ py: 2 }}>
-        {steps.map((step, index) => {
-          const isCompleted = stepCompleted[index];
-          const isCurrent  = index === currentStep;
+      <Stepper activeStep={activeVisibleStep} alternativeLabel nonLinear sx={{ py: 2 }}>
+        {VISIBLE_STEPS.map((step) => {
+          const { realIndex } = step;
+          const isCompleted = stepCompleted[realIndex];
+          const isCurrent  = realIndex === currentStep;
 
           return (
             <Step key={step.label} completed={isCompleted}>
               <StepButton
-                onClick={() => { if (index !== currentStep) goToStep(index); }}
+                onClick={() => { if (realIndex !== currentStep) goToStep(realIndex); }}
                 sx={{
                   py: 1.5,
                   '& .MuiStepLabel-label': {
@@ -99,7 +68,7 @@ const WizardStepper = () => {
                 }}
               >
                 <StepLabel
-                  StepIconComponent={() => getStepIcon(index)}
+                  StepIconComponent={() => getStepIcon(realIndex, isCurrent)}
                   optional={
                     <Typography variant="caption" color={isCurrent ? primary : 'text.secondary'}>
                       {step.description}
