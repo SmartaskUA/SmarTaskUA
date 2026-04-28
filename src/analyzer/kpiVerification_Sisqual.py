@@ -760,17 +760,22 @@ class KpiEvaluator_Sisqual:
     # ── PERF-8  Maximum shortage in a single slot ─────────────────────────────
     def Max_Shortage_Single_Slot(self) -> dict:
         """
-        The largest gap (minimum - coverage) recorded in any single
-        (date, team, work_period) triple. Identifies the worst-case bottleneck.
+        The largest gap recorded in any single 30-min slot, plus a full
+        distribution of all gap sizes and their locations.
 
         Returns:
           {
-            "max_gap":  3,
-            "worst_slots": [        # all slots tied at the max gap
-              {"date": "2025-10-04", "team": "Checkout",
-               "period": "11:00-14:00", "required": 3, "covered": 0, "gap": 3},
-              ...
-            ]
+            "max_gap": 3,
+            "gap_distribution": {          # how many slots have each gap size
+              "1": 31,
+              "2": 12,
+              "3": 3
+            },
+            "details_by_gap": {            # up to 20 examples per gap size
+              "3": [{"date","team","period","required","covered","gap"}, ...],
+              "2": [...],
+              "1": [...]
+            }
           }
         """
         stats = getattr(self, "_slot_stats", None)
@@ -779,76 +784,48 @@ class KpiEvaluator_Sisqual:
             stats = self._slot_stats
 
         if stats is None or stats["max_gap"] == 0:
-            result = {"max_gap": 0, "worst_slots": []}
+            result = {
+                "max_gap":          0,
+                "gap_distribution": {},
+                "details_by_gap":   {},
+            }
             self.kpis["Max_Shortage_Single_Slot"] = result
             return result
 
-        max_gap = stats["max_gap"]
-        worst   = [
-            {
-                "date":     s["date"],
-                "team":     s["team"],
-                "period":   f"{s['p_start'] // 60:02d}:{s['p_start'] % 60:02d}"
-                            f"-{s['p_end'] // 60:02d}:{s['p_end'] % 60:02d}",
-                "required": s["minimum"],
-                "covered":  s["coverage"],
-                "gap":      s["gap"],
-            }
-            for s in stats["slots"] if s["gap"] == max_gap
-        ]
+        # Build distribution and per-gap details in one pass
+        gap_distribution: dict = {}
+        details_by_gap: dict   = {}
 
-        result = {"max_gap": max_gap, "worst_slots": worst[:10]}
-        self.kpis["Max_Shortage_Single_Slot"] = result
-        return result
+        for s in stats["slots"]:
+            g = s["gap"]
+            if g <= 0:
+                continue
+            key = str(g)
+            gap_distribution[key] = gap_distribution.get(key, 0) + 1
+            if key not in details_by_gap:
+                details_by_gap[key] = []
+            if len(details_by_gap[key]) < 20:
+                details_by_gap[key].append({
+                    "date":     s["date"],
+                    "team":     s["team"],
+                    "period":   f"{s['p_start'] // 60:02d}:{s['p_start'] % 60:02d}"
+                                f"-{s['p_end'] // 60:02d}:{s['p_end'] % 60:02d}",
+                    "required": s["minimum"],
+                    "covered":  s["coverage"],
+                    "gap":      g,
+                })
 
-    # ── PERF-9  Mean shortage per demanded slot ───────────────────────────────
-    def Mean_Shortage_Per_Slot(self) -> dict:
-        """
-        Total shortage divided by the number of demanded slots (slots with
-        minimum > 0). Normalises the total shortage by instance size, making
-        it comparable across schedules of different lengths or staffing levels.
-
-        Returns:
-          {
-            "mean_shortage":        0.16,   # over ALL demanded slots
-            "mean_shortage_failing": 1.80,  # over slots that actually failed
-            "total_shortage":       57,
-            "total_slots":          350,
-            "failing_slots":        46,
-          }
-        """
-        stats = getattr(self, "_slot_stats", None)
-        if stats is None:
-            self.compute_Total_Shortage()
-            stats = self._slot_stats
-
-        if stats is None or stats["total_slots"] == 0:
-            result = {
-                "mean_shortage":         0.0,
-                "mean_shortage_failing": 0.0,
-                "total_shortage":        0,
-                "total_slots":           0,
-                "failing_slots":         0,
-            }
-            self.kpis["Mean_Shortage_Per_Slot"] = result
-            return result
-
-        mean_all    = round(stats["total_shortage"] / stats["total_slots"], 2)
-        mean_failing = (
-            round(stats["total_shortage"] / stats["failing_slots"], 2)
-            if stats["failing_slots"] > 0 else 0.0
-        )
+        # Sort details per gap by date then period
+        for key in details_by_gap:
+            details_by_gap[key].sort(key=lambda x: (x["date"], x["period"]))
 
         result = {
-            "mean_shortage":         mean_all,
-            "mean_shortage_failing": mean_failing,
-            "total_shortage":        stats["total_shortage"],
-            "total_slots":           stats["total_slots"],
-            "failing_slots":         stats["failing_slots"],
+            "max_gap":          stats["max_gap"],
+            "gap_distribution": gap_distribution,
+            "details_by_gap":   details_by_gap,
         }
-        self.kpis["Mean_Shortage_Per_Slot"] = result
+        self.kpis["Max_Shortage_Single_Slot"] = result
         return result
-
 
 
     # ── Priority Hierarchy ────────────────────────────────────────────────────
@@ -1450,39 +1427,12 @@ class KpiEvaluator_Sisqual:
             })
 
         # Filter to employees where we can compute utilisation
-        with_util = [e for e in emp_stats if e["utilisation_pct"] is not None]
-        util_rates = [e["utilisation_pct"] for e in with_util]
         actual_hours_list = [e["actual_hours"] for e in emp_stats]
-
-        # ── STAT-A1  Mean utilisation ──
-        mean_util = round(sum(util_rates) / len(util_rates), 1) if util_rates else 0.0
-
-        # ── STAT-A2  Variance ──
-        if len(util_rates) > 1:
-            mean_r = sum(util_rates) / len(util_rates)
-            variance = round(
-                sum((r - mean_r) ** 2 for r in util_rates) / len(util_rates), 3
-            )
-        else:
-            variance = 0.0
 
         # ── STAT-A3  Max-min gap ──
         max_min_gap = round(
             max(actual_hours_list) - min(actual_hours_list), 2
         ) if actual_hours_list else 0.0
-
-        # ── STAT-A4  Fairness index (Gini coefficient) ──
-        # Gini = (2 * Σ i*h_i) / (n * Σ h_i) - (n+1)/n   where h_i sorted ascending
-        n = len(actual_hours_list)
-        if n > 1 and sum(actual_hours_list) > 0:
-            sorted_h = sorted(actual_hours_list)
-            total_h  = sum(sorted_h)
-            gini = (
-                2 * sum((i + 1) * h for i, h in enumerate(sorted_h))
-            ) / (n * total_h) - (n + 1) / n
-            fairness_index = round(max(0.0, min(1.0, gini)), 3)
-        else:
-            fairness_index = 0.0
 
         # ── STAT-A5  Idle employees ──
         idle_count = sum(1 for e in emp_stats if e["status"] == "idle")
@@ -1491,24 +1441,19 @@ class KpiEvaluator_Sisqual:
         overloaded_count = sum(1 for e in emp_stats if e["status"] == "overloaded")
 
         # ── STAT-A7  Assignments used ──
-        # An assignment is active when the output cell has a real shift
         assignments_used = sum(
             1
             for row in self._rows
             for cell in row["days"]
             if _parse_shift(cell.strip()) is not None
         )
-        # Possible assignments = employees × days
         assignments_possible = len(self._rows) * len(self._dates)
         assignment_rate = round(
             assignments_used / assignments_possible * 100, 1
         ) if assignments_possible > 0 else 0.0
 
         result = {
-            "mean_utilisation":     mean_util,
-            "variance":             variance,
             "max_min_gap_hours":    max_min_gap,
-            "fairness_index":       fairness_index,
             "idle_employees":       idle_count,
             "idle_threshold_pct":   int(IDLE_THRESHOLD * 100),
             "overloaded_employees": overloaded_count,
@@ -1529,58 +1474,99 @@ class KpiEvaluator_Sisqual:
         Reuses Employee_KPIs cache (daily_segments, daily_detail) when available.
         Falls back to computing inline if Employee_KPIs has not been called yet.
 
-        A "skill change" on a given day = number of segments - 1.
-        A segment is a merged contiguous block of the same skill (already merged
-        in Employee_KPIs).
+        A "skill change" on a given day = number of merged segments - 1.
+        A segment is a contiguous block of the same skill.
+
+        Now computed per employee, not globally.
 
         Returns:
           {
-            "mean_skill_changes_per_day":  1.4,    # STAT-B3
-            "mean_segment_duration_hours": 2.8,    # STAT-B4
+            "mean_segment_duration_hours": 2.8,    # STAT-B4 — global average
             "total_segments":              874,
             "total_active_employee_days":  312,
-            "by_skill": {                          # breakdown of segment count by skill
+            "by_skill": {
               "Management": {"segments": 210, "total_hours": 1680.0},
-              "Checkout":   {"segments": 520, "total_hours": 2080.0},
               ...
-            }
+            },
+            "per_employee": [
+              {
+                "emp_id":                  "20072412",
+                "num_skills":              2,         # distinct skills used
+                "skills_used":             ["Management", "Checkout"],
+                "mean_changes_per_day":    1.4,       # avg skill switches/day
+                "total_active_days":       21,
+                "total_changes":           29,
+              },
+              ...
+            ]
           }
         """
         emp_kpis = self.kpis.get("Employee_KPIs", {}).get("employees", [])
 
-        total_changes        = 0   # sum of (segments - 1) per active day
-        total_active_days    = 0
         total_segments       = 0
         total_segment_hours  = 0.0
+        total_active_days    = 0
         by_skill: dict       = {}
+        per_employee         = []
+
+        def _process_emp_days(emp_id, daily_detail):
+            """Returns per-employee stats dict."""
+            emp_changes   = 0
+            emp_act_days  = 0
+            emp_skills: set = set()
+            nonlocal total_segments, total_segment_hours, total_active_days
+
+            for date_str, segs in daily_detail.items():
+                if not segs:
+                    continue
+                n = len(segs)
+                total_active_days   += 1
+                emp_act_days        += 1
+                total_segments      += n
+                emp_changes         += max(0, n - 1)
+
+                for seg in segs:
+                    dur   = seg.get("duration_h", 0.0)
+                    skill = seg.get("skill", "Unknown")
+                    total_segment_hours += dur
+                    emp_skills.add(skill)
+                    if skill not in by_skill:
+                        by_skill[skill] = {"segments": 0, "total_hours": 0.0}
+                    by_skill[skill]["segments"]    += 1
+                    by_skill[skill]["total_hours"] += dur
+
+            mean_chg = (
+                round(emp_changes / emp_act_days, 2)
+                if emp_act_days > 0 else 0.0
+            )
+            skills_list = sorted(emp_skills)
+            return {
+                "emp_id":               emp_id,
+                "num_skills":           len(skills_list),
+                "skills_used":          skills_list,
+                "mean_changes_per_day": mean_chg,
+                "total_active_days":    emp_act_days,
+                "total_changes":        emp_changes,
+            }
 
         if emp_kpis:
-            # Fast path: reuse already-computed data
             for emp in emp_kpis:
-                for date_str, segs in emp.get("daily_detail", {}).items():
-                    if not segs:
-                        continue
-                    n = len(segs)
-                    total_active_days   += 1
-                    total_segments      += n
-                    total_changes       += max(0, n - 1)
-
-                    for seg in segs:
-                        dur = seg.get("duration_h", 0.0)
-                        total_segment_hours += dur
-                        skill = seg.get("skill", "Unknown")
-                        if skill not in by_skill:
-                            by_skill[skill] = {"segments": 0, "total_hours": 0.0}
-                        by_skill[skill]["segments"]    += 1
-                        by_skill[skill]["total_hours"] += dur
-
+                stat = _process_emp_days(emp["emp_id"], emp.get("daily_detail", {}))
+                per_employee.append(stat)
         else:
-            # Inline computation (Employee_KPIs not cached)
+            # Inline computation — build daily_detail on the fly
             for row in self._rows:
+                emp_id       = row["emp_id"]
+                daily_detail = {}
+
                 for i, cell in enumerate(row["days"]):
                     cell = cell.strip()
                     if _is_off(cell):
                         continue
+                    d = self._dates[i]
+                    if d is None:
+                        continue
+                    date_str = str(d)
 
                     raw_segs = [s.strip() for s in cell.split("|")]
                     day_segs = []
@@ -1600,7 +1586,6 @@ class KpiEvaluator_Sisqual:
                     if not day_segs:
                         continue
 
-                    # Merge adjacent same-skill blocks
                     day_segs.sort()
                     merged = [list(day_segs[0])]
                     for s_min, e_min, skill in day_segs[1:]:
@@ -1609,38 +1594,35 @@ class KpiEvaluator_Sisqual:
                         else:
                             merged.append([s_min, e_min, skill])
 
-                    n = len(merged)
-                    total_active_days   += 1
-                    total_segments      += n
-                    total_changes       += max(0, n - 1)
+                    daily_detail[date_str] = [
+                        {
+                            "skill":      sk,
+                            "duration_h": round((e - s) / 60.0, 2),
+                        }
+                        for s, e, sk in merged
+                    ]
 
-                    for s_min, e_min, skill in merged:
-                        dur = (e_min - s_min) / 60.0
-                        total_segment_hours += dur
-                        if skill not in by_skill:
-                            by_skill[skill] = {"segments": 0, "total_hours": 0.0}
-                        by_skill[skill]["segments"]    += 1
-                        by_skill[skill]["total_hours"] += dur
+                stat = _process_emp_days(emp_id, daily_detail)
+                per_employee.append(stat)
 
         # Round by_skill hours
         for sk in by_skill:
             by_skill[sk]["total_hours"] = round(by_skill[sk]["total_hours"], 1)
 
-        mean_changes = (
-            round(total_changes / total_active_days, 2)
-            if total_active_days > 0 else 0.0
-        )
         mean_seg_dur = (
             round(total_segment_hours / total_segments, 2)
             if total_segments > 0 else 0.0
         )
 
+        # Sort per_employee by mean_changes desc so highest switchers appear first
+        per_employee.sort(key=lambda e: e["mean_changes_per_day"], reverse=True)
+
         result = {
-            "mean_skill_changes_per_day":  mean_changes,
             "mean_segment_duration_hours": mean_seg_dur,
             "total_segments":              total_segments,
             "total_active_employee_days":  total_active_days,
             "by_skill":                    by_skill,
+            "per_employee":                per_employee,
         }
         self.kpis["Skill_Allocation_Stats"] = result
         return result
@@ -1660,13 +1642,12 @@ class KpiEvaluator_Sisqual:
         self.Maximum_Consecutive_Days()
         self.Minimum_Rest_Time_Between_Shifts()
         self.Work_On_Unavailable_Days()
-        # self.Sunday_Rest_Per_Month()
+        self.Sunday_Rest_Per_Month()
         self.Weekly_Contracted_Hours()         # must run before Workload_Utilisation
         # Performance — compute_Total_Shortage first so _slot_stats is cached
         self.compute_Total_Shortage()
         self.Slots_With_Failure()
         self.Max_Shortage_Single_Slot()
-        self.Mean_Shortage_Per_Slot()
         self.Staffing_Ideals()
         self.Staffing_Estimated()
         self.Severity_Index()
