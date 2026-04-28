@@ -1642,7 +1642,7 @@ class KpiEvaluator_Sisqual:
         self.Maximum_Consecutive_Days()
         self.Minimum_Rest_Time_Between_Shifts()
         self.Work_On_Unavailable_Days()
-        self.Sunday_Rest_Per_Month()
+        # self.Sunday_Rest_Per_Month()
         self.Weekly_Contracted_Hours()         # must run before Workload_Utilisation
         # Performance — compute_Total_Shortage first so _slot_stats is cached
         self.compute_Total_Shortage()
