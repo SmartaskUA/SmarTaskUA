@@ -274,6 +274,7 @@ const CreateCalendar = () => {
     { value: "ILP_Sisqual_Hours", label: "ILP Sisqual Hours" },
     { value: "ILP_Sisqual_Hours_MathematicalDefinition5", label: "ILP Sisqual Hours MD5" },
     { value: "CSP_Sisqual_Hours", label: "CSP Sisqual Hours" },
+    { value: "CSP_Sisqual_Hours_MathematicalDefinition5", label: "CSP Sisqual Hours MD5" },
   ];
 
   const manualShiftAlgorithms = [

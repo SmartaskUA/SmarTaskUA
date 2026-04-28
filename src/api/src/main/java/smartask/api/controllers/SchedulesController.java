@@ -7,11 +7,15 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import org.slf4j.Logger;
+import org.bson.Document;
 import smartask.api.models.Schedule;
 import smartask.api.models.requests.ScheduleRequest;
 import smartask.api.services.SchedulesService;
@@ -39,6 +43,9 @@ public class SchedulesController {
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     /**
      * Initiates the generation of a new schedule based on the given title.
@@ -106,6 +113,31 @@ public class SchedulesController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @GetMapping("/analysis/{requestId}")
+    public ResponseEntity<?> fetchAnalysisByRequestId(@PathVariable String requestId) {
+        Query query = new Query(Criteria.where("requestId").is(requestId));
+
+        Document verification = mongoTemplate.findOne(query, Document.class, "verifications");
+        if (verification != null) {
+            return ResponseEntity.ok(Map.of(
+                    "requestId", requestId,
+                    "status", verification.getString("status"),
+                    "result", verification.get("result")
+            ));
+        }
+
+        Document comparison = mongoTemplate.findOne(query, Document.class, "comparisons");
+        if (comparison != null) {
+            return ResponseEntity.ok(Map.of(
+                    "requestId", requestId,
+                    "status", comparison.getString("status"),
+                    "result", comparison.get("result")
+            ));
+        }
+
+        return ResponseEntity.notFound().build();
     }
 
 

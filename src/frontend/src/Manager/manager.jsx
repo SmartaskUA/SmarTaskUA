@@ -22,6 +22,15 @@ const CalendarCard = ({
   showFailedTag,
   showCompletedTag,
 }) => {
+  const hasStatusTag = showFailedTag || showCompletedTag;
+  const cardClassName = [
+    "calendar-card",
+    hasStatusTag ? "has-card-tag" : "",
+    className || "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   const getBorderStyle = () => {
     if (showFailedTag) return "1px solid #dc3545";
     if (status === "orange") return "2px dashed #FFA500";
@@ -37,7 +46,7 @@ const CalendarCard = ({
 
   return (
     <div
-      className={`calendar-card ${className || ""}`}
+      className={cardClassName}
       style={{
         width: "300px",
         height: "165px",
@@ -53,43 +62,19 @@ const CalendarCard = ({
     >
       {/* Tags */}
       {showFailedTag && (
-        <div
-          style={{
-            position: "absolute",
-            top: "8px",
-            right: "10px",
-            backgroundColor: "#dc3545",
-            color: "white",
-            padding: "2px 8px",
-            borderRadius: "5px",
-            fontSize: "0.75rem",
-            fontWeight: "bold",
-          }}
-        >
+        <div className="calendar-card-tag calendar-card-tag-failed">
           FAILED
         </div>
       )}
 
       {showCompletedTag && (
-        <div
-          style={{
-            position: "absolute",
-            top: "8px",
-            right: "10px",
-            backgroundColor: "#28a745",
-            color: "white",
-            padding: "2px 8px",
-            borderRadius: "5px",
-            fontSize: "0.75rem",
-            fontWeight: "bold",
-          }}
-        >
+        <div className="calendar-card-tag calendar-card-tag-completed">
           COMPLETED
         </div>
       )}
 
       {/* Card Header */}
-      <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
+      <div className="calendar-card-top-row">
         <span
           className="status-dot"
           style={{
@@ -97,9 +82,10 @@ const CalendarCard = ({
             backgroundColor: getDotColor(),
           }}
         />
-        <div style={{ marginLeft: "10px" }}>
+        <div className="calendar-card-content">
           <div
             className="calendar-card-title"
+            title={title}
             style={{
               fontSize: "1.3rem",
               fontWeight: "600",
@@ -111,11 +97,11 @@ const CalendarCard = ({
           {algorithm && (
             <div
               className="calendar-card-algorithm"
+              title={algorithm}
               style={{
                 fontSize: "1rem",
                 color: "#777",
                 marginTop: "5%",
-                marginLeft: "3%",
               }}
             >
               {algorithm}
@@ -149,15 +135,8 @@ const CalendarCard = ({
 
       {/* Loader */}
       {showLoader && (
-        <div
-          style={{
-            position: "absolute",
-            top: "60%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-          }}
-        >
-          <CircularProgress color="warning" />
+        <div className="calendar-card-loader">
+          <CircularProgress color="warning" size={32} />
         </div>
       )}
     </div>

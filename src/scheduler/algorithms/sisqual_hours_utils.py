@@ -8,6 +8,17 @@ from typing import Dict, Iterable, List, Tuple
 
 
 OFF_MARKERS = {"DO", "FDO", "VAC", "NOT", "MED"}
+SISQUAL_UNAVAILABLE_MARKERS = OFF_MARKERS - {"DO"}
+DEFAULT_SISQUAL_COVERAGE_PRIORITY_TIERS = (
+    ("Storage", 1, None, "RESP ALMACEN N>=1"),
+    ("Management", 1, 1, "RESP - EQUIPO GESTION N=1"),
+    ("Checkout", 1, 1, "CAJA N=1"),
+    ("Management", 2, 2, "RESP - EQUIPO GESTION N=2"),
+    ("Checkout", 2, 2, "CAJA N=2"),
+    ("Management", 3, 3, "RESP - EQUIPO GESTION N=3"),
+    ("Management", 4, None, "RESP - EQUIPO GESTION N>=4"),
+    ("Checkout", 3, None, "CAJA N>=3"),
+)
 OBJECTIVE_SOFT_TYPES = {
     "coverage_shortage": {
         "min_coverage",
@@ -32,6 +43,14 @@ OBJECTIVE_SOFT_TYPES = {
         "minimize_preferred_day_off_work",
         "objective4",
         "minimize_day_off_changes",
+    },
+    "skill_priority_assignment": {
+        "skill_priority_assignment",
+        "priority_skill_assignment",
+        "assign_higher_priority_skills",
+        "minimize_lower_priority_skill_assignment",
+        "objective5",
+        "skill_priority",
     },
 }
 OBJECTIVE2_GOALS = {
@@ -136,6 +155,10 @@ def parse_employees_with_levels(
             if level is None:
                 raise ValueError(f"Missing or invalid level for {employee_id} skill '{code}'")
             skill_levels[code] = level
+        if staff_team_code and staff_team_code not in skill_levels:
+            raise ValueError(
+                f"Employee '{employee_id}' is missing required '{staff_team_code}' competency"
+            )
         employees.append(
             {
                 "id": employee_id,
@@ -144,9 +167,7 @@ def parse_employees_with_levels(
                 "contract_hours": contract_hours.get(contract_type),
                 "skills": tuple(skill_levels.keys()),
                 "skill_levels": dict(skill_levels),
-                "assignable_skills": tuple(
-                    skill for skill in skill_levels.keys() if skill != staff_team_code
-                ),
+                "assignable_skills": tuple(skill_levels.keys()),
             }
         )
     return employees
@@ -168,6 +189,15 @@ def parse_schedule_input(base_dir: Path, problem: Dict, days: List[str]) -> Dict
     schedule_path = base_dir / problem.get("scheduleInput", {}).get("dataFile", "schedule_input.csv")
     with schedule_path.open(newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
+        fieldnames = reader.fieldnames or []
+        missing_days = [day for day in days if day not in fieldnames]
+        if missing_days:
+            preview = ", ".join(missing_days[:5])
+            if len(missing_days) > 5:
+                preview += ", ..."
+            raise ValueError(
+                f"Schedule input '{schedule_path.name}' is missing targetPeriod day columns: {preview}"
+            )
         rows = {}
         for row in reader:
             employee_id = str(row.get("employee_id", "")).strip()
@@ -317,6 +347,213 @@ def build_assignments(
     return assignments
 
 
+def build_sisqual_day_modes(
+    employees: List[Dict],
+    days: List[str],
+    schedule_markers: Dict[str, Dict[str, str]],
+    closed_days,
+) -> Dict[Tuple[str, str], str]:
+    closed_days = set(closed_days)
+    day_modes = {}
+    for employee in employees:
+        employee_id = employee["id"]
+        for day in days:
+            marker = normalize_marker(schedule_markers[employee_id][day])
+            if day in closed_days:
+                day_modes[(employee_id, day)] = "closed"
+            elif marker in SISQUAL_UNAVAILABLE_MARKERS or not marker:
+                day_modes[(employee_id, day)] = "unavailable"
+            elif marker == "DO":
+                day_modes[(employee_id, day)] = "preferred_day_off"
+            elif marker.startswith("EQUALS:"):
+                day_modes[(employee_id, day)] = "fixed_time_work"
+            elif marker == "A" or marker.isdigit():
+                day_modes[(employee_id, day)] = "work_template"
+            else:
+                raise ValueError(
+                    f"Unsupported schedule marker '{schedule_markers[employee_id][day]}' "
+                    f"for {employee_id} on {day}"
+                )
+    return day_modes
+
+
+def build_sisqual_bundle_assignments(
+    employees: List[Dict],
+    days: List[str],
+    schedule_markers: Dict[str, Dict[str, str]],
+    time_slots: List[TimeSlot],
+    day_modes: Dict[Tuple[str, str], str],
+    variable_days_off_active: bool,
+) -> Dict[Tuple[str, str], List[Assignment]]:
+    assignments = {}
+    num_slots = len(time_slots)
+
+    for employee in employees:
+        employee_id = employee["id"]
+        contract_hours = employee["contract_hours"]
+        for day in days:
+            key = (employee_id, day)
+            mode = day_modes[key]
+            marker = normalize_marker(schedule_markers[employee_id][day])
+            day_assignments = []
+
+            if mode in {"closed", "unavailable"}:
+                assignments[key] = day_assignments
+                continue
+
+            if mode == "preferred_day_off" and not variable_days_off_active:
+                assignments[key] = day_assignments
+                continue
+
+            if marker.startswith("EQUALS:"):
+                time_range = marker.split(":", 1)[1]
+                start_text, end_text = time_range.split("-", 1)
+                start_min = parse_hhmm(start_text)
+                end_min = parse_hhmm(end_text)
+                slot_indices = tuple(
+                    slot.index
+                    for slot in time_slots
+                    if slot.start_min >= start_min and slot.end_min <= end_min
+                )
+                if not slot_indices:
+                    raise ValueError(
+                        f"No slots found for exact marker '{marker}' on {employee_id} {day}"
+                    )
+                day_assignments.append(
+                    Assignment(
+                        key=f"{employee_id}_{day}_exact_{start_min}_{end_min}",
+                        start_min=start_min,
+                        end_min=end_min,
+                        slot_indices=slot_indices,
+                    )
+                )
+                assignments[key] = day_assignments
+                continue
+
+            hours = None
+            if marker == "A":
+                hours = contract_hours
+            elif marker == "DO":
+                hours = contract_hours
+            elif marker.isdigit():
+                hours = int(marker)
+
+            if hours is None or hours <= 0:
+                raise ValueError(
+                    f"Missing or invalid hours for swappable marker "
+                    f"'{schedule_markers[employee_id][day]}' on {employee_id} {day}"
+                )
+
+            required_slots = hours * 2
+            for start_idx in range(0, num_slots - required_slots + 1):
+                covered = tuple(range(start_idx, start_idx + required_slots))
+                start_min = time_slots[start_idx].start_min
+                end_min = time_slots[start_idx + required_slots - 1].end_min
+                day_assignments.append(
+                    Assignment(
+                        key=f"{employee_id}_{day}_{start_idx}_{required_slots}",
+                        start_min=start_min,
+                        end_min=end_min,
+                        slot_indices=covered,
+                    )
+                )
+
+            if not day_assignments:
+                raise ValueError(
+                    f"No feasible assignments generated for {employee_id} on {day} "
+                    f"with marker '{schedule_markers[employee_id][day]}'"
+                )
+
+            assignments[key] = day_assignments
+
+    return assignments
+
+
+def group_open_days_by_week(problem: Dict, open_days: List[str], date_by_day: Dict[str, object]) -> List[List[str]]:
+    if not open_days:
+        return []
+
+    day_off_cfg = (
+        problem.get("constraints", {})
+        .get("advanced", {})
+        .get("dayOffSwapping", {})
+    )
+    week_definition = str(day_off_cfg.get("weekDefinition", "monday-sunday")).strip().lower()
+
+    groups = defaultdict(list)
+    for day in open_days:
+        current = date_by_day[day]
+        if week_definition == "sunday-saturday":
+            offset = (current.weekday() + 1) % 7
+        else:
+            offset = current.weekday()
+        week_start = current - timedelta(days=offset)
+        groups[week_start].append(day)
+
+    return [groups[key] for key in sorted(groups)]
+
+
+def match_coverage_priority_tier(
+    coverage_priority_tiers: List[Dict],
+    skill: str,
+    nth_worker: int,
+) -> int:
+    for index, tier in enumerate(coverage_priority_tiers):
+        if tier["skill"] != skill:
+            continue
+        if nth_worker < tier["min_n"]:
+            continue
+        max_n = tier["max_n"]
+        if max_n is not None and nth_worker > max_n:
+            continue
+        return index
+    raise ValueError(f"No ObjectiveFunction1 priority tier matches skill '{skill}' worker #{nth_worker}")
+
+
+def build_objective1_priority_index(
+    alpha: Dict[Tuple[str, int, str], int],
+    coverage_priority_tiers: List[Dict],
+) -> Dict[Tuple[str, int, str, int], int]:
+    priority_index = {}
+    for (day, slot_idx, skill), minimum in alpha.items():
+        for nth_worker in range(1, max(0, minimum) + 1):
+            priority_index[(day, slot_idx, skill, nth_worker)] = match_coverage_priority_tier(
+                coverage_priority_tiers,
+                skill,
+                nth_worker,
+            )
+    return priority_index
+
+
+def build_objective1_priority_coefficients(
+    coverage_priority_tiers: List[Dict],
+) -> Dict[int, int]:
+    num_tiers = len(coverage_priority_tiers)
+    return {
+        tier_index: 10 ** (num_tiers - tier_index - 1)
+        for tier_index in range(num_tiers)
+    }
+
+
+def build_objective5_skill_priority(
+    employees: List[Dict],
+    coverage_priority_tiers: List[Dict],
+) -> Dict[Tuple[str, str], int]:
+    """Return {(employee_id, skill): tier_index} for the worker's actual competence level."""
+    fallback = len(coverage_priority_tiers)
+    skill_priority = {}
+    for employee in employees:
+        employee_id = employee["id"]
+        for skill in employee["assignable_skills"]:
+            level = employee["skill_levels"].get(skill, 1)
+            try:
+                tier_idx = match_coverage_priority_tier(coverage_priority_tiers, skill, level)
+            except ValueError:
+                tier_idx = fallback
+            skill_priority[(employee_id, skill)] = tier_idx
+    return skill_priority
+
+
 def parse_hhmm(value: str) -> int:
     hour, minute = value.strip().split(":", 1)
     return int(hour) * 60 + int(minute)
@@ -375,6 +612,90 @@ def parse_open_days(days: List[str], alpha: Dict[Tuple[str, int, str], int]) -> 
     return open_days or list(days)
 
 
+def parse_coverage_priority_tiers(
+    problem: Dict,
+    skills: List[str],
+    staff_team_code: str = "Employees",
+) -> List[Dict]:
+    """Build the ordered list of (skill, level-range) priority tiers used by Objective 1.
+
+    The tier list is driven by ``demand.priorityHierarchy`` in problem.json when every
+    entry there carries ``minLevel`` (and optionally ``maxLevel``) fields.  This lets
+    each problem define its own alarm priority order without touching the code.
+
+    If the JSON hierarchy does not contain level fields the function falls back to
+    ``DEFAULT_SISQUAL_COVERAGE_PRIORITY_TIERS``, which encodes the standard Sisqual
+    9-tier order from the BFarias specification.
+    """
+    raw_hierarchy = sorted(
+        problem.get("demand", {}).get("priorityHierarchy", []),
+        key=lambda item: parse_int_value(item.get("rank")) or 10 ** 6,
+    )
+
+    # Use the JSON hierarchy as the full tier definition when it specifies levels.
+    if any(entry.get("minLevel") is not None for entry in raw_hierarchy):
+        priority_tiers = []
+        for index, entry in enumerate(raw_hierarchy):
+            skill = str(entry.get("team", "")).strip()
+            if not skill:
+                continue
+            min_n = parse_int_value(entry.get("minLevel")) or 1
+            max_n = parse_int_value(entry.get("maxLevel"))
+            label = str(entry.get("label", f"{skill} N>={min_n}")).strip()
+            priority_tiers.append(
+                {
+                    "priority": index + 1,
+                    "skill": skill,
+                    "min_n": min_n,
+                    "max_n": max_n,
+                    "label": label,
+                }
+            )
+    else:
+        # Fall back to the hardcoded Sisqual defaults.
+        priority_tiers = [
+            {
+                "priority": index + 1,
+                "skill": skill,
+                "min_n": min_n,
+                "max_n": max_n,
+                "label": label,
+            }
+            for index, (skill, min_n, max_n, label) in enumerate(DEFAULT_SISQUAL_COVERAGE_PRIORITY_TIERS)
+        ]
+
+    # Ensure the generic Employees team is always present as the lowest-priority tier.
+    known_skill_levels = {(t["skill"], t["min_n"]) for t in priority_tiers}
+    if (staff_team_code, 1) not in known_skill_levels:
+        priority_tiers.append(
+            {
+                "priority": len(priority_tiers) + 1,
+                "skill": staff_team_code,
+                "min_n": 1,
+                "max_n": None,
+                "label": "EQUIPA Empleados N>=1",
+            }
+        )
+
+    # Append any skills present in the problem but not covered by any tier.
+    known_skills = {t["skill"] for t in priority_tiers}
+    for skill in skills:
+        if not skill or skill in known_skills:
+            continue
+        priority_tiers.append(
+            {
+                "priority": len(priority_tiers) + 1,
+                "skill": skill,
+                "min_n": 1,
+                "max_n": None,
+                "label": f"{skill} N>=1",
+            }
+        )
+        known_skills.add(skill)
+
+    return priority_tiers
+
+
 def parse_soft_constraint_weight(constraint: Dict) -> float:
     params = constraint.get("params", {}) or {}
     for value in (
@@ -394,11 +715,12 @@ def parse_soft_constraint_weight(constraint: Dict) -> float:
     return 0.0
 
 
-def parse_soft_objectives(problem: Dict) -> Tuple[float, Dict[Tuple[str, int], float], float, float]:
+def parse_soft_objectives(problem: Dict) -> Tuple[float, Dict[Tuple[str, int], float], float, float, float]:
     objective1_weight = 0.0
     objective2_weight_map = {}
     objective3_weight = 0.0
     objective4_weight = 0.0
+    objective5_weight = 0.0
 
     for constraint in problem.get("constraints", {}).get("soft", []):
         if not constraint.get("enabled", True):
@@ -435,8 +757,10 @@ def parse_soft_objectives(problem: Dict) -> Tuple[float, Dict[Tuple[str, int], f
             objective3_weight = weight
         elif type_name in OBJECTIVE_SOFT_TYPES["preferred_day_off"]:
             objective4_weight = weight
+        elif type_name in OBJECTIVE_SOFT_TYPES["skill_priority_assignment"]:
+            objective5_weight = weight
 
-    return objective1_weight, objective2_weight_map, objective3_weight, objective4_weight
+    return objective1_weight, objective2_weight_map, objective3_weight, objective4_weight, objective5_weight
 
 
 def parse_json_mapping(value, label: str = "mapping") -> Dict:

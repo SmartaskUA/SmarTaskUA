@@ -20,6 +20,23 @@ import {
 } from "../utils/scheduleCalendar";
 import { Box, Button, Paper, Typography } from "@mui/material";
 
+const isHourSpecificKpiPayload = (value) =>
+  Boolean(
+    value &&
+      (value.weightedMinimumCoverageRate !== undefined ||
+        value.consecutiveDaysViolations !== undefined ||
+        value.availabilityViolations !== undefined)
+  );
+
+const isLegacySisqualKpiPayload = (value) =>
+  Boolean(value && value.Total_Shortage !== undefined && !isHourSpecificKpiPayload(value));
+
+const normalizeRealtimePayload = (value) => {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === "object") return [value];
+  return [];
+};
+
 const Calendar = () => {
   const [data, setData] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(1);
@@ -54,17 +71,22 @@ const Calendar = () => {
         if (responseData) {
           const scheduleData = responseData.data;
           const elapsed_time = responseData?.elapsed_time || null;
+          const initialMetadata = responseData.metadata || null;
+          const initialScheduleType = inferScheduleType(initialMetadata);
+          const storedKpis = initialMetadata?.analysis?.kpis;
+          const skipStoredLegacySisqualKpis =
+            initialScheduleType === "Horas" && isLegacySisqualKpiPayload(storedKpis);
           setData(scheduleData);
-          setMetadata(responseData.metadata);
-          // If KPIs were produced server-side (e.g. Sisqual) they may be
-          // present in `metadata.analysis.kpis` — load them into state.
-          if (responseData.metadata?.analysis?.kpis) {
-            setKpiSummary(responseData.metadata.analysis.kpis);
+          setMetadata(initialMetadata);
+          // Ignore legacy Sisqual alarm payloads for hourly schedules. They use
+          // the wrong verifier and are replaced asynchronously by hour-specific KPIs.
+          if (storedKpis && !skipStoredLegacySisqualKpis) {
+            setKpiSummary(storedKpis);
           }
           setElapsedTime(elapsed_time);
           console.log("Elapsed time:", elapsed_time);
-          fetchNationalHolidays(responseData.metadata?.year || new Date().getFullYear());
-          analyzeScheduleViaWebSocket(scheduleData, responseData.metadata);
+          fetchNationalHolidays(initialMetadata?.year || new Date().getFullYear());
+          analyzeScheduleViaWebSocket(scheduleData, initialMetadata);
         }
       })
       .catch(console.error);
@@ -86,15 +108,15 @@ const Calendar = () => {
       onConnect: () => {
         stompClient.subscribe("/topic/comparison/all", (msg) => {
           try {
-            const data = JSON.parse(msg.body);
+            const data = normalizeRealtimePayload(JSON.parse(msg.body));
             data.forEach((item) => {
               const mappedCalId = reqToCalRef.current[item.requestId];
               if (mappedCalId === calendarId) {
                 console.log("KPI recebido via WebSocket:", item.result);
                 setKpiSummary((prev) => {
-                  // Se já temos KPIs Sisqual (calculados em memória),
-                  // não deixar o WebSocket legacy sobrescrever
-                  if (prev && prev["Total_Shortage"] !== undefined) {
+                  // Preserve richer legacy Sisqual payloads only when the incoming
+                  // result is not the newer hour-specific KPI schema.
+                  if (isLegacySisqualKpiPayload(prev) && !isHourSpecificKpiPayload(item.result)) {
                     console.log("KPIs Sisqual já presentes — ignorando WebSocket.");
                     return prev;
                   }
@@ -114,6 +136,41 @@ const Calendar = () => {
     stompClient.activate();
     return () => stompClient.deactivate();
   }, [calendarId]);
+
+  const applyIncomingKpis = (nextResult) => {
+    if (!nextResult) return;
+    setKpiSummary((prev) => {
+      if (isLegacySisqualKpiPayload(prev) && !isHourSpecificKpiPayload(nextResult)) {
+        console.log("KPIs Sisqual já presentes — ignorando resultado legacy.");
+        return prev;
+      }
+      return nextResult;
+    });
+  };
+
+  const pollAnalysisResult = async (requestId, attempt = 0) => {
+    const maxAttempts = 15;
+    try {
+      const res = await axios.get(`${BaseUrl}/schedules/analysis/${requestId}`);
+      if (res?.data?.result) {
+        applyIncomingKpis(res.data.result);
+        return;
+      }
+    } catch (error) {
+      if (error?.response?.status !== 404) {
+        console.error("Erro ao obter resultado da análise:", error);
+        return;
+      }
+    }
+
+    if (attempt + 1 >= maxAttempts) {
+      return;
+    }
+
+    window.setTimeout(() => {
+      pollAnalysisResult(requestId, attempt + 1);
+    }, 2000);
+  };
 
   const analyzeScheduleViaWebSocket = async (scheduleData, metadata) => {
     try {
@@ -159,6 +216,7 @@ const Calendar = () => {
       const res = await axios.post(`${BaseUrl}/schedules/analyze`, fd);
       console.log("🛰️ Enviado para análise com requestId:", res.data.requestId);
       reqToCalRef.current[res.data.requestId] = calendarId;
+      pollAnalysisResult(res.data.requestId);
     } catch (e) {
       console.error("Erro ao enviar CSV para análise:", e);
     }
@@ -371,7 +429,7 @@ const Calendar = () => {
 
         <MetadataInfo metadata={metadata} />
 
-        {kpiSummary?.["Total_Shortage"] !== undefined ? (
+        {isLegacySisqualKpiPayload(kpiSummary) ? (
           <SisqualKPIReport kpis={kpiSummary} />
         ) : (
           <KPIReport metrics={kpiSummary || {}} scheduleType={scheduleType} />
