@@ -13,6 +13,16 @@ SEGMENT_PATTERN = re.compile(r"^(\d{1,2}:\d{2})-(\d{1,2}:\d{2})@(.+)$")
 DEFAULT_MAX_CONSECUTIVE_DAYS = 5
 DEFAULT_MIN_REST_HOURS = 11
 STAFF_TEAM_CODE = "Employees"
+DEFAULT_SISQUAL_COVERAGE_PRIORITY_TIERS = (
+    ("Storage", 1, None, "RESP ALMACEN N>=1"),
+    ("Management", 1, 1, "RESP - EQUIPO GESTION N=1"),
+    ("Checkout", 1, 1, "CAJA N=1"),
+    ("Management", 2, 2, "RESP - EQUIPO GESTION N=2"),
+    ("Checkout", 2, 2, "CAJA N=2"),
+    ("Management", 3, 3, "RESP - EQUIPO GESTION N=3"),
+    ("Management", 4, None, "RESP - EQUIPO GESTION N>=4"),
+    ("Checkout", 3, None, "CAJA N>=3"),
+)
 
 
 def analyze(file_path, problem_path, employees=None, year=None):
