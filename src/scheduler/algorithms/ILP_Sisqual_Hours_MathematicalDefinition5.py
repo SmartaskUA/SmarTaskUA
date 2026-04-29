@@ -14,9 +14,6 @@ Each objective stays inactive unless a positive weight exists in a matching soft
 constraint.
 If no objective receives a weight, the model runs as a feasibility model.
 
-For ObjectiveFunction1, the Sisqual bundle uses a stronger internal priority
-order for shortages: Storage first, then Management/Checkout by required worker
-number, and finally Employees demand. The HOSS line is ignored.
 """
 
 from __future__ import annotations
@@ -32,8 +29,6 @@ import pulp
 from algorithms.sisqual_hours_utils import (
     Assignment,
     build_half_hour_slots,
-    build_objective1_priority_coefficients,
-    build_objective1_priority_index,
     build_objective5_skill_priority,
     build_period_slot_map,
     build_sisqual_bundle_assignments,
@@ -100,8 +95,6 @@ class SisqualProblem5ILP:
         self.closed_days = set(self.days) - set(self.open_days)  # set() for the current October bundle; otherwise {"2025-10-05", ...}
         self.coverage_priority_tiers = parse_coverage_priority_tiers(self.problem,self.skills,self.staff_team_code)  # [{"priority": 1, "skill": "Storage", "min_n": 1, ...}, {"priority": 2, "skill": "Management", "min_n": 1, "max_n": 1, ...}, ...]
         self.objective5_skill_priority = build_objective5_skill_priority(self.employees,self.coverage_priority_tiers)  # {("20051291", "Storage"): 0, ("20072412", "Management"): 3, ("20054956", "Checkout"): 4, ...}
-        self.objective1_priority_index = build_objective1_priority_index(self.alpha, self.coverage_priority_tiers)  # {("2025-10-01", 0, "Storage", 1): 0, ("2025-10-01", 5, "Checkout", 2): 4, ...}
-        self.objective1_priority_coefficients = build_objective1_priority_coefficients(self.coverage_priority_tiers)  # {0: 100000000, 1: 10000000, ..., 8: 1}
         (self.objective1_weight, self.objective2_weights, self.objective3_weight, self.objective4_weight, self.objective5_weight) = (parse_soft_objectives(self.problem))  # e.g. (1000.0, {}, 0.0, 100.0, 1.0)
         self.variable_days_off_active = self.objective4_weight > 0  # True when preferred day-offs may be swapped; False keeps template DO days fixed off
         self.day_modes = build_sisqual_day_modes(self.employees, self.days, self.schedule_markers, self.closed_days)  # {("20072412", "2025-10-01"): "work_template", ("20072412", "2025-10-05"): "preferred_day_off", ...}
@@ -141,7 +134,6 @@ class SisqualProblem5ILP:
         self.y_level = {}
         self.shortage = {}
         self.level_shortage = {}
-        self.priority_shortage = {}
         self.preferred_day_work = {}
         self.coverage_terms_cache = {}
         self.status = None
@@ -212,16 +204,6 @@ class SisqualProblem5ILP:
                 lowBound=0,
                 cat="Integer",
             )
-
-        if self.objective1_weight > 0:
-            # Sisqual-specific refinement of ObjectiveFunction1: one binary variable for each
-            # nth demanded worker in alpha_dts, so shortage penalties can follow the business
-            # alarm priority order instead of a flat sum over z_{dts}.
-            for (day, slot_idx, skill, nth_worker), tier_index in self.objective1_priority_index.items():
-                self.priority_shortage[(day, slot_idx, skill, nth_worker)] = pulp.LpVariable(
-                    f"zrank_{day.replace('-', '')}_{slot_idx}_{skill}_N{nth_worker}_P{tier_index + 1}",
-                    cat="Binary",
-                )
 
         if level_objectives_active:
             # y'_{wdtsl} from constraint (6): for each worker/slot/skill, only the employee's
@@ -370,17 +352,6 @@ class SisqualProblem5ILP:
                 f"shortage_{day}_{slot_idx}_{skill}",
             )
 
-        if self.objective1_weight > 0 and self.priority_shortage:
-            # Sisqual alarm hierarchy for ObjectiveFunction1:
-            # Storage > Management #1 > Checkout #1 > Management #2 > Checkout #2
-            # > Management #3 > Management #4+ > Checkout #3+ > Employees.
-            for (day, slot_idx, skill, nth_worker), variable in self.priority_shortage.items():
-                coverage_terms = self._coverage_terms(day, slot_idx, skill)
-                model += (
-                    pulp.lpSum(coverage_terms) + nth_worker * variable >= nth_worker,
-                    f"priority_shortage_{day}_{slot_idx}_{skill}_N{nth_worker}",
-                )
-
         if level_objectives_active:
             # Constraint (6)
             # "each worker w∈W that works in day d∈D_o in timeslot t∈T with skill s∈S_w
@@ -459,21 +430,12 @@ class SisqualProblem5ILP:
 
         objective_terms = []
 
-        # ObjectiveFunction1 
+        # ObjectiveFunction1
         # trying to fulfil as much as possible the minimum number alpha_dts of workers
-        # in all open days, timeslots, and skills. In the Sisqual bundle this is refined
-        # with the alarm-priority order for each nth required worker.
+        # in all open days, timeslots, and skills. All minimum shortages have the
+        # same cost here; skill priority is handled by ObjectiveFunction5.
         if self.objective1_weight > 0:
-            if self.priority_shortage:
-                objective_terms.append(
-                    self.objective1_weight
-                    * pulp.lpSum(
-                        self.objective1_priority_coefficients[self.objective1_priority_index[key]] * variable
-                        for key, variable in self.priority_shortage.items()
-                    )
-                )
-            else:
-                objective_terms.append(self.objective1_weight * pulp.lpSum(self.shortage.values()))
+            objective_terms.append(self.objective1_weight * pulp.lpSum(self.shortage.values()))
 
         # ObjectiveFunction2 ()
         # for a given skill s and competence level l, trying to fulfil as much as

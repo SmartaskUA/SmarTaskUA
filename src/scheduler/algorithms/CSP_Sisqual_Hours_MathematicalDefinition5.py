@@ -3,7 +3,7 @@ Hour-based CP-SAT model for the Sisqual bundle following MathematicalDefinition5
 
 This mirrors `ILP_Sisqual_Hours_MathematicalDefinition5.py` while using
 OR-Tools CP-SAT:
-  - ObjectiveFunction1: weighted priority shortage against alpha_dts
+  - ObjectiveFunction1: weighted total shortage against alpha_dts
   - ObjectiveFunction2: weighted level-specific shortage against beta_dtsl
   - ObjectiveFunction3: linear competence score l * y'_wdtsl
   - ObjectiveFunction4: work assigned on preferred day-offs x'_wd
@@ -22,8 +22,6 @@ from ortools.sat.python import cp_model
 
 from algorithms.sisqual_hours_utils import (
     build_half_hour_slots,
-    build_objective1_priority_coefficients,
-    build_objective1_priority_index,
     build_objective5_skill_priority,
     build_period_slot_map,
     build_sisqual_bundle_assignments,
@@ -113,13 +111,6 @@ class SisqualProblem5CSP:
             self.employees,
             self.coverage_priority_tiers,
         )
-        self.objective1_priority_index = build_objective1_priority_index(
-            self.alpha,
-            self.coverage_priority_tiers,
-        )
-        self.objective1_priority_coefficients = build_objective1_priority_coefficients(
-            self.coverage_priority_tiers,
-        )
 
         (
             self.objective1_weight,
@@ -174,7 +165,6 @@ class SisqualProblem5CSP:
         self.y_level = {}
         self.shortage = {}
         self.level_shortage = {}
-        self.priority_shortage = {}
         self.preferred_day_work = {}
         self.coverage_terms_cache = {}
         self.status = None
@@ -241,12 +231,6 @@ class SisqualProblem5CSP:
                 int(minimum),
                 f"z_{day.replace('-', '')}_{slot_idx}_{skill}",
             )
-
-        if self.objective1_weight > 0:
-            for (day, slot_idx, skill, nth_worker), tier_index in self.objective1_priority_index.items():
-                self.priority_shortage[(day, slot_idx, skill, nth_worker)] = model.NewBoolVar(
-                    f"zrank_{day.replace('-', '')}_{slot_idx}_{skill}_N{nth_worker}_P{tier_index + 1}"
-                )
 
         if level_objectives_active:
             for employee in self.employees:
@@ -359,11 +343,6 @@ class SisqualProblem5CSP:
             coverage_terms = self._coverage_terms(day, slot_idx, skill)
             model.Add(self.shortage[(day, slot_idx, skill)] + sum(coverage_terms) >= minimum)
 
-        if self.objective1_weight > 0 and self.priority_shortage:
-            for (day, slot_idx, skill, nth_worker), variable in self.priority_shortage.items():
-                coverage_terms = self._coverage_terms(day, slot_idx, skill)
-                model.Add(sum(coverage_terms) + nth_worker * variable >= nth_worker)
-
         if level_objectives_active:
             for employee in self.employees:
                 employee_id = employee["id"]
@@ -425,18 +404,10 @@ class SisqualProblem5CSP:
 
         objective1_weight = _int_weight(self.objective1_weight, "ObjectiveFunction1")
         if objective1_weight > 0:
-            if self.priority_shortage:
-                objective_terms.extend(
-                    objective1_weight
-                    * self.objective1_priority_coefficients[self.objective1_priority_index[key]]
-                    * variable
-                    for key, variable in self.priority_shortage.items()
-                )
-            else:
-                objective_terms.extend(
-                    objective1_weight * variable
-                    for variable in self.shortage.values()
-                )
+            objective_terms.extend(
+                objective1_weight * variable
+                for variable in self.shortage.values()
+            )
 
         for (skill, level), weight in sorted(self.objective2_weights.items()):
             objective2_weight = _int_weight(weight, f"ObjectiveFunction2 {skill}:{level}")
