@@ -398,49 +398,199 @@ function SlotFailureCard({ data }) {
 }
 
 function MaxShortageCard({ data }) {
+  const [openGap, setOpenGap] = useState(null); // which gap level is expanded
+
   if (!data) return null;
-  const { max_gap, worst_slots } = data;
+  const { max_gap, gap_distribution, details_by_gap } = data;
   const isOk = max_gap === 0;
-  const worst = worst_slots?.[0];
+
+  // Sort gap sizes descending (worst first)
+  const gapEntries = Object.entries(gap_distribution || {})
+    .map(([g, count]) => ({ gap: parseInt(g), count }))
+    .sort((a, b) => b.gap - a.gap);
+
+  const maxCount = gapEntries.length > 0 ? Math.max(...gapEntries.map(e => e.count)) : 1;
+
+  // Colour by severity
+  const gapColor = (g) =>
+    g >= 3 ? "#A32D2D" : g === 2 ? "#854F0B" : "#633806";
+
   return (
-    <Paper elevation={0} sx={{ p: 1.5, bgcolor: "action.hover", borderRadius: 1 }}>
-      <Typography variant="caption" color="text.secondary">Max shortage (single slot)</Typography>
-      <Typography variant="h5" fontWeight={500} color={isOk ? "success.main" : "error.main"} sx={{ lineHeight: 1.2, mt: 0.25, mb: 0.5 }}>
+    <Paper
+      elevation={0}
+      sx={{ p: 1.5, bgcolor: "action.hover", borderRadius: 1 }}
+    >
+      {/* Header */}
+      <Typography variant="caption" color="text.secondary">
+        Max shortage (single slot)
+      </Typography>
+      <Typography
+        variant="h5"
+        fontWeight={500}
+        color={isOk ? "success.main" : "error.main"}
+        sx={{ lineHeight: 1.2, mt: 0.25, mb: isOk ? 0 : 1 }}
+      >
         {max_gap}
+        {!isOk && (
+          <Typography component="span" variant="caption" color="text.disabled" sx={{ ml: 0.75 }}>
+            worker-slots
+          </Typography>
+        )}
       </Typography>
-      <Typography variant="caption" color="text.disabled" sx={{ display: "block" }}>
-        worker-slots in worst slot
-      </Typography>
-      {worst && !isOk && (
-        <Typography variant="caption" color="error" sx={{ display: "block", mt: 0.5 }}>
-          {worst.date} · {worst.team} · {worst.period}
-        </Typography>
+
+      {/* Gap distribution — mini histogram with expandable rows */}
+      {gapEntries.length > 0 && (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+          {gapEntries.map(({ gap, count }) => {
+            const barPct  = Math.round((count / maxCount) * 100);
+            const color   = gapColor(gap);
+            const key     = String(gap);
+            const isOpen  = openGap === key;
+            const details = details_by_gap?.[key] ?? [];
+
+            // Group details by date for compact display
+            const byDate = {};
+            for (const d of details) {
+              if (!byDate[d.date]) byDate[d.date] = [];
+              byDate[d.date].push(d);
+            }
+
+            return (
+              <Box key={key}>
+                {/* Row: gap size + bar + count + expand button */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.75,
+                    cursor: details.length > 0 ? "pointer" : "default",
+                    py: 0.25,
+                  }}
+                  onClick={() => details.length > 0 && setOpenGap(isOpen ? null : key)}
+                >
+                  {/* Gap badge */}
+                  <Box
+                    sx={{
+                      minWidth: 22,
+                      height: 18,
+                      borderRadius: "4px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      bgcolor: color,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Typography sx={{ fontSize: 10, fontWeight: 700, color: "#fff" }}>
+                      -{gap}
+                    </Typography>
+                  </Box>
+
+                  {/* Bar */}
+                  <Box
+                    sx={{
+                      flex: 1,
+                      height: 6,
+                      borderRadius: 2,
+                      bgcolor: "action.selected",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        height: "100%",
+                        width: `${barPct}%`,
+                        bgcolor: color,
+                        borderRadius: 2,
+                        transition: "width .3s ease",
+                      }}
+                    />
+                  </Box>
+
+                  {/* Count */}
+                  <Typography
+                    variant="caption"
+                    fontWeight={500}
+                    sx={{ color, minWidth: 28, textAlign: "right" }}
+                  >
+                    {count}
+                  </Typography>
+
+                  {/* Expand chevron */}
+                  {details.length > 0 && (
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "text.disabled", fontSize: 10 }}
+                    >
+                      {isOpen ? "▲" : "▼"}
+                    </Typography>
+                  )}
+                </Box>
+
+                {/* Expanded details */}
+                <Collapse in={isOpen}>
+                  <Box
+                    sx={{
+                      ml: 3.5,
+                      mb: 0.5,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 0.5,
+                    }}
+                  >
+                    {Object.entries(byDate).map(([date, slots]) => (
+                      <Box key={date}>
+                        <Typography
+                          variant="caption"
+                          fontWeight={500}
+                          color="text.secondary"
+                          sx={{ display: "block", mb: 0.25 }}
+                        >
+                          {date}
+                        </Typography>
+                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.4, pl: 1 }}>
+                          {slots.map((s, i) => (
+                            <Box
+                              key={i}
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                                px: 0.75,
+                                py: 0.2,
+                                borderRadius: 1,
+                                bgcolor: "#FCEBEB",
+                              }}
+                            >
+                              <Typography variant="caption" sx={{ color: "#791F1F", fontWeight: 500 }}>
+                                {s.team}
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: "#791F1F" }}>
+                                {s.period}
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: "#791F1F", opacity: 0.8 }}>
+                                {s.covered}/{s.required}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Box>
+                      </Box>
+                    ))}
+                    {details.length === 20 && (
+                      <Typography variant="caption" color="text.disabled" sx={{ pl: 1 }}>
+                        Showing first 20 occurrences
+                      </Typography>
+                    )}
+                  </Box>
+                </Collapse>
+              </Box>
+            );
+          })}
+        </Box>
       )}
     </Paper>
   );
 }
-
-function MeanShortageCard({ data }) {
-  if (!data) return null;
-  const { mean_shortage, mean_shortage_failing, total_slots } = data;
-  const isOk = mean_shortage === 0;
-  return (
-    <Paper elevation={0} sx={{ p: 1.5, bgcolor: "action.hover", borderRadius: 1 }}>
-      <Typography variant="caption" color="text.secondary">Mean shortage / slot</Typography>
-      <Box sx={{ display: "flex", alignItems: "baseline", gap: 1, mt: 0.25, mb: 0.5 }}>
-        <Typography variant="h5" fontWeight={500} color={isOk ? "success.main" : "error.main"} sx={{ lineHeight: 1.2 }}>
-          {mean_shortage}
-        </Typography>
-        <Typography variant="caption" color="text.disabled">all slots</Typography>
-      </Box>
-      <Typography variant="caption" color="text.disabled" sx={{ display: "block" }}>
-        {mean_shortage_failing} avg over failing slots · {total_slots} total
-      </Typography>
-    </Paper>
-  );
-}
-
-
 
 function SeverityCard({ kpis }) {
   const data = kpis["Severity_Index"];
@@ -723,16 +873,6 @@ export default function SisqualKPIReport({ kpis }) {
           <Divider sx={{ my: 1.5 }} />
           <SectionTitle>Performance</SectionTitle>
 
-          {/* Standalone constraint summary block */}
-          <Box sx={{ mb: 1.5 }}>
-            <MetricCard
-              label="Constraint violations"
-              value={failCount}
-              sub={`of ${loadedCount} alarms evaluated`}
-              color={failCount === 0 ? "success.main" : "error.main"}
-            />
-          </Box>
-
           {/* Row 1: Total shortage (with bar) + severity index */}
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, mb: 1 }}>
             <StaffingTargetCard
@@ -763,11 +903,10 @@ export default function SisqualKPIReport({ kpis }) {
             />
           </Box>
 
-          {/* Row 3: Slots with failure + Max shortage + Mean shortage */}
-          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, mb: 1 }}>
+          {/* Row 3: Slots with failure + Max shortage */}
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, mb: 1 }}>
             <SlotFailureCard data={kpis["Slots_With_Failure"]} />
             <MaxShortageCard data={kpis["Max_Shortage_Single_Slot"]} />
-            <MeanShortageCard data={kpis["Mean_Shortage_Per_Slot"]} />
           </Box>
 
           {/* Row 4: Shortage breakdown by skill — expandable */}
@@ -783,6 +922,14 @@ export default function SisqualKPIReport({ kpis }) {
               ))}
             </Box>
           )}
+
+          {/* Row 5: Constraint violations summary */}
+          <MetricCard
+            label="Constraint violations"
+            value={failCount}
+            sub={`of ${loadedCount} alarms evaluated`}
+            color={failCount === 0 ? "success.main" : "error.main"}
+          />
         </>
       )}
 
