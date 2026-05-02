@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Accordion,
   AccordionSummary,
@@ -18,6 +18,10 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ErrorIcon from "@mui/icons-material/Error";
@@ -590,6 +594,219 @@ function buildPriorityTierSummary(employeeRows) {
     .sort((a, b) => a.priorityRank - b.priorityRank);
 }
 
+function EmployeeAssignmentQualityPanel({ employeeRows }) {
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+  const selectedEmployee =
+    employeeRows.find((employee) => employee.employeeId === selectedEmployeeId) || null;
+
+  return (
+    <Box mt={4}>
+      <Divider sx={{ my: 1.5 }} />
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
+          mb: 1.5,
+          flexWrap: "wrap",
+        }}
+      >
+        <SectionTitle>Employee Assignment Quality</SectionTitle>
+        <Chip
+          label={`${employeeRows.length} employees`}
+          size="small"
+          sx={{
+            height: 22,
+            fontSize: 11,
+            bgcolor: "#F1EFE8",
+            color: "#5F5E5A",
+          }}
+        />
+      </Box>
+
+      <FormControl size="small" sx={{ minWidth: 280, mb: 2 }}>
+        <InputLabel sx={{ fontSize: 13 }}>Employee</InputLabel>
+        <Select
+          value={selectedEmployeeId}
+          label="Employee"
+          onChange={(event) => setSelectedEmployeeId(event.target.value)}
+          sx={{ fontSize: 13 }}
+        >
+          <MenuItem value="">
+            <em>Select an employee</em>
+          </MenuItem>
+          {employeeRows.map((employee) => (
+            <MenuItem
+              key={employee.employeeId || employee.name}
+              value={employee.employeeId}
+              sx={{ fontSize: 13 }}
+            >
+              {employee.name || employee.employeeId}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+      {selectedEmployee && (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            mb: 2,
+            border: "0.5px solid",
+            borderColor: "divider",
+            borderRadius: 2,
+            bgcolor: "action.hover",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5, flexWrap: "wrap" }}>
+            <Typography variant="subtitle2" fontWeight={700}>
+              {selectedEmployee.name || selectedEmployee.employeeId}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {selectedEmployee.employeeId}
+            </Typography>
+            <Chip
+              label={`#${selectedEmployee.priorityRank ?? "?"}`}
+              size="small"
+              sx={{ height: 20, fontSize: 11, bgcolor: "#F1EFE8", color: "#5F5E5A" }}
+            />
+            <Typography variant="caption" color="text.secondary">
+              {selectedEmployee.priorityLabel || selectedEmployee.priorityTeam || selectedEmployee.primaryTeam || "Unmapped"}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 1 }}>
+            <MetricPanel label="Worked hours" value={selectedEmployee.workedHours ?? 0} />
+            <MetricPanel
+              label="Primary utilization"
+              value={`${Number(selectedEmployee.primaryTeamUtilizationRate || 0).toFixed(2)}%`}
+            />
+            <MetricPanel label="Non-primary hours" value={selectedEmployee.nonPrimaryTeamHours ?? 0} />
+            <MetricPanel label="Team switches" value={selectedEmployee.teamSwitches ?? 0} />
+            <MetricPanel label="Fragmented days" value={selectedEmployee.fragmentedWorkDays ?? 0} />
+            <MetricPanel
+              label="Duration compliance"
+              value={`${Number(selectedEmployee.durationComplianceRate || 0).toFixed(2)}%`}
+            />
+            <MetricPanel
+              label="Demanded hours"
+              value={`${Number(selectedEmployee.demandedHoursComplianceRate || 0).toFixed(2)}%`}
+            />
+            <MetricPanel
+              label="Preferred DO"
+              value={selectedEmployee.preferredDayOffWorkedDays ?? 0}
+              color={Number(selectedEmployee.preferredDayOffWorkedDays || 0) > 0 ? "error.main" : "success.main"}
+            />
+            <MetricPanel label="Skill penalty" value={selectedEmployee.skillPriorityPenaltyScore ?? 0} />
+            <MetricPanel
+              label="Availability"
+              value={selectedEmployee.availabilityViolations ?? 0}
+              color={Number(selectedEmployee.availabilityViolations || 0) > 0 ? "error.main" : "success.main"}
+            />
+            <MetricPanel
+              label="Consecutive"
+              value={selectedEmployee.consecutiveDaysViolations ?? 0}
+              color={Number(selectedEmployee.consecutiveDaysViolations || 0) > 0 ? "error.main" : "success.main"}
+            />
+            <MetricPanel
+              label="Min rest"
+              value={selectedEmployee.minRestViolations ?? 0}
+              color={Number(selectedEmployee.minRestViolations || 0) > 0 ? "error.main" : "success.main"}
+            />
+          </Box>
+        </Paper>
+      )}
+
+      <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, maxHeight: 520 }}>
+        <Table size="small" stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell>Employee</TableCell>
+              <TableCell>Priority</TableCell>
+              <TableCell align="right">Worked h</TableCell>
+              <TableCell align="right">Primary %</TableCell>
+              <TableCell align="right">Non-primary h</TableCell>
+              <TableCell align="right">Switches</TableCell>
+              <TableCell align="right">Fragments</TableCell>
+              <TableCell align="right">Duration %</TableCell>
+              <TableCell align="right">Demanded %</TableCell>
+              <TableCell align="right">Pref. DO</TableCell>
+              <TableCell align="right">Skill penalty</TableCell>
+              <TableCell align="right">Availability</TableCell>
+              <TableCell align="right">Consecutive</TableCell>
+              <TableCell align="right">Min rest</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {employeeRows.map((employee) => (
+              <TableRow key={employee.employeeId || employee.name}>
+                <TableCell>
+                  <Typography variant="body2" fontWeight={600}>
+                    {employee.name || employee.employeeId}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {employee.employeeId}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Chip
+                      label={`#${employee.priorityRank ?? "?"}`}
+                      size="small"
+                      sx={{
+                        height: 20,
+                        fontSize: 11,
+                        bgcolor: "#F1EFE8",
+                        color: "#5F5E5A",
+                      }}
+                    />
+                    <Typography variant="caption" sx={{ lineHeight: 1.2 }}>
+                      {employee.priorityLabel || employee.priorityTeam || employee.primaryTeam || "Unmapped"}
+                    </Typography>
+                  </Box>
+                </TableCell>
+                <TableCell align="right">{employee.workedHours ?? 0}</TableCell>
+                <TableCell align="right">{Number(employee.primaryTeamUtilizationRate || 0).toFixed(2)}%</TableCell>
+                <TableCell align="right">{employee.nonPrimaryTeamHours ?? 0}</TableCell>
+                <TableCell align="right">{employee.teamSwitches ?? 0}</TableCell>
+                <TableCell align="right">{employee.fragmentedWorkDays ?? 0}</TableCell>
+                <TableCell align="right">{Number(employee.durationComplianceRate || 0).toFixed(2)}%</TableCell>
+                <TableCell align="right">{Number(employee.demandedHoursComplianceRate || 0).toFixed(2)}%</TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ color: Number(employee.preferredDayOffWorkedDays || 0) > 0 ? "error.main" : "success.main" }}
+                >
+                  {employee.preferredDayOffWorkedDays ?? 0}
+                </TableCell>
+                <TableCell align="right">{employee.skillPriorityPenaltyScore ?? 0}</TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ color: Number(employee.availabilityViolations || 0) > 0 ? "error.main" : "success.main" }}
+                >
+                  {employee.availabilityViolations ?? 0}
+                </TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ color: Number(employee.consecutiveDaysViolations || 0) > 0 ? "error.main" : "success.main" }}
+                >
+                  {employee.consecutiveDaysViolations ?? 0}
+                </TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ color: Number(employee.minRestViolations || 0) > 0 ? "error.main" : "success.main" }}
+                >
+                  {employee.minRestViolations ?? 0}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  );
+}
+
 const renderSisqualReport = (metrics) => {
   const hasIssues = sisqualIssueMetrics.some((key) => Number(metrics[key] || 0) > 0);
   const teamCoverage = Array.isArray(metrics.teamCoverageBreakdown)
@@ -600,6 +817,9 @@ const renderSisqualReport = (metrics) => {
     : [];
   const priorityTierSummary = Array.isArray(metrics.employeeAssignmentQuality)
     ? buildPriorityTierSummary(metrics.employeeAssignmentQuality)
+    : [];
+  const employeeRows = Array.isArray(metrics.employeeAssignmentQuality)
+    ? metrics.employeeAssignmentQuality
     : [];
 
   return (
@@ -852,6 +1072,10 @@ const renderSisqualReport = (metrics) => {
                   </Table>
                 </TableContainer>
               </Box>
+            )}
+
+            {employeeRows.length > 0 && (
+              <EmployeeAssignmentQualityPanel employeeRows={employeeRows} />
             )}
           </Paper>
         </AccordionDetails>
