@@ -1,0 +1,20 @@
+1. GNN snapshot bug in ppo_update (correctness — biggest expected impact)
+The old code used batch["emp_feats"][idx[0]] as the graph input for the entire minibatch, meaning ~511 of 512 samples were trained with the wrong GNN embedding. Fixed by grouping the minibatch by day_id, running one GNN forward pass per unique day using that day's stored snapshot, and reassembling in original order via inverse permutation.
+
+2. Chronological day order in reset() (training stability)
+The old code sorted days by demand pressure + random noise, so the same calendar day could appear at a different position in the episode each time. Streak and shift-transition windows (_get_prev_shift, _consecutive_streak_if_work) depend on which days come before/after, so the value function was chasing a moving target. Fixed to list(range(num_days)) — always chronological, always consistent.
+
+3. Phase 2 force-work when can_fill_gap=False (constraint correctness)
+When a day had a shortfall but the employee's only feasible shifts couldn't cover any gap slot, the old code still removed REST, forcing them onto an already-overstaffed slot and burning one of their 223-day budget unnecessarily. Fixed by only setting mask[0] = False inside the if can_fill_gap: branch.
+
+4. cov_gap normalization at the head (numerical quality)
+The four coverage gap values were fed raw (unbounded integers) into the actor/critic head linear layer, while days_worked and streak were normalized by 223 and 5 respectively. Fixed by dividing cov_gaps / 10.0 (approximate max team size) in _compute_heads, consistent with the other dynamic features.
+
+5. γ = 0.99 instead of 1.0 (training stability)
+With γ=1.0 over ~4000+ steps, returns are a straight undiscounted sum of all future rewards, making the critic target very high-variance and hard to fit. Changing to 0.99 gives the value function a finite horizon and stabilizes advantage estimates.
+
+6. Evaluate snapshot bug fix (reporting correctness)
+evaluate() was returning env itself (not a copy). All N entries in results held the same Python reference, so best_env always reflected the last run's state, not the best run's — explaining the shortfall=23 vs gap count=27 discrepancy. Fixed by returning a snapshot dict with daily_coverage.copy(), phase1_shortfall, and phase2_steps_len captured at the end of each individual run.
+
+7. Removed LR restart logic (simplification)
+Removed the PATIENCE/LR_DECAY_ON_RESTART mechanism that reloaded the best checkpoint and decayed the learning rate when stuck. Not worth the complexity.
