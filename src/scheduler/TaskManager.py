@@ -1,11 +1,9 @@
 # modules/TaskManager.py
 
-import csv
 import json
+import time
 import os
 import sys
-import tempfile
-import time
 from algorithms.hillClimbing import solve as hill_clibing_alg_solver
 from algorithms.ILP import solve as ilp_solver
 from algorithms.greedyRandomized import solve as greedy_randomized_solver
@@ -22,9 +20,7 @@ from algorithms.ilp_greedy import solve as ilp_greedy
 from algorithms.CSPv2 import solve as cspv2_solver
 from algorithms.CSP_Afonso_Hours import solve as CSP_Afonso_Hours_solver
 from algorithms.ILP_Sisqual_Hours import solve as ILP_Sisqual_Hours_solver
-from algorithms.ILP_Sisqual_Hours_MathematicalDefinition5 import solve as ILP_Sisqual_Hours_MathematicalDefinition5_solver
 from algorithms.CSP_Sisqual_Hours import solve as CSP_Sisqual_Hours_solver
-from algorithms.CSP_Sisqual_Hours_MathematicalDefinition5 import solve as CSP_Sisqual_Hours_MathematicalDefinition5_solver
 from algorithms.ILP_2 import solve as ILP_2
 from algorithms.ILP_2_Half_Intervals import solve as ILP_2_Half_Intervals
 from algorithms.ILP_3 import solve as ILP_3
@@ -41,10 +37,6 @@ from algorithms.COP_2_Half_Intervals import solve as COP_2_Half_Intervals_Solver
 from algorithms.COP_1_Half_Intervals import solve as COP_1_Half_Intervals_solver
 from algorithms.general.heuristic_general import solve as heuristic_general_solver
 from analyzer.kpiVerification_Sisqual import KpiEvaluator_Sisqual
-from analyzer.kpiVerification_sisqual_bundle import (
-    analyze as verifyKpis_SisqualBundle,
-    is_bundle_native_hour_problem,
-)
 
 class TaskManager:
     def __init__(self):
@@ -80,9 +72,7 @@ class TaskManager:
             "Heuristic General": heuristic_general_solver,
             "ilp_greedy": ilp_greedy,
             "ILP_Sisqual_Hours": ILP_Sisqual_Hours_solver,
-            "ILP_Sisqual_Hours_MathematicalDefinition5": ILP_Sisqual_Hours_MathematicalDefinition5_solver,
             "CSP_Sisqual_Hours": CSP_Sisqual_Hours_solver,
-            "CSP_Sisqual_Hours_MathematicalDefinition5": CSP_Sisqual_Hours_MathematicalDefinition5_solver,
             "COP_1_Half_Intervals": COP_1_Half_Intervals_solver,
             "COP_2_Half_Intervals": COP_2_Half_Intervals_Solver,
         }
@@ -110,14 +100,7 @@ class TaskManager:
         print(f"[TaskManager] Executing algorithm '{algorithm_name}' with Task ID: {task_id}")
         algorithm = self.algorithms[algorithm_name]
 
-        no_rules_algorithms = {
-            "ILP General",
-            "CSP General",
-            "ILP_Sisqual_Hours",
-            "ILP_Sisqual_Hours_MathematicalDefinition5",
-            "CSP_Sisqual_Hours",
-            "CSP_Sisqual_Hours_MathematicalDefinition5",
-        }
+        no_rules_algorithms = {"ILP General", "CSP General", "ILP_Sisqual_Hours", "CSP_Sisqual_Hours"}
         uses_rules = algorithm_name not in no_rules_algorithms
         rules_json = None
         if uses_rules:
@@ -163,62 +146,36 @@ class TaskManager:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, rules=rules_json)
             else:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, constraints=rules)
-        elif algorithm_name in [
-            "ILP_Sisqual_Hours",
-            "ILP_Sisqual_Hours_MathematicalDefinition5",
-            "CSP_Sisqual_Hours",
-            "CSP_Sisqual_Hours_MathematicalDefinition5",
-        ]:
+        elif algorithm_name in ["ILP_Sisqual_Hours", "CSP_Sisqual_Hours"]:
+            # Request the solver to print the returned rows as JSON so the
+            # container logs contain the schedule payload sent to the frontend.
             schedule_data = algorithm(problem_path=problem_path, maxTime=maxTime, print_json=True)
             # print(f"[Taskmaster] Schedule data returned by '{algorithm_name}': {schedule_data}")
             try:
-                if problem_path and is_bundle_native_hour_problem(problem_path):
-                    temp_schedule_path = None
-                    try:
-                        with tempfile.NamedTemporaryFile(
-                            mode="w",
-                            newline="",
-                            encoding="utf-8",
-                            suffix=".csv",
-                            delete=False,
-                        ) as temp_schedule_file:
-                            csv.writer(temp_schedule_file).writerows(schedule_data)
-                            temp_schedule_path = temp_schedule_file.name
+                # Attempt to locate expected problem bundle files (demand.csv, schedule_input.csv, problem.json)
+                demand_path = None
+                input_path = None
+                problem_json_path = None
+                if problem_path:
+                    # If problem_path points to a directory use it directly, otherwise use its parent dir
+                    base = problem_path if os.path.isdir(problem_path) else os.path.dirname(problem_path)
+                    demand_path = os.path.join(base, "demand.csv")
+                    input_path = os.path.join(base, "schedule_input.csv")
+                    problem_json_path = os.path.join(base, "problem.json")
 
-                        kpis = verifyKpis_SisqualBundle(
-                            temp_schedule_path,
-                            problem_path,
-                            employees,
-                            year,
-                        )
-                    finally:
-                        if temp_schedule_path and os.path.exists(temp_schedule_path):
-                            os.remove(temp_schedule_path)
-                else:
-                    # Attempt to locate expected problem bundle files (demand.csv, schedule_input.csv, problem.json)
-                    demand_path = None
-                    input_path = None
-                    problem_json_path = None
-                    if problem_path:
-                        # If problem_path points to a directory use it directly, otherwise use its parent dir
-                        base = problem_path if os.path.isdir(problem_path) else os.path.dirname(problem_path)
-                        demand_path = os.path.join(base, "demand.csv")
-                        input_path = os.path.join(base, "schedule_input.csv")
-                        problem_json_path = os.path.join(base, "problem.json")
+                # Only pass paths that actually exist to avoid loader errors
+                kp_demand = demand_path if (demand_path and os.path.exists(demand_path)) else None
+                kp_input = input_path if (input_path and os.path.exists(input_path)) else None
+                kp_problem = problem_json_path if (problem_json_path and os.path.exists(problem_json_path)) else None
 
-                    # Only pass paths that actually exist to avoid loader errors
-                    kp_demand = demand_path if (demand_path and os.path.exists(demand_path)) else None
-                    kp_input = input_path if (input_path and os.path.exists(input_path)) else None
-                    kp_problem = problem_json_path if (problem_json_path and os.path.exists(problem_json_path)) else None
-
-                    kpi_eval = KpiEvaluator_Sisqual(
-                        schedule_data,
-                        demand_csv_path=kp_demand,
-                        input_csv_path=kp_input,
-                        problem_json=kp_problem,
-                    )
-                    kpi_eval.evaluate_kpis()
-                    kpis = getattr(kpi_eval, 'kpis', None)
+                kpi_eval = KpiEvaluator_Sisqual(
+                    schedule_data,
+                    demand_csv_path=kp_demand,
+                    input_csv_path=kp_input,
+                    problem_json=kp_problem,
+                )
+                kpi_eval.evaluate_kpis()
+                kpis = getattr(kpi_eval, 'kpis', None)
             except Exception as e:
                 print(f"[TaskManager] KPI evaluation failed: {e}")
                 kpis = None

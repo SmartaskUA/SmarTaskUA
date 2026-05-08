@@ -10,14 +10,6 @@ import {
   Chip,
   Grid,
   Tooltip,
-  Stack,
-  Divider,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ErrorIcon from "@mui/icons-material/Error";
@@ -133,7 +125,7 @@ const metricInfo = {
   weightedMinimumCoverageRate: {
     label: "Weighted Minimum Coverage",
     description:
-      "Fulfilled required staffing divided by total required staffing across all 30-minute team slots.",
+      "Fulfilled required headcount divided by total required headcount across all 30-minute team slots.",
   },
   criticalUnderfilledPeriods: {
     label: "Critical Underfilled Slots",
@@ -148,42 +140,32 @@ const metricInfo = {
   totalMinimumGap: {
     label: "Total Minimum Gap",
     description:
-      "Total missing staff across all required 30-minute team slots.",
+      "Total missing headcount across all required 30-minute team slots.",
   },
   totalOverstaff: {
     label: "Total Overstaff",
     description:
-      "Total of staff exceeding minimum requirements across all required 30-minute team slots.",
+      "Total surplus headcount above minimum requirements across all required 30-minute team slots.",
   },
   intraDayTeamSwitches: {
     label: "Intra-Day Team Switches",
     description:
-      "Number of times staff switch teams between consecutive assigned segments inside the same day.",
+      "Number of times employees switch teams between consecutive assigned segments inside the same day.",
   },
   primaryTeamUtilizationRate: {
     label: "Primary Team Utilization",
     description:
-      "Share of assigned hours worked in each staff member's strongest-ranked team.",
+      "Share of assigned hours worked in each employee's strongest-ranked team.",
   },
   durationComplianceRate: {
     label: "Duration Compliance",
     description:
-      "Share of staff-days that respect the daily duration or exact time rule defined in schedule_input.csv.",
+      "Share of employee-days that respect the daily duration or exact time rule defined in schedule_input.csv.",
   },
-  preferredDayOffWorkedDays: {
-    label: "Preferred Day-Off Worked Days",
+  demandedHoursComplianceRate: {
+    label: "Demanded Hours Compliance",
     description:
-      "Number of template `DO` days that still ended up assigned. This is the direct KPI counterpart of objective 4.",
-  },
-  preferredDayOffPreservationRate: {
-    label: "Preferred Day-Off Preservation",
-    description:
-      "Share of template `DO` days that remained fully off in the generated schedule.",
-  },
-  skillPriorityPenaltyScore: {
-    label: "Skill Priority Penalty",
-    description:
-      "Weighted slot-level penalty for assigning employees to lower-priority skills. Lower is better. This mirrors objective 5.",
+      "Share of working-rule employee-days where assigned hours exactly match the hours requested in schedule_input.csv.",
   },
   fragmentedWorkDays: {
     label: "Fragmented Work Days",
@@ -234,14 +216,7 @@ const sisqualSummaryMetrics = [
   "criticalUnderfilledPeriods",
   "maxPeriodShortage",
   "totalMinimumGap",
-];
-
-const sisqualAssignmentMetrics = [
-  "intraDayTeamSwitches",
-  "fragmentedWorkDays",
-  "primaryTeamUtilizationRate",
-  "nonPrimaryTeamHours",
-  "durationComplianceRate",
+  "demandedHoursComplianceRate",
 ];
 
 const optionalMetrics = new Set(["fixedDaysOffViolations"]);
@@ -252,12 +227,11 @@ const percentMetrics = new Set([
   "weightedMinimumCoverageRate",
   "primaryTeamUtilizationRate",
   "durationComplianceRate",
-  "preferredDayOffPreservationRate",
+  "demandedHoursComplianceRate",
 ]);
 const sisqualIssueMetrics = [
   "criticalUnderfilledPeriods",
   "totalMinimumGap",
-  "preferredDayOffWorkedDays",
   "consecutiveDaysViolations",
   "minRestViolations",
   "availabilityViolations",
@@ -341,267 +315,8 @@ const renderLegacyReport = (metricKeys, metrics, issueKeys) => {
   );
 };
 
-function SectionTitle({ children }) {
-  return (
-    <Typography
-      variant="subtitle2"
-      color="text.secondary"
-      sx={{
-        mb: 1.5,
-        textTransform: "uppercase",
-        letterSpacing: ".05em",
-        fontSize: 11,
-        fontWeight: 600,
-      }}
-    >
-      {children}
-    </Typography>
-  );
-}
-
-function StatusRow({ label, value, tone = "neutral", suffix = null }) {
-  const colors = {
-    success: { border: "#3B6D11", bg: "#EAF3DE", fg: "#27500A" },
-    error: { border: "#A32D2D", bg: "#FCEBEB", fg: "#791F1F" },
-    neutral: { border: "#5F5E5A", bg: "#F1EFE8", fg: "#5F5E5A" },
-  };
-  const palette = colors[tone] || colors.neutral;
-
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 1.5,
-        px: 1.5,
-        py: 1,
-        border: "0.5px solid",
-        borderColor: "divider",
-        borderLeft: `3px solid ${palette.border}`,
-        borderRadius: "0 8px 8px 0",
-      }}
-    >
-      <Box sx={{ flex: 1, display: "flex", alignItems: "center", gap: 0.75 }}>
-        <Typography variant="body2">
-          {label}
-        </Typography>
-        <Tooltip title={suffix || ""} arrow>
-          <HelpOutlineIcon sx={{ fontSize: 15, color: "text.secondary" }} />
-        </Tooltip>
-      </Box>
-      <Typography variant="body2" fontWeight={700} sx={{ color: palette.fg }}>
-        {value}
-      </Typography>
-      {suffix && (
-        <Typography variant="caption" sx={{ color: "text.secondary" }}>
-          {suffix}
-        </Typography>
-      )}
-    </Paper>
-  );
-}
-
-function MetricPanel({ label, value, sub, color = "text.primary", info = "" }) {
-  return (
-    <Paper elevation={0} sx={{ p: 1.5, bgcolor: "action.hover", borderRadius: 1 }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-        <Typography variant="caption" color="text.secondary">
-          {label}
-        </Typography>
-        {info ? (
-          <Tooltip title={info} arrow>
-            <HelpOutlineIcon sx={{ fontSize: 14, color: "text.secondary" }} />
-          </Tooltip>
-        ) : null}
-      </Box>
-      <Typography variant="h5" fontWeight={500} color={color} sx={{ lineHeight: 1.3, mt: 0.25 }}>
-        {value}
-      </Typography>
-      {sub && (
-        <Typography variant="caption" color="text.disabled">
-          {sub}
-        </Typography>
-      )}
-    </Paper>
-  );
-}
-
-function TeamCoverageCard({ team }) {
-  const coverage = Number(team.weightedMinimumCoverageRate || 0);
-  const gap = Number(team.gap || 0);
-  const overstaff = Number(team.overstaff || 0);
-  const coverageTone =
-    coverage >= 98 ? "success" : coverage >= 85 ? "warning" : "error";
-  const palette = {
-    success: { accent: "#3B6D11", soft: "#EAF3DE", text: "#27500A" },
-    warning: { accent: "#B86500", soft: "#FFF1DB", text: "#8A4B00" },
-    error: { accent: "#A32D2D", soft: "#FCEBEB", text: "#791F1F" },
-  }[coverageTone];
-
-  const statItems = [
-    { label: "Required", value: team.required, tone: "neutral" },
-    { label: "Filled", value: team.filled, tone: "neutral" },
-    { label: "Gap", value: gap, tone: gap > 0 ? "error" : "success" },
-    { label: "Overstaff", value: overstaff, tone: overstaff > 0 ? "warning" : "neutral" },
-  ];
-
-  const statTone = {
-    neutral: { bg: "#F5F5F4", fg: "#44403C" },
-    success: { bg: "#EAF3DE", fg: "#27500A" },
-    warning: { bg: "#FFF1DB", fg: "#8A4B00" },
-    error: { bg: "#FCEBEB", fg: "#791F1F" },
-  };
-
-  return (
-    <Paper
-      variant="outlined"
-      sx={{
-        p: 2,
-        height: "100%",
-        pb: 3,
-        borderRadius: 2,
-        borderColor: "divider",
-        background:
-          "linear-gradient(180deg, rgba(248,250,252,0.96) 0%, rgba(255,255,255,1) 100%)",
-        boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
-      }}
-    >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: 1,
-          mb: 1.5,
-        }}
-      >
-        <Typography variant="subtitle1" fontWeight={700}>
-          {team.team}
-        </Typography>
-        <Chip
-          label={`${coverage.toFixed(2)}%`}
-          size="small"
-          sx={{
-            height: 22,
-            fontSize: 11,
-            fontWeight: 700,
-            bgcolor: palette.soft,
-            color: palette.text,
-          }}
-        />
-      </Box>
-
-      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.75 }}>
-        Coverage
-      </Typography>
-      <Box
-        sx={{
-          position: "relative",
-          height: 8,
-          borderRadius: 999,
-          bgcolor: "#E7E5E4",
-          overflow: "hidden",
-          mb: 1.5,
-        }}
-      >
-        <Box
-          sx={{
-            position: "absolute",
-            inset: 0,
-            width: `${Math.max(0, Math.min(coverage, 100))}%`,
-            bgcolor: palette.accent,
-            borderRadius: 999,
-          }}
-        />
-      </Box>
-
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-          gap: 1,
-        }}
-      >
-        {statItems.map((item) => (
-          <Box
-            key={item.label}
-            sx={{
-              px: 1,
-              py: 0.9,
-              borderRadius: 1.5,
-              bgcolor: statTone[item.tone].bg,
-            }}
-          >
-            <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
-              {item.label}
-            </Typography>
-            <Typography
-              variant="body2"
-              fontWeight={700}
-              sx={{ color: statTone[item.tone].fg, lineHeight: 1.25 }}
-            >
-              {item.value}
-            </Typography>
-          </Box>
-        ))}
-      </Box>
-    </Paper>
-  );
-}
-
-function buildPriorityTierSummary(employeeRows) {
-  const grouped = new Map();
-
-  for (const employee of employeeRows || []) {
-    const key = `${employee.priorityRank ?? "?"}::${employee.priorityLabel || "Unmapped priority"}`;
-    if (!grouped.has(key)) {
-      grouped.set(key, {
-        priorityRank: employee.priorityRank ?? Number.MAX_SAFE_INTEGER,
-        priorityLabel: employee.priorityLabel || "Unmapped priority",
-        employeeCount: 0,
-        workedHours: 0,
-        availabilityViolations: 0,
-        preferredDayOffWorkedDays: 0,
-        consecutiveDaysViolations: 0,
-        minRestViolations: 0,
-        durationComplianceRateSum: 0,
-      });
-    }
-
-    const row = grouped.get(key);
-    row.employeeCount += 1;
-    row.workedHours += Number(employee.workedHours || 0);
-    row.availabilityViolations += Number(employee.availabilityViolations || 0);
-    row.preferredDayOffWorkedDays += Number(employee.preferredDayOffWorkedDays || 0);
-    row.consecutiveDaysViolations += Number(employee.consecutiveDaysViolations || 0);
-    row.minRestViolations += Number(employee.minRestViolations || 0);
-    row.durationComplianceRateSum += Number(employee.durationComplianceRate || 0);
-  }
-
-  return Array.from(grouped.values())
-    .map((row) => ({
-      ...row,
-      workedHours: Number(row.workedHours.toFixed(2)),
-      durationComplianceRate: row.employeeCount
-        ? Number((row.durationComplianceRateSum / row.employeeCount).toFixed(2))
-        : 100,
-    }))
-    .sort((a, b) => a.priorityRank - b.priorityRank);
-}
-
 const renderSisqualReport = (metrics) => {
   const hasIssues = sisqualIssueMetrics.some((key) => Number(metrics[key] || 0) > 0);
-  const teamCoverage = Array.isArray(metrics.teamCoverageBreakdown)
-    ? metrics.teamCoverageBreakdown
-    : [];
-  const underfilledPeriods = Array.isArray(metrics.underfilledPeriods)
-    ? metrics.underfilledPeriods.slice(0, 12)
-    : [];
-  const priorityTierSummary = Array.isArray(metrics.employeeAssignmentQuality)
-    ? buildPriorityTierSummary(metrics.employeeAssignmentQuality)
-    : [];
-
   return (
     <CardContent sx={{ px: 0, mt: 2 }}>
       <Accordion elevation={3} sx={{ borderRadius: 2 }} defaultExpanded>
@@ -613,246 +328,27 @@ const renderSisqualReport = (metrics) => {
         </AccordionSummary>
         <AccordionDetails>
           <Paper elevation={0} sx={{ p: 3 }}>
-            <SectionTitle>Hour Constraint Alarms</SectionTitle>
-            <Stack spacing={0.75} mb={2.5}>
-              <StatusRow
-                label="No more than 5 consecutive working days"
-                value={metrics.consecutiveDaysViolations ?? 0}
-                suffix={metricInfo.consecutiveDaysViolations?.description}
-                tone={Number(metrics.consecutiveDaysViolations || 0) > 0 ? "error" : "success"}
-              />
-              <StatusRow
-                label="Minimum 11h rest between consecutive shifts"
-                value={metrics.minRestViolations ?? 0}
-                suffix={metricInfo.minRestViolations?.description}
-                tone={Number(metrics.minRestViolations || 0) > 0 ? "error" : "success"}
-              />
-              <StatusRow
-                label="Employees do not work on unavailable days"
-                value={metrics.availabilityViolations ?? 0}
-                suffix={metricInfo.availabilityViolations?.description}
-                tone={Number(metrics.availabilityViolations || 0) > 0 ? "error" : "success"}
-              />
-              <StatusRow
-                label="Preferred day-offs remain unworked"
-                value={metrics.preferredDayOffWorkedDays ?? 0}
-                suffix={metricInfo.preferredDayOffWorkedDays?.description}
-                tone={Number(metrics.preferredDayOffWorkedDays || 0) > 0 ? "error" : "success"}
-              />
-            </Stack>
+            <Typography variant="subtitle1" fontWeight={800} color="#0f172a" sx={{ mb: 2 }}>
+              Coverage and Assignment Summary
+            </Typography>
+            <SummaryGrid metricKeys={sisqualSummaryMetrics} metrics={metrics} />
 
-            <Divider sx={{ my: 1.5 }} />
-            <SectionTitle>Coverage Summary</SectionTitle>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, mb: 1 }}>
-              <MetricPanel
-                label="Weighted minimum coverage"
-                value={`${Number(metrics.weightedMinimumCoverageRate || 0).toFixed(2)}%`}
-                color="text.primary"
-                info={metricInfo.weightedMinimumCoverageRate?.description}
-              />
-              <MetricPanel
-                label="Critical underfilled slots"
-                value={metrics.criticalUnderfilledPeriods ?? 0}
-                color={Number(metrics.criticalUnderfilledPeriods || 0) > 0 ? "error.main" : "success.main"}
-                info={metricInfo.criticalUnderfilledPeriods?.description}
-              />
-              <MetricPanel
-                label="Total minimum gap"
-                value={metrics.totalMinimumGap ?? 0}
-                color={Number(metrics.totalMinimumGap || 0) > 0 ? "error.main" : "success.main"}
-                info={metricInfo.totalMinimumGap?.description}
-              />
-            </Box>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, mb: 1 }}>
-              <MetricPanel
-                label="Max period shortage"
-                value={metrics.maxPeriodShortage ?? 0}
-                color={Number(metrics.maxPeriodShortage || 0) > 0 ? "error.main" : "success.main"}
-                info={metricInfo.maxPeriodShortage?.description}
-              />
-              <MetricPanel
-                label="Total overstaff"
-                value={metrics.totalOverstaff ?? 0}
-                color={Number(metrics.totalOverstaff || 0) > 0 ? "warning.main" : "success.main"}
-                info={metricInfo.totalOverstaff?.description}
-              />
-            </Box>
-
-            <Divider sx={{ my: 1.5 }} />
-            <SectionTitle>Assignment Quality</SectionTitle>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, mb: 1 }}>
-              <MetricPanel label="Intra-day team switches" value={metrics.intraDayTeamSwitches ?? 0} info={metricInfo.intraDayTeamSwitches?.description} />
-              <MetricPanel label="Fragmented work days" value={metrics.fragmentedWorkDays ?? 0} info={metricInfo.fragmentedWorkDays?.description} />
-              <MetricPanel
-                label="Primary team utilization"
-                value={`${Number(metrics.primaryTeamUtilizationRate || 0).toFixed(2)}%`}
-                info={metricInfo.primaryTeamUtilizationRate?.description}
-              />
-            </Box>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, mb: 1 }}>
-              <MetricPanel label="Non-primary team hours" value={metrics.nonPrimaryTeamHours ?? 0} info={metricInfo.nonPrimaryTeamHours?.description} />
-              <MetricPanel
-                label="Duration compliance"
-                value={`${Number(metrics.durationComplianceRate || 0).toFixed(2)}%`}
-                info={metricInfo.durationComplianceRate?.description}
-              />
-            </Box>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, mb: 1 }}>
-              <MetricPanel
-                label="Preferred day-off preservation"
-                value={`${Number(metrics.preferredDayOffPreservationRate || 0).toFixed(2)}%`}
-                info={metricInfo.preferredDayOffPreservationRate?.description}
-              />
-              <MetricPanel
-                label="Preferred day-off worked days"
-                value={metrics.preferredDayOffWorkedDays ?? 0}
-                color={Number(metrics.preferredDayOffWorkedDays || 0) > 0 ? "error.main" : "success.main"}
-                info={metricInfo.preferredDayOffWorkedDays?.description}
-              />
-              <MetricPanel
-                label="Skill priority penalty"
-                value={metrics.skillPriorityPenaltyScore ?? 0}
-                info={metricInfo.skillPriorityPenaltyScore?.description}
-              />
-            </Box>
-
-            {teamCoverage.length > 0 && (
-              <Box mt={4}>
-                <Divider sx={{ my: 1.5 }} />
-                <SectionTitle>Team Coverage Breakdown</SectionTitle>
-                <Grid container spacing={2}>
-                  {teamCoverage.map((team) => (
-                    <Grid item xs={12} md={6} lg={3} key={team.team}>
-                      <TeamCoverageCard team={team} />
-                    </Grid>
-                  ))}
+            <Box mt={3}>
+              <Typography variant="subtitle1" fontWeight={800} color="#0f172a" sx={{ mb: 1.5 }}>
+                Rule Checks
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6} md={4}>
+                  {renderMetric("consecutiveDaysViolations", metrics.consecutiveDaysViolations, Number(metrics.consecutiveDaysViolations || 0) > 0)}
                 </Grid>
-              </Box>
-            )}
-
-            {underfilledPeriods.length > 0 && (
-              <Box sx={{ mt: 4, pt: 1 }}>
-                <Divider sx={{ mt: 0, mb: 2 }} />
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 1,
-                    mb: 1.5,
-                  }}
-                >
-                  <Typography
-                    variant="subtitle2"
-                    color="text.secondary"
-                    sx={{
-                      textTransform: "uppercase",
-                      letterSpacing: ".05em",
-                      fontSize: 11,
-                      fontWeight: 600,
-                    }}
-                  >
-                    Most Critical Underfilled Periods
-                  </Typography>
-                  <Chip
-                    label={`${underfilledPeriods.length} shown`}
-                    size="small"
-                    sx={{
-                      height: 22,
-                      fontSize: 11,
-                      bgcolor: "#F1EFE8",
-                      color: "#5F5E5A",
-                    }}
-                  />
-                </Box>
-                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Date</TableCell>
-                        <TableCell>Team</TableCell>
-                        <TableCell>Period</TableCell>
-                        <TableCell align="right">Required</TableCell>
-                        <TableCell align="right">Actual</TableCell>
-                        <TableCell align="right">Shortage</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {underfilledPeriods.map((row, index) => (
-                        <TableRow key={`${row.date}-${row.team}-${row.workPeriod}-${index}`}>
-                          <TableCell>{row.date}</TableCell>
-                          <TableCell>{row.team}</TableCell>
-                          <TableCell>{row.label || `${row.start}-${row.end}`}</TableCell>
-                          <TableCell align="right">{row.required}</TableCell>
-                          <TableCell align="right">{row.actual}</TableCell>
-                          <TableCell align="right" sx={{ color: "error.main", fontWeight: 700 }}>
-                            {row.shortage}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Box>
-            )}
-
-            {priorityTierSummary.length > 0 && (
-              <Box mt={4}>
-                <Divider sx={{ my: 1.5 }} />
-                <SectionTitle>Priority Tier Summary</SectionTitle>
-                <TableContainer component={Paper} variant="outlined">
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Priority Tier</TableCell>
-                        <TableCell align="right">Employees</TableCell>
-                        <TableCell align="right">Worked Hours</TableCell>
-                        <TableCell align="right">Availability</TableCell>
-                        <TableCell align="right">Pref. DO Worked</TableCell>
-                        <TableCell align="right">Consecutive</TableCell>
-                        <TableCell align="right">Min Rest</TableCell>
-                        <TableCell align="right">Duration %</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {priorityTierSummary.map((row) => (
-                        <TableRow key={`${row.priorityRank}-${row.priorityLabel}`}>
-                          <TableCell>
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                              <Chip
-                                label={`#${row.priorityRank ?? "?"}`}
-                                size="small"
-                                sx={{
-                                  height: 20,
-                                  fontSize: 11,
-                                  bgcolor: "#F1EFE8",
-                                  color: "#5F5E5A",
-                                }}
-                              />
-                              <Typography variant="body2" sx={{ lineHeight: 1.2 }}>
-                                {row.priorityLabel || "Unmapped priority"}
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell align="right">{row.employeeCount}</TableCell>
-                          <TableCell align="right">{row.workedHours}</TableCell>
-                          <TableCell
-                            align="right"
-                            sx={{ color: Number(row.availabilityViolations || 0) > 0 ? "error.main" : "success.main" }}
-                          >
-                            {row.availabilityViolations}
-                          </TableCell>
-                          <TableCell align="right">{row.preferredDayOffWorkedDays}</TableCell>
-                          <TableCell align="right">{row.consecutiveDaysViolations}</TableCell>
-                          <TableCell align="right">{row.minRestViolations}</TableCell>
-                          <TableCell align="right">{row.durationComplianceRate}%</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Box>
-            )}
+                <Grid item xs={12} sm={6} md={4}>
+                  {renderMetric("minRestViolations", metrics.minRestViolations, Number(metrics.minRestViolations || 0) > 0)}
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                  {renderMetric("availabilityViolations", metrics.availabilityViolations, Number(metrics.availabilityViolations || 0) > 0)}
+                </Grid>
+              </Grid>
+            </Box>
           </Paper>
         </AccordionDetails>
       </Accordion>

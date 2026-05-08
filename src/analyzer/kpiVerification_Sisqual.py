@@ -24,7 +24,7 @@ from pathlib import Path
 # ─────────────────────────────────────────────────────────────────────────────
 
 UNAVAILABLE_MARKERS = {"VAC", "NOT", "MED", "ENFD", "DC-E"}
-OFF_MARKERS = {"OFF", "DO", "FDO"} | UNAVAILABLE_MARKERS
+OFF_MARKERS = {"DO", "FDO"} | UNAVAILABLE_MARKERS
 
 MIN_REST_MINUTES = 11 * 60
 MAX_CONSECUTIVE  = 5

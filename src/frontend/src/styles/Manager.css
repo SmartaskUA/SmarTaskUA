@@ -268,69 +268,6 @@
 .calendar-card-title {
   font-weight: 600;
   margin-left: 8px;
-  line-height: 1.2;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.calendar-card-top-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.calendar-card.has-card-tag .calendar-card-top-row {
-  padding-right: 112px;
-}
-
-.calendar-card-content {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.calendar-card-top-row .calendar-card-title {
-  display: -webkit-box;
-  margin-left: 0;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-
-.calendar-card-algorithm {
-  display: block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.calendar-card-tag {
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  max-width: 96px;
-  color: #fff;
-  padding: 2px 8px;
-  border-radius: 5px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  line-height: 1.2;
-  text-align: center;
-  z-index: 1;
-}
-
-.calendar-card-tag-failed {
-  background-color: #dc3545;
-}
-
-.calendar-card-tag-completed {
-  background-color: #28a745;
 }
 
 .status-dot {
@@ -394,11 +331,4 @@
   color: #777;
   margin-left: 8px;
   margin-top: 4px;
-}
-
-.calendar-card-loader {
-  position: absolute;
-  right: 20px;
-  bottom: 18px;
-  line-height: 0;
 }
