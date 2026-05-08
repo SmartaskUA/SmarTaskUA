@@ -413,6 +413,7 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
         availability_violations = 0
         consecutive_violations = 0
         min_rest_violations = 0
+        team_minutes = defaultdict(int)
         streak = 0
         previous_day_end = None
         previous_day_date = None
@@ -434,6 +435,16 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
             for previous, current in zip(segments, segments[1:]):
                 if previous["team"] != current["team"]:
                     team_switches += 1
+
+            for segment in segments:
+                segment_minutes = max(segment["end"] - segment["start"], 0)
+                team_minutes[segment["team"]] += segment_minutes
+                level = meta.get("skill_levels", {}).get(segment["team"], 1)
+                try:
+                    tier_index = match_coverage_priority_tier(segment["team"], level, coverage_priority_tiers)
+                except ValueError:
+                    tier_index = len(coverage_priority_tiers or [])
+                skill_priority_penalty += len(build_half_hour_slots(segment["start"], segment["end"])) * tier_index
 
             rule = employee_rules.get(date_key)
             if rule is not None:
@@ -473,6 +484,14 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
         duration_rate = round((compliant_days / evaluated_days) * 100, 2) if evaluated_days else 100.0
         demanded_hours_rate = round((hours_match_days / hours_evaluated_days) * 100, 2) if hours_evaluated_days else 100.0
         primary_rate = round((primary_minutes / worked_minutes) * 100, 2) if worked_minutes else 100.0
+        team_work_breakdown = [
+            {
+                "team": team,
+                "hours": round(minutes / 60.0, 2),
+                "percentage": round((minutes / worked_minutes) * 100, 2) if worked_minutes else 0.0,
+            }
+            for team, minutes in sorted(team_minutes.items(), key=lambda item: (-item[1], item[0]))
+        ]
 
         total_team_switches += team_switches
         total_fragmented_days += fragmented_days
@@ -494,6 +513,11 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
                 "primaryTeam": meta.get("primary_team"),
                 "primaryTeamUtilizationRate": primary_rate,
                 "nonPrimaryTeamHours": round(non_primary_minutes / 60.0, 2),
+                "teamWorkBreakdown": team_work_breakdown,
+                "teamWorkPercentages": {
+                    item["team"]: item["percentage"]
+                    for item in team_work_breakdown
+                },
                 "teamSwitches": team_switches,
                 "fragmentedWorkDays": fragmented_days,
                 "durationComplianceRate": duration_rate,

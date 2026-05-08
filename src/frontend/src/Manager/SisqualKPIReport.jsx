@@ -75,6 +75,14 @@ function getTotalShortageValue(v) {
   return null;
 }
 
+function getMetricShortageValue(v) {
+  if (v === null || v === undefined) return null;
+  if (typeof v === "number") return v;
+  if (typeof v === "object" && "shortage" in v) return v.shortage;
+  if (typeof v === "object" && "value" in v) return v.value;
+  return null;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-components
 // ─────────────────────────────────────────────────────────────────────────────
@@ -152,6 +160,74 @@ function AlarmRow({ label, pass, violations }) {
           height: 20,
           background: !loaded ? "#F1EFE8" : pass ? "#EAF3DE" : "#FCEBEB",
           color: !loaded ? "#5F5E5A" : pass ? "#27500A" : "#791F1F",
+        }}
+      />
+    </Paper>
+  );
+}
+
+function CheckRow({ label, pass, value, sub }) {
+  const loaded = pass !== null && pass !== undefined;
+  const color = !loaded ? "#B4B2A9" : pass ? "#3B6D11" : "#A32D2D";
+  const softBg = !loaded ? "#F1EFE8" : pass ? "#EAF3DE" : "#FCEBEB";
+  const softText = !loaded ? "#5F5E5A" : pass ? "#27500A" : "#791F1F";
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1.5,
+        px: 1.5,
+        py: 1,
+        border: "0.5px solid",
+        borderColor: "divider",
+        borderLeft: `3px solid ${color}`,
+        borderRadius: "0 8px 8px 0",
+      }}
+    >
+      <Box
+        sx={{
+          width: 20,
+          height: 20,
+          borderRadius: "4px",
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 11,
+          fontWeight: 500,
+          background: softBg,
+          color: softText,
+        }}
+      >
+        {!loaded ? "—" : pass ? "✓" : "!"}
+      </Box>
+
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="body2">{label}</Typography>
+        {sub && (
+          <Typography variant="caption" color="text.secondary">
+            {sub}
+          </Typography>
+        )}
+      </Box>
+
+      {value !== null && value !== undefined && (
+        <Typography variant="body2" fontWeight={700} sx={{ color: softText }}>
+          {value}
+        </Typography>
+      )}
+
+      <Chip
+        label={!loaded ? "—" : pass ? "Met" : "Needs work"}
+        size="small"
+        sx={{
+          fontSize: 11,
+          height: 20,
+          background: softBg,
+          color: softText,
         }}
       />
     </Paper>
@@ -820,6 +896,68 @@ export default function SisqualKPIReport({ kpis }) {
   const hierarchy    = kpis["Priority_Hierarchy"] ?? null;
   const priorities   = hierarchy?.priorities ?? [];
   const hierarchyPass = hierarchy?.pass ?? null;
+  const softChecks = [
+    {
+      key: "Total_Shortage",
+      label: "Minimum coverage shortage minimized",
+      value: shortageValue,
+      pass: shortageValue === null ? null : shortageValue === 0,
+      sub: kpis["Total_Shortage"]?.coverage_rate !== undefined
+        ? `${kpis["Total_Shortage"].coverage_rate}% minimum coverage`
+        : "Missing staff against minimum demand",
+    },
+    {
+      key: "Staffing_Ideals",
+      label: "Ideal staffing shortage minimized",
+      value: getMetricShortageValue(kpis["Staffing_Ideals"]),
+      pass: getMetricShortageValue(kpis["Staffing_Ideals"]) === null
+        ? null
+        : getMetricShortageValue(kpis["Staffing_Ideals"]) === 0,
+      sub: kpis["Staffing_Ideals"]?.coverage_rate !== undefined
+        ? `${kpis["Staffing_Ideals"].coverage_rate}% ideal coverage`
+        : "Missing staff against ideal demand",
+    },
+    {
+      key: "Staffing_Estimated",
+      label: "Estimated staffing shortage minimized",
+      value: getMetricShortageValue(kpis["Staffing_Estimated"]),
+      pass: getMetricShortageValue(kpis["Staffing_Estimated"]) === null
+        ? null
+        : getMetricShortageValue(kpis["Staffing_Estimated"]) === 0,
+      sub: kpis["Staffing_Estimated"]?.coverage_rate !== undefined
+        ? `${kpis["Staffing_Estimated"].coverage_rate}% estimated coverage`
+        : "Missing staff against estimated demand",
+    },
+    {
+      key: "Slots_With_Failure",
+      label: "Slots with staffing failure minimized",
+      value: kpis["Slots_With_Failure"]?.failing_slots,
+      pass: kpis["Slots_With_Failure"]?.failing_slots === undefined
+        ? null
+        : kpis["Slots_With_Failure"].failing_slots === 0,
+      sub: kpis["Slots_With_Failure"]?.failure_rate !== undefined
+        ? `${kpis["Slots_With_Failure"].failure_rate}% failure rate`
+        : "Date/team/period cells below target",
+    },
+    {
+      key: "Max_Shortage_Single_Slot",
+      label: "Maximum single-slot shortage minimized",
+      value: kpis["Max_Shortage_Single_Slot"]?.max_gap,
+      pass: kpis["Max_Shortage_Single_Slot"]?.max_gap === undefined
+        ? null
+        : kpis["Max_Shortage_Single_Slot"].max_gap === 0,
+      sub: "Worst shortage in one demanded slot",
+    },
+    {
+      key: "Severity_Index",
+      label: "Priority-weighted shortage minimized",
+      value: kpis["Severity_Index"]?.severity_index,
+      pass: kpis["Severity_Index"]?.severity_index === undefined
+        ? null
+        : kpis["Severity_Index"].severity_index === 0,
+      sub: "Higher-priority shortage carries higher weight",
+    },
+  ].filter((check) => check.value !== null && check.value !== undefined);
 
   return (
     <Box mt={3}>
@@ -832,7 +970,26 @@ export default function SisqualKPIReport({ kpis }) {
         ))}
       </Stack>
 
-      {/* ── Section 2: Alarm priority hierarchy ── */}
+      {/* ── Section 2: Soft objective checks ── */}
+      {softChecks.length > 0 && (
+        <>
+          <Divider sx={{ my: 1.5 }} />
+          <SectionTitle>Soft objective checks</SectionTitle>
+          <Stack spacing={0.75} mb={2.5}>
+            {softChecks.map(({ key, label, pass, value, sub }) => (
+              <CheckRow
+                key={key}
+                label={label}
+                pass={pass}
+                value={value}
+                sub={sub}
+              />
+            ))}
+          </Stack>
+        </>
+      )}
+
+      {/* ── Section 3: Alarm priority hierarchy ── */}
       {priorities.length > 0 && (
         <>
           <Divider sx={{ my: 1.5 }} />
@@ -867,7 +1024,7 @@ export default function SisqualKPIReport({ kpis }) {
         </>
       )}
 
-      {/* ── Section 3: Performance metrics ── */}
+      {/* ── Section 4: Performance metrics ── */}
       {shortageValue !== null && (
         <>
           <Divider sx={{ my: 1.5 }} />
@@ -933,10 +1090,10 @@ export default function SisqualKPIReport({ kpis }) {
         </>
       )}
 
-      {/* ── Section 4: Per-employee KPIs ── */}
+      {/* ── Section 5: Per-employee KPIs ── */}
       <EmployeeKPIPanel kpis={kpis} />
 
-      {/* ── Section 5: General scheduling statistics — workload utilisation ── */}
+      {/* ── Section 6: General scheduling statistics — workload utilisation ── */}
       <WorkloadUtilisationPanel kpis={kpis} />
 
     </Box>

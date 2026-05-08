@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Accordion,
   AccordionSummary,
@@ -10,6 +10,18 @@ import {
   Chip,
   Grid,
   Tooltip,
+  Stack,
+  Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ErrorIcon from "@mui/icons-material/Error";
@@ -315,8 +327,741 @@ const renderLegacyReport = (metricKeys, metrics, issueKeys) => {
   );
 };
 
+function SectionTitle({ children }) {
+  return (
+    <Typography
+      variant="subtitle2"
+      color="text.secondary"
+      sx={{
+        mb: 1.5,
+        textTransform: "uppercase",
+        letterSpacing: ".05em",
+        fontSize: 11,
+        fontWeight: 600,
+      }}
+    >
+      {children}
+    </Typography>
+  );
+}
+
+function StatusRow({ label, value, tone = "neutral", suffix = null }) {
+  const colors = {
+    success: { border: "#3B6D11", bg: "#EAF3DE", fg: "#27500A" },
+    error: { border: "#A32D2D", bg: "#FCEBEB", fg: "#791F1F" },
+    neutral: { border: "#5F5E5A", bg: "#F1EFE8", fg: "#5F5E5A" },
+  };
+  const palette = colors[tone] || colors.neutral;
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1.5,
+        px: 1.5,
+        py: 1,
+        border: "0.5px solid",
+        borderColor: "divider",
+        borderLeft: `3px solid ${palette.border}`,
+        borderRadius: "0 8px 8px 0",
+      }}
+    >
+      <Box sx={{ flex: 1, display: "flex", alignItems: "center", gap: 0.75 }}>
+        <Typography variant="body2">
+          {label}
+        </Typography>
+        <Tooltip title={suffix || ""} arrow>
+          <HelpOutlineIcon sx={{ fontSize: 15, color: "text.secondary" }} />
+        </Tooltip>
+      </Box>
+      <Typography variant="body2" fontWeight={700} sx={{ color: palette.fg }}>
+        {value}
+      </Typography>
+      {suffix && (
+        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+          {suffix}
+        </Typography>
+      )}
+    </Paper>
+  );
+}
+
+function MetricPanel({ label, value, sub, color = "text.primary", info = "" }) {
+  return (
+    <Paper elevation={0} sx={{ p: 1.5, bgcolor: "action.hover", borderRadius: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+        <Typography variant="caption" color="text.secondary">
+          {label}
+        </Typography>
+        {info ? (
+          <Tooltip title={info} arrow>
+            <HelpOutlineIcon sx={{ fontSize: 14, color: "text.secondary" }} />
+          </Tooltip>
+        ) : null}
+      </Box>
+      <Typography variant="h5" fontWeight={500} color={color} sx={{ lineHeight: 1.3, mt: 0.25 }}>
+        {value}
+      </Typography>
+      {sub && (
+        <Typography variant="caption" color="text.disabled">
+          {sub}
+        </Typography>
+      )}
+    </Paper>
+  );
+}
+
+function TeamCoverageCard({ team }) {
+  const coverage = Number(team.weightedMinimumCoverageRate || 0);
+  const gap = Number(team.gap || 0);
+  const overstaff = Number(team.overstaff || 0);
+  const coverageTone =
+    coverage >= 98 ? "success" : coverage >= 85 ? "warning" : "error";
+  const palette = {
+    success: { accent: "#3B6D11", soft: "#EAF3DE", text: "#27500A" },
+    warning: { accent: "#B86500", soft: "#FFF1DB", text: "#8A4B00" },
+    error: { accent: "#A32D2D", soft: "#FCEBEB", text: "#791F1F" },
+  }[coverageTone];
+
+  const statItems = [
+    { label: "Required", value: team.required, tone: "neutral" },
+    { label: "Filled", value: team.filled, tone: "neutral" },
+    { label: "Gap", value: gap, tone: gap > 0 ? "error" : "success" },
+    { label: "Overstaff", value: overstaff, tone: overstaff > 0 ? "warning" : "neutral" },
+  ];
+
+  const statTone = {
+    neutral: { bg: "#F5F5F4", fg: "#44403C" },
+    success: { bg: "#EAF3DE", fg: "#27500A" },
+    warning: { bg: "#FFF1DB", fg: "#8A4B00" },
+    error: { bg: "#FCEBEB", fg: "#791F1F" },
+  };
+
+  return (
+    <Paper
+      variant="outlined"
+      sx={{
+        p: 2,
+        height: "100%",
+        pb: 3,
+        borderRadius: 2,
+        borderColor: "divider",
+        background:
+          "linear-gradient(180deg, rgba(248,250,252,0.96) 0%, rgba(255,255,255,1) 100%)",
+        boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 1,
+          mb: 1.5,
+        }}
+      >
+        <Typography variant="subtitle1" fontWeight={700}>
+          {team.team}
+        </Typography>
+        <Chip
+          label={`${coverage.toFixed(2)}%`}
+          size="small"
+          sx={{
+            height: 22,
+            fontSize: 11,
+            fontWeight: 700,
+            bgcolor: palette.soft,
+            color: palette.text,
+          }}
+        />
+      </Box>
+
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.75 }}>
+        Coverage
+      </Typography>
+      <Box
+        sx={{
+          position: "relative",
+          height: 8,
+          borderRadius: 999,
+          bgcolor: "#E7E5E4",
+          overflow: "hidden",
+          mb: 1.5,
+        }}
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            width: `${Math.max(0, Math.min(coverage, 100))}%`,
+            bgcolor: palette.accent,
+            borderRadius: 999,
+          }}
+        />
+      </Box>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: 1,
+        }}
+      >
+        {statItems.map((item) => (
+          <Box
+            key={item.label}
+            sx={{
+              px: 1,
+              py: 0.9,
+              borderRadius: 1.5,
+              bgcolor: statTone[item.tone].bg,
+            }}
+          >
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+              {item.label}
+            </Typography>
+            <Typography
+              variant="body2"
+              fontWeight={700}
+              sx={{ color: statTone[item.tone].fg, lineHeight: 1.25 }}
+            >
+              {item.value}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+    </Paper>
+  );
+}
+
+const NATIVE_SKILL_COLORS = {
+  Management: { bg: "#E6F1FB", text: "#0C447C", bar: "#185FA5" },
+  Checkout: { bg: "#EAF3DE", text: "#27500A", bar: "#3B6D11" },
+  Storage: { bg: "#FAEEDA", text: "#633806", bar: "#854F0B" },
+  Employees: { bg: "#F1EFE8", text: "#444441", bar: "#5F5E5A" },
+};
+
+function nativeSkillColor(skill) {
+  return NATIVE_SKILL_COLORS[skill] || { bg: "#EEEDFE", text: "#3C3489", bar: "#534AB7" };
+}
+
+const employeeAssignmentInfo = {
+  workByTeam: "Shows what percentage of this employee's scheduled hours were spent on each team.",
+  employee: "Employee name and internal ID.",
+  workedHours: "Total number of hours assigned to this employee in the generated schedule.",
+  primaryUtilization: "Percentage of assigned hours worked on the employee's primary or strongest team.",
+  nonPrimaryHours: "Hours assigned outside the employee's primary team.",
+  teamSwitches: "How many times the employee changes team between consecutive work segments on the same day.",
+  fragmentedDays: "Number of days where the employee has more than one work segment.",
+  durationCompliance: "Percentage of days where the assigned shift duration matches the allowed duration or exact rule from the input.",
+  demandedHours: "Percentage of working-rule days where assigned hours exactly match the requested hours.",
+  preferredDayOff: "Preferred day-off days where the employee was still scheduled to work. Lower is better.",
+  skillPenalty: "Penalty for assigning work in lower-priority skills or teams. Lower is better.",
+  availability: "Hard availability violations, such as working on unavailable days. This should be zero.",
+  consecutive: "Times the employee exceeded the maximum consecutive working-days rule. This should be zero.",
+  minRest: "Times the employee had less than the required rest between consecutive shifts. This should be zero.",
+};
+
+const skillAllocationInfo = {
+  primaryTeamRate: "Percentage of all scheduled hours that were worked on each employee's primary or strongest team.",
+  nonPrimaryHours: "Total scheduled hours worked outside employees' primary teams.",
+  teamSwitches: "Total number of within-day changes from one team to another.",
+  fragmentedDays: "Total number of employee-days split into more than one work segment.",
+};
+
+function InfoLabel({ children, info, align = "left" }) {
+  return (
+    <Box
+      sx={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: align === "right" ? "flex-end" : "flex-start",
+        gap: 0.35,
+        width: "100%",
+      }}
+    >
+      <span>{children}</span>
+      {info && (
+        <Tooltip title={info} arrow>
+          <HelpOutlineIcon sx={{ fontSize: 13, color: "text.secondary" }} />
+        </Tooltip>
+      )}
+    </Box>
+  );
+}
+
+function getEmployeeTeamBreakdown(employee) {
+  if (Array.isArray(employee?.teamWorkBreakdown) && employee.teamWorkBreakdown.length > 0) {
+    return employee.teamWorkBreakdown;
+  }
+
+  const workedHours = Number(employee?.workedHours || 0);
+  const nonPrimaryHours = Number(employee?.nonPrimaryTeamHours || 0);
+  const primaryHours = Math.max(workedHours - nonPrimaryHours, 0);
+  const rows = [];
+
+  if (primaryHours > 0) {
+    rows.push({
+      team: employee?.primaryTeam || "Primary team",
+      hours: Number(primaryHours.toFixed(2)),
+      percentage: workedHours ? Number(((primaryHours / workedHours) * 100).toFixed(2)) : 0,
+    });
+  }
+
+  if (nonPrimaryHours > 0) {
+    rows.push({
+      team: "Other teams",
+      hours: Number(nonPrimaryHours.toFixed(2)),
+      percentage: workedHours ? Number(((nonPrimaryHours / workedHours) * 100).toFixed(2)) : 0,
+    });
+  }
+
+  return rows;
+}
+
+function EmployeeTeamBreakdown({ employee }) {
+  const breakdown = getEmployeeTeamBreakdown(employee);
+  if (!breakdown.length) return null;
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: 1.5,
+        mb: 1.5,
+        border: "0.5px solid",
+        borderColor: "divider",
+        borderRadius: 1,
+        bgcolor: "background.paper",
+      }}
+    >
+      <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" mb={0.75}>
+        <InfoLabel info={employeeAssignmentInfo.workByTeam}>Work by team</InfoLabel>
+      </Typography>
+      <Box sx={{ display: "flex", height: 8, borderRadius: 4, overflow: "hidden", mb: 0.75, bgcolor: "action.selected" }}>
+        {breakdown.map((item) => (
+          <Box
+            key={item.team}
+            sx={{
+              width: `${Math.max(0, Math.min(Number(item.percentage || 0), 100))}%`,
+              bgcolor: nativeSkillColor(item.team).bar,
+            }}
+            title={`${item.team}: ${Number(item.percentage || 0).toFixed(2)}%`}
+          />
+        ))}
+      </Box>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+        {breakdown.map((item) => {
+          const color = nativeSkillColor(item.team);
+          return (
+            <Box
+              key={item.team}
+              sx={{ display: "flex", alignItems: "center", gap: 0.4, px: 0.75, py: 0.25, borderRadius: 1, bgcolor: color.bg }}
+            >
+              <Typography variant="caption" fontWeight={600} sx={{ color: color.text, fontSize: 10 }}>
+                {item.team}
+              </Typography>
+              <Typography variant="caption" sx={{ color: color.text, fontSize: 10 }}>
+                {Number(item.percentage || 0).toFixed(2)}%
+              </Typography>
+              <Typography variant="caption" sx={{ color: color.text, opacity: 0.75, fontSize: 10 }}>
+                {Number(item.hours || 0).toFixed(2)}h
+              </Typography>
+            </Box>
+          );
+        })}
+      </Box>
+    </Paper>
+  );
+}
+
+function EmployeeAssignmentQualityPanel({ employeeRows }) {
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+  const selectedEmployee =
+    employeeRows.find((employee) => employee.employeeId === selectedEmployeeId) || null;
+
+  return (
+    <Box mt={4}>
+      <Divider sx={{ my: 1.5 }} />
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
+          mb: 1.5,
+          flexWrap: "wrap",
+        }}
+      >
+        <SectionTitle>Employee Assignment Quality</SectionTitle>
+        <Chip
+          label={`${employeeRows.length} employees`}
+          size="small"
+          sx={{
+            height: 22,
+            fontSize: 11,
+            bgcolor: "#F1EFE8",
+            color: "#5F5E5A",
+          }}
+        />
+      </Box>
+
+      <FormControl size="small" sx={{ minWidth: 280, mb: 2 }}>
+        <InputLabel sx={{ fontSize: 13 }}>Employee</InputLabel>
+        <Select
+          value={selectedEmployeeId}
+          label="Employee"
+          onChange={(event) => setSelectedEmployeeId(event.target.value)}
+          sx={{ fontSize: 13 }}
+        >
+          <MenuItem value="">
+            <em>Select an employee</em>
+          </MenuItem>
+          {employeeRows.map((employee) => (
+            <MenuItem
+              key={employee.employeeId || employee.name}
+              value={employee.employeeId}
+              sx={{ fontSize: 13 }}
+            >
+              {employee.name || employee.employeeId}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+      {selectedEmployee && (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            mb: 2,
+            border: "0.5px solid",
+            borderColor: "divider",
+            borderRadius: 2,
+            bgcolor: "action.hover",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5, flexWrap: "wrap" }}>
+            <Typography variant="subtitle2" fontWeight={700}>
+              {selectedEmployee.name || selectedEmployee.employeeId}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {selectedEmployee.employeeId}
+            </Typography>
+          </Box>
+          <EmployeeTeamBreakdown employee={selectedEmployee} />
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 1 }}>
+            <MetricPanel
+              label="Worked hours"
+              value={selectedEmployee.workedHours ?? 0}
+              info={employeeAssignmentInfo.workedHours}
+            />
+            <MetricPanel
+              label="Primary utilization"
+              value={`${Number(selectedEmployee.primaryTeamUtilizationRate || 0).toFixed(2)}%`}
+              info={employeeAssignmentInfo.primaryUtilization}
+            />
+            <MetricPanel
+              label="Non-primary hours"
+              value={selectedEmployee.nonPrimaryTeamHours ?? 0}
+              info={employeeAssignmentInfo.nonPrimaryHours}
+            />
+            <MetricPanel
+              label="Team switches"
+              value={selectedEmployee.teamSwitches ?? 0}
+              info={employeeAssignmentInfo.teamSwitches}
+            />
+            <MetricPanel
+              label="Fragmented days"
+              value={selectedEmployee.fragmentedWorkDays ?? 0}
+              info={employeeAssignmentInfo.fragmentedDays}
+            />
+            <MetricPanel
+              label="Duration compliance"
+              value={`${Number(selectedEmployee.durationComplianceRate || 0).toFixed(2)}%`}
+              info={employeeAssignmentInfo.durationCompliance}
+            />
+            <MetricPanel
+              label="Demanded hours"
+              value={`${Number(selectedEmployee.demandedHoursComplianceRate || 0).toFixed(2)}%`}
+              info={employeeAssignmentInfo.demandedHours}
+            />
+            <MetricPanel
+              label="Preferred DO"
+              value={selectedEmployee.preferredDayOffWorkedDays ?? 0}
+              color={Number(selectedEmployee.preferredDayOffWorkedDays || 0) > 0 ? "error.main" : "success.main"}
+              info={employeeAssignmentInfo.preferredDayOff}
+            />
+            <MetricPanel
+              label="Skill penalty"
+              value={selectedEmployee.skillPriorityPenaltyScore ?? 0}
+              info={employeeAssignmentInfo.skillPenalty}
+            />
+            <MetricPanel
+              label="Availability"
+              value={selectedEmployee.availabilityViolations ?? 0}
+              color={Number(selectedEmployee.availabilityViolations || 0) > 0 ? "error.main" : "success.main"}
+              info={employeeAssignmentInfo.availability}
+            />
+            <MetricPanel
+              label="Consecutive"
+              value={selectedEmployee.consecutiveDaysViolations ?? 0}
+              color={Number(selectedEmployee.consecutiveDaysViolations || 0) > 0 ? "error.main" : "success.main"}
+              info={employeeAssignmentInfo.consecutive}
+            />
+            <MetricPanel
+              label="Min rest"
+              value={selectedEmployee.minRestViolations ?? 0}
+              color={Number(selectedEmployee.minRestViolations || 0) > 0 ? "error.main" : "success.main"}
+              info={employeeAssignmentInfo.minRest}
+            />
+          </Box>
+        </Paper>
+      )}
+
+      <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, maxHeight: 520 }}>
+        <Table size="small" stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell><InfoLabel info={employeeAssignmentInfo.employee}>Employee</InfoLabel></TableCell>
+              <TableCell align="right"><InfoLabel align="right" info={employeeAssignmentInfo.workedHours}>Worked h</InfoLabel></TableCell>
+              <TableCell align="right"><InfoLabel align="right" info={employeeAssignmentInfo.primaryUtilization}>Primary %</InfoLabel></TableCell>
+              <TableCell align="right"><InfoLabel align="right" info={employeeAssignmentInfo.nonPrimaryHours}>Non-primary h</InfoLabel></TableCell>
+              <TableCell align="right"><InfoLabel align="right" info={employeeAssignmentInfo.teamSwitches}>Switches</InfoLabel></TableCell>
+              <TableCell align="right"><InfoLabel align="right" info={employeeAssignmentInfo.fragmentedDays}>Fragments</InfoLabel></TableCell>
+              <TableCell align="right"><InfoLabel align="right" info={employeeAssignmentInfo.durationCompliance}>Duration %</InfoLabel></TableCell>
+              <TableCell align="right"><InfoLabel align="right" info={employeeAssignmentInfo.demandedHours}>Demanded %</InfoLabel></TableCell>
+              <TableCell align="right"><InfoLabel align="right" info={employeeAssignmentInfo.preferredDayOff}>Pref. DO</InfoLabel></TableCell>
+              <TableCell align="right"><InfoLabel align="right" info={employeeAssignmentInfo.skillPenalty}>Skill penalty</InfoLabel></TableCell>
+              <TableCell align="right"><InfoLabel align="right" info={employeeAssignmentInfo.availability}>Availability</InfoLabel></TableCell>
+              <TableCell align="right"><InfoLabel align="right" info={employeeAssignmentInfo.consecutive}>Consecutive</InfoLabel></TableCell>
+              <TableCell align="right"><InfoLabel align="right" info={employeeAssignmentInfo.minRest}>Min rest</InfoLabel></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {employeeRows.map((employee) => (
+              <TableRow key={employee.employeeId || employee.name}>
+                <TableCell>
+                  <Typography variant="body2" fontWeight={600}>
+                    {employee.name || employee.employeeId}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {employee.employeeId}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right">{employee.workedHours ?? 0}</TableCell>
+                <TableCell align="right">{Number(employee.primaryTeamUtilizationRate || 0).toFixed(2)}%</TableCell>
+                <TableCell align="right">{employee.nonPrimaryTeamHours ?? 0}</TableCell>
+                <TableCell align="right">{employee.teamSwitches ?? 0}</TableCell>
+                <TableCell align="right">{employee.fragmentedWorkDays ?? 0}</TableCell>
+                <TableCell align="right">{Number(employee.durationComplianceRate || 0).toFixed(2)}%</TableCell>
+                <TableCell align="right">{Number(employee.demandedHoursComplianceRate || 0).toFixed(2)}%</TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ color: Number(employee.preferredDayOffWorkedDays || 0) > 0 ? "error.main" : "success.main" }}
+                >
+                  {employee.preferredDayOffWorkedDays ?? 0}
+                </TableCell>
+                <TableCell align="right">{employee.skillPriorityPenaltyScore ?? 0}</TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ color: Number(employee.availabilityViolations || 0) > 0 ? "error.main" : "success.main" }}
+                >
+                  {employee.availabilityViolations ?? 0}
+                </TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ color: Number(employee.consecutiveDaysViolations || 0) > 0 ? "error.main" : "success.main" }}
+                >
+                  {employee.consecutiveDaysViolations ?? 0}
+                </TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ color: Number(employee.minRestViolations || 0) > 0 ? "error.main" : "success.main" }}
+                >
+                  {employee.minRestViolations ?? 0}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  );
+}
+
+function NativeWorkloadUtilisationPanel({ employeeRows }) {
+  if (!employeeRows.length) return null;
+
+  const workedHours = employeeRows.map((employee) => Number(employee.workedHours || 0));
+  const totalHours = workedHours.reduce((sum, value) => sum + value, 0);
+  const maxHours = Math.max(...workedHours, 0);
+  const minHours = Math.min(...workedHours, 0);
+  const averageHours = employeeRows.length ? totalHours / employeeRows.length : 0;
+  const idleThreshold = averageHours * 0.5;
+  const idleEmployees = employeeRows.filter((employee) => Number(employee.workedHours || 0) < idleThreshold).length;
+  const overloadedEmployees = employeeRows.filter((employee) => Number(employee.demandedHoursComplianceRate || 0) < 75).length;
+  const sortedEmployees = [...employeeRows].sort((a, b) => Number(b.workedHours || 0) - Number(a.workedHours || 0));
+
+  const utilisationTone = (hours) => {
+    if (hours < idleThreshold) return { bar: "#854F0B", bg: "#FAEEDA", text: "#633806", label: "low" };
+    if (hours > averageHours * 1.25) return { bar: "#185FA5", bg: "#E6F1FB", text: "#0C447C", label: "high" };
+    return { bar: "#3B6D11", bg: "#EAF3DE", text: "#27500A", label: "balanced" };
+  };
+
+  return (
+    <Box mt={4}>
+      <Divider sx={{ my: 1.5 }} />
+      <SectionTitle>Workload Utilisation</SectionTitle>
+
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 1, mb: 1.5 }}>
+        <MetricPanel label="Total worked hours" value={Number(totalHours.toFixed(2))} />
+        <MetricPanel label="Average hours" value={Number(averageHours.toFixed(2))} />
+        <MetricPanel label="Max-min gap" value={Number((maxHours - minHours).toFixed(2))} />
+        <MetricPanel
+          label="Low-load employees"
+          value={idleEmployees}
+          color={idleEmployees > 0 ? "warning.main" : "success.main"}
+        />
+      </Box>
+
+      <Paper elevation={0} sx={{ p: 1.5, border: "0.5px solid", borderColor: "divider", borderRadius: 1 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, mb: 1, flexWrap: "wrap" }}>
+          <Typography variant="caption" color="text.secondary" fontWeight={500}>
+            Per-employee utilisation
+          </Typography>
+          <Chip
+            label={`${overloadedEmployees} below 75% demanded-hour compliance`}
+            size="small"
+            sx={{
+              height: 20,
+              fontSize: 10,
+              bgcolor: overloadedEmployees > 0 ? "#FAEEDA" : "#EAF3DE",
+              color: overloadedEmployees > 0 ? "#633806" : "#27500A",
+            }}
+          />
+        </Box>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+          {sortedEmployees.map((employee) => {
+            const hours = Number(employee.workedHours || 0);
+            const pct = maxHours > 0 ? Math.round((hours / maxHours) * 100) : 0;
+            const tone = utilisationTone(hours);
+
+            return (
+              <Box
+                key={employee.employeeId || employee.name}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  px: 1.5,
+                  py: 0.75,
+                  border: "0.5px solid",
+                  borderColor: "divider",
+                  borderRadius: 1,
+                  bgcolor: "background.paper",
+                }}
+              >
+                <Box sx={{ minWidth: 190, overflow: "hidden" }}>
+                  <Typography variant="caption" fontWeight={600} noWrap>
+                    {employee.name || employee.employeeId}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" display="block" noWrap>
+                    {employee.employeeId}
+                  </Typography>
+                </Box>
+                <Box sx={{ flex: 1, height: 6, borderRadius: 3, bgcolor: "action.selected", overflow: "hidden" }}>
+                  <Box
+                    sx={{
+                      height: "100%",
+                      width: `${pct}%`,
+                      bgcolor: tone.bar,
+                      borderRadius: 3,
+                      transition: "width .3s ease",
+                    }}
+                  />
+                </Box>
+                <Typography variant="caption" color="text.secondary" sx={{ minWidth: 64, textAlign: "right" }}>
+                  {hours}h
+                </Typography>
+                <Chip
+                  label={tone.label}
+                  size="small"
+                  sx={{ height: 18, minWidth: 58, fontSize: 10, bgcolor: tone.bg, color: tone.text }}
+                />
+              </Box>
+            );
+          })}
+        </Box>
+      </Paper>
+    </Box>
+  );
+}
+
+function NativeSkillAllocationPanel({ employeeRows }) {
+  if (!employeeRows.length) return null;
+
+  let totalWorkedHours = 0;
+  let totalNonPrimaryHours = 0;
+  let totalSwitches = 0;
+  let totalFragments = 0;
+
+  for (const employee of employeeRows) {
+    totalWorkedHours += Number(employee.workedHours || 0);
+    totalNonPrimaryHours += Number(employee.nonPrimaryTeamHours || 0);
+    totalSwitches += Number(employee.teamSwitches || 0);
+    totalFragments += Number(employee.fragmentedWorkDays || 0);
+  }
+
+  const primaryRate = totalWorkedHours
+    ? Number((((totalWorkedHours - totalNonPrimaryHours) / totalWorkedHours) * 100).toFixed(2))
+    : 100;
+
+  return (
+    <Box mt={4}>
+      <Divider sx={{ my: 1.5 }} />
+      <SectionTitle>Skill Allocation</SectionTitle>
+
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 1 }}>
+        <MetricPanel
+          label="Primary-team rate"
+          value={`${primaryRate}%`}
+          info={skillAllocationInfo.primaryTeamRate}
+        />
+        <MetricPanel
+          label="Non-primary hours"
+          value={Number(totalNonPrimaryHours.toFixed(2))}
+          info={skillAllocationInfo.nonPrimaryHours}
+        />
+        <MetricPanel
+          label="Team switches"
+          value={totalSwitches}
+          info={skillAllocationInfo.teamSwitches}
+        />
+        <MetricPanel
+          label="Fragmented days"
+          value={totalFragments}
+          info={skillAllocationInfo.fragmentedDays}
+        />
+      </Box>
+    </Box>
+  );
+}
+
 const renderSisqualReport = (metrics) => {
   const hasIssues = sisqualIssueMetrics.some((key) => Number(metrics[key] || 0) > 0);
+  const teamCoverage = Array.isArray(metrics.teamCoverageBreakdown)
+    ? metrics.teamCoverageBreakdown
+    : [];
+  const underfilledPeriods = Array.isArray(metrics.underfilledPeriods)
+    ? metrics.underfilledPeriods.slice(0, 12)
+    : [];
+  const employeeRows = Array.isArray(metrics.employeeAssignmentQuality)
+    ? metrics.employeeAssignmentQuality
+    : [];
+
   return (
     <CardContent sx={{ px: 0, mt: 2 }}>
       <Accordion elevation={3} sx={{ borderRadius: 2 }} defaultExpanded>
@@ -328,27 +1073,197 @@ const renderSisqualReport = (metrics) => {
         </AccordionSummary>
         <AccordionDetails>
           <Paper elevation={0} sx={{ p: 3 }}>
-            <Typography variant="subtitle1" fontWeight={800} color="#0f172a" sx={{ mb: 2 }}>
-              Coverage and Assignment Summary
-            </Typography>
-            <SummaryGrid metricKeys={sisqualSummaryMetrics} metrics={metrics} />
+            <SectionTitle>Hour Constraint Alarms</SectionTitle>
+            <Stack spacing={0.75} mb={2.5}>
+              <StatusRow
+                label="No more than 5 consecutive working days"
+                value={metrics.consecutiveDaysViolations ?? 0}
+                suffix={metricInfo.consecutiveDaysViolations?.description}
+                tone={Number(metrics.consecutiveDaysViolations || 0) > 0 ? "error" : "success"}
+              />
+              <StatusRow
+                label="Minimum 11h rest between consecutive shifts"
+                value={metrics.minRestViolations ?? 0}
+                suffix={metricInfo.minRestViolations?.description}
+                tone={Number(metrics.minRestViolations || 0) > 0 ? "error" : "success"}
+              />
+              <StatusRow
+                label="Employees do not work on unavailable days"
+                value={metrics.availabilityViolations ?? 0}
+                suffix={metricInfo.availabilityViolations?.description}
+                tone={Number(metrics.availabilityViolations || 0) > 0 ? "error" : "success"}
+              />
+              <StatusRow
+                label="Preferred day-offs remain unworked"
+                value={metrics.preferredDayOffWorkedDays ?? 0}
+                suffix={metricInfo.preferredDayOffWorkedDays?.description}
+                tone={Number(metrics.preferredDayOffWorkedDays || 0) > 0 ? "error" : "success"}
+              />
+            </Stack>
 
-            <Box mt={3}>
-              <Typography variant="subtitle1" fontWeight={800} color="#0f172a" sx={{ mb: 1.5 }}>
-                Rule Checks
-              </Typography>
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={6} md={4}>
-                  {renderMetric("consecutiveDaysViolations", metrics.consecutiveDaysViolations, Number(metrics.consecutiveDaysViolations || 0) > 0)}
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                  {renderMetric("minRestViolations", metrics.minRestViolations, Number(metrics.minRestViolations || 0) > 0)}
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                  {renderMetric("availabilityViolations", metrics.availabilityViolations, Number(metrics.availabilityViolations || 0) > 0)}
-                </Grid>
-              </Grid>
+            <Divider sx={{ my: 1.5 }} />
+            <SectionTitle>Coverage Summary</SectionTitle>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, mb: 1 }}>
+              <MetricPanel
+                label="Weighted minimum coverage"
+                value={`${Number(metrics.weightedMinimumCoverageRate || 0).toFixed(2)}%`}
+                color="text.primary"
+                info={metricInfo.weightedMinimumCoverageRate?.description}
+              />
+              <MetricPanel
+                label="Critical underfilled slots"
+                value={metrics.criticalUnderfilledPeriods ?? 0}
+                color={Number(metrics.criticalUnderfilledPeriods || 0) > 0 ? "error.main" : "success.main"}
+                info={metricInfo.criticalUnderfilledPeriods?.description}
+              />
+              <MetricPanel
+                label="Total minimum gap"
+                value={metrics.totalMinimumGap ?? 0}
+                color={Number(metrics.totalMinimumGap || 0) > 0 ? "error.main" : "success.main"}
+                info={metricInfo.totalMinimumGap?.description}
+              />
             </Box>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, mb: 1 }}>
+              <MetricPanel
+                label="Max period shortage"
+                value={metrics.maxPeriodShortage ?? 0}
+                color={Number(metrics.maxPeriodShortage || 0) > 0 ? "error.main" : "success.main"}
+                info={metricInfo.maxPeriodShortage?.description}
+              />
+              <MetricPanel
+                label="Total overstaff"
+                value={metrics.totalOverstaff ?? 0}
+                color={Number(metrics.totalOverstaff || 0) > 0 ? "warning.main" : "success.main"}
+                info={metricInfo.totalOverstaff?.description}
+              />
+            </Box>
+
+            <Divider sx={{ my: 1.5 }} />
+            <SectionTitle>Assignment Quality</SectionTitle>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, mb: 1 }}>
+              <MetricPanel label="Intra-day team switches" value={metrics.intraDayTeamSwitches ?? 0} info={metricInfo.intraDayTeamSwitches?.description} />
+              <MetricPanel label="Fragmented work days" value={metrics.fragmentedWorkDays ?? 0} info={metricInfo.fragmentedWorkDays?.description} />
+              <MetricPanel
+                label="Primary team utilization"
+                value={`${Number(metrics.primaryTeamUtilizationRate || 0).toFixed(2)}%`}
+                info={metricInfo.primaryTeamUtilizationRate?.description}
+              />
+            </Box>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, mb: 1 }}>
+              <MetricPanel label="Non-primary team hours" value={metrics.nonPrimaryTeamHours ?? 0} info={metricInfo.nonPrimaryTeamHours?.description} />
+              <MetricPanel
+                label="Duration compliance"
+                value={`${Number(metrics.durationComplianceRate || 0).toFixed(2)}%`}
+                info={metricInfo.durationComplianceRate?.description}
+              />
+            </Box>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, mb: 1 }}>
+              <MetricPanel
+                label="Preferred day-off preservation"
+                value={`${Number(metrics.preferredDayOffPreservationRate || 0).toFixed(2)}%`}
+                info={metricInfo.preferredDayOffPreservationRate?.description}
+              />
+              <MetricPanel
+                label="Preferred day-off worked days"
+                value={metrics.preferredDayOffWorkedDays ?? 0}
+                color={Number(metrics.preferredDayOffWorkedDays || 0) > 0 ? "error.main" : "success.main"}
+                info={metricInfo.preferredDayOffWorkedDays?.description}
+              />
+              <MetricPanel
+                label="Skill priority penalty"
+                value={metrics.skillPriorityPenaltyScore ?? 0}
+                info={metricInfo.skillPriorityPenaltyScore?.description}
+              />
+            </Box>
+            {employeeRows.length > 0 && (
+              <NativeSkillAllocationPanel employeeRows={employeeRows} />
+            )}
+            {teamCoverage.length > 0 && (
+              <Box mt={4}>
+                <Divider sx={{ my: 1.5 }} />
+                <SectionTitle>Team Coverage Breakdown</SectionTitle>
+                <Grid container spacing={2}>
+                  {teamCoverage.map((team) => (
+                    <Grid item xs={12} md={6} lg={3} key={team.team}>
+                      <TeamCoverageCard team={team} />
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            )}
+
+            {underfilledPeriods.length > 0 && (
+              <Box sx={{ mt: 4, pt: 1 }}>
+                <Divider sx={{ mt: 0, mb: 2 }} />
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 1,
+                    mb: 1.5,
+                  }}
+                >
+                  <Typography
+                    variant="subtitle2"
+                    color="text.secondary"
+                    sx={{
+                      textTransform: "uppercase",
+                      letterSpacing: ".05em",
+                      fontSize: 11,
+                      fontWeight: 600,
+                    }}
+                  >
+                    Most Critical Underfilled Periods
+                  </Typography>
+                  <Chip
+                    label={`${underfilledPeriods.length} shown`}
+                    size="small"
+                    sx={{
+                      height: 22,
+                      fontSize: 11,
+                      bgcolor: "#F1EFE8",
+                      color: "#5F5E5A",
+                    }}
+                  />
+                </Box>
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Date</TableCell>
+                        <TableCell>Team</TableCell>
+                        <TableCell>Period</TableCell>
+                        <TableCell align="right">Required</TableCell>
+                        <TableCell align="right">Actual</TableCell>
+                        <TableCell align="right">Shortage</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {underfilledPeriods.map((row, index) => (
+                        <TableRow key={`${row.date}-${row.team}-${row.workPeriod}-${index}`}>
+                          <TableCell>{row.date}</TableCell>
+                          <TableCell>{row.team}</TableCell>
+                          <TableCell>{row.label || `${row.start}-${row.end}`}</TableCell>
+                          <TableCell align="right">{row.required}</TableCell>
+                          <TableCell align="right">{row.actual}</TableCell>
+                          <TableCell align="right" sx={{ color: "error.main", fontWeight: 700 }}>
+                            {row.shortage}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            )}
+
+            {employeeRows.length > 0 && (
+              <>
+                <EmployeeAssignmentQualityPanel employeeRows={employeeRows} />
+                <NativeWorkloadUtilisationPanel employeeRows={employeeRows} />
+              </>
+            )}
           </Paper>
         </AccordionDetails>
       </Accordion>

@@ -8,6 +8,11 @@ OR-Tools CP-SAT:
   - ObjectiveFunction3: linear competence score l * y'_wdtsl
   - ObjectiveFunction4: work assigned on preferred day-offs x'_wd
   - ObjectiveFunction5: assignment to lower-priority skills
+
+Objective terms are activated from `problem.json -> constraints.soft`.
+CP-SAT requires integer objective coefficients, so positive configured weights
+are validated before model construction.
+If no objective receives a weight, the model runs as a feasibility model.
 """
 
 from __future__ import annotations
@@ -64,33 +69,34 @@ class SisqualProblem5CSP:
         problem_json_path: str,
         max_time_minutes=None,
     ):
-        self.staff_team_code = "Employees"
-        self.problem_json_path = Path(problem_json_path).resolve()
-        self.base_dir = self.problem_json_path.parent
-        self.problem = load_problem_json(self.problem_json_path)
-        self.max_time_seconds = parse_max_time_seconds(max_time_minutes)
-        self.min_rest_hours = parse_min_rest_hours(self.problem)
-
-        self.contract_hours = parse_contract_hours(self.problem)
-        self.work_periods = parse_work_periods(self.problem)
+        self.staff_team_code = "Employees"  # generic staff-demand team used by the Sisqual bundle
+        self.problem_json_path = Path(problem_json_path).resolve()  # /.../data/problems/SISQUAL_COMPLETE/problem.json
+        self.base_dir = self.problem_json_path.parent  # /.../data/problems/SISQUAL_COMPLETE
+        self.problem = load_problem_json(self.problem_json_path)  # full problem.json dict
+        self.max_time_seconds = parse_max_time_seconds(max_time_minutes)  # "10" -> 600; None -> no CP-SAT time limit
+        self.min_rest_hours = parse_min_rest_hours(self.problem)  # 11.0 for the current Sisqual bundle
+        self.contract_hours = parse_contract_hours(self.problem)  # {"fullTime_8h": 8, "partTime_4h": 4, "partTime_5h": 5, "partTime_7h": 7}
+        self.work_periods = parse_work_periods(self.problem)  # {"STORAGE_0830_1530": (510, 930), "CHECKOUT_1100_2100": (660, 1260), ...}
         self.employees = parse_employees_with_levels(
             self.problem,
             self.contract_hours,
             self.staff_team_code,
-        )
-        self.days = parse_days(self.problem)
+        )  # [{"id": "20072412", "assignable_skills": ("Management", "Employees"), "skill_levels": {"Management": 1, "Employees": 6}, ...}, ...]
+        self.days = parse_days(self.problem)  # ["2025-10-01", "2025-10-02", ..., "2025-10-31"]
         self.date_by_day = {
             day: datetime.strptime(day, "%Y-%m-%d").date()
             for day in self.days
-        }
-        self.schedule_markers = parse_schedule_input(self.base_dir, self.problem, self.days)
-        self.skills = parse_skill_codes(self.problem)
-        self.time_slots = build_half_hour_slots(self.work_periods)
-        self.coverage_by_period = build_period_slot_map(self.work_periods, self.time_slots)
-        self.alpha = parse_demand_minimums(self.base_dir, self.problem, self.coverage_by_period)
+        }  # {"2025-10-01": date(2025, 10, 1), ...}
+        self.schedule_markers = parse_schedule_input(self.base_dir, self.problem, self.days)  # {"20072412": {"2025-10-01": "8", "2025-10-02": "8", ...}, ...}
+        self.skills = parse_skill_codes(self.problem)  # ["Storage", "Management", "Checkout", "Employees"]
+        self.time_slots = build_half_hour_slots(self.work_periods)  # [TimeSlot(index=0, 08:30-09:00), TimeSlot(index=1, 09:00-09:30), ...]
+        self.coverage_by_period = build_period_slot_map(self.work_periods, self.time_slots)  # {"STORAGE_0830_1530": (0, 1, ..., 13), "CHECKOUT_1100_2100": (5, 6, ..., 24), ...}
+        self.alpha = parse_demand_minimums(self.base_dir, self.problem, self.coverage_by_period)  # {("2025-10-01", 0, "Storage"): 1, ("2025-10-01", 5, "Checkout"): 1, ...}
 
-        demand_days = {day for (day, _, _) in self.alpha.keys()}
-        invalid_demand_days = sorted(demand_days - set(self.days))
+        # Demand must stay inside temporalScope.targetPeriod. This catches a
+        # common data issue before the model creates variables for impossible days.
+        demand_days = {day for (day, _, _) in self.alpha.keys()}  # {"2025-10-01", "2025-10-02", ..., "2025-10-31"}
+        invalid_demand_days = sorted(demand_days - set(self.days))  # [] when demand.csv matches targetPeriod
         if invalid_demand_days:
             preview = ", ".join(invalid_demand_days[:5])
             if len(invalid_demand_days) > 5:
@@ -100,17 +106,18 @@ class SisqualProblem5CSP:
                 f"{preview}. Update problem.json targetPeriod or demand.csv."
             )
 
-        self.open_days = parse_open_days(self.days, self.alpha)
-        self.closed_days = set(self.days) - set(self.open_days)
+        self.open_days = parse_open_days(self.days, self.alpha)  # days with demand, usually all October days in this bundle
+        self.closed_days = set(self.days) - set(self.open_days)  # set() for current Sisqual data, or {"2025-10-05", ...}
+
         self.coverage_priority_tiers = parse_coverage_priority_tiers(
             self.problem,
             self.skills,
             self.staff_team_code,
-        )
+        )  # [{"priority": 1, "skill": "Storage", "min_n": 1, ...}, {"priority": 2, "skill": "Management", ...}, ...]
         self.objective5_skill_priority = build_objective5_skill_priority(
             self.employees,
             self.coverage_priority_tiers,
-        )
+        )  # {("20051291", "Storage"): 0, ("20072412", "Management"): 1, ("20054956", "Checkout"): 4, ...}
 
         (
             self.objective1_weight,
@@ -118,16 +125,18 @@ class SisqualProblem5CSP:
             self.objective3_weight,
             self.objective4_weight,
             self.objective5_weight,
-        ) = parse_soft_objectives(self.problem)
+        ) = parse_soft_objectives(self.problem)  # e.g. (1000.0, {}, 0.0, 10.0, 100.0)
         self._validate_objective_weights()
 
-        self.variable_days_off_active = self.objective4_weight > 0
+        # Objective 4 activates the "swap preferred day-off" behavior. When it
+        # is inactive, template DO days remain fixed off exactly like the input.
+        self.variable_days_off_active = self.objective4_weight > 0  # True when preferred day-offs may be swapped within the week
         self.day_modes = build_sisqual_day_modes(
             self.employees,
             self.days,
             self.schedule_markers,
             self.closed_days,
-        )
+        )  # {("20072412", "2025-10-01"): "work_template", ("20072412", "2025-10-05"): "preferred_day_off", ...}
         self.assignments = build_sisqual_bundle_assignments(
             self.employees,
             self.days,
@@ -135,14 +144,15 @@ class SisqualProblem5CSP:
             self.time_slots,
             self.day_modes,
             self.variable_days_off_active,
-        )
+        )  # {("20072412", "2025-10-01"): [Assignment("08:30-16:30"), Assignment("09:00-17:00"), ...], ...}
+
         self.levels = sorted(
             {
                 level
                 for employee in self.employees
                 for level in employee["skill_levels"].values()
             }
-        )
+        )  # [1, 2, 3, 4, 5, 6]
         self.beta = parse_beta_requirements(
             self.base_dir,
             self.problem,
@@ -150,23 +160,30 @@ class SisqualProblem5CSP:
             self.time_slots,
             self.open_days,
             self.objective2_weights,
-        )
+        )  # {(day, slot, skill, level): minimum, ...} when ObjectiveFunction2 is configured; otherwise {}
         self.weeks = group_open_days_by_week(
             self.problem,
             self.open_days,
             self.date_by_day,
-        )
+        )  # [["2025-10-01", ..., "2025-10-05"], ["2025-10-06", ..., "2025-10-12"], ...]
 
+        #   x[(w, d, h)]              -> chosen daily assignment
+        #   workday[(w, d)]           -> whether worker w works on day d
+        #   y[(w, d, t, s)]           -> slot/team assignment
+        #   y_level[(w, d, t, s, l)]  -> slot/team/level assignment
+        #   shortage[(d, t, s)]       -> z_dts coverage shortage
+        #   level_shortage[(d,t,s,l)] -> z'_dtsl level shortage
+        #   preferred_day_work[(w,d)] -> x'_wd preferred day-off worked
         self.model = None
         self.solver = None
-        self.x = {}
-        self.workday = {}
-        self.y = {}
-        self.y_level = {}
-        self.shortage = {}
-        self.level_shortage = {}
-        self.preferred_day_work = {}
-        self.coverage_terms_cache = {}
+        self.x = {}  # {("20072412", "2025-10-01", "A_510_990"): BoolVar(...), ...}
+        self.workday = {}  # {("20072412", "2025-10-01"): BoolVar(...), ...}
+        self.y = {}  # {("20072412", "2025-10-01", 5, "Management"): BoolVar(...), ...}
+        self.y_level = {}  # {("20072412", "2025-10-01", 5, "Management", 1): BoolVar(...), ...}
+        self.shortage = {}  # {("2025-10-01", 5, "Checkout"): IntVar(...), ...}
+        self.level_shortage = {}  # {("2025-10-01", 5, "Checkout", 2): IntVar(...), ...}
+        self.preferred_day_work = {}  # {("20072412", "2025-10-05"): BoolVar(...), ...}
+        self.coverage_terms_cache = {}  # {("2025-10-01", 5, "Checkout"): [y_var, y_var, ...], ...}
         self.status = None
         self.objective_value = None
 
@@ -199,6 +216,8 @@ class SisqualProblem5CSP:
         level_objectives_active = bool(self.objective2_weights) or self.objective3_weight > 0
         self.coverage_terms_cache = {}
 
+        # For every employee, every day, and every feasible daily block, create
+        # one binary variable x_{wdh} that says whether assignment h in H_wd was chosen.
         for employee in self.employees:
             employee_id = employee["id"]
             for day in self.days:
@@ -207,6 +226,9 @@ class SisqualProblem5CSP:
                         f"x_{employee_id}_{day.replace('-', '')}_{assignment.key.split('_')[-2]}_{assignment.key.split('_')[-1]}"
                     )
 
+        # Binary workday_{wd}: 1 when employee w is assigned on day d. It is used
+        # by the daily assignment link, max-consecutive-days, weekly balance, and
+        # preferred day-off indicator constraints.
         for employee in self.employees:
             employee_id = employee["id"]
             for day in self.days:
@@ -214,6 +236,8 @@ class SisqualProblem5CSP:
                     f"workday_{employee_id}_{day.replace('-', '')}"
                 )
 
+        # Slot-level team assignment y_{wdts}: if a chosen daily block covers a
+        # half-hour slot, exactly one of the employee's assignable skills is used.
         for employee in self.employees:
             employee_id = employee["id"]
             for day in self.days:
@@ -225,6 +249,8 @@ class SisqualProblem5CSP:
                             f"y_{employee_id}_{day.replace('-', '')}_{slot.index}_{skill}"
                         )
 
+        # Coverage shortage z_{dts} for ObjectiveFunction1. The upper bound is
+        # the required minimum because shortage cannot exceed the full demand.
         for (day, slot_idx, skill), minimum in self.alpha.items():
             self.shortage[(day, slot_idx, skill)] = model.NewIntVar(
                 0,
@@ -233,6 +259,8 @@ class SisqualProblem5CSP:
             )
 
         if level_objectives_active:
+            # y'_{wdtsl} from constraint (6). Only the employee's own competence
+            # level for each skill is materialized; all other levels are implicitly 0.
             for employee in self.employees:
                 employee_id = employee["id"]
                 for day in self.days:
@@ -246,6 +274,8 @@ class SisqualProblem5CSP:
                             )
 
         if self.objective2_weights:
+            # Level-specific shortage z'_{dtsl} for ObjectiveFunction2. Only
+            # configured (skill, level) pairs are created to keep the CP model smaller.
             for (day, slot_idx, skill, level), minimum in self.beta.items():
                 if (skill, level) not in self.objective2_weights:
                     continue
@@ -256,6 +286,8 @@ class SisqualProblem5CSP:
                 )
 
         if self.objective4_weight > 0:
+            # Preferred day-off indicator x'_{wd}: 1 when worker w is assigned on
+            # an input DO day that the objective allows the solver to swap.
             for employee in self.employees:
                 employee_id = employee["id"]
                 for day in self.days:
@@ -265,6 +297,10 @@ class SisqualProblem5CSP:
                         f"xprime_{employee_id}_{day.replace('-', '')}"
                     )
 
+        # Constraint (2)
+        # Each worker can receive at most one daily assignment on each open day.
+        # For fixed-template days this becomes equality, while unavailable/closed
+        # days are forced to 0. Preferred DO behavior depends on Objective 4.
         for employee in self.employees:
             employee_id = employee["id"]
             for day in self.days:
@@ -293,6 +329,10 @@ class SisqualProblem5CSP:
                     model.Add(sum(x_vars) == 1)
                     model.Add(self.workday[(employee_id, day)] == 1)
 
+        # Constraint (3)
+        # Link daily block choices x_{wdh} to slot/team assignments y_{wdts}.
+        # If the chosen block covers slot t, exactly one assignable skill must be
+        # selected for that slot; if no chosen block covers it, all y variables are 0.
         for employee in self.employees:
             employee_id = employee["id"]
             assignment_list = {
@@ -314,6 +354,9 @@ class SisqualProblem5CSP:
                     ]
                     model.Add(sum(lhs_terms) == sum(rhs_terms))
 
+        # Constraint (4)
+        # No worker can be assigned more than 5 working days in any 6 consecutive
+        # open days, matching the Sisqual max-consecutive-days hard rule.
         for employee in self.employees:
             employee_id = employee["id"]
             for start in range(0, len(self.open_days) - 5):
@@ -322,6 +365,9 @@ class SisqualProblem5CSP:
                     sum(self.workday[(employee_id, day)] for day in window) <= 5
                 )
 
+        # Extra hard constraint from problem.json:
+        # forbid adjacent-day assignment pairs whose overnight rest is below the
+        # configured minimum rest hours, usually 11h in the Sisqual bundle.
         for employee in self.employees:
             employee_id = employee["id"]
             for day, next_day in zip(self.days, self.days[1:]):
@@ -339,11 +385,16 @@ class SisqualProblem5CSP:
                                 <= 1
                             )
 
+        # Constraint (5)
+        # Shortage z_dts plus assigned coverage must reach minimum demand alpha_dts.
         for (day, slot_idx, skill), minimum in self.alpha.items():
             coverage_terms = self._coverage_terms(day, slot_idx, skill)
             model.Add(self.shortage[(day, slot_idx, skill)] + sum(coverage_terms) >= minimum)
 
         if level_objectives_active:
+            # Constraint (6)
+            # Link each slot/team assignment y_{wdts} to the employee's actual
+            # competence level variable y'_{wdtsl}.
             for employee in self.employees:
                 employee_id = employee["id"]
                 for day in self.days:
@@ -358,6 +409,9 @@ class SisqualProblem5CSP:
                             )
 
         if self.objective2_weights:
+            # Constraint (7)
+            # Level-specific shortage z'_dtsl plus coverage at that exact level
+            # must reach beta_dtsl for each activated skill/level requirement.
             for (day, slot_idx, skill, level), minimum in self.beta.items():
                 if (skill, level) not in self.objective2_weights:
                     continue
@@ -372,6 +426,12 @@ class SisqualProblem5CSP:
                 )
 
         if self.variable_days_off_active:
+            # Constraint (8)
+            # Unavailable days are already enforced above through mode == "unavailable".
+            #
+            # Constraint (9)
+            # Keep each worker's weekly number of workdays equal to the original
+            # template count, while allowing preferred DO days to swap inside the week.
             for employee in self.employees:
                 employee_id = employee["id"]
                 for week_days in self.weeks:
@@ -391,6 +451,9 @@ class SisqualProblem5CSP:
                         == required_workdays
                     )
 
+            # Constraint (10)
+            # x'_{wd} is exactly the workday indicator on preferred day-off cells,
+            # so ObjectiveFunction4 can count how many DO days were worked.
             for employee in self.employees:
                 employee_id = employee["id"]
                 for day in self.days:
@@ -402,6 +465,9 @@ class SisqualProblem5CSP:
 
         objective_terms = []
 
+        # ObjectiveFunction1
+        # Minimize shortage against alpha_dts across all open days, half-hour
+        # slots, and skills.
         objective1_weight = _int_weight(self.objective1_weight, "ObjectiveFunction1")
         if objective1_weight > 0:
             objective_terms.extend(
@@ -409,6 +475,8 @@ class SisqualProblem5CSP:
                 for variable in self.shortage.values()
             )
 
+        # ObjectiveFunction2
+        # For configured skill/level pairs, minimize shortage against beta_dtsl.
         for (skill, level), weight in sorted(self.objective2_weights.items()):
             objective2_weight = _int_weight(weight, f"ObjectiveFunction2 {skill}:{level}")
             if objective2_weight <= 0:
@@ -419,6 +487,8 @@ class SisqualProblem5CSP:
                 if pair_skill == skill and pair_level == level
             )
 
+        # ObjectiveFunction3
+        # Minimize the linear competence score sum(l * y'_{wdtsl}).
         objective3_weight = _int_weight(self.objective3_weight, "ObjectiveFunction3")
         if objective3_weight > 0 and self.y_level:
             objective_terms.extend(
@@ -426,6 +496,8 @@ class SisqualProblem5CSP:
                 for (_, _, _, _, level), variable in self.y_level.items()
             )
 
+        # ObjectiveFunction4
+        # Minimize preferred day-offs that become worked days.
         objective4_weight = _int_weight(self.objective4_weight, "ObjectiveFunction4")
         if objective4_weight > 0 and self.preferred_day_work:
             objective_terms.extend(
@@ -433,6 +505,10 @@ class SisqualProblem5CSP:
                 for variable in self.preferred_day_work.values()
             )
 
+        # ObjectiveFunction5
+        # Prefer assigning multi-skilled workers to higher-priority Sisqual teams.
+        # Lower priority scores are better, so the weighted sum discourages using a
+        # worker on lower-priority fallback skills when better alternatives exist.
         objective5_weight = _int_weight(self.objective5_weight, "ObjectiveFunction5")
         if objective5_weight > 0 and self.y:
             fallback = len(self.objective5_skill_priority) + 1
@@ -487,6 +563,8 @@ class SisqualProblem5CSP:
                     row.append(marker or "OFF")
                     continue
 
+                # Find the selected daily Assignment h from x_{wdh}. A solved CP-SAT
+                # model has exactly one chosen assignment on mandatory work days.
                 chosen = None
                 if solved:
                     for assignment in self.assignments[(employee_id, day)]:
@@ -504,6 +582,8 @@ class SisqualProblem5CSP:
                         row.append("UNASSIGNED")
                     continue
 
+                # Walk the selected half-hour slots and merge adjacent slots with
+                # the same y_{wdts} skill into readable "HH:MM-HH:MM@Team" segments.
                 segments = []
                 current_skill = None
                 current_start = None
