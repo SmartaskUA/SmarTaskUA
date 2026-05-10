@@ -4,7 +4,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, List, Tuple
 
 
 OFF_MARKERS = {"DO", "FDO", "VAC", "NOT", "MED"}
@@ -147,43 +147,6 @@ def parse_employees(problem: Dict, contract_hours: Dict[str, int]) -> List[Dict]
     return employees
 
 
-def parse_employees_with_levels(
-    problem: Dict,
-    contract_hours: Dict[str, int],
-    staff_team_code: str = "Employees",
-) -> List[Dict]:
-    raw_employees = problem.get("employees", {}).get("competency", [])
-    employees = []
-    for raw in raw_employees:
-        employee_id = str(raw.get("id", "")).strip()
-        contract_type = str(raw.get("contractType", "")).strip()
-        skill_levels = {}
-        for team in raw.get("teams", []):
-            code = str(team.get("code", "")).strip()
-            if not code:
-                continue
-            level = parse_level_value(team.get("level"))
-            if level is None:
-                raise ValueError(f"Missing or invalid level for {employee_id} skill '{code}'")
-            skill_levels[code] = level
-        if staff_team_code and staff_team_code not in skill_levels:
-            raise ValueError(
-                f"Employee '{employee_id}' is missing required '{staff_team_code}' competency"
-            )
-        employees.append(
-            {
-                "id": employee_id,
-                "name": raw.get("name", employee_id),
-                "contract_type": contract_type,
-                "contract_hours": contract_hours.get(contract_type),
-                "skills": tuple(skill_levels.keys()),
-                "skill_levels": dict(skill_levels),
-                "assignable_skills": tuple(skill_levels.keys()),
-            }
-        )
-    return employees
-
-
 def parse_days(problem: Dict) -> List[str]:
     target = problem.get("temporalScope", {}).get("targetPeriod", {})
     start = datetime.strptime(target["start"], "%Y-%m-%d").date()
@@ -200,31 +163,11 @@ def parse_schedule_input(base_dir: Path, problem: Dict, days: List[str]) -> Dict
     schedule_path = base_dir / problem.get("scheduleInput", {}).get("dataFile", "schedule_input.csv")
     with schedule_path.open(newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
-        fieldnames = reader.fieldnames or []
-        missing_days = [day for day in days if day not in fieldnames]
-        if missing_days:
-            preview = ", ".join(missing_days[:5])
-            if len(missing_days) > 5:
-                preview += ", ..."
-            raise ValueError(
-                f"Schedule input '{schedule_path.name}' is missing targetPeriod day columns: {preview}"
-            )
         rows = {}
         for row in reader:
             employee_id = str(row.get("employee_id", "")).strip()
             rows[employee_id] = {day: str(row.get(day, "")).strip() for day in days}
     return rows
-
-
-def parse_min_rest_hours(problem: Dict, default_hours: float = 11.0) -> float:
-    constraints = problem.get("constraints", {}).get("hard", [])
-    for constraint in constraints:
-        if constraint.get("type") != "min_rest_hours" or not constraint.get("enabled", True):
-            continue
-        hours = constraint.get("params", {}).get("hours")
-        if isinstance(hours, (int, float)):
-            return float(hours)
-    return default_hours
 
 
 def parse_skill_codes(problem: Dict) -> List[str]:

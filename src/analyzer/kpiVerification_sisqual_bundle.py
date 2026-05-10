@@ -7,22 +7,11 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 OFF_MARKERS = {"", "0", "DO", "FDO", "VAC", "NOT", "MED"}
-HARD_UNAVAILABLE_MARKERS = {"VAC", "NOT", "MED", "FDO", "ENFD", "DC-E"}
 EXACT_PATTERN = re.compile(r"^EQUALS:(\d{1,2}:\d{2})-(\d{1,2}:\d{2})$", re.IGNORECASE)
 SEGMENT_PATTERN = re.compile(r"^(\d{1,2}:\d{2})-(\d{1,2}:\d{2})@(.+)$")
 DEFAULT_MAX_CONSECUTIVE_DAYS = 5
 DEFAULT_MIN_REST_HOURS = 11
 STAFF_TEAM_CODE = "Employees"
-DEFAULT_SISQUAL_COVERAGE_PRIORITY_TIERS = (
-    ("Storage", 1, None, "RESP ALMACEN N>=1"),
-    ("Management", 1, 1, "RESP - EQUIPO GESTION N=1"),
-    ("Checkout", 1, 1, "CAJA N=1"),
-    ("Management", 2, 2, "RESP - EQUIPO GESTION N=2"),
-    ("Checkout", 2, 2, "CAJA N=2"),
-    ("Management", 3, 3, "RESP - EQUIPO GESTION N=3"),
-    ("Management", 4, None, "RESP - EQUIPO GESTION N>=4"),
-    ("Checkout", 3, None, "CAJA N>=3"),
-)
 
 
 def analyze(file_path, problem_path, employees=None, year=None):
@@ -44,7 +33,6 @@ def analyze(file_path, problem_path, employees=None, year=None):
         employee_meta,
         bundle["min_rest_hours"],
         bundle["max_consecutive_days"],
-        bundle["coverage_priority_tiers"],
     )
 
     result = {
@@ -62,9 +50,6 @@ def analyze(file_path, problem_path, employees=None, year=None):
         "nonPrimaryTeamHours": assignment_metrics["nonPrimaryTeamHours"],
         "durationComplianceRate": assignment_metrics["durationComplianceRate"],
         "demandedHoursComplianceRate": assignment_metrics["demandedHoursComplianceRate"],
-        "preferredDayOffWorkedDays": assignment_metrics["preferredDayOffWorkedDays"],
-        "preferredDayOffPreservationRate": assignment_metrics["preferredDayOffPreservationRate"],
-        "skillPriorityPenaltyScore": assignment_metrics["skillPriorityPenaltyScore"],
         "consecutiveDaysViolations": assignment_metrics["consecutiveDaysViolations"],
         "minRestViolations": assignment_metrics["minRestViolations"],
         "availabilityViolations": assignment_metrics["availabilityViolations"],
@@ -115,8 +100,6 @@ def load_problem_bundle(problem_path):
     schedule_rules = load_schedule_rules(schedule_input_path)
 
     employees = extract_problem_employees(problem)
-    skill_codes = extract_skill_codes(problem, employees)
-    coverage_priority_tiers = parse_coverage_priority_tiers(problem, skill_codes, STAFF_TEAM_CODE)
     hard_constraints = problem.get("constraints", {}).get("hard", [])
     min_rest_hours = DEFAULT_MIN_REST_HOURS
     for constraint in hard_constraints:
@@ -132,7 +115,6 @@ def load_problem_bundle(problem_path):
         "demand_rows": demand_rows,
         "work_periods": work_periods,
         "schedule_rules": schedule_rules,
-        "coverage_priority_tiers": coverage_priority_tiers,
         "min_rest_hours": min_rest_hours,
         "max_consecutive_days": DEFAULT_MAX_CONSECUTIVE_DAYS,
     }
@@ -162,153 +144,6 @@ def extract_problem_employees(problem):
     competency = employees_node.get("competency")
     source = simple if isinstance(simple, list) and simple else competency
     return source if isinstance(source, list) else []
-
-
-def extract_skill_codes(problem, employees):
-    skills = []
-    for employee in employees or []:
-        if not isinstance(employee, dict):
-            continue
-        for team in employee.get("teams") or []:
-            if isinstance(team, str):
-                code = str(team).strip()
-            elif isinstance(team, dict):
-                code = first_non_blank(team.get("code"), team.get("id"), team.get("name"))
-            else:
-                code = None
-            if code:
-                skills.append(code)
-
-    for team in (((problem or {}).get("demand", {}).get("organizationalUnits", {}) or {}).get("teams", [])):
-        if not isinstance(team, dict):
-            continue
-        code = first_non_blank(team.get("code"), team.get("id"), team.get("name"))
-        if code:
-            skills.append(code)
-
-    deduped = []
-    seen = set()
-    for skill in skills:
-        if skill in seen:
-            continue
-        seen.add(skill)
-        deduped.append(skill)
-    if STAFF_TEAM_CODE not in seen:
-        deduped.append(STAFF_TEAM_CODE)
-    return deduped
-
-
-def parse_coverage_priority_tiers(problem, skills, staff_team_code="Employees"):
-    raw_hierarchy = sorted(
-        ((problem or {}).get("demand", {}) or {}).get("priorityHierarchy", []),
-        key=lambda item: parse_int_value(item.get("rank")) or 10 ** 6,
-    )
-
-    if any(isinstance(entry, dict) and entry.get("minLevel") is not None for entry in raw_hierarchy):
-        priority_tiers = []
-        for index, entry in enumerate(raw_hierarchy):
-            if not isinstance(entry, dict):
-                continue
-            skill = str(entry.get("team", "")).strip()
-            if not skill:
-                continue
-            min_n = parse_int_value(entry.get("minLevel")) or 1
-            max_n = parse_int_value(entry.get("maxLevel"))
-            label = str(entry.get("label", f"{skill} N>={min_n}")).strip()
-            priority_tiers.append(
-                {
-                    "priority": index + 1,
-                    "skill": skill,
-                    "min_n": min_n,
-                    "max_n": max_n,
-                    "label": label,
-                }
-            )
-    else:
-        priority_tiers = [
-            {
-                "priority": index + 1,
-                "skill": skill,
-                "min_n": min_n,
-                "max_n": max_n,
-                "label": label,
-            }
-            for index, (skill, min_n, max_n, label) in enumerate(DEFAULT_SISQUAL_COVERAGE_PRIORITY_TIERS)
-        ]
-
-    known_skill_levels = {(tier["skill"], tier["min_n"]) for tier in priority_tiers}
-    if (staff_team_code, 1) not in known_skill_levels:
-        priority_tiers.append(
-            {
-                "priority": len(priority_tiers) + 1,
-                "skill": staff_team_code,
-                "min_n": 1,
-                "max_n": None,
-                "label": "EQUIPA Empleados N>=1",
-            }
-        )
-
-    known_skills = {tier["skill"] for tier in priority_tiers}
-    for skill in skills:
-        if not skill or skill in known_skills:
-            continue
-        priority_tiers.append(
-            {
-                "priority": len(priority_tiers) + 1,
-                "skill": skill,
-                "min_n": 1,
-                "max_n": None,
-                "label": f"{skill} N>=1",
-            }
-        )
-        known_skills.add(skill)
-
-    return priority_tiers
-
-
-def match_coverage_priority_tier(skill, nth_worker, coverage_priority_tiers):
-    for index, tier in enumerate(coverage_priority_tiers or []):
-        if tier["skill"] != skill:
-            continue
-        if nth_worker < tier["min_n"]:
-            continue
-        max_n = tier["max_n"]
-        if max_n is not None and nth_worker > max_n:
-            continue
-        return index
-    raise ValueError(f"No priority tier matches skill '{skill}' worker #{nth_worker}")
-
-
-def build_employee_priority_summary(meta, coverage_priority_tiers):
-    best = None
-    for team in meta.get("teams", []) or []:
-        skill = team.get("code")
-        level = parse_int_value(team.get("level"))
-        if not skill or level is None:
-            continue
-        try:
-            tier_index = match_coverage_priority_tier(skill, level, coverage_priority_tiers)
-        except ValueError:
-            continue
-        tier = coverage_priority_tiers[tier_index]
-        candidate = {
-            "priorityRank": int(tier.get("priority", tier_index + 1)),
-            "priorityLabel": str(tier.get("label") or f"{skill} priority {tier_index + 1}"),
-            "priorityTeam": skill,
-            "priorityLevel": level,
-        }
-        if best is None or candidate["priorityRank"] < best["priorityRank"]:
-            best = candidate
-
-    if best is not None:
-        return best
-
-    return {
-        "priorityRank": len(coverage_priority_tiers or []) + 1,
-        "priorityLabel": "Unmapped priority",
-        "priorityTeam": meta.get("primary_team"),
-        "priorityLevel": None,
-    }
 
 
 def load_schedule_rules(path):
@@ -418,16 +253,11 @@ def build_employee_meta(employees):
 
         teams.sort(key=lambda item: (item["level"], item["code"]))
         primary_team = teams[0]["code"] if teams else None
-        skill_levels = {
-            team["code"]: int(team["level"]) if float(team["level"]).is_integer() else team["level"]
-            for team in teams
-        }
         meta[str(employee_id).strip()] = {
             "id": str(employee_id).strip(),
             "name": str(name).strip(),
             "teams": teams,
             "primary_team": primary_team,
-            "skill_levels": skill_levels,
         }
     return meta
 
@@ -439,6 +269,8 @@ def build_slot_coverage(schedule):
             for segment in segments:
                 for slot_start in build_half_hour_slots(segment["start"], segment["end"]):
                     slot_coverage[(day, segment["team"], slot_start)] += 1
+                    if segment["team"] != STAFF_TEAM_CODE:
+                        slot_coverage[(day, STAFF_TEAM_CODE, slot_start)] += 1
     return slot_coverage
 
 
@@ -544,7 +376,7 @@ def compute_coverage_metrics(demand_rows, work_periods, slot_coverage):
     }
 
 
-def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest_hours, max_consecutive_days, coverage_priority_tiers):
+def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest_hours, max_consecutive_days):
     dates = [parse_iso_date(value) for value in schedule.get("dates", [])]
     ordered_dates = [value for value in dates if value is not None]
     ordered_date_keys = [value.isoformat() for value in ordered_dates]
@@ -557,9 +389,6 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
     total_evaluated_days = 0
     total_hours_match_days = 0
     total_hours_evaluated_days = 0
-    total_preferred_day_off_worked_days = 0
-    total_preferred_day_off_days = 0
-    total_skill_priority_penalty = 0
     total_availability_violations = 0
     total_consecutive_violations = 0
     total_min_rest_violations = 0
@@ -572,7 +401,6 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
         meta = employee_meta.get(employee_id, {"id": employee_id, "name": employee_id, "primary_team": None, "teams": []})
         employee_schedule = schedule_employees.get(employee_id, {})
         employee_rules = schedule_rules.get(employee_id, {})
-        priority_summary = build_employee_priority_summary(meta, coverage_priority_tiers)
 
         team_switches = 0
         fragmented_days = 0
@@ -582,9 +410,6 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
         evaluated_days = 0
         hours_match_days = 0
         hours_evaluated_days = 0
-        preferred_day_off_worked_days = 0
-        preferred_day_off_days = 0
-        skill_priority_penalty = 0
         availability_violations = 0
         consecutive_violations = 0
         min_rest_violations = 0
@@ -624,18 +449,10 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
             rule = employee_rules.get(date_key)
             if rule is not None:
                 evaluated_days += 1
-                rule_upper = str(rule).strip().upper()
-                if rule_upper == "DO":
-                    preferred_day_off_days += 1
-                    if worked:
-                        preferred_day_off_worked_days += 1
                 if is_day_rule_compliant(rule, segments):
                     compliant_days += 1
                 else:
-                    # Only count true hard-unavailability breaches here.
-                    # Swapped DO days and duration mismatches are tracked separately.
-                    if rule_upper in HARD_UNAVAILABLE_MARKERS and worked:
-                        availability_violations += 1
+                    availability_violations += 1
                 demanded_minutes = get_demanded_minutes(rule)
                 if demanded_minutes is not None:
                     hours_evaluated_days += 1
@@ -684,9 +501,6 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
         total_evaluated_days += evaluated_days
         total_hours_match_days += hours_match_days
         total_hours_evaluated_days += hours_evaluated_days
-        total_preferred_day_off_worked_days += preferred_day_off_worked_days
-        total_preferred_day_off_days += preferred_day_off_days
-        total_skill_priority_penalty += skill_priority_penalty
         total_availability_violations += availability_violations
         total_consecutive_violations += consecutive_violations
         total_min_rest_violations += min_rest_violations
@@ -695,10 +509,6 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
             {
                 "employeeId": employee_id,
                 "name": meta.get("name") or employee_id,
-                "priorityRank": priority_summary["priorityRank"],
-                "priorityLabel": priority_summary["priorityLabel"],
-                "priorityTeam": priority_summary["priorityTeam"],
-                "priorityLevel": priority_summary["priorityLevel"],
                 "workedHours": round(worked_minutes / 60.0, 2),
                 "primaryTeam": meta.get("primary_team"),
                 "primaryTeamUtilizationRate": primary_rate,
@@ -712,33 +522,16 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
                 "fragmentedWorkDays": fragmented_days,
                 "durationComplianceRate": duration_rate,
                 "demandedHoursComplianceRate": demanded_hours_rate,
-                "preferredDayOffWorkedDays": preferred_day_off_worked_days,
-                "preferredDayOffPreservationRate": round(
-                    ((preferred_day_off_days - preferred_day_off_worked_days) / preferred_day_off_days) * 100,
-                    2,
-                ) if preferred_day_off_days else 100.0,
-                "skillPriorityPenaltyScore": skill_priority_penalty,
                 "availabilityViolations": availability_violations,
                 "consecutiveDaysViolations": consecutive_violations,
                 "minRestViolations": min_rest_violations,
             }
         )
 
-    employee_rows.sort(
-        key=lambda item: (
-            item.get("priorityRank", 10 ** 6),
-            -item["workedHours"],
-            item.get("name") or item["employeeId"],
-        )
-    )
+    employee_rows.sort(key=lambda item: (-item["availabilityViolations"], -item["teamSwitches"], item["employeeId"]))
     primary_team_utilization_rate = round((total_primary_minutes / total_worked_minutes) * 100, 2) if total_worked_minutes else 100.0
     duration_compliance_rate = round((total_compliant_days / total_evaluated_days) * 100, 2) if total_evaluated_days else 100.0
     demanded_hours_compliance_rate = round((total_hours_match_days / total_hours_evaluated_days) * 100, 2) if total_hours_evaluated_days else 100.0
-    preferred_day_off_preservation_rate = (
-        round(((total_preferred_day_off_days - total_preferred_day_off_worked_days) / total_preferred_day_off_days) * 100, 2)
-        if total_preferred_day_off_days
-        else 100.0
-    )
 
     return {
         "intraDayTeamSwitches": total_team_switches,
@@ -747,9 +540,6 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
         "nonPrimaryTeamHours": round(max(total_worked_minutes - total_primary_minutes, 0) / 60.0, 2),
         "durationComplianceRate": duration_compliance_rate,
         "demandedHoursComplianceRate": demanded_hours_compliance_rate,
-        "preferredDayOffWorkedDays": total_preferred_day_off_worked_days,
-        "preferredDayOffPreservationRate": preferred_day_off_preservation_rate,
-        "skillPriorityPenaltyScore": total_skill_priority_penalty,
         "availabilityViolations": total_availability_violations,
         "consecutiveDaysViolations": total_consecutive_violations,
         "minRestViolations": total_min_rest_violations,
@@ -916,12 +706,3 @@ def first_non_blank(*values):
         if text:
             return text
     return None
-
-
-def parse_int_value(value):
-    if value in (None, ""):
-        return None
-    try:
-        return int(float(value))
-    except (TypeError, ValueError):
-        return None

@@ -88,18 +88,6 @@ const metricInfo = {
     label: "Minimum Rest Violations",
     description: "Number of shift-to-shift transitions where rest time between consecutive working days is less than 12 hours.",
   },
-  preferredDayOffWorkedDays: {
-    label: "Preferred Day-Off Worked Days",
-    description: "Number of template `DO` days that still ended up worked. Direct KPI for objective 4.",
-  },
-  preferredDayOffPreservationRate: {
-    label: "Preferred Day-Off Preservation",
-    description: "Percentage of template `DO` days that remained off in the generated schedule.",
-  },
-  skillPriorityPenaltyScore: {
-    label: "Skill Priority Penalty",
-    description: "Weighted slot-level penalty for assigning employees to lower-priority skills. Lower is better. Direct KPI for objective 5.",
-  },
   totalStaffingGap: {
     label: "Total Staffing Gap",
     description: "Total missing staff compared to required minimums across all teams, time slots and days.",
@@ -120,94 +108,7 @@ const metricInfo = {
     label: "Excess Staffing",
     description: "Total extra staff assigned beyond required minimums across all teams, time slots and days.",
   },
-  weightedMinimumCoverageRate: {
-    label: "Weighted Minimum Coverage",
-    description: "Fulfilled required headcount divided by total required headcount across all 30-minute team slots.",
-  },
-  criticalUnderfilledPeriods: {
-    label: "Critical Underfilled Slots",
-    description: "Count of 30-minute date, team, slot cells where actual coverage is below the required minimum.",
-  },
-  maxPeriodShortage: {
-    label: "Max Period Shortage",
-    description: "Largest single shortage found in any date, team, work-period cell.",
-  },
-  totalMinimumGap: {
-    label: "Total Minimum Gap",
-    description: "Total missing headcount across all required 30-minute team slots.",
-  },
-  totalOverstaff: {
-    label: "Total Overstaff",
-    description: "Total surplus headcount above minimum requirements across all required 30-minute team slots.",
-  },
-  intraDayTeamSwitches: {
-    label: "Intra-Day Team Switches",
-    description: "Number of times employees switch teams between consecutive assigned segments inside the same day.",
-  },
-  fragmentedWorkDays: {
-    label: "Fragmented Work Days",
-    description: "Count of employee-days with more than one assigned segment.",
-  },
-  primaryTeamUtilizationRate: {
-    label: "Primary Team Utilization",
-    description: "Share of assigned hours worked in each employee's strongest-ranked team.",
-  },
-  nonPrimaryTeamHours: {
-    label: "Non-Primary Team Hours",
-    description: "Total assigned hours worked outside each employee's strongest-ranked team.",
-  },
-  durationComplianceRate: {
-    label: "Duration Compliance",
-    description: "Share of employee-days that respect the daily duration or exact time rule defined in schedule_input.csv.",
-  },
-  demandedHoursComplianceRate: {
-    label: "Demanded Hours Compliance",
-    description: "Share of working-rule employee-days where assigned hours exactly match the hours requested in schedule_input.csv.",
-  },
-  availabilityViolations: {
-    label: "Availability Violations",
-    description: "Count of employee-days where the generated schedule violates the employee's stated schedule_input rule.",
-  },
 };
-
-const sisqualHourlyMetrics = [
-  "weightedMinimumCoverageRate",
-  "criticalUnderfilledPeriods",
-  "maxPeriodShortage",
-  "totalMinimumGap",
-  "totalOverstaff",
-  "preferredDayOffWorkedDays",
-  "preferredDayOffPreservationRate",
-  "skillPriorityPenaltyScore",
-  "primaryTeamUtilizationRate",
-  "durationComplianceRate",
-  "demandedHoursComplianceRate",
-  "consecutiveDaysViolations",
-  "minRestViolations",
-  "availabilityViolations",
-];
-
-const percentMetrics = new Set([
-  "shiftBalance",
-  "teamSatisfactionLevel",
-  "staffingCoverageRate",
-  "weightedMinimumCoverageRate",
-  "primaryTeamUtilizationRate",
-  "durationComplianceRate",
-  "demandedHoursComplianceRate",
-  "preferredDayOffPreservationRate",
-]);
-
-const higherIsBetter = new Set([
-  "staffingCoverageRate",
-  "teamSatisfactionLevel",
-  "shiftBalance",
-  "weightedMinimumCoverageRate",
-  "primaryTeamUtilizationRate",
-  "durationComplianceRate",
-  "demandedHoursComplianceRate",
-  "preferredDayOffPreservationRate",
-]);
 
 export default function CompareCalendar() {
   const [calendars, setCalendars] = useState([]);
@@ -306,15 +207,6 @@ export default function CompareCalendar() {
   const cal1 = calendars.find((c) => c.id === selected1);
   const cal2 = calendars.find((c) => c.id === selected2);
 
-  const isSisqualHourly =
-    [r1, r2].some((r) =>
-      r && (
-        r.weightedMinimumCoverageRate !== undefined ||
-        r.preferredDayOffWorkedDays !== undefined ||
-        Array.isArray(r.teamCoverageBreakdown)
-      )
-    );
-
   const isHourly =
     inferScheduleType(cal1?.metadata) === "Horas" ||
     inferScheduleType(cal2?.metadata) === "Horas" ||
@@ -326,9 +218,7 @@ export default function CompareCalendar() {
       )
     );
 
-  const orderedMetrics = isSisqualHourly
-    ? sisqualHourlyMetrics
-    : isHourly
+  const orderedMetrics = isHourly
     ? [
         "workDaysTargetDeviation",
         "vacationDaysQuotaDeviation",
@@ -410,7 +300,7 @@ export default function CompareCalendar() {
                   const val1 = isNull1 ? 0 : raw1;
                   const val2 = isNull2 ? 0 : raw2;
                   const diff = val2 - val1;
-                  const isPercentage = percentMetrics.has(metric);
+                  const isPercentage = metric === "shiftBalance" || metric === "teamSatisfactionLevel" || metric === "staffingCoverageRate";
 
                   const normalize = (v) => metric === "shiftBalance" ? parseFloat((v * 2).toFixed(2)) : v;
 
@@ -422,6 +312,8 @@ export default function CompareCalendar() {
                   const diffDisplay = (isNull1 || isNull2) ? "N/A" :
                     normalizedDiff === 0 ? "Equal" :
                     isPercentage ? `${normalizedDiff > 0 ? "+" : ""}${parseFloat(normalizedDiff).toFixed(2)}%` : `${diff > 0 ? "+" : ""}${diff}`;
+
+                  const higherIsBetter = new Set(["staffingCoverageRate", "teamSatisfactionLevel", "shiftBalance"]);
 
                   const valueColor = (val, isNullVal) => {
                     if (isNullVal || isPercentage) return "#000";

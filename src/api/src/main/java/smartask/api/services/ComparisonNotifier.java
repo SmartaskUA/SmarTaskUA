@@ -7,7 +7,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Update;
 import org.bson.Document;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,9 +50,9 @@ public class ComparisonNotifier {
             // ✅ Envia para o tópico WebSocket
             messagingTemplate.convertAndSend("/topic/comparison/all", payload);
 
-            // Keep the result available for polling fallback and avoid resending it.
-            mongoTemplate.updateMulti(query, new Update().set("status", "sent"), "verifications");
-            mongoTemplate.updateMulti(query, new Update().set("status", "sent"), "comparisons");
+            // ✅ Remove resultados enviados
+            mongoTemplate.remove(query, "verifications");
+            mongoTemplate.remove(query, "comparisons");
         }
     }
 }

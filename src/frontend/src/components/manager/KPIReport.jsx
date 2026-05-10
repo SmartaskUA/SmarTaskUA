@@ -137,7 +137,7 @@ const metricInfo = {
   weightedMinimumCoverageRate: {
     label: "Weighted Minimum Coverage",
     description:
-      "Fulfilled required staffing divided by total required staffing across all 30-minute team slots.",
+      "Fulfilled required headcount divided by total required headcount across all 30-minute team slots.",
   },
   criticalUnderfilledPeriods: {
     label: "Critical Underfilled Slots",
@@ -152,27 +152,27 @@ const metricInfo = {
   totalMinimumGap: {
     label: "Total Minimum Gap",
     description:
-      "Total missing staff across all required 30-minute team slots.",
+      "Total missing headcount across all required 30-minute team slots.",
   },
   totalOverstaff: {
     label: "Total Overstaff",
     description:
-      "Total of staff exceeding minimum requirements across all required 30-minute team slots.",
+      "Total surplus headcount above minimum requirements across all required 30-minute team slots.",
   },
   intraDayTeamSwitches: {
     label: "Intra-Day Team Switches",
     description:
-      "Number of times staff switch teams between consecutive assigned segments inside the same day.",
+      "Number of times employees switch teams between consecutive assigned segments inside the same day.",
   },
   primaryTeamUtilizationRate: {
     label: "Primary Team Utilization",
     description:
-      "Share of assigned hours worked in each staff member's strongest-ranked team.",
+      "Share of assigned hours worked in each employee's strongest-ranked team.",
   },
   durationComplianceRate: {
     label: "Duration Compliance",
     description:
-      "Share of staff-days that respect the daily duration or exact time rule defined in schedule_input.csv.",
+      "Share of employee-days that respect the daily duration or exact time rule defined in schedule_input.csv.",
   },
   preferredDayOffPreservationRate: {
     label: "Preferred Day-Off Preservation",
@@ -233,14 +233,7 @@ const sisqualSummaryMetrics = [
   "criticalUnderfilledPeriods",
   "maxPeriodShortage",
   "totalMinimumGap",
-];
-
-const sisqualAssignmentMetrics = [
-  "intraDayTeamSwitches",
-  "fragmentedWorkDays",
-  "primaryTeamUtilizationRate",
-  "nonPrimaryTeamHours",
-  "durationComplianceRate",
+  "demandedHoursComplianceRate",
 ];
 
 const optionalMetrics = new Set(["fixedDaysOffViolations"]);
@@ -251,7 +244,7 @@ const percentMetrics = new Set([
   "weightedMinimumCoverageRate",
   "primaryTeamUtilizationRate",
   "durationComplianceRate",
-  "preferredDayOffPreservationRate",
+  "demandedHoursComplianceRate",
 ]);
 const sisqualIssueMetrics = [
   "criticalUnderfilledPeriods",
