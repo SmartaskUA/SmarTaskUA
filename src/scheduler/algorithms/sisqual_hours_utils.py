@@ -52,6 +52,17 @@ OBJECTIVE_SOFT_TYPES = {
         "objective5",
         "skill_priority",
     },
+    "skill_switch_minimization": {
+        # Secondary, lexicographic cleanup objective for the Sisqual MD5 solvers.
+        # It is parsed separately from the weighted MD5 objectives because it must
+        # not trade off against Objective 1-5 in the same weighted sum.
+        "minimize_skill_switches",
+        "minimize-skill-switches",
+        "skill_switch_penalty",
+        "skill-switch-penalty",
+        "minimize_role_changes",
+        "minimize-role-changes",
+    },
 }
 OBJECTIVE2_GOALS = {
     "objective2",
@@ -527,12 +538,47 @@ def build_objective1_priority_index(
 
 def build_objective1_priority_coefficients(
     coverage_priority_tiers: List[Dict],
+    dominance_base: int = 3,
 ) -> Dict[int, int]:
+    """Return hierarchy weights where each tier dominates two of the next tier.
+
+    ``dominance_base=3`` means priority 1 has more objective value than two
+    priority-2 units, priority 2 has more value than two priority-3 units, and
+    so on. This keeps the JSON ``priorityHierarchy`` meaningful without using
+    very large big-M coefficients.
+    """
+
     num_tiers = len(coverage_priority_tiers)
+    base = max(3, int(dominance_base))
     return {
-        tier_index: 10 ** (num_tiers - tier_index - 1)
+        tier_index: base ** (num_tiers - tier_index - 1)
         for tier_index in range(num_tiers)
     }
+
+
+def build_objective5_priority_penalties(
+    coverage_priority_tiers: List[Dict],
+    dominance_base: int = 3,
+) -> Dict[int, int]:
+    """Return assignment penalties derived from the priority hierarchy.
+
+    The best tier has zero penalty. Dropping from tier 1 to tier 2 costs the
+    tier-1 hierarchy weight, dropping from tier 2 to tier 3 adds the tier-2
+    hierarchy weight, etc. This makes one downgrade at a high priority more
+    important than two downgrades at the next lower priority.
+    """
+
+    hierarchy_weights = build_objective1_priority_coefficients(
+        coverage_priority_tiers,
+        dominance_base=dominance_base,
+    )
+    penalties = {}
+    running_penalty = 0
+    for tier_index in range(len(coverage_priority_tiers)):
+        penalties[tier_index] = running_penalty
+        running_penalty += hierarchy_weights[tier_index]
+    penalties[len(coverage_priority_tiers)] = running_penalty
+    return penalties
 
 
 def build_objective5_skill_priority(
@@ -715,12 +761,13 @@ def parse_soft_constraint_weight(constraint: Dict) -> float:
     return 0.0
 
 
-def parse_soft_objectives(problem: Dict) -> Tuple[float, Dict[Tuple[str, int], float], float, float, float]:
+def parse_soft_objectives(problem: Dict) -> Tuple[float, Dict[Tuple[str, int], float], float, float, float, float]:
     objective1_weight = 0.0
     objective2_weight_map = {}
     objective3_weight = 0.0
     objective4_weight = 0.0
     objective5_weight = 0.0
+    skill_switch_weight = 0.0
 
     for constraint in problem.get("constraints", {}).get("soft", []):
         if not constraint.get("enabled", True):
@@ -732,6 +779,12 @@ def parse_soft_objectives(problem: Dict) -> Tuple[float, Dict[Tuple[str, int], f
         ).strip().lower()
         params = constraint.get("params", {}) or {}
         weight = parse_soft_constraint_weight(constraint)
+        if type_name in OBJECTIVE_SOFT_TYPES["skill_switch_minimization"]:
+            # Presence + enabled=true activates the second solve phase. A missing
+            # weight still counts as active; the numeric value is only used as a
+            # boolean/integer validation flag by the solvers.
+            skill_switch_weight = weight if weight > 0 else 1.0
+            continue
         if weight <= 0:
             continue
 
@@ -760,7 +813,47 @@ def parse_soft_objectives(problem: Dict) -> Tuple[float, Dict[Tuple[str, int], f
         elif type_name in OBJECTIVE_SOFT_TYPES["skill_priority_assignment"]:
             objective5_weight = weight
 
-    return objective1_weight, objective2_weight_map, objective3_weight, objective4_weight, objective5_weight
+    return (
+        objective1_weight,
+        objective2_weight_map,
+        objective3_weight,
+        objective4_weight,
+        objective5_weight,
+        skill_switch_weight,
+    )
+
+
+def parse_skill_switch_phase2_max_seconds(problem: Dict, default_seconds: int = 30) -> int:
+    for constraint in problem.get("constraints", {}).get("soft", []):
+        if not constraint.get("enabled", True):
+            continue
+        type_name = str(
+            constraint.get("type")
+            or constraint.get("id")
+            or ""
+        ).strip().lower()
+        if type_name not in OBJECTIVE_SOFT_TYPES["skill_switch_minimization"]:
+            continue
+        params = constraint.get("params", {}) or {}
+        for key in (
+            "phase2MaxSeconds",
+            "phase2_max_seconds",
+            "maxSeconds",
+            "max_seconds",
+            "timeLimitSeconds",
+            "time_limit_seconds",
+        ):
+            value = params.get(key, constraint.get(key))
+            if value is None:
+                continue
+            try:
+                seconds = int(float(value))
+            except (TypeError, ValueError):
+                continue
+            if seconds > 0:
+                return seconds
+        return default_seconds
+    return default_seconds
 
 
 def parse_json_mapping(value, label: str = "mapping") -> Dict:

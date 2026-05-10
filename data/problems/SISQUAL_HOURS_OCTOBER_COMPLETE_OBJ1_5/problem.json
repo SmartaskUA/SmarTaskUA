@@ -621,6 +621,11 @@
         "type": "skill_priority_assignment",
         "weight": 10,
         "enabled": true
+      },
+      {
+        "id": "minimize-skill-switches",
+        "type": "minimize_skill_switches",
+        "enabled": true
       }
     ],
     "advanced": {

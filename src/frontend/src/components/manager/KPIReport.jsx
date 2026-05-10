@@ -174,11 +174,6 @@ const metricInfo = {
     description:
       "Share of staff-days that respect the daily duration or exact time rule defined in schedule_input.csv.",
   },
-  preferredDayOffWorkedDays: {
-    label: "Preferred Day-Off Worked Days",
-    description:
-      "Number of template `DO` days that still ended up assigned. This is the direct KPI counterpart of objective 4.",
-  },
   preferredDayOffPreservationRate: {
     label: "Preferred Day-Off Preservation",
     description:
@@ -261,7 +256,6 @@ const percentMetrics = new Set([
 const sisqualIssueMetrics = [
   "criticalUnderfilledPeriods",
   "totalMinimumGap",
-  "preferredDayOffWorkedDays",
   "consecutiveDaysViolations",
   "minRestViolations",
   "availabilityViolations",
@@ -566,7 +560,7 @@ function nativeSkillColor(skill) {
 }
 
 const employeeAssignmentInfo = {
-  workByTeam: "Shows what percentage of this employee's scheduled hours were spent on each team.",
+  workByTeam: "Shows what percentage of this employee's scheduled hours were spent on each skill.",
   employee: "Employee name and internal ID.",
   workedHours: "Total number of hours assigned to this employee in the generated schedule.",
   primaryUtilization: "Percentage of assigned hours worked on the employee's primary or strongest team.",
@@ -612,7 +606,34 @@ function InfoLabel({ children, info, align = "left" }) {
 
 function getEmployeeTeamBreakdown(employee) {
   if (Array.isArray(employee?.teamWorkBreakdown) && employee.teamWorkBreakdown.length > 0) {
-    return employee.teamWorkBreakdown;
+    return employee.teamWorkBreakdown
+      .map((item) => {
+        const team = item.team || item.skill || "Unknown";
+        const hours = Number(item.hours || 0);
+        const percentage = Number(item.percentage || item.pct || 0);
+        return {
+          team,
+          hours: Number(hours.toFixed(2)),
+          percentage: Number(percentage.toFixed(2)),
+        };
+      })
+      .filter((item) => item.hours > 0 || item.percentage > 0);
+  }
+
+  const percentageSource = employee?.teamWorkPercentages || employee?.skill_usage_pct;
+  if (percentageSource && typeof percentageSource === "object") {
+    const workedHours = Number(employee?.workedHours || 0);
+    return Object.entries(percentageSource)
+      .map(([team, rawPct]) => {
+        const percentage = Number(rawPct || 0);
+        return {
+          team,
+          hours: Number(((workedHours * percentage) / 100).toFixed(2)),
+          percentage: Number(percentage.toFixed(2)),
+        };
+      })
+      .filter((item) => item.hours > 0 || item.percentage > 0)
+      .sort((a, b) => b.percentage - a.percentage || a.team.localeCompare(b.team));
   }
 
   const workedHours = Number(employee?.workedHours || 0);
@@ -656,7 +677,7 @@ function EmployeeTeamBreakdown({ employee }) {
       }}
     >
       <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" mb={0.75}>
-        <InfoLabel info={employeeAssignmentInfo.workByTeam}>Work by team</InfoLabel>
+        <InfoLabel info={employeeAssignmentInfo.workByTeam}>Work by skill</InfoLabel>
       </Typography>
       <Box sx={{ display: "flex", height: 8, borderRadius: 4, overflow: "hidden", mb: 0.75, bgcolor: "action.selected" }}>
         {breakdown.map((item) => (
@@ -918,16 +939,15 @@ function NativeWorkloadUtilisationPanel({ employeeRows }) {
   const maxHours = Math.max(...workedHours, 0);
   const minHours = Math.min(...workedHours, 0);
   const averageHours = employeeRows.length ? totalHours / employeeRows.length : 0;
-  const idleThreshold = averageHours * 0.5;
-  const idleEmployees = employeeRows.filter((employee) => Number(employee.workedHours || 0) < idleThreshold).length;
-  const overloadedEmployees = employeeRows.filter((employee) => Number(employee.demandedHoursComplianceRate || 0) < 75).length;
-  const sortedEmployees = [...employeeRows].sort((a, b) => Number(b.workedHours || 0) - Number(a.workedHours || 0));
-
-  const utilisationTone = (hours) => {
-    if (hours < idleThreshold) return { bar: "#854F0B", bg: "#FAEEDA", text: "#633806", label: "low" };
-    if (hours > averageHours * 1.25) return { bar: "#185FA5", bg: "#E6F1FB", text: "#0C447C", label: "high" };
-    return { bar: "#3B6D11", bg: "#EAF3DE", text: "#27500A", label: "balanced" };
-  };
+  const employeeSkillRows = employeeRows
+    .map((employee) => ({
+      employee,
+      breakdown: getEmployeeTeamBreakdown(employee),
+    }))
+    .sort((a, b) => Number(b.employee.workedHours || 0) - Number(a.employee.workedHours || 0));
+  const skillsUsed = new Set(
+    employeeSkillRows.flatMap((row) => row.breakdown.map((item) => item.team))
+  ).size;
 
   return (
     <Box mt={4}>
@@ -938,34 +958,28 @@ function NativeWorkloadUtilisationPanel({ employeeRows }) {
         <MetricPanel label="Total worked hours" value={Number(totalHours.toFixed(2))} />
         <MetricPanel label="Average hours" value={Number(averageHours.toFixed(2))} />
         <MetricPanel label="Max-min gap" value={Number((maxHours - minHours).toFixed(2))} />
-        <MetricPanel
-          label="Low-load employees"
-          value={idleEmployees}
-          color={idleEmployees > 0 ? "warning.main" : "success.main"}
-        />
+        <MetricPanel label="Skills used" value={skillsUsed} />
       </Box>
 
       <Paper elevation={0} sx={{ p: 1.5, border: "0.5px solid", borderColor: "divider", borderRadius: 1 }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, mb: 1, flexWrap: "wrap" }}>
           <Typography variant="caption" color="text.secondary" fontWeight={500}>
-            Per-employee utilisation
+            Per-employee time by skill
           </Typography>
           <Chip
-            label={`${overloadedEmployees} below 75% demanded-hour compliance`}
+            label="percent of each worker's assigned time"
             size="small"
             sx={{
               height: 20,
               fontSize: 10,
-              bgcolor: overloadedEmployees > 0 ? "#FAEEDA" : "#EAF3DE",
-              color: overloadedEmployees > 0 ? "#633806" : "#27500A",
+              bgcolor: "#F1EFE8",
+              color: "#5F5E5A",
             }}
           />
         </Box>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-          {sortedEmployees.map((employee) => {
+          {employeeSkillRows.map(({ employee, breakdown }) => {
             const hours = Number(employee.workedHours || 0);
-            const pct = maxHours > 0 ? Math.round((hours / maxHours) * 100) : 0;
-            const tone = utilisationTone(hours);
 
             return (
               <Box
@@ -982,33 +996,90 @@ function NativeWorkloadUtilisationPanel({ employeeRows }) {
                   bgcolor: "background.paper",
                 }}
               >
-                <Box sx={{ minWidth: 190, overflow: "hidden" }}>
-                  <Typography variant="caption" fontWeight={600} noWrap>
+                <Box
+                  sx={{
+                    flex: "0 0 190px",
+                    width: 190,
+                    minWidth: 0,
+                    overflow: "hidden",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    fontWeight={600}
+                    sx={{
+                      display: "block",
+                      lineHeight: 1.25,
+                      whiteSpace: "normal",
+                      overflowWrap: "anywhere",
+                    }}
+                  >
                     {employee.name || employee.employeeId}
                   </Typography>
                   <Typography variant="caption" color="text.secondary" display="block" noWrap>
                     {employee.employeeId}
                   </Typography>
                 </Box>
-                <Box sx={{ flex: 1, height: 6, borderRadius: 3, bgcolor: "action.selected", overflow: "hidden" }}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Box
                     sx={{
-                      height: "100%",
-                      width: `${pct}%`,
-                      bgcolor: tone.bar,
-                      borderRadius: 3,
-                      transition: "width .3s ease",
+                      display: "flex",
+                      height: 8,
+                      borderRadius: 4,
+                      bgcolor: "action.selected",
+                      overflow: "hidden",
+                      mb: 0.65,
                     }}
-                  />
+                  >
+                    {breakdown.length > 0 ? (
+                      breakdown.map((item) => {
+                        const pct = Math.max(0, Math.min(Number(item.percentage || 0), 100));
+                        return (
+                          <Box
+                            key={item.team}
+                            sx={{
+                              width: `${pct}%`,
+                              minWidth: pct > 0 ? 3 : 0,
+                              bgcolor: nativeSkillColor(item.team).bar,
+                            }}
+                            title={`${item.team}: ${pct.toFixed(2)}% (${Number(item.hours || 0).toFixed(2)}h)`}
+                          />
+                        );
+                      })
+                    ) : (
+                      <Box sx={{ width: "100%", bgcolor: "action.disabledBackground" }} />
+                    )}
+                  </Box>
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                    {breakdown.map((item) => {
+                      const color = nativeSkillColor(item.team);
+                      return (
+                        <Box
+                          key={item.team}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.4,
+                            px: 0.75,
+                            py: 0.2,
+                            borderRadius: 1,
+                            bgcolor: color.bg,
+                          }}
+                        >
+                          <Typography variant="caption" fontWeight={600} sx={{ color: color.text, fontSize: 10 }}>
+                            {item.team}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: color.text, fontSize: 10 }}>
+                            {Number(item.percentage || 0).toFixed(2)}%
+                          </Typography>
+                        </Box>
+                      );
+                    })}
+                  </Box>
                 </Box>
                 <Typography variant="caption" color="text.secondary" sx={{ minWidth: 64, textAlign: "right" }}>
                   {hours}h
                 </Typography>
-                <Chip
-                  label={tone.label}
-                  size="small"
-                  sx={{ height: 18, minWidth: 58, fontSize: 10, bgcolor: tone.bg, color: tone.text }}
-                />
               </Box>
             );
           })}
@@ -1111,12 +1182,6 @@ const renderSisqualReport = (metrics) => {
                 suffix={metricInfo.availabilityViolations?.description}
                 tone={Number(metrics.availabilityViolations || 0) > 0 ? "error" : "success"}
               />
-              <StatusRow
-                label="Preferred day-offs remain unworked"
-                value={metrics.preferredDayOffWorkedDays ?? 0}
-                suffix={metricInfo.preferredDayOffWorkedDays?.description}
-                tone={Number(metrics.preferredDayOffWorkedDays || 0) > 0 ? "error" : "success"}
-              />
             </Stack>
 
             <Divider sx={{ my: 1.5 }} />
@@ -1180,12 +1245,6 @@ const renderSisqualReport = (metrics) => {
                 label="Preferred day-off preservation"
                 value={`${Number(metrics.preferredDayOffPreservationRate || 0).toFixed(2)}%`}
                 info={metricInfo.preferredDayOffPreservationRate?.description}
-              />
-              <MetricPanel
-                label="Preferred day-off worked days"
-                value={metrics.preferredDayOffWorkedDays ?? 0}
-                color={Number(metrics.preferredDayOffWorkedDays || 0) > 0 ? "error.main" : "success.main"}
-                info={metricInfo.preferredDayOffWorkedDays?.description}
               />
               <MetricPanel
                 label="Skill priority penalty"
