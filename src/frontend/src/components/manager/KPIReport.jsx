@@ -927,32 +927,17 @@ function EmployeeAssignmentQualityPanel({ employeeRows }) {
 function NativeWorkloadUtilisationPanel({ employeeRows }) {
   if (!employeeRows.length) return null;
 
-  const workedHours = employeeRows.map((employee) => Number(employee.workedHours || 0));
-  const totalHours = workedHours.reduce((sum, value) => sum + value, 0);
-  const maxHours = Math.max(...workedHours, 0);
-  const minHours = Math.min(...workedHours, 0);
-  const averageHours = employeeRows.length ? totalHours / employeeRows.length : 0;
   const employeeSkillRows = employeeRows
     .map((employee) => ({
       employee,
       breakdown: getEmployeeTeamBreakdown(employee),
     }))
     .sort((a, b) => Number(b.employee.workedHours || 0) - Number(a.employee.workedHours || 0));
-  const skillsUsed = new Set(
-    employeeSkillRows.flatMap((row) => row.breakdown.map((item) => item.team))
-  ).size;
 
   return (
     <Box mt={4}>
       <Divider sx={{ my: 1.5 }} />
       <SectionTitle>Workload Utilisation</SectionTitle>
-
-      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 1, mb: 1.5 }}>
-        <MetricPanel label="Total worked hours" value={Number(totalHours.toFixed(2))} />
-        <MetricPanel label="Average hours" value={Number(averageHours.toFixed(2))} />
-        <MetricPanel label="Max-min gap" value={Number((maxHours - minHours).toFixed(2))} />
-        <MetricPanel label="Skills used" value={skillsUsed} />
-      </Box>
 
       <Paper elevation={0} sx={{ p: 1.5, border: "0.5px solid", borderColor: "divider", borderRadius: 1 }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, mb: 1, flexWrap: "wrap" }}>
