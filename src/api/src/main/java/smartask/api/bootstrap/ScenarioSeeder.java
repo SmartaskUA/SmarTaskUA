@@ -77,12 +77,14 @@ public class ScenarioSeeder {
         // createScenarioWithCrossing(4, 24, 0.20);
         // createScenarioWithCrossing(8, 48, 0.20);
         // createScenarioWithCrossing(16, 96, 0.20);
+        // createScenarioWithCrossing(32, 192, 0.20);
 
         // 3-shift scenarios
         createScenarioWithCrossing(2, 24, 0.20);
         createScenarioWithCrossing(4, 48, 0.20);
         createScenarioWithCrossing(8, 96, 0.20);
         createScenarioWithCrossing(16, 192, 0.20);
+        createScenarioWithCrossing(32, 384, 0.20);
 
         loadTemplatesIntoDatabase();
 
@@ -186,10 +188,10 @@ public class ScenarioSeeder {
         System.out.printf("%nInitializing %s -> %d teams, %d employees, cross=%.0f%%%n",
                 groupName, numTeams, numEmployees, crossRatio * 100);
 
-        // Create teams A..(A+numTeams-1)
+        // Create teams A..(A+numTeams-1), supporting multi-char labels beyond Z (AA, AB, ...)
         List<Team> teams = new ArrayList<>();
         for (int t = 0; t < numTeams; t++) {
-            String teamName = "Equipa " + (char) ('A' + t);
+            String teamName = "Equipa " + teamLabel(t);
             teams.add(createOrGetTeam(teamName, groupName));
         }
 
@@ -243,6 +245,21 @@ public class ScenarioSeeder {
     // ----------------------------------------------------------------
     // Helpers
     // ----------------------------------------------------------------
+
+    /**
+     * Convert a 0-based team index to a label: A, B, ..., Z, AA, AB, ..., AF, ...
+     * Mirrors Python _team_label() in minimum_generation_template.py.
+     */
+    private static String teamLabel(int t) {
+        StringBuilder label = new StringBuilder();
+        int n = t;
+        do {
+            label.insert(0, (char) ('A' + n % 26));
+            n = n / 26 - 1;
+        } while (n >= 0);
+        return label.toString();
+    }
+
     private Team createOrGetTeam(String name, String groupName) {
         return teamService.getTeams().stream()
                 .filter(t -> name.equals(t.getName()) && groupName.equals(t.getGroupName()))
