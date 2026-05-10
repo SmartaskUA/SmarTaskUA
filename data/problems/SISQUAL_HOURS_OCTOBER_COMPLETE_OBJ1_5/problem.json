@@ -2,10 +2,10 @@
   "schemaVersion": "2.2",
   "problemType": "employee_scheduling",
   "metadata": {
-    "problemId": "SISQUAL_OCTOBER_2025",
-    "createdAt": "2026-02-02T16:00:00Z",
-    "description": "Sisqual October 2025 employee scheduling - Competency-based model with 15 employees assigned to 3 teams with competency levels (Storage, Checkout, Management)",
-    "source": "sisqual_example"
+    "problemId": "SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_5",
+    "createdAt": "2026-04-14T12:00:00Z",
+    "description": "Full BFarias Sisqual problem: 14 employees, 3 skills (Storage/Management/Checkout), weekday 08:30-22:00 / weekend 11:00-21:00. Exercises all 5 objectives including Desafio 3 multi-skill assignment priority.",
+    "source": "BFarias_Doc_Sisqual.pdf + BFarias_Problema2.pdf"
   },
   "features": {
     "useWorkPeriodBasedScheduling": true,
@@ -50,435 +50,272 @@
     "competency": [
       {
         "id": "20072412",
-        "name": "Emp_20072412",
+        "name": "Manager Level 1",
         "teams": [
           {
             "code": "Management",
-            "name": "Management Team",
             "level": 1
           },
           {
             "code": "Employees",
-            "name": "Employees Team",
             "level": 6
           }
         ],
-        "contractType": "fullTime_8h",
-        "contractPeriods": [
-          {
-            "start": "2024-01-01",
-            "end": null,
-            "contractType": "fullTime_8h"
-          }
-        ]
+        "contractType": "fullTime_8h"
       },
       {
         "id": "20066543",
-        "name": "Emp_20066543",
+        "name": "Manager Level 2",
         "teams": [
           {
             "code": "Management",
-            "name": "Management Team",
             "level": 2
           },
           {
             "code": "Employees",
-            "name": "Employees Team",
             "level": 6
           }
         ],
-        "contractType": "fullTime_8h",
-        "contractPeriods": [
-          {
-            "start": "2024-01-01",
-            "end": null,
-            "contractType": "fullTime_8h"
-          }
-        ]
+        "contractType": "fullTime_8h"
       },
       {
         "id": "20067009",
-        "name": "Emp_20067009",
+        "name": "Cashier-L1 / Manager-L3 (multi-skill)",
         "teams": [
           {
             "code": "Checkout",
-            "name": "Checkout Team",
             "level": 1
           },
           {
             "code": "Management",
-            "name": "Management Team",
             "level": 3
           },
           {
             "code": "Employees",
-            "name": "Employees Team",
             "level": 6
           }
         ],
-        "contractType": "partTime_5h",
-        "contractPeriods": [
-          {
-            "start": "2024-01-01",
-            "end": null,
-            "contractType": "partTime_5h"
-          }
-        ]
+        "contractType": "partTime_5h"
       },
       {
         "id": "20054956",
-        "name": "Emp_20054956",
+        "name": "Cashier-L2 / Manager-L4 (multi-skill)",
         "teams": [
           {
             "code": "Checkout",
-            "name": "Checkout Team",
             "level": 2
           },
           {
             "code": "Management",
-            "name": "Management Team",
             "level": 4
           },
           {
             "code": "Employees",
-            "name": "Employees Team",
             "level": 6
           }
         ],
-        "contractType": "partTime_4h",
-        "contractPeriods": [
-          {
-            "start": "2024-01-01",
-            "end": null,
-            "contractType": "partTime_4h"
-          }
-        ]
+        "contractType": "partTime_4h"
       },
       {
         "id": "20056459",
-        "name": "Emp_20056459",
+        "name": "Cashier Level 1 (A)",
         "teams": [
           {
             "code": "Checkout",
-            "name": "Checkout Team",
             "level": 1
           },
           {
             "code": "Employees",
-            "name": "Employees Team",
             "level": 6
           }
         ],
-        "contractType": "partTime_4h",
-        "contractPeriods": [
-          {
-            "start": "2024-01-01",
-            "end": null,
-            "contractType": "partTime_4h"
-          }
-        ]
+        "contractType": "partTime_4h"
       },
       {
         "id": "20062688",
-        "name": "Emp_20062688",
+        "name": "Cashier-L3 / Manager-L4 (multi-skill)",
         "teams": [
           {
             "code": "Checkout",
-            "name": "Checkout Team",
             "level": 3
           },
           {
             "code": "Management",
-            "name": "Management Team",
             "level": 4
           },
           {
             "code": "Employees",
-            "name": "Employees Team",
             "level": 6
           }
         ],
-        "contractType": "partTime_4h",
-        "contractPeriods": [
-          {
-            "start": "2024-01-01",
-            "end": null,
-            "contractType": "partTime_4h"
-          }
-        ]
+        "contractType": "partTime_4h"
       },
       {
         "id": "20067696",
-        "name": "Emp_20067696",
+        "name": "Cashier Level 2 (A)",
         "teams": [
           {
             "code": "Checkout",
-            "name": "Checkout Team",
             "level": 2
           },
           {
             "code": "Employees",
-            "name": "Employees Team",
             "level": 6
           }
         ],
-        "contractType": "partTime_4h",
-        "contractPeriods": [
-          {
-            "start": "2024-01-01",
-            "end": null,
-            "contractType": "partTime_4h"
-          }
-        ]
+        "contractType": "partTime_4h"
       },
       {
         "id": "20058959",
-        "name": "Emp_20058959",
+        "name": "Cashier Level 2 (B)",
         "teams": [
           {
             "code": "Checkout",
-            "name": "Checkout Team",
             "level": 2
           },
           {
             "code": "Employees",
-            "name": "Employees Team",
             "level": 6
           }
         ],
-        "contractType": "partTime_4h",
-        "contractPeriods": [
-          {
-            "start": "2024-01-01",
-            "end": null,
-            "contractType": "partTime_4h"
-          }
-        ]
+        "contractType": "partTime_5h"
       },
       {
         "id": "20068397",
-        "name": "Emp_20068397",
+        "name": "Cashier Level 2 (C)",
         "teams": [
           {
             "code": "Checkout",
-            "name": "Checkout Team",
             "level": 2
           },
           {
             "code": "Employees",
-            "name": "Employees Team",
             "level": 6
           }
         ],
-        "contractType": "partTime_4h",
-        "contractPeriods": [
-          {
-            "start": "2024-01-01",
-            "end": null,
-            "contractType": "partTime_4h"
-          }
-        ]
+        "contractType": "partTime_4h"
       },
       {
         "id": "20038706",
-        "name": "Emp_20038706",
+        "name": "Cashier Level 2 (D)",
         "teams": [
           {
             "code": "Checkout",
-            "name": "Checkout Team",
             "level": 2
           },
           {
             "code": "Employees",
-            "name": "Employees Team",
             "level": 6
           }
         ],
-        "contractType": "partTime_5h",
-        "contractPeriods": [
-          {
-            "start": "2024-01-01",
-            "end": null,
-            "contractType": "partTime_5h"
-          }
-        ]
+        "contractType": "partTime_5h"
       },
       {
         "id": "20066338",
-        "name": "Emp_20066338",
+        "name": "Cashier Level 3",
         "teams": [
           {
             "code": "Checkout",
-            "name": "Checkout Team",
             "level": 3
           },
           {
             "code": "Employees",
-            "name": "Employees Team",
             "level": 6
           }
         ],
-        "contractType": "partTime_5h",
-        "contractPeriods": [
-          {
-            "start": "2024-01-01",
-            "end": null,
-            "contractType": "partTime_5h"
-          }
-        ]
+        "contractType": "partTime_5h"
       },
       {
         "id": "900027719",
-        "name": "Emp_900027719",
+        "name": "Cashier Level 4 (A)",
         "teams": [
           {
             "code": "Checkout",
-            "name": "Checkout Team",
             "level": 4
           },
           {
             "code": "Employees",
-            "name": "Employees Team",
             "level": 6
           }
         ],
-        "contractType": "partTime_5h",
-        "contractPeriods": [
-          {
-            "start": "2024-01-01",
-            "end": null,
-            "contractType": "partTime_5h"
-          }
-        ]
+        "contractType": "partTime_5h"
       },
       {
         "id": "20051291",
-        "name": "Emp_20051291",
+        "name": "Storage Warehouse - Level 1",
         "teams": [
           {
             "code": "Storage",
-            "name": "Storage Team",
             "level": 1
           },
           {
             "code": "Employees",
-            "name": "Employees Team",
             "level": 6
           }
         ],
-        "contractType": "partTime_7h",
-        "contractPeriods": [
-          {
-            "start": "2024-01-01",
-            "end": null,
-            "contractType": "partTime_7h"
-          }
-        ]
+        "contractType": "partTime_7h"
       },
       {
         "id": "20055066",
-        "name": "Emp_20055066",
+        "name": "Cashier Level 4 (B)",
         "teams": [
           {
             "code": "Checkout",
-            "name": "Checkout Team",
             "level": 4
           },
           {
             "code": "Employees",
-            "name": "Employees Team",
             "level": 6
           }
         ],
-        "contractType": "partTime_4h",
-        "contractPeriods": [
-          {
-            "start": "2024-01-01",
-            "end": null,
-            "contractType": "partTime_4h"
-          }
-        ]
+        "contractType": "partTime_4h"
       },
       {
         "id": "900027718",
-        "name": "Emp_900027718",
+        "name": "Cashier Level 5",
         "teams": [
           {
             "code": "Checkout",
-            "name": "Checkout Team",
             "level": 5
           },
           {
             "code": "Employees",
-            "name": "Employees Team",
             "level": 6
           }
         ],
-        "contractType": "partTime_4h",
-        "contractPeriods": [
-          {
-            "start": "2024-01-01",
-            "end": null,
-            "contractType": "partTime_4h"
-          }
-        ]
+        "contractType": "partTime_4h"
       }
     ]
   },
   "demand": {
-    "workPeriodModel": "fixed",
     "dataFile": "demand.csv",
     "organizationalUnits": {
       "teams": [
         {
           "code": "Storage",
-          "name": "Storage Team"
-        },
-        {
-          "code": "Checkout",
-          "name": "Checkout Team"
+          "name": "Storage Team (ALM)"
         },
         {
           "code": "Management",
-          "name": "Management Team"
+          "name": "Management Team (EG)"
+        },
+        {
+          "code": "Checkout",
+          "name": "Checkout Team (CAJ)"
         },
         {
           "code": "Employees",
-          "name": "Employees Team"
+          "name": "Employees (Quadro)"
         }
       ]
     },
     "workPeriods": [
       {
         "code": "STORAGE_0830_1530",
-        "name": "Storage 08:30-15:30",
+        "name": "Storage 08:30-15:30 (ALM warehouse shift)",
         "timeRange": {
           "start": "08:30",
           "end": "15:30"
-        }
-      },
-      {
-        "code": "CHECKOUT_1000_1100",
-        "name": "Checkout 10:00-11:00",
-        "timeRange": {
-          "start": "10:00",
-          "end": "11:00"
-        }
-      },
-      {
-        "code": "CHECKOUT_1100_2100",
-        "name": "Checkout 11:00-21:00",
-        "timeRange": {
-          "start": "11:00",
-          "end": "21:00"
-        }
-      },
-      {
-        "code": "CHECKOUT_2100_2200",
-        "name": "Checkout 21:00-22:00",
-        "timeRange": {
-          "start": "21:00",
-          "end": "22:00"
         }
       },
       {
@@ -516,6 +353,30 @@
       {
         "code": "MANAGEMENT_2100_2200",
         "name": "Management 21:00-22:00",
+        "timeRange": {
+          "start": "21:00",
+          "end": "22:00"
+        }
+      },
+      {
+        "code": "CHECKOUT_1000_1100",
+        "name": "Checkout 10:00-11:00",
+        "timeRange": {
+          "start": "10:00",
+          "end": "11:00"
+        }
+      },
+      {
+        "code": "CHECKOUT_1100_2100",
+        "name": "Checkout 11:00-21:00",
+        "timeRange": {
+          "start": "11:00",
+          "end": "21:00"
+        }
+      },
+      {
+        "code": "CHECKOUT_2100_2200",
+        "name": "Checkout 21:00-22:00",
         "timeRange": {
           "start": "21:00",
           "end": "22:00"
@@ -629,38 +490,80 @@
     "priorityHierarchy": [
       {
         "rank": 1,
-        "team": "Management",
-        "description": "Management Team - Highest priority"
+        "team": "Storage",
+        "minLevel": 1,
+        "maxLevel": null,
+        "label": "RESP ALMACEN N>=1 — Warehouse supervisor, level >= 1"
       },
       {
         "rank": 2,
-        "team": "Checkout",
-        "description": "Checkout Team - Medium priority"
+        "team": "Management",
+        "minLevel": 1,
+        "maxLevel": 1,
+        "label": "RESP - EQUIPO GESTION N=1 — Management supervisor, level 1"
       },
       {
         "rank": 3,
-        "team": "Storage",
-        "description": "Storage Team - Standard priority"
+        "team": "Checkout",
+        "minLevel": 1,
+        "maxLevel": 1,
+        "label": "CAJA N=1 — Cashier, level 1"
       },
       {
         "rank": 4,
+        "team": "Management",
+        "minLevel": 2,
+        "maxLevel": 2,
+        "label": "RESP - EQUIPO GESTION N=2 — Management supervisor, level 2"
+      },
+      {
+        "rank": 5,
+        "team": "Checkout",
+        "minLevel": 2,
+        "maxLevel": 2,
+        "label": "CAJA N=2 — Cashier, level 2"
+      },
+      {
+        "rank": 6,
+        "team": "Management",
+        "minLevel": 3,
+        "maxLevel": 3,
+        "label": "RESP - EQUIPO GESTION N=3 — Management supervisor, level 3"
+      },
+      {
+        "rank": 7,
+        "team": "Management",
+        "minLevel": 4,
+        "maxLevel": null,
+        "label": "RESP - EQUIPO GESTION N>=4 — Management supervisor, level >= 4"
+      },
+      {
+        "rank": 8,
+        "team": "Checkout",
+        "minLevel": 3,
+        "maxLevel": null,
+        "label": "CAJA N=3 — Cashier, level 3"
+      },
+      {
+        "rank": 9,
         "team": "Employees",
-        "description": "Employees Team - Aggregate fallback category"
+        "minLevel": 1,
+        "maxLevel": null,
+        "label": "EQUIPA Empleados N>=1 — General employee, level >= 1"
       }
     ]
   },
   "scheduleInput": {
     "dataFile": "schedule_input.csv",
     "markingTypes": {
-      "8": "Work exactly 8 hours (v2.2)",
-      "7": "Work exactly 7 hours (v2.2)",
-      "5": "Work exactly 5 hours (v2.2)",
-      "4": "Work exactly 4 hours (v2.2)",
-      "DO": "Day Off - Can be swapped with penalty",
-      "FDO": "Forced Day Off - Cannot be changed",
-      "VAC": "Vacation/Holidays - Cannot work",
-      "NOT": "Unavailable - Cannot work",
-      "Med": "Medical Reason - Cannot work"
+      "8": "Work 8 hours (flexible start)",
+      "7": "Work 7 hours (flexible start)",
+      "5": "Work 5 hours (flexible start)",
+      "4": "Work 4 hours (flexible start)",
+      "DO": "DLV — Preferred day-off, can be swapped within week",
+      "FDO": "DLF — Fixed day-off, cannot be changed",
+      "VAC": "Vacation — unavailable",
+      "NOT": "Unavailable (e.g. part-time contract day)"
     }
   },
   "constraints": {
@@ -670,6 +573,14 @@
         "type": "min_rest_hours",
         "params": {
           "hours": 11
+        },
+        "enabled": true
+      },
+      {
+        "id": "max-consecutive-days",
+        "type": "max_consecutive_working_days",
+        "params": {
+          "days": 5
         },
         "enabled": true
       },
@@ -694,22 +605,21 @@
     ],
     "soft": [
       {
-        "id": "min-coverage",
+        "id": "obj1-min-coverage",
         "type": "min_coverage",
-        "params": {
-          "penalty_per_missing": 1000
-        },
-        "weight": 1000,
+        "weight": 100,
         "enabled": true
       },
       {
-        "id": "day-off-swap-within-week",
+        "id": "obj4-day-off-swap-penalty",
         "type": "day_off_swap_penalty",
-        "params": {
-          "penalty_within_week": 100,
-          "penalty_outside_week": 500
-        },
-        "weight": 100,
+        "weight": 0,
+        "enabled": true
+      },
+      {
+        "id": "obj5-skill-priority-assignment",
+        "type": "skill_priority_assignment",
+        "weight": 10,
         "enabled": true
       },
       {
@@ -720,36 +630,18 @@
     ],
     "advanced": {
       "dayOffSwapping": {
-        "enabled": true,
+        "enabled": false,
+        "weekDefinition": "monday-sunday",
         "rules": [
-          "DO can be swapped within week with penalty 100",
-          "DO can be swapped outside week with penalty 500",
-          "FDO cannot be swapped",
-          "Time constraints cannot be changed"
-        ],
-        "weekDefinition": "monday-sunday"
+          "DO (DLV) can be swapped within same week with penalty 100",
+          "FDO (DLF) cannot be swapped",
+          "Part-time workers (NOT days) cannot have days off swapped"
+        ]
       }
     }
   },
   "optimization": {
-    "algorithm": "CSPv2",
-    "maxTimeMinutes": 10,
-    "objectives": [
-      {
-        "goal": "minimize_shortages",
-        "weight": 1000,
-        "priority": 1
-      },
-      {
-        "goal": "balance_workload",
-        "weight": 10,
-        "priority": 2
-      },
-      {
-        "goal": "minimize_day_off_changes",
-        "weight": 100,
-        "priority": 3
-      }
-    ]
+    "algorithm": "ILP_Sisqual_Hours_MathematicalDefinition5",
+    "maxTimeMinutes": 10
   }
 }

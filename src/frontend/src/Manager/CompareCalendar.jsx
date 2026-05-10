@@ -182,6 +182,9 @@ export default function CompareCalendar() {
           fd.append("hourGranularity", inferHourGranularity(cal.metadata));
         }
       }
+      if (cal.metadata?.problemPath) {
+        fd.append("problemPath", cal.metadata.problemPath);
+      }
       return fd;
     };
 
