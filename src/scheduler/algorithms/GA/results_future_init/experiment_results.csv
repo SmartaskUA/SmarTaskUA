@@ -1,0 +1,6 @@
+crossover_type,mutation_type,run,best_fitness,min_coverage_unmet,ideal_coverage_unmet,stopped_at_gen,elapsed_s
+nbts,demand_guided,1,-2746.0,26,146,512,302.3
+nbts,demand_guided,2,-2749.0,26,149,527,312.4
+nbts,demand_guided,3,-3145.0,30,145,528,313.1
+nbts,demand_guided,4,-2653.0,25,153,514,306.3
+nbts,demand_guided,5,-3150.0,30,150,518,307.3

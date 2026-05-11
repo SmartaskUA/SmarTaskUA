@@ -321,4 +321,4 @@ def create_vacation_cases(employee_count=21, days_per_year=365, year=2025, outpu
 
 
 if __name__ == "__main__":
-    create_vacation_cases(employee_count=12, year=2025)
+    create_vacation_cases(employee_count=192, year=2025)
