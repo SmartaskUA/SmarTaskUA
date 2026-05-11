@@ -118,59 +118,18 @@ public class ScenarioSeeder {
             teamService.addTeam(teamB);
         }
 
-        // Criar 21 funcionários: 7 exclusivos para A, 7 exclusivos para B, 7 para ambas
-        ensureEmployeesExist(1, 21);
+        // Criar 24 funcionários distintos: 12 para A e 12 para B
+        ensureEmployeesExist(1, 24);
 
         // IDs dos funcionários
-        List<String> onlyA = employeeIdsInRange(1, 7);      // 1-7
-        List<String> onlyB = employeeIdsInRange(8, 14);     // 8-14
-        List<String> both = employeeIdsInRange(15, 21);     // 15-21
+        List<String> teamAEmployees = employeeIdsInRange(1, 12);
+        List<String> teamBEmployees = employeeIdsInRange(13, 24);
 
-        // Adicionar aos respetivos grupos
-        addEmployeesToTeam(teamA, onlyA);
-        addEmployeesToTeam(teamB, onlyB);
-        addEmployeesToTeam(teamA, both);
-        addEmployeesToTeam(teamB, both);
+        // Adicionar 12 empregados distintos a cada equipa
+        addEmployeesToTeam(teamA, teamAEmployees);
+        addEmployeesToTeam(teamB, teamBEmployees);
 
-        System.out.println("[Startup] Criados 7 exclusivos para Equipa A, 7 exclusivos para Equipa B e 7 para ambas as equipas.");
-    }
-
-    // BASE SCENARIO (exactly as requested):
-    // Group = Scenario_2Teams
-    // - Equipa A: 10 members (S2-E1..S2-E10)
-    // - Equipa B: 5 members total, with 3 shared with A:
-    //     shared = S2-E8, S2-E9, S2-E10
-    //     unique to B = S2-E11, S2-E12
-    // => 12 unique employees total
-    private void createBaseScenario_2Teams12Employees() {
-        final String groupName = "Scenario_2Teams";
-
-        System.out.println("\nInitializing " + groupName + " -> 2 teams, 12 employees");
-
-        Team teamA = createOrGetTeam("Equipa A", groupName);
-        Team teamB = createOrGetTeam("Equipa B", groupName);
-
-        // Create 12 unique employees for this scenario
-        List<Employee> all = new ArrayList<>();
-        for (int i = 1; i <= 12; i++) {
-            String name = "Employee " + i;
-            Employee e = new Employee(name);
-            employeeService.addEmployee(e);
-            all.add(e);
-        }
-
-        // A primary = E1..E10
-        List<String> aPrimIds = ids(all, 1, 10);
-        teamService.addEmployeesToTeam(teamA.getName(), aPrimIds, groupName);
-
-        // B shared with A = E8,E9,E10; plus unique E11,E12
-        List<String> bIds = new ArrayList<>();
-        bIds.addAll(ids(all, 8, 10));     // shared 3
-        bIds.addAll(ids(all, 11, 12));    // unique 2
-        teamService.addEmployeesToTeam(teamB.getName(), bIds, groupName);
-
-        System.out.printf("%s ready. A=%d (with 3 shared), B=%d, unique=%d%n",
-                groupName, aPrimIds.size(), bIds.size(), 12);
+        System.out.println("[Startup] Criados 24 funcionários: Equipa A com Employee 1..12 e Equipa B com Employee 13..24.");
     }
 
     // ----------------------------------------------------------------
@@ -254,14 +213,6 @@ public class ScenarioSeeder {
                 });
     }
 
-    private List<String> ids(List<Employee> emps, int startInclusive, int endInclusive) {
-        List<String> res = new ArrayList<>();
-        for (int i = startInclusive; i <= endInclusive; i++) {
-            res.add(emps.get(i - 1).getId());
-        }
-        return res;
-    }
-
     private Team findTeamByNameNoGroup(String name) {
         return teamService.getTeams().stream()
                 .filter(t -> name.equals(t.getName()))
@@ -301,13 +252,6 @@ public class ScenarioSeeder {
                 })
                 .map(Employee::getId)
                 .toList();
-    }
-
-    private Employee findEmployeeByName(String name) {
-        return employeeService.getEmployees().stream()
-                .filter(e -> name.equals(e.getName()))
-                .findFirst()
-                .orElse(null);
     }
 
     private void addEmployeesToTeam(Team team, List<String> employeeIds) {

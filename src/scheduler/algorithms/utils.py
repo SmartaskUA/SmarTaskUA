@@ -731,6 +731,68 @@ def count_minimum_failures(scheduler):
                     failures += 1
         return failures
 
+def count_minimum_shift_failures(scheduler):
+        """
+        Conta o número total de falhas aos mínimos necessários em problemas por turnos.
+
+        Suporta mínimos em qualquer uma destas formas:
+        - (dia, turno, equipa)
+        - (dia, equipa, turno)
+        - dia como `int` ou `Timestamp`
+        - equipa como código (`'A'`, `'B'`) ou ID inteiro
+
+        Se o scheduler for horário, delega para `count_minimum_failures()`.
+        """
+        minimos_dict = getattr(scheduler, 'minimos', None) or getattr(scheduler, 'theta', {})
+        
+        if not minimos_dict:
+            return 0
+        
+        sample_key = next(iter(minimos_dict.keys()), None)
+        if sample_key is None:
+            return 0
+
+        sample_value = sample_key[1] if len(sample_key) > 1 else None
+        if isinstance(sample_value, float) or (
+            isinstance(sample_value, str) and ('-' in sample_value or ':' in sample_value)
+        ):
+            return count_minimum_failures(scheduler)
+
+        dates = getattr(scheduler, 'dates', [])
+        num_days = len(dates)
+
+        # Reconstruir cobertura por (dia, turno, equipa)
+        coverage = {}
+        for assignments in scheduler.assignment.values():
+            for assignment in assignments:
+                if len(assignment) < 3:
+                    continue
+
+                day_idx, shift, team_id = assignment[:3]
+
+                day_values = {day_idx}
+                if isinstance(day_idx, int):
+                    if 1 <= day_idx <= num_days:
+                        day_values.add(dates[day_idx - 1])
+                    elif 0 <= day_idx < num_days:
+                        day_values.add(dates[day_idx])
+
+                team_code = TEAM_ID_TO_CODE.get(team_id, str(team_id))
+                team_values = {team_id, team_code}
+
+                for day_value in day_values:
+                    for team_value in team_values:
+                        coverage[(day_value, shift, team_value)] = coverage.get((day_value, shift, team_value), 0) + 1
+                        coverage[(day_value, team_value, shift)] = coverage.get((day_value, team_value, shift), 0) + 1
+        
+        failures = 0
+        for key, minimo in minimos_dict.items():
+            if minimo > 0:
+                covered = coverage.get(key, 0)
+                if covered < minimo:
+                    failures += 1
+        return failures
+
 def check_5_consecutive_days(table):
     violations = []
     for row in table[1:]:  # Ignora header

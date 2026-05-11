@@ -4,10 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import smartask.api.models.Employee;
 import smartask.api.repositories.*;
-import smartask.api.services.EmployeeService;
-import smartask.api.services.TeamService;
-
-import java.util.List;
 
 @Service
 public class ClearAndResetService {
@@ -36,41 +32,25 @@ public class ClearAndResetService {
         teamRepository.deleteAll();
         employeesRepository.deleteAll();
 
-        // Criar Equipa A com 9 funcionários
+        // Criar 24 funcionários: 12 para cada equipa
         teamService.addTeam("Equipa A");
-        for (int i = 1; i <= 9; i++) {
+        for (int i = 0; i <= 23; i++) {
             Employee employee = new Employee("Employee " + i);
             employeeService.addEmployee(employee);
         }
         var aEmployees = employeeService.getEmployees().stream()
-                .filter(e -> e.getName().startsWith("Employee ") && Integer.parseInt(e.getName().split(" ")[1]) <= 9)
+            .filter(e -> e.getName().startsWith("Employee ") && Integer.parseInt(e.getName().split(" ")[1]) <= 11)
                 .map(Employee::getId)
                 .toList();
         teamService.addEmployeesToTeam("Equipa A", aEmployees);
 
-        // Criar Equipa B com 3 funcionários
+        // Os restantes 12 funcionários pertencem à Equipa B
         teamService.addTeam("Equipa B");
-        for (int i = 10; i <= 12; i++) {
-            Employee employee = new Employee("Employee " + i);
-            employeeService.addEmployee(employee);
-        }
         var bEmployees = employeeService.getEmployees().stream()
-                .filter(e -> e.getName().startsWith("Employee ") && Integer.parseInt(e.getName().split(" ")[1]) >= 10)
+            .filter(e -> e.getName().startsWith("Employee ") && Integer.parseInt(e.getName().split(" ")[1]) >= 12)
                 .map(Employee::getId)
                 .toList();
         teamService.addEmployeesToTeam("Equipa B", bEmployees);
-
-        // Adicionar Employee 5 e 6 à Equipa B (também estão na A)
-        employeeService.getEmployees().stream()
-                .filter(e -> e.getName().equals("Employee 5") || e.getName().equals("Employee 6"))
-                .map(Employee::getId)
-                .forEach(id -> teamService.addEmployeesToTeam("Equipa B", List.of(id)));
-
-        // Adicionar Employee 11 à Equipa A (também está na B)
-        employeeService.getEmployees().stream()
-                .filter(e -> e.getName().equals("Employee 11"))
-                .map(Employee::getId)
-                .forEach(id -> teamService.addEmployeesToTeam("Equipa A", List.of(id)));
     }
 
     public void deleteAllSchedules() {

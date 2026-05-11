@@ -37,6 +37,8 @@ from algorithms.COP_2_Half_Intervals import solve as COP_2_Half_Intervals_Solver
 from algorithms.COP_1_Half_Intervals import solve as COP_1_Half_Intervals_solver
 from algorithms.general.heuristic_general import solve as heuristic_general_solver
 from analyzer.kpiVerification_Sisqual import KpiEvaluator_Sisqual
+from algorithms.lns_scheduler import solve as lns_scheduler_solver
+from algorithms.Hybrid_Heuristic import solve as hybrid_heuristic_solver
 
 class TaskManager:
     def __init__(self):
@@ -75,6 +77,8 @@ class TaskManager:
             "CSP_Sisqual_Hours": CSP_Sisqual_Hours_solver,
             "COP_1_Half_Intervals": COP_1_Half_Intervals_solver,
             "COP_2_Half_Intervals": COP_2_Half_Intervals_Solver,
+            "LNS_Scheduler": lns_scheduler_solver,
+            "Hybrid_Heuristic": hybrid_heuristic_solver,
         }
 
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13, solver="CBC", problem_path=None):
@@ -135,6 +139,7 @@ class TaskManager:
             "Heuristic Solver",
             "Heuristic Solver Restarts",
             "ilp_greedy",
+            "Hybrid_Heuristic"
         ]
         if algorithm_name in algs_with_shifts:
             if uses_rules:
@@ -146,7 +151,7 @@ class TaskManager:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, rules=rules_json)
             else:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, constraints=rules)
-        elif algorithm_name in ["ILP_Sisqual_Hours", "CSP_Sisqual_Hours"]:
+        elif algorithm_name in ["ILP_Sisqual_Hours", "CSP_Sisqual_Hours", "LNS_Scheduler"]:
             # Request the solver to print the returned rows as JSON so the
             # container logs contain the schedule payload sent to the frontend.
             schedule_data = algorithm(problem_path=problem_path, maxTime=maxTime, print_json=True)

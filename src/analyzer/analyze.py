@@ -11,6 +11,7 @@ from kpiVerification_sisqual_bundle import (
     is_bundle_native_hour_problem,
 )
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from MongoDBClient import MongoDBClient
 import pandas as pd
 import holidays as hl
 import csv
@@ -21,6 +22,64 @@ mongo = MongoClient("mongodb://admin:password@mongo:27017/")
 db = mongo["mydatabase"]
 comparison_results = db["comparisons"]
 verification_results = db["verifications"]
+
+# Shared MongoDBClient instance for fetching templates
+_mongo_client = MongoDBClient()
+
+
+# ------------------------------------------------------------------------
+# 🗄️ Helper: fetch minimums CSV text content from MongoDB by template name
+# ------------------------------------------------------------------------
+def fetch_minimums_content(template_name):
+    """
+    Fetches the minimums template from MongoDB by name and returns its content
+    as a CSV text string that parse_requirements() can consume.
+
+    MongoDB stores the template as a list-of-lists (e.g.
+    [["Equipa A", "Minimo", "M", "2", "2", ...], ...]).
+    This function converts that back to a CSV text string.
+
+    Returns None if the template is not found or has no usable content.
+    """
+    if not template_name:
+        return None
+
+    try:
+        doc = _mongo_client.fetch_reference_by_name(template_name)
+        if not doc:
+            print(f"[analyze] Reference template not found in MongoDB: '{template_name}'")
+            return None
+
+        raw = doc.get("minimuns")
+        if raw is None:
+            print(f"[analyze] Reference doc '{template_name}' has no 'minimuns' field.")
+            return None
+
+        # Already a plain CSV string — return as-is
+        if isinstance(raw, str):
+            return raw
+
+        # List-of-lists — convert to CSV text
+        if isinstance(raw, list):
+            lines = []
+            for row in raw:
+                if isinstance(row, list):
+                    lines.append(",".join(str(cell) for cell in row))
+                elif isinstance(row, str):
+                    lines.append(row)
+            content = "\n".join(lines)
+            print(f"[analyze] Fetched minimums content for '{template_name}': "
+                  f"{len(lines)} rows, {len(content)} chars.")
+            return content
+
+        print(f"[analyze] Unexpected 'minimuns' data type "
+              f"({type(raw).__name__}) for template '{template_name}'.")
+        return None
+
+    except Exception as e:
+        print(f"[analyze] Failed to fetch minimums template '{template_name}': {e}")
+        return None
+
 
 # ------------------------------------------------------------------------
 # 🔍 Helper: detectar tipo de problema (shifts vs hours)
@@ -112,12 +171,13 @@ def detect_schedule_format(file_path, mins_text=None):
 
     return problem_type, hour_granularity
 
+
 def select_kpi_verifier(problem_type, hour_granularity):                                                 
     if problem_type == "hours":                                                                          
-        # Retorna uma função wrapper que passa a granularidade correta                                   
         granularity = 30 if hour_granularity == "30min" else 60                                          
-        return lambda f, h, m, e, y: verifyKpis_Unified(f, h, m, e, y, granularity=granularity)          
+        return lambda f, h, m, e, y, **kw: verifyKpis_Unified(f, h, m, e, y, granularity=granularity)          
     return verifyKpis
+
 
 def normalize_schedule_type(value):
     if not value:
@@ -129,6 +189,7 @@ def normalize_schedule_type(value):
         return "hours"
     return None
 
+
 def normalize_hour_granularity(value):
     if not value:
         return None
@@ -138,6 +199,7 @@ def normalize_hour_granularity(value):
     if normalized in {"hour", "hours", "1h", "1hr", "60min", "60"}:
         return "hour"
     return None
+
 
 # ------------------------------------------------------------------------
 # 📦 Callback principal
@@ -155,10 +217,10 @@ def callback(ch, method, properties, body):
         request_id = message.get("requestId")
         files = message.get("files", [])
         vacs = message.get("vacationTemplate")
-        mins = message.get("minimunsTemplate")
+        mins_template_name = message.get("minimunsTemplate")
         problem_path = message.get("problemPath")
         print(f"[DEBUG] Received message for requestId={request_id} with {len(files)} files.")
-        print(f"[DEBUG] Minimums Template: {mins}")
+        print(f"[DEBUG] Minimums Template name: {mins_template_name}")
         employees = message.get("employees", "[]")
         year = int(message.get("year", 2025))
         employees = json.loads(employees)
@@ -178,8 +240,19 @@ def callback(ch, method, properties, body):
         print(f"[Comparison] Processing requestId={request_id}")
         print(f"[DEBUG] Files = {files}")
 
-        # 🔍 Detectar tipo de problema (usa o primeiro ficheiro)
-        problem_type, hour_granularity = detect_schedule_format(files[0], mins)
+        # -----------------------------------------------------------------
+        # 🗄️ Fetch the actual minimums CSV content from MongoDB.
+        # The message only carries the template NAME; parse_requirements()
+        # inside kpiVerification.py needs the raw CSV text, not the name.
+        # -----------------------------------------------------------------
+        mins_content = fetch_minimums_content(mins_template_name)
+        if not mins_content:
+            print(f"[WARN] Could not fetch minimums content for '{mins_template_name}'. "
+                  f"missedTeamMin / missedTeamIdeal will be 0.")
+            mins_content = ""  # safe empty — parse_requirements handles it gracefully
+
+        # 🔍 Detectar tipo de problema — pass content (not name) for better detection
+        problem_type, hour_granularity = detect_schedule_format(files[0], mins_content)
         schedule_type_override = normalize_schedule_type(
             message.get("scheduleType") or message.get("schedule_type")
         )
@@ -198,7 +271,9 @@ def callback(ch, method, properties, body):
             print("[WARN] Unknown schedule type; defaulting to shifts.")
             problem_type = "shifts"
             hour_granularity = None
+
         print(f"[DEBUG] Detected problem type: {problem_type} (hour granularity: {hour_granularity})")
+
         use_sisqual_bundle_verifier = (
             problem_type == "hours"
             and problem_path
@@ -210,8 +285,6 @@ def callback(ch, method, properties, body):
         # -----------------------------------------------------------------
         # Caso 1️⃣: Apenas um ficheiro → KPI Verification
         # -----------------------------------------------------------------
-        # -----------------------------------------------------------------
-
         if len(files) == 1:
             print("[DEBUG] Running KPI verification for file:", files[0])
 
@@ -237,7 +310,6 @@ def callback(ch, method, properties, body):
                     date(2021, 12, 8): 'Immaculate Conception',
                     date(2021, 12, 25): 'Christmas Day'
                 }
-                #print(f"[DEBUG] Holidays prepared: {holidays}")
             else:
                 print(f"[DEBUG] Preparing holidays for shifts verification for year {year}")
                 holidays = hl.country_holidays("PT", years=[year])
@@ -245,13 +317,14 @@ def callback(ch, method, properties, body):
             if use_sisqual_bundle_verifier:
                 print(f"[DEBUG] Using Sisqual bundle-native KPI verifier for {problem_path}")
             elif problem_type == "shifts":
-                result = verifier(files[0], holidays, mins, employees, year, rules=rules)
+                # ✅ FIX: pass mins_content (CSV text) instead of mins_template_name (string name)
+                result = verifier(files[0], holidays, mins_content, employees, year, rules=rules)
             else:
-                result = verifier(files[0], holidays, mins, employees, year)
+                result = verifier(files[0], holidays, mins_content, employees, year)
 
             print("[DEBUG] KPI verification result:", result)
 
-            # 👉 Enviar resultado via WebSocket **DEPOIS** de obter o result
+            # 👉 Enviar resultado via WebSocket
             try:
                 websocket_channel = ch.connection.channel()
                 websocket_channel.exchange_declare(exchange="websocket-exchange", exchange_type="fanout", durable=True)
@@ -291,7 +364,6 @@ def callback(ch, method, properties, body):
         # -----------------------------------------------------------------
         elif len(files) >= 2:
 
-            # 🔹 Definir holidays com base no problem_type
             if use_sisqual_bundle_verifier:
                 holidays = None
             elif problem_type == "hours":
@@ -316,7 +388,6 @@ def callback(ch, method, properties, body):
             else:
                 holidays = hl.country_holidays("PT", years=[year])
 
-            # 1️⃣ PRIMEIRO: Calcular resultados para todos os ficheiros
             results = {}
             print(f"[DEBUG] Running KPI comparison for {len(files)} files...")
 
@@ -324,12 +395,14 @@ def callback(ch, method, properties, body):
                 print(f"[DEBUG] Comparing file: {f}")
                 if use_sisqual_bundle_verifier:
                     results[f] = verifyKpis_SisqualBundle(f, problem_path, employees, year)
+                elif problem_type == "shifts":
+                    # ✅ FIX: pass mins_content (CSV text) instead of mins_template_name
+                    results[f] = verifier(f, holidays, mins_content, employees, year, rules=rules)
                 else:
-                    results[f] = verifier(f, holidays, mins, employees, year)
+                    results[f] = verifier(f, holidays, mins_content, employees, year)
 
             print("[DEBUG] KPI comparison results:", results)
 
-            # 2️⃣ DEPOIS: Enviar resultado via WebSocket
             try:
                 websocket_channel = ch.connection.channel()
                 websocket_channel.exchange_declare(exchange="websocket-exchange", exchange_type="fanout", durable=True)
@@ -349,7 +422,6 @@ def callback(ch, method, properties, body):
             except Exception as e:
                 print(f"[ERROR] Failed to send WebSocket message: {e}")
 
-            # 3️⃣ POR FIM: Guardar no MongoDB
             try:
                 comparison_results.insert_one({
                     "requestId": request_id,
@@ -368,6 +440,7 @@ def callback(ch, method, properties, body):
     except Exception as e:
         print(f"[Comparison] Error: {e}")
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+
 
 # ------------------------------------------------------------------------
 # 🔁 RabbitMQ Setup
@@ -390,6 +463,7 @@ def connect_to_rabbitmq():
         )
     )
 
+
 def start_consumer():
     print("[BOOT] Analyzer worker started and listening...")
     connection = connect_to_rabbitmq()
@@ -409,7 +483,6 @@ def start_consumer():
     channel.basic_consume(queue="comparison-queue", on_message_callback=callback)
     print("[Comparison] Waiting for messages...")
     channel.start_consuming()
-
 
 
 if __name__ == "__main__":

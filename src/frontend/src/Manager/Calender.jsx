@@ -86,10 +86,14 @@ const Calendar = () => {
       onConnect: () => {
         stompClient.subscribe("/topic/comparison/all", (msg) => {
           try {
-            const data = JSON.parse(msg.body);
-            data.forEach((item) => {
+            const payload = JSON.parse(msg.body);
+            const items = Array.isArray(payload) ? payload : [payload];
+            items.forEach((item) => {
+              if (!item || !item.requestId) {
+                return;
+              }
               const mappedCalId = reqToCalRef.current[item.requestId];
-              if (mappedCalId === calendarId) {
+              if (mappedCalId === calendarId && item.result) {
                 console.log("KPI recebido via WebSocket:", item.result);
                 setKpiSummary((prev) => {
                   // Se já temos KPIs Sisqual (calculados em memória),
@@ -200,8 +204,9 @@ const Calendar = () => {
   return `${mins} min${secs > 0 ? ` ${secs} sec` : ""}`;
 };
   const isHourly = scheduleType === "Horas";
-  const missingMinimums =
-    kpiSummary?.hourlyCoverageGaps ?? kpiSummary?.missedTeamMin ?? null;
+  const missingMinimums = isHourly
+    ? kpiSummary?.hourlyCoverageGaps ?? kpiSummary?.missedTeamMin ?? null
+    : kpiSummary?.missedTeamMin ?? kpiSummary?.hourlyCoverageGaps ?? null;
   const missingIdeals = kpiSummary?.missedTeamIdeal ?? null;
   const hasIdeals =
     Array.isArray(metadata?.minimunsTemplateData) &&

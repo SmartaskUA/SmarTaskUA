@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy analyzer service files (from src/analyzer/)
 COPY src/analyzer/ .
+COPY src/scheduler/MongoDBClient.py ./scheduler/MongoDBClient.py
 COPY data/problems /app/data/problems
 
 # Run the analyzer worker

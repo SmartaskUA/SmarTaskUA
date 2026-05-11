@@ -64,6 +64,7 @@ public class SchedulingAlgorithmRegistry {
         register(specs, "CSP General", UiMode.PROBLEM, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
         register(specs, "ILP_Sisqual_Hours", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
         register(specs, "CSP_Sisqual_Hours", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
+        register(specs, "LNS_Scheduler", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
 
         register(specs, "hill climbing", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
         register(specs, "linear programming", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
@@ -82,6 +83,7 @@ public class SchedulingAlgorithmRegistry {
         register(specs, "ilp_greedy", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
 
         register(specs, "CSP_Afonso_Hours", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "Hybrid_Heuristic", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
         register(specs, "ILP_2", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
         register(specs, "ILP_2_Half_Intervals", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
         register(specs, "ILP_3", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
