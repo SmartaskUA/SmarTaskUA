@@ -4,7 +4,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, Iterable, List, Tuple
 
 
 OFF_MARKERS = {"DO", "FDO", "VAC", "NOT", "MED"}
@@ -51,17 +51,6 @@ OBJECTIVE_SOFT_TYPES = {
         "minimize_lower_priority_skill_assignment",
         "objective5",
         "skill_priority",
-    },
-    "skill_switch_minimization": {
-        # Secondary, lexicographic cleanup objective for the Sisqual MD5 solvers.
-        # It is parsed separately from the weighted MD5 objectives because it must
-        # not trade off against Objective 1-5 in the same weighted sum.
-        "minimize_skill_switches",
-        "minimize-skill-switches",
-        "skill_switch_penalty",
-        "skill-switch-penalty",
-        "minimize_role_changes",
-        "minimize-role-changes",
     },
 }
 OBJECTIVE2_GOALS = {
@@ -144,6 +133,35 @@ def parse_employees(problem: Dict, contract_hours: Dict[str, int]) -> List[Dict]
                 "skills": tuple(dict.fromkeys(skills)),
             }
         )
+    return employees
+
+
+def parse_employees_with_levels(
+    problem: Dict,
+    contract_hours: Dict[str, int],
+    staff_team_code: str = "Employees",
+) -> List[Dict]:
+    employees = parse_employees(problem, contract_hours)
+    raw_by_id = {
+        str(raw.get("id", "")).strip(): raw
+        for raw in problem.get("employees", {}).get("competency", [])
+    }
+    for employee in employees:
+        raw = raw_by_id.get(employee["id"], {})
+        skill_levels = {}
+        for index, team in enumerate(raw.get("teams", []), start=1):
+            code = str(team.get("code", "")).strip()
+            if not code:
+                continue
+            level = parse_level_value(team.get("level"))
+            skill_levels[code] = level if level is not None else index
+        employee["skill_levels"] = skill_levels
+        employee["assignable_skills"] = tuple(
+            skill for skill in employee["skills"] if skill_levels.get(skill) is not None
+        )
+        if staff_team_code in employee["skills"] and staff_team_code not in employee["assignable_skills"]:
+            employee["assignable_skills"] = (*employee["assignable_skills"], staff_team_code)
+            employee["skill_levels"].setdefault(staff_team_code, len(employee["skill_levels"]) + 1)
     return employees
 
 
@@ -461,25 +479,10 @@ def match_coverage_priority_tier(
         if max_n is not None and nth_worker > max_n:
             continue
         return index
-    raise ValueError(f"No ObjectiveFunction1 priority tier matches skill '{skill}' worker #{nth_worker}")
+    raise ValueError(f"No priority tier matches skill '{skill}' worker/level #{nth_worker}")
 
 
-def build_objective1_priority_index(
-    alpha: Dict[Tuple[str, int, str], int],
-    coverage_priority_tiers: List[Dict],
-) -> Dict[Tuple[str, int, str, int], int]:
-    priority_index = {}
-    for (day, slot_idx, skill), minimum in alpha.items():
-        for nth_worker in range(1, max(0, minimum) + 1):
-            priority_index[(day, slot_idx, skill, nth_worker)] = match_coverage_priority_tier(
-                coverage_priority_tiers,
-                skill,
-                nth_worker,
-            )
-    return priority_index
-
-
-def build_objective1_priority_coefficients(
+def build_priority_hierarchy_coefficients(
     coverage_priority_tiers: List[Dict],
     dominance_base: int = 3,
 ) -> Dict[int, int]:
@@ -511,7 +514,7 @@ def build_objective5_priority_penalties(
     important than two downgrades at the next lower priority.
     """
 
-    hierarchy_weights = build_objective1_priority_coefficients(
+    hierarchy_weights = build_priority_hierarchy_coefficients(
         coverage_priority_tiers,
         dominance_base=dominance_base,
     )
@@ -573,6 +576,22 @@ def parse_max_time_seconds(value) -> int | None:
     return int(minutes * 60)
 
 
+def parse_min_rest_hours(problem: Dict, default_hours: float = 11.0) -> float:
+    for constraint in problem.get("constraints", {}).get("hard", []):
+        if not constraint.get("enabled", True):
+            continue
+        type_name = str(constraint.get("type") or constraint.get("id") or "").strip()
+        if type_name != "min_rest_hours":
+            continue
+        params = constraint.get("params", {}) or {}
+        value = params.get("hours", constraint.get("hours"))
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return default_hours
+    return default_hours
+
+
 def parse_int_value(value) -> int | None:
     try:
         if value is None or value == "":
@@ -606,7 +625,7 @@ def parse_coverage_priority_tiers(
     skills: List[str],
     staff_team_code: str = "Employees",
 ) -> List[Dict]:
-    """Build the ordered list of (skill, level-range) priority tiers used by Objective 1.
+    """Build the ordered list of (skill, level-range) priority tiers used by Objective 5.
 
     The tier list is driven by ``demand.priorityHierarchy`` in problem.json when every
     entry there carries ``minLevel`` (and optionally ``maxLevel``) fields.  This lets
@@ -704,13 +723,12 @@ def parse_soft_constraint_weight(constraint: Dict) -> float:
     return 0.0
 
 
-def parse_soft_objectives(problem: Dict) -> Tuple[float, Dict[Tuple[str, int], float], float, float, float, float]:
+def parse_soft_objectives(problem: Dict) -> Tuple[float, Dict[Tuple[str, int], float], float, float, float]:
     objective1_weight = 0.0
     objective2_weight_map = {}
     objective3_weight = 0.0
     objective4_weight = 0.0
     objective5_weight = 0.0
-    skill_switch_weight = 0.0
 
     for constraint in problem.get("constraints", {}).get("soft", []):
         if not constraint.get("enabled", True):
@@ -722,12 +740,6 @@ def parse_soft_objectives(problem: Dict) -> Tuple[float, Dict[Tuple[str, int], f
         ).strip().lower()
         params = constraint.get("params", {}) or {}
         weight = parse_soft_constraint_weight(constraint)
-        if type_name in OBJECTIVE_SOFT_TYPES["skill_switch_minimization"]:
-            # Presence + enabled=true activates the second solve phase. A missing
-            # weight still counts as active; the numeric value is only used as a
-            # boolean/integer validation flag by the solvers.
-            skill_switch_weight = weight if weight > 0 else 1.0
-            continue
         if weight <= 0:
             continue
 
@@ -762,41 +774,7 @@ def parse_soft_objectives(problem: Dict) -> Tuple[float, Dict[Tuple[str, int], f
         objective3_weight,
         objective4_weight,
         objective5_weight,
-        skill_switch_weight,
     )
-
-
-def parse_skill_switch_phase2_max_seconds(problem: Dict, default_seconds: int = 30) -> int:
-    for constraint in problem.get("constraints", {}).get("soft", []):
-        if not constraint.get("enabled", True):
-            continue
-        type_name = str(
-            constraint.get("type")
-            or constraint.get("id")
-            or ""
-        ).strip().lower()
-        if type_name not in OBJECTIVE_SOFT_TYPES["skill_switch_minimization"]:
-            continue
-        params = constraint.get("params", {}) or {}
-        for key in (
-            "phase2MaxSeconds",
-            "phase2_max_seconds",
-            "maxSeconds",
-            "max_seconds",
-            "timeLimitSeconds",
-            "time_limit_seconds",
-        ):
-            value = params.get(key, constraint.get(key))
-            if value is None:
-                continue
-            try:
-                seconds = int(float(value))
-            except (TypeError, ValueError):
-                continue
-            if seconds > 0:
-                return seconds
-        return default_seconds
-    return default_seconds
 
 
 def parse_json_mapping(value, label: str = "mapping") -> Dict:

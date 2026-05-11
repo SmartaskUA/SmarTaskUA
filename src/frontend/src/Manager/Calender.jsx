@@ -92,9 +92,14 @@ const Calendar = () => {
               if (mappedCalId === calendarId) {
                 console.log("KPI recebido via WebSocket:", item.result);
                 setKpiSummary((prev) => {
-                  // Se já temos KPIs Sisqual (calculados em memória),
-                  // não deixar o WebSocket legacy sobrescrever
-                  if (prev && prev["Total_Shortage"] !== undefined) {
+                  const prevIsSisqualHourly =
+                    prev?.weightedMinimumCoverageRate !== undefined ||
+                    Array.isArray(prev?.teamCoverageBreakdown) ||
+                    prev?.["Total_Shortage"] !== undefined;
+                  const nextIsSisqualHourly =
+                    item.result?.weightedMinimumCoverageRate !== undefined ||
+                    Array.isArray(item.result?.teamCoverageBreakdown);
+                  if (prevIsSisqualHourly && !nextIsSisqualHourly) {
                     console.log("KPIs Sisqual já presentes — ignorando WebSocket.");
                     return prev;
                   }
@@ -371,7 +376,9 @@ const Calendar = () => {
 
         <MetadataInfo metadata={metadata} />
 
-        {kpiSummary?.["Total_Shortage"] !== undefined ? (
+        {kpiSummary?.weightedMinimumCoverageRate !== undefined || Array.isArray(kpiSummary?.teamCoverageBreakdown) ? (
+          <KPIReport metrics={kpiSummary || {}} scheduleType={scheduleType} />
+        ) : kpiSummary?.["Total_Shortage"] !== undefined ? (
           <SisqualKPIReport kpis={kpiSummary} />
         ) : (
           <KPIReport metrics={kpiSummary || {}} scheduleType={scheduleType} />

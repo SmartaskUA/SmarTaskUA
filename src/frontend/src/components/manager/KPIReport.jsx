@@ -22,6 +22,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Collapse,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ErrorIcon from "@mui/icons-material/Error";
@@ -133,6 +134,16 @@ const metricInfo = {
     label: "Minimum Rest Violations",
     description:
       "Number of shift-to-shift transitions where the rest time between consecutive working days is less than the configured minimum (should be 0 if the schedule is valid).",
+  },
+  duplicatedAssignmentsPerDay: {
+    label: "Duplicated Assignments Per Day",
+    description:
+      "Count of employee-days with separated worked intervals, which indicates more than one assignment on the same day.",
+  },
+  uncoveredSlotsWithoutSkill: {
+    label: "Uncovered Slots Without Skill",
+    description:
+      "Count of worked employee-days where the schedule cell has time assigned but no skill/team label.",
   },
   weightedMinimumCoverageRate: {
     label: "Weighted Minimum Coverage",
@@ -247,6 +258,8 @@ const percentMetrics = new Set([
   "demandedHoursComplianceRate",
 ]);
 const sisqualIssueMetrics = [
+  "duplicatedAssignmentsPerDay",
+  "uncoveredSlotsWithoutSkill",
   "criticalUnderfilledPeriods",
   "totalMinimumGap",
   "consecutiveDaysViolations",
@@ -1067,6 +1080,259 @@ function NativeWorkloadUtilisationPanel({ employeeRows }) {
   );
 }
 
+function NativeSkillChangesPanel({ employeeRows }) {
+  if (!employeeRows.length) return null;
+
+  const rows = employeeRows
+    .map((employee) => {
+      const breakdown = getEmployeeTeamBreakdown(employee);
+      const activeDays = Number(employee.activeWorkDays || employee.totalActiveDays || 0);
+      const meanChanges =
+        employee.meanSkillChangesPerDay !== undefined
+          ? Number(employee.meanSkillChangesPerDay || 0)
+          : activeDays
+            ? Number((Number(employee.teamSwitches || 0) / activeDays).toFixed(2))
+            : 0;
+      return {
+        employee,
+        breakdown,
+        activeDays,
+        meanChanges,
+      };
+    })
+    .sort((a, b) => b.meanChanges - a.meanChanges || b.activeDays - a.activeDays);
+
+  const maxChanges = Math.max(...rows.map((row) => row.meanChanges), 0.01);
+  const switchColor = (value) => {
+    if (value < 1) return "#3B6D11";
+    if (value < 2) return "#854F0B";
+    return "#A32D2D";
+  };
+
+  return (
+    <Box mt={4}>
+      <Divider sx={{ my: 1.5 }} />
+      <SectionTitle>Workload Utilisation</SectionTitle>
+
+      <Paper elevation={0} sx={{ p: 1.5, border: "0.5px solid", borderColor: "divider", borderRadius: 1 }}>
+        <Typography variant="caption" color="text.secondary" fontWeight={500} display="block" mb={1}>
+          Mean skill changes / day — per employee (B3)
+        </Typography>
+
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+          {rows.map(({ employee, breakdown, activeDays, meanChanges }) => {
+            const pct = Math.round((meanChanges / maxChanges) * 100);
+            const color = switchColor(meanChanges);
+            return (
+              <Box
+                key={employee.employeeId || employee.name}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  px: 1.5,
+                  py: 0.75,
+                  border: "0.5px solid",
+                  borderColor: "divider",
+                  borderRadius: 1,
+                  bgcolor: "background.paper",
+                }}
+              >
+                <Typography variant="caption" fontWeight={600} sx={{ minWidth: 80 }}>
+                  {employee.employeeId || employee.name}
+                </Typography>
+
+                <Box sx={{ display: "flex", gap: 0.4, flexWrap: "wrap", minWidth: 100 }}>
+                  {breakdown.map((item) => {
+                    const c = nativeSkillColor(item.team);
+                    return (
+                      <Box key={item.team} sx={{ px: 0.6, py: 0.1, borderRadius: "3px", bgcolor: c.bg }}>
+                        <Typography sx={{ fontSize: 9, fontWeight: 600, color: c.text }}>
+                          {item.team}
+                        </Typography>
+                      </Box>
+                    );
+                  })}
+                </Box>
+
+                <Box sx={{ flex: 1, height: 5, borderRadius: 2, bgcolor: "action.selected", overflow: "hidden" }}>
+                  <Box
+                    sx={{
+                      height: "100%",
+                      width: `${pct}%`,
+                      bgcolor: color,
+                      borderRadius: 2,
+                      transition: "width .3s ease",
+                    }}
+                  />
+                </Box>
+
+                <Typography variant="caption" fontWeight={600} sx={{ color, minWidth: 34, textAlign: "right" }}>
+                  {meanChanges}
+                </Typography>
+
+                <Typography variant="caption" color="text.disabled" sx={{ minWidth: 52, textAlign: "right" }}>
+                  {activeDays}d
+                </Typography>
+              </Box>
+            );
+          })}
+        </Box>
+      </Paper>
+    </Box>
+  );
+}
+
+function NativeMaxShortageCard({ data, fallbackValue }) {
+  const [openGap, setOpenGap] = useState(null);
+  if (!data && fallbackValue === undefined) return null;
+
+  const maxGap = Number(data?.max_gap ?? fallbackValue ?? 0);
+  const gapEntries = Object.entries(data?.gap_distribution || {})
+    .map(([gap, count]) => ({ gap: Number(gap), count: Number(count || 0) }))
+    .filter((entry) => entry.gap > 0 && entry.count > 0)
+    .sort((a, b) => b.gap - a.gap);
+  const maxCount = Math.max(...gapEntries.map((entry) => entry.count), 1);
+  const isOk = maxGap === 0;
+  const gapColor = (gap) => {
+    if (gap >= 3) return "#A32D2D";
+    if (gap === 2) return "#854F0B";
+    return "#633806";
+  };
+
+  return (
+    <Paper elevation={0} sx={{ p: 1.5, bgcolor: "action.hover", borderRadius: 1 }}>
+      <Typography variant="caption" color="text.secondary">
+        Max shortage (single slot)
+      </Typography>
+      <Typography
+        variant="h5"
+        fontWeight={500}
+        color={isOk ? "success.main" : "error.main"}
+        sx={{ lineHeight: 1.2, mt: 0.25, mb: isOk ? 0 : 1 }}
+      >
+        {maxGap}
+        {!isOk && (
+          <Typography component="span" variant="caption" color="text.disabled" sx={{ ml: 0.75 }}>
+            worker-slots
+          </Typography>
+        )}
+      </Typography>
+
+      {gapEntries.length > 0 && (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+          {gapEntries.map(({ gap, count }) => {
+            const key = String(gap);
+            const isOpen = openGap === key;
+            const details = data?.details_by_gap?.[key] || [];
+            const color = gapColor(gap);
+            const barPct = Math.round((count / maxCount) * 100);
+            const byDate = details.reduce((acc, detail) => {
+              if (!acc[detail.date]) acc[detail.date] = [];
+              acc[detail.date].push(detail);
+              return acc;
+            }, {});
+
+            return (
+              <Box key={key}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.75,
+                    cursor: details.length > 0 ? "pointer" : "default",
+                    py: 0.25,
+                  }}
+                  onClick={() => details.length > 0 && setOpenGap(isOpen ? null : key)}
+                >
+                  <Box
+                    sx={{
+                      minWidth: 22,
+                      height: 18,
+                      borderRadius: "4px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      bgcolor: color,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Typography sx={{ fontSize: 10, fontWeight: 700, color: "#fff" }}>
+                      -{gap}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, height: 6, borderRadius: 2, bgcolor: "action.selected", overflow: "hidden" }}>
+                    <Box
+                      sx={{
+                        height: "100%",
+                        width: `${barPct}%`,
+                        bgcolor: color,
+                        borderRadius: 2,
+                        transition: "width .3s ease",
+                      }}
+                    />
+                  </Box>
+                  <Typography variant="caption" fontWeight={600} sx={{ color, minWidth: 28, textAlign: "right" }}>
+                    {count}
+                  </Typography>
+                  {details.length > 0 && (
+                    <Typography variant="caption" sx={{ color: "text.disabled", fontSize: 10 }}>
+                      {isOpen ? "▲" : "▼"}
+                    </Typography>
+                  )}
+                </Box>
+
+                <Collapse in={isOpen}>
+                  <Box sx={{ ml: 3.5, mb: 0.5, display: "flex", flexDirection: "column", gap: 0.5 }}>
+                    {Object.entries(byDate).map(([date, slots]) => (
+                      <Box key={date}>
+                        <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ display: "block", mb: 0.25 }}>
+                          {date}
+                        </Typography>
+                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.4, pl: 1 }}>
+                          {slots.map((slot, index) => (
+                            <Box
+                              key={`${slot.team}-${slot.period}-${index}`}
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                                px: 0.75,
+                                py: 0.2,
+                                borderRadius: 1,
+                                bgcolor: "#FCEBEB",
+                              }}
+                            >
+                              <Typography variant="caption" sx={{ color: "#791F1F", fontWeight: 600 }}>
+                                {slot.team}
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: "#791F1F" }}>
+                                {slot.period}
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: "#791F1F", opacity: 0.8 }}>
+                                {slot.covered}/{slot.required}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Box>
+                      </Box>
+                    ))}
+                    {details.length === 20 && (
+                      <Typography variant="caption" color="text.disabled" sx={{ pl: 1 }}>
+                        Showing first 20 occurrences
+                      </Typography>
+                    )}
+                  </Box>
+                </Collapse>
+              </Box>
+            );
+          })}
+        </Box>
+      )}
+    </Paper>
+  );
+}
+
 function NativeSkillAllocationPanel({ employeeRows }) {
   if (!employeeRows.length) return null;
 
@@ -1140,8 +1406,20 @@ const renderSisqualReport = (metrics) => {
         </AccordionSummary>
         <AccordionDetails>
           <Paper elevation={0} sx={{ p: 3 }}>
-            <SectionTitle>Hour Constraint Alarms</SectionTitle>
+            <SectionTitle>Hard Constraint Alarms</SectionTitle>
             <Stack spacing={0.75} mb={2.5}>
+              <StatusRow
+                label="At most one assignment per employee per day"
+                value={metrics.duplicatedAssignmentsPerDay ?? 0}
+                suffix={metricInfo.duplicatedAssignmentsPerDay?.description}
+                tone={Number(metrics.duplicatedAssignmentsPerDay || 0) > 0 ? "error" : "success"}
+              />
+              <StatusRow
+                label="Every covered slot has a skill assigned"
+                value={metrics.uncoveredSlotsWithoutSkill ?? 0}
+                suffix={metricInfo.uncoveredSlotsWithoutSkill?.description}
+                tone={Number(metrics.uncoveredSlotsWithoutSkill || 0) > 0 ? "error" : "success"}
+              />
               <StatusRow
                 label="No more than 5 consecutive working days"
                 value={metrics.consecutiveDaysViolations ?? 0}
@@ -1185,11 +1463,9 @@ const renderSisqualReport = (metrics) => {
               />
             </Box>
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, mb: 1 }}>
-              <MetricPanel
-                label="Max period shortage"
-                value={metrics.maxPeriodShortage ?? 0}
-                color={Number(metrics.maxPeriodShortage || 0) > 0 ? "error.main" : "success.main"}
-                info={metricInfo.maxPeriodShortage?.description}
+              <NativeMaxShortageCard
+                data={metrics.maxShortageSingleSlot}
+                fallbackValue={metrics.maxPeriodShortage}
               />
               <MetricPanel
                 label="Total overstaff"
@@ -1316,7 +1592,7 @@ const renderSisqualReport = (metrics) => {
             {employeeRows.length > 0 && (
               <>
                 <EmployeeAssignmentQualityPanel employeeRows={employeeRows} />
-                <NativeWorkloadUtilisationPanel employeeRows={employeeRows} />
+                <NativeSkillChangesPanel employeeRows={employeeRows} />
               </>
             )}
           </Paper>

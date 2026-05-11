@@ -29,8 +29,6 @@ import pulp
 from algorithms.sisqual_hours_utils import (
     Assignment,
     build_half_hour_slots,
-    build_objective1_priority_coefficients,
-    build_objective1_priority_index,
     build_objective5_priority_penalties,
     build_objective5_skill_priority,
     build_period_slot_map,
@@ -50,7 +48,6 @@ from algorithms.sisqual_hours_utils import (
     parse_open_days,
     parse_schedule_input,
     parse_skill_codes,
-    parse_skill_switch_phase2_max_seconds,
     parse_soft_objectives,
     parse_work_periods,
 )
@@ -98,20 +95,15 @@ class SisqualProblem5ILP:
         self.open_days = parse_open_days(self.days, self.alpha)  # ["2025-10-01", ..., "2025-10-31"] or only the days that appear in demand.csv
         self.closed_days = set(self.days) - set(self.open_days)  # set() for the current October bundle; otherwise {"2025-10-05", ...}
         self.coverage_priority_tiers = parse_coverage_priority_tiers(self.problem,self.skills,self.staff_team_code)  # [{"priority": 1, "skill": "Storage", "min_n": 1, ...}, {"priority": 2, "skill": "Management", "min_n": 1, "max_n": 1, ...}, ...]
-        self.objective1_priority_index = build_objective1_priority_index(self.alpha, self.coverage_priority_tiers)
-        self.objective1_priority_weights = build_objective1_priority_coefficients(self.coverage_priority_tiers)
         self.objective5_skill_priority = build_objective5_skill_priority(self.employees,self.coverage_priority_tiers)  # {("20051291", "Storage"): 0, ("20072412", "Management"): 3, ("20054956", "Checkout"): 4, ...}
         self.objective5_priority_penalties = build_objective5_priority_penalties(self.coverage_priority_tiers)
-        self.objective_hierarchy_scale = max(self.objective1_priority_weights.values(), default=1)
         (
             self.objective1_weight,
             self.objective2_weights,
             self.objective3_weight,
             self.objective4_weight,
             self.objective5_weight,
-            self.skill_switch_weight,
-        ) = parse_soft_objectives(self.problem)  # e.g. (1000.0, {}, 0.0, 100.0, 1.0, 0.0)
-        self.skill_switch_phase2_max_seconds = parse_skill_switch_phase2_max_seconds(self.problem)
+        ) = parse_soft_objectives(self.problem)  # e.g. (1000.0, {}, 0.0, 10.0, 100.0)
         self.variable_days_off_active = self.objective4_weight > 0  # True when preferred day-offs may be swapped; False keeps template DO days fixed off
         self.day_modes = build_sisqual_day_modes(self.employees, self.days, self.schedule_markers, self.closed_days)  # {("20072412", "2025-10-01"): "work_template", ("20072412", "2025-10-05"): "preferred_day_off", ...}
         self.assignments = build_sisqual_bundle_assignments(
@@ -148,18 +140,14 @@ class SisqualProblem5ILP:
         self.workday = {}
         self.y = {}
         self.y_level = {}
-        self.switch = {}
         self.shortage = {}
-        self.shortage_unit = {}
         self.level_shortage = {}
         self.preferred_day_work = {}
         self.coverage_terms_cache = {}
         self.primary_objective = None
         self.primary_objective_active = False
-        self.switch_objective = None
         self.status = None
         self.objective_value = None
-        self.switch_objective_value = None
 
     def _coverage_terms(self, day: str, slot_idx: int, skill: str) -> List[pulp.LpVariable]:
         cache_key = (day, slot_idx, skill)
@@ -176,177 +164,6 @@ class SisqualProblem5ILP:
 
         self.coverage_terms_cache[cache_key] = coverage_terms
         return coverage_terms
-
-    def _add_skill_switch_minimization(self):
-        if self.model is None or self.switch:
-            return
-
-        model = self.model
-        for employee in self.employees:
-            employee_id = employee["id"]
-            skills = employee["assignable_skills"]
-            if len(skills) < 2:
-                continue
-            for day in self.days:
-                adjacent_slots = set()
-                for assignment in self.assignments[(employee_id, day)]:
-                    for left_slot, right_slot in zip(assignment.slot_indices, assignment.slot_indices[1:]):
-                        if right_slot == left_slot + 1:
-                            adjacent_slots.add(left_slot)
-                for slot_idx in sorted(adjacent_slots):
-                    switch_var = pulp.LpVariable(
-                        f"switch_{employee_id}_{day.replace('-', '')}_{slot_idx}",
-                        cat="Binary",
-                    )
-                    self.switch[(employee_id, day, slot_idx)] = switch_var
-
-                    left_work_terms = [
-                        self.y[(employee_id, day, slot_idx, skill)]
-                        for skill in skills
-                    ]
-                    right_work_terms = [
-                        self.y[(employee_id, day, slot_idx + 1, skill)]
-                        for skill in skills
-                    ]
-                    # Do not count a boundary unless both adjacent slots are
-                    # actually worked by this employee.
-                    model += (
-                        switch_var <= pulp.lpSum(left_work_terms),
-                        f"skill_switch_left_worked_{employee_id}_{day}_{slot_idx}",
-                    )
-                    model += (
-                        switch_var <= pulp.lpSum(right_work_terms),
-                        f"skill_switch_right_worked_{employee_id}_{day}_{slot_idx}",
-                    )
-                    for first_skill in skills:
-                        first_y = self.y[(employee_id, day, slot_idx, first_skill)]
-                        for second_skill in skills:
-                            second_y = self.y[(employee_id, day, slot_idx + 1, second_skill)]
-                            if first_skill == second_skill:
-                                # Same skill on both sides forces switch=0.
-                                model += (
-                                    switch_var <= 2 - first_y - second_y,
-                                    f"skill_switch_same_{employee_id}_{day}_{slot_idx}_{first_skill}",
-                                )
-                                continue
-                            # Different skills on adjacent worked slots force switch=1.
-                            model += (
-                                switch_var >= first_y + second_y - 1,
-                                f"skill_switch_{employee_id}_{day}_{slot_idx}_{first_skill}_{second_skill}",
-                            )
-
-        self.switch_objective = pulp.lpSum(self.switch.values()) if self.switch else 0
-
-    def _phase2_time_limit_seconds(self):
-        if self.max_time_seconds is None:
-            return self.skill_switch_phase2_max_seconds
-        return min(self.max_time_seconds, self.skill_switch_phase2_max_seconds)
-
-    def _fix_phase2_daily_assignments(self):
-        """Keep phase 2 focused on skill labels, not the whole shift schedule.
-
-        Phase 1 decides the business schedule: which daily block each employee
-        works, whether a flexible day-off is used, and the primary Objective 1-5
-        value. Phase 2 is only a cleanup tie-breaker, so fixing x/workday keeps
-        the selected shifts intact and lets CBC spend the short phase-2 time cap
-        on reducing role switches within those already-chosen worked slots.
-        """
-
-        for idx, variable in enumerate(self.x.values()):
-            value = pulp.value(variable)
-            if value is not None:
-                self.model += (
-                    variable == int(round(value)),
-                    f"phase2_fix_x_{idx}",
-                )
-        for idx, variable in enumerate(self.workday.values()):
-            value = pulp.value(variable)
-            if value is not None:
-                self.model += (
-                    variable == int(round(value)),
-                    f"phase2_fix_workday_{idx}",
-                )
-
-    def _lock_phase2_minimum_shortages(self):
-        """Prevent switch cleanup from worsening minimum coverage.
-
-        The primary objective lock protects the weighted MD5 score, but equal or
-        better weighted scores can still reshuffle raw minimum gaps across skills
-        or priority tiers. Switch minimization is only a display/operations
-        cleanup, so phase 2 may reduce existing shortages but must not increase
-        any shortage value that phase 1 already achieved.
-        """
-
-        for idx, variable in enumerate(self.shortage.values()):
-            value = pulp.value(variable)
-            if value is not None:
-                self.model += (
-                    variable <= int(round(value)),
-                    f"phase2_lock_shortage_{idx}",
-                )
-        for idx, variable in enumerate(self.shortage_unit.values()):
-            value = pulp.value(variable)
-            if value is not None:
-                self.model += (
-                    variable <= int(round(value)),
-                    f"phase2_lock_shortage_unit_{idx}",
-                )
-        for idx, variable in enumerate(self.level_shortage.values()):
-            value = pulp.value(variable)
-            if value is not None:
-                self.model += (
-                    variable <= int(round(value)),
-                    f"phase2_lock_level_shortage_{idx}",
-                )
-
-    def _set_phase2_initial_values(self):
-        for variable in self.x.values():
-            value = pulp.value(variable)
-            if value is not None:
-                variable.setInitialValue(round(value))
-        for variable in self.workday.values():
-            value = pulp.value(variable)
-            if value is not None:
-                variable.setInitialValue(round(value))
-        for variable in self.y.values():
-            value = pulp.value(variable)
-            if value is not None:
-                variable.setInitialValue(round(value))
-        for variable in self.y_level.values():
-            value = pulp.value(variable)
-            if value is not None:
-                variable.setInitialValue(round(value))
-        for variable in self.shortage.values():
-            value = pulp.value(variable)
-            if value is not None:
-                variable.setInitialValue(round(value))
-        for variable in self.shortage_unit.values():
-            value = pulp.value(variable)
-            if value is not None:
-                variable.setInitialValue(round(value))
-        for variable in self.level_shortage.values():
-            value = pulp.value(variable)
-            if value is not None:
-                variable.setInitialValue(round(value))
-        for variable in self.preferred_day_work.values():
-            value = pulp.value(variable)
-            if value is not None:
-                variable.setInitialValue(round(value))
-        for (employee_id, day, slot_idx), switch_var in self.switch.items():
-            left_skill = None
-            right_skill = None
-            for employee in self.employees:
-                if employee["id"] != employee_id:
-                    continue
-                for skill in employee["assignable_skills"]:
-                    left_value = pulp.value(self.y[(employee_id, day, slot_idx, skill)])
-                    right_value = pulp.value(self.y[(employee_id, day, slot_idx + 1, skill)])
-                    if left_value is not None and left_value > 0.5:
-                        left_skill = skill
-                    if right_value is not None and right_value > 0.5:
-                        right_skill = skill
-                break
-            switch_var.setInitialValue(1 if left_skill and right_skill and left_skill != right_skill else 0)
 
     def build_model(self):
         model = pulp.LpProblem("SisqualProblem5HourlyILP", pulp.LpMinimize)
@@ -397,12 +214,6 @@ class SisqualProblem5ILP:
                 lowBound=0,
                 cat="Integer",
             )
-            if self.objective1_weight > 0:
-                for nth_worker in range(1, int(minimum) + 1):
-                    self.shortage_unit[(day, slot_idx, skill, nth_worker)] = pulp.LpVariable(
-                        f"zu_{day.replace('-', '')}_{slot_idx}_{skill}_{nth_worker}",
-                        cat="Binary",
-                    )
 
         if level_objectives_active:
             # y'_{wdtsl} from constraint (6): for each worker/slot/skill, only the employee's
@@ -550,19 +361,6 @@ class SisqualProblem5ILP:
                 self.shortage[(day, slot_idx, skill)] + pulp.lpSum(coverage_terms) >= minimum,
                 f"shortage_{day}_{slot_idx}_{skill}",
             )
-            for nth_worker in range(1, int(minimum) + 1):
-                unit_key = (day, slot_idx, skill, nth_worker)
-                if unit_key not in self.shortage_unit:
-                    continue
-                # Unit shortages make priorityHierarchy a true hierarchy. Missing
-                # one worker in a higher tier is more important than two misses in
-                # the next lower tier.
-                model += (
-                    pulp.lpSum(coverage_terms)
-                    + nth_worker * self.shortage_unit[unit_key]
-                    >= nth_worker,
-                    f"priority_shortage_unit_{day}_{slot_idx}_{skill}_{nth_worker}",
-                )
 
         if level_objectives_active:
             # Constraint (6)
@@ -641,28 +439,14 @@ class SisqualProblem5ILP:
                         )
 
         objective_terms = []
-        hierarchy_objective_active = self.objective1_weight > 0 or self.objective5_weight > 0
-        hierarchy_scale = self.objective_hierarchy_scale if hierarchy_objective_active else 1
 
         # ObjectiveFunction1
         # Try to fulfil as much as possible the minimum number alpha_dts of workers
-        # in all open days, timeslots, and skills. Shortage is scored per demanded
-        # worker unit so priorityHierarchy is respected: one miss in a higher tier
-        # is more important than two misses in the next lower tier.
-        if self.objective1_weight > 0:
-            if self.shortage_unit:
-                objective_terms.append(
-                    self.objective1_weight
-                    * pulp.lpSum(
-                        self.objective1_priority_weights[
-                            self.objective1_priority_index[(day, slot_idx, skill, nth_worker)]
-                        ]
-                        * variable
-                        for (day, slot_idx, skill, nth_worker), variable in self.shortage_unit.items()
-                    )
-                )
-            else:
-                objective_terms.append(self.objective1_weight * pulp.lpSum(self.shortage.values()))
+        # in all open days, timeslots, and skills. The Sisqual priorityHierarchy
+        # belongs to ObjectiveFunction5, so ObjectiveFunction1 is plain total
+        # minimum-coverage shortage.
+        if self.objective1_weight > 0 and self.shortage:
+            objective_terms.append(self.objective1_weight * pulp.lpSum(self.shortage.values()))
 
         # ObjectiveFunction2 ()
         # for a given skill s and competence level l, trying to fulfil as much as
@@ -676,15 +460,13 @@ class SisqualProblem5ILP:
                 if pair_skill == skill and pair_level == level
             ]
             if pair_terms:
-                objective_terms.append(hierarchy_scale * weight * pulp.lpSum(pair_terms))
+                objective_terms.append(weight * pulp.lpSum(pair_terms))
 
         # ObjectiveFunction3 
         # trying to obtain the best possible average competence level by minimizing
         # the linear score sum(l * y'_wdtsl).
         if self.objective3_weight > 0 and self.y_level:
             objective_terms.append(
-                hierarchy_scale
-                *
                 self.objective3_weight
                 * pulp.lpSum(
                     level * variable
@@ -697,7 +479,7 @@ class SisqualProblem5ILP:
         # the number of preferred day-offs that become worked days.
         if self.objective4_weight > 0 and self.preferred_day_work:
             objective_terms.append(
-                hierarchy_scale * self.objective4_weight * pulp.lpSum(self.preferred_day_work.values())
+                self.objective4_weight * pulp.lpSum(self.preferred_day_work.values())
             )
 
         # ObjectiveFunction5 (Sisqual extension)
@@ -719,7 +501,6 @@ class SisqualProblem5ILP:
 
         self.primary_objective = pulp.lpSum(objective_terms) if objective_terms else 0
         self.primary_objective_active = bool(objective_terms)
-        self.switch_objective = 0
 
         if self.primary_objective_active:
             model += self.primary_objective, "weighted_mathematical_definition_5_objective"
@@ -744,44 +525,6 @@ class SisqualProblem5ILP:
 
         primary_value = pulp.value(self.primary_objective) or 0.0
         self.objective_value = primary_value
-
-        if self.skill_switch_weight > 0:
-            # Secondary lexicographic tie-breaker: switch_{wdt}=1 when a worker
-            # changes assigned skill between adjacent worked half-hour slots. These
-            # variables are created after phase 1 so the primary MD5 solve remains
-            # the same size as before this tie-breaker existed.
-            self._add_skill_switch_minimization()
-        if self.skill_switch_weight > 0 and self.switch:
-            tolerance = max(1e-6, abs(primary_value) * 1e-8)
-            if self.primary_objective_active:
-                # Lexicographic phase 2: keep every Objective 1-5 tradeoff exactly
-                # as good as phase 1, then use switch count only to break ties.
-                self.model += (
-                    self.primary_objective <= primary_value + tolerance,
-                    "primary_objective_lock_for_skill_switch_minimization",
-                )
-            # The tie-breaker should not spend its limited time moving shifts
-            # around. We freeze the phase-1 daily block choices and only allow
-            # skill assignments inside those blocks to change.
-            self._lock_phase2_minimum_shortages()
-            self._fix_phase2_daily_assignments()
-            # With the primary objective locked, minimizing switches cannot reduce
-            # covered minimums or worsen Objective 5.
-            self.model.setObjective(self.switch_objective)
-
-            phase2_solver = pulp.PULP_CBC_CMD(
-                msg=1,
-                timeLimit=self._phase2_time_limit_seconds(),
-                gapRel=gap_rel,
-                warmStart=True,
-            )
-            self._set_phase2_initial_values()
-            self.status = self.model.solve(phase2_solver)
-            if pulp.LpStatus.get(self.status) in {"Optimal", "Feasible"}:
-                self.objective_value = pulp.value(self.primary_objective) or primary_value
-                self.switch_objective_value = pulp.value(self.switch_objective)
-            else:
-                self.switch_objective_value = None
 
         return self.status
 

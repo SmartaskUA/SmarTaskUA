@@ -1,0 +1,1298 @@
+[
+  {
+    "title": "SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1",
+    "problemId": "SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1",
+    "problemPath": "data/problems/SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1/problem.json",
+    "csvPath": "shared_tmp/obj_compare_20260511/SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1.csv",
+    "status": "Optimal",
+    "elapsedSeconds": 7.241,
+    "objectiveValue": 51830800.0,
+    "switchObjectiveValue": 31.0,
+    "objectiveWeights": {
+      "obj1": 100.0,
+      "obj4": 0.0,
+      "obj5": 0.0,
+      "skillSwitch": 1.0
+    },
+    "modelSize": {
+      "variables": 30350,
+      "constraints": 66433,
+      "x": 4178,
+      "y": 14067,
+      "switch": 6074
+    },
+    "componentValues": {
+      "shortageSlots": 836.0,
+      "shortageUnits": 836.0,
+      "preferredDayOffWorked": 0.0,
+      "skillSwitches": 31.0
+    },
+    "minimums": {
+      "weightedMinimumCoverageRate": 95.23,
+      "totalMinimumGap": 148,
+      "criticalUnderfilledPeriods": 148,
+      "maxPeriodShortage": 1,
+      "totalOverstaff": 929,
+      "totalActualCoverageSlots": 3883
+    },
+    "teamBreakdown": [
+      {
+        "team": "Checkout",
+        "required": 712,
+        "actual": 684,
+        "filled": 680,
+        "gap": 32,
+        "overstaff": 4,
+        "coverageRate": 95.51
+      },
+      {
+        "team": "Employees",
+        "required": 1396,
+        "actual": 2281,
+        "filled": 1366,
+        "gap": 30,
+        "overstaff": 915,
+        "coverageRate": 97.85
+      },
+      {
+        "team": "Management",
+        "required": 672,
+        "actual": 666,
+        "filled": 656,
+        "gap": 16,
+        "overstaff": 10,
+        "coverageRate": 97.62
+      },
+      {
+        "team": "Storage",
+        "required": 322,
+        "actual": 252,
+        "filled": 252,
+        "gap": 70,
+        "overstaff": 0,
+        "coverageRate": 78.26
+      }
+    ],
+    "assignments": {
+      "intraDayTeamSwitches": 31,
+      "fragmentedWorkDays": 30,
+      "primaryTeamUtilizationRate": 58.07,
+      "nonPrimaryTeamHours": 496.0,
+      "totalWorkedHours": 1183.0,
+      "durationComplianceRate": 100.0,
+      "demandedHoursComplianceRate": 100.0,
+      "availabilityViolations": 0,
+      "consecutiveDaysViolations": 0,
+      "minRestViolations": 0,
+      "employeeRows": [
+        {
+          "employeeId": "20067009",
+          "name": "Cashier-L1 / Manager-L3 (multi-skill)",
+          "workedHours": 105.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 49.05,
+          "teamSwitches": 11,
+          "fragmentedWorkDays": 11,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 51.5,
+            "Employees": 14.0,
+            "Management": 39.5
+          }
+        },
+        {
+          "employeeId": "20054956",
+          "name": "Cashier-L2 / Manager-L4 (multi-skill)",
+          "workedHours": 76.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 23.03,
+          "teamSwitches": 4,
+          "fragmentedWorkDays": 3,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 17.5,
+            "Employees": 7.5,
+            "Management": 51.0
+          }
+        },
+        {
+          "employeeId": "20066543",
+          "name": "Manager Level 2",
+          "workedHours": 136.0,
+          "primaryTeam": "Management",
+          "primaryTeamUtilizationRate": 72.43,
+          "teamSwitches": 4,
+          "fragmentedWorkDays": 4,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Employees": 37.5,
+            "Management": 98.5
+          }
+        },
+        {
+          "employeeId": "20072412",
+          "name": "Manager Level 1",
+          "workedHours": 152.0,
+          "primaryTeam": "Management",
+          "primaryTeamUtilizationRate": 74.67,
+          "teamSwitches": 4,
+          "fragmentedWorkDays": 4,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Employees": 38.5,
+            "Management": 113.5
+          }
+        },
+        {
+          "employeeId": "20058959",
+          "name": "Cashier Level 2 (B)",
+          "workedHours": 88.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 73.3,
+          "teamSwitches": 3,
+          "fragmentedWorkDays": 3,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 64.5,
+            "Employees": 23.5
+          }
+        },
+        {
+          "employeeId": "20055066",
+          "name": "Cashier Level 4 (B)",
+          "workedHours": 52.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 50.96,
+          "teamSwitches": 2,
+          "fragmentedWorkDays": 2,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 26.5,
+            "Employees": 25.5
+          }
+        },
+        {
+          "employeeId": "20067696",
+          "name": "Cashier Level 2 (A)",
+          "workedHours": 88.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 68.18,
+          "teamSwitches": 2,
+          "fragmentedWorkDays": 2,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 60.0,
+            "Employees": 28.0
+          }
+        },
+        {
+          "employeeId": "20056459",
+          "name": "Cashier Level 1 (A)",
+          "workedHours": 92.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 55.43,
+          "teamSwitches": 1,
+          "fragmentedWorkDays": 1,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 51.0,
+            "Employees": 41.0
+          }
+        },
+        {
+          "employeeId": "20038706",
+          "name": "Cashier Level 2 (D)",
+          "workedHours": 40.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 87.5,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 35.0,
+            "Employees": 5.0
+          }
+        },
+        {
+          "employeeId": "20051291",
+          "name": "Storage Warehouse - Level 1",
+          "workedHours": 126.0,
+          "primaryTeam": "Storage",
+          "primaryTeamUtilizationRate": 100.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Storage": 126.0
+          }
+        },
+        {
+          "employeeId": "20062688",
+          "name": "Cashier-L3 / Manager-L4 (multi-skill)",
+          "workedHours": 44.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 27.27,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 12.0,
+            "Management": 32.0
+          }
+        },
+        {
+          "employeeId": "20066338",
+          "name": "Cashier Level 3",
+          "workedHours": 40.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 25.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 10.0,
+            "Employees": 30.0
+          }
+        },
+        {
+          "employeeId": "20068397",
+          "name": "Cashier Level 2 (C)",
+          "workedHours": 52.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 7.69,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 4.0,
+            "Employees": 48.0
+          }
+        },
+        {
+          "employeeId": "900027718",
+          "name": "Cashier Level 5",
+          "workedHours": 52.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 23.08,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 12.0,
+            "Employees": 40.0
+          }
+        },
+        {
+          "employeeId": "900027719",
+          "name": "Cashier Level 4 (A)",
+          "workedHours": 40.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 12.5,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 5.0,
+            "Employees": 35.0
+          }
+        }
+      ]
+    }
+  },
+  {
+    "title": "SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_4",
+    "problemId": "SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_4",
+    "problemPath": "data/problems/SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_4/problem.json",
+    "csvPath": "shared_tmp/obj_compare_20260511/SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_4.csv",
+    "status": "Optimal",
+    "elapsedSeconds": 56.979,
+    "objectiveValue": 46525980.0,
+    "switchObjectiveValue": 44.0,
+    "objectiveWeights": {
+      "obj1": 100.0,
+      "obj4": 10.0,
+      "obj5": 0.0,
+      "skillSwitch": 1.0
+    },
+    "modelSize": {
+      "variables": 48247,
+      "constraints": 104495,
+      "x": 7360,
+      "y": 24057,
+      "switch": 10624
+    },
+    "componentValues": {
+      "shortageSlots": 810.0,
+      "shortageUnits": 811.0,
+      "preferredDayOffWorked": 8.0,
+      "skillSwitches": 44.0
+    },
+    "minimums": {
+      "weightedMinimumCoverageRate": 97.42,
+      "totalMinimumGap": 80,
+      "criticalUnderfilledPeriods": 80,
+      "maxPeriodShortage": 1,
+      "totalOverstaff": 946,
+      "totalActualCoverageSlots": 3968
+    },
+    "teamBreakdown": [
+      {
+        "team": "Checkout",
+        "required": 712,
+        "actual": 716,
+        "filled": 712,
+        "gap": 0,
+        "overstaff": 4,
+        "coverageRate": 100.0
+      },
+      {
+        "team": "Employees",
+        "required": 1396,
+        "actual": 2321,
+        "filled": 1386,
+        "gap": 10,
+        "overstaff": 935,
+        "coverageRate": 99.28
+      },
+      {
+        "team": "Management",
+        "required": 672,
+        "actual": 679,
+        "filled": 672,
+        "gap": 0,
+        "overstaff": 7,
+        "coverageRate": 100.0
+      },
+      {
+        "team": "Storage",
+        "required": 322,
+        "actual": 252,
+        "filled": 252,
+        "gap": 70,
+        "overstaff": 0,
+        "coverageRate": 78.26
+      }
+    ],
+    "assignments": {
+      "intraDayTeamSwitches": 44,
+      "fragmentedWorkDays": 41,
+      "primaryTeamUtilizationRate": 60.31,
+      "nonPrimaryTeamHours": 469.5,
+      "totalWorkedHours": 1183.0,
+      "durationComplianceRate": 96.56,
+      "demandedHoursComplianceRate": 96.6,
+      "availabilityViolations": 16,
+      "consecutiveDaysViolations": 0,
+      "minRestViolations": 0,
+      "employeeRows": [
+        {
+          "employeeId": "20072412",
+          "name": "Manager Level 1",
+          "workedHours": 152.0,
+          "primaryTeam": "Management",
+          "primaryTeamUtilizationRate": 71.71,
+          "teamSwitches": 3,
+          "fragmentedWorkDays": 3,
+          "availabilityViolations": 4,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Employees": 43.0,
+            "Management": 109.0
+          }
+        },
+        {
+          "employeeId": "20062688",
+          "name": "Cashier-L3 / Manager-L4 (multi-skill)",
+          "workedHours": 44.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 26.14,
+          "teamSwitches": 4,
+          "fragmentedWorkDays": 3,
+          "availabilityViolations": 2,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 11.5,
+            "Employees": 9.5,
+            "Management": 23.0
+          }
+        },
+        {
+          "employeeId": "20066543",
+          "name": "Manager Level 2",
+          "workedHours": 136.0,
+          "primaryTeam": "Management",
+          "primaryTeamUtilizationRate": 87.5,
+          "teamSwitches": 4,
+          "fragmentedWorkDays": 4,
+          "availabilityViolations": 2,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Employees": 17.0,
+            "Management": 119.0
+          }
+        },
+        {
+          "employeeId": "20067696",
+          "name": "Cashier Level 2 (A)",
+          "workedHours": 88.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 65.34,
+          "teamSwitches": 4,
+          "fragmentedWorkDays": 3,
+          "availabilityViolations": 2,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 57.5,
+            "Employees": 30.5
+          }
+        },
+        {
+          "employeeId": "20038706",
+          "name": "Cashier Level 2 (D)",
+          "workedHours": 40.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 86.25,
+          "teamSwitches": 1,
+          "fragmentedWorkDays": 1,
+          "availabilityViolations": 2,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 34.5,
+            "Employees": 5.5
+          }
+        },
+        {
+          "employeeId": "20068397",
+          "name": "Cashier Level 2 (C)",
+          "workedHours": 52.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 29.81,
+          "teamSwitches": 1,
+          "fragmentedWorkDays": 1,
+          "availabilityViolations": 2,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 15.5,
+            "Employees": 36.5
+          }
+        },
+        {
+          "employeeId": "20054956",
+          "name": "Cashier-L2 / Manager-L4 (multi-skill)",
+          "workedHours": 76.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 21.05,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 2,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 16.0,
+            "Management": 60.0
+          }
+        },
+        {
+          "employeeId": "20067009",
+          "name": "Cashier-L1 / Manager-L3 (multi-skill)",
+          "workedHours": 105.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 44.76,
+          "teamSwitches": 15,
+          "fragmentedWorkDays": 14,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 47.0,
+            "Employees": 19.5,
+            "Management": 38.5
+          }
+        },
+        {
+          "employeeId": "20056459",
+          "name": "Cashier Level 1 (A)",
+          "workedHours": 92.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 51.63,
+          "teamSwitches": 4,
+          "fragmentedWorkDays": 4,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 47.5,
+            "Employees": 44.5
+          }
+        },
+        {
+          "employeeId": "20058959",
+          "name": "Cashier Level 2 (B)",
+          "workedHours": 88.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 75.0,
+          "teamSwitches": 4,
+          "fragmentedWorkDays": 4,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 66.0,
+            "Employees": 22.0
+          }
+        },
+        {
+          "employeeId": "20055066",
+          "name": "Cashier Level 4 (B)",
+          "workedHours": 52.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 55.77,
+          "teamSwitches": 3,
+          "fragmentedWorkDays": 3,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 29.0,
+            "Employees": 23.0
+          }
+        },
+        {
+          "employeeId": "900027718",
+          "name": "Cashier Level 5",
+          "workedHours": 52.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 9.62,
+          "teamSwitches": 1,
+          "fragmentedWorkDays": 1,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 5.0,
+            "Employees": 47.0
+          }
+        },
+        {
+          "employeeId": "20051291",
+          "name": "Storage Warehouse - Level 1",
+          "workedHours": 126.0,
+          "primaryTeam": "Storage",
+          "primaryTeamUtilizationRate": 100.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Storage": 126.0
+          }
+        },
+        {
+          "employeeId": "20066338",
+          "name": "Cashier Level 3",
+          "workedHours": 40.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 50.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 20.0,
+            "Employees": 20.0
+          }
+        },
+        {
+          "employeeId": "900027719",
+          "name": "Cashier Level 4 (A)",
+          "workedHours": 40.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 25.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 10.0,
+            "Employees": 30.0
+          }
+        }
+      ]
+    }
+  },
+  {
+    "title": "SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_5",
+    "problemId": "SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_5",
+    "problemPath": "data/problems/SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_5/problem.json",
+    "csvPath": "shared_tmp/obj_compare_20260511/SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_5.csv",
+    "status": "Optimal",
+    "elapsedSeconds": 7.997,
+    "objectiveValue": 244343080.0,
+    "switchObjectiveValue": 12.0,
+    "objectiveWeights": {
+      "obj1": 100.0,
+      "obj4": 0.0,
+      "obj5": 10.0,
+      "skillSwitch": 1.0
+    },
+    "modelSize": {
+      "variables": 30350,
+      "constraints": 66433,
+      "x": 4178,
+      "y": 14067,
+      "switch": 6074
+    },
+    "componentValues": {
+      "shortageSlots": 1154.0,
+      "shortageUnits": 1154.0,
+      "preferredDayOffWorked": 0.0,
+      "skillSwitches": 12.0
+    },
+    "minimums": {
+      "weightedMinimumCoverageRate": 95.94,
+      "totalMinimumGap": 126,
+      "criticalUnderfilledPeriods": 126,
+      "maxPeriodShortage": 1,
+      "totalOverstaff": 1231,
+      "totalActualCoverageSlots": 4207
+    },
+    "teamBreakdown": [
+      {
+        "team": "Checkout",
+        "required": 712,
+        "actual": 911,
+        "filled": 680,
+        "gap": 32,
+        "overstaff": 231,
+        "coverageRate": 95.51
+      },
+      {
+        "team": "Employees",
+        "required": 1396,
+        "actual": 2288,
+        "filled": 1388,
+        "gap": 8,
+        "overstaff": 900,
+        "coverageRate": 99.43
+      },
+      {
+        "team": "Management",
+        "required": 672,
+        "actual": 756,
+        "filled": 656,
+        "gap": 16,
+        "overstaff": 100,
+        "coverageRate": 97.62
+      },
+      {
+        "team": "Storage",
+        "required": 322,
+        "actual": 252,
+        "filled": 252,
+        "gap": 70,
+        "overstaff": 0,
+        "coverageRate": 78.26
+      }
+    ],
+    "assignments": {
+      "intraDayTeamSwitches": 12,
+      "fragmentedWorkDays": 11,
+      "primaryTeamUtilizationRate": 77.01,
+      "nonPrimaryTeamHours": 272.0,
+      "totalWorkedHours": 1183.0,
+      "durationComplianceRate": 100.0,
+      "demandedHoursComplianceRate": 100.0,
+      "availabilityViolations": 0,
+      "consecutiveDaysViolations": 0,
+      "minRestViolations": 0,
+      "employeeRows": [
+        {
+          "employeeId": "20067009",
+          "name": "Cashier-L1 / Manager-L3 (multi-skill)",
+          "workedHours": 105.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 77.14,
+          "teamSwitches": 7,
+          "fragmentedWorkDays": 7,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 81.0,
+            "Management": 24.0
+          }
+        },
+        {
+          "employeeId": "900027718",
+          "name": "Cashier Level 5",
+          "workedHours": 52.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 3.85,
+          "teamSwitches": 3,
+          "fragmentedWorkDays": 2,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 2.0,
+            "Employees": 50.0
+          }
+        },
+        {
+          "employeeId": "20055066",
+          "name": "Cashier Level 4 (B)",
+          "workedHours": 52.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 3.85,
+          "teamSwitches": 2,
+          "fragmentedWorkDays": 2,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 2.0,
+            "Employees": 50.0
+          }
+        },
+        {
+          "employeeId": "20038706",
+          "name": "Cashier Level 2 (D)",
+          "workedHours": 40.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 100.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 40.0
+          }
+        },
+        {
+          "employeeId": "20051291",
+          "name": "Storage Warehouse - Level 1",
+          "workedHours": 126.0,
+          "primaryTeam": "Storage",
+          "primaryTeamUtilizationRate": 100.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Storage": 126.0
+          }
+        },
+        {
+          "employeeId": "20054956",
+          "name": "Cashier-L2 / Manager-L4 (multi-skill)",
+          "workedHours": 76.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 68.42,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 52.0,
+            "Management": 24.0
+          }
+        },
+        {
+          "employeeId": "20056459",
+          "name": "Cashier Level 1 (A)",
+          "workedHours": 92.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 100.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 92.0
+          }
+        },
+        {
+          "employeeId": "20058959",
+          "name": "Cashier Level 2 (B)",
+          "workedHours": 88.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 100.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 88.0
+          }
+        },
+        {
+          "employeeId": "20062688",
+          "name": "Cashier-L3 / Manager-L4 (multi-skill)",
+          "workedHours": 44.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 0.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Management": 44.0
+          }
+        },
+        {
+          "employeeId": "20066338",
+          "name": "Cashier Level 3",
+          "workedHours": 40.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 0.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Employees": 40.0
+          }
+        },
+        {
+          "employeeId": "20066543",
+          "name": "Manager Level 2",
+          "workedHours": 136.0,
+          "primaryTeam": "Management",
+          "primaryTeamUtilizationRate": 100.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Management": 136.0
+          }
+        },
+        {
+          "employeeId": "20067696",
+          "name": "Cashier Level 2 (A)",
+          "workedHours": 88.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 100.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 88.0
+          }
+        },
+        {
+          "employeeId": "20068397",
+          "name": "Cashier Level 2 (C)",
+          "workedHours": 52.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 100.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 52.0
+          }
+        },
+        {
+          "employeeId": "20072412",
+          "name": "Manager Level 1",
+          "workedHours": 152.0,
+          "primaryTeam": "Management",
+          "primaryTeamUtilizationRate": 100.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Management": 152.0
+          }
+        },
+        {
+          "employeeId": "900027719",
+          "name": "Cashier Level 4 (A)",
+          "workedHours": 40.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 0.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Employees": 40.0
+          }
+        }
+      ]
+    }
+  },
+  {
+    "title": "SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_4_5",
+    "problemId": "SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_4_5",
+    "problemPath": "data/problems/SISQUAL_COMPLETE/problem.json",
+    "csvPath": "shared_tmp/obj_compare_20260511/SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_4_5.csv",
+    "status": "Optimal",
+    "elapsedSeconds": 39.633,
+    "objectiveValue": 2387783150.0,
+    "switchObjectiveValue": 10.0,
+    "objectiveWeights": {
+      "obj1": 1000.0,
+      "obj4": 10.0,
+      "obj5": 100.0,
+      "skillSwitch": 1.0
+    },
+    "modelSize": {
+      "variables": 48247,
+      "constraints": 104495,
+      "x": 7360,
+      "y": 24057,
+      "switch": 10624
+    },
+    "componentValues": {
+      "shortageSlots": 1119.0,
+      "shortageUnits": 1119.0,
+      "preferredDayOffWorked": 15.0,
+      "skillSwitches": 10.0
+    },
+    "minimums": {
+      "weightedMinimumCoverageRate": 97.42,
+      "totalMinimumGap": 80,
+      "criticalUnderfilledPeriods": 80,
+      "maxPeriodShortage": 1,
+      "totalOverstaff": 1119,
+      "totalActualCoverageSlots": 4141
+    },
+    "teamBreakdown": [
+      {
+        "team": "Checkout",
+        "required": 712,
+        "actual": 887,
+        "filled": 710,
+        "gap": 2,
+        "overstaff": 177,
+        "coverageRate": 99.72
+      },
+      {
+        "team": "Employees",
+        "required": 1396,
+        "actual": 2266,
+        "filled": 1389,
+        "gap": 7,
+        "overstaff": 877,
+        "coverageRate": 99.5
+      },
+      {
+        "team": "Management",
+        "required": 672,
+        "actual": 736,
+        "filled": 671,
+        "gap": 1,
+        "overstaff": 65,
+        "coverageRate": 99.85
+      },
+      {
+        "team": "Storage",
+        "required": 322,
+        "actual": 252,
+        "filled": 252,
+        "gap": 70,
+        "overstaff": 0,
+        "coverageRate": 78.26
+      }
+    ],
+    "assignments": {
+      "intraDayTeamSwitches": 10,
+      "fragmentedWorkDays": 10,
+      "primaryTeamUtilizationRate": 75.99,
+      "nonPrimaryTeamHours": 284.0,
+      "totalWorkedHours": 1183.0,
+      "durationComplianceRate": 93.55,
+      "demandedHoursComplianceRate": 93.62,
+      "availabilityViolations": 30,
+      "consecutiveDaysViolations": 0,
+      "minRestViolations": 0,
+      "employeeRows": [
+        {
+          "employeeId": "20054956",
+          "name": "Cashier-L2 / Manager-L4 (multi-skill)",
+          "workedHours": 76.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 34.21,
+          "teamSwitches": 6,
+          "fragmentedWorkDays": 6,
+          "availabilityViolations": 6,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 26.0,
+            "Management": 50.0
+          }
+        },
+        {
+          "employeeId": "20066543",
+          "name": "Manager Level 2",
+          "workedHours": 136.0,
+          "primaryTeam": "Management",
+          "primaryTeamUtilizationRate": 100.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 6,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Management": 136.0
+          }
+        },
+        {
+          "employeeId": "20038706",
+          "name": "Cashier Level 2 (D)",
+          "workedHours": 40.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 100.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 4,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 40.0
+          }
+        },
+        {
+          "employeeId": "20062688",
+          "name": "Cashier-L3 / Manager-L4 (multi-skill)",
+          "workedHours": 44.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 0.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 4,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Management": 44.0
+          }
+        },
+        {
+          "employeeId": "20067009",
+          "name": "Cashier-L1 / Manager-L3 (multi-skill)",
+          "workedHours": 105.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 88.57,
+          "teamSwitches": 3,
+          "fragmentedWorkDays": 3,
+          "availabilityViolations": 2,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 93.0,
+            "Management": 12.0
+          }
+        },
+        {
+          "employeeId": "900027719",
+          "name": "Cashier Level 4 (A)",
+          "workedHours": 40.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 5.0,
+          "teamSwitches": 1,
+          "fragmentedWorkDays": 1,
+          "availabilityViolations": 2,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 2.0,
+            "Employees": 38.0
+          }
+        },
+        {
+          "employeeId": "20068397",
+          "name": "Cashier Level 2 (C)",
+          "workedHours": 52.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 100.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 2,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 52.0
+          }
+        },
+        {
+          "employeeId": "20072412",
+          "name": "Manager Level 1",
+          "workedHours": 152.0,
+          "primaryTeam": "Management",
+          "primaryTeamUtilizationRate": 100.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 2,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Management": 152.0
+          }
+        },
+        {
+          "employeeId": "900027718",
+          "name": "Cashier Level 5",
+          "workedHours": 52.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 7.69,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 2,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 4.0,
+            "Employees": 48.0
+          }
+        },
+        {
+          "employeeId": "20051291",
+          "name": "Storage Warehouse - Level 1",
+          "workedHours": 126.0,
+          "primaryTeam": "Storage",
+          "primaryTeamUtilizationRate": 100.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Storage": 126.0
+          }
+        },
+        {
+          "employeeId": "20055066",
+          "name": "Cashier Level 4 (B)",
+          "workedHours": 52.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 0.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Employees": 52.0
+          }
+        },
+        {
+          "employeeId": "20056459",
+          "name": "Cashier Level 1 (A)",
+          "workedHours": 92.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 100.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 92.0
+          }
+        },
+        {
+          "employeeId": "20058959",
+          "name": "Cashier Level 2 (B)",
+          "workedHours": 88.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 100.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 88.0
+          }
+        },
+        {
+          "employeeId": "20066338",
+          "name": "Cashier Level 3",
+          "workedHours": 40.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 0.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Employees": 40.0
+          }
+        },
+        {
+          "employeeId": "20067696",
+          "name": "Cashier Level 2 (A)",
+          "workedHours": 88.0,
+          "primaryTeam": "Checkout",
+          "primaryTeamUtilizationRate": 100.0,
+          "teamSwitches": 0,
+          "fragmentedWorkDays": 0,
+          "availabilityViolations": 0,
+          "consecutiveDaysViolations": 0,
+          "minRestViolations": 0,
+          "teamHours": {
+            "Checkout": 88.0
+          }
+        }
+      ]
+    }
+  }
+]
