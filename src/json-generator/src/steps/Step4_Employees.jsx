@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Typography, Box, Tabs, Tab, Alert, Chip, Button } from '@mui/material';
+import { Typography, Box, Tabs, Tab, Alert, Chip, Button, Tooltip } from '@mui/material';
 import { Download as DownloadIcon } from '@mui/icons-material';
 import StepCard from '../components/wizard/StepCard';
 import NavigationButtons from '../components/wizard/NavigationButtons';
@@ -7,6 +7,7 @@ import EmployeeTable from '../components/employees/EmployeeTable';
 import CSVImporter from '../components/import/CSVImporter';
 import CSVPreview from '../components/import/CSVPreview';
 import ColumnMapper from '../components/import/ColumnMapper';
+import ImportPreviewModal from '../components/shared/ImportPreviewModal';
 import { useWizard } from '../context/WizardContext';
 import Papa from 'papaparse';
 
@@ -25,6 +26,10 @@ const Step4_Employees = () => {
   // CSV import state
   const [csvData, setCsvData] = useState(null);
   const [columnMappings, setColumnMappings] = useState({});
+
+  // Import preview modal state
+  const [pendingEmployees, setPendingEmployees] = useState(null);
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   // Get state values
   const employeeModel = state.employees.model;
@@ -59,90 +64,100 @@ const Step4_Employees = () => {
       return;
     }
 
-    // Validate mappings
-    const requiredFields = ['employee_id', 'contract_type', 'teams'];  // Always require teams
-
+    const requiredFields = ['employee_id', 'contract_type', 'teams'];
     const missingMappings = requiredFields.filter(field => !columnMappings[field]);
     if (missingMappings.length > 0) {
       setCsvError(`Please map required fields: ${missingMappings.join(', ')}`);
       return;
     }
 
-    try {
-      const newEmployees = csvData.rows.map((row, index) => {
+    const existingIds = new Set(employees.map(e => e.id));
+    const validContractIds = new Set(contracts);
+    const validRows = [];
+    const warnings = [];
+    const previewRows = [];
+
+    for (let index = 0; index < csvData.rows.length; index++) {
+      const row = csvData.rows[index];
+      try {
         const empId = row[columnMappings.employee_id]?.trim();
-        if (!empId) {
-          throw new Error(`Row ${index + 1}: Employee ID is empty`);
-        }
+        if (!empId) { warnings.push(`Row ${index + 1}: Employee ID is empty — skipped`); continue; }
 
         const contractType = row[columnMappings.contract_type]?.trim();
-        if (!contractType) {
-          throw new Error(`Row ${index + 1}: Contract type is empty`);
+        if (!contractType) { warnings.push(`Row ${index + 1}: Contract type is empty — skipped`); continue; }
+
+        if (existingIds.has(empId)) {
+          warnings.push(`Row ${index + 1}: Employee "${empId}" already exists — skipped`);
+          continue;
+        }
+
+        if (!validContractIds.has(contractType)) {
+          warnings.push(`Row ${index + 1}: Unknown contract type "${contractType}" (valid: ${[...validContractIds].join(', ')}) — skipped`);
+          continue;
         }
 
         const employee = {
           id: empId,
           name: row[columnMappings.name]?.trim() || empId,
-          contractType: contractType
+          contractType
         };
 
-        // Parse teams (format depends on employee model)
         const teamsStr = row[columnMappings.teams];
-        if (!teamsStr) {
-          throw new Error(`Row ${index + 1}: Teams field is empty`);
-        }
+        if (!teamsStr) { warnings.push(`Row ${index + 1}: Teams field is empty — skipped`); continue; }
 
         if (employeeModel === 'team') {
-          // Team model: Parse teams as simple codes "A,B,C"
           employee.teams = teamsStr.split(',').map(t => t.trim()).filter(t => t);
-          if (employee.teams.length === 0) {
-            throw new Error(`Row ${index + 1}: No valid teams found`);
-          }
-          // Validate team codes exist
+          if (employee.teams.length === 0) { warnings.push(`Row ${index + 1}: No valid teams — skipped`); continue; }
           const validTeamCodes = teams.map(t => t.code);
           const invalidTeams = employee.teams.filter(t => !validTeamCodes.includes(t));
-          if (invalidTeams.length > 0) {
-            throw new Error(`Row ${index + 1}: Invalid team codes: ${invalidTeams.join(', ')}. Valid teams: ${validTeamCodes.join(', ')}`);
-          }
+          if (invalidTeams.length > 0) { warnings.push(`Row ${index + 1}: Invalid team codes: ${invalidTeams.join(', ')} — skipped`); continue; }
         } else {
-          // Competency model: Parse teams with levels "EG:1,CAJ:2"
-          employee.teams = teamsStr.split(',').map(t => {
+          const parsed = [];
+          let rowError = null;
+          for (const t of teamsStr.split(',')) {
             const parts = t.trim().split(':');
-            if (parts.length !== 2) {
-              throw new Error(`Row ${index + 1}: Invalid team format "${t.trim()}". Expected format: CODE:LEVEL`);
-            }
+            if (parts.length !== 2) { rowError = `Invalid team format "${t.trim()}" — expected CODE:LEVEL`; break; }
             const code = parts[0].trim();
             const level = parseInt(parts[1].trim());
-            if (isNaN(level) || level < 1) {
-              throw new Error(`Row ${index + 1}: Invalid competency level for team "${code}"`);
-            }
-            const teamInfo = teams.find(team => team.code === code);
-            if (!teamInfo) {
-              throw new Error(`Row ${index + 1}: Unknown team code "${code}". Valid teams: ${teams.map(t => t.code).join(', ')}`);
-            }
-            return {
-              code: code,
-              name: teamInfo.name,
-              level: level
-            };
-          });
-          if (employee.teams.length === 0) {
-            throw new Error(`Row ${index + 1}: No valid teams found`);
+            if (isNaN(level) || level < 1) { rowError = `Invalid competency level for team "${code}"`; break; }
+            const teamInfo = teams.find(tm => tm.code === code);
+            if (!teamInfo) { rowError = `Unknown team code "${code}"`; break; }
+            parsed.push({ code, name: teamInfo.name, level });
           }
+          if (rowError) { warnings.push(`Row ${index + 1}: ${rowError} — skipped`); continue; }
+          employee.teams = parsed;
         }
 
-        return employee;
-      });
-
-      // Success - add to employees
-      handleEmployeesChange([...employees, ...newEmployees]);
-      setCsvData(null);
-      setColumnMappings({});
-      setCurrentTab(0);  // Switch to Manual Entry tab to see imported employees
-      setCsvError('');
-    } catch (err) {
-      setCsvError(err.message);
+        validRows.push(employee);
+        if (previewRows.length < 10) {
+          const teamsDisplay = employeeModel === 'team'
+            ? employee.teams.join(', ')
+            : employee.teams.map(t => `${t.code}:${t.level}`).join(', ');
+          previewRows.push({ id: employee.id, name: employee.name, teams: teamsDisplay, contractType: employee.contractType });
+        }
+      } catch (err) {
+        warnings.push(`Row ${index + 1}: ${err.message} — skipped`);
+      }
     }
+
+    if (validRows.length === 0 && warnings.length === 0) {
+      setCsvError('No valid rows found in CSV');
+      return;
+    }
+
+    setPendingEmployees({ validRows, previewRows });
+    setImportModalOpen(true);
+    setCsvError('');
+  };
+
+  const handleImportConfirm = () => {
+    if (!pendingEmployees) return;
+    handleEmployeesChange([...employees, ...pendingEmployees.validRows]);
+    setPendingEmployees(null);
+    setImportModalOpen(false);
+    setCsvData(null);
+    setColumnMappings({});
+    setCurrentTab(0);
   };
 
   const handleDownloadTemplate = () => {
@@ -173,6 +188,22 @@ const Step4_Employees = () => {
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `employees_template_${employeeModel}.csv`;
+    link.click();
+  };
+
+  const handleDownloadCurrentEmployees = () => {
+    const headers = ['employee_id', 'name', 'teams', 'contract_type'];
+    const rows = employees.map(emp => {
+      const teamsStr = employeeModel === 'team'
+        ? (emp.teams || []).join(',')
+        : (emp.teams || []).map(t => `${t.code}:${t.level}`).join(',');
+      return [emp.id, emp.name, teamsStr, emp.contractType];
+    });
+    const csv = Papa.unparse({ fields: headers, data: rows });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `employees_export_${employeeModel}.csv`;
     link.click();
   };
 
@@ -240,8 +271,20 @@ const Step4_Employees = () => {
           {/* Tab 2: CSV Import */}
           {currentTab === 1 && (
             <Box>
-              {/* Download Template Button */}
-              <Box sx={{ mb: 2, textAlign: 'right' }}>
+              {/* Download Buttons */}
+              <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                <Tooltip title={employees.length === 0 ? 'No employees to export' : ''}>
+                  <span>
+                    <Button
+                      size="small"
+                      startIcon={<DownloadIcon />}
+                      onClick={handleDownloadCurrentEmployees}
+                      disabled={employees.length === 0}
+                    >
+                      Download Current Employees
+                    </Button>
+                  </span>
+                </Tooltip>
                 <Button
                   size="small"
                   startIcon={<DownloadIcon />}
@@ -344,6 +387,23 @@ const Step4_Employees = () => {
           nextDisabled={employees.length === 0}
         />
       </Box>
+
+      {/* Import Preview Confirmation Modal */}
+      <ImportPreviewModal
+        open={importModalOpen}
+        title={`Import Preview — ${pendingEmployees?.validRows?.length ?? 0} employee(s)`}
+        summary={`${pendingEmployees?.validRows?.length ?? 0} employees will be added to the roster.`}
+        warnings={[]}
+        rows={pendingEmployees?.previewRows || []}
+        columns={[
+          { field: 'id', label: 'Employee ID' },
+          { field: 'name', label: 'Name' },
+          { field: 'teams', label: 'Teams' },
+          { field: 'contractType', label: 'Contract Type' }
+        ]}
+        onConfirm={handleImportConfirm}
+        onCancel={() => { setImportModalOpen(false); setPendingEmployees(null); }}
+      />
     </Box>
   );
 };

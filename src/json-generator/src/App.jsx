@@ -1,9 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
-import { CssBaseline, Container, Box, Typography, AppBar, Toolbar } from '@mui/material';
+import {
+  CssBaseline, Container, Box, Typography, AppBar, Toolbar,
+  Button, Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText, IconButton, Tooltip
+} from '@mui/material';
+import { RestartAlt, FolderSpecial } from '@mui/icons-material';
 import { WizardProvider, useWizard } from './context/WizardContext';
 import theme from './theme';
 import WizardStepper from './components/wizard/WizardStepper';
+import { getVisibleStepNumber, TOTAL_VISIBLE } from './constants/wizardSteps';
+import ProjectManagerDialog from './components/project/ProjectManagerDialog';
 
 // Import steps
 import Step1_Setup from './steps/Step1_Setup';
@@ -21,8 +27,15 @@ import Step10_ReviewGenerate from './steps/Step10_ReviewGenerate';
  * Main Wizard Component
  */
 const WizardContent = () => {
-  const { state } = useWizard();
+  const { state, resetWizard } = useWizard();
   const { currentStep } = state;
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [projectsOpen, setProjectsOpen] = useState(false);
+
+  const handleResetConfirm = () => {
+    resetWizard();
+    setResetDialogOpen(false);
+  };
 
   // Render current step
   const renderStep = () => {
@@ -57,11 +70,50 @@ const WizardContent = () => {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
             JSON Generator - Schema v2.2
           </Typography>
-          <Typography variant="body2" sx={{ opacity: 0.8 }}>
-            Step {currentStep + 1} of 10
+          <Typography variant="body2" sx={{ opacity: 0.8, mr: 2 }}>
+            Step {getVisibleStepNumber(currentStep)} of {TOTAL_VISIBLE}
           </Typography>
+          <Tooltip title="Projects — save, load, export, import">
+            <IconButton
+              color="inherit"
+              size="small"
+              onClick={() => setProjectsOpen(true)}
+              sx={{ opacity: 0.8, '&:hover': { opacity: 1 }, mr: 0.5 }}
+            >
+              <FolderSpecial />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Reset wizard — clears all data">
+            <IconButton
+              color="inherit"
+              size="small"
+              onClick={() => setResetDialogOpen(true)}
+              sx={{ opacity: 0.8, '&:hover': { opacity: 1 } }}
+            >
+              <RestartAlt />
+            </IconButton>
+          </Tooltip>
         </Toolbar>
       </AppBar>
+
+      {/* Project Manager */}
+      <ProjectManagerDialog open={projectsOpen} onClose={() => setProjectsOpen(false)} />
+
+      {/* Reset Confirmation Dialog */}
+      <Dialog open={resetDialogOpen} onClose={() => setResetDialogOpen(false)}>
+        <DialogTitle>Reset Wizard?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            This will clear all entered data and return to Step 1. This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResetDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleResetConfirm} color="error" variant="contained">
+            Reset
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Main Content */}
       <Container maxWidth="lg" sx={{ py: 4 }}>

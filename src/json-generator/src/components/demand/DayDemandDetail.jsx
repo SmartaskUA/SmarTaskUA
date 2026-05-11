@@ -22,8 +22,10 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Save as SaveIcon,
-  Cancel as CancelIcon
+  Cancel as CancelIcon,
+  Add as AddIcon
 } from '@mui/icons-material';
+import AddDemandEntryDialog from './AddDemandEntryDialog';
 
 /**
  * DayDemandDetail Component
@@ -48,10 +50,15 @@ const DayDemandDetail = ({
   demandEntries = [],
   onUpdate,
   onDelete,
+  onAdd,
+  workPeriods = [],
+  teams = [],
+  workPeriodModel = 'fixed',
   employeeModel = 'team'
 }) => {
   const [editingId, setEditingId] = useState(null);
   const [editValues, setEditValues] = useState({});
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
 
   const handleStartEdit = (entry) => {
     setEditingId(entry.date + entry.workPeriod + entry[employeeModel === 'team' ? 'team' : 'competency']);
@@ -270,10 +277,30 @@ const DayDemandDetail = ({
         )}
       </DialogContent>
       <DialogActions>
+        <Button
+          variant="outlined"
+          startIcon={<AddIcon />}
+          onClick={() => setAddDialogOpen(true)}
+          sx={{ mr: 'auto' }}
+        >
+          Add Entry
+        </Button>
         <Button onClick={onClose} variant="contained">
           Close
         </Button>
       </DialogActions>
+
+      <AddDemandEntryDialog
+        open={addDialogOpen}
+        onClose={() => setAddDialogOpen(false)}
+        onSave={(newEntry) => { onAdd(newEntry); setAddDialogOpen(false); }}
+        date={date}
+        workPeriods={workPeriods}
+        teams={teams}
+        workPeriodModel={workPeriodModel}
+        employeeModel={employeeModel}
+        existingEntries={demandEntries}
+      />
     </Dialog>
   );
 };
