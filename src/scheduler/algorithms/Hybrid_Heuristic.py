@@ -5,7 +5,6 @@ import datetime
 
 import numpy as np
 import pandas as pd
-import pulp
 import holidays
 import time
 import random
@@ -18,10 +17,6 @@ from algorithms.utils import (
     TEAM_ID_TO_CODE,      
     get_team_id,   
     get_team_code,
-    count_minimum_failures,
-    check_5_consecutive_days,
-    rows_to_req_dicts_FIXED,
-    count_minimum_shift_failures,
     build_calendar,
     export_schedule_to_csv,
 )
@@ -53,15 +48,9 @@ class Heuristica:
         # === Preprocessing ===
         self.teams = self._build_teams(self.employee_rows)
 
-        #print(f"Employee to Teams mapping: {self.teams}")
-
         self.emp_allowed_teams = self._build_emp_team_map(self.employee_rows)
 
-        #print(f"Employee to Allowed Teams mapping: {self.emp_allowed_teams}")
-
         self.dates, sundays_idx = build_calendar(year)
-
-        #print(f"Generated calendar for year {year} with {(self.dates)} days, {sundays_idx} Sundays.")
 
         self.num_days = len(self.dates)
         # convert sunday indices (1-based day numbers) to actual Timestamp objects
@@ -71,8 +60,6 @@ class Heuristica:
             if 1 <= idx <= len(self.dates)
         }
 
-        #print(f"Identified {len(sundays)} Sundays: {sorted(sundays)}")
-
         # PT holidays
         pt_holidays = holidays.country_holidays("PT", years=[year])
         holiday_dates = {
@@ -81,12 +68,8 @@ class Heuristica:
             if d.date() in pt_holidays
         }
 
-        #print(f"Identified {len(holiday_dates)} holidays: {sorted(holiday_dates)}")
-
         # Combined: Sundays + Holidays
         self.sundays_holidays = sorted(sundays | holiday_dates)
-
-        #print(f"Total closed days (Sundays + Holidays): {len(self.sundays_holidays)}, Sundays + Holidays: {self.sundays_holidays}")
 
         raw_vacs = rows_to_vac_dict(vacations_rows)
         self.vacs_1based = {
@@ -103,9 +86,6 @@ class Heuristica:
             for emp_id in self.employees
         }
 
-        #print(f"Processed vacations_1based for {len(self.vacs)} employees. Sample: {self.vacs}")
-        #print(f"Processed vacations_dates for {len(self.vacations_dates)} employees. Sample: {self.vacations_dates}")
-
         mins_raw, ideals_raw = rows_to_req_dicts(minimuns_rows)
         self.minimos = {}
         self.ideais = {}
@@ -116,9 +96,6 @@ class Heuristica:
             if 1 <= day <= self.num_days:
                 self.ideais[(self.dates[day - 1], shift, team_id)] = int(value)
 
-        #print(f"Processed minimum requirements: {len(self.minimos)} entries. Sample: {(self.minimos)}")
-        #print(f"Processed ideal requirements: {len(self.ideais)} entries. Sample: {(self.ideais)}")
-        
         # Containers filled after solving
         self.assignment = defaultdict(list)
 
@@ -126,8 +103,6 @@ class Heuristica:
 
         self.Total_Days = {f: 0 for f in self.employees}
         self.sundays_holidays_worked = {f: 0 for f in self.employees}
-
-        #print(f"assignment initialized as empty defaultdict(list): {self.assignment}")
 
         print(f"\n{'='*80}")
         print(f"[Heuristica] Initialized Heuristic Scheduler")
@@ -177,92 +152,24 @@ class Heuristica:
                 teams.setdefault(t, set()).add(i)
         return teams
     
-
-    def choose_Employee2(self, Worked_Total_Days, Worked_Sequential_Days,
-                        Worked_Previous_Day, emp_allowed_teams, f, d):
-        """
-        Heuristic scoring function for employee selection.
-        Higher score = higher priority for assignment next day.
-        """
-
-        # -----------------------------
-        # PARAMETERS (tunable weights)
-        # -----------------------------
-        W_TOTAL = 0.502   # Quem trabalhou menos tem prioridade
-        W_WEEK  = 0.272   # Equilibrar dentro da semana
-        W_TEAMS = 0       # Flexibilidade de equipas
-
-        # -----------------------------
-        # 1. TOTAL DAYS COMPONENT
-        # -----------------------------
-        total_days = Worked_Total_Days.get(f, 0)
-        total_component = max(0.0, 1.0 - total_days / 223)
-
-        # -----------------------------
-        # 2. WEEKLY DAYS COMPONENT
-        # -----------------------------
-        week_days = Worked_Sequential_Days.get(f, 0)
-        week_component = max(0.0, 1.0 - week_days / 5)
-
-        # -----------------------------
-        # 3. PREVIOUS DAY BLOCK PENALTY
-        # -----------------------------
-        prev_block = Worked_Previous_Day.get(f)
-        critical_blocks = set(range(max(1, self.shifts - 1), self.shifts + 1))
-
-        if prev_block in critical_blocks:
-            block_component = -0.0
-        else:
-            block_component = 0.0
-
-        # -----------------------------
-        # 4. TEAM FLEXIBILITY BONUS
-        # -----------------------------
-        num_teams = len(emp_allowed_teams)
-        max_teams = max(len(v) for v in self.emp_allowed_teams.values())
-
-        if max_teams > 1:
-            team_component = max(0.0, 1.0 - (num_teams) / (max_teams))
-        else:
-            team_component = 0.0
-
-        # -----------------------------
-        # FINAL SCORE
-        # -----------------------------
-        score = (
-            W_TOTAL * total_component +
-            W_WEEK  * week_component +
-            W_TEAMS * team_component
-        )
-
-        return score
     
     def choose_Employee(self, Worked_Total_Days, Worked_Sequential_Days,
                         Worked_Previous_Day, emp_allowed_teams, f, d):
         import math
 
-        W_PACE    = 0.69
+        W_PACE    = 0.60
         W_SEQ     = 0.25
         W_SUN_HOL = 0.00
-        W_TEAMS   = 0.005
-        W_TRANS   = 0.05
+        W_TEAMS   = 0.05
+        W_TRANS   = 0.10
 
         # ── 1. PACE COMPONENT ──────────────────────────────────────────────────
         # Quantos dias de trabalho esperados até ao dia d
         total_days   = Worked_Total_Days.get(f, 0)
-        # day_index é o número do dia atual (1-based), usado para calcular o ritmo esperado
-        # day_index    = self.dates.index(d) + 1 if hasattr(d, 'date') else d
-        # total_open_days = self.num_days - len(self.sundays_holidays)  # dias úteis no ano
-# 
-        # # Ritmo esperado: proporção do ano passada × dias máximos
-        # expected_by_now = (day_index / self.num_days) * 223
-
-        # Diferença: negativo = atrasado (deve ter prioridade ALTA)
-        #            positivo = adiantado (deve ter prioridade BAIXA)
         pace_delta = total_days / 223
 
         # Normaliza para [0, 1]: atrasado → 1.0, adiantado → 0.0
-        pace_component = max(0.0, min(1.0, 0.5 - pace_delta / 30.0))
+        pace_component = max(0.0, 1.0 - pace_delta ** 2) 
 
         # ── 2. STREAK PRESSURE ─────────────────────────────────────────────────
         streak = Worked_Sequential_Days.get(f, 0)
@@ -323,40 +230,6 @@ class Heuristica:
         ranked.sort(key=lambda x: x[1], reverse=True)
 
         return [emp_id for emp_id, _ in ranked]
-
-    def _print_daily_assignment_map(self, day, daily_assignments):
-        """
-        Print a cumulative day-by-day grid up to the current day.
-        """
-        day_index = self.dates.index(day) + 1
-        shift_label = {1: 'M', 2: 'T', 3: 'N'}
-
-        assignment_by_employee = defaultdict(dict)
-        for emp_id, assignments in self.assignment.items():
-            for assignment_day, shift, team_code in assignments:
-                if assignment_day <= day_index:
-                    team_code_label = TEAM_ID_TO_CODE.get(team_code, str(team_code))
-                    assignment_by_employee[emp_id][assignment_day] = f"{shift_label.get(shift, shift)}{team_code_label}"
-
-        header_cells = ["Emp"] + [f"D{idx}" for idx in range(1, day_index + 1)]
-        column_width = 6
-
-        print(f"\n{'=' * 80}")
-        print(f"[Heuristica] Cumulative map up to Day {day_index} ({day.date()})")
-        print(f"[Heuristica] Today's assignments: {len(daily_assignments)}")
-
-        header_line = "".join(cell.center(column_width) for cell in header_cells)
-        print(header_line)
-
-        for emp_id in range(1, len(self.employee_rows) + 1):
-            row_cells = [f"Emp{emp_id}"]
-            emp_map = assignment_by_employee.get(emp_id, {})
-            for current_day in range(1, day_index + 1):
-                row_cells.append(emp_map.get(current_day, "x"))
-
-            print("".join(str(cell).center(column_width) for cell in row_cells))
-
-        print(f"{'=' * 80}")
     
     def evaluate_Day_Toshifts_mins(self, day, mins):
         """
@@ -386,7 +259,6 @@ class Heuristica:
             random.shuffle(optional)  # Embaralha os opcionais para dar variedade na atribuição
             result[team_code] = {"mandatory": mandatory, "optional": optional}
 
-        # print(f"[Heuristica] Shifts needed for {day}: {result}")
         return result
     
     def evaluate_Day_Toshifts_ideais(self, day, ideals):
@@ -418,7 +290,6 @@ class Heuristica:
             random.shuffle(optional)  # Embaralha os opcionais para dar variedade na atribuição
             result[team_code] = {"mandatory": mandatory, "optional": optional}
 
-        # print(f"[Heuristica] Shifts needed for {day}: {result}")
         return result
 
 
@@ -434,7 +305,6 @@ class Heuristica:
         print(f"[Heuristica] BUILDING HEURISTIC SCHEDULE")
         print(f"{'='*80}")
 
-        # Heuristica - Tracking variables (one entry per employee)
         Worked_Sequential_Days = {}  # {Employee: Current consecutive-day streak}
         Worked_Previous_Day    = {}  # {Employee: Shift worked yesterday}
         Pontuation             = {f: 0 for f in funcionarios}  # {Employee: Score}
@@ -457,14 +327,6 @@ class Heuristica:
                     if key in self.minimos:
                         mins[(s, team_code)] = self.minimos[key]
             
-            # Ideal do dia
-            ideals = {}
-            for s in turnos:
-                for team_code in self.teams.keys():
-                    key = (d, s, team_code)
-                    if key in self.ideais:
-                        ideals[(s, team_code)] = self.ideais[key]
-
             Shifts_Table = self.evaluate_Day_Toshifts_mins(d, mins)
 
             # Ordem de funcionarios pelo score (maior para menor)
@@ -556,32 +418,9 @@ class Heuristica:
                     d,
                 )
 
-            # ================================================================
-            
-            if debug_daily_trace:
-               print_daily_assignment_map(
-                   scheduler          = self,
-                   day                = d,
-                   daily_assignments  = daily_assignments,
-                   tracking           = {
-                       "Worked_Total_Days":      self.Total_Days,
-                       "Worked_Sequential_Days": Worked_Sequential_Days,
-                       "Worked_Previous_Day":    Worked_Previous_Day,
-                   },
-                   mins  = mins,
-                   wide  = False,
-                   window = 30,
-               )
-
-
-        print(f"\n[DEBUG] Fim do dia {self.dates.index(d)+1} ({d.date()})")
-        for f in funcionarios:
-            print(f"  Emp {f}: Total={self.Total_Days[f]} Seq={Worked_Sequential_Days[f]} "
-                  f"SunHol={self.sundays_holidays_worked[f]} Prev={Worked_Previous_Day[f]}")
-
         return True
 
-    # =========================================================
+    # ================================================================
 
     def log_ideals_day(self, d, day_date, ideals_table, days_assignments,
                    employees_worked_today, actual_streaks,
@@ -634,6 +473,7 @@ class Heuristica:
 
         print(f"{'═'*90}")
 
+
     def recreate_days(self, assignment):
 
         """
@@ -652,8 +492,8 @@ class Heuristica:
             day: sorted(days.get(day, []), key=lambda x: x[0])
             for day in range(1, self.num_days + 1)
         }
-        # print(f"Recreated days from assignment: {sorted_days}")
         return sorted_days
+    
         
     def get_next_assigned_shift(self, emp_id, day):
         """
@@ -665,6 +505,7 @@ class Heuristica:
             if day_1b == day + 1:
                 return shift
         return None
+    
     
     def consecutivechecker(self, emp_id, day, assignment):
         """
@@ -700,18 +541,13 @@ class Heuristica:
             
         # Total streak if we assign today = before + 1 (today) + after
         total_streak = streak_before + 1 + streak_after
-        #print(f"Checking consecutive for Emp {emp_id} on Day {day}: "
-        #      f"Streak Before={streak_before}, Streak After={streak_after}, Total if assigned today={total_streak}")
+
         return total_streak  
 
     def build_ideals(self, debug_daily_trace=False):
         """
         Phase 2: fill ideal slots.
         """
-
-        print(f"\n{'='*80}")
-        print(f"[Heuristica] BUILDING IDEALS (Fase 2)")
-        print(f"{'='*80}")
 
         funcionarios = self.employees
         turnos       = range(1, self.shifts + 1)
@@ -735,7 +571,6 @@ class Heuristica:
                 today_assign = self.consecutivechecker(f, d, days_assignments)
                 Actual_Streaks[f] = today_assign
             
-            #print(f"Day {d}: Assignments: {days_assignments.get(d, [])}")
             Employees_Worked_today = {emp for emp, _, _ in days_assignments.get(d, [])}
             Employees_Worked_Yesterday = {emp for emp,_,_ in days_assignments.get(d-1,[])}
 
@@ -812,14 +647,12 @@ class Heuristica:
                         prev_shift = Previous_days_emp.get(f)
                         if prev_shift is not None:
                             if not self._validate_block_transition(prev_shift, candidate_shift):
-                                # print(f"    Violação passado: Emp {f} shift {prev_shift} → {candidate_shift}")
                                 continue
 
                         # 2. Verifica transição de hoje → dia seguinte já atribuído
                         next_shift = self.get_next_assigned_shift(f, d)
                         if next_shift is not None:
                             if not self._validate_block_transition(candidate_shift, next_shift):
-                                # print(f"    Violação futuro: Emp {f} shift {candidate_shift} → {next_shift} (dia {d+1})")
                                 continue
 
                         # Válido nos dois sentidos — atribui
@@ -857,23 +690,8 @@ class Heuristica:
                     f,
                     d,
                 )
-            
-            # self.log_ideals_day(
-            #     d               = d,
-            #     day_date        = day_date,
-            #     ideals_table    = ideals_Table,   # estado DEPOIS das atribuições
-            #     days_assignments= days_assignments,
-            #     employees_worked_today = Employees_Worked_today,
-            #     actual_streaks  = Actual_Streaks,
-            #     daily_new_assignments  = daily_new_assignments,
-            # )
 
-
-        print(f"\n[build_ideals] Complete.")
-        print(f"[build_ideals] Total assignments after ideals: "
-              f"{sum(len(v) for v in self.assignment.values())}")
-
-        return ideals_added_finally
+        return True
     
 
     def complete_solution(self, **kwargs):
@@ -989,7 +807,7 @@ class Heuristica:
         self.sundays_holidays_worked  = {f: 0 for f in self.employees}
         self.ideal_assignments        = defaultdict(list)
 
-    def solve(self, n_outer=1, n_inner=1,
+    def solve(self, n_outer, n_inner,
               debug_daily_trace=False, debug_day_delay_seconds=0.0):
 
         print(f"\n{'='*80}")
@@ -998,8 +816,9 @@ class Heuristica:
 
         start_wall = time.time()
 
-        best_outer_score     = -1
+        best_outer_score     = float("inf")
         best_outer_assignment = None
+        Total_List = []
 
         for outer in range(1, n_outer + 1):
             print(f"\n[Outer {outer}/{n_outer}] build_model()...")
@@ -1009,28 +828,32 @@ class Heuristica:
             # Snapshot do estado APÓS build_model, ANTES de qualquer ideal
             post_model_snapshot = self._capture_ideal_state()
 
-            best_inner_score      = -1
+            best_inner_score      = float("inf")
             best_inner_assignment = None
 
             for inner in range(1, n_inner + 1):
                 # Restaura sempre o estado pós-model para cada run
                 self._restore_ideal_state(post_model_snapshot)
 
-                ideals_added = self.build_ideals()
+                self.build_ideals()
 
-                if ideals_added > best_inner_score:
-                    best_inner_score      = ideals_added
+                kpis = self.evaluate_kpis()
+
+                Total_List.append({
+                    "missed_mins": kpis["missed_mins"],
+                    "missed_ideals": kpis["missed_ideals"],
+                })
+
+                if kpis["missed_ideals"] < best_inner_score:
+                    best_inner_score      = kpis["missed_ideals"]
                     best_inner_assignment = self._capture_ideal_state()
-                    print(f"  [Inner {inner:>3}] novo melhor: {ideals_added} ideais")
 
             # Restaura o melhor resultado do inner loop
+            if best_inner_assignment is None:
+                best_inner_assignment = post_model_snapshot
             self._restore_ideal_state(best_inner_assignment)
 
-            total_assigned = sum(len(v) for v in self.assignment.values())
-            print(f"[Outer {outer}/{n_outer}] melhor inner={best_inner_score} "
-                  f"total_dias={total_assigned}")
-
-            if best_inner_score > best_outer_score:
+            if best_inner_score < best_outer_score:
                 best_outer_score      = best_inner_score
                 best_outer_assignment = self._capture_ideal_state()
 
@@ -1038,13 +861,30 @@ class Heuristica:
             self._reset_for_new_outer()
 
         # Restaura o melhor resultado global
+        if best_outer_assignment is None:
+            best_outer_assignment = post_model_snapshot
         self._restore_ideal_state(best_outer_assignment)
 
         self.complete_solution()
+ 
+        # ── KPI report ────────────────────────────────────────────────────────
+        kpis = self.evaluate_kpis()
+        print(f"\n{'='*80}")
+        print(f"[Heuristica] KPI Report")
+        print(f"{'='*80}")
+        print(f"  Mins por cumprir  : {kpis['missed_mins']}")
+        print(f"  Ideais por cumprir: {kpis['missed_ideals']}")
+        print(f"{'='*80}")
+
+        Media_Mins = sum(item["missed_mins"] for item in Total_List) / len(Total_List)
+        Media_Ideals = sum(item["missed_ideals"] for item in Total_List) / len(Total_List)
+        print(f"  Média Mins por cumprir: {Media_Mins:.2f}")
+        print(f"  Média Ideais por cumprir: {Media_Ideals:.2f}")
+        print(f"{'='*80}")
 
         wall_time = time.time() - start_wall
         print(f"\n[Heuristica] Concluído em {wall_time:.1f}s")
-        print(f"[Heuristica] Melhor score global: {best_outer_score} ideais adicionados")
+        print(f"[Heuristica] Melhor score global: {best_outer_score} ideais por cumprir")
         for emp, assg in self.assignment.items():
             print(f"  Emp {emp}: {len(assg)} dias")
 
@@ -1082,13 +922,43 @@ class Heuristica:
             rows.append(line)
 
         return rows
-    
 
+    def evaluate_kpis(self) -> dict:
+        """
+        Conta, a partir de self.assignment, quantos slots de mínimos e
+        de ideais ficaram por cumprir.
+ 
+        Retorna um dicionário com:
+            "missed_mins"   -> int  (total de slots mínimos em falta)
+            "missed_ideals" -> int  (total de slots ideais em falta)
+        """
+        # Reconstrói contagem de atribuições por (date, shift, team_id)
+        assigned_counts: dict = {}
+        for emp_id, entries in self.assignment.items():
+            for day_1b, shift, team_id in entries:
+                if 1 <= day_1b <= self.num_days:
+                    date = self.dates[day_1b - 1]
+                    key = (date, shift, team_id)
+                    assigned_counts[key] = assigned_counts.get(key, 0) + 1
+ 
+        missed_mins = 0
+        for (date, shift, team_id), required in self.minimos.items():
+            actual = assigned_counts.get((date, shift, team_id), 0)
+            missed_mins += max(0, required - actual)
+ 
+        missed_ideals = 0
+        for (date, shift, team_id), target in self.ideais.items():
+            actual = assigned_counts.get((date, shift, team_id), 0)
+            missed_ideals += max(0, target - actual)
+ 
+        return {"missed_mins": missed_mins, "missed_ideals": missed_ideals}
+
+    
 
 def solve(vacations=None, minimuns=None, employees=None, maxTime=None,
           year=2021, hours=13, work_blocks=None, rules=None,
           debug_daily_trace=False, debug_day_delay_seconds=10.0,
-          n_outer=1, n_inner=1, **kwargs):
+          n_outer=1, n_inner=10, **kwargs):
     """
     Main solve function for hourly scheduling.
     """
