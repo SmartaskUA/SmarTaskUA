@@ -152,61 +152,7 @@ class Heuristica:
                 teams.setdefault(t, set()).add(i)
         return teams
     
-    
-    def choose_Employee(self, Worked_Total_Days, Worked_Sequential_Days,
-                        Worked_Previous_Day, emp_allowed_teams, f, d):
-        import math
-
-        W_PACE    = 0.60
-        W_SEQ     = 0.25
-        W_SUN_HOL = 0.00
-        W_TEAMS   = 0.05
-        W_TRANS   = 0.10
-
-        # ── 1. PACE COMPONENT ──────────────────────────────────────────────────
-        # Quantos dias de trabalho esperados até ao dia d
-        total_days   = Worked_Total_Days.get(f, 0)
-        pace_delta = total_days / 223
-
-        # Normaliza para [0, 1]: atrasado → 1.0, adiantado → 0.0
-        pace_component = max(0.0, 1.0 - pace_delta ** 2) 
-
-        # ── 2. STREAK PRESSURE ─────────────────────────────────────────────────
-        streak = Worked_Sequential_Days.get(f, 0)
-        seq_component = max(0.0, 1.0 - (streak / 5) ** 2)
-
-        # ── 3. SUNDAY/HOLIDAY EQUITY ───────────────────────────────────────────
-        sun_hol = self.sundays_holidays_worked.get(f, 0)
-        sun_hol_component = max(0.0, 1.0 - sun_hol / 22)
-
-        # ── 4. TEAM FLEXIBILITY (fail-first) ───────────────────────────────────
-        num_teams = len(emp_allowed_teams)
-        max_teams = max(len(v) for v in self.emp_allowed_teams.values())
-        # Quanto mais equipas um funcionário puder trabalhar, maior a penalização (prioridade menor)
-        team_component = max(0.0, 0.6 - (num_teams) / (max_teams)) if max_teams > 1 else 0.0
-
-        # ── 5. TRANSITION FEASIBILITY ──────────────────────────────────────────
-        # Se o funcionário trabalhou um turno crítico ontem (2 ou 3), beneficia dando rank mais alto
-        prev = Worked_Previous_Day.get(f) if isinstance(Worked_Previous_Day, dict) else Worked_Previous_Day
-        
-        if prev == 3:
-            value = 0.75
-        elif prev == 2:
-            value = 0.5
-        else:
-            value = 0.0
-
-        trans_component = value
-
-        score = (
-            W_PACE    * pace_component    +
-            W_SEQ     * seq_component     +
-            W_SUN_HOL * sun_hol_component +
-            W_TEAMS   * team_component    +
-            W_TRANS   * trans_component
-        )
-        return score
-    
+# ==========================================================================================
 
     def _validate_block_transition_beta(self, previous_shift, next_shift):
         if previous_shift is None or next_shift is None:
@@ -291,137 +237,7 @@ class Heuristica:
             result[team_code] = {"mandatory": mandatory, "optional": optional}
 
         return result
-
-
-    def build_model(self, debug_daily_trace=False, debug_day_delay_seconds=10.0):
-        """Build the Heuristic model with shift constraints."""
-
-        funcionarios = self.employees
-        dias = self.dates
-        turnos = range(1, self.shifts + 1)
-
-        print(f"turnos: {turnos}")
-        print(f"\n{'='*80}")
-        print(f"[Heuristica] BUILDING HEURISTIC SCHEDULE")
-        print(f"{'='*80}")
-
-        Worked_Sequential_Days = {}  # {Employee: Current consecutive-day streak}
-        Worked_Previous_Day    = {}  # {Employee: Shift worked yesterday}
-        Pontuation             = {f: 0 for f in funcionarios}  # {Employee: Score}
-
-        for f in funcionarios:
-            self.Total_Days[f]      = 0
-            Worked_Sequential_Days[f] = 0
-            Worked_Previous_Day[f]    = None
-            Pontuation[f]             = 0
-            self.sundays_holidays_worked[f]   = 0
-
-        for d in dias:
-            daily_assignments = []
-
-            # Minimo do dia
-            mins = {}
-            for s in turnos:
-                for team_code in self.teams.keys():
-                    key = (d, s, team_code)
-                    if key in self.minimos:
-                        mins[(s, team_code)] = self.minimos[key]
-            
-            Shifts_Table = self.evaluate_Day_Toshifts_mins(d, mins)
-
-            # Ordem de funcionarios pelo score (maior para menor)
-            create_global_order = self.order_of_ranks(Pontuation)
-
-            # ================================================================
-            # FASE 1 — preencher os MÍNIMOS
-            # ================================================================
-            for f in create_global_order:
-
-                if d in self.vacations_dates[f]:
-                    Worked_Previous_Day[f]    = None
-                    Worked_Sequential_Days[f] = 0
-                    continue
-
-                if d in self.sundays_holidays and self.sundays_holidays_worked[f] >= 22:
-                    Worked_Previous_Day[f]    = None
-                    Worked_Sequential_Days[f] = 0
-                    continue
-
-                if len(Shifts_Table) == 0:
-                    Worked_Previous_Day[f]    = None
-                    Worked_Sequential_Days[f] = 0
-                    continue
-
-                if Worked_Sequential_Days[f] >= 5:
-                    Worked_Previous_Day[f]    = None
-                    Worked_Sequential_Days[f] = 0
-                    continue
-
-                if self.Total_Days[f] >= 223:
-                    Worked_Previous_Day[f]    = None
-                    Worked_Sequential_Days[f] = 0
-                    continue
-        
-                Emp_Teams = self.emp_allowed_teams[f]
-                teams_most_needed = sorted(
-                    ((team, len(shifts_needed["mandatory"]))
-                     for team, shifts_needed in Shifts_Table.items()
-                     if team in Emp_Teams and shifts_needed["mandatory"]),
-                    key=lambda x: x[1],
-                    reverse=True
-                )
-
-                assigned = False
-                for team_code, shifts_needed_count in teams_most_needed:
-                    if assigned:
-                        break
-                    
-                    prev_shift = Worked_Previous_Day[f]
-                    mandatory_shifts = Shifts_Table[team_code]["mandatory"]
-
-                    for slot_index, candidate_shift in enumerate(mandatory_shifts):
-                        if prev_shift is not None:
-                            if not self._validate_block_transition(prev_shift, candidate_shift):
-                                continue  # try next shift in this same team
-                            
-                        # Valid — assign this slot
-                        assigned_shift = mandatory_shifts.pop(slot_index)
-
-                        self.assignment[f].append((
-                            self.dates.index(d) + 1,
-                            assigned_shift,
-                            team_code
-                        ))
-                        daily_assignments.append((f, assigned_shift, team_code))
-
-                        self.Total_Days[f]        += 1
-                        Worked_Sequential_Days[f] += 1
-                        Worked_Previous_Day[f]     = assigned_shift
-                        assigned = True
-
-                        if d in self.sundays_holidays:
-                            self.sundays_holidays_worked[f] += 1
-
-                        break  # exits the inner shift loop
-                    
-                if not assigned:
-                    Worked_Previous_Day[f]    = None
-                    Worked_Sequential_Days[f] = 0
-
-
-                Pontuation[f] = self.choose_Employee(
-                    self.Total_Days,
-                    Worked_Sequential_Days,
-                    Worked_Previous_Day,
-                    self.emp_allowed_teams[f],
-                    f,
-                    d,
-                )
-
-        return True
-
-    # ================================================================
-
+    
     def log_ideals_day(self, d, day_date, ideals_table, days_assignments,
                    employees_worked_today, actual_streaks,
                    daily_new_assignments):
@@ -543,6 +359,189 @@ class Heuristica:
         total_streak = streak_before + 1 + streak_after
 
         return total_streak  
+    
+# =========================================================================================
+
+    def choose_Employee(self, Worked_Total_Days, Worked_Sequential_Days,
+                        Worked_Previous_Day, emp_allowed_teams, f, d):
+        import math
+
+        W_PACE    = 0.60
+        W_SEQ     = 0.25
+        W_SUN_HOL = 0.00
+        W_TEAMS   = 0.05
+        W_TRANS   = 0.10
+
+        # ── 1. PACE COMPONENT ──────────────────────────────────────────────────
+        # Quantos dias de trabalho esperados até ao dia d
+        total_days   = Worked_Total_Days.get(f, 0)
+        pace_delta = total_days / 223
+
+        # Normaliza para [0, 1]: atrasado → 1.0, adiantado → 0.0
+        pace_component = max(0.0, 1.0 - pace_delta ** 2) 
+
+        # ── 2. STREAK PRESSURE ─────────────────────────────────────────────────
+        streak = Worked_Sequential_Days.get(f, 0)
+        seq_component = max(0.0, 1.0 - (streak / 5) ** 2)
+
+        # ── 3. SUNDAY/HOLIDAY EQUITY ───────────────────────────────────────────
+        sun_hol = self.sundays_holidays_worked.get(f, 0)
+        sun_hol_component = max(0.0, 1.0 - sun_hol / 22)
+
+        # ── 4. TEAM FLEXIBILITY (fail-first) ───────────────────────────────────
+        num_teams = len(emp_allowed_teams)
+        max_teams = max(len(v) for v in self.emp_allowed_teams.values())
+        # Quanto mais equipas um funcionário puder trabalhar, maior a penalização (prioridade menor)
+        team_component = max(0.0, 0.6 - (num_teams) / (max_teams)) if max_teams > 1 else 0.0
+
+        # ── 5. TRANSITION FEASIBILITY ──────────────────────────────────────────
+        # Se o funcionário trabalhou um turno crítico ontem (2 ou 3), beneficia dando rank mais alto
+        prev = Worked_Previous_Day.get(f) if isinstance(Worked_Previous_Day, dict) else Worked_Previous_Day
+        
+        if prev == 3:
+            value = 0.75
+        elif prev == 2:
+            value = 0.5
+        else:
+            value = 0.0
+
+        trans_component = value
+
+        score = (
+            W_PACE    * pace_component    +
+            W_SEQ     * seq_component     +
+            W_SUN_HOL * sun_hol_component +
+            W_TEAMS   * team_component    +
+            W_TRANS   * trans_component
+        )
+        return score
+
+
+    def build_model(self, debug_daily_trace=False, debug_day_delay_seconds=10.0):
+        """Build the Heuristic model with shift constraints."""
+
+        funcionarios = self.employees
+        dias = self.dates
+        turnos = range(1, self.shifts + 1)
+
+        print(f"turnos: {turnos}")
+        print(f"\n{'='*80}")
+        print(f"[Heuristica] BUILDING HEURISTIC SCHEDULE")
+        print(f"{'='*80}")
+
+        Worked_Sequential_Days = {}  # {Employee: Current consecutive-day streak}
+        Worked_Previous_Day    = {}  # {Employee: Shift worked yesterday}
+        Pontuation             = {f: 0 for f in funcionarios}  # {Employee: Score}
+
+        for f in funcionarios:
+            self.Total_Days[f]      = 0
+            Worked_Sequential_Days[f] = 0
+            Worked_Previous_Day[f]    = None
+            Pontuation[f]             = 0
+            self.sundays_holidays_worked[f]   = 0
+
+        for d in dias:
+
+            # Minimo do dia
+            mins = {}
+            for s in turnos:
+                for team_code in self.teams.keys():
+                    key = (d, s, team_code)
+                    if key in self.minimos:
+                        mins[(s, team_code)] = self.minimos[key]
+            
+            Shifts_Table = self.evaluate_Day_Toshifts_mins(d, mins)
+
+            # Ordem de funcionarios pelo score (maior para menor)
+            create_global_order = self.order_of_ranks(Pontuation)
+
+            # ================================================================
+            # FASE 1 — preencher os MÍNIMOS
+            # ================================================================
+            for f in create_global_order:
+
+                if d in self.vacations_dates[f]:
+                    Worked_Previous_Day[f]    = None
+                    Worked_Sequential_Days[f] = 0
+                    continue
+
+                if d in self.sundays_holidays and self.sundays_holidays_worked[f] >= 22:
+                    Worked_Previous_Day[f]    = None
+                    Worked_Sequential_Days[f] = 0
+                    continue
+
+                if Worked_Sequential_Days[f] >= 5:
+                    Worked_Previous_Day[f]    = None
+                    Worked_Sequential_Days[f] = 0
+                    continue
+
+                if self.Total_Days[f] >= 223:
+                    Worked_Previous_Day[f]    = None
+                    Worked_Sequential_Days[f] = 0
+                    continue
+        
+                Emp_Teams = self.emp_allowed_teams[f]
+                teams_most_needed = sorted(
+                    ((team, len(shifts_needed["mandatory"]))
+                     for team, shifts_needed in Shifts_Table.items()
+                     if team in Emp_Teams and shifts_needed["mandatory"]),
+                    key=lambda x: x[1],
+                    reverse=True
+                )
+
+                assigned = False
+                for team_code, shifts_needed_count in teams_most_needed:
+                    if assigned:
+                        break
+
+                    if shifts_needed_count <= 0:
+                        continue
+                    
+                    prev_shift = Worked_Previous_Day[f]
+                    mandatory_shifts = Shifts_Table[team_code]["mandatory"]
+
+                    for slot_index, candidate_shift in enumerate(mandatory_shifts):
+                        if prev_shift is not None:
+                            if not self._validate_block_transition(prev_shift, candidate_shift):
+                                continue  # try next shift in this same team
+                            
+                        # Valid — assign this slot
+                        assigned_shift = mandatory_shifts.pop(slot_index)
+
+                        self.assignment[f].append((
+                            self.dates.index(d) + 1,
+                            assigned_shift,
+                            team_code
+                        ))
+
+                        self.Total_Days[f]        += 1
+                        Worked_Sequential_Days[f] += 1
+                        Worked_Previous_Day[f]     = assigned_shift
+                        assigned = True
+
+                        if d in self.sundays_holidays:
+                            self.sundays_holidays_worked[f] += 1
+
+                        break  # exits the inner shift loop
+                    
+                if not assigned:
+                    Worked_Previous_Day[f]    = None
+                    Worked_Sequential_Days[f] = 0
+
+
+                Pontuation[f] = self.choose_Employee(
+                    self.Total_Days,
+                    Worked_Sequential_Days,
+                    Worked_Previous_Day,
+                    self.emp_allowed_teams[f],
+                    f,
+                    d,
+                )
+
+        return True
+
+    # ================================================================
+
 
     def build_ideals(self, debug_daily_trace=False):
         """
@@ -560,9 +559,6 @@ class Heuristica:
         days_assignments = self.recreate_days(self.assignment)
 
         for d in random_days:
-
-            # No início do loop `for d in days:`, adiciona este container:
-            daily_new_assignments = []
 
             Actual_Streaks = {}
 
@@ -603,19 +599,15 @@ class Heuristica:
                     continue
 
                 if self.dates[d-1] in self.vacations_dates[f]:
-                    Actual_Streaks[f] = 0
                     continue
 
                 if self.Total_Days.get(f, 0) >= 223:
-                    Actual_Streaks[f] = 0
                     continue
 
                 if Actual_Streaks[f] > 5:
-                    Actual_Streaks[f] = 0
                     continue
 
                 if day_date in self.sundays_holidays and self.sundays_holidays_worked.get(f, 0) >= 22:
-                    Actual_Streaks[f] = 0
                     continue
         
                 Emp_Teams = self.emp_allowed_teams[f]
@@ -635,11 +627,9 @@ class Heuristica:
                     if assigned:
                         break
 
-                    if team_code not in Emp_Teams:
-                        continue
-
                     optional_shifts = ideals_Table[team_code]["optional"]
-                    if not optional_shifts:
+
+                    if shifts_needed_count <= 0:
                         continue
 
                     for slot_index, candidate_shift in enumerate(optional_shifts):
@@ -667,17 +657,6 @@ class Heuristica:
 
                     if assigned:
                         break
-                    
-                if assigned:
-                    seq_now = Actual_Streaks.get(f, 0)
-                    sf_now  = self.sundays_holidays_worked.get(f, 0)
-                    ideals_added_finally += 1
-                    daily_new_assignments.append((
-                        f, assigned_shift, team_code,
-                        self.Total_Days.get(f, 0),
-                        seq_now,
-                        sf_now,
-                    ))
 
                 if not assigned:
                     Actual_Streaks[f] = 0
@@ -782,30 +761,7 @@ class Heuristica:
         print(f"\n[complete_solution] Complete.")
 
         return True
-
-
-    def _capture_ideal_state(self):
-        """Capture the mutable state that build_ideals changes."""
-        return {
-            "assignment": copy.deepcopy(self.assignment),
-            "Total_Days": copy.deepcopy(self.Total_Days),
-            "sundays_holidays_worked": copy.deepcopy(self.sundays_holidays_worked),
-            "ideal_assignments": copy.deepcopy(getattr(self, "ideal_assignments", defaultdict(list))),
-        }
-
-    def _restore_ideal_state(self, state):
-        """Restore a previously captured mutable state."""
-        self.assignment = copy.deepcopy(state["assignment"])
-        self.Total_Days = copy.deepcopy(state["Total_Days"])
-        self.sundays_holidays_worked = copy.deepcopy(state["sundays_holidays_worked"])
-        self.ideal_assignments = copy.deepcopy(state["ideal_assignments"])
-
-    def _reset_for_new_outer(self):
-        """Limpa o estado para um novo outer (novo build_model)."""
-        self.assignment               = defaultdict(list)
-        self.Total_Days               = {f: 0 for f in self.employees}
-        self.sundays_holidays_worked  = {f: 0 for f in self.employees}
-        self.ideal_assignments        = defaultdict(list)
+    
 
     def solve(self, n_outer, n_inner,
               debug_daily_trace=False, debug_day_delay_seconds=0.0):
@@ -889,6 +845,30 @@ class Heuristica:
             print(f"  Emp {emp}: {len(assg)} dias")
 
         return True
+
+
+    def _capture_ideal_state(self):
+        """Capture the mutable state that build_ideals changes."""
+        return {
+            "assignment": copy.deepcopy(self.assignment),
+            "Total_Days": copy.deepcopy(self.Total_Days),
+            "sundays_holidays_worked": copy.deepcopy(self.sundays_holidays_worked),
+            "ideal_assignments": copy.deepcopy(getattr(self, "ideal_assignments", defaultdict(list))),
+        }
+
+    def _restore_ideal_state(self, state):
+        """Restore a previously captured mutable state."""
+        self.assignment = copy.deepcopy(state["assignment"])
+        self.Total_Days = copy.deepcopy(state["Total_Days"])
+        self.sundays_holidays_worked = copy.deepcopy(state["sundays_holidays_worked"])
+        self.ideal_assignments = copy.deepcopy(state["ideal_assignments"])
+
+    def _reset_for_new_outer(self):
+        """Limpa o estado para um novo outer (novo build_model)."""
+        self.assignment               = defaultdict(list)
+        self.Total_Days               = {f: 0 for f in self.employees}
+        self.sundays_holidays_worked  = {f: 0 for f in self.employees}
+        self.ideal_assignments        = defaultdict(list)
 
 
     def export_csv(self, filename="schedule_weighted.csv"):
