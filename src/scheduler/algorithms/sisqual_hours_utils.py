@@ -482,23 +482,41 @@ def match_coverage_priority_tier(
     raise ValueError(f"No priority tier matches skill '{skill}' worker/level #{nth_worker}")
 
 
+def priority_weight_for_skill_level(
+    coverage_priority_tiers: List[Dict],
+    skill: str,
+    level: int,
+) -> int:
+    """Return the arithmetic p_sl weight for a skill/level priority tier."""
+
+    try:
+        tier_index = match_coverage_priority_tier(
+            coverage_priority_tiers,
+            skill,
+            level,
+        )
+    except ValueError:
+        priority = len(coverage_priority_tiers) + 1
+    else:
+        priority = int(coverage_priority_tiers[tier_index].get("priority", tier_index + 1))
+    return 1 + (priority - 1) * 10
+
+
 def build_priority_hierarchy_coefficients(
     coverage_priority_tiers: List[Dict],
     dominance_base: int = 3,
 ) -> Dict[int, int]:
-    """Return hierarchy weights where each tier dominates two of the next tier.
+    """Return arithmetic hierarchy weights.
 
-    ``dominance_base=3`` means priority 1 has more objective value than two
-    priority-2 units, priority 2 has more value than two priority-3 units, and
-    so on. This keeps the JSON ``priorityHierarchy`` meaningful without using
-    very large big-M coefficients.
+    ``dominance_base`` is accepted for backward compatibility and ignored.
+    MathematicalDefinition7 ObjectiveFunction2 uses p_sl priority weights
+    with a linear gap between tiers: tier 1 has weight 1, tier 2 has weight
+    11, tier 3 has weight 21, and so on.
     """
 
-    num_tiers = len(coverage_priority_tiers)
-    base = max(3, int(dominance_base))
     return {
-        tier_index: base ** (num_tiers - tier_index - 1)
-        for tier_index in range(num_tiers)
+        tier_index: 1 + (int(tier.get("priority", tier_index + 1)) - 1) * 10
+        for tier_index, tier in enumerate(coverage_priority_tiers)
     }
 
 
@@ -506,24 +524,17 @@ def build_objective5_priority_penalties(
     coverage_priority_tiers: List[Dict],
     dominance_base: int = 3,
 ) -> Dict[int, int]:
-    """Return assignment penalties derived from the priority hierarchy.
+    """Return arithmetic assignment penalties for legacy Objective 5 callers.
 
-    The best tier has zero penalty. Dropping from tier 1 to tier 2 costs the
-    tier-1 hierarchy weight, dropping from tier 2 to tier 3 adds the tier-2
-    hierarchy weight, etc. This makes one downgrade at a high priority more
-    important than two downgrades at the next lower priority.
+    ``dominance_base`` is accepted for backward compatibility and ignored.
+    The best tier has penalty 0, the next tier has penalty 10, and so on.
     """
 
-    hierarchy_weights = build_priority_hierarchy_coefficients(
-        coverage_priority_tiers,
-        dominance_base=dominance_base,
-    )
-    penalties = {}
-    running_penalty = 0
-    for tier_index in range(len(coverage_priority_tiers)):
-        penalties[tier_index] = running_penalty
-        running_penalty += hierarchy_weights[tier_index]
-    penalties[len(coverage_priority_tiers)] = running_penalty
+    penalties = {
+        tier_index: tier_index * 10
+        for tier_index in range(len(coverage_priority_tiers))
+    }
+    penalties[len(coverage_priority_tiers)] = len(coverage_priority_tiers) * 10
     return penalties
 
 

@@ -30,7 +30,6 @@ from algorithms.sisqual_hours_utils import (
     build_sisqual_day_modes,
     group_open_days_by_week,
     load_problem_json,
-    match_coverage_priority_tier,
     minutes_to_hhmm,
     parse_contract_hours,
     parse_coverage_priority_tiers,
@@ -44,6 +43,7 @@ from algorithms.sisqual_hours_utils import (
     parse_skill_codes,
     parse_soft_constraint_weight,
     parse_work_periods,
+    priority_weight_for_skill_level,
 )
 
 
@@ -231,15 +231,11 @@ class SisqualProblem5CSP:
         _int_weight(self.objective3_weight, "ObjectiveFunction3")
 
     def _priority_weight(self, skill: str, level: int) -> int:
-        try:
-            tier_index = match_coverage_priority_tier(
-                self.coverage_priority_tiers,
-                skill,
-                level,
-            )
-        except ValueError:
-            return len(self.coverage_priority_tiers) + 1
-        return int(self.coverage_priority_tiers[tier_index].get("priority", tier_index + 1))
+        return priority_weight_for_skill_level(
+            self.coverage_priority_tiers,
+            skill,
+            level,
+        )
 
     def _coverage_terms(self, day: str, slot_idx: int, skill: str):
         cache_key = (day, slot_idx, skill)
@@ -283,7 +279,7 @@ class SisqualProblem5CSP:
                 )
 
         # Slot-level team assignment y_{wdts}: if a chosen daily block covers a
-        # half-hour slot, exactly one of the employee's assignable skills is used.
+        # half-hour slot, exactly one demanded employee skill is used.
         for employee in self.employees:
             employee_id = employee["id"]
             for day in self.days:
@@ -291,6 +287,8 @@ class SisqualProblem5CSP:
                     continue
                 for slot in self.time_slots:
                     for skill in employee["assignable_skills"]:
+                        if self.alpha.get((day, slot.index, skill), 0) <= 0:
+                            continue
                         self.y[(employee_id, day, slot.index, skill)] = model.NewBoolVar(
                             f"y_{employee_id}_{day.replace('-', '')}_{slot.index}_{skill}"
                         )
@@ -314,6 +312,8 @@ class SisqualProblem5CSP:
                         continue
                     for slot in self.time_slots:
                         for skill in employee["assignable_skills"]:
+                            if (employee_id, day, slot.index, skill) not in self.y:
+                                continue
                             level = employee["skill_levels"][skill]
                             self.y_level[(employee_id, day, slot.index, skill, level)] = model.NewBoolVar(
                                 f"yprime_{employee_id}_{day.replace('-', '')}_{slot.index}_{skill}_L{level}"
@@ -385,6 +385,7 @@ class SisqualProblem5CSP:
                     lhs_terms = [
                         self.y[(employee_id, day, slot.index, skill)]
                         for skill in employee["assignable_skills"]
+                        if (employee_id, day, slot.index, skill) in self.y
                     ]
                     model.Add(sum(lhs_terms) == sum(rhs_terms))
 
@@ -437,6 +438,8 @@ class SisqualProblem5CSP:
                     for slot in self.time_slots:
                         for skill in employee["assignable_skills"]:
                             level = employee["skill_levels"][skill]
+                            if (employee_id, day, slot.index, skill, level) not in self.y_level:
+                                continue
                             model.Add(
                                 self.y_level[(employee_id, day, slot.index, skill, level)]
                                 == self.y[(employee_id, day, slot.index, skill)]

@@ -32,7 +32,6 @@ from algorithms.sisqual_hours_utils import (
     build_sisqual_day_modes,
     group_open_days_by_week,
     load_problem_json,
-    match_coverage_priority_tier,
     minutes_to_hhmm,
     parse_contract_hours,
     parse_coverage_priority_tiers,
@@ -46,6 +45,7 @@ from algorithms.sisqual_hours_utils import (
     parse_skill_codes,
     parse_soft_constraint_weight,
     parse_work_periods,
+    priority_weight_for_skill_level,
 )
 
 
@@ -188,15 +188,11 @@ class SisqualProblem5ILP:
         self.objective_value = None
 
     def _priority_weight(self, skill: str, level: int) -> int:
-        try:
-            tier_index = match_coverage_priority_tier(
-                self.coverage_priority_tiers,
-                skill,
-                level,
-            )
-        except ValueError:
-            return len(self.coverage_priority_tiers) + 1
-        return int(self.coverage_priority_tiers[tier_index].get("priority", tier_index + 1))
+        return priority_weight_for_skill_level(
+            self.coverage_priority_tiers,
+            skill,
+            level,
+        )
 
     def _coverage_terms(self, day: str, slot_idx: int, skill: str) -> List[pulp.LpVariable]:
         cache_key = (day, slot_idx, skill)
@@ -250,6 +246,8 @@ class SisqualProblem5ILP:
                     continue
                 for slot in self.time_slots:
                     for skill in skills:
+                        if self.alpha.get((day, slot.index, skill), 0) <= 0:
+                            continue
                         self.y[(employee_id, day, slot.index, skill)] = pulp.LpVariable(
                             f"y_{employee_id}_{day.replace('-', '')}_{slot.index}_{skill}",
                             cat="Binary",
@@ -274,6 +272,8 @@ class SisqualProblem5ILP:
                         continue
                     for slot in self.time_slots:
                         for skill in employee["assignable_skills"]:
+                            if (employee_id, day, slot.index, skill) not in self.y:
+                                continue
                             level = employee["skill_levels"][skill]
                             self.y_level[(employee_id, day, slot.index, skill, level)] = pulp.LpVariable(
                                 f"yprime_{employee_id}_{day.replace('-', '')}_{slot.index}_{skill}_L{level}",
@@ -349,7 +349,11 @@ class SisqualProblem5ILP:
                     for assignment in assignment_list[day]:
                         if slot.index in assignment.slot_indices:
                             rhs_terms.append(self.x[(employee_id, day, assignment.key)])
-                    lhs_terms = [self.y[(employee_id, day, slot.index, skill)] for skill in skills]
+                    lhs_terms = [
+                        self.y[(employee_id, day, slot.index, skill)]
+                        for skill in skills
+                        if (employee_id, day, slot.index, skill) in self.y
+                    ]
                     model += (
                         pulp.lpSum(lhs_terms) == pulp.lpSum(rhs_terms),
                         f"skill_cover_{employee_id}_{day}_{slot.index}",
@@ -411,6 +415,8 @@ class SisqualProblem5ILP:
                     for slot in self.time_slots:
                         for skill in employee["assignable_skills"]:
                             level = employee["skill_levels"][skill]
+                            if (employee_id, day, slot.index, skill, level) not in self.y_level:
+                                continue
                             model += (
                                 self.y_level[(employee_id, day, slot.index, skill, level)]
                                 == self.y[(employee_id, day, slot.index, skill)],
