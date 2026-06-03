@@ -11,7 +11,7 @@ User-friendly frontend wizard for generating schema v2.6 JSON + CSV pairs for em
 - ✅ **Validation**: Real-time validation with error feedback
 - ✅ **Responsive**: Works on tablets and desktops
 
-The application will be available at: http://localhost:5174
+The application is served at **http://localhost/json-gen** (via the nginx proxy); the standalone Vite dev server runs on port 5174.
 
 ## Project Structure
 
