@@ -21,8 +21,8 @@ from algorithms.CSPv2 import solve as cspv2_solver
 from algorithms.CSP_Afonso_Hours import solve as CSP_Afonso_Hours_solver
 from algorithms.ILP_Sisqual_Hours import solve as ILP_Sisqual_Hours_solver
 from algorithms.CSP_Sisqual_Hours import solve as CSP_Sisqual_Hours_solver
-from algorithms.ILP_Sisqual_Hours_MathematicalDefinition5 import solve as ILP_Sisqual_Hours_MathematicalDefinition5_solver
-from algorithms.CSP_Sisqual_Hours_MathematicalDefinition5 import solve as CSP_Sisqual_Hours_MathematicalDefinition5_solver
+from algorithms.ILP_Sisqual_Hours_MathematicalDefinition7 import solve as ILP_Sisqual_Hours_MathematicalDefinition7_solver
+from algorithms.CSP_Sisqual_Hours_MathematicalDefinition7 import solve as CSP_Sisqual_Hours_MathematicalDefinition7_solver
 from algorithms.ILP_2 import solve as ILP_2
 from algorithms.ILP_2_Half_Intervals import solve as ILP_2_Half_Intervals
 from algorithms.ILP_3 import solve as ILP_3
@@ -75,8 +75,10 @@ class TaskManager:
             "ilp_greedy": ilp_greedy,
             "ILP_Sisqual_Hours": ILP_Sisqual_Hours_solver,
             "CSP_Sisqual_Hours": CSP_Sisqual_Hours_solver,
-            "ILP_Sisqual_Hours_MathematicalDefinition5": ILP_Sisqual_Hours_MathematicalDefinition5_solver,
-            "CSP_Sisqual_Hours_MathematicalDefinition5": CSP_Sisqual_Hours_MathematicalDefinition5_solver,
+            "ILP_Sisqual_Hours_MathematicalDefinition7": ILP_Sisqual_Hours_MathematicalDefinition7_solver,
+            "CSP_Sisqual_Hours_MathematicalDefinition7": CSP_Sisqual_Hours_MathematicalDefinition7_solver,
+            "ILP_Sisqual_Hours_MathematicalDefinition5": ILP_Sisqual_Hours_MathematicalDefinition7_solver,
+            "CSP_Sisqual_Hours_MathematicalDefinition5": CSP_Sisqual_Hours_MathematicalDefinition7_solver,
             "COP_1_Half_Intervals": COP_1_Half_Intervals_solver,
             "COP_2_Half_Intervals": COP_2_Half_Intervals_Solver,
         }
@@ -109,6 +111,8 @@ class TaskManager:
             "CSP General",
             "ILP_Sisqual_Hours",
             "CSP_Sisqual_Hours",
+            "ILP_Sisqual_Hours_MathematicalDefinition7",
+            "CSP_Sisqual_Hours_MathematicalDefinition7",
             "ILP_Sisqual_Hours_MathematicalDefinition5",
             "CSP_Sisqual_Hours_MathematicalDefinition5",
         }
@@ -160,6 +164,8 @@ class TaskManager:
         elif algorithm_name in [
             "ILP_Sisqual_Hours",
             "CSP_Sisqual_Hours",
+            "ILP_Sisqual_Hours_MathematicalDefinition7",
+            "CSP_Sisqual_Hours_MathematicalDefinition7",
             "ILP_Sisqual_Hours_MathematicalDefinition5",
             "CSP_Sisqual_Hours_MathematicalDefinition5",
         ]:
