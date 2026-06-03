@@ -4,7 +4,7 @@
   "metadata": {
     "problemId": "SISQUAL_COMPLETE_EXPANDED_PLUS6",
     "createdAt": "2026-05-03T00:00:00Z",
-    "description": "Expanded Sisqual October benchmark based on SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_4_5: all original workers and rules are kept, six realistic workers are added, and demand is raised in targeted peak periods so ILP/CSP coverage, day-off, skill-priority, and employee-level KPI tradeoffs remain meaningful.",
+    "description": "Expanded Sisqual October benchmark based on SISQUAL_COMPLETE_OBJ1_2_3: all original workers and rules are kept, six realistic workers are added, and demand is raised in targeted peak periods so ILP/CSP coverage, day-off, skill-priority, and employee-level KPI tradeoffs remain meaningful.",
     "source": "Generated from data/problems/SISQUAL_COMPLETE using scripts/create_sisqual_expanded_problem.py"
   },
   "features": {
@@ -706,20 +706,20 @@
     "soft": [
       {
         "id": "obj1-min-coverage",
-        "type": "min_coverage",
+        "type": "objective1",
         "weight": 1000,
         "enabled": true
       },
       {
-        "id": "obj4-day-off-swap-penalty",
-        "type": "day_off_swap_penalty",
-        "weight": 10,
+        "id": "obj2-skill-priority-assignment",
+        "type": "objective2",
+        "weight": 100,
         "enabled": true
       },
       {
-        "id": "obj5-skill-priority-assignment",
-        "type": "skill_priority_assignment",
-        "weight": 100,
+        "id": "obj3-day-off-swap-penalty",
+        "type": "objective3",
+        "weight": 10,
         "enabled": true
       },
       {
@@ -741,7 +741,7 @@
     }
   },
   "optimization": {
-    "algorithm": "ILP_Sisqual_Hours_MathematicalDefinition5",
+    "algorithm": "ILP_Sisqual_Hours_MathematicalDefinition7",
     "maxTimeMinutes": 10
   }
 }

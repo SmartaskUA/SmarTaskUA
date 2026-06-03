@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the Sisqual MD5 ILP objective variants and write an Excel comparison."""
+"""Run the Sisqual MD7 ILP objective variants and write an Excel comparison."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ from openpyxl import Workbook  # noqa: E402
 from openpyxl.styles import Alignment, Font, PatternFill  # noqa: E402
 from openpyxl.utils import get_column_letter  # noqa: E402
 
-from algorithms.ILP_Sisqual_Hours_MathematicalDefinition5 import (  # noqa: E402
+from algorithms.ILP_Sisqual_Hours_MathematicalDefinition7 import (  # noqa: E402
     SisqualProblem5ILP,
 )
 
@@ -47,23 +47,23 @@ RUNS = [
         ROOT / "data/problems/SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1/problem.json",
     ),
     (
-        "SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_4",
-        ROOT / "data/problems/SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_4/problem.json",
+        "SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_3",
+        ROOT / "data/problems/SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_3/problem.json",
     ),
     (
-        "SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_5",
-        ROOT / "data/problems/SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_5/problem.json",
+        "SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_2",
+        ROOT / "data/problems/SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_2/problem.json",
     ),
     (
-        "SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_4_5",
+        "SISQUAL_COMPLETE_OBJ1_2_3",
         ROOT / "data/problems/SISQUAL_COMPLETE/problem.json",
     ),
 ]
 
 OUTPUT_DIR = ROOT / "docs" / "comparisons"
-SCHEDULE_DIR = ROOT / "shared_tmp" / "obj_compare_20260511"
-WORKBOOK_PATH = OUTPUT_DIR / "SISQUAL_HOURS_OCTOBER_MD5_OBJECTIVE_COMPARISON_20260511.xlsx"
-RAW_PATH = OUTPUT_DIR / "sisqual_hours_october_md5_objective_comparison_20260511_raw.json"
+SCHEDULE_DIR = ROOT / "shared_tmp" / "obj_compare_md7_20260603"
+WORKBOOK_PATH = OUTPUT_DIR / "SISQUAL_HOURS_OCTOBER_MD7_OBJECTIVE_COMPARISON_20260603.xlsx"
+RAW_PATH = OUTPUT_DIR / "sisqual_hours_october_md7_objective_comparison_20260603_raw.json"
 
 OFF_MARKERS = {"", "0", "DO", "FDO", "VAC", "NOT", "MED", "OFF", "CLOSED", "UNASSIGNED"}
 STAFF_TEAM = "Employees"
@@ -383,6 +383,10 @@ def variable_sum(variables: dict) -> float:
     return float(sum((pulp.value(variable) or 0.0) for variable in variables.values()))
 
 
+def variable_dict(scheduler, name: str) -> dict:
+    return getattr(scheduler, name, {}) or {}
+
+
 def run_case(title: str, problem_path: Path) -> dict:
     with problem_path.open(encoding="utf-8") as file:
         problem = json.load(file)
@@ -409,25 +413,25 @@ def run_case(title: str, problem_path: Path) -> dict:
         "status": status,
         "elapsedSeconds": round(elapsed, 3),
         "objectiveValue": scheduler.objective_value,
-        "switchObjectiveValue": scheduler.switch_objective_value,
+        "switchObjectiveValue": getattr(scheduler, "switch_objective_value", 0.0),
         "objectiveWeights": {
             "obj1": scheduler.objective1_weight,
-            "obj4": scheduler.objective4_weight,
-            "obj5": scheduler.objective5_weight,
-            "skillSwitch": scheduler.skill_switch_weight,
+            "obj2": scheduler.objective2_weight,
+            "obj3": scheduler.objective3_weight,
+            "skillSwitch": getattr(scheduler, "skill_switch_weight", 0.0),
         },
         "modelSize": {
             "variables": len(scheduler.model.variables()),
             "constraints": len(scheduler.model.constraints),
             "x": len(scheduler.x),
             "y": len(scheduler.y),
-            "switch": len(scheduler.switch),
+            "switch": len(variable_dict(scheduler, "switch")),
         },
         "componentValues": {
             "shortageSlots": variable_sum(scheduler.shortage),
-            "shortageUnits": variable_sum(scheduler.shortage_unit),
+            "shortageUnits": variable_sum(variable_dict(scheduler, "shortage_unit")),
             "preferredDayOffWorked": variable_sum(scheduler.preferred_day_work),
-            "skillSwitches": variable_sum(scheduler.switch),
+            "skillSwitches": variable_sum(variable_dict(scheduler, "switch")),
         },
         "minimums": minimums,
         "teamBreakdown": team_rows,
@@ -468,8 +472,8 @@ def write_workbook(results: list[dict]):
                 "Primary Objective",
                 "Switch Objective",
                 "Obj1 Weight",
-                "Obj4 Weight",
-                "Obj5 Weight",
+                "Obj2 Weight",
+                "Obj3 Weight",
                 "Coverage %",
                 "Minimum Gap",
                 "Critical Underfilled Slots",
@@ -504,8 +508,8 @@ def write_workbook(results: list[dict]):
                     result["objectiveValue"],
                     result["switchObjectiveValue"],
                     result["objectiveWeights"]["obj1"],
-                    result["objectiveWeights"]["obj4"],
-                    result["objectiveWeights"]["obj5"],
+                    result["objectiveWeights"]["obj2"],
+                    result["objectiveWeights"]["obj3"],
                     result["minimums"]["weightedMinimumCoverageRate"],
                     result["minimums"]["totalMinimumGap"],
                     result["minimums"]["criticalUnderfilledPeriods"],

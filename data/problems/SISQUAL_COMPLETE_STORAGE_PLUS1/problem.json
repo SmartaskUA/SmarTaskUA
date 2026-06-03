@@ -381,20 +381,20 @@
     "soft": [
       {
         "id": "obj1-min-coverage",
-        "type": "min_coverage",
+        "type": "objective1",
         "weight": 1000,
         "enabled": true
       },
       {
-        "id": "obj4-day-off-swap-penalty",
-        "type": "day_off_swap_penalty",
-        "weight": 10,
+        "id": "obj2-skill-priority-assignment",
+        "type": "objective2",
+        "weight": 100,
         "enabled": true
       },
       {
-        "id": "obj5-skill-priority-assignment",
-        "type": "skill_priority_assignment",
-        "weight": 100,
+        "id": "obj3-day-off-swap-penalty",
+        "type": "objective3",
+        "weight": 10,
         "enabled": true
       },
       {
@@ -416,7 +416,7 @@
     }
   },
   "optimization": {
-    "algorithm": "ILP_Sisqual_Hours_MathematicalDefinition5",
+    "algorithm": "ILP_Sisqual_Hours_MathematicalDefinition7",
     "maxTimeMinutes": 10
   }
 }

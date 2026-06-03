@@ -2,10 +2,10 @@
   "schemaVersion": "2.2",
   "problemType": "employee_scheduling",
   "metadata": {
-    "problemId": "SISQUAL_COMPLETE_OBJ5_10",
-    "name": "Sisqual Complete OBJ5=10",
+    "problemId": "SISQUAL_COMPLETE_OBJ2_10",
+    "name": "Sisqual Complete OBJ2=10",
     "createdAt": "2026-04-14T12:00:00Z",
-    "description": "Full BFarias Sisqual problem with the same CSV bundle and soft constraints as the original complete instance, except Objective 5 weight is reduced from 100 to 10.",
+    "description": "Full BFarias Sisqual problem with the same CSV bundle and soft constraints as the original complete instance, except Objective 2 weight is reduced from 100 to 10.",
     "source": "BFarias_Doc_Sisqual.pdf + BFarias_Problema2.pdf"
   },
   "features": {
@@ -372,19 +372,19 @@
     "soft": [
       {
         "id": "obj1-min-coverage",
-        "type": "min_coverage",
+        "type": "objective1",
         "weight": 1000,
         "enabled": true
       },
       {
-        "id": "obj4-day-off-swap-penalty",
-        "type": "day_off_swap_penalty",
+        "id": "obj2-skill-priority-assignment",
+        "type": "objective2",
         "weight": 10,
         "enabled": true
       },
       {
-        "id": "obj5-skill-priority-assignment",
-        "type": "skill_priority_assignment",
+        "id": "obj3-day-off-swap-penalty",
+        "type": "objective3",
         "weight": 10,
         "enabled": true
       },
@@ -407,7 +407,7 @@
     }
   },
   "optimization": {
-    "algorithm": "ILP_Sisqual_Hours_MathematicalDefinition5",
+    "algorithm": "ILP_Sisqual_Hours_MathematicalDefinition7",
     "maxTimeMinutes": 10
   }
 }

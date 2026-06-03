@@ -4,7 +4,7 @@
 
 `SISQUAL_COMPLETE_EXPANDED_PLUS6` is a larger October Sisqual benchmark derived from
 `data/problems/SISQUAL_COMPLETE`, whose problem id is
-`SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_4_5`.
+`SISQUAL_COMPLETE_OBJ1_2_3`.
 
 The goal is to test ILP and CSP behavior when the store has more workers available, but
 the demand is also increased enough that the problem remains meaningful. This is not meant
@@ -40,9 +40,9 @@ The same soft objectives and weights are kept:
 
 | Objective | Weight | Meaning |
 | --- | ---: | --- |
-| Minimum coverage | 1000 | Strongly prioritize covering required demand. |
-| Preferred day-off swap penalty | 10 | Avoid working `DO` days unless needed. |
-| Skill-priority assignment | 100 | Prefer assigning workers to higher-priority skills/levels. |
+| Objective 1: minimum coverage | 1000 | Strongly prioritize covering required demand. |
+| Objective 2: skill-level priority assignment | 100 | Prefer assigning workers to higher-priority skills/levels. |
+| Objective 3: preferred day-off swap penalty | 10 | Avoid working `DO` days unless needed. |
 
 ## What Was Added
 
@@ -112,8 +112,8 @@ schedule if they allocate people well.
 
 This scenario is intended for comparing:
 
-- `ILP_Sisqual_Hours_MathematicalDefinition5`
-- `CSP_Sisqual_Hours_MathematicalDefinition5`
+- `ILP_Sisqual_Hours_MathematicalDefinition7`
+- `CSP_Sisqual_Hours_MathematicalDefinition7`
 
 It should help answer questions like:
 
@@ -157,11 +157,11 @@ Use the generated problem path:
 data/problems/SISQUAL_COMPLETE_EXPANDED_PLUS6/problem.json
 ```
 
-Run either MD5 solver:
+Run either MathematicalDefinition7 solver:
 
 ```text
-ILP_Sisqual_Hours_MathematicalDefinition5
-CSP_Sisqual_Hours_MathematicalDefinition5
+ILP_Sisqual_Hours_MathematicalDefinition7
+CSP_Sisqual_Hours_MathematicalDefinition7
 ```
 
 After generating a schedule, inspect it with the Sisqual KPI report. The key comparison is

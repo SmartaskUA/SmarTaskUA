@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DIR = ROOT / "data" / "problems" / "SISQUAL_COMPLETE"
 TARGET_DIR = ROOT / "data" / "problems" / "SISQUAL_COMPLETE_EXPANDED_PLUS6"
 
-SOURCE_PROBLEM_ID = "SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_4_5"
+SOURCE_PROBLEM_ID = "SISQUAL_COMPLETE_OBJ1_2_3"
 TARGET_PROBLEM_ID = "SISQUAL_COMPLETE_EXPANDED_PLUS6"
 
 EMPLOYEES_PEAK_PERIODS = {
@@ -189,7 +189,7 @@ def expanded_problem(source_problem: dict) -> dict:
         "Expanded Sisqual October benchmark based on "
         f"{SOURCE_PROBLEM_ID}: all original workers and rules are kept, six realistic "
         "workers are added, and demand is raised in targeted peak periods so ILP/CSP "
-        "coverage, day-off, skill-priority, and employee-level KPI tradeoffs remain meaningful."
+        "coverage, skill-priority, day-off, and employee-level KPI tradeoffs remain meaningful."
     )
     metadata["source"] = (
         "Generated from data/problems/SISQUAL_COMPLETE using "

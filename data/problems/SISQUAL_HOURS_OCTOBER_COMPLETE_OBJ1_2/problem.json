@@ -2,9 +2,9 @@
   "schemaVersion": "2.2",
   "problemType": "employee_scheduling",
   "metadata": {
-    "problemId": "SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_5",
+    "problemId": "SISQUAL_HOURS_OCTOBER_COMPLETE_OBJ1_2",
     "createdAt": "2026-04-14T12:00:00Z",
-    "description": "Full BFarias Sisqual problem: 14 employees, 3 skills (Storage/Management/Checkout), weekday 08:30-22:00 / weekend 11:00-21:00. Exercises all 5 objectives including Desafio 3 multi-skill assignment priority.",
+    "description": "Full BFarias Sisqual problem: 14 employees, 3 skills (Storage/Management/Checkout), weekday 08:30-22:00 / weekend 11:00-21:00. Exercises the 3 MathematicalDefinition7 objectives: coverage shortage, priority-weighted skill/level assignment, and preferred day-off preservation.",
     "source": "BFarias_Doc_Sisqual.pdf + BFarias_Problema2.pdf"
   },
   "features": {
@@ -606,20 +606,20 @@
     "soft": [
       {
         "id": "obj1-min-coverage",
-        "type": "min_coverage",
+        "type": "objective1",
         "weight": 100,
         "enabled": true
       },
       {
-        "id": "obj4-day-off-swap-penalty",
-        "type": "day_off_swap_penalty",
-        "weight": 0,
+        "id": "obj2-skill-priority-assignment",
+        "type": "objective2",
+        "weight": 10,
         "enabled": true
       },
       {
-        "id": "obj5-skill-priority-assignment",
-        "type": "skill_priority_assignment",
-        "weight": 10,
+        "id": "obj3-day-off-swap-penalty",
+        "type": "objective3",
+        "weight": 0,
         "enabled": true
       },
       {
@@ -641,7 +641,7 @@
     }
   },
   "optimization": {
-    "algorithm": "ILP_Sisqual_Hours_MathematicalDefinition5",
+    "algorithm": "ILP_Sisqual_Hours_MathematicalDefinition7",
     "maxTimeMinutes": 10
   }
 }
