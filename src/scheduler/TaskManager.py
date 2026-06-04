@@ -36,6 +36,7 @@ from algorithms.ILP_4_Half_Intervals import solve as ILP_4_Half_Intervals
 from algorithms.COP_2_Half_Intervals import solve as COP_2_Half_Intervals_Solver
 from algorithms.COP_1_Half_Intervals import solve as COP_1_Half_Intervals_solver
 from algorithms.general.heuristic_general import solve as heuristic_general_solver
+from algorithms.GA.ga import solve as ga_solver
 from analyzer.kpiVerification_Sisqual import KpiEvaluator_Sisqual
 
 class TaskManager:
@@ -75,6 +76,7 @@ class TaskManager:
             "CSP_Sisqual_Hours": CSP_Sisqual_Hours_solver,
             "COP_1_Half_Intervals": COP_1_Half_Intervals_solver,
             "COP_2_Half_Intervals": COP_2_Half_Intervals_Solver,
+            "Genetic Algorithm": ga_solver,
         }
 
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13, solver="CBC", problem_path=None):
@@ -146,6 +148,8 @@ class TaskManager:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, rules=rules_json)
             else:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, constraints=rules)
+        elif algorithm_name == "Genetic Algorithm":
+            schedule_data = algorithm(problem_path=problem_path, maxTime=maxTime)
         elif algorithm_name in ["ILP_Sisqual_Hours", "CSP_Sisqual_Hours"]:
             # Request the solver to print the returned rows as JSON so the
             # container logs contain the schedule payload sent to the frontend.
