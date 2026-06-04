@@ -269,6 +269,7 @@ const CreateCalendar = () => {
   const problemShiftAlgorithms = [
     { value: "ILP General", label: "ILP General" },
     { value: "CSP General", label: "CSP General" },
+    { value: "Genetic Algorithm", label: "Genetic Algorithm" },
   ];
   const problemHourAlgorithms = [
     { value: "ILP_Sisqual_Hours", label: "ILP Sisqual Hours" },
