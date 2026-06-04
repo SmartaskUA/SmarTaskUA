@@ -13,11 +13,15 @@ Run:
     python ga.py
 """
 
+import sys
 import time
 import random
 import numpy as np
-import matplotlib.pyplot as plt
 from multiprocessing import Pool
+from pathlib import Path
+
+# Ensure problem.py is importable regardless of working directory
+sys.path.insert(0, str(Path(__file__).parent))
 
 from problem import (
     load_problem, compute_fitness, random_schedule,
@@ -92,38 +96,32 @@ def _coverage_contribution(row_arr, coverage, min_demand, ideal_demand, problem_
     Score how much this employee's row helps cover unmet demand.
     - Each day below minimum counts W_MIN (100) — matches the fitness weight.
     - Each day below ideal but above minimum counts W_IDEAL (1).
-    This ensures employees processed later (after minimum is already met)
-    are still scored meaningfully against ideal demand instead of all
-    tying at 0 and defaulting to the same parent.
-    Vectorised per gene value to avoid slow Python day-by-day loops.
     """
-    gene_to_shift_team = problem_data["gene_to_shift_team"]
-    team_idx           = problem_data["team_idx"]
-    score = 0
-    for gene_val, (s_code, t_code) in gene_to_shift_team.items():
-        s_idx = SHIFT_IDX[s_code]
-        t_idx = team_idx[t_code]
-        days  = np.where(row_arr == gene_val)[0]
-        if not len(days):
-            continue
-        cov   = coverage[days, s_idx, t_idx]
-        mn    = min_demand[days, s_idx, t_idx]
-        id_   = ideal_demand[days, s_idx, t_idx]
-        score += int(np.sum(np.maximum(0, mn  - cov)) * 100)   # below minimum
-        score += int(np.sum(np.maximum(0, id_ - np.maximum(cov, mn))))  # below ideal
-    return score
+    # O4 — single np.where on the row, then lookup arrays for shift/team indices
+    days = np.where(row_arr != GENE_OFF)[0]
+    if not len(days):
+        return 0
+    genes = row_arr[days]
+    s_arr = problem_data["gene_shift_arr"][genes]
+    t_arr = problem_data["gene_team_arr"][genes]
+    cov   = coverage[days, s_arr, t_arr]
+    mn    = min_demand[days, s_arr, t_arr]
+    id_   = ideal_demand[days, s_arr, t_arr]
+    return int(np.sum(np.maximum(0, mn - cov)) * 100 +
+               np.sum(np.maximum(0, id_ - np.maximum(cov, mn))))
 
 
 def _update_coverage(row_arr, coverage, problem_data):
     """Add one employee row's worked assignments to the running coverage array."""
-    gene_to_shift_team = problem_data["gene_to_shift_team"]
-    team_idx           = problem_data["team_idx"]
-    for gene_val, (s_code, t_code) in gene_to_shift_team.items():
-        s_idx = SHIFT_IDX[s_code]
-        t_idx = team_idx[t_code]
-        days  = np.where(row_arr == gene_val)[0]
-        if len(days):
-            coverage[days, s_idx, t_idx] += 1
+    # O3 — single np.where on the row, then np.add.at with lookup arrays
+    days = np.where(row_arr != GENE_OFF)[0]
+    if len(days):
+        genes = row_arr[days]
+        np.add.at(coverage,
+                  (days,
+                   problem_data["gene_shift_arr"][genes],
+                   problem_data["gene_team_arr"][genes]),
+                  1)
 
 
 def cx_nbts(ind1, ind2, n_emp, n_days, problem_data):
@@ -259,65 +257,67 @@ def mut_demand_guided(individual, problem_data, indpb):
     Falls back to random choice when all demand is already met.
     Coverage is computed once and updated after each gene change.
     """
-    n_emp         = problem_data["n_employees"]
-    n_days        = problem_data["n_days"]
-    vac_mask      = problem_data["vac_mask"]
-    allowed_genes = problem_data["allowed_genes"]
-    min_demand    = problem_data["min_demand"]
-    ideal_demand  = problem_data["ideal_demand"]
-
+    n_emp              = problem_data["n_employees"]
+    n_days             = problem_data["n_days"]
+    vac_mask           = problem_data["vac_mask"]
+    allowed_genes      = problem_data["allowed_genes"]
+    min_demand         = problem_data["min_demand"]
+    ideal_demand       = problem_data["ideal_demand"]
     gene_to_shift_team = problem_data["gene_to_shift_team"]
     team_idx           = problem_data["team_idx"]
+    gene_shift_arr     = problem_data["gene_shift_arr"]
+    gene_team_arr      = problem_data["gene_team_arr"]
     n_teams            = len(problem_data["teams"])
 
     schedule = np.array(individual["genes"], dtype=int).reshape(n_emp, n_days)
+
+    # O6 — build initial coverage vectorised
     coverage = np.zeros((n_days, len(SHIFTS), n_teams), dtype=int)
-    for gene_val, (s_code, t_code) in gene_to_shift_team.items():
-        s_idx = SHIFT_IDX[s_code]
-        t_idx = team_idx[t_code]
-        coverage[:, s_idx, t_idx] += np.sum(schedule == gene_val, axis=0)
+    emp_i, day_j = np.where(schedule != GENE_OFF)
+    if len(emp_i):
+        genes_present = schedule[emp_i, day_j]
+        np.add.at(coverage,
+                  (day_j, gene_shift_arr[genes_present], gene_team_arr[genes_present]),
+                  1)
 
-    for i in range(n_emp):
-        for d in range(n_days):
-            if random.random() >= indpb:
-                continue
-            idx = i * n_days + d
-            if vac_mask[i, d]:
-                individual["genes"][idx] = GENE_OFF
-                continue
+    # O5 — mutation mask generated upfront; vac days already excluded
+    mut_mask  = (np.random.random((n_emp, n_days)) < indpb) & ~vac_mask
+    positions = np.argwhere(mut_mask)
 
-            # Remove current gene's contribution from coverage
-            old_gene = individual["genes"][idx]
-            if old_gene != GENE_OFF:
-                s_code, t_code = gene_to_shift_team[old_gene]
-                coverage[d, SHIFT_IDX[s_code], team_idx[t_code]] -= 1
+    for i, d in positions:
+        idx = i * n_days + d
 
-            # Score each allowed gene by how much it covers unmet demand
-            genes  = allowed_genes[i]
-            scores = []
-            for g in genes:
-                if g == GENE_OFF:
-                    scores.append(0)
-                else:
-                    s_code, t_code = gene_to_shift_team[g]
-                    s_idx = SHIFT_IDX[s_code]
-                    t_idx = team_idx[t_code]
-                    cov = coverage[d, s_idx, t_idx]
-                    mn  = int(min_demand[d, s_idx, t_idx])
-                    id_ = int(ideal_demand[d, s_idx, t_idx])
-                    scores.append(max(0, mn - cov) * 100 + max(0, id_ - max(cov, mn)))
+        # Remove current gene's contribution from coverage
+        old_gene = individual["genes"][idx]
+        if old_gene != GENE_OFF:
+            coverage[d, SHIFT_IDX[gene_to_shift_team[old_gene][0]],
+                        team_idx[gene_to_shift_team[old_gene][1]]] -= 1
 
-            max_score = max(scores)
-            if max_score == 0:
-                chosen = random.choice(genes)
+        # Score each allowed gene by how much it covers unmet demand
+        emp_genes = allowed_genes[i]
+        scores    = []
+        for g in emp_genes:
+            if g == GENE_OFF:
+                scores.append(0)
             else:
-                best = [g for g, s in zip(genes, scores) if s == max_score]
-                chosen = random.choice(best)
+                s_idx = SHIFT_IDX[gene_to_shift_team[g][0]]
+                t_idx = team_idx[gene_to_shift_team[g][1]]
+                cov   = coverage[d, s_idx, t_idx]
+                mn    = int(min_demand[d, s_idx, t_idx])
+                id_   = int(ideal_demand[d, s_idx, t_idx])
+                scores.append(max(0, mn - cov) * 100 + max(0, id_ - max(cov, mn)))
 
-            individual["genes"][idx] = chosen
-            if chosen != GENE_OFF:
-                s_code, t_code = gene_to_shift_team[chosen]
-                coverage[d, SHIFT_IDX[s_code], team_idx[t_code]] += 1
+        max_score = max(scores)
+        if max_score == 0:
+            chosen = random.choice(emp_genes)
+        else:
+            chosen = random.choice([g for g, s in zip(emp_genes, scores)
+                                    if s == max_score])
+
+        individual["genes"][idx] = chosen
+        if chosen != GENE_OFF:
+            coverage[d, SHIFT_IDX[gene_to_shift_team[chosen][0]],
+                        team_idx[gene_to_shift_team[chosen][1]]] += 1
 
     individual["fitness"] = None
 
@@ -557,6 +557,7 @@ def main():
     export_schedule(best_schedule, pd_data, path="schedule_ga.csv")
 
     # ── Plot ──────────────────────────────────────────────────────────────────
+    import matplotlib.pyplot as plt
     gens  = [r["gen"]  for r in logbook]
     bests = [r["best"] for r in logbook]
     means = [r["mean"] for r in logbook]
@@ -573,6 +574,61 @@ def main():
     plt.savefig("ga_fitness.png", dpi=120)
     print("Plot saved → ga_fitness.png")
     plt.show()
+
+
+# ── TaskManager entry point ───────────────────────────────────────────────────
+
+_GA_PARAMS = {
+    "crossover_type":      "nbts",
+    "mutation_type":       "demand_guided",
+    "pop_size":            200,
+    "gene_mut_prob":       0.003,
+    "tournament_size":     7,
+    "crossover_prob":      0.8,
+    "num_generations":     1000,
+    "early_stop_patience": 50,
+}
+
+
+def solve(problem_path, maxTime=None, **kwargs):
+    """
+    TaskManager-compatible entry point for the Genetic Algorithm.
+
+    Args:
+        problem_path: path to a SMARTASK scenario directory
+                      (must contain problem.json, vacations.csv, demand.csv)
+        maxTime:      ignored — GA uses early stopping instead
+    Returns:
+        list of lists: [header_row, emp1_row, ...]
+        header: ["funcionario", "Dia 1", ..., "Dia 365"]
+        cells:  "M_A" / "T_B" (worked), "F" (vacation), "0" (rest)
+    """
+    path = Path(str(problem_path))
+    if path.is_file():
+        path = path.parent
+    problem_data = load_problem(str(path))
+
+    best_ind, _, _, _ = run_ga(problem_data, _GA_PARAMS)
+
+    n_emp  = problem_data["n_employees"]
+    n_days = problem_data["n_days"]
+    schedule           = np.array(best_ind["genes"], dtype=int).reshape(n_emp, n_days)
+    gene_to_shift_team = problem_data["gene_to_shift_team"]
+    vac_mask           = problem_data["vac_mask"]
+
+    header = ["funcionario"] + [f"Dia {d}" for d in range(1, n_days + 1)]
+    output = [header]
+    for i in range(n_emp):
+        row = [i + 1]
+        for d in range(n_days):
+            g = schedule[i, d]
+            if g == GENE_OFF:
+                row.append("F" if vac_mask[i, d] else "0")
+            else:
+                shift, team = gene_to_shift_team[g]
+                row.append(f"{shift}_{team}")
+        output.append(row)
+    return output
 
 
 if __name__ == "__main__":
