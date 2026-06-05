@@ -565,7 +565,10 @@ class SisqualProblem5ILP:
                     slot = self.time_slots[slot_idx]  # one 30-minute slot, e.g. TimeSlot(index=5, start_min=660, end_min=690)
                     assigned_skill = None  # actual team chosen by y_{wdts} for this slot
                     for skill in employee["assignable_skills"]:
-                        value = pulp.value(self.y.get((employee_id, day, slot_idx, skill)))
+                        y_var = self.y.get((employee_id, day, slot_idx, skill))
+                        if y_var is None:
+                            continue
+                        value = pulp.value(y_var)
                         if value is not None and value > 0.5:
                             assigned_skill = skill
                             break
