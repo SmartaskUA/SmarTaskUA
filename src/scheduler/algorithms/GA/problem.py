@@ -159,6 +159,15 @@ def load_problem(data_dir: str = "SMARTASK_SIMPLE_2025") -> dict:
 
     special_days = _build_special_days(year, n_days)
 
+    # O1 — precomputed gene→(shift_idx, team_idx) lookup arrays for fast indexing
+    gene_to_shift_team = enc["gene_to_shift_team"]
+    max_gene = max(gene_to_shift_team.keys()) if gene_to_shift_team else 0
+    gene_shift_arr = np.zeros(max_gene + 1, dtype=np.int32)
+    gene_team_arr  = np.zeros(max_gene + 1, dtype=np.int32)
+    for g, (s_code, t_code) in gene_to_shift_team.items():
+        gene_shift_arr[g] = SHIFT_IDX[s_code]
+        gene_team_arr[g]  = team_idx[t_code]
+
     return {
         "n_employees":       n_employees,
         "n_days":            n_days,
@@ -170,6 +179,8 @@ def load_problem(data_dir: str = "SMARTASK_SIMPLE_2025") -> dict:
         "min_demand":        min_demand,
         "ideal_demand":      ideal_demand,
         "special_days":      special_days,
+        "gene_shift_arr":    gene_shift_arr,
+        "gene_team_arr":     gene_team_arr,
         # encoding lookups
         **enc,
     }
@@ -184,21 +195,27 @@ def _compute_penalties(schedule: np.ndarray, problem_data: dict) -> tuple:
     Returns:
         (min_unmet, ideal_unmet)  — all non-negative ints
     """
-    min_demand         = problem_data["min_demand"]
-    ideal_demand       = problem_data["ideal_demand"]
-    teams              = problem_data["teams"]
-    shift_team_to_gene = problem_data["shift_team_to_gene"]
-    team_idx           = problem_data["team_idx"]
+    min_demand     = problem_data["min_demand"]
+    ideal_demand   = problem_data["ideal_demand"]
+    gene_shift_arr = problem_data["gene_shift_arr"]
+    gene_team_arr  = problem_data["gene_team_arr"]
+    n_days         = problem_data["n_days"]
+    n_shifts       = len(SHIFTS)
+    n_teams        = len(problem_data["teams"])
 
-    min_unmet = ideal_unmet = 0
-    for s_idx, s_code in enumerate(SHIFTS):
-        for t_code in teams:
-            t_idx    = team_idx[t_code]
-            gene_val = shift_team_to_gene[(s_code, t_code)]
-            assigned = np.sum(schedule == gene_val, axis=0)  # (n_days,)
-            min_unmet   += int(np.sum(np.maximum(0, min_demand[:, s_idx, t_idx]   - assigned)))
-            ideal_unmet += int(np.sum(np.maximum(0, ideal_demand[:, s_idx, t_idx] - assigned)))
+    # O2 — build coverage in one vectorised pass using np.bincount
+    emp_i, day_j = np.where(schedule != GENE_OFF)
+    genes = schedule[emp_i, day_j]
+    coverage = np.bincount(
+        np.ravel_multi_index(
+            (day_j, gene_shift_arr[genes], gene_team_arr[genes]),
+            (n_days, n_shifts, n_teams),
+        ),
+        minlength=n_days * n_shifts * n_teams,
+    ).reshape(n_days, n_shifts, n_teams)
 
+    min_unmet   = int(np.sum(np.maximum(0, min_demand   - coverage)))
+    ideal_unmet = int(np.sum(np.maximum(0, ideal_demand - coverage)))
     return min_unmet, ideal_unmet
 
 
@@ -491,7 +508,7 @@ def _repair_workday_count(schedule: np.ndarray, problem_data: dict) -> np.ndarra
     return schedule
 
 
-def repair_schedule(schedule: np.ndarray, problem_data: dict) -> np.ndarray:
+def repair_schedule(schedule: np.ndarray, problem_data: dict, debug: bool = False):
     """
     Apply all Phase 2 repair operators in one pass:
       1. Vacations          (forces OFF on all vacation days)
@@ -499,13 +516,30 @@ def repair_schedule(schedule: np.ndarray, problem_data: dict) -> np.ndarray:
       3. Special days cap   (sets excess special days to OFF)
       4. 6-day window cap   (sets excess days to OFF)
       5. Workday count      (rebalances total; adds only constraint-safe days)
+
+    If debug=True, returns (schedule, changes_dict) where changes_dict maps
+    operator name to number of cells changed.
     """
-    schedule = _repair_vacations(schedule, problem_data)
-    schedule = _repair_no_backward_shift(schedule, problem_data)
-    schedule = _repair_special_days(schedule, problem_data)
-    schedule = _repair_6day_window(schedule, problem_data)
-    schedule = _repair_workday_count(schedule, problem_data)
-    return schedule
+    if not debug:
+        schedule = _repair_vacations(schedule, problem_data)
+        schedule = _repair_no_backward_shift(schedule, problem_data)
+        schedule = _repair_special_days(schedule, problem_data)
+        schedule = _repair_6day_window(schedule, problem_data)
+        schedule = _repair_workday_count(schedule, problem_data)
+        return schedule
+
+    changes = {}
+    for name, fn in [
+        ("vacations",        _repair_vacations),
+        ("no_backward",      _repair_no_backward_shift),
+        ("special_days",     _repair_special_days),
+        ("6day_window",      _repair_6day_window),
+        ("workday_count",    _repair_workday_count),
+    ]:
+        before = schedule.copy()
+        schedule = fn(schedule, problem_data)
+        changes[name] = int(np.sum(schedule != before))
+    return schedule, changes
 
 
 def compute_phase2_violations(schedule: np.ndarray, problem_data: dict) -> dict:

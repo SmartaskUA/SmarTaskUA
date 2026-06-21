@@ -1,0 +1,5 @@
+config,pop_size,early_stop_patience,mean_min_unmet,std_min_unmet,best_min_unmet,worst_min_unmet,mean_elapsed_s
+A_baseline,200,50,2.4,1.62,0,5,584.6
+B_larger_pop,300,50,0.8,0.4,0,1,854.6
+C_patience,200,100,0.2,0.4,0,1,826.1
+D_both,300,100,0.4,0.8,0,2,1128.7

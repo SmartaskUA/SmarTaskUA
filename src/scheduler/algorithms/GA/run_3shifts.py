@@ -27,11 +27,11 @@ from ga3 import run_ga
 DATA_DIR = os.path.join(os.path.dirname(__file__), "../../../../data/problems")
 
 SCENARIOS = [
-    ("SMARTASK_3SHIFTS_2TEAMS_2025",  3),
-    ("SMARTASK_3SHIFTS_4TEAMS_2025",  3),
-    ("SMARTASK_3SHIFTS_8TEAMS_2025",  3),
-    ("SMARTASK_3SHIFTS_16TEAMS_2025",  2),
-    ("SMARTASK_3SHIFTS_32TEAMS_2025",  2),
+    ("SMARTASK_3SHIFTS_2TEAMS_2025",  10),
+    #("SMARTASK_3SHIFTS_4TEAMS_2025",  3),
+    #("SMARTASK_3SHIFTS_8TEAMS_2025",  3),
+    #("SMARTASK_3SHIFTS_16TEAMS_2025",  2),
+    #("SMARTASK_3SHIFTS_32TEAMS_2025",  2),
 ]
 
 PARAMS = {

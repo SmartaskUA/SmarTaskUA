@@ -1,0 +1,4 @@
+run,best_fitness,min_coverage_unmet,ideal_coverage_unmet,stopped_at_gen,elapsed_s,viol_vacation,viol_workday,viol_window,viol_special,viol_backward
+1,-23068.0,215,1568,415,512.8,0,0,0,0,0
+2,-22993.0,215,1493,522,642.8,0,0,0,0,0
+3,-22975.0,215,1475,664,820.5,0,0,0,0,0

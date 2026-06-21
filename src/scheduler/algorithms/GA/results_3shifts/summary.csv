@@ -1,0 +1,2 @@
+scenario,n_teams,n_employees,mean_min_unmet,std_min_unmet,best_min_unmet,worst_min_unmet,mean_elapsed_s,n_runs
+SMARTASK_3SHIFTS_2TEAMS_2025,2,24,103.0,0.0,103,103,373.2,10
