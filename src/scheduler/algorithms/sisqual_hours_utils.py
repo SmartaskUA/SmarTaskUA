@@ -177,6 +177,47 @@ def parse_days(problem: Dict) -> List[str]:
     return days
 
 
+def parse_before_context_days(base_dir: Path, problem: Dict, max_days: int = 5) -> List[str]:
+    """Return available schedule_input dates immediately before targetPeriod.start.
+
+    The Sisqual specification uses configurable days before the target month as
+    immutable history for boundary constraints. V1 only consumes date columns
+    already present in schedule_input.csv and never synthesizes missing history.
+    The returned dates are sorted chronologically so callers can prepend them to
+    target days and scan consecutive windows normally.
+    """
+
+    target = problem.get("temporalScope", {}).get("targetPeriod", {})
+    start = datetime.strptime(target["start"], "%Y-%m-%d").date()
+    schedule_path = base_dir / problem.get("scheduleInput", {}).get("dataFile", "schedule_input.csv")
+    with schedule_path.open(newline="", encoding="utf-8") as f:
+        reader = csv.reader(f)
+        try:
+            header = next(reader)
+        except StopIteration:
+            return []
+
+    # Only valid date-like header columns can become context. Other columns are
+    # ignored here because the validator is responsible for reporting malformed
+    # headers with user-facing errors.
+    header_dates = set()
+    for column in header[1:]:
+        try:
+            header_dates.add(datetime.strptime(column, "%Y-%m-%d").date())
+        except ValueError:
+            continue
+
+    # Context must be contiguous backwards from targetPeriod.start - 1 day.
+    # If a day is missing, stop immediately; otherwise a gap could make a
+    # "6 consecutive days" window look shorter than it really is.
+    context = []
+    current = start - timedelta(days=1)
+    while len(context) < max_days and current in header_dates:
+        context.append(current.isoformat())
+        current -= timedelta(days=1)
+    return list(reversed(context))
+
+
 def parse_schedule_input(base_dir: Path, problem: Dict, days: List[str]) -> Dict[str, Dict[str, str]]:
     schedule_path = base_dir / problem.get("scheduleInput", {}).get("dataFile", "schedule_input.csv")
     with schedule_path.open(newline="", encoding="utf-8") as f:
@@ -463,6 +504,40 @@ def group_open_days_by_week(problem: Dict, open_days: List[str], date_by_day: Di
         groups[week_start].append(day)
 
     return [groups[key] for key in sorted(groups)]
+
+
+def fixed_context_workday(schedule_markers: Dict[str, Dict[str, str]], employee_id: str, day: str) -> int:
+    """Return the fixed workday contribution for an immutable context day.
+
+    Context days are history, not solver decisions. Any non-off marker counts as
+    worked for max-consecutive checks; off/unavailable markers count as rest.
+    """
+
+    marker = normalize_marker(schedule_markers.get(employee_id, {}).get(day, ""))
+    return 0 if marker in OFF_MARKERS or not marker else 1
+
+
+def fixed_context_assignment(schedule_markers: Dict[str, Dict[str, str]], employee_id: str, day: str) -> Assignment | None:
+    """Return a fixed previous-day assignment only when exact times are known.
+
+    Numeric markers such as "8" prove that the employee worked, but not when the
+    shift ended. They are enough for max-consecutive windows, but not enough for
+    an 11h rest calculation. For rest, only EQUALS:start-end context is safe.
+    """
+
+    marker = normalize_marker(schedule_markers.get(employee_id, {}).get(day, ""))
+    if not marker.startswith("EQUALS:"):
+        return None
+    time_range = marker.split(":", 1)[1]
+    start_text, end_text = time_range.split("-", 1)
+    start_min = parse_hhmm(start_text)
+    end_min = parse_hhmm(end_text)
+    return Assignment(
+        key=f"{employee_id}_{day}_context_exact_{start_min}_{end_min}",
+        start_min=start_min,
+        end_min=end_min,
+        slot_indices=(),
+    )
 
 
 def match_coverage_priority_tier(

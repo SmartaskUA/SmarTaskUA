@@ -2,7 +2,6 @@ package smartask.api.bootstrap;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import smartask.api.models.Employee;
@@ -14,7 +13,9 @@ import smartask.api.services.SchedulesService;
 import smartask.api.services.TeamService;
 import smartask.api.services.VacationService;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -401,7 +402,7 @@ public class ScenarioSeeder {
                 try (InputStream is = new ClassPathResource("minimuns/" + file).getInputStream()) {
                     if (is != null) {
                         String name = file.replace(".csv", "");
-                        MultipartFile mf = new MockMultipartFile(name, file, "text/csv", is.readAllBytes());
+                        MultipartFile mf = new InMemoryMultipartFile(name, file, "text/csv", is.readAllBytes());
                         referenceService.createTemplateFromCsv(name, mf);
                         System.out.println("Reference template loaded: " + name);
                     }
@@ -519,6 +520,60 @@ public class ScenarioSeeder {
                 System.err.printf("[WARN] Error checking status of '%s': %s%n", title, e.getMessage());
                 break;
             }
+        }
+    }
+
+    private static class InMemoryMultipartFile implements MultipartFile {
+        private final String name;
+        private final String originalFilename;
+        private final String contentType;
+        private final byte[] content;
+
+        private InMemoryMultipartFile(String name, String originalFilename, String contentType, byte[] content) {
+            this.name = name;
+            this.originalFilename = originalFilename;
+            this.contentType = contentType;
+            this.content = content;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public String getOriginalFilename() {
+            return originalFilename;
+        }
+
+        @Override
+        public String getContentType() {
+            return contentType;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return content.length == 0;
+        }
+
+        @Override
+        public long getSize() {
+            return content.length;
+        }
+
+        @Override
+        public byte[] getBytes() {
+            return content;
+        }
+
+        @Override
+        public InputStream getInputStream() {
+            return new ByteArrayInputStream(content);
+        }
+
+        @Override
+        public void transferTo(File dest) throws IOException {
+            Files.write(dest.toPath(), content);
         }
     }
 }

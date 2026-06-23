@@ -30,9 +30,12 @@ from algorithms.sisqual_hours_utils import (
     build_period_slot_map,
     build_sisqual_bundle_assignments,
     build_sisqual_day_modes,
+    fixed_context_assignment,
+    fixed_context_workday,
     group_open_days_by_week,
     load_problem_json,
     minutes_to_hhmm,
+    parse_before_context_days,
     parse_contract_hours,
     parse_coverage_priority_tiers,
     parse_days,
@@ -126,9 +129,22 @@ class SisqualProblem5ILP:
             self.contract_hours,
             self.staff_team_code,
         )  # [{"id": "20072412", "assignable_skills": ("Management", "Employees"), "skill_levels": {"Management": 2, "Employees": 6}, ...}, ...]
-        self.days = parse_days(self.problem)  # ["2025-10-01", "2025-10-02", ..., "2025-10-31"]
-        self.date_by_day = {day: datetime.strptime(day, "%Y-%m-%d").date() for day in self.days}  # {"2025-10-01": date(2025, 10, 1), ...}
-        self.schedule_markers = parse_schedule_input(self.base_dir, self.problem, self.days)  # {"20072412": {"2025-10-01": "8", "2025-10-02": "DO", ...}, ...}
+        # `self.days` is still the optimization/output horizon: these are the
+        # dates that get decision variables, coverage terms, and exported cells.
+        self.days = parse_days(self.problem)  # target/output days, e.g. ["2025-10-01", ..., "2025-10-31"]
+
+        # The PDF specification allows days before the target month as context.
+        # We only use columns that already exist in schedule_input.csv. They are
+        # immutable history and never appear in the generated schedule output.
+        self.before_context_days = parse_before_context_days(self.base_dir, self.problem)
+
+        # `constraint_days` lets boundary-sensitive hard rules scan history and
+        # target days together. Any day in `context_day_set` is a constant, not a
+        # decision variable.
+        self.constraint_days = [*self.before_context_days, *self.days]
+        self.context_day_set = set(self.before_context_days)
+        self.date_by_day = {day: datetime.strptime(day, "%Y-%m-%d").date() for day in self.constraint_days}
+        self.schedule_markers = parse_schedule_input(self.base_dir, self.problem, self.constraint_days)  # target markers plus optional before-context markers
         self.skills = parse_skill_codes(self.problem)  # ["Storage", "Checkout", "Management", "Employees"]
         self.time_slots = build_half_hour_slots(self.work_periods)  # 08:30-09:00, 09:00-09:30, ..., 20:30-21:00
         self.coverage_by_period = build_period_slot_map(self.work_periods, self.time_slots)  # {"STORAGE_0830_1530": (0, 1, ..., 13), "CHECKOUT_1100_2100": (5, 6, ..., 24), ...}
@@ -361,13 +377,34 @@ class SisqualProblem5ILP:
 
         # Constraint (4)
         # "each worker w∈W cannot be assigned with more than 5 working days in
-        # any set of 6 consecutive open days."
+        # any set of 6 consecutive days." Optional before-context days are fixed
+        # history, so they only contribute constants to windows crossing the
+        # target-period boundary.
         for employee in self.employees:
             employee_id = employee["id"]
-            for start in range(0, len(self.open_days) - 5):
-                window = self.open_days[start:start + 6]
+            for start in range(0, len(self.constraint_days) - 5):
+                window = self.constraint_days[start:start + 6]
+
+                # Pure-history windows need no constraint because they contain no
+                # target decision variables. We only constrain windows that touch
+                # the target period.
+                if not any(day not in self.context_day_set for day in window):
+                    continue
+
+                # Previous days are fixed input history: add them as constants.
+                # Target days remain normal binary workday variables.
+                fixed_workdays = sum(
+                    fixed_context_workday(self.schedule_markers, employee_id, day)
+                    for day in window
+                    if day in self.context_day_set
+                )
+                target_terms = [
+                    self.workday[(employee_id, day)]
+                    for day in window
+                    if day not in self.context_day_set
+                ]
                 model += (
-                    pulp.lpSum(self.workday[(employee_id, day)] for day in window) <= 5,
+                    fixed_workdays + pulp.lpSum(target_terms) <= 5,
                     f"max5in6_{employee_id}_{start}",
                 )
 
@@ -376,6 +413,27 @@ class SisqualProblem5ILP:
         # configured minimum rest hours.
         for employee in self.employees:
             employee_id = employee["id"]
+
+            # First handle the single boundary from the last available context
+            # day into the first target day. Context days only restrict the
+            # target assignment when they have exact EQUALS times; numeric
+            # markers do not provide a safe previous-day end time.
+            for day, next_day in zip(self.constraint_days, self.constraint_days[1:]):
+                if day not in self.context_day_set or next_day in self.context_day_set:
+                    continue
+                context_assignment = fixed_context_assignment(self.schedule_markers, employee_id, day)
+                if context_assignment is None:
+                    continue
+                for next_assignment in self.assignments[(employee_id, next_day)]:
+                    rest_hours = ((24 * 60 - context_assignment.end_min) + next_assignment.start_min) / 60.0
+                    if rest_hours < self.min_rest_hours:
+                        model += (
+                            self.x[(employee_id, next_day, next_assignment.key)] == 0,
+                            f"min_rest_context_{employee_id}_{day.replace('-', '')}_{next_day.replace('-', '')}_{next_assignment.key}",
+                        )
+
+            # Then keep the original target-period rest constraints between
+            # pairs of target days, where both assignments are solver decisions.
             for day, next_day in zip(self.days, self.days[1:]):
                 today_assignments = self.assignments[(employee_id, day)]
                 next_day_assignments = self.assignments[(employee_id, next_day)]
@@ -613,7 +671,21 @@ def solve(
         max_time_minutes=maxTime,
     )
     scheduler.build_model()
-    scheduler.solve(gap_rel=float(kwargs.get("gap_rel", kwargs.get("gapRel", 0.01))))
+    status = scheduler.solve(gap_rel=float(kwargs.get("gap_rel", kwargs.get("gapRel", 0.01))))
+    status_name = pulp.LpStatus.get(status, "Unknown")
+    if status_name == "Infeasible":
+        from validators.sisqual_feasibility import build_solver_infeasible_report
+
+        raise build_solver_infeasible_report(
+            problem_path,
+            str(kwargs.get("task_id", "manual")),
+            "ILP_Sisqual_Hours_MathematicalDefinition7",
+            status_name,
+            model_stats={
+                "variables": len(scheduler.model.variables()) if scheduler.model is not None else None,
+                "constraints": len(scheduler.model.constraints) if scheduler.model is not None else None,
+            },
+        )
     return scheduler.build_output_rows()
 
 

@@ -39,6 +39,7 @@ from algorithms.COP_2_Half_Intervals import solve as COP_2_Half_Intervals_Solver
 from algorithms.COP_1_Half_Intervals import solve as COP_1_Half_Intervals_solver
 from algorithms.general.heuristic_general import solve as heuristic_general_solver
 from analyzer.kpiVerification_Sisqual import KpiEvaluator_Sisqual
+from validators.sisqual_feasibility import validate_sisqual_problem_or_raise
 
 class TaskManager:
     def __init__(self):
@@ -171,7 +172,14 @@ class TaskManager:
         ]:
             # Request the solver to print the returned rows as JSON so the
             # container logs contain the schedule payload sent to the frontend.
-            schedule_data = algorithm(problem_path=problem_path, maxTime=maxTime, print_json=True)
+            validate_sisqual_problem_or_raise(problem_path, task_id, algorithm_name=algorithm_name)
+            solver_kwargs = {"problem_path": problem_path, "maxTime": maxTime, "print_json": True}
+            if algorithm_name in {
+                "ILP_Sisqual_Hours_MathematicalDefinition7",
+                "CSP_Sisqual_Hours_MathematicalDefinition7",
+            }:
+                solver_kwargs["task_id"] = task_id
+            schedule_data = algorithm(**solver_kwargs)
             # print(f"[Taskmaster] Schedule data returned by '{algorithm_name}': {schedule_data}")
             try:
                 # Attempt to locate expected problem bundle files (demand.csv, schedule_input.csv, problem.json)
