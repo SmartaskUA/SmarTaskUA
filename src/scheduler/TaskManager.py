@@ -39,6 +39,9 @@ from algorithms.general.heuristic_general import solve as heuristic_general_solv
 from analyzer.kpiVerification_Sisqual import KpiEvaluator_Sisqual
 from algorithms.lns_scheduler import solve as lns_scheduler_solver
 from algorithms.Hybrid_Heuristic import solve as hybrid_heuristic_solver
+from algorithms.R2_Heuristic import solve as r2_heuristic_solver
+from algorithms.Puzzle_Heuristic import solve as puzzle_heuristic_solver
+from algorithms.Inv_Puzzle_Heuristic import solve as Inverted_Puzzle_Heuristic_solver
 
 class TaskManager:
     def __init__(self):
@@ -79,6 +82,9 @@ class TaskManager:
             "COP_2_Half_Intervals": COP_2_Half_Intervals_Solver,
             "LNS_Scheduler": lns_scheduler_solver,
             "Hybrid_Heuristic": hybrid_heuristic_solver,
+            "R2_Heuristic": r2_heuristic_solver,
+            "Puzzle_Heuristic": puzzle_heuristic_solver,
+            "Inverted_Puzzle_Heuristic": Inverted_Puzzle_Heuristic_solver
         }
 
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13, solver="CBC", problem_path=None):
@@ -139,7 +145,10 @@ class TaskManager:
             "Heuristic Solver",
             "Heuristic Solver Restarts",
             "ilp_greedy",
-            "Hybrid_Heuristic"
+            "Hybrid_Heuristic",
+            "R2_Heuristic",
+            "Puzzle_Heuristic",
+            "Inverted_Puzzle_Heuristic",
         ]
         if algorithm_name in algs_with_shifts:
             if uses_rules:

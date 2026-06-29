@@ -284,6 +284,10 @@ const CreateCalendar = () => {
     { value: "linear programming", label: "Integer Linear Programming" },
     { value: "linear programming 2", label: "Integer Linear Programming 2" },
     { value: "Hybrid_Heuristic", label: "Hybrid Heuristic" },
+    { value: "R2_Heuristic", label: "R2 Heuristic" },
+    { value: "Heuristic Solver", label: "Heuristic Solver" },
+    { value: "Puzzle_Heuristic", label: "Puzzle Heuristic" },
+    { value: "Inverted_Puzzle_Heuristic", label: "Inverted Puzzle Heuristic" }
   ];
   const manualHourAlgorithms = [
     { value: "CSP_Afonso_Hours", label: "CSP Afonso 13 Hours" },

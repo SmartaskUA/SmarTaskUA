@@ -81,9 +81,13 @@ public class SchedulingAlgorithmRegistry {
         register(specs, "Heuristic Solver", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
         register(specs, "Heuristic General", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
         register(specs, "ilp_greedy", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "R2_Heuristic", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "Hybrid_Heuristic", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "Puzzle_Heuristic", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "Inverted_Puzzle_Heuristic", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
+
 
         register(specs, "CSP_Afonso_Hours", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
-        register(specs, "Hybrid_Heuristic", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
         register(specs, "ILP_2", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
         register(specs, "ILP_2_Half_Intervals", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
         register(specs, "ILP_3", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);

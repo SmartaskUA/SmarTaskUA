@@ -28,7 +28,7 @@ class GreedyRandomized:
       - Time-boxed outer loop (maxTime in seconds, if provided)
     """
     def __init__(self, employees, num_days, holidays_set, vacs, mins, ideals, teams,
-                 num_iter=10, maxTime=None, year=2025, shifts=2):
+                 num_iter=10, maxTime=None, year=2025, shifts=3):
         self.employees = employees
         self.num_days = num_days
         self.vacs = vacs
@@ -157,7 +157,51 @@ class GreedyRandomized:
     def is_complete(self):
         return all(len(self.assignment[p]) >= 223 for p in self.employees)
 
-def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2,rules=None):
+
+def _evaluate_shortages(assignment, mins, ideals):
+    """
+    Return the number of unmet minimum and ideal slots for one schedule.
+    """
+    assigned_counts = defaultdict(int)
+    for _emp_id, entries in assignment.items():
+        for day, shift, team in entries:
+            assigned_counts[(day, shift, team)] += 1
+
+    missed_mins = 0
+    for key, required in mins.items():
+        actual = assigned_counts.get(key, 0)
+        missed_mins += max(0, required - actual)
+
+    missed_ideals = 0
+    for key, required in ideals.items():
+        actual = assigned_counts.get(key, 0)
+        missed_ideals += max(0, required - actual)
+
+    return missed_mins, missed_ideals
+
+
+def _build_output(scheduler, vacs, num_days):
+    header = ["funcionario"] + [f"Dia {d}" for d in range(1, num_days + 1)]
+    label = {1: "M_", 2: "T_", 3: "N_"}
+    output = [header]
+
+    for p in scheduler.employees:
+        row = [p]
+        assign = {day: (s, t) for (day, s, t) in scheduler.assignment[p]}
+        vacation_days = set(vacs.get(p, []))
+        for d in range(1, num_days + 1):
+            if d in vacation_days:
+                row.append("F")
+            elif d in assign:
+                s, t = assign[d]
+                row.append(label.get(s, "") + TEAM_ID_TO_CODE.get(t, str(t)))
+            else:
+                row.append("0")
+        output.append(row)
+
+    return output
+
+def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=3,rules=None):
     """
     Library-style API:
       vacations_rows: list of rows like ['Employee 1', '0','1','0',...]
@@ -182,35 +226,90 @@ def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2,rule
             ids = [ get_team_id("A") ]
         teams[emp_id] = ids
 
-    scheduler = GreedyRandomized(
-        employees=emp_ids,
-        num_days=num_days,
-        holidays_set=holi,
-        vacs=vacs,
-        mins=mins,
-        ideals=ideals,
-        teams=teams,
-        num_iter=10,
-        maxTime=(int(maxTime) if maxTime is not None else None),
-        year=year,
-        shifts=shifts, 
-    )
-    scheduler.build_schedule()
+    iterations = 300
+    if isinstance(rules, dict) and rules.get("iterations"):
+        iterations = int(rules["iterations"])
+    iterations = max(1, int(iterations))
 
-    header = ["funcionario"] + [f"Dia {d}" for d in range(1, num_days + 1)]
-    label = {1: "M_", 2: "T_", 3: "N_"} 
-    output = [header]
-    for p in scheduler.employees:
-        row = [p]
-        assign = {day: (s, t) for (day, s, t) in scheduler.assignment[p]}
-        vacation_days = set(vacs.get(p, []))
-        for d in range(1, num_days + 1):
-            if d in vacation_days:
-                row.append("F")
-            elif d in assign:
-                s, t = assign[d]
-                row.append(label.get(s, "") + TEAM_ID_TO_CODE.get(t, str(t)))
-            else:
-                row.append("0")
-        row and output.append(row)
-    return output
+    start_time = time.perf_counter()
+    total_min_short = 0
+    total_ideal_short = 0
+    best_min_short = None
+    best_ideal_short = None
+    best_scores = None
+    best_scheduler = None
+    best_output = None
+
+    for _ in range(iterations):
+
+        # print(f"Iteração {_ + 1}/{iterations}...")
+
+        scheduler = GreedyRandomized(
+            employees=emp_ids,
+            num_days=num_days,
+            holidays_set=holi,
+            vacs=vacs,
+            mins=mins,
+            ideals=ideals,
+            teams=teams,
+            num_iter=10,
+            maxTime=(int(maxTime) if maxTime is not None else None),
+            year=year,
+            shifts=shifts,
+        )
+
+        scheduler.build_schedule()
+        min_short, ideal_short = _evaluate_shortages(scheduler.assignment, mins, ideals)
+
+        total_min_short += min_short
+        total_ideal_short += ideal_short
+
+        if best_min_short is None or min_short < best_min_short:
+            best_min_short = min_short
+        if best_ideal_short is None or ideal_short < best_ideal_short:
+            best_ideal_short = ideal_short
+
+        current_scores = (min_short, ideal_short)
+        if best_scores is None or current_scores < best_scores:
+            best_scores = current_scores
+            best_scheduler = scheduler
+            best_output = _build_output(scheduler, vacs, num_days)
+
+    total_time = time.perf_counter() - start_time
+    avg_min_short = total_min_short / iterations
+    avg_ideal_short = total_ideal_short / iterations
+    avg_time = total_time / iterations
+
+    print(f"[{iterations} iterações] Tempo total da heurística: {total_time:.2f}s")
+    print(f"[{iterations} iterações] Tempo médio por iteração: {avg_time:.2f}s")
+    print(
+        f"Melhor valor de mínimos nas {iterations} iterações: "
+        f"{best_min_short if best_min_short is not None else 0}"
+    )
+    print(
+        f"Melhor valor de ideais nas {iterations} iterações: "
+        f"{best_ideal_short if best_ideal_short is not None else 0}"
+    )
+    print(f"Média de mínimos        : {avg_min_short:.2f}")
+    print(f"Média de ideais         : {avg_ideal_short:.2f}")
+
+    if best_scheduler is not None:
+        export_schedule_to_csv_shifts(best_scheduler, "schedule_greedy_randomized.csv", num_days=num_days)
+
+    return best_output if best_output is not None else _build_output(
+        GreedyRandomized(
+            employees=emp_ids,
+            num_days=num_days,
+            holidays_set=holi,
+            vacs=vacs,
+            mins=mins,
+            ideals=ideals,
+            teams=teams,
+            num_iter=1,
+            maxTime=(int(maxTime) if maxTime is not None else None),
+            year=year,
+            shifts=shifts,
+        ),
+        vacs,
+        num_days,
+    )
