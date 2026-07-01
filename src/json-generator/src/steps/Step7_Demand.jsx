@@ -295,7 +295,7 @@ const Step7_Demand = () => {
                       <Chip
                         label={`${demandData.length} entries`}
                         size="small"
-                        color="primary"
+                        color="success"
                         sx={{ height: '20px', fontSize: '0.7rem' }}
                       />
                     )}
