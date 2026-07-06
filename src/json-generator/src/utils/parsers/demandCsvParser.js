@@ -8,6 +8,8 @@
 
 import Papa from 'papaparse';
 
+const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
 /**
  * Parses demand CSV file
  * @param {File} file - CSV file to parse
@@ -85,6 +87,21 @@ export async function parseDemandCsv(file, employeeModel = 'team') {
               errors.push(`Line ${lineNumber}: Invalid estimated value '${row.estimated}'`);
             }
 
+            // Optional per-day time override (schema v2.6 start/end columns)
+            const start = row.start?.trim();
+            const end = row.end?.trim();
+            if (start || end) {
+              if (!start || !end) {
+                errors.push(`Line ${lineNumber}: start and end must be set together (or both empty)`);
+              } else if (!TIME_PATTERN.test(start) || !TIME_PATTERN.test(end)) {
+                errors.push(`Line ${lineNumber}: Invalid time format in start/end. Use HH:MM (24h)`);
+              } else if (start >= end) {
+                errors.push(`Line ${lineNumber}: start must be before end (overnight overrides not supported)`);
+              } else {
+                entry.timeRange = { start, end };
+              }
+            }
+
             demandData.push(entry);
           } catch (error) {
             errors.push(`Line ${lineNumber}: ${error.message}`);
@@ -145,6 +162,13 @@ export async function parseDemandCsvFromText(csvContent, employeeModel = 'team')
               ideal: row.ideal ? parseInt(row.ideal, 10) : 0,
               estimated: row.estimated ? parseInt(row.estimated, 10) : 0
             };
+
+            // Optional per-day time override (schema v2.6 start/end columns)
+            const start = row.start?.trim();
+            const end = row.end?.trim();
+            if (start && end && TIME_PATTERN.test(start) && TIME_PATTERN.test(end) && start < end) {
+              entry.timeRange = { start, end };
+            }
 
             demandData.push(entry);
           } catch (error) {

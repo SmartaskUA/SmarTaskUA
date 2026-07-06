@@ -140,6 +140,38 @@ export function getTemplateSummary(weeklyTemplate) {
 }
 
 /**
+ * Prune weekly-template blocks whose work period no longer exists.
+ *
+ * Keeps the template in sync when work periods are deleted or their code is
+ * renamed in Step 6 (blocks referencing a now-missing code are dropped).
+ *
+ * @param {Object} weeklyTemplate - Weekly template with day keys
+ * @param {Array<string>} validCodes - Codes of the currently-defined work periods
+ * @returns {Object} - New weekly template with orphaned blocks removed
+ */
+export function pruneTemplateForWorkPeriods(weeklyTemplate, validCodes) {
+  const codes = new Set(validCodes);
+  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const pruned = {};
+  days.forEach((day) => {
+    pruned[day] = (weeklyTemplate?.[day] || []).filter((block) => codes.has(block.workPeriod));
+  });
+  return pruned;
+}
+
+/**
+ * Prune demand-data rows whose work period no longer exists.
+ *
+ * @param {Array} demandData - Demand data rows ({ date, workPeriod, ... })
+ * @param {Array<string>} validCodes - Codes of the currently-defined work periods
+ * @returns {Array} - New demand data with orphaned rows removed
+ */
+export function pruneDemandDataForWorkPeriods(demandData, validCodes) {
+  const codes = new Set(validCodes);
+  return (demandData || []).filter((row) => codes.has(row.workPeriod));
+}
+
+/**
  * Clear weekly template (returns empty template structure)
  *
  * @returns {Object} - Empty weekly template

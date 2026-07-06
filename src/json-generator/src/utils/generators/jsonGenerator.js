@@ -111,11 +111,20 @@ function buildContracts(contracts) {
       if (contract.constraints.weekdaysOnly !== undefined) {
         formatted.constraints.weekdaysOnly = contract.constraints.weekdaysOnly;
       }
+      if (contract.constraints.availableDays !== undefined) {
+        formatted.constraints.availableDays = contract.constraints.availableDays;
+      }
+      if (contract.constraints.maxHoursPerWeek !== undefined) {
+        formatted.constraints.maxHoursPerWeek = contract.constraints.maxHoursPerWeek;
+      }
       if (contract.constraints.maxConsecutiveDays !== undefined) {
         formatted.constraints.maxConsecutiveDays = contract.constraints.maxConsecutiveDays;
       }
-      if (contract.constraints.minRestHours !== undefined) {
-        formatted.constraints.minRestHours = contract.constraints.minRestHours;
+      if (contract.constraints.minRestDaysPerWeek !== undefined) {
+        formatted.constraints.minRestDaysPerWeek = contract.constraints.minRestDaysPerWeek;
+      }
+      if (contract.constraints.flexibleHours !== undefined) {
+        formatted.constraints.flexibleHours = contract.constraints.flexibleHours;
       }
     }
 

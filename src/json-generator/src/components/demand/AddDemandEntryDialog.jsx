@@ -12,6 +12,7 @@ import {
   Typography,
   Box
 } from '@mui/material';
+import { getWorkPeriodTimeRange, validateOverrideTime } from '../../utils/helpers/demandTimeHelpers';
 
 const AddDemandEntryDialog = ({
   open,
@@ -20,7 +21,6 @@ const AddDemandEntryDialog = ({
   date,
   workPeriods = [],
   teams = [],
-  workPeriodModel = 'fixed',
   employeeModel = 'team',
   existingEntries = []
 }) => {
@@ -89,6 +89,11 @@ const AddDemandEntryDialog = ({
     if (!team) { setError('Team is required'); return; }
     if (!workPeriod) { setError('Work period is required'); return; }
     if (!timeRange.start || !timeRange.end) { setError('Time range is required'); return; }
+
+    // A per-day time that differs from the work-period default is an override —
+    // it must be a valid same-day window (schema v2.6).
+    const timeError = validateOverrideTime(timeRange, getWorkPeriodTimeRange(workPeriods, workPeriod));
+    if (timeError) { setError(timeError); return; }
 
     const min = Number(minimum);
     const idl = Number(ideal);
@@ -178,7 +183,6 @@ const AddDemandEntryDialog = ({
                 label="Start Time"
                 value={formData.timeRange.start}
                 onChange={(e) => handleTimeChange('start', e.target.value)}
-                disabled={workPeriodModel === 'fixed'}
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
@@ -189,21 +193,15 @@ const AddDemandEntryDialog = ({
                 label="End Time"
                 value={formData.timeRange.end}
                 onChange={(e) => handleTimeChange('end', e.target.value)}
-                disabled={workPeriodModel === 'fixed'}
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
 
             <Grid item xs={12}>
-              {workPeriodModel === 'fixed' ? (
-                <Alert severity="info" sx={{ fontSize: '0.85rem' }}>
-                  <strong>Fixed Work Periods:</strong> Time range is automatically set by the selected work period.
-                </Alert>
-              ) : (
-                <Alert severity="success" sx={{ fontSize: '0.85rem' }}>
-                  <strong>Flexible Work Periods:</strong> Time range is auto-filled but can be edited.
-                </Alert>
-              )}
+              <Alert severity="info" sx={{ fontSize: '0.85rem' }}>
+                Auto-filled from the work period. Change it to set a per-day time override for this
+                date, or leave it to use the default. Overrides must be same-day (start before end).
+              </Alert>
             </Grid>
 
             {/* Coverage */}
