@@ -142,9 +142,11 @@ function calculateStats(state) {
   const totalWorkPeriods = state.demand?.workPeriods?.length || 0;
   const dateRange = state.temporalScope?.numDays || 0;
 
-  // Calculate organizational units
+  // Calculate organizational units. Both models store units under
+  // organizationalUnits.teams; in competency mode those entries are the
+  // competencies, so report them as such for accurate stats.
   const totalTeams = state.organizationalUnits?.teams?.length || 0;
-  const totalCompetencies = state.organizationalUnits?.competencies?.length || 0;
+  const totalCompetencies = state.employees?.model === 'competency' ? totalTeams : 0;
 
   // Calculate demand entries
   const totalDemandEntries = state.demand?.demandData?.length || 0;
