@@ -84,3 +84,7 @@ src/scheduler/rules.json
 /logs*.txt
 /Combinacoes
 /Processed_Extract
+
+# Solver output artifacts (keep generated CSVs out of source dirs)
+infra/*.csv
+schedule_cpsat*.csv
