@@ -31,7 +31,7 @@ YEAR_END = date(YEAR, 12, 31)
 OCTOBER_START = date(YEAR, 10, 1)
 OCTOBER_END = date(YEAR, 10, 31)
 MAX_CONSECUTIVE_WORKDAYS = 5
-OFF_MARKERS = {"", "DO", "FDO", "VAC", "NOT", "MED"}
+OFF_MARKERS = {"", "DO", "FDO", "VAC", "NOT", "MED", "ENFD", "DC-E"}
 
 
 def read_json(path: Path) -> dict:

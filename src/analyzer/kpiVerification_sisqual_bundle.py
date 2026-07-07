@@ -439,7 +439,7 @@ def compute_schedule_integrity_metrics(schedule):
 
             intervals.sort()
             for index in range(1, len(intervals)):
-                if intervals[index][0] > intervals[index - 1][1]:
+                if intervals[index][0] < intervals[index - 1][1]:
                     duplicated += 1
                     duplicated_details.append(
                         {"employeeId": employee_id, "date": day, "cell": cell}
@@ -730,8 +730,7 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
                 if is_day_rule_compliant(rule, segments):
                     compliant_days += 1
                 else:
-                    if rule_upper in HARD_UNAVAILABLE_MARKERS and worked:
-                        availability_violations += 1
+                    availability_violations += 1
                 demanded_minutes = get_demanded_minutes(rule)
                 if demanded_minutes is not None:
                     hours_evaluated_days += 1

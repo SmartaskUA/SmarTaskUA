@@ -143,7 +143,8 @@ def validate_sisqual_problem(problem_json_path: Path, task_id: str, algorithm_na
     _validate_schedule_markers(schedule_header, schedule_rows, work_periods, issues)
     _validate_possible_coverage(demand_rows, schedule_header, schedule_rows, employees, employee_skills, problem, issues)
     _validate_consecutive_and_weekly(schedule_header, schedule_rows, max_consecutive, issues)
-    _validate_fixed_rest(schedule_header, schedule_by_employee, min_rest_hours, issues)
+    context_col_count = max(0, len(schedule_header) - 1 - len(days))
+    _validate_fixed_rest(schedule_header, schedule_by_employee, min_rest_hours, issues, context_col_count)
 
     report = _base_report(str(problem_json_path), task_id, algorithm_name, "INFEASIBLE_PRECHECK", issues)
     if report["errorCount"] > 0:
@@ -537,6 +538,7 @@ def _preferred_days_off_swappable(problem: dict[str, Any]) -> bool:
         return True
 
     swappable_types = {
+        "objective3",
         "day_off_swap_penalty",
         "preferred_day_off",
         "preferred_day_off_work",
@@ -599,13 +601,17 @@ def _validate_fixed_rest(
     schedule_by_employee: dict[str, list[str]],
     min_rest_hours: float,
     issues: list[ValidationIssue],
+    context_col_count: int = 0,
 ) -> None:
     if not header:
         return
+    # Start iteration after the last context column so we never compute rest
+    # across the before-context / target-period boundary.
+    start_idx = max(1, context_col_count + 1)
     for employee_id, row in schedule_by_employee.items():
         if len(row) != len(header):
             continue
-        for idx in range(1, len(header) - 1):
+        for idx in range(start_idx, len(header) - 1):
             today = _parse_equals(row[idx])
             tomorrow = _parse_equals(row[idx + 1])
             if today is None or tomorrow is None:

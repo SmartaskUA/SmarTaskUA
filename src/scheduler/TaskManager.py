@@ -186,12 +186,7 @@ class TaskManager:
                 schedule_data = monthly_result.schedule
                 extra_metadata = {"monthlyExecution": monthly_result.metadata}
             else:
-                solver_kwargs = {"problem_path": problem_path, "maxTime": maxTime, "print_json": True}
-                if algorithm_name in {
-                    "ILP_Sisqual_Hours_MathematicalDefinition7",
-                    "CSP_Sisqual_Hours_MathematicalDefinition7",
-                }:
-                    solver_kwargs["task_id"] = task_id
+                solver_kwargs = {"problem_path": problem_path, "maxTime": maxTime, "print_json": True, "task_id": task_id}
                 schedule_data = algorithm(**solver_kwargs)
             # print(f"[Taskmaster] Schedule data returned by '{algorithm_name}': {schedule_data}")
             try:

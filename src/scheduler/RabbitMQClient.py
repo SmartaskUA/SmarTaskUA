@@ -303,8 +303,8 @@ class RabbitMQClient:
             if kpis is not None:
                 metadata.setdefault("analysis", {})
                 metadata["analysis"]["kpis"] = kpis
-            metadata.update(result_metadata)
             metadata.update(problem_metadata)
+            metadata.update(result_metadata)
 
             self.mongodb_client.insert_schedule(
                 data=schedule_data,
