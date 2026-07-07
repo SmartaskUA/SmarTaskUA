@@ -65,12 +65,14 @@ infra/
 
 ## Technology Stack
 
-- **React 18**: UI framework
-- **Vite 5**: Build tool and dev server
-- **Tailwind CSS**: Utility-first CSS framework
-- **DaisyUI**: Component library for Tailwind
-- **React Router**: Client-side routing
-- **Axios**: HTTP client for API calls
+- **React 18** + **Vite 7**: UI framework and dev server
+- **Material-UI (MUI) v7** + **@mui/x-date-pickers**: component library and theming
+- **Tailwind CSS**: utility classes (used alongside MUI for layout/spacing)
+- **React Router 6**: client-side routing (base path `/json-gen/`)
+- **Axios**: HTTP client (reserved for future API integration)
+- **PapaParse**: CSV parsing (employees import, demand, schedule input)
+- **JSZip** + **file-saver**: bundle `problem.json` + CSVs and trigger download
+- **date-fns**: date arithmetic and formatting
 
 ## Development Workflow
 
@@ -222,36 +224,27 @@ Make sure `CHOKIDAR_USEPOLLING=1` is set in docker-compose.yml (already configur
 2. Check nginx logs: `docker logs nginx`
 3. Verify all services are healthy: `docker-compose ps`
 
-## Schema v2.2 Features
+## Schema v2.6 Features
 
-The JSON Generator now supports schema v2.2, which includes:
+The JSON Generator targets schema v2.6 (with backward-compatible output for v2.2 and v2.5 via the `state.schemaVersion` flag).
 
 ### Time Window Constraints (Allen Interval Algebra)
-New constraint types in `schedule_input.csv`:
-- `EQUALS:HH:MM-HH:MM` - Employee must work exactly this time range
-- `INCLUDE:HH:MM-HH:MM` - Employee must cover this entire range minimum (can extend)
-- `EXCEPT:HH:MM-HH:MM` - Employee unavailable during this time window
+Constraint codes in `schedule_input.csv`:
+- `EQUALS:HH:MM-HH:MM` — employee must work exactly this time range
+- `INCLUDE:HH:MM-HH:MM` — employee must cover this entire range at minimum (can extend)
+- `EXCEPT:HH:MM-HH:MM` — employee unavailable during this time window
 
 ### Standard vs Custom Constraints
 - **Standard** (always valid): `VAC` (vacation), `NOT` (unavailable)
 - **Custom** (must be defined in `scheduleInput.markingTypes`): DL, DLF, DLV, etc.
 
 ### Constraints Configuration
-- **Hard Constraints**: max_consecutive_days, min_rest_hours, vacation_block, etc.
-- **Soft Constraints**: min_coverage, balance_workload, with penalty weights
-- **Advanced**: Day-off swapping, break rules (requires `useAdvancedConstraints` feature flag)
+- **Hard Constraints**: `max_consecutive_days`, `min_rest_hours`, `vacation_block`, etc.
+- **Soft Constraints**: `min_coverage`, `balance_workload`, with penalty weights
+- **Advanced**: day-off swapping, break rules (requires `useAdvancedConstraints` feature flag)
 
-See `schema_v2.2/FORMAT.md` and `schema_v2.2/README.md` for complete details.
+See `schema_v2.6/FORMAT.md` and `schema_v2.6/README.md` for the complete schema reference.
 
-## Next Steps
+## Status
 
-Now that the infrastructure is ready, you can:
-
-1. **Design the UI** - Sketch out the pages and components you need
-2. **Create page components** - Build the forms and interfaces
-3. **Implement JSON generation** - Add logic to create schema v2.2 files
-4. **Add CSV generation** - Create schedule_input.csv and demand.csv
-5. **Integrate with API** - Connect to backend services if needed
-6. **Add validation** - Use the schema validator for generated files
-
-Happy coding! 🚀
+The wizard is **feature-complete** and currently in a user-testing pass. Output is a client-side ZIP (`problem.json` + `demand.csv` + `schedule_input.csv`); there is no backend submission yet. Next steps depend on tester feedback (bugs, UX tweaks) and a follow-up decision on whether to add a "submit to API" path.

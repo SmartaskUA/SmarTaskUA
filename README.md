@@ -18,27 +18,40 @@ SmarTask is an intelligent employee scheduling system that automatically generat
 
 ```
 SmarTaskUA/
-├── src/                              # All source code (microservices)
+├── src/                              # All source code (6 microservices)
 │   ├── api/                          # Java Spring Boot REST API
-│   ├── frontend/                     # React + Vite Frontend
-│   ├── scheduler/                    # Python Worker - Schedule Generation
+│   ├── frontend/                     # React + Vite frontend (main app)
+│   ├── json-generator/              # React wizard — builds problem.json (live schema v2.6)
+│   ├── scheduler/                    # Python worker — schedule generation
 │   │   └── algorithms/               # CSP, ILP, Greedy, Hill Climbing, etc.
-│   └── analyzer/                     # Python Worker - KPI Analysis
+│   └── analyzer/                     # Python worker — KPI analysis
 │
 ├── config/                           # Centralized configuration
-│   ├── rules.json                    # Business rules (consolidated)
-│   └── templates/                    # CSV templates for data import
+│   ├── rules.json                    # Master business rules (copied to api + scheduler at build)
+│   ├── templates/                    # CSV/Excel templates for data import
+│   └── examples/                     # Sample config snippets
+│
+├── data/                             # Sample problem fixtures (problem.json + CSVs)
+│   └── problems/
 │
 ├── infra/                            # Infrastructure as code
-│   ├── docker-compose.yml            # Service orchestration (6 services)
-│   └── docker/                       # All Dockerfiles
+│   ├── docker-compose.yml            # Orchestration: api, frontend, json-generator,
+│   │                                 #   scheduler, analyzer, nginx
+│   └── docker/                       # All Dockerfiles + nginx reverse-proxy config
 │
-├── docs/                             # Comprehensive documentation
-│   ├── architecture/                 # System design & diagrams
-│   ├── services/                     # Per-service documentation
-│   ├── development/                  # Developer guides
-│   └── algorithms/                   # Algorithm documentation
+├── docs/                             # Documentation
+│   ├── architecture/                 # System design & diagrams (markdown)
+│   ├── algorithms/                   # Algorithm documentation (markdown)
+│   ├── development/                  # Developer guides (markdown)
+│   ├── adr/                          # Architecture Decision Records
+│   ├── specifications/               # Problem specs & math definitions (PDF/docx)
+│   ├── references/                   # Third-party / academic source material (PDF)
+│   ├── results/                      # Experimental results (PDF)
+│   └── reports/                      # Technical reports / deliverables (PDF)
 │
+├── json_generation/                  # Historical schema archive (v2 → v2.6) — reference
+│                                     #   only, not built; live schema is in src/json-generator
+├── scripts/                          # Helper scripts (e.g. validate_general_rules.py)
 ├── .github/workflows/                # CI/CD pipelines
 ├── Makefile                          # Build and deployment commands
 └── README.md                         # This file
@@ -72,8 +85,11 @@ make logs
 
 ### Access Points
 
-- **Web UI:** http://localhost:5173/ (manager/manager)
-- **API:** http://localhost:8081/
+All services are served behind the nginx reverse proxy:
+
+- **Main App:** http://localhost/ (manager/manager)
+- **JSON Generator:** http://localhost/json-gen
+- **API:** http://localhost/api
 - **RabbitMQ Management:** http://localhost:15672/ (guest/guest)
 
 ---
@@ -92,4 +108,10 @@ make logs
 ## Documentation
 
 For detailed documentation, see:
-- 
+- **[docs/architecture/](docs/architecture/)** — system design & diagrams
+- **[docs/development/](docs/development/)** — developer getting-started guides
+- **[docs/algorithms/](docs/algorithms/)** — algorithm documentation
+- **[docs/adr/](docs/adr/)** — architecture decision records
+- **[docs/specifications/](docs/specifications/)** — problem specs & mathematical definitions
+- **[docs/references/](docs/references/)** — third-party & academic source material
+- **[docs/results/](docs/results/)** & **[docs/reports/](docs/reports/)** — experimental results & technical reports

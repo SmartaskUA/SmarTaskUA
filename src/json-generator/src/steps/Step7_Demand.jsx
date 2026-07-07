@@ -205,7 +205,7 @@ const Step7_Demand = () => {
 
   // Handle CSV export
   const handleExportCSV = () => {
-    downloadDemandCsv(demandData, employeeModel, 'demand.csv');
+    downloadDemandCsv(demandData, employeeModel, 'demand.csv', workPeriods);
     setSnackbar({ open: true, message: 'Demand CSV exported successfully', severity: 'success' });
   };
 
@@ -295,7 +295,7 @@ const Step7_Demand = () => {
                       <Chip
                         label={`${demandData.length} entries`}
                         size="small"
-                        color="primary"
+                        color="success"
                         sx={{ height: '20px', fontSize: '0.7rem' }}
                       />
                     )}

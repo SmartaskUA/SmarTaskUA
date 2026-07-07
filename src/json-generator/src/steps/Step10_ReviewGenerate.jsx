@@ -57,10 +57,11 @@ const Step10_ReviewGenerate = () => {
         ? state.employees.simple
         : state.employees.competency;
 
-      // Generate demand.csv
+      // Generate demand.csv (workPeriods needed to detect per-day time overrides)
       const demandCsv = generateDemandCsv(
         state.demand.demandData || [],
-        state.employees.model
+        state.employees.model,
+        state.demand.workPeriods || []
       );
 
       // Generate schedule_input.csv

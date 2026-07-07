@@ -19,9 +19,10 @@ cd SmarTaskUA
 # 2. Build and start all services
 make build
 
-# 3. Access the application
-# Web UI: http://localhost:5173 (manager/manager)
-# API: http://localhost:8081
+# 3. Access the application (all behind the nginx proxy)
+# Main App:       http://localhost/ (manager/manager)
+# JSON Generator: http://localhost/json-gen
+# API:            http://localhost/api
 ```
 
 That's it! The system is running.
@@ -59,6 +60,6 @@ make down
 ## Next Steps
 
 - **System architecture:** See `docs/architecture/system-overview.md`
-- **Service details:** See READMEs in `src/api/`, `src/frontend/`, `src/scheduler/`, `src/analyzer/`, `infra/`
+- **Service details:** See READMEs in `src/api/`, `src/frontend/`, `src/json-generator/`, `src/scheduler/`, `src/analyzer/`, `infra/`
 - **Algorithms:** See `docs/algorithms/overview.md`
 - **Configuration:** See `config/README.md`

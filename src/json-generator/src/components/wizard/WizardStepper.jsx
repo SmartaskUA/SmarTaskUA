@@ -16,8 +16,17 @@ import { VISIBLE_STEPS } from '../../constants/wizardSteps';
 import { validateStep } from '../../utils/validators/stepValidators';
 
 const WizardStepper = () => {
-  const { state, goToStep } = useWizard();
+  const { state, goToStep, completeStep } = useWizard();
   const { currentStep, stepCompleted } = state;
+
+  // Jumping to another step via the stepper marks the step being left as
+  // completed — mirroring the "Next" button — so visited steps light up
+  // green (valid) or red (invalid) regardless of how the user navigated.
+  const handleStepClick = (realIndex) => {
+    if (realIndex === currentStep) return;
+    completeStep(currentStep);
+    goToStep(realIndex);
+  };
 
   const primary = themeConfig.custom.stepperActive;
 
@@ -94,7 +103,7 @@ const WizardStepper = () => {
           return (
             <Step key={step.label} completed={isCompleted}>
               <StepButton
-                onClick={() => { if (realIndex !== currentStep) goToStep(realIndex); }}
+                onClick={() => handleStepClick(realIndex)}
                 sx={{
                   py: 1.5,
                   '& .MuiStepLabel-label': {

@@ -75,9 +75,9 @@ function validateEmployeeContracts(state, errors) {
  */
 function validateDemandOrganizationalUnits(state, errors) {
   const teamField = state.employees?.model === 'team' ? 'team' : 'competency';
-  const units = state.employees?.model === 'team'
-    ? state.organizationalUnits?.teams || []
-    : state.organizationalUnits?.competencies || [];
+  // Both models store their organizational units under organizationalUnits.teams;
+  // the demand entry key (team/competency) is what differs by model.
+  const units = state.organizationalUnits?.teams || [];
 
   // Create set of valid unit codes
   const unitCodes = new Set(

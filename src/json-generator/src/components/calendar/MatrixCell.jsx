@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Select, MenuItem, TextField, Box, Typography, IconButton, Tooltip } from '@mui/material';
-import { Edit as EditIcon, Close as CloseIcon } from '@mui/icons-material';
+import { Edit as EditIcon, Close as CloseIcon, ArrowDropDown as ArrowDropDownIcon } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import {
   isTimeConstraint,
@@ -186,6 +186,11 @@ const MatrixCell = ({
     }
   };
 
+  // Return a numeric/"custom hours" cell to the category dropdown
+  const handleBackToOptions = () => {
+    onChange(employeeId, date, 'A');
+  };
+
   const handleDialogSave = (constraintString) => {
     onChange(employeeId, date, constraintString);
   };
@@ -297,6 +302,18 @@ const MatrixCell = ({
         placeholder="Enter hours (max 24)"
         inputProps={{ style: { textAlign: 'center' } }}
         InputProps={{
+          endAdornment: (
+            <Tooltip title="Back to categories" placement="top">
+              <IconButton
+                size="small"
+                onClick={handleBackToOptions}
+                edge="end"
+                sx={{ p: 0.25 }}
+              >
+                <ArrowDropDownIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+          ),
           sx: {
             '& input::placeholder': {
               textAlign: 'center',

@@ -68,7 +68,7 @@ const WizardContent = () => {
       >
         <Toolbar sx={{ minHeight: '64px' }}>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
-            JSON Generator - Schema v2.2
+            JSON Generator - Schema v2.6
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.8, mr: 2 }}>
             Step {getVisibleStepNumber(currentStep)} of {TOTAL_VISIBLE}

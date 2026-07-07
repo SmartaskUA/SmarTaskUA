@@ -26,6 +26,11 @@ import {
   Add as AddIcon
 } from '@mui/icons-material';
 import AddDemandEntryDialog from './AddDemandEntryDialog';
+import {
+  getWorkPeriodTimeRange,
+  isTimeOverride,
+  validateOverrideTime
+} from '../../utils/helpers/demandTimeHelpers';
 
 /**
  * DayDemandDetail Component
@@ -62,10 +67,13 @@ const DayDemandDetail = ({
 
   const handleStartEdit = (entry) => {
     setEditingId(entry.date + entry.workPeriod + entry[employeeModel === 'team' ? 'team' : 'competency']);
+    const effective = entry.timeRange || getWorkPeriodTimeRange(workPeriods, entry.workPeriod) || { start: '', end: '' };
     setEditValues({
       minimum: entry.minimum,
       ideal: entry.ideal,
-      estimated: entry.estimated
+      estimated: entry.estimated,
+      start: effective.start || '',
+      end: effective.end || ''
     });
   };
 
@@ -81,7 +89,19 @@ const DayDemandDetail = ({
       return;
     }
 
-    onUpdate(entry, editValues);
+    const timeRange = { start: editValues.start, end: editValues.end };
+    const timeError = validateOverrideTime(timeRange, getWorkPeriodTimeRange(workPeriods, entry.workPeriod));
+    if (timeError) {
+      alert(timeError);
+      return;
+    }
+
+    onUpdate(entry, {
+      minimum: editValues.minimum,
+      ideal: editValues.ideal,
+      estimated: editValues.estimated,
+      timeRange
+    });
     setEditingId(null);
     setEditValues({});
   };
@@ -90,6 +110,13 @@ const DayDemandDetail = ({
     setEditValues({
       ...editValues,
       [field]: value === '' ? '' : parseInt(value, 10)
+    });
+  };
+
+  const handleTimeEditChange = (field, value) => {
+    setEditValues({
+      ...editValues,
+      [field]: value
     });
   };
 
@@ -141,6 +168,7 @@ const DayDemandDetail = ({
               <TableRow>
                 <TableCell><strong>Work Period</strong></TableCell>
                 <TableCell><strong>{teamLabel}</strong></TableCell>
+                <TableCell><strong>Time</strong></TableCell>
                 <TableCell align="center"><strong>Minimum</strong></TableCell>
                 <TableCell align="center"><strong>Ideal</strong></TableCell>
                 <TableCell align="center"><strong>Estimated</strong></TableCell>
@@ -150,7 +178,7 @@ const DayDemandDetail = ({
             <TableBody>
               {demandEntries.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center">
+                  <TableCell colSpan={7} align="center">
                     <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
                       No demand entries for this date
                     </Typography>
@@ -171,6 +199,46 @@ const DayDemandDetail = ({
                         <Chip label={entry.workPeriod} size="small" color="primary" variant="outlined" />
                       </TableCell>
                       <TableCell>{entry[employeeModel === 'team' ? 'team' : 'competency']}</TableCell>
+
+                      {/* Time (per-day override) */}
+                      <TableCell>
+                        {editing ? (
+                          <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                            <TextField
+                              type="time"
+                              value={editValues.start}
+                              onChange={(e) => handleTimeEditChange('start', e.target.value)}
+                              size="small"
+                              InputLabelProps={{ shrink: true }}
+                              sx={{ width: '110px' }}
+                            />
+                            <TextField
+                              type="time"
+                              value={editValues.end}
+                              onChange={(e) => handleTimeEditChange('end', e.target.value)}
+                              size="small"
+                              InputLabelProps={{ shrink: true }}
+                              sx={{ width: '110px' }}
+                            />
+                          </Box>
+                        ) : (
+                          (() => {
+                            const def = getWorkPeriodTimeRange(workPeriods, entry.workPeriod);
+                            const eff = entry.timeRange || def;
+                            const override = isTimeOverride(entry.timeRange, def);
+                            return (
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <Typography variant="body2">
+                                  {eff ? `${eff.start}–${eff.end}` : '—'}
+                                </Typography>
+                                {override && (
+                                  <Chip label="override" size="small" color="warning" variant="outlined" sx={{ height: '18px', fontSize: '0.6rem' }} />
+                                )}
+                              </Box>
+                            );
+                          })()
+                        )}
+                      </TableCell>
 
                       {/* Minimum */}
                       <TableCell align="center">

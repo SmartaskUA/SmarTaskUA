@@ -103,8 +103,9 @@ export function validateStep3(state) {
       errors.push('At least one team is required');
     }
   } else if (state.employees.model === 'competency') {
-    // Competency model: at least one competency required
-    if (!state.organizationalUnits.competencies || state.organizationalUnits.competencies.length === 0) {
+    // Competency model: units are stored under organizationalUnits.teams
+    // (both models share the same storage; the model flag distinguishes them)
+    if (!state.organizationalUnits.teams || state.organizationalUnits.teams.length === 0) {
       errors.push('At least one competency is required');
     }
   } else {
@@ -151,7 +152,9 @@ export function validateStep4(state) {
         if (!emp.id) {
           errors.push(`Employee ${index + 1}: ID is required`);
         }
-        if (!emp.competencies || emp.competencies.length === 0) {
+        // Competency-model employees store their assignments under emp.teams
+        // (array of {code, name, level}); there is no emp.competencies field.
+        if (!emp.teams || emp.teams.length === 0) {
           errors.push(`Employee ${index + 1}: At least one competency is required`);
         }
         if (!emp.contractType) {
