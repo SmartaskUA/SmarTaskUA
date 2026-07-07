@@ -64,11 +64,17 @@ const Calendar = () => {
           setElapsedTime(elapsed_time);
           console.log("Elapsed time:", elapsed_time);
           fetchNationalHolidays(responseData.metadata?.year || new Date().getFullYear());
-          analyzeScheduleViaWebSocket(scheduleData, responseData.metadata);
         }
       })
       .catch(console.error);
   }, [calendarId]);
+
+  useEffect(() => {
+    if (!data?.length || !metadata || !monthColumns.length) {
+      return;
+    }
+    analyzeScheduleViaWebSocket(data, metadata, monthColumns);
+  }, [data, metadata, monthColumns, calendarId]);
 
   useEffect(() => {
     if (!monthOptions.length) {
@@ -120,7 +126,19 @@ const Calendar = () => {
     return () => stompClient.deactivate();
   }, [calendarId]);
 
-  const analyzeScheduleViaWebSocket = async (scheduleData, metadata) => {
+  const buildMonthScopedScheduleData = (scheduleData, columns) => {
+    if (!Array.isArray(scheduleData) || !scheduleData.length || !columns?.length) {
+      return scheduleData;
+    }
+    const selectedIndexes = columns.map((column) => column.index + 1);
+    return scheduleData.map((row, rowIndex) => {
+      if (!Array.isArray(row)) return row;
+      const firstCell = rowIndex === 0 ? "employee_id" : row[0];
+      return [firstCell, ...selectedIndexes.map((index) => row[index] ?? "")];
+    });
+  };
+
+  const analyzeScheduleViaWebSocket = async (scheduleData, metadata, columns) => {
     try {
       const hasVacationTemplate =
         Array.isArray(metadata?.vacationTemplateData) &&
@@ -136,8 +154,11 @@ const Calendar = () => {
         return;
       }
 
+      const scopedScheduleData = buildMonthScopedScheduleData(scheduleData, columns);
+      setKpiSummary(null);
+
       const toCsvString = (rows) => rows.map((row) => row.join(",")).join("\n");
-      const blob = new Blob([toCsvString(scheduleData)], {
+      const blob = new Blob([toCsvString(scopedScheduleData)], {
         type: "text/csv;charset=utf-8",
       });
 

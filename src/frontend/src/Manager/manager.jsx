@@ -303,6 +303,21 @@ const LastProcessedSection = ({ refreshTrigger }) => {
 const CalendarsInProcessSection = ({ setRefreshTrigger }) => {
   const [processingCalendars, setProcessingCalendars] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
+  const STALE_PROCESSING_MINUTES = 20;
+
+  const isFreshProcessingTask = (task) => {
+    const status = task.status?.toLowerCase();
+    if (status !== "in_progress" && status !== "pending") return false;
+
+    const timestamp = task.updatedAt || task.createdAt;
+    if (!timestamp) return true;
+
+    const updatedAt = new Date(timestamp).getTime();
+    if (Number.isNaN(updatedAt)) return true;
+
+    const ageMinutes = (Date.now() - updatedAt) / (1000 * 60);
+    return ageMinutes <= STALE_PROCESSING_MINUTES;
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -312,10 +327,7 @@ const CalendarsInProcessSection = ({ setRefreshTrigger }) => {
         const response = await axios.get(`${BaseUrl}/tasks`);
         const data = response.data;
 
-        const stillProcessing = data.filter((task) => {
-          const s = task.status?.toLowerCase();
-          return s === "in_progress" || s === "pending";
-        });
+        const stillProcessing = data.filter(isFreshProcessingTask);
 
         if (!isMounted) return;
 
@@ -364,7 +376,7 @@ const CalendarsInProcessSection = ({ setRefreshTrigger }) => {
         ) : processingCalendars.length > 0 ? (
           processingCalendars.map((calendar) => (
             <CalendarCard
-              key={calendar.id}
+              key={calendar.taskId || calendar.id}
               title={calendar.scheduleRequest?.title || "Unknown"}
               algorithm={calendar.scheduleRequest?.algorithm}
               status="orange"

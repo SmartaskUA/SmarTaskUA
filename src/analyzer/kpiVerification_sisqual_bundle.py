@@ -29,13 +29,14 @@ def analyze(file_path, problem_path, employees=None, year=None):
     bundle = load_problem_bundle(problem_path)
     schedule = load_schedule_csv(file_path)
     employees = employees if isinstance(employees, list) and employees else bundle["employees"]
+    schedule_dates = set(schedule.get("dates") or [])
 
     employee_meta = build_employee_meta(employees)
     slot_coverage = build_slot_coverage(schedule)
     integrity_metrics = compute_schedule_integrity_metrics(schedule)
 
     coverage_metrics = compute_coverage_metrics(
-        bundle["demand_rows"],
+        filter_rows_by_dates(bundle["demand_rows"], schedule_dates),
         bundle["work_periods"],
         slot_coverage,
     )
@@ -75,6 +76,12 @@ def analyze(file_path, problem_path, employees=None, year=None):
         "employeeAssignmentQuality": assignment_metrics["employeeAssignmentQuality"],
     }
     return result
+
+
+def filter_rows_by_dates(rows, dates):
+    if not dates:
+        return list(rows or [])
+    return [row for row in rows or [] if row.get("date") in dates]
 
 
 def is_bundle_native_hour_problem(problem_path):

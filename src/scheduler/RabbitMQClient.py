@@ -275,9 +275,11 @@ class RabbitMQClient:
             if isinstance(result, dict) and "schedule" in result:
                 schedule_data = result.get("schedule")
                 kpis = result.get("kpis")
+                result_metadata = result.get("metadata") or {}
             else:
                 schedule_data = result
                 kpis = None
+                result_metadata = {}
 
             print("ELAPSED TIME:", elapsed_time)
             problem_metadata = self.load_problem_bundle_metadata(problem_path) if problem_path else {}
@@ -301,6 +303,7 @@ class RabbitMQClient:
             if kpis is not None:
                 metadata.setdefault("analysis", {})
                 metadata["analysis"]["kpis"] = kpis
+            metadata.update(result_metadata)
             metadata.update(problem_metadata)
 
             self.mongodb_client.insert_schedule(

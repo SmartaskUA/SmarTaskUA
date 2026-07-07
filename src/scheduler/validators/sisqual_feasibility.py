@@ -124,8 +124,18 @@ def validate_sisqual_problem(problem_json_path: Path, task_id: str, algorithm_na
 
     demand_file = problem.get("demand", {}).get("dataFile", "demand.csv")
     schedule_file = problem.get("scheduleInput", {}).get("dataFile", "schedule_input.csv")
-    demand_rows = _read_dict_rows(base_dir / demand_file, "demand.csv", issues)
-    schedule_header, schedule_rows = _read_raw_rows(base_dir / schedule_file, "schedule_input.csv", issues)
+    demand_rows = _read_dict_rows(
+        base_dir / demand_file,
+        "demand.dataFile",
+        demand_file,
+        issues,
+    )
+    schedule_header, schedule_rows = _read_raw_rows(
+        base_dir / schedule_file,
+        "scheduleInput.dataFile",
+        schedule_file,
+        issues,
+    )
     schedule_by_employee = {row[0]: row for row in schedule_rows if row}
 
     _validate_demand_dates_and_periods(demand_rows, day_set, work_periods, employee_skills, issues)
@@ -235,22 +245,56 @@ def _read_json(path: Path) -> dict[str, Any]:
         return json.load(file)
 
 
-def _read_dict_rows(path: Path, label: str, issues: list[ValidationIssue]) -> list[dict[str, str]]:
+def _read_dict_rows(
+    path: Path,
+    json_field: str,
+    referenced_file: str,
+    issues: list[ValidationIssue],
+) -> list[dict[str, str]]:
     if not path.is_file():
-        issues.append(ValidationIssue("MISSING_FILE", "error", "Missing data file", f"{label} was not found at {path}."))
+        issues.append(
+            ValidationIssue(
+                "MISSING_REFERENCED_FILE",
+                "error",
+                "Referenced data file was not found",
+                f"{json_field} references '{referenced_file}', but no file exists at {path}.",
+                suggested_fix=f"Create the referenced file or update {json_field} in problem.json.",
+            )
+        )
         return []
     with path.open(newline="", encoding="utf-8") as file:
         return list(csv.DictReader(file))
 
 
-def _read_raw_rows(path: Path, label: str, issues: list[ValidationIssue]) -> tuple[list[str], list[list[str]]]:
+def _read_raw_rows(
+    path: Path,
+    json_field: str,
+    referenced_file: str,
+    issues: list[ValidationIssue],
+) -> tuple[list[str], list[list[str]]]:
     if not path.is_file():
-        issues.append(ValidationIssue("MISSING_FILE", "error", "Missing data file", f"{label} was not found at {path}."))
+        issues.append(
+            ValidationIssue(
+                "MISSING_REFERENCED_FILE",
+                "error",
+                "Referenced data file was not found",
+                f"{json_field} references '{referenced_file}', but no file exists at {path}.",
+                suggested_fix=f"Create the referenced file or update {json_field} in problem.json.",
+            )
+        )
         return [], []
     with path.open(newline="", encoding="utf-8") as file:
         rows = list(csv.reader(file))
     if not rows:
-        issues.append(ValidationIssue("EMPTY_FILE", "error", "Empty data file", f"{label} is empty."))
+        issues.append(
+            ValidationIssue(
+                "EMPTY_REFERENCED_FILE",
+                "error",
+                "Referenced data file is empty",
+                f"{json_field} references '{referenced_file}', but that file is empty.",
+                suggested_fix=f"Populate the referenced file or update {json_field} in problem.json.",
+            )
+        )
         return [], []
     return rows[0], rows[1:]
 
@@ -363,12 +407,12 @@ def _validate_schedule_shape(
                 "SCHEDULE_DATES_MISMATCH",
                 "error",
                 "Schedule dates do not match supported target period",
-                "schedule_input.csv header must contain the target period dates and may include up to 5 contiguous dates immediately before targetPeriod.start. Dates after targetPeriod.end are not supported yet.",
+                "The referenced schedule file header must contain the target period dates and may include up to 5 contiguous dates immediately before targetPeriod.start. Dates after targetPeriod.end are not supported yet.",
             )
         )
     schedule_ids = {row[0] for row in rows if row}
     if schedule_ids != employee_ids:
-        issues.append(ValidationIssue("EMPLOYEE_MISMATCH", "error", "Employee mismatch", f"problem.json and schedule_input.csv employee IDs differ. Missing={sorted(employee_ids - schedule_ids)}, extra={sorted(schedule_ids - employee_ids)}"))
+        issues.append(ValidationIssue("EMPLOYEE_MISMATCH", "error", "Employee mismatch", f"problem.json and the referenced schedule file employee IDs differ. Missing={sorted(employee_ids - schedule_ids)}, extra={sorted(schedule_ids - employee_ids)}"))
     bad = [row[0] for row in rows if len(row) != len(header)]
     if bad:
         issues.append(ValidationIssue("SCHEDULE_ROW_LENGTH", "error", "Schedule row length mismatch", f"Rows with wrong column count: {bad[:5]}"))
@@ -394,7 +438,7 @@ def _allowed_schedule_dates_with_before_context(
     if not days:
         return []
     if not header or header[0] != "employee_id":
-        issues.append(ValidationIssue("SCHEDULE_HEADER", "error", "Invalid schedule header", "schedule_input.csv first column must be employee_id."))
+        issues.append(ValidationIssue("SCHEDULE_HEADER", "error", "Invalid schedule header", "The referenced schedule file first column must be employee_id."))
         return days
 
     date_columns = header[1:]
