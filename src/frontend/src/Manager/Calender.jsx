@@ -154,6 +154,14 @@ const Calendar = () => {
         return;
       }
 
+      // Server-computed KPIs (stored in metadata.analysis.kpis) cover the full
+      // schedule and are already loaded into state. Don't wipe them — the
+      // WebSocket re-analysis is month-scoped and would overwrite a richer result.
+      if (metadata?.analysis?.kpis) {
+        console.info("Skipping WebSocket KPI re-analysis: server-computed KPIs already present.");
+        return;
+      }
+
       const scopedScheduleData = buildMonthScopedScheduleData(scheduleData, columns);
       setKpiSummary(null);
 
