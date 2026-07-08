@@ -24,3 +24,15 @@ equipas vs competencias vs responsabilidades
 solução sub-equipas (?) em vez de responsabilidades - perguntar e verificar
 
 analisar estruturas Sisqual para ver o que dá para incorporar / alterar
+
+---
+
+regras gerais e regras por colaborador por exemplo direito do gozo de feriado do local de trabalho ou do local de residencia de colaborador
+
+---
+
+PACKAGE - json, csvs (problems) + solution (if has any) -> RUNS THROUGH ALGORITHM -> OUTPUTS PACKAGE
+
+Can run multiple algorithms and pipelines with different algoritms for diferent phases
+
+Workflow and Project Managing Platform // if feasible and usable to have algorithms for different functions
