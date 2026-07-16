@@ -1,0 +1,23 @@
+# schedule_input.csv -- one row per employee, one column per date.  Delete every # line.
+#
+# CELL VALUES
+#   A                    work the contract's workMinutesPerDay
+#   480                  work exactly 480 MINUTES  (v2.6 wrote "8" for 8 hours -- multiply by 60)
+#   EQUALS:HH:MM-HH:MM   work exactly this range
+#   INCLUDE:HH:MM-HH:MM  work at least this range; may extend
+#   EXCEPT:HH:MM-HH:MM   unavailable during this range
+#   VAC / NOT            always unavailable
+#   <your code>          must be declared in markingTypes AND classified in dayOffCodes
+#   (blank)              NO ASSIGNMENTS -- not "unconstrained"
+#
+# Numeric cells in 1-24 are REJECTED: they are unmigrated v2.6 hours, and 8 minutes is not a shift.
+#
+# Every code must be classified, because the two kinds behave differently and both shift the
+# week's working-day target n_wk = open days - |unavailable| - |preferable|:
+#   preferable  soft -- may be worked at a penalty  (typically DO)
+#   unavailable hard -- no assignment permitted     (typically FDO, VAC, NOT, Med)
+employee_id,2025-10-01,2025-10-02,2025-10-03,2025-10-04,2025-10-05
+EMP001,A,A,480,DO,VAC
+EMP002,EQUALS:08:30-16:30,A,DO,A,VAC
+EMP003,INCLUDE:10:00-15:00,EXCEPT:14:00-22:00,A,A,DO
+EMP004,300,A,DO,NOT,A

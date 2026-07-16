@@ -1,0 +1,114 @@
+{
+  "_comment": "v3.0 declarative starting point. Delete every _comment key. See FORMAT.md.",
+
+  "schemaVersion": "3.0",
+  "form": "declarative",
+  "problemType": "employee_scheduling",
+
+  "metadata": {
+    "problemId": "MY_PROBLEM_2025",
+    "createdAt": "2025-10-01T09:00:00Z",
+    "description": "What this problem is"
+  },
+
+  "features": {
+    "useAdvancedConstraints": false,
+    "usePriorityOrder": false
+  },
+
+  "_comment_timeGrid": "slotMinutes must divide 1440. 15 represents 08:30/15:30/06:30 exactly; 60 cannot represent any half-hour. Fewer slots = smaller model.",
+  "timeGrid": { "slotMinutes": 15 },
+
+  "temporalScope": {
+    "year": 2025,
+    "numDays": 7,
+    "targetPeriod": { "start": "2025-10-01", "end": "2025-10-07" }
+  },
+
+  "_comment_calendar": "weekStart may be any of the 7 days; it defines the weeks that per-week limits are counted over. Marking a holiday lets it carry its own demand in demand.csv -- it does NOT make anyone unavailable. hasEve says the day before is its eve, so that day can carry its own demand too; the eve's date needs no stating.",
+  "calendar": {
+    "weekStart": "monday",
+    "holidays": [{ "date": "2025-10-05", "name": "A public holiday", "hasEve": true }]
+  },
+
+  "_comment_contracts": "workMinutesPerDay is MINUTES. 8h = 480, 7h45 = 465.",
+  "contracts": {
+    "definitions": [
+      {
+        "id": "fullTime_8h",
+        "name": "Full time - 8h/day",
+        "workMinutesPerDay": 480,
+        "constraints": { "maxMinutesPerWeek": 2400, "maxConsecutiveDays": 5 }
+      },
+      { "id": "partTime_4h", "name": "Part time - 4h/day", "workMinutesPerDay": 240 }
+    ]
+  },
+
+  "_comment_employees": "One list for both models. contractAssignments and teamAssignments are date-ranged: multiple, possibly discontinuous, must not overlap (per team). end: null = ongoing. LEVEL 1 IS THE HIGHEST.",
+  "employees": {
+    "model": "competency",
+    "list": [
+      {
+        "id": "EMP001",
+        "name": "Employee 001",
+        "contractAssignments": [
+          { "contractType": "fullTime_8h", "start": "2025-01-01", "end": null }
+        ],
+        "teamAssignments": [
+          { "team": "TeamA", "level": 1, "start": "2025-01-01", "end": null }
+        ]
+      }
+    ]
+  },
+
+  "_comment_demand": "workPeriods are DEMAND BUCKETS, not a menu of shifts. They say where coverage is wanted and, together, delimit the operating window. A worker works a contiguous block of their contracted length anywhere inside it.",
+  "demand": {
+    "dataFile": "demand.csv",
+    "organizationalUnits": {
+      "teams": [{ "code": "TeamA", "name": "Team A" }]
+    },
+    "workPeriods": [
+      { "code": "MORNING", "name": "Morning", "timeRange": { "start": "08:30", "end": "16:30" } },
+      { "code": "NIGHT", "name": "Night (crosses midnight)", "timeRange": { "start": "22:00", "end": "06:30" } }
+    ],
+    "_comment_priorityOrder": "Which team/level combinations get filled first. Sort by `order`, first match wins; a bare {team} matches any level, add `level` to name one exactly. Anything unlisted sorts last, tied. Ordering follows `order`, NOT array position, so you can rearrange these freely. Remember level 1 is the HIGHEST, so {team, level: 1} means that team's most senior. Needs usePriorityOrder.",
+    "priorityOrder": [
+      { "order": 1, "team": "TeamA", "level": 1, "description": "TeamA's most senior first" },
+      { "order": 2, "team": "TeamA", "description": "then anyone else in TeamA" }
+    ]
+  },
+
+  "_comment_scheduleInput": "Every declared code must also be classified under dayOffCodes; leaving one unclassified is an error, not a default.",
+  "scheduleInput": {
+    "dataFile": "schedule_input.csv",
+    "markingTypes": {
+      "DO": "Day off - may be swapped, at a penalty",
+      "FDO": "Forced day off - cannot be changed",
+      "VAC": "Vacation - cannot work",
+      "NOT": "Unavailable - cannot work"
+    },
+    "dayOffCodes": {
+      "preferable": ["DO"],
+      "unavailable": ["FDO", "VAC", "NOT"]
+    }
+  },
+
+  "_comment_constraints": "hard[] carries ONLY what nothing else can express -- min_rest_minutes is currently the sole type. Coverage, day-off penalties and skill priority are objectives, not rules; day-off classification is dayOffCodes; contract limits are on the contract. `type` is enumerated, so a typo is an error, not a silent no-op. `scope` is reserved for v3.1 per-employee rules and only accepts \"global\".",
+  "constraints": {
+    "hard": [
+      { "id": "min-rest", "type": "min_rest_minutes", "params": { "minutes": 660 }, "enabled": true }
+    ]
+  },
+
+  "_comment_optimization": "Use `algorithm` for one run, or `pipeline: [...]` for phases (exactly one of the two). demandInterpretation is where hard/soft is decided, per phase -- the demand data itself takes no position. `goal` is one of MathematicalDefinition7's three objective functions.",
+  "optimization": {
+    "algorithm": "CSPv2",
+    "maxTimeMinutes": 10,
+    "demandInterpretation": { "minimum": "soft", "empiric": "ignore", "maximum": "ignore" },
+    "objectives": [
+      { "goal": "minimize_shortages", "weight": 1000, "priority": 1 },
+      { "goal": "skill_priority_weight", "weight": 10, "priority": 2 },
+      { "goal": "preferable_days_off_worked", "weight": 100, "priority": 3 }
+    ]
+  }
+}

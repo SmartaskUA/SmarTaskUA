@@ -1,0 +1,27 @@
+# demand.csv -- coverage wanted per date / work period / team.  Delete every # line.
+#
+# minimum  workers desired (the model's alpha_dts)
+# empiric  observed / expected level
+# maximum  upper level
+#
+# RULES
+#   minimum <= empiric <= maximum, applied ONLY to non-zero values
+#   0 means UNSET, not zero workers:  "1,0,0" = minimum 1, no opinion above it
+#   start/end optionally override the work period's times for THIS ROW ONLY; both or neither
+#   one row per (date, workPeriod, team)
+#   a MISSING row = that period is not operating that day
+#   a date with NO rows at all = closed; outside D_o, so outside every week
+#
+# Whether a bound is hard or soft is NOT decided here -- see optimization.demandInterpretation.
+# The V7 reference ILP reads `minimum` only, and reads it as a soft target.
+#
+# MIGRATING FROM v2.6: the header was minimum,ideal,estimated and `ideal` was the UPPER bound in
+# the MIDDLE column. empiric <- estimated, maximum <- ideal: the last two columns SWAP VALUES.
+date,workPeriod,team,minimum,empiric,maximum,start,end
+2025-10-01,MORNING,TeamA,1,2,3,,
+2025-10-01,AFTERNOON,TeamA,2,2,4,,
+2025-10-01,NIGHT,TeamA,1,1,1,,
+2025-10-02,MORNING,TeamA,1,2,3,,
+2025-10-02,AFTERNOON,TeamA,2,2,4,,
+# a holiday, marked in calendar.holidays, given its own reduced demand:
+2025-10-05,MORNING,TeamA,1,1,2,10:00,14:00

@@ -1,0 +1,259 @@
+{
+  "schemaVersion": "3.0",
+  "form": "declarative",
+  "problemType": "employee_scheduling",
+  "metadata": {
+    "problemId": "TIME_CONSTRAINTS_DEMO",
+    "createdAt": "2026-07-16T10:00:00Z",
+    "description": "Single-team demo of the Allen-style time-window operators (EQUALS/INCLUDE/EXCEPT) and a midnight-crossing night shift. Migrated from the v2.6 example of the same name.",
+    "source": "time_constraints_example"
+  },
+  "features": {
+    "useAdvancedConstraints": false,
+    "usePriorityOrder": false
+  },
+  "timeGrid": {
+    "slotMinutes": 15
+  },
+  "temporalScope": {
+    "year": 2030,
+    "numDays": 7,
+    "targetPeriod": {
+      "start": "2030-10-01",
+      "end": "2030-10-07",
+      "includeBufferWeeks": false
+    }
+  },
+  "calendar": {
+    "weekStart": "monday"
+  },
+  "contracts": {
+    "definitions": [
+      {
+        "id": "fullTime_8h",
+        "name": "Full Time - 8 hours/day",
+        "workMinutesPerDay": 480
+      }
+    ]
+  },
+  "employees": {
+    "model": "team",
+    "list": [
+      {
+        "id": "EMP001",
+        "name": "Employee 001",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2030-10-01",
+            "end": null
+          }
+        ],
+        "teamAssignments": [
+          {
+            "team": "TeamA",
+            "start": "2030-10-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "EMP002",
+        "name": "Employee 002",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2030-10-01",
+            "end": null
+          }
+        ],
+        "teamAssignments": [
+          {
+            "team": "TeamA",
+            "start": "2030-10-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "EMP003",
+        "name": "Employee 003",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2030-10-01",
+            "end": null
+          }
+        ],
+        "teamAssignments": [
+          {
+            "team": "TeamA",
+            "start": "2030-10-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "EMP004",
+        "name": "Employee 004",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2030-10-01",
+            "end": null
+          }
+        ],
+        "teamAssignments": [
+          {
+            "team": "TeamA",
+            "start": "2030-10-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "EMP005",
+        "name": "Employee 005",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2030-10-01",
+            "end": null
+          }
+        ],
+        "teamAssignments": [
+          {
+            "team": "TeamA",
+            "start": "2030-10-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "EMP006",
+        "name": "Employee 006",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2030-10-01",
+            "end": null
+          }
+        ],
+        "teamAssignments": [
+          {
+            "team": "TeamA",
+            "start": "2030-10-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "EMP007",
+        "name": "Employee 007",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2030-10-01",
+            "end": null
+          }
+        ],
+        "teamAssignments": [
+          {
+            "team": "TeamA",
+            "start": "2030-10-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "EMP008",
+        "name": "Employee 008",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2030-10-01",
+            "end": null
+          }
+        ],
+        "teamAssignments": [
+          {
+            "team": "TeamA",
+            "start": "2030-10-01",
+            "end": null
+          }
+        ]
+      }
+    ]
+  },
+  "demand": {
+    "dataFile": "demand.csv",
+    "organizationalUnits": {
+      "teams": [
+        {
+          "code": "TeamA",
+          "name": "Team A"
+        }
+      ]
+    },
+    "workPeriods": [
+      {
+        "code": "MORNING",
+        "name": "Morning Shift",
+        "timeRange": {
+          "start": "08:30",
+          "end": "16:30"
+        }
+      },
+      {
+        "code": "AFTERNOON",
+        "name": "Afternoon Shift",
+        "timeRange": {
+          "start": "14:00",
+          "end": "22:00"
+        }
+      },
+      {
+        "code": "NIGHT",
+        "name": "Night Shift",
+        "timeRange": {
+          "start": "22:00",
+          "end": "06:30"
+        }
+      }
+    ]
+  },
+  "scheduleInput": {
+    "dataFile": "schedule_input.csv",
+    "markingTypes": {
+      "DL": "Day off - may be swapped, at a penalty",
+      "VAC": "Vacation - cannot work"
+    },
+    "dayOffCodes": {
+      "preferable": [
+        "DL"
+      ],
+      "unavailable": [
+        "VAC"
+      ]
+    }
+  },
+  "constraints": {
+    "hard": []
+  },
+  "optimization": {
+    "algorithm": "CSPv2",
+    "maxTimeMinutes": 10,
+    "demandInterpretation": {
+      "minimum": "soft",
+      "empiric": "ignore",
+      "maximum": "ignore"
+    },
+    "objectives": [
+      {
+        "goal": "minimize_shortages",
+        "weight": 1000,
+        "priority": 1
+      }
+    ]
+  }
+}
