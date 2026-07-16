@@ -3,6 +3,24 @@
 v3.0 is a breaking change. Nothing auto-upgrades. This lists every change that alters meaning,
 worst first.
 
+## At a glance
+
+| | v2.6 | v3.0 |
+|---|---|---|
+| Time unit | hours in contracts, minutes in breaks, HH:MM in periods, hours in `duration` | **minutes everywhere**, on a configurable `timeGrid.slotMinutes` (default 15) |
+| Midnight crossing | bare HH:MM; readers inferred roll-over from `start > end` | minutes past 1440 (`22:00-06:30` -> `1320-1830`) |
+| Problem forms | one | **two**: declarative + expanded (`H_wd`/`delta`), with a compiler between them |
+| Solution | not describable | `schema-v3-solution.json` |
+| Demand columns | `minimum,ideal,estimated` (`ideal` = upper bound, in the middle column) | `minimum,empiric,maximum`, ascending; `0` = unset |
+| Hard/soft | fixed in the schema | per **algorithm phase** (`demandInterpretation`), so a pipeline can read the same demand differently |
+| Contracts over time | date-ranged | date-ranged (unchanged) |
+| Teams over time | **static** | date-ranged, symmetric with contracts |
+| Holidays | none | `calendar.holidays`, with `hasEve` for the day before |
+| Week start | `monday-sunday` \| `sunday-saturday`, buried under advanced constraints | `calendar.weekStart`, any of 7 days |
+| Fill order | `{rank, team, level:"N>=2"}` -- a rank plus an unparseable string | `demand.priorityOrder`: ordered `{order, team, level?}`, first match wins; the solver derives the model's weights |
+| Day-off kinds | one opaque code space | `preferable` (soft, `D_wk`) vs `unavailable` (hard, `U_wk`) |
+| Competence level | schema said `1=junior`; the maths said `1=highest` | **`1` = highest**, matching the maths |
+
 ---
 
 ## 1. demand.csv: the last two columns swap VALUES, not just names
@@ -132,6 +150,7 @@ precedence; in migration terms:
 | `demand.workPeriodModel` | only `fixed` remains, so the field had one legal value |
 | `workPeriods[].durationMinutes` / `allowedStartTimes` | the "flexible work period" model |
 | `constraints.soft[]`, `constraints.advanced` | soft = objective weights; advanced = prose/dead |
+| `scheduleInput.markingTypes` | merged into `dayOffCodes` (see §5); it only added descriptions |
 
 The last three are one removal. Once work periods are understood as **demand buckets**, a
 "flexible" bucket — a duration plus a set of allowed start times, with no settled range — has no
@@ -141,22 +160,32 @@ strictly more flexible than the old model, while the bucket keeps a concrete `ti
 work period therefore requires `timeRange`. If you genuinely need variable-start buckets, this is
 the thing to add back.
 
-## 5. Day-off codes must now be classified
+## 5. Day-off codes: one map that declares and classifies
 
-v2.6 treated every marking code as an opaque string. V7 needs two distinct sets, and they behave
-very differently:
+v2.6 had `markingTypes` (declare a code + description) *and* `dayOffCodes` (classify it), which were
+forced to list the same codes — pure redundancy. v3 has **only `scheduleInput.dayOffCodes`**, a map
+keyed by code:
 
-- **`preferable`** [`D_wk`] — soft. The worker would rather be off but **may be scheduled at a
-  penalty** (ObjectiveFunction3). Typically v2.6's `DO`.
-- **`unavailable`** [`U_wk`] — hard. Constraint (5) forbids any assignment. Typically `FDO`,
-  `VAC`, `NOT`, `Med`.
+```json
+"dayOffCodes": {
+  "DO":  { "kind": "preferable",  "description": "Day off - swappable" },
+  "FDO": { "kind": "unavailable", "description": "Forced day off" },
+  "VAC": { "kind": "unavailable" }
+}
+```
 
-Declare them under `scheduleInput.dayOffCodes`. A declared-but-unclassified code is a hard error:
-the transformer refuses to guess, because both readings produce a file that validates and a model
-that is wrong. Both sets also feed the per-week working-day **equality**
-`n_wk = open days − |U_wk| − |D_wk|`, so misclassifying one shifts every week's target.
+To migrate: drop `markingTypes`; turn each `dayOffCodes` array entry into a keyed entry with
+`kind`, folding the old `markingTypes` description in (optional). Two behaviour changes:
 
-This split is not an invention — the live solver already encodes it as
+- **Every code you use must be declared, `VAC`/`NOT` included** — they are no longer implicitly
+  accepted. If used, they must be `kind: "unavailable"`.
+- A code can no longer be classified two ways: it is one key with one `kind`, so the "listed as both
+  preferable and unavailable" mistake is now unrepresentable rather than merely validated against.
+
+`kind` drives the model — **`preferable`** [`D_wk`] is soft (may be worked at a penalty,
+ObjectiveFunction3), **`unavailable`** [`U_wk`] is hard (constraint 5 forbids any assignment). Both
+feed the per-week **equality** `n_wk = open days − |U_wk| − |D_wk|`, so a misclassification shifts
+every week's target. The split is not an invention — the live solver already encodes it as
 `SISQUAL_UNAVAILABLE_MARKERS = OFF_MARKERS - {"DO"}`.
 
 ## 6. Work periods are demand buckets, not shifts
@@ -199,7 +228,7 @@ window. Both were unsatisfiable under v2.6 too.
 2. Multiply every hours field and every numeric schedule_input cell by 60.
 3. Leave competence levels alone; verify 1 = your most senior.
 4. Fold `simple[]`/`competency[]` into `list[]`; convert to `contractAssignments`/`teamAssignments`.
-5. Classify every marking code under `dayOffCodes`.
+5. Fold `markingTypes` into `dayOffCodes` as `{code: {kind, description?}}`; list `VAC`/`NOT` too.
 6. Rename `priorityHierarchy` -> `priorityOrder`, `rank` -> `order`; drop any
    free-form `level` expression strings. Author no weights.
 7. Add `form`, `timeGrid`; move `weekDefinition` to `calendar.weekStart`; drop

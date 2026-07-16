@@ -52,5 +52,6 @@ suggestive rather than conclusive. The maths is the authority.
   because every row was `1,1,1`).
 - `min_rest_hours {hours: 11}` → `min_rest_minutes {minutes: 660}`.
 - `weekDefinition` → `calendar.weekStart`. Static teams → one open-ended `teamAssignment`.
-- v2.6 declared `"8"/"7"/"5"/"4"` in `markingTypes`; numeric cells are inherently work
-  requirements and never needed declaring.
+- v2.6's `markingTypes` + `dayOffCodes` collapse into one `dayOffCodes` map keyed by code
+  (`{DO: {kind: "preferable", …}}`); the numeric codes `"8"/"7"/"5"/"4"` are dropped — numeric
+  cells are work requirements, never day-off codes.

@@ -310,12 +310,18 @@ expect("14d. minRestDaysPerWeek unsatisfiable",
        fixture(_one_capped({"minRestDaysPerWeek": 5})), "rest days")
 
 # 15. Tier 3 integrity
-expect("15a. code listed as both preferable and unavailable",
-       fixture(lambda d: d["scheduleInput"]["dayOffCodes"]["unavailable"].append("DL")),
-       "cannot be both soft and hard")
-expect("15b. dayOffCodes naming an undeclared code",
-       fixture(lambda d: d["scheduleInput"]["dayOffCodes"]["preferable"].append("ZZZ")),
-       "not declared")
+expect("15a. VAC classified as preferable is rejected",
+       fixture(lambda d: d["scheduleInput"]["dayOffCodes"]["VAC"].__setitem__("kind", "preferable")),
+       "unavailable by definition")
+expect("15b. a CSV code absent from dayOffCodes is undeclared",
+       fixture(schedule_rows={("EMP001", "2030-10-01"): "XYZ"}),
+       "undeclared code")
+# a dayOffCodes entry without `kind` is a schema violation (used in a cell so it is not
+# also flagged as unused, keeping the finding isolated)
+expect("15d. dayOffCodes entry missing kind is a schema error",
+       fixture(lambda d: d["scheduleInput"]["dayOffCodes"].__setitem__("BAD", {}),
+               schedule_rows={("EMP001", "2030-10-01"): "BAD"}),
+       "schema", want_error=True)
 v26 = [["date", "workPeriod", "team", "minimum", "ideal", "estimated", "start", "end"]] + \
       [[f"2030-10-0{i}", wp, "TeamA", 1, 2, 2, "", ""] for i in range(1, 8)
        for wp in ["MORNING", "AFTERNOON", "NIGHT"]]

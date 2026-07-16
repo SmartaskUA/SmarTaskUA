@@ -353,26 +353,22 @@ class SchemaValidator:
         self._feasibility_preflight()
 
     def _check_day_off_codes(self) -> None:
-        """Tier 3: the two day-off sets must be disjoint and declared."""
+        """Tier 3: VAC/NOT are unavailable by definition.
+
+        Disjointness and declared-vs-classified are no longer possible to get wrong:
+        dayOffCodes is one map keyed by code, so a code has exactly one kind and is
+        declared by being present. The schema enforces the shape; only the VAC/NOT
+        semantic needs a content check.
+        """
         r = self.report
         section = self.problem.get("scheduleInput", {})
-        off = section.get("dayOffCodes", {})
-        preferable = set(off.get("preferable", []))
-        unavailable = set(off.get("unavailable", []))
-        declared = set(section.get("markingTypes", {}))
-
-        for code in sorted(preferable & unavailable):
-            # One says "may be worked at a penalty", the other says "may not be worked".
-            # There is no defensible way to pick.
-            r.error(
-                f"scheduleInput.dayOffCodes: {code!r} is listed as both preferable and "
-                "unavailable; it cannot be both soft and hard"
-            )
-        for code in sorted((preferable | unavailable) - declared - ALWAYS_UNAVAILABLE):
-            r.error(
-                f"scheduleInput.dayOffCodes: {code!r} is classified but not declared in "
-                "scheduleInput.markingTypes"
-            )
+        codes = section.get("dayOffCodes", {})
+        for code in sorted(ALWAYS_UNAVAILABLE & set(codes)):
+            if codes[code].get("kind") != "unavailable":
+                r.error(
+                    f"scheduleInput.dayOffCodes: {code!r} is unavailable by definition and "
+                    f"cannot be kind {codes[code].get('kind')!r}"
+                )
 
     def _check_structural(self, open_days: set[str], cells: dict, date_cols: list[str]) -> None:
         """Tier 2: per-week working-day counts that the model cannot satisfy."""
@@ -385,10 +381,7 @@ class SchemaValidator:
         week_start = p.get("calendar", {}).get("weekStart", "monday")
         contracts = {c["id"]: c for c in p.get("contracts", {}).get("definitions", [])}
 
-        section = p.get("scheduleInput", {})
-        off = section.get("dayOffCodes", {})
-        preferable = set(off.get("preferable", []))
-        unavailable = set(off.get("unavailable", [])) | ALWAYS_UNAVAILABLE
+        preferable, unavailable = core.day_off_sets(p.get("scheduleInput", {}))
 
         # D-bar: days starting a run of six consecutive calendar days that are ALL open.
         # The 5-in-6 rule only ranges over these, so a week whose open days are broken
@@ -484,10 +477,10 @@ class SchemaValidator:
         r = self.report
         section = p.get("scheduleInput", {})
 
-        declared = set(section.get("markingTypes", {}))
+        declared = set(section.get("dayOffCodes", {}))
         used = {c.strip() for row in cells.values() for c in row.values() if c and c.strip()}
         for code in sorted(declared - used):
-            r.warn(f"scheduleInput.markingTypes: {code!r} is declared but never used")
+            r.warn(f"scheduleInput.dayOffCodes: {code!r} is declared but never used")
 
         held: dict[str, list] = defaultdict(list)
         for emp in p.get("employees", {}).get("list", []):
@@ -657,9 +650,9 @@ class SchemaValidator:
             r.error(f"schedule input file not found: {path}")
             return cells, []
 
-        codes = set(section.get("markingTypes", {}))
-        off = section.get("dayOffCodes", {})
-        classified = set(off.get("preferable", [])) | set(off.get("unavailable", [])) | ALWAYS_UNAVAILABLE
+        # One set now: every custom code must appear in dayOffCodes, which both
+        # declares and classifies it.
+        declared = set(section.get("dayOffCodes", {}))
         emp_ids = {e["id"] for e in self.problem.get("employees", {}).get("list", [])}
 
         with path.open(newline="") as fh:
@@ -690,7 +683,7 @@ class SchemaValidator:
                 }
                 for i, cell in enumerate(row[1:]):
                     self._check_cell(cell.strip(), eid, dates[i] if i < len(dates) else "?",
-                                     codes, classified, path.name, slot)
+                                     declared, path.name, slot)
 
             for missing in emp_ids - seen_ids:
                 r.error(f"{path.name}: employee {missing!r} has no row")
@@ -699,7 +692,7 @@ class SchemaValidator:
 
         return cells, dates
 
-    def _check_cell(self, cell, eid, day, codes, classified, fname, slot) -> None:
+    def _check_cell(self, cell, eid, day, declared, fname, slot) -> None:
         r = self.report
         if not cell:
             return
@@ -728,14 +721,11 @@ class SchemaValidator:
                     "grid, so no assignment block can align to it"
                 )
             return
-        if cell in ALWAYS_UNAVAILABLE:
-            return
-        if cell not in codes:
-            r.error(f"{fname}: {eid} {day}: undeclared code {cell!r}; add it to scheduleInput.markingTypes")
-        elif cell not in classified:
+        if cell not in declared:
+            # Every custom code, VAC/NOT included, must be declared in dayOffCodes.
             r.error(
-                f"{fname}: {eid} {day}: code {cell!r} is declared but not classified; list it under "
-                "scheduleInput.dayOffCodes.preferable or .unavailable"
+                f"{fname}: {eid} {day}: undeclared code {cell!r}; add it to "
+                "scheduleInput.dayOffCodes with kind 'preferable' or 'unavailable'"
             )
 
     # -- layer 3: expanded / V7 conformance -------------------------------

@@ -78,18 +78,14 @@
     ]
   },
 
-  "_comment_scheduleInput": "Every declared code must also be classified under dayOffCodes; leaving one unclassified is an error, not a default.",
+  "_comment_scheduleInput": "dayOffCodes declares AND classifies every non-standard cell code, keyed by code. kind is 'preferable' (may be worked at a penalty) or 'unavailable' (cannot). description is optional. Every custom code you use must be here, VAC/NOT included; VAC/NOT must be 'unavailable'.",
   "scheduleInput": {
     "dataFile": "schedule_input.csv",
-    "markingTypes": {
-      "DO": "Day off - may be swapped, at a penalty",
-      "FDO": "Forced day off - cannot be changed",
-      "VAC": "Vacation - cannot work",
-      "NOT": "Unavailable - cannot work"
-    },
     "dayOffCodes": {
-      "preferable": ["DO"],
-      "unavailable": ["FDO", "VAC", "NOT"]
+      "DO":  { "kind": "preferable",  "description": "Day off - may be swapped, at a penalty" },
+      "FDO": { "kind": "unavailable", "description": "Forced day off - cannot be changed" },
+      "VAC": { "kind": "unavailable", "description": "Vacation - cannot work" },
+      "NOT": { "kind": "unavailable", "description": "Unavailable - cannot work" }
     }
   },
 

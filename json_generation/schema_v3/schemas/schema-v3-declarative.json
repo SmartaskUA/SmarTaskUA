@@ -83,38 +83,31 @@
           "type": "string",
           "description": "Path to schedule_input.csv, relative to this file."
         },
-        "markingTypes": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Declares every non-standard cell code, mapped to a human description. Each must also be classified in dayOffCodes.",
-          "examples": [
-            {
-              "DO": "Day off - may be swapped",
-              "VAC": "Vacation"
-            }
-          ]
-        },
         "dayOffCodes": {
           "type": "object",
-          "description": "Classifies each day-off code into one of the two sets the model treats differently. Both feed the per-week working-day equality n_wk = open days - |unavailable| - |preferable|, so a misclassification shifts that week's target.",
-          "properties": {
-            "preferable": {
-              "type": "array",
-              "items": {
-                "type": "string"
+          "description": "Declares and classifies every non-standard cell code, keyed by the code. A custom code can only ever mean the worker is off (work is expressed by A, numbers, and EQUALS/INCLUDE/EXCEPT), so this one map both declares valid codes and says what each means. Each code has exactly one kind, so it cannot be both soft and hard. Both kinds feed the per-week working-day equality n_wk = open days - |unavailable| - |preferable|, so a misclassification shifts that week's target.",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["kind"],
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["preferable", "unavailable"],
+                "description": "'preferable' [D_wk]: soft -- the worker would rather be off, but may be scheduled at a penalty. 'unavailable' [U_wk]: hard -- no assignment permitted. VAC and NOT, if used, must be 'unavailable'."
               },
-              "description": "Soft [D_wk]: the worker would rather be off, but may be scheduled at a penalty."
-            },
-            "unavailable": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "description": "Hard [U_wk]: no assignment permitted. VAC and NOT are always unavailable, listed or not."
+              "description": {
+                "type": "string",
+                "description": "Optional human-readable label for this code."
+              }
             }
-          }
+          },
+          "examples": [
+            {
+              "DO": { "kind": "preferable", "description": "Day off - may be swapped" },
+              "VAC": { "kind": "unavailable", "description": "Vacation" }
+            }
+          ]
         }
       }
     }

@@ -130,8 +130,7 @@ employee_id,2025-10-01,2025-10-02,2025-10-03
 | `EQUALS:HH:MM-HH:MM` | work exactly this range |
 | `INCLUDE:HH:MM-HH:MM` | work at least this range; may extend |
 | `EXCEPT:HH:MM-HH:MM` | unavailable during this range |
-| `VAC`, `NOT` | always unavailable |
-| any other code | must be declared in `markingTypes` **and** classified in `dayOffCodes` |
+| any other code | must be declared in `dayOffCodes` (`VAC`, `NOT` included) |
 | *(blank)* | **no assignments** — not "unconstrained" |
 
 Numeric cells are **minutes**. Values in 1–24 are rejected: they are v2.6 hours that were never
@@ -139,15 +138,21 @@ migrated, and 8 minutes is not a shift.
 
 ### Day-off codes
 
-Every declared code must be classified, and refusing to guess is deliberate — both readings yield
-a file that validates and a model that is wrong.
+Any cell code that is not `A`, a number, or an `EQUALS`/`INCLUDE`/`EXCEPT` window is a **day-off
+code**, and every one you use must be declared under `scheduleInput.dayOffCodes` — a map keyed by
+the code, each entry `{ kind, description? }`. There are no implicit codes: `VAC` and `NOT` are
+listed like any other (and must be `unavailable`).
+
+`kind` is the classification the model acts on:
 
 - **`preferable`** [`D_wk`] — soft. Keeps its options: the solver may schedule over it and pay
   ObjectiveFunction3. Typically `DO`.
-- **`unavailable`** [`U_wk`] — hard. Constraint (5) forbids any assignment.
+- **`unavailable`** [`U_wk`] — hard. Constraint (5) forbids any assignment. Typically `FDO`, `VAC`,
+  `NOT`, `Med`.
 
 Both feed the per-week **equality** `n_wk = |D_k| − |U_wk| − |D_wk|` (constraint 6), so a
-misclassification moves that week's working-day target.
+misclassification moves that week's working-day target. Because each code is a key with exactly one
+`kind`, it cannot be classified two ways — that mistake is unrepresentable.
 
 ## Competence levels
 

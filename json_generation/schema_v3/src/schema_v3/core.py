@@ -24,7 +24,9 @@ WEEKDAY_NAMES = [
     "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
 ]
 
-# Cell codes that mean "cannot work" whether or not the problem declares them.
+# Codes that are unavailable by definition: if a problem uses them they must be
+# declared in dayOffCodes with kind "unavailable", never "preferable". (They are no
+# longer implicitly accepted -- every code used is declared explicitly.)
 ALWAYS_UNAVAILABLE = {"VAC", "NOT"}
 
 # Cell kinds that ask for work to happen. A day-off code does not, and a blank
@@ -326,6 +328,18 @@ def read_schedule_input(problem: dict, base: Path) -> tuple[dict[str, dict[str, 
 # cells
 # --------------------------------------------------------------------------
 
+def day_off_sets(section: dict) -> tuple[set[str], set[str]]:
+    """(preferable, unavailable) code sets from scheduleInput.dayOffCodes.
+
+    The one place the dayOffCodes map shape is read, so the transformer and the
+    validator agree on it.
+    """
+    codes = section.get("dayOffCodes", {})
+    preferable = {c for c, v in codes.items() if v.get("kind") == "preferable"}
+    unavailable = {c for c, v in codes.items() if v.get("kind") == "unavailable"}
+    return preferable, unavailable
+
+
 @dataclass
 class CellRule:
     """What one schedule-input cell says about one worker-day."""
@@ -347,10 +361,7 @@ def classify_cell(raw: str, problem: dict) -> CellRule:
         # "unconstrained".
         return CellRule(kind="empty")
 
-    section = problem["scheduleInput"]
-    day_off_codes = section.get("dayOffCodes", {})
-    preferable = set(day_off_codes.get("preferable", []))
-    unavailable = set(day_off_codes.get("unavailable", [])) | ALWAYS_UNAVAILABLE
+    preferable, unavailable = day_off_sets(problem["scheduleInput"])
 
     upper = text.upper()
 
@@ -395,21 +406,10 @@ def classify_cell(raw: str, problem: dict) -> CellRule:
             )
         return CellRule(kind="exact_minutes", minutes=value, code=text)
 
-    if text in set(section.get("markingTypes", {})):
-        # Declared, but not classified. Refusing to guess is deliberate: the two
-        # ways a code can mean "off" are a soft preference (D_wk) and a hard block
-        # (U_wk), they pull the model in different directions, and both shift the
-        # week's working-day target n_wk. Silently picking one would be a wrong
-        # answer that still validates.
-        raise DomainError(
-            f"schedule input cell {text!r} is declared in scheduleInput.markingTypes but "
-            "not classified. List it under scheduleInput.dayOffCodes.preferable (may be "
-            "worked at a penalty) or .unavailable (cannot be worked)."
-        )
-
     raise DomainError(
         f"schedule input cell {text!r} is not recognised. Declare it in "
-        "scheduleInput.markingTypes and classify it under scheduleInput.dayOffCodes."
+        "scheduleInput.dayOffCodes with kind 'preferable' (may be worked at a penalty) or "
+        "'unavailable' (cannot be worked)."
     )
 
 
@@ -635,7 +635,14 @@ def scan_feasibility(problem: dict, base: Path) -> list[Diagnostic]:
                 continue  # closed day, nothing is required
             day = date.fromisoformat(iso_d)
             weekday = WEEKDAY_NAMES[day.weekday()]
-            rule = classify_cell(row.get(iso_d, ""), problem)
+            try:
+                rule = classify_cell(row.get(iso_d, ""), problem)
+            except DomainError:
+                # An unparseable cell (undeclared code, malformed window, hours-in-cell)
+                # is a declaration error the validator's CSV layer reports precisely;
+                # don't also raise a vaguer "cannot be interpreted" from here. The
+                # transformer proper still raises on it in its own per-cell loop.
+                continue
             contract_id = active_period(emp["contractAssignments"], day, "contractType")
             contract = contracts.get(contract_id) if contract_id else None
 

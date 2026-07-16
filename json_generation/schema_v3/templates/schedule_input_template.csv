@@ -7,7 +7,7 @@
 #   INCLUDE:HH:MM-HH:MM  work at least this range; may extend
 #   EXCEPT:HH:MM-HH:MM   unavailable during this range
 #   VAC / NOT            always unavailable
-#   <your code>          must be declared in markingTypes AND classified in dayOffCodes
+#   <your code>          must be declared in scheduleInput.dayOffCodes (kind preferable|unavailable)
 #   (blank)              NO ASSIGNMENTS -- not "unconstrained"
 #
 # Numeric cells in 1-24 are REJECTED: they are unmigrated v2.6 hours, and 8 minutes is not a shift.

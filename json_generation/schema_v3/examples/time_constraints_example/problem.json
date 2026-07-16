@@ -224,17 +224,15 @@
   },
   "scheduleInput": {
     "dataFile": "schedule_input.csv",
-    "markingTypes": {
-      "DL": "Day off - may be swapped, at a penalty",
-      "VAC": "Vacation - cannot work"
-    },
     "dayOffCodes": {
-      "preferable": [
-        "DL"
-      ],
-      "unavailable": [
-        "VAC"
-      ]
+      "DL": {
+        "kind": "preferable",
+        "description": "Day off - may be swapped, at a penalty"
+      },
+      "VAC": {
+        "kind": "unavailable",
+        "description": "Vacation - cannot work"
+      }
     }
   },
   "constraints": {
