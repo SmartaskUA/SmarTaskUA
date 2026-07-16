@@ -327,6 +327,13 @@ v26 = [["date", "workPeriod", "team", "minimum", "ideal", "estimated", "start", 
        for wp in ["MORNING", "AFTERNOON", "NIGHT"]]
 expect("15c. unmigrated v2.6 demand header is rejected by name", fixture(demand_rows=v26),
        "v2.6 header")
+# a leftover v2.6 restrictions block. Employee items take additionalProperties, so
+# without this guard the block validates clean and is silently ignored -- the worker
+# becomes available on every blacked-out date.
+expect("15e. a leftover v2.6 restrictions block is rejected",
+       fixture(lambda d: d["employees"]["list"][0].__setitem__(
+           "restrictions", {"blackoutDates": ["2030-10-01"]})),
+       "'restrictions' was removed")
 
 # 16. priorityOrder
 def po(entries):

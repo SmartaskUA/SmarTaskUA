@@ -127,8 +127,6 @@ def transform(problem: dict, base: Path) -> tuple[dict, dict, list[Diagnostic]]:
                 reason = "contract_inactive"
             elif not teams:
                 reason = "other"  # no skill held on this date -> cannot cover anything
-            elif iso_d in set(emp.get("restrictions", {}).get("blackoutDates", [])):
-                reason = "not_available"
 
             if reason is not None:
                 entry["assignmentIds"] = []

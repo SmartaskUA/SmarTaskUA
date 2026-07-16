@@ -151,8 +151,13 @@ precedence; in migration terms:
 | `workPeriods[].durationMinutes` / `allowedStartTimes` | the "flexible work period" model |
 | `constraints.soft[]`, `constraints.advanced` | soft = objective weights; advanced = prose/dead |
 | `scheduleInput.markingTypes` | merged into `dayOffCodes` (see §5); it only added descriptions |
+| `employees…restrictions.blackoutDates` | schedule input already says this — an unavailable code (`NOT`) on that date |
+| `employees…restrictions.cannotSwapDayOffs` | the cell already says this — `DO` is swappable, `FDO` is not |
+| `employees…restrictions.preferredWorkPeriods` | a worker never works a *period* — see §6 |
+| `employees…restrictions` (the block itself) | nothing remained in it |
 
-The last three are one removal. Once work periods are understood as **demand buckets**, a
+`workPeriodModel`, `durationMinutes` and `allowedStartTimes` are one removal. Once work periods are
+understood as **demand buckets**, a
 "flexible" bucket — a duration plus a set of allowed start times, with no settled range — has no
 time span for demand to attach to, and neither example ever used one. Flexibility now lives where
 it belongs: the *worker's* assignment is a block placed anywhere in the operating window, which is
@@ -228,6 +233,8 @@ window. Both were unsatisfiable under v2.6 too.
 2. Multiply every hours field and every numeric schedule_input cell by 60.
 3. Leave competence levels alone; verify 1 = your most senior.
 4. Fold `simple[]`/`competency[]` into `list[]`; convert to `contractAssignments`/`teamAssignments`.
+   Delete `restrictions`, re-expressing each `blackoutDates` entry as a `NOT` cell and each
+   `cannotSwapDayOffs` worker's `DO` cells as `FDO`.
 5. Fold `markingTypes` into `dayOffCodes` as `{code: {kind, description?}}`; list `VAC`/`NOT` too.
 6. Rename `priorityHierarchy` -> `priorityOrder`, `rank` -> `order`; drop any
    free-form `level` expression strings. Author no weights.

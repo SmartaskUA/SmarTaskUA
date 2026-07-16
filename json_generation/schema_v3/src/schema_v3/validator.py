@@ -178,6 +178,19 @@ class SchemaValidator:
             eid = emp.get("id", "?")
             emp_ids.append(eid)
 
+            # v2.6 carried a per-employee 'restrictions' block. Employee items take
+            # additionalProperties, so a leftover one would validate clean and be
+            # ignored -- silently making the worker AVAILABLE on blacked-out dates.
+            # An error, not a warning: the file passes and the schedule is wrong.
+            if "restrictions" in emp:
+                r.error(
+                    f"employee {eid}: 'restrictions' was removed in v3.0 and is ignored. "
+                    "blackoutDates -> an unavailable code (NOT) in schedule_input.csv; "
+                    "cannotSwapDayOffs -> write FDO instead of DO in that cell; "
+                    "preferredWorkPeriods -> removed (work periods are demand buckets, "
+                    "not shifts). See MIGRATION-2.6-to-3.0.md."
+                )
+
             self._check_periods(emp.get("contractAssignments", []), eid, "contractAssignments")
             for a in emp.get("contractAssignments", []):
                 if a.get("contractType") not in contract_ids:

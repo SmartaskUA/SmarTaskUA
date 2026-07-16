@@ -627,7 +627,6 @@ def scan_feasibility(problem: dict, base: Path) -> list[Diagnostic]:
     out: list[Diagnostic] = []
     for emp in problem["employees"]["list"]:
         emp_id = emp["id"]
-        blackout = set(emp.get("restrictions", {}).get("blackoutDates", []))
         row = cells.get(emp_id, {})
         for iso_d in date_columns:
             demanded = t_d.get(iso_d, set())
@@ -651,8 +650,6 @@ def scan_feasibility(problem: dict, base: Path) -> list[Diagnostic]:
             if rule.kind == "dayoff" and rule.day_off == "unavailable":
                 continue
             if contract_id is None or not active_teams(emp["teamAssignments"], day):
-                continue
-            if iso_d in blackout:
                 continue
 
             if not day_allowed(contract, weekday):
