@@ -61,6 +61,13 @@ for label, p in bundles.items():
     res = run_validator(p)
     check(f"2. validator PASS: {label}", res["valid"], str(res["errors"][:2]))
 
+# 2t. the template is a valid, self-consistent bundle -- catches drift between
+# problem_template.json and its CSVs, and exercises CSV '#'-comment skipping (the
+# template CSVs carry documentation lines the example CSVs do not).
+_tmpl = run_validator(V3 / "templates/problem_template.json")
+check("2t. template validates with no errors or warnings",
+      _tmpl["valid"] and not _tmpl["warnings"], str(_tmpl["errors"][:2] + _tmpl["warnings"][:2]))
+
 # deep ref resolution against real instances
 for form, f in [("declarative", "schema-v3-declarative.json"), ("expanded", "schema-v3-expanded.json")]:
     inst = json.loads(bundles[f"sisqual {form}"].read_text())
@@ -158,7 +165,7 @@ window = C.operating_window(periods, 15)
 # T_d covering only 08:30-16:30; a block reaching past 16:30 must be dropped whole
 t_d = set(range(510 // 15, 990 // 15))
 cands = C.build_day_candidates(C.CellRule(kind="auto"),
-                               {"workMinutesPerDay": 480}, window, 15, {})
+                               {"workMinutesPerDay": 480}, window, 15)
 kept = [c for c in cands if C.slots_of(c.intervals, 15) <= t_d]
 dropped = [c for c in cands if not C.slots_of(c.intervals, 15) <= t_d]
 check("10a. blocks outside T_d are dropped", len(dropped) > 0, f"{len(dropped)} dropped")
@@ -168,6 +175,14 @@ check("10c. no block was truncated to fit (all keep full 480 min)",
       all(c.intervals[0].end - c.intervals[0].start == 480 for c in kept))
 check("10d. the single exact fit 510-990 survives",
       any(c.intervals[0].start == 510 and c.intervals[0].end == 990 for c in kept))
+
+# 10e. csv_lines drops '#' comments and blank lines, keeps data (incl. indented rows)
+_lines = list(C.csv_lines(iter([
+    "# a comment\n", "\n", "date,team\n", "  # indented comment\n",
+    "2025-10-01,TeamA\n", "   \n",
+])))
+check("10e. csv_lines strips comments and blanks", _lines == ["date,team\n", "2025-10-01,TeamA\n"],
+      str(_lines))
 
 # 11. level polarity: 1 = highest, data NOT inverted from v2.6
 v26 = json.loads((V3.parent / "schema_v2.6/examples/sisqual_example/problem.json").read_text())
@@ -327,18 +342,20 @@ v26 = [["date", "workPeriod", "team", "minimum", "ideal", "estimated", "start", 
        for wp in ["MORNING", "AFTERNOON", "NIGHT"]]
 expect("15c. unmigrated v2.6 demand header is rejected by name", fixture(demand_rows=v26),
        "v2.6 header")
-# a leftover v2.6 restrictions block. Employee items take additionalProperties, so
-# without this guard the block validates clean and is silently ignored -- the worker
-# becomes available on every blacked-out date.
+# removed v2.6 fields inside closed objects are now caught by additionalProperties:false
+# at the schema layer -- no dedicated guard needed (the silent-ignore is gone).
 expect("15e. a leftover v2.6 restrictions block is rejected",
        fixture(lambda d: d["employees"]["list"][0].__setitem__(
            "restrictions", {"blackoutDates": ["2030-10-01"]})),
-       "'restrictions' was removed")
+       "restrictions")
+expect("15f. a leftover breaks block on a work period is rejected",
+       fixture(lambda d: d["demand"]["workPeriods"][0].__setitem__(
+           "breaks", [{"type": "meal", "durationMinutes": 30}])),
+       "breaks")
 
-# 16. priorityOrder
+# 16. priorityOrder (honored by presence -- no feature flag)
 def po(entries):
     def m(d):
-        d["features"]["usePriorityOrder"] = True
         d["demand"]["priorityOrder"] = entries
     return m
 # distinct levels at the same order: duplicate-order error, but neither shadows the
@@ -379,20 +396,29 @@ check("18b. no level was invented (v2.6 ranked teams only)",
           json.loads((V3 / "examples/sisqual_example/problem.json").read_text())
           ["demand"]["priorityOrder"]))
 
-# 19. typed rule catalogue: unknown type / goal are ERRORS, not silent no-ops
-expect("19a. unknown constraints.hard[].type is an error",
-       fixture(lambda d: d["constraints"]["hard"].append(
-           {"id": "x", "type": "no_such_rule", "params": {}})),
-       "schema", want_error=True)
-expect("19b. unknown objectives[].goal is an error",
-       fixture(lambda d: d["optimization"]["objectives"].append(
-           {"goal": "balance_workload", "weight": 1})),
-       "schema", want_error=True)
-# min_rest_minutes with a bad param shape is caught too
-expect("19c. typed rule params are checked",
-       fixture(lambda d: d["constraints"]["hard"].append(
-           {"id": "x", "type": "min_rest_minutes", "params": {"hours": 11}})),
-       "schema", want_error=True)
+# 19. solve directives were cut (optimization/constraints connect to no solver);
+# a leftover block validates clean at the root, so a guard must reject it.
+expect("19a. a leftover optimization block is rejected",
+       fixture(lambda d: d.__setitem__("optimization", {"algorithm": "CSPv2"})),
+       "'optimization' was removed")
+expect("19b. a leftover constraints block is rejected",
+       fixture(lambda d: d.__setitem__(
+           "constraints", {"hard": [{"id": "min-rest", "type": "min_rest_minutes",
+                                     "params": {"minutes": 660}}]})),
+       "'constraints' was removed")
+# additionalProperties:false catches a field-name typo in a closed object...
+expect("19c. a mistyped field in a closed object is rejected",
+       fixture(lambda d: d["contracts"]["definitions"][0].__setitem__("workMinutsPerDay", 480)),
+       "not allowed", want_error=True)
+# ...but a stray key at the (open) root is still accepted -- that is where _comment_ lives
+_rootok = fixture(lambda d: d.__setitem__("_comment_note", "kept"))
+check("19d. a stray key at the open root is accepted",
+      run_validator(_rootok / "problem.json")["valid"], "root should stay open")
+shutil.rmtree(_rootok, ignore_errors=True)
+# a reversed temporalScope (start after end) must not validate as an empty schedule
+expect("19e. a reversed temporalScope is rejected",
+       fixture(lambda d: d.__setitem__("temporalScope", {"start": "2030-10-07", "end": "2030-10-01"})),
+       "after end")
 
 # 20. decoupling: core is standalone; neither tool imports the other
 import importlib

@@ -8,21 +8,12 @@
     "description": "Single-team demo of the Allen-style time-window operators (EQUALS/INCLUDE/EXCEPT) and a midnight-crossing night shift. Migrated from the v2.6 example of the same name.",
     "source": "time_constraints_example"
   },
-  "features": {
-    "useAdvancedConstraints": false,
-    "usePriorityOrder": false
-  },
   "timeGrid": {
     "slotMinutes": 15
   },
   "temporalScope": {
-    "year": 2030,
-    "numDays": 7,
-    "targetPeriod": {
-      "start": "2030-10-01",
-      "end": "2030-10-07",
-      "includeBufferWeeks": false
-    }
+    "start": "2030-10-01",
+    "end": "2030-10-07"
   },
   "calendar": {
     "weekStart": "monday"
@@ -234,24 +225,5 @@
         "description": "Vacation - cannot work"
       }
     }
-  },
-  "constraints": {
-    "hard": []
-  },
-  "optimization": {
-    "algorithm": "CSPv2",
-    "maxTimeMinutes": 10,
-    "demandInterpretation": {
-      "minimum": "soft",
-      "empiric": "ignore",
-      "maximum": "ignore"
-    },
-    "objectives": [
-      {
-        "goal": "minimize_shortages",
-        "weight": 1000,
-        "priority": 1
-      }
-    ]
   }
 }

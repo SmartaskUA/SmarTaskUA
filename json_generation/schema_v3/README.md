@@ -27,7 +27,7 @@ contiguous block of their contracted length, not a named period).
 python3 src/schema_v3/validator.py examples/sisqual_example/problem.json -v
 python3 src/schema_v3/transform.py examples/sisqual_example/problem.json --stats
 python3 src/schema_v3/validator.py examples/sisqual_example/problem.expanded.json -v
-python3 tests/test_v3_conformance.py          # 65 checks
+python3 tests/test_v3_conformance.py          # conformance suite
 ```
 
 Needs `jsonschema>=4.18` (`requirements.txt`); without it the validator still runs its
@@ -39,7 +39,7 @@ cross-reference and feasibility passes. Start a new problem from `templates/`.
 schemas/          the spec — three standalone JSON Schemas (declarative, expanded, solution)
 src/schema_v3/    the Python tooling — core (shared domain), transform, validator
 tests/            conformance suite
-docs/             FORMAT (formats + semantics), MIGRATION (2.6 -> 3.0), STATUS (scope)
+docs/             FORMAT (formats + semantics), MIGRATION (2.6 -> 3.0), FUTURE (roadmap)
 examples/         two worked examples, each in both forms
 templates/        commented starting points
 reference/        maths spec, vendor docs, working notes
@@ -47,6 +47,6 @@ reference/        maths spec, vendor docs, working notes
 
 ## More
 
-- [docs/FORMAT.md](docs/FORMAT.md) — CSV formats, cell semantics, the rule/objective model.
+- [docs/FORMAT.md](docs/FORMAT.md) — CSV formats, cell semantics, and what v3.0 deliberately leaves out.
 - [docs/MIGRATION-2.6-to-3.0.md](docs/MIGRATION-2.6-to-3.0.md) — what changed and what will bite you.
-- [docs/STATUS.md](docs/STATUS.md) — what is delivered, and what is deferred and why.
+- [docs/FUTURE.md](docs/FUTURE.md) — what's next and why (break logic first).

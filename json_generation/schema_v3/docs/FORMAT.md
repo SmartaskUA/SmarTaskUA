@@ -29,9 +29,12 @@ date,workPeriod,team,minimum,empiric,maximum,start,end
 2025-10-05,CHECKOUT_1100_2100,Checkout,2,3,4,10:00,20:00
 ```
 
+Both CSVs may carry documentation: a line whose first non-whitespace character is `#`, and blank
+lines, are ignored by the readers (this is how the templates annotate themselves).
+
 | column | meaning |
 |---|---|
-| `date` | `YYYY-MM-DD`, within `temporalScope.targetPeriod` |
+| `date` | `YYYY-MM-DD`, within `temporalScope` (`start`..`end`) |
 | `workPeriod` | a code from `demand.workPeriods[]` |
 | `team` | a code from `demand.organizationalUnits.teams[]` — the skill dimension `S` |
 | `minimum` | workers desired — the model's `alpha_dts` |
@@ -50,15 +53,14 @@ Rules:
 
 ### Which bound is hard is not stated here
 
-The three numbers are data. How an algorithm reads each one lives in
-`optimization.demandInterpretation`, per phase, so a pipeline can run one phase treating `maximum`
-as a hard cap and the next treating it as a soft target over identical demand.
-
-The V7 reference ILP is `{minimum: "soft", empiric: "ignore", maximum: "ignore"}`. Its `alpha_dts`
-is the minimum number of workers **desired**, pursued only through the shortfall variable `z_dts`
-in ObjectiveFunction1. **V7 defines no hard coverage constraint and no upper bound at all** — so a
-perfectly feasible solution may still under-cover, and `empiric`/`maximum` are carried for other
-phases and for KPI reporting.
+The three numbers are **data**. Whether a solver reads each as a hard cap, a soft target, or
+ignores it is **not stated in v3.0** — v3.0 is the problem definition only, and how to solve it
+(algorithm, objectives, demand interpretation) is deferred to the solver (see
+`FUTURE.md`). The V7 reference ILP, for instance, reads `minimum` only and treats it as a soft
+target: its `alpha_dts` is the minimum number of workers **desired**, pursued only through the
+shortfall variable `z_dts`, with no hard coverage constraint and no upper bound — so a perfectly
+feasible solution may still under-cover, and `empiric`/`maximum` are carried for other solvers and
+for KPI reporting.
 
 ### Holidays
 
@@ -69,50 +71,26 @@ holiday's minus one, so only its existence needs stating. There is no day-class-
 construct: the wizard resolves the day class and emits concrete per-date rows. Marking a holiday
 does **not** make anyone unavailable.
 
-## Rules and objectives — one fact, one place
+## What v3.0 does and does not carry — one fact, one place
 
-v3.0 has three ways to influence a schedule, and they do not overlap. Read this before adding a
-`constraints.hard[]` entry — most of what you might reach for is already stated somewhere else.
+v3.0 is the problem **definition**: the *what*. Every fact about the problem has exactly one home,
+and none is stated twice:
 
-| where | says | examples |
-|---|---|---|
-| **Structure** | what the data **is** | `dayOffCodes` (which codes are soft vs hard), contract `constraints` (daily/weekly limits, available days, max consecutive), the cells themselves (`EQUALS`/`INCLUDE`/`EXCEPT`), `priorityOrder`, `demandInterpretation` |
-| **`optimization.objectives[]`** | what to **optimise**, and its cost | coverage shortfall, skill priority, days-off worked |
-| **`constraints.hard[]`** | only what neither of the above can express | `min_rest_minutes` |
-
-**Nothing may be stated twice.** In v2.6 coverage was declared three times over — a soft
-constraint, an objective weight, and a demand-interpretation — with no defined winner. In v3 it is
-two orthogonal facts: `demandInterpretation.minimum` (how the bound enters the model) and
-`objectives[minimize_shortages].weight` (what a shortfall costs). A day-off being swappable is
-`dayOffCodes.preferable`; the penalty for working it is
-`objectives[preferable_days_off_worked].weight`. There is no third place.
-
-### `constraints.hard[]` is typed
-
-Each rule has an enumerated `type` and schema-checked `params`, so a typo is a validation error,
-not a rule that silently does nothing (which is how v2.6 accumulated dead `type` strings). One type
-exists today:
-
-| type | params | meaning |
-|---|---|---|
-| `min_rest_minutes` | `{minutes}` | minimum rest between the end of one day's work and the start of the next |
-
-The `type` list is a `oneOf`, so more can be added later without breaking existing files. What is
-**not** there is deliberate: `vacation_block`, `forced_day_off`, `time_constraint`, `min_coverage`
-and `day_off_swap_penalty` all restated structure or objectives and are gone;
-`constraints.soft[]` and `constraints.advanced` are gone entirely (a soft constraint *was* an
-objective; `advanced.dayOffSwapping.rules` was English prose no solver ever parsed).
-
-### `optimization.objectives[]`
-
-`goal` is one of MathematicalDefinition7's three objective functions — an unknown goal is a
-validation error:
-
-| goal | function |
+| fact | where it lives |
 |---|---|
-| `minimize_shortages` | OF1 — minimise total under-staffing (`Σ z_dts`) |
-| `skill_priority_weight` | OF2 — minimise the priority weight of assigned team/level combinations (`Σ p_sl·y'`), driven by `priorityOrder` |
-| `preferable_days_off_worked` | OF3 — minimise preferable days-off that get worked (`Σ x'_wd`) |
+| which day-off codes are soft vs hard | `scheduleInput.dayOffCodes` |
+| daily/weekly limits, available days, max consecutive | contract `constraints` |
+| a specific worker-day's requirement | the schedule_input cell (`EQUALS`/`INCLUDE`/`EXCEPT`, a number, `A`) |
+| which team/level combinations fill first | `demand.priorityOrder` |
+| how many workers each slice of the day wants | the demand.csv numbers |
+
+What v3.0 does **not** carry is *how to solve* the problem — the algorithm, the objective weights,
+which demand bound is hard or soft, and rules such as minimum rest. In v3.0 none of that reached a
+solver (routing is orchestrator-driven; objectives and rest are hardcoded in each solver or read
+via the v2.6 shape v3 replaced), so it was cut. Those solve directives return as **one explicit
+registry**, consumed by the algorithm, when a v3 solver is built — see `FUTURE.md`. Until then a
+leftover `optimization` or `constraints` block is a validation **error**, not a silently ignored
+one.
 
 ## schedule_input.csv
 
@@ -233,21 +211,21 @@ non-operating time disappear rather than being silently reshaped.
 
 ## Expanded form
 
-`assignmentCatalog` holds every distinct assignment, deduplicated on coverage + weight:
+`assignmentCatalog` holds every distinct assignment, deduplicated on coverage:
 
 ```json
 { "id": "A0007",
-  "intervals": [ {"startMin": 510, "endMin": 930} ],
-  "weightMinutes": 420 }
+  "intervals": [ {"startMin": 510, "endMin": 930} ] }
 ```
 
 - `intervals` — disjoint, ascending. More than one expresses a **split shift**, which v2.6's single
-  `timeRange` could not represent. `delta_wdht` is derived from these plus the grid.
-- `weightMinutes` — **paid** minutes, deliberately separate from clock span because unpaid breaks
-  make them differ. Contract limits check against this; coverage uses `intervals`.
-- An assignment is pure time coverage and carries **no team**: which skill a worker serves in each
-  slot is a separate decision (`y_wdts`), bounded only by their own skills `S_w`. One assignment
-  can be shared by workers of different teams.
+  `timeRange` could not represent. `delta_wdht` is derived from these plus the grid, and the paid
+  span is just their total length — v3.0 has no break model, so paid always equals clock span (see
+  MIGRATION §4b).
+- An assignment is pure time coverage and carries **no team** and **no work-period tag**: which
+  skill a worker serves in each slot is a separate decision (`y_wdts`), bounded only by their own
+  skills `S_w`, and which demand bucket a block happens to align with is derivable from its
+  intervals. One assignment can be shared by workers of different teams.
 
 `availability` gives each worker's `H_wd` per day, plus `dayOff` (`preferable` | `unavailable`) and
 an optional `forced` pre-commitment. An `unavailable` day must carry no assignments; a

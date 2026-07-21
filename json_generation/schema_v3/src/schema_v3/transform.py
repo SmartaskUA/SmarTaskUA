@@ -49,7 +49,6 @@ def transform(problem: dict, base: Path) -> tuple[dict, dict, list[Diagnostic]]:
     slot = problem["timeGrid"]["slotMinutes"]
     periods = core.period_ranges(problem)
     window = core.operating_window(periods, slot)
-    meta = core.period_meta(problem, periods)
     t_d, _ = core.read_demand(problem, base, periods)
     cells, date_columns = core.read_schedule_input(problem, base)
 
@@ -76,12 +75,7 @@ def transform(problem: dict, base: Path) -> tuple[dict, dict, list[Diagnostic]]:
                 "intervals": [
                     {"startMin": iv.start, "endMin": iv.end} for iv in cand.intervals
                 ],
-                "weightMinutes": cand.weight,
             }
-            # Most assignments are free-floating blocks that match no declared
-            # period, so provenance is simply absent rather than null.
-            if cand.work_period is not None:
-                row["workPeriod"] = cand.work_period
             catalog_rows.append(row)
         return catalog[key]
 
@@ -117,8 +111,8 @@ def transform(problem: dict, base: Path) -> tuple[dict, dict, list[Diagnostic]]:
             # a holiday exists so the enterprise can give it its own demand; it does
             # not decide who works.  Shops open on holidays, and whether a given
             # worker is entitled to take it off depends on the workplace-vs-residence
-            # entitlement rule, which is per-employee and deferred to v3.1.  Until
-            # then a holiday reaches U_wk only the same way any other day does: via
+            # entitlement rule, which is per-employee and deferred (see FUTURE.md).
+            # Until then a holiday reaches U_wk only the same way any other day does: via
             # that worker's schedule-input cell.
             reason = None
             if rule.kind == "dayoff" and rule.day_off == "unavailable":
@@ -137,7 +131,7 @@ def transform(problem: dict, base: Path) -> tuple[dict, dict, list[Diagnostic]]:
                 continue
 
             allowed = core.day_allowed(contract, weekday)
-            eligible = core.build_day_candidates(rule, contract, window, slot, meta) if allowed else []
+            eligible = core.build_day_candidates(rule, contract, window, slot) if allowed else []
 
             # MathematicalDefinition7, stated in bold: "H_wd does not include
             # assignments with timeslots t not belonging to T_d".  An assignment
@@ -202,8 +196,6 @@ def transform(problem: dict, base: Path) -> tuple[dict, dict, list[Diagnostic]]:
         "demand": problem["demand"],
         "assignmentCatalog": catalog_rows,
         "availability": availability,
-        "constraints": problem["constraints"],
-        "optimization": problem["optimization"],
     }
     if "calendar" in problem:
         expanded["calendar"] = problem["calendar"]

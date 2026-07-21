@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://smartask.ua/schemas/scheduling-problem-v3.0-solution.json",
   "title": "Employee Scheduling Solution v3.0",
-  "description": "The output half of a package: problem + optional solution -> algorithm -> package. Records which daily working assignment each worker took on each day [x_wdh = 1]. Two things this enables: warm-starting a run from an existing schedule, and pipelines where one phase's solution is the next phase's starting point. Assignment ids and employee ids refer to the expanded problem this solution belongs to. Standalone: this file does not reference any other schema. Symbols in square brackets refer to MathematicalDefinition7.",
+  "description": "The output half of a package: problem + optional solution -> algorithm -> package. Records which daily working assignment each worker took on each day [x_wdh = 1]. This enables warm-starting a run from an existing schedule. Assignment ids and employee ids refer to the expanded problem this solution belongs to. Standalone: this file does not reference any other schema. Symbols in square brackets refer to MathematicalDefinition7.",
   "type": "object",
   "required": [
     "schemaVersion",
@@ -30,11 +30,6 @@
         "algorithm": {
           "type": "string"
         },
-        "phaseIndex": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Index into optimization.pipeline, when the problem used one."
-        },
         "solvedAt": {
           "type": "string",
           "format": "date-time"
@@ -54,7 +49,8 @@
           ],
           "description": "A 'feasible' or 'timeout' solution may still be worth warm-starting from; 'infeasible' and 'error' carry no assignments."
         }
-      }
+      },
+      "additionalProperties": false
     },
     "objectiveValues": {
       "type": "array",
@@ -73,7 +69,8 @@
           "value": {
             "type": "number"
           }
-        }
+        },
+        "additionalProperties": false
       }
     },
     "assignments": {
@@ -136,13 +133,16 @@
                       "team": {
                         "type": "string"
                       }
-                    }
+                    },
+                    "additionalProperties": false
                   }
                 }
-              }
+              },
+              "additionalProperties": false
             }
           }
-        }
+        },
+        "additionalProperties": false
       }
     },
     "shortfalls": {
@@ -174,7 +174,8 @@
             "type": "integer",
             "minimum": 1
           }
-        }
+        },
+        "additionalProperties": false
       }
     }
   },

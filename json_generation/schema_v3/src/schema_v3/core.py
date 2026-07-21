@@ -14,6 +14,7 @@ the callers.
 from __future__ import annotations
 
 import csv
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
@@ -228,17 +229,6 @@ def operating_window(periods: dict[str, Interval], slot: int) -> Interval:
     return Interval(lo, hi)
 
 
-def period_meta(problem: dict, periods: dict[str, Interval]) -> dict[Interval, tuple[str, int]]:
-    """Map each period's exact range to (code, unpaid break minutes)."""
-    meta: dict[Interval, tuple[str, int]] = {}
-    for wp in problem["demand"]["workPeriods"]:
-        unpaid = sum(
-            b["durationMinutes"] for b in wp.get("breaks", []) if not b.get("paid", False)
-        )
-        meta[periods[wp["code"]]] = (wp["code"], unpaid)
-    return meta
-
-
 def generate_blocks(duration: int, window: Interval, slot: int) -> list[Interval]:
     """Every contiguous block of `duration` that fits in `window`, stepping by one slot."""
     if duration <= 0 or duration > window.length:
@@ -252,6 +242,19 @@ def generate_blocks(duration: int, window: Interval, slot: int) -> list[Interval
 # --------------------------------------------------------------------------
 # I/O: the two CSVs
 # --------------------------------------------------------------------------
+
+def csv_lines(fh) -> Iterator[str]:
+    """Yield CSV lines from an open file, skipping blank lines and '#' comments.
+
+    A line whose first non-whitespace character is '#' is a comment, so both the
+    matrices and the templates that document them can carry inline notes. The one
+    place comment-skipping lives, fed to every reader (core and validator) so they
+    parse the files identically.
+    """
+    for ln in fh:
+        if ln.strip() and not ln.lstrip().startswith("#"):
+            yield ln
+
 
 def read_demand(
     problem: dict, base: Path, periods: dict[str, Interval]
@@ -275,7 +278,7 @@ def read_demand(
     rows: list[dict] = []
 
     with path.open(newline="") as fh:
-        for lineno, row in enumerate(csv.DictReader(fh), start=2):
+        for lineno, row in enumerate(csv.DictReader(csv_lines(fh)), start=2):
             if not row.get("date"):
                 continue
             rows.append(row)
@@ -306,8 +309,8 @@ def read_schedule_input(problem: dict, base: Path) -> tuple[dict[str, dict[str, 
         raise DomainError(f"schedule input file not found: {path}")
 
     with path.open(newline="") as fh:
-        reader = csv.reader(fh)
-        header = next(reader)
+        reader = csv.reader(csv_lines(fh))
+        header = next(reader, None)
         if not header or header[0] != "employee_id":
             raise DomainError("schedule_input.csv: first column must be 'employee_id'")
         dates = [h.strip() for h in header[1:]]
@@ -422,18 +425,15 @@ class Candidate:
     """One way a worker could spend a day, before the T_d filter."""
 
     intervals: tuple[Interval, ...]
-    weight: int
-    work_period: str | None = None
 
     def key(self) -> tuple:
         """Identity for deduplication.
 
-        Keyed on coverage and paid weight only, deliberately excluding the
-        originating work period: two options that resolve to the same intervals
-        and weight are the same option as far as the model is concerned, and
-        emitting both would hand the solver a pair of symmetric duplicates.
+        Keyed on coverage alone: two options that resolve to the same intervals
+        are the same option as far as the model is concerned, and emitting both
+        would hand the solver a pair of symmetric duplicates.
         """
-        return (self.intervals, self.weight)
+        return self.intervals
 
 
 def day_allowed(contract: dict | None, weekday: str) -> bool:
@@ -452,7 +452,6 @@ def build_day_candidates(
     contract: dict | None,
     window: Interval,
     slot: int,
-    meta: dict[Interval, tuple[str, int]],
 ) -> list[Candidate]:
     """The daily working assignments a worker could take -- H_wd before the T_d filter.
 
@@ -492,18 +491,10 @@ def build_day_candidates(
     else:
         return []
 
-    out = []
-    for block in blocks:
-        # An assignment that happens to coincide exactly with a declared period
-        # inherits that period's unpaid breaks, which is the only place breaks can
-        # attach: a free-floating block has no period to take them from.
-        match = meta.get(block)
-        if match:
-            code, unpaid = match
-            out.append(Candidate((block,), max(0, block.length - unpaid), code))
-        else:
-            out.append(Candidate((block,), block.length, None))
-    return out
+    # An assignment is pure time coverage: a single contiguous block. It carries no
+    # link back to a demand bucket -- which bucket a block happens to align with is
+    # derivable from its intervals and adds no fact the model reads.
+    return [Candidate((block,)) for block in blocks]
 
 
 def required_duration(rule: CellRule, contract: dict | None) -> int | None:
@@ -619,7 +610,6 @@ def scan_feasibility(problem: dict, base: Path) -> list[Diagnostic]:
     slot = problem["timeGrid"]["slotMinutes"]
     periods = period_ranges(problem)
     window = operating_window(periods, slot)
-    meta = period_meta(problem, periods)
     t_d, _ = read_demand(problem, base, periods)
     cells, date_columns = read_schedule_input(problem, base)
     contracts = {c["id"]: c for c in problem["contracts"]["definitions"]}
@@ -661,7 +651,7 @@ def scan_feasibility(problem: dict, base: Path) -> list[Diagnostic]:
                     ))
                 continue
 
-            eligible = build_day_candidates(rule, contract, window, slot, meta)
+            eligible = build_day_candidates(rule, contract, window, slot)
             kept = [c for c in eligible if slots_of(c.intervals, slot) <= demanded]
             if kept:
                 continue

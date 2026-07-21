@@ -10,20 +10,15 @@
   },
   "generatedFrom": {
     "declarativeProblemId": "TIME_CONSTRAINTS_DEMO",
-    "generatedAt": "2026-07-16T17:25:03+01:00",
+    "generatedAt": "2026-07-21T19:52:58+01:00",
     "transformerVersion": "3.0.0"
   },
   "timeGrid": {
     "slotMinutes": 15
   },
   "temporalScope": {
-    "year": 2030,
-    "numDays": 7,
-    "targetPeriod": {
-      "start": "2030-10-01",
-      "end": "2030-10-07",
-      "includeBufferWeeks": false
-    }
+    "start": "2030-10-01",
+    "end": "2030-10-07"
   },
   "contracts": {
     "definitions": [
@@ -228,9 +223,7 @@
           "startMin": 510,
           "endMin": 990
         }
-      ],
-      "weightMinutes": 480,
-      "workPeriod": "MORNING"
+      ]
     },
     {
       "id": "A0002",
@@ -239,8 +232,7 @@
           "startMin": 525,
           "endMin": 1005
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0003",
@@ -249,8 +241,7 @@
           "startMin": 540,
           "endMin": 1020
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0004",
@@ -259,8 +250,7 @@
           "startMin": 555,
           "endMin": 1035
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0005",
@@ -269,8 +259,7 @@
           "startMin": 570,
           "endMin": 1050
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0006",
@@ -279,8 +268,7 @@
           "startMin": 585,
           "endMin": 1065
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0007",
@@ -289,8 +277,7 @@
           "startMin": 600,
           "endMin": 1080
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0008",
@@ -299,8 +286,7 @@
           "startMin": 615,
           "endMin": 1095
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0009",
@@ -309,8 +295,7 @@
           "startMin": 630,
           "endMin": 1110
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0010",
@@ -319,8 +304,7 @@
           "startMin": 645,
           "endMin": 1125
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0011",
@@ -329,8 +313,7 @@
           "startMin": 660,
           "endMin": 1140
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0012",
@@ -339,8 +322,7 @@
           "startMin": 675,
           "endMin": 1155
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0013",
@@ -349,8 +331,7 @@
           "startMin": 690,
           "endMin": 1170
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0014",
@@ -359,8 +340,7 @@
           "startMin": 705,
           "endMin": 1185
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0015",
@@ -369,8 +349,7 @@
           "startMin": 720,
           "endMin": 1200
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0016",
@@ -379,8 +358,7 @@
           "startMin": 735,
           "endMin": 1215
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0017",
@@ -389,8 +367,7 @@
           "startMin": 750,
           "endMin": 1230
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0018",
@@ -399,8 +376,7 @@
           "startMin": 765,
           "endMin": 1245
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0019",
@@ -409,8 +385,7 @@
           "startMin": 780,
           "endMin": 1260
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0020",
@@ -419,8 +394,7 @@
           "startMin": 795,
           "endMin": 1275
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0021",
@@ -429,8 +403,7 @@
           "startMin": 810,
           "endMin": 1290
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0022",
@@ -439,8 +412,7 @@
           "startMin": 825,
           "endMin": 1305
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0023",
@@ -449,9 +421,7 @@
           "startMin": 840,
           "endMin": 1320
         }
-      ],
-      "weightMinutes": 480,
-      "workPeriod": "AFTERNOON"
+      ]
     },
     {
       "id": "A0024",
@@ -460,8 +430,7 @@
           "startMin": 855,
           "endMin": 1335
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0025",
@@ -470,8 +439,7 @@
           "startMin": 870,
           "endMin": 1350
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0026",
@@ -480,8 +448,7 @@
           "startMin": 885,
           "endMin": 1365
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0027",
@@ -490,8 +457,7 @@
           "startMin": 900,
           "endMin": 1380
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0028",
@@ -500,8 +466,7 @@
           "startMin": 915,
           "endMin": 1395
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0029",
@@ -510,8 +475,7 @@
           "startMin": 930,
           "endMin": 1410
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0030",
@@ -520,8 +484,7 @@
           "startMin": 945,
           "endMin": 1425
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0031",
@@ -530,8 +493,7 @@
           "startMin": 960,
           "endMin": 1440
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0032",
@@ -540,8 +502,7 @@
           "startMin": 975,
           "endMin": 1455
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0033",
@@ -550,8 +511,7 @@
           "startMin": 990,
           "endMin": 1470
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0034",
@@ -560,8 +520,7 @@
           "startMin": 1005,
           "endMin": 1485
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0035",
@@ -570,8 +529,7 @@
           "startMin": 1020,
           "endMin": 1500
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0036",
@@ -580,8 +538,7 @@
           "startMin": 1035,
           "endMin": 1515
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0037",
@@ -590,8 +547,7 @@
           "startMin": 1050,
           "endMin": 1530
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0038",
@@ -600,8 +556,7 @@
           "startMin": 1065,
           "endMin": 1545
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0039",
@@ -610,8 +565,7 @@
           "startMin": 1080,
           "endMin": 1560
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0040",
@@ -620,8 +574,7 @@
           "startMin": 1095,
           "endMin": 1575
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0041",
@@ -630,8 +583,7 @@
           "startMin": 1110,
           "endMin": 1590
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0042",
@@ -640,8 +592,7 @@
           "startMin": 1125,
           "endMin": 1605
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0043",
@@ -650,8 +601,7 @@
           "startMin": 1140,
           "endMin": 1620
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0044",
@@ -660,8 +610,7 @@
           "startMin": 1155,
           "endMin": 1635
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0045",
@@ -670,8 +619,7 @@
           "startMin": 1170,
           "endMin": 1650
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0046",
@@ -680,8 +628,7 @@
           "startMin": 1185,
           "endMin": 1665
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0047",
@@ -690,8 +637,7 @@
           "startMin": 1200,
           "endMin": 1680
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0048",
@@ -700,8 +646,7 @@
           "startMin": 1215,
           "endMin": 1695
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0049",
@@ -710,8 +655,7 @@
           "startMin": 1230,
           "endMin": 1710
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0050",
@@ -720,8 +664,7 @@
           "startMin": 1245,
           "endMin": 1725
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0051",
@@ -730,8 +673,7 @@
           "startMin": 1260,
           "endMin": 1740
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0052",
@@ -740,8 +682,7 @@
           "startMin": 1275,
           "endMin": 1755
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0053",
@@ -750,8 +691,7 @@
           "startMin": 1290,
           "endMin": 1770
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0054",
@@ -760,8 +700,7 @@
           "startMin": 1305,
           "endMin": 1785
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0055",
@@ -770,8 +709,7 @@
           "startMin": 1320,
           "endMin": 1800
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0056",
@@ -780,8 +718,7 @@
           "startMin": 1335,
           "endMin": 1815
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0057",
@@ -790,8 +727,7 @@
           "startMin": 1350,
           "endMin": 1830
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0058",
@@ -800,8 +736,7 @@
           "startMin": 510,
           "endMin": 870
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0059",
@@ -810,8 +745,7 @@
           "startMin": 525,
           "endMin": 885
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0060",
@@ -820,8 +754,7 @@
           "startMin": 540,
           "endMin": 900
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0061",
@@ -830,8 +763,7 @@
           "startMin": 555,
           "endMin": 915
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0062",
@@ -840,8 +772,7 @@
           "startMin": 570,
           "endMin": 930
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0063",
@@ -850,8 +781,7 @@
           "startMin": 585,
           "endMin": 945
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0064",
@@ -860,8 +790,7 @@
           "startMin": 600,
           "endMin": 960
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0065",
@@ -870,8 +799,7 @@
           "startMin": 615,
           "endMin": 975
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0066",
@@ -880,8 +808,7 @@
           "startMin": 630,
           "endMin": 990
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0067",
@@ -890,8 +817,7 @@
           "startMin": 645,
           "endMin": 1005
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0068",
@@ -900,8 +826,7 @@
           "startMin": 660,
           "endMin": 1020
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0069",
@@ -910,8 +835,7 @@
           "startMin": 675,
           "endMin": 1035
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0070",
@@ -920,8 +844,7 @@
           "startMin": 690,
           "endMin": 1050
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0071",
@@ -930,8 +853,7 @@
           "startMin": 705,
           "endMin": 1065
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0072",
@@ -940,8 +862,7 @@
           "startMin": 720,
           "endMin": 1080
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0073",
@@ -950,8 +871,7 @@
           "startMin": 735,
           "endMin": 1095
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0074",
@@ -960,8 +880,7 @@
           "startMin": 750,
           "endMin": 1110
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0075",
@@ -970,8 +889,7 @@
           "startMin": 765,
           "endMin": 1125
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0076",
@@ -980,8 +898,7 @@
           "startMin": 780,
           "endMin": 1140
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0077",
@@ -990,8 +907,7 @@
           "startMin": 795,
           "endMin": 1155
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0078",
@@ -1000,8 +916,7 @@
           "startMin": 810,
           "endMin": 1170
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0079",
@@ -1010,8 +925,7 @@
           "startMin": 825,
           "endMin": 1185
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0080",
@@ -1020,8 +934,7 @@
           "startMin": 840,
           "endMin": 1200
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0081",
@@ -1030,8 +943,7 @@
           "startMin": 855,
           "endMin": 1215
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0082",
@@ -1040,8 +952,7 @@
           "startMin": 870,
           "endMin": 1230
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0083",
@@ -1050,8 +961,7 @@
           "startMin": 885,
           "endMin": 1245
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0084",
@@ -1060,8 +970,7 @@
           "startMin": 900,
           "endMin": 1260
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0085",
@@ -1070,8 +979,7 @@
           "startMin": 915,
           "endMin": 1275
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0086",
@@ -1080,8 +988,7 @@
           "startMin": 930,
           "endMin": 1290
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0087",
@@ -1090,8 +997,7 @@
           "startMin": 945,
           "endMin": 1305
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0088",
@@ -1100,8 +1006,7 @@
           "startMin": 960,
           "endMin": 1320
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0089",
@@ -1110,8 +1015,7 @@
           "startMin": 975,
           "endMin": 1335
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0090",
@@ -1120,8 +1024,7 @@
           "startMin": 990,
           "endMin": 1350
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0091",
@@ -1130,8 +1033,7 @@
           "startMin": 1005,
           "endMin": 1365
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0092",
@@ -1140,8 +1042,7 @@
           "startMin": 1020,
           "endMin": 1380
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0093",
@@ -1150,8 +1051,7 @@
           "startMin": 1035,
           "endMin": 1395
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0094",
@@ -1160,8 +1060,7 @@
           "startMin": 1050,
           "endMin": 1410
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0095",
@@ -1170,8 +1069,7 @@
           "startMin": 1065,
           "endMin": 1425
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0096",
@@ -1180,8 +1078,7 @@
           "startMin": 1080,
           "endMin": 1440
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0097",
@@ -1190,8 +1087,7 @@
           "startMin": 1095,
           "endMin": 1455
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0098",
@@ -1200,8 +1096,7 @@
           "startMin": 1110,
           "endMin": 1470
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0099",
@@ -1210,8 +1105,7 @@
           "startMin": 1125,
           "endMin": 1485
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0100",
@@ -1220,8 +1114,7 @@
           "startMin": 1140,
           "endMin": 1500
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0101",
@@ -1230,8 +1123,7 @@
           "startMin": 1155,
           "endMin": 1515
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0102",
@@ -1240,8 +1132,7 @@
           "startMin": 1170,
           "endMin": 1530
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0103",
@@ -1250,8 +1141,7 @@
           "startMin": 1185,
           "endMin": 1545
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0104",
@@ -1260,8 +1150,7 @@
           "startMin": 1200,
           "endMin": 1560
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0105",
@@ -1270,8 +1159,7 @@
           "startMin": 1215,
           "endMin": 1575
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0106",
@@ -1280,8 +1168,7 @@
           "startMin": 1230,
           "endMin": 1590
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0107",
@@ -1290,8 +1177,7 @@
           "startMin": 1245,
           "endMin": 1605
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0108",
@@ -1300,8 +1186,7 @@
           "startMin": 1260,
           "endMin": 1620
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0109",
@@ -1310,8 +1195,7 @@
           "startMin": 1275,
           "endMin": 1635
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0110",
@@ -1320,8 +1204,7 @@
           "startMin": 1290,
           "endMin": 1650
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0111",
@@ -1330,8 +1213,7 @@
           "startMin": 1305,
           "endMin": 1665
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0112",
@@ -1340,8 +1222,7 @@
           "startMin": 1320,
           "endMin": 1680
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0113",
@@ -1350,8 +1231,7 @@
           "startMin": 1335,
           "endMin": 1695
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0114",
@@ -1360,8 +1240,7 @@
           "startMin": 1350,
           "endMin": 1710
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0115",
@@ -1370,8 +1249,7 @@
           "startMin": 1365,
           "endMin": 1725
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0116",
@@ -1380,8 +1258,7 @@
           "startMin": 1380,
           "endMin": 1740
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0117",
@@ -1390,8 +1267,7 @@
           "startMin": 1395,
           "endMin": 1755
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0118",
@@ -1400,8 +1276,7 @@
           "startMin": 1410,
           "endMin": 1770
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0119",
@@ -1410,8 +1285,7 @@
           "startMin": 1425,
           "endMin": 1785
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0120",
@@ -1420,8 +1294,7 @@
           "startMin": 1440,
           "endMin": 1800
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0121",
@@ -1430,8 +1303,7 @@
           "startMin": 1455,
           "endMin": 1815
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0122",
@@ -1440,8 +1312,7 @@
           "startMin": 1470,
           "endMin": 1830
         }
-      ],
-      "weightMinutes": 360
+      ]
     },
     {
       "id": "A0123",
@@ -1450,8 +1321,7 @@
           "startMin": 510,
           "endMin": 750
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0124",
@@ -1460,8 +1330,7 @@
           "startMin": 525,
           "endMin": 765
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0125",
@@ -1470,8 +1339,7 @@
           "startMin": 540,
           "endMin": 780
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0126",
@@ -1480,8 +1348,7 @@
           "startMin": 555,
           "endMin": 795
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0127",
@@ -1490,8 +1357,7 @@
           "startMin": 570,
           "endMin": 810
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0128",
@@ -1500,8 +1366,7 @@
           "startMin": 585,
           "endMin": 825
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0129",
@@ -1510,8 +1375,7 @@
           "startMin": 600,
           "endMin": 840
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0130",
@@ -1520,8 +1384,7 @@
           "startMin": 615,
           "endMin": 855
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0131",
@@ -1530,8 +1393,7 @@
           "startMin": 630,
           "endMin": 870
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0132",
@@ -1540,8 +1402,7 @@
           "startMin": 645,
           "endMin": 885
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0133",
@@ -1550,8 +1411,7 @@
           "startMin": 660,
           "endMin": 900
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0134",
@@ -1560,8 +1420,7 @@
           "startMin": 675,
           "endMin": 915
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0135",
@@ -1570,8 +1429,7 @@
           "startMin": 690,
           "endMin": 930
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0136",
@@ -1580,8 +1438,7 @@
           "startMin": 705,
           "endMin": 945
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0137",
@@ -1590,8 +1447,7 @@
           "startMin": 720,
           "endMin": 960
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0138",
@@ -1600,8 +1456,7 @@
           "startMin": 735,
           "endMin": 975
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0139",
@@ -1610,8 +1465,7 @@
           "startMin": 750,
           "endMin": 990
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0140",
@@ -1620,8 +1474,7 @@
           "startMin": 765,
           "endMin": 1005
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0141",
@@ -1630,8 +1483,7 @@
           "startMin": 780,
           "endMin": 1020
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0142",
@@ -1640,8 +1492,7 @@
           "startMin": 795,
           "endMin": 1035
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0143",
@@ -1650,8 +1501,7 @@
           "startMin": 810,
           "endMin": 1050
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0144",
@@ -1660,8 +1510,7 @@
           "startMin": 825,
           "endMin": 1065
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0145",
@@ -1670,8 +1519,7 @@
           "startMin": 840,
           "endMin": 1080
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0146",
@@ -1680,8 +1528,7 @@
           "startMin": 855,
           "endMin": 1095
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0147",
@@ -1690,8 +1537,7 @@
           "startMin": 870,
           "endMin": 1110
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0148",
@@ -1700,8 +1546,7 @@
           "startMin": 885,
           "endMin": 1125
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0149",
@@ -1710,8 +1555,7 @@
           "startMin": 900,
           "endMin": 1140
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0150",
@@ -1720,8 +1564,7 @@
           "startMin": 915,
           "endMin": 1155
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0151",
@@ -1730,8 +1573,7 @@
           "startMin": 930,
           "endMin": 1170
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0152",
@@ -1740,8 +1582,7 @@
           "startMin": 945,
           "endMin": 1185
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0153",
@@ -1750,8 +1591,7 @@
           "startMin": 960,
           "endMin": 1200
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0154",
@@ -1760,8 +1600,7 @@
           "startMin": 975,
           "endMin": 1215
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0155",
@@ -1770,8 +1609,7 @@
           "startMin": 990,
           "endMin": 1230
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0156",
@@ -1780,8 +1618,7 @@
           "startMin": 1005,
           "endMin": 1245
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0157",
@@ -1790,8 +1627,7 @@
           "startMin": 1020,
           "endMin": 1260
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0158",
@@ -1800,8 +1636,7 @@
           "startMin": 1035,
           "endMin": 1275
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0159",
@@ -1810,8 +1645,7 @@
           "startMin": 1050,
           "endMin": 1290
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0160",
@@ -1820,8 +1654,7 @@
           "startMin": 1065,
           "endMin": 1305
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0161",
@@ -1830,8 +1663,7 @@
           "startMin": 1080,
           "endMin": 1320
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0162",
@@ -1840,8 +1672,7 @@
           "startMin": 1095,
           "endMin": 1335
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0163",
@@ -1850,8 +1681,7 @@
           "startMin": 1110,
           "endMin": 1350
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0164",
@@ -1860,8 +1690,7 @@
           "startMin": 1125,
           "endMin": 1365
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0165",
@@ -1870,8 +1699,7 @@
           "startMin": 1140,
           "endMin": 1380
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0166",
@@ -1880,8 +1708,7 @@
           "startMin": 1155,
           "endMin": 1395
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0167",
@@ -1890,8 +1717,7 @@
           "startMin": 1170,
           "endMin": 1410
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0168",
@@ -1900,8 +1726,7 @@
           "startMin": 1185,
           "endMin": 1425
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0169",
@@ -1910,8 +1735,7 @@
           "startMin": 1200,
           "endMin": 1440
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0170",
@@ -1920,8 +1744,7 @@
           "startMin": 1215,
           "endMin": 1455
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0171",
@@ -1930,8 +1753,7 @@
           "startMin": 1230,
           "endMin": 1470
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0172",
@@ -1940,8 +1762,7 @@
           "startMin": 1245,
           "endMin": 1485
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0173",
@@ -1950,8 +1771,7 @@
           "startMin": 1260,
           "endMin": 1500
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0174",
@@ -1960,8 +1780,7 @@
           "startMin": 1275,
           "endMin": 1515
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0175",
@@ -1970,8 +1789,7 @@
           "startMin": 1290,
           "endMin": 1530
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0176",
@@ -1980,8 +1798,7 @@
           "startMin": 1305,
           "endMin": 1545
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0177",
@@ -1990,8 +1807,7 @@
           "startMin": 1320,
           "endMin": 1560
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0178",
@@ -2000,8 +1816,7 @@
           "startMin": 1335,
           "endMin": 1575
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0179",
@@ -2010,8 +1825,7 @@
           "startMin": 1350,
           "endMin": 1590
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0180",
@@ -2020,8 +1834,7 @@
           "startMin": 1365,
           "endMin": 1605
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0181",
@@ -2030,8 +1843,7 @@
           "startMin": 1380,
           "endMin": 1620
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0182",
@@ -2040,8 +1852,7 @@
           "startMin": 1395,
           "endMin": 1635
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0183",
@@ -2050,8 +1861,7 @@
           "startMin": 1410,
           "endMin": 1650
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0184",
@@ -2060,8 +1870,7 @@
           "startMin": 1425,
           "endMin": 1665
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0185",
@@ -2070,8 +1879,7 @@
           "startMin": 1440,
           "endMin": 1680
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0186",
@@ -2080,8 +1888,7 @@
           "startMin": 1455,
           "endMin": 1695
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0187",
@@ -2090,8 +1897,7 @@
           "startMin": 1470,
           "endMin": 1710
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0188",
@@ -2100,8 +1906,7 @@
           "startMin": 1485,
           "endMin": 1725
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0189",
@@ -2110,8 +1915,7 @@
           "startMin": 1500,
           "endMin": 1740
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0190",
@@ -2120,8 +1924,7 @@
           "startMin": 1515,
           "endMin": 1755
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0191",
@@ -2130,8 +1933,7 @@
           "startMin": 1530,
           "endMin": 1770
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0192",
@@ -2140,8 +1942,7 @@
           "startMin": 1545,
           "endMin": 1785
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0193",
@@ -2150,8 +1951,7 @@
           "startMin": 1560,
           "endMin": 1800
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0194",
@@ -2160,8 +1960,7 @@
           "startMin": 1575,
           "endMin": 1815
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0195",
@@ -2170,8 +1969,7 @@
           "startMin": 1590,
           "endMin": 1830
         }
-      ],
-      "weightMinutes": 240
+      ]
     }
   ],
   "availability": [
@@ -4635,25 +4433,6 @@
       ]
     }
   ],
-  "constraints": {
-    "hard": []
-  },
-  "optimization": {
-    "algorithm": "CSPv2",
-    "maxTimeMinutes": 10,
-    "demandInterpretation": {
-      "minimum": "soft",
-      "empiric": "ignore",
-      "maximum": "ignore"
-    },
-    "objectives": [
-      {
-        "goal": "minimize_shortages",
-        "weight": 1000,
-        "priority": 1
-      }
-    ]
-  },
   "calendar": {
     "weekStart": "monday"
   }

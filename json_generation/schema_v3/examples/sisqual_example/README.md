@@ -11,7 +11,6 @@ to see every v3.0 change on real data.
 | Work periods | 9 (Storage 08:30–15:30; Checkout and Management slices across 10:00–22:00) |
 | Grid | 15 minutes → operating window 08:30–22:00 |
 | Calendar | 2025-10-05 holiday (Implantação da República), 10-04 its eve |
-| Algorithm | CSPv2, `minimum` read as soft |
 
 ```bash
 python3 ../../src/schema_v3/validator.py problem.json -v
@@ -50,7 +49,9 @@ suggestive rather than conclusive. The maths is the authority.
 - Cells `8/7/5/4` → `480/420/300/240` minutes.
 - demand.csv `minimum,ideal,estimated` → `minimum,empiric,maximum` (values swap; invisible here
   because every row was `1,1,1`).
-- `min_rest_hours {hours: 11}` → `min_rest_minutes {minutes: 660}`.
+- v2.6's `constraints` and `optimization` (min_rest, algorithm, objectives) are dropped: v3.0
+  defines the problem, not how to solve it — those solve directives reached no solver (see
+  `../../docs/FUTURE.md`).
 - `weekDefinition` → `calendar.weekStart`. Static teams → one open-ended `teamAssignment`.
 - v2.6's `markingTypes` + `dayOffCodes` collapse into one `dayOffCodes` map keyed by code
   (`{DO: {kind: "preferable", …}}`); the numeric codes `"8"/"7"/"5"/"4"` are dropped — numeric

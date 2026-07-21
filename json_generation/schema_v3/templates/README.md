@@ -1,10 +1,10 @@
 # Templates
 
 1. Copy `problem_template.json`, `demand_template.csv`, `schedule_input_template.csv` into a new
-   directory.
-2. Delete every `_comment*` key and every `#` line — neither survives validation as data.
-3. Fill in your data.
-4. Validate, expand, validate again:
+   directory (point the two `dataFile` fields at your CSV names).
+2. Fill in your data. The `_comment*` keys in the JSON and the `#` lines in the CSVs are ignored by
+   the validator, so keep them as reminders or delete them — either way it validates.
+3. Validate, expand, validate again:
 
 ```bash
 python3 ../src/schema_v3/validator.py problem.json -v

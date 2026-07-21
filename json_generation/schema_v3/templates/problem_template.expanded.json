@@ -1,0 +1,2015 @@
+{
+  "schemaVersion": "3.0",
+  "form": "expanded",
+  "problemType": "employee_scheduling",
+  "metadata": {
+    "problemId": "MY_PROBLEM_2025",
+    "createdAt": "2025-10-01T09:00:00Z",
+    "description": "What this problem is"
+  },
+  "generatedFrom": {
+    "declarativeProblemId": "MY_PROBLEM_2025",
+    "generatedAt": "2026-07-21T19:52:58+01:00",
+    "transformerVersion": "3.0.0"
+  },
+  "timeGrid": {
+    "slotMinutes": 15
+  },
+  "temporalScope": {
+    "start": "2025-10-01",
+    "end": "2025-10-05"
+  },
+  "contracts": {
+    "definitions": [
+      {
+        "id": "fullTime_8h",
+        "name": "Full time - 8h/day",
+        "workMinutesPerDay": 480,
+        "constraints": {
+          "maxMinutesPerWeek": 2400,
+          "maxConsecutiveDays": 5
+        }
+      },
+      {
+        "id": "partTime_5h",
+        "name": "Part time - 5h/day",
+        "workMinutesPerDay": 300
+      },
+      {
+        "id": "partTime_4h",
+        "name": "Part time - 4h/day",
+        "workMinutesPerDay": 240
+      }
+    ]
+  },
+  "employees": {
+    "model": "competency",
+    "list": [
+      {
+        "id": "EMP001",
+        "name": "Employee 001",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "teamAssignments": [
+          {
+            "team": "TeamA",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "EMP002",
+        "name": "Employee 002",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "teamAssignments": [
+          {
+            "team": "TeamA",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "EMP003",
+        "name": "Employee 003",
+        "contractAssignments": [
+          {
+            "contractType": "partTime_5h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "teamAssignments": [
+          {
+            "team": "TeamA",
+            "level": 2,
+            "start": "2025-01-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "EMP004",
+        "name": "Employee 004",
+        "contractAssignments": [
+          {
+            "contractType": "partTime_4h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "teamAssignments": [
+          {
+            "team": "TeamA",
+            "level": 2,
+            "start": "2025-01-01",
+            "end": null
+          }
+        ]
+      }
+    ]
+  },
+  "demand": {
+    "dataFile": "demand_template.csv",
+    "organizationalUnits": {
+      "teams": [
+        {
+          "code": "TeamA",
+          "name": "Team A"
+        }
+      ]
+    },
+    "workPeriods": [
+      {
+        "code": "MORNING",
+        "name": "Morning",
+        "timeRange": {
+          "start": "08:30",
+          "end": "16:30"
+        }
+      },
+      {
+        "code": "AFTERNOON",
+        "name": "Afternoon",
+        "timeRange": {
+          "start": "14:00",
+          "end": "22:00"
+        }
+      },
+      {
+        "code": "NIGHT",
+        "name": "Night (crosses midnight)",
+        "timeRange": {
+          "start": "22:00",
+          "end": "06:30"
+        }
+      }
+    ],
+    "priorityOrder": [
+      {
+        "order": 1,
+        "team": "TeamA",
+        "level": 1,
+        "description": "TeamA's most senior first"
+      },
+      {
+        "order": 2,
+        "team": "TeamA",
+        "description": "then anyone else in TeamA"
+      }
+    ]
+  },
+  "assignmentCatalog": [
+    {
+      "id": "A0001",
+      "intervals": [
+        {
+          "startMin": 510,
+          "endMin": 990
+        }
+      ]
+    },
+    {
+      "id": "A0002",
+      "intervals": [
+        {
+          "startMin": 525,
+          "endMin": 1005
+        }
+      ]
+    },
+    {
+      "id": "A0003",
+      "intervals": [
+        {
+          "startMin": 540,
+          "endMin": 1020
+        }
+      ]
+    },
+    {
+      "id": "A0004",
+      "intervals": [
+        {
+          "startMin": 555,
+          "endMin": 1035
+        }
+      ]
+    },
+    {
+      "id": "A0005",
+      "intervals": [
+        {
+          "startMin": 570,
+          "endMin": 1050
+        }
+      ]
+    },
+    {
+      "id": "A0006",
+      "intervals": [
+        {
+          "startMin": 585,
+          "endMin": 1065
+        }
+      ]
+    },
+    {
+      "id": "A0007",
+      "intervals": [
+        {
+          "startMin": 600,
+          "endMin": 1080
+        }
+      ]
+    },
+    {
+      "id": "A0008",
+      "intervals": [
+        {
+          "startMin": 615,
+          "endMin": 1095
+        }
+      ]
+    },
+    {
+      "id": "A0009",
+      "intervals": [
+        {
+          "startMin": 630,
+          "endMin": 1110
+        }
+      ]
+    },
+    {
+      "id": "A0010",
+      "intervals": [
+        {
+          "startMin": 645,
+          "endMin": 1125
+        }
+      ]
+    },
+    {
+      "id": "A0011",
+      "intervals": [
+        {
+          "startMin": 660,
+          "endMin": 1140
+        }
+      ]
+    },
+    {
+      "id": "A0012",
+      "intervals": [
+        {
+          "startMin": 675,
+          "endMin": 1155
+        }
+      ]
+    },
+    {
+      "id": "A0013",
+      "intervals": [
+        {
+          "startMin": 690,
+          "endMin": 1170
+        }
+      ]
+    },
+    {
+      "id": "A0014",
+      "intervals": [
+        {
+          "startMin": 705,
+          "endMin": 1185
+        }
+      ]
+    },
+    {
+      "id": "A0015",
+      "intervals": [
+        {
+          "startMin": 720,
+          "endMin": 1200
+        }
+      ]
+    },
+    {
+      "id": "A0016",
+      "intervals": [
+        {
+          "startMin": 735,
+          "endMin": 1215
+        }
+      ]
+    },
+    {
+      "id": "A0017",
+      "intervals": [
+        {
+          "startMin": 750,
+          "endMin": 1230
+        }
+      ]
+    },
+    {
+      "id": "A0018",
+      "intervals": [
+        {
+          "startMin": 765,
+          "endMin": 1245
+        }
+      ]
+    },
+    {
+      "id": "A0019",
+      "intervals": [
+        {
+          "startMin": 780,
+          "endMin": 1260
+        }
+      ]
+    },
+    {
+      "id": "A0020",
+      "intervals": [
+        {
+          "startMin": 795,
+          "endMin": 1275
+        }
+      ]
+    },
+    {
+      "id": "A0021",
+      "intervals": [
+        {
+          "startMin": 810,
+          "endMin": 1290
+        }
+      ]
+    },
+    {
+      "id": "A0022",
+      "intervals": [
+        {
+          "startMin": 825,
+          "endMin": 1305
+        }
+      ]
+    },
+    {
+      "id": "A0023",
+      "intervals": [
+        {
+          "startMin": 840,
+          "endMin": 1320
+        }
+      ]
+    },
+    {
+      "id": "A0024",
+      "intervals": [
+        {
+          "startMin": 855,
+          "endMin": 1335
+        }
+      ]
+    },
+    {
+      "id": "A0025",
+      "intervals": [
+        {
+          "startMin": 870,
+          "endMin": 1350
+        }
+      ]
+    },
+    {
+      "id": "A0026",
+      "intervals": [
+        {
+          "startMin": 885,
+          "endMin": 1365
+        }
+      ]
+    },
+    {
+      "id": "A0027",
+      "intervals": [
+        {
+          "startMin": 900,
+          "endMin": 1380
+        }
+      ]
+    },
+    {
+      "id": "A0028",
+      "intervals": [
+        {
+          "startMin": 915,
+          "endMin": 1395
+        }
+      ]
+    },
+    {
+      "id": "A0029",
+      "intervals": [
+        {
+          "startMin": 930,
+          "endMin": 1410
+        }
+      ]
+    },
+    {
+      "id": "A0030",
+      "intervals": [
+        {
+          "startMin": 945,
+          "endMin": 1425
+        }
+      ]
+    },
+    {
+      "id": "A0031",
+      "intervals": [
+        {
+          "startMin": 960,
+          "endMin": 1440
+        }
+      ]
+    },
+    {
+      "id": "A0032",
+      "intervals": [
+        {
+          "startMin": 975,
+          "endMin": 1455
+        }
+      ]
+    },
+    {
+      "id": "A0033",
+      "intervals": [
+        {
+          "startMin": 990,
+          "endMin": 1470
+        }
+      ]
+    },
+    {
+      "id": "A0034",
+      "intervals": [
+        {
+          "startMin": 1005,
+          "endMin": 1485
+        }
+      ]
+    },
+    {
+      "id": "A0035",
+      "intervals": [
+        {
+          "startMin": 1020,
+          "endMin": 1500
+        }
+      ]
+    },
+    {
+      "id": "A0036",
+      "intervals": [
+        {
+          "startMin": 1035,
+          "endMin": 1515
+        }
+      ]
+    },
+    {
+      "id": "A0037",
+      "intervals": [
+        {
+          "startMin": 1050,
+          "endMin": 1530
+        }
+      ]
+    },
+    {
+      "id": "A0038",
+      "intervals": [
+        {
+          "startMin": 1065,
+          "endMin": 1545
+        }
+      ]
+    },
+    {
+      "id": "A0039",
+      "intervals": [
+        {
+          "startMin": 1080,
+          "endMin": 1560
+        }
+      ]
+    },
+    {
+      "id": "A0040",
+      "intervals": [
+        {
+          "startMin": 1095,
+          "endMin": 1575
+        }
+      ]
+    },
+    {
+      "id": "A0041",
+      "intervals": [
+        {
+          "startMin": 1110,
+          "endMin": 1590
+        }
+      ]
+    },
+    {
+      "id": "A0042",
+      "intervals": [
+        {
+          "startMin": 1125,
+          "endMin": 1605
+        }
+      ]
+    },
+    {
+      "id": "A0043",
+      "intervals": [
+        {
+          "startMin": 1140,
+          "endMin": 1620
+        }
+      ]
+    },
+    {
+      "id": "A0044",
+      "intervals": [
+        {
+          "startMin": 1155,
+          "endMin": 1635
+        }
+      ]
+    },
+    {
+      "id": "A0045",
+      "intervals": [
+        {
+          "startMin": 1170,
+          "endMin": 1650
+        }
+      ]
+    },
+    {
+      "id": "A0046",
+      "intervals": [
+        {
+          "startMin": 1185,
+          "endMin": 1665
+        }
+      ]
+    },
+    {
+      "id": "A0047",
+      "intervals": [
+        {
+          "startMin": 1200,
+          "endMin": 1680
+        }
+      ]
+    },
+    {
+      "id": "A0048",
+      "intervals": [
+        {
+          "startMin": 1215,
+          "endMin": 1695
+        }
+      ]
+    },
+    {
+      "id": "A0049",
+      "intervals": [
+        {
+          "startMin": 1230,
+          "endMin": 1710
+        }
+      ]
+    },
+    {
+      "id": "A0050",
+      "intervals": [
+        {
+          "startMin": 1245,
+          "endMin": 1725
+        }
+      ]
+    },
+    {
+      "id": "A0051",
+      "intervals": [
+        {
+          "startMin": 1260,
+          "endMin": 1740
+        }
+      ]
+    },
+    {
+      "id": "A0052",
+      "intervals": [
+        {
+          "startMin": 1275,
+          "endMin": 1755
+        }
+      ]
+    },
+    {
+      "id": "A0053",
+      "intervals": [
+        {
+          "startMin": 1290,
+          "endMin": 1770
+        }
+      ]
+    },
+    {
+      "id": "A0054",
+      "intervals": [
+        {
+          "startMin": 1305,
+          "endMin": 1785
+        }
+      ]
+    },
+    {
+      "id": "A0055",
+      "intervals": [
+        {
+          "startMin": 1320,
+          "endMin": 1800
+        }
+      ]
+    },
+    {
+      "id": "A0056",
+      "intervals": [
+        {
+          "startMin": 1335,
+          "endMin": 1815
+        }
+      ]
+    },
+    {
+      "id": "A0057",
+      "intervals": [
+        {
+          "startMin": 1350,
+          "endMin": 1830
+        }
+      ]
+    },
+    {
+      "id": "A0058",
+      "intervals": [
+        {
+          "startMin": 600,
+          "endMin": 900
+        }
+      ]
+    },
+    {
+      "id": "A0059",
+      "intervals": [
+        {
+          "startMin": 510,
+          "endMin": 810
+        }
+      ]
+    },
+    {
+      "id": "A0060",
+      "intervals": [
+        {
+          "startMin": 525,
+          "endMin": 825
+        }
+      ]
+    },
+    {
+      "id": "A0061",
+      "intervals": [
+        {
+          "startMin": 540,
+          "endMin": 840
+        }
+      ]
+    },
+    {
+      "id": "A0062",
+      "intervals": [
+        {
+          "startMin": 555,
+          "endMin": 855
+        }
+      ]
+    },
+    {
+      "id": "A0063",
+      "intervals": [
+        {
+          "startMin": 570,
+          "endMin": 870
+        }
+      ]
+    },
+    {
+      "id": "A0064",
+      "intervals": [
+        {
+          "startMin": 585,
+          "endMin": 885
+        }
+      ]
+    },
+    {
+      "id": "A0065",
+      "intervals": [
+        {
+          "startMin": 615,
+          "endMin": 915
+        }
+      ]
+    },
+    {
+      "id": "A0066",
+      "intervals": [
+        {
+          "startMin": 630,
+          "endMin": 930
+        }
+      ]
+    },
+    {
+      "id": "A0067",
+      "intervals": [
+        {
+          "startMin": 645,
+          "endMin": 945
+        }
+      ]
+    },
+    {
+      "id": "A0068",
+      "intervals": [
+        {
+          "startMin": 660,
+          "endMin": 960
+        }
+      ]
+    },
+    {
+      "id": "A0069",
+      "intervals": [
+        {
+          "startMin": 675,
+          "endMin": 975
+        }
+      ]
+    },
+    {
+      "id": "A0070",
+      "intervals": [
+        {
+          "startMin": 690,
+          "endMin": 990
+        }
+      ]
+    },
+    {
+      "id": "A0071",
+      "intervals": [
+        {
+          "startMin": 705,
+          "endMin": 1005
+        }
+      ]
+    },
+    {
+      "id": "A0072",
+      "intervals": [
+        {
+          "startMin": 720,
+          "endMin": 1020
+        }
+      ]
+    },
+    {
+      "id": "A0073",
+      "intervals": [
+        {
+          "startMin": 735,
+          "endMin": 1035
+        }
+      ]
+    },
+    {
+      "id": "A0074",
+      "intervals": [
+        {
+          "startMin": 750,
+          "endMin": 1050
+        }
+      ]
+    },
+    {
+      "id": "A0075",
+      "intervals": [
+        {
+          "startMin": 765,
+          "endMin": 1065
+        }
+      ]
+    },
+    {
+      "id": "A0076",
+      "intervals": [
+        {
+          "startMin": 780,
+          "endMin": 1080
+        }
+      ]
+    },
+    {
+      "id": "A0077",
+      "intervals": [
+        {
+          "startMin": 795,
+          "endMin": 1095
+        }
+      ]
+    },
+    {
+      "id": "A0078",
+      "intervals": [
+        {
+          "startMin": 810,
+          "endMin": 1110
+        }
+      ]
+    },
+    {
+      "id": "A0079",
+      "intervals": [
+        {
+          "startMin": 825,
+          "endMin": 1125
+        }
+      ]
+    },
+    {
+      "id": "A0080",
+      "intervals": [
+        {
+          "startMin": 840,
+          "endMin": 1140
+        }
+      ]
+    },
+    {
+      "id": "A0081",
+      "intervals": [
+        {
+          "startMin": 855,
+          "endMin": 1155
+        }
+      ]
+    },
+    {
+      "id": "A0082",
+      "intervals": [
+        {
+          "startMin": 870,
+          "endMin": 1170
+        }
+      ]
+    },
+    {
+      "id": "A0083",
+      "intervals": [
+        {
+          "startMin": 885,
+          "endMin": 1185
+        }
+      ]
+    },
+    {
+      "id": "A0084",
+      "intervals": [
+        {
+          "startMin": 900,
+          "endMin": 1200
+        }
+      ]
+    },
+    {
+      "id": "A0085",
+      "intervals": [
+        {
+          "startMin": 915,
+          "endMin": 1215
+        }
+      ]
+    },
+    {
+      "id": "A0086",
+      "intervals": [
+        {
+          "startMin": 930,
+          "endMin": 1230
+        }
+      ]
+    },
+    {
+      "id": "A0087",
+      "intervals": [
+        {
+          "startMin": 945,
+          "endMin": 1245
+        }
+      ]
+    },
+    {
+      "id": "A0088",
+      "intervals": [
+        {
+          "startMin": 960,
+          "endMin": 1260
+        }
+      ]
+    },
+    {
+      "id": "A0089",
+      "intervals": [
+        {
+          "startMin": 975,
+          "endMin": 1275
+        }
+      ]
+    },
+    {
+      "id": "A0090",
+      "intervals": [
+        {
+          "startMin": 990,
+          "endMin": 1290
+        }
+      ]
+    },
+    {
+      "id": "A0091",
+      "intervals": [
+        {
+          "startMin": 1005,
+          "endMin": 1305
+        }
+      ]
+    },
+    {
+      "id": "A0092",
+      "intervals": [
+        {
+          "startMin": 1020,
+          "endMin": 1320
+        }
+      ]
+    },
+    {
+      "id": "A0093",
+      "intervals": [
+        {
+          "startMin": 1035,
+          "endMin": 1335
+        }
+      ]
+    },
+    {
+      "id": "A0094",
+      "intervals": [
+        {
+          "startMin": 1050,
+          "endMin": 1350
+        }
+      ]
+    },
+    {
+      "id": "A0095",
+      "intervals": [
+        {
+          "startMin": 1065,
+          "endMin": 1365
+        }
+      ]
+    },
+    {
+      "id": "A0096",
+      "intervals": [
+        {
+          "startMin": 1080,
+          "endMin": 1380
+        }
+      ]
+    },
+    {
+      "id": "A0097",
+      "intervals": [
+        {
+          "startMin": 1095,
+          "endMin": 1395
+        }
+      ]
+    },
+    {
+      "id": "A0098",
+      "intervals": [
+        {
+          "startMin": 1110,
+          "endMin": 1410
+        }
+      ]
+    },
+    {
+      "id": "A0099",
+      "intervals": [
+        {
+          "startMin": 1125,
+          "endMin": 1425
+        }
+      ]
+    },
+    {
+      "id": "A0100",
+      "intervals": [
+        {
+          "startMin": 1140,
+          "endMin": 1440
+        }
+      ]
+    },
+    {
+      "id": "A0101",
+      "intervals": [
+        {
+          "startMin": 1155,
+          "endMin": 1455
+        }
+      ]
+    },
+    {
+      "id": "A0102",
+      "intervals": [
+        {
+          "startMin": 1170,
+          "endMin": 1470
+        }
+      ]
+    },
+    {
+      "id": "A0103",
+      "intervals": [
+        {
+          "startMin": 1185,
+          "endMin": 1485
+        }
+      ]
+    },
+    {
+      "id": "A0104",
+      "intervals": [
+        {
+          "startMin": 1200,
+          "endMin": 1500
+        }
+      ]
+    },
+    {
+      "id": "A0105",
+      "intervals": [
+        {
+          "startMin": 1215,
+          "endMin": 1515
+        }
+      ]
+    },
+    {
+      "id": "A0106",
+      "intervals": [
+        {
+          "startMin": 1230,
+          "endMin": 1530
+        }
+      ]
+    },
+    {
+      "id": "A0107",
+      "intervals": [
+        {
+          "startMin": 1245,
+          "endMin": 1545
+        }
+      ]
+    },
+    {
+      "id": "A0108",
+      "intervals": [
+        {
+          "startMin": 1260,
+          "endMin": 1560
+        }
+      ]
+    },
+    {
+      "id": "A0109",
+      "intervals": [
+        {
+          "startMin": 1275,
+          "endMin": 1575
+        }
+      ]
+    },
+    {
+      "id": "A0110",
+      "intervals": [
+        {
+          "startMin": 1290,
+          "endMin": 1590
+        }
+      ]
+    },
+    {
+      "id": "A0111",
+      "intervals": [
+        {
+          "startMin": 1305,
+          "endMin": 1605
+        }
+      ]
+    },
+    {
+      "id": "A0112",
+      "intervals": [
+        {
+          "startMin": 1320,
+          "endMin": 1620
+        }
+      ]
+    },
+    {
+      "id": "A0113",
+      "intervals": [
+        {
+          "startMin": 1335,
+          "endMin": 1635
+        }
+      ]
+    },
+    {
+      "id": "A0114",
+      "intervals": [
+        {
+          "startMin": 1350,
+          "endMin": 1650
+        }
+      ]
+    },
+    {
+      "id": "A0115",
+      "intervals": [
+        {
+          "startMin": 1365,
+          "endMin": 1665
+        }
+      ]
+    },
+    {
+      "id": "A0116",
+      "intervals": [
+        {
+          "startMin": 1380,
+          "endMin": 1680
+        }
+      ]
+    },
+    {
+      "id": "A0117",
+      "intervals": [
+        {
+          "startMin": 1395,
+          "endMin": 1695
+        }
+      ]
+    },
+    {
+      "id": "A0118",
+      "intervals": [
+        {
+          "startMin": 1410,
+          "endMin": 1710
+        }
+      ]
+    },
+    {
+      "id": "A0119",
+      "intervals": [
+        {
+          "startMin": 1425,
+          "endMin": 1725
+        }
+      ]
+    },
+    {
+      "id": "A0120",
+      "intervals": [
+        {
+          "startMin": 1440,
+          "endMin": 1740
+        }
+      ]
+    },
+    {
+      "id": "A0121",
+      "intervals": [
+        {
+          "startMin": 1455,
+          "endMin": 1755
+        }
+      ]
+    },
+    {
+      "id": "A0122",
+      "intervals": [
+        {
+          "startMin": 1470,
+          "endMin": 1770
+        }
+      ]
+    },
+    {
+      "id": "A0123",
+      "intervals": [
+        {
+          "startMin": 1485,
+          "endMin": 1785
+        }
+      ]
+    },
+    {
+      "id": "A0124",
+      "intervals": [
+        {
+          "startMin": 1500,
+          "endMin": 1800
+        }
+      ]
+    },
+    {
+      "id": "A0125",
+      "intervals": [
+        {
+          "startMin": 1515,
+          "endMin": 1815
+        }
+      ]
+    },
+    {
+      "id": "A0126",
+      "intervals": [
+        {
+          "startMin": 1530,
+          "endMin": 1830
+        }
+      ]
+    },
+    {
+      "id": "A0127",
+      "intervals": [
+        {
+          "startMin": 510,
+          "endMin": 750
+        }
+      ]
+    },
+    {
+      "id": "A0128",
+      "intervals": [
+        {
+          "startMin": 525,
+          "endMin": 765
+        }
+      ]
+    },
+    {
+      "id": "A0129",
+      "intervals": [
+        {
+          "startMin": 540,
+          "endMin": 780
+        }
+      ]
+    },
+    {
+      "id": "A0130",
+      "intervals": [
+        {
+          "startMin": 555,
+          "endMin": 795
+        }
+      ]
+    },
+    {
+      "id": "A0131",
+      "intervals": [
+        {
+          "startMin": 570,
+          "endMin": 810
+        }
+      ]
+    },
+    {
+      "id": "A0132",
+      "intervals": [
+        {
+          "startMin": 585,
+          "endMin": 825
+        }
+      ]
+    },
+    {
+      "id": "A0133",
+      "intervals": [
+        {
+          "startMin": 600,
+          "endMin": 840
+        }
+      ]
+    },
+    {
+      "id": "A0134",
+      "intervals": [
+        {
+          "startMin": 615,
+          "endMin": 855
+        }
+      ]
+    },
+    {
+      "id": "A0135",
+      "intervals": [
+        {
+          "startMin": 630,
+          "endMin": 870
+        }
+      ]
+    },
+    {
+      "id": "A0136",
+      "intervals": [
+        {
+          "startMin": 645,
+          "endMin": 885
+        }
+      ]
+    },
+    {
+      "id": "A0137",
+      "intervals": [
+        {
+          "startMin": 660,
+          "endMin": 900
+        }
+      ]
+    },
+    {
+      "id": "A0138",
+      "intervals": [
+        {
+          "startMin": 675,
+          "endMin": 915
+        }
+      ]
+    },
+    {
+      "id": "A0139",
+      "intervals": [
+        {
+          "startMin": 690,
+          "endMin": 930
+        }
+      ]
+    },
+    {
+      "id": "A0140",
+      "intervals": [
+        {
+          "startMin": 705,
+          "endMin": 945
+        }
+      ]
+    },
+    {
+      "id": "A0141",
+      "intervals": [
+        {
+          "startMin": 720,
+          "endMin": 960
+        }
+      ]
+    },
+    {
+      "id": "A0142",
+      "intervals": [
+        {
+          "startMin": 735,
+          "endMin": 975
+        }
+      ]
+    },
+    {
+      "id": "A0143",
+      "intervals": [
+        {
+          "startMin": 750,
+          "endMin": 990
+        }
+      ]
+    },
+    {
+      "id": "A0144",
+      "intervals": [
+        {
+          "startMin": 765,
+          "endMin": 1005
+        }
+      ]
+    },
+    {
+      "id": "A0145",
+      "intervals": [
+        {
+          "startMin": 780,
+          "endMin": 1020
+        }
+      ]
+    },
+    {
+      "id": "A0146",
+      "intervals": [
+        {
+          "startMin": 795,
+          "endMin": 1035
+        }
+      ]
+    },
+    {
+      "id": "A0147",
+      "intervals": [
+        {
+          "startMin": 810,
+          "endMin": 1050
+        }
+      ]
+    },
+    {
+      "id": "A0148",
+      "intervals": [
+        {
+          "startMin": 825,
+          "endMin": 1065
+        }
+      ]
+    },
+    {
+      "id": "A0149",
+      "intervals": [
+        {
+          "startMin": 840,
+          "endMin": 1080
+        }
+      ]
+    },
+    {
+      "id": "A0150",
+      "intervals": [
+        {
+          "startMin": 855,
+          "endMin": 1095
+        }
+      ]
+    },
+    {
+      "id": "A0151",
+      "intervals": [
+        {
+          "startMin": 870,
+          "endMin": 1110
+        }
+      ]
+    },
+    {
+      "id": "A0152",
+      "intervals": [
+        {
+          "startMin": 885,
+          "endMin": 1125
+        }
+      ]
+    },
+    {
+      "id": "A0153",
+      "intervals": [
+        {
+          "startMin": 900,
+          "endMin": 1140
+        }
+      ]
+    },
+    {
+      "id": "A0154",
+      "intervals": [
+        {
+          "startMin": 915,
+          "endMin": 1155
+        }
+      ]
+    },
+    {
+      "id": "A0155",
+      "intervals": [
+        {
+          "startMin": 930,
+          "endMin": 1170
+        }
+      ]
+    },
+    {
+      "id": "A0156",
+      "intervals": [
+        {
+          "startMin": 945,
+          "endMin": 1185
+        }
+      ]
+    },
+    {
+      "id": "A0157",
+      "intervals": [
+        {
+          "startMin": 960,
+          "endMin": 1200
+        }
+      ]
+    },
+    {
+      "id": "A0158",
+      "intervals": [
+        {
+          "startMin": 975,
+          "endMin": 1215
+        }
+      ]
+    },
+    {
+      "id": "A0159",
+      "intervals": [
+        {
+          "startMin": 990,
+          "endMin": 1230
+        }
+      ]
+    },
+    {
+      "id": "A0160",
+      "intervals": [
+        {
+          "startMin": 1005,
+          "endMin": 1245
+        }
+      ]
+    },
+    {
+      "id": "A0161",
+      "intervals": [
+        {
+          "startMin": 1020,
+          "endMin": 1260
+        }
+      ]
+    },
+    {
+      "id": "A0162",
+      "intervals": [
+        {
+          "startMin": 1035,
+          "endMin": 1275
+        }
+      ]
+    },
+    {
+      "id": "A0163",
+      "intervals": [
+        {
+          "startMin": 1050,
+          "endMin": 1290
+        }
+      ]
+    },
+    {
+      "id": "A0164",
+      "intervals": [
+        {
+          "startMin": 1065,
+          "endMin": 1305
+        }
+      ]
+    },
+    {
+      "id": "A0165",
+      "intervals": [
+        {
+          "startMin": 1080,
+          "endMin": 1320
+        }
+      ]
+    }
+  ],
+  "availability": [
+    {
+      "employeeId": "EMP001",
+      "days": [
+        {
+          "date": "2025-10-01",
+          "assignmentIds": [
+            "A0001",
+            "A0002",
+            "A0003",
+            "A0004",
+            "A0005",
+            "A0006",
+            "A0007",
+            "A0008",
+            "A0009",
+            "A0010",
+            "A0011",
+            "A0012",
+            "A0013",
+            "A0014",
+            "A0015",
+            "A0016",
+            "A0017",
+            "A0018",
+            "A0019",
+            "A0020",
+            "A0021",
+            "A0022",
+            "A0023",
+            "A0024",
+            "A0025",
+            "A0026",
+            "A0027",
+            "A0028",
+            "A0029",
+            "A0030",
+            "A0031",
+            "A0032",
+            "A0033",
+            "A0034",
+            "A0035",
+            "A0036",
+            "A0037",
+            "A0038",
+            "A0039",
+            "A0040",
+            "A0041",
+            "A0042",
+            "A0043",
+            "A0044",
+            "A0045",
+            "A0046",
+            "A0047",
+            "A0048",
+            "A0049",
+            "A0050",
+            "A0051",
+            "A0052",
+            "A0053",
+            "A0054",
+            "A0055",
+            "A0056",
+            "A0057"
+          ]
+        },
+        {
+          "date": "2025-10-02",
+          "assignmentIds": [
+            "A0001",
+            "A0002",
+            "A0003",
+            "A0004",
+            "A0005",
+            "A0006",
+            "A0007",
+            "A0008",
+            "A0009",
+            "A0010",
+            "A0011",
+            "A0012",
+            "A0013",
+            "A0014",
+            "A0015",
+            "A0016",
+            "A0017",
+            "A0018",
+            "A0019",
+            "A0020",
+            "A0021",
+            "A0022",
+            "A0023"
+          ]
+        },
+        {
+          "date": "2025-10-03",
+          "assignmentIds": []
+        },
+        {
+          "date": "2025-10-04",
+          "assignmentIds": [],
+          "dayOff": "unavailable",
+          "unavailableReason": "other"
+        },
+        {
+          "date": "2025-10-05",
+          "assignmentIds": [],
+          "dayOff": "unavailable",
+          "unavailableReason": "vacation"
+        }
+      ]
+    },
+    {
+      "employeeId": "EMP002",
+      "days": [
+        {
+          "date": "2025-10-01",
+          "assignmentIds": [
+            "A0001"
+          ]
+        },
+        {
+          "date": "2025-10-02",
+          "assignmentIds": [
+            "A0001",
+            "A0002",
+            "A0003",
+            "A0004",
+            "A0005",
+            "A0006",
+            "A0007",
+            "A0008",
+            "A0009",
+            "A0010",
+            "A0011",
+            "A0012",
+            "A0013",
+            "A0014",
+            "A0015",
+            "A0016",
+            "A0017",
+            "A0018",
+            "A0019",
+            "A0020",
+            "A0021",
+            "A0022",
+            "A0023"
+          ]
+        },
+        {
+          "date": "2025-10-03",
+          "assignmentIds": [],
+          "dayOff": "unavailable",
+          "unavailableReason": "fixed_day_off"
+        },
+        {
+          "date": "2025-10-04",
+          "assignmentIds": []
+        },
+        {
+          "date": "2025-10-05",
+          "assignmentIds": [],
+          "dayOff": "unavailable",
+          "unavailableReason": "vacation"
+        }
+      ]
+    },
+    {
+      "employeeId": "EMP003",
+      "days": [
+        {
+          "date": "2025-10-01",
+          "assignmentIds": [
+            "A0058"
+          ]
+        },
+        {
+          "date": "2025-10-02",
+          "assignmentIds": [
+            "A0059",
+            "A0060",
+            "A0061"
+          ]
+        },
+        {
+          "date": "2025-10-03",
+          "assignmentIds": []
+        },
+        {
+          "date": "2025-10-04",
+          "assignmentIds": []
+        },
+        {
+          "date": "2025-10-05",
+          "assignmentIds": [],
+          "dayOff": "unavailable",
+          "unavailableReason": "other"
+        }
+      ]
+    },
+    {
+      "employeeId": "EMP004",
+      "days": [
+        {
+          "date": "2025-10-01",
+          "assignmentIds": [
+            "A0058",
+            "A0059",
+            "A0060",
+            "A0061",
+            "A0062",
+            "A0063",
+            "A0064",
+            "A0065",
+            "A0066",
+            "A0067",
+            "A0068",
+            "A0069",
+            "A0070",
+            "A0071",
+            "A0072",
+            "A0073",
+            "A0074",
+            "A0075",
+            "A0076",
+            "A0077",
+            "A0078",
+            "A0079",
+            "A0080",
+            "A0081",
+            "A0082",
+            "A0083",
+            "A0084",
+            "A0085",
+            "A0086",
+            "A0087",
+            "A0088",
+            "A0089",
+            "A0090",
+            "A0091",
+            "A0092",
+            "A0093",
+            "A0094",
+            "A0095",
+            "A0096",
+            "A0097",
+            "A0098",
+            "A0099",
+            "A0100",
+            "A0101",
+            "A0102",
+            "A0103",
+            "A0104",
+            "A0105",
+            "A0106",
+            "A0107",
+            "A0108",
+            "A0109",
+            "A0110",
+            "A0111",
+            "A0112",
+            "A0113",
+            "A0114",
+            "A0115",
+            "A0116",
+            "A0117",
+            "A0118",
+            "A0119",
+            "A0120",
+            "A0121",
+            "A0122",
+            "A0123",
+            "A0124",
+            "A0125",
+            "A0126"
+          ]
+        },
+        {
+          "date": "2025-10-02",
+          "assignmentIds": [
+            "A0127",
+            "A0128",
+            "A0129",
+            "A0130",
+            "A0131",
+            "A0132",
+            "A0133",
+            "A0134",
+            "A0135",
+            "A0136",
+            "A0137",
+            "A0138",
+            "A0139",
+            "A0140",
+            "A0141",
+            "A0142",
+            "A0143",
+            "A0144",
+            "A0145",
+            "A0146",
+            "A0147",
+            "A0148",
+            "A0149",
+            "A0150",
+            "A0151",
+            "A0152",
+            "A0153",
+            "A0154",
+            "A0155",
+            "A0156",
+            "A0157",
+            "A0158",
+            "A0159",
+            "A0160",
+            "A0161",
+            "A0162",
+            "A0163",
+            "A0164",
+            "A0165"
+          ]
+        },
+        {
+          "date": "2025-10-03",
+          "assignmentIds": [],
+          "dayOff": "unavailable",
+          "unavailableReason": "other"
+        },
+        {
+          "date": "2025-10-04",
+          "assignmentIds": [],
+          "dayOff": "unavailable",
+          "unavailableReason": "not_available"
+        },
+        {
+          "date": "2025-10-05",
+          "assignmentIds": [
+            "A0133"
+          ]
+        }
+      ]
+    }
+  ],
+  "calendar": {
+    "weekStart": "monday",
+    "holidays": [
+      {
+        "date": "2025-10-05",
+        "name": "A public holiday",
+        "hasEve": true
+      }
+    ]
+  }
+}

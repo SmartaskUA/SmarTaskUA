@@ -1,4 +1,5 @@
-# demand.csv -- coverage wanted per date / work period / team.  Delete every # line.
+# demand.csv -- coverage wanted per date / work period / team.
+# Lines starting with '#' and blank lines are ignored, so these notes can stay.
 #
 # minimum  workers desired (the model's alpha_dts)
 # empiric  observed / expected level
@@ -12,8 +13,9 @@
 #   a MISSING row = that period is not operating that day
 #   a date with NO rows at all = closed; outside D_o, so outside every week
 #
-# Whether a bound is hard or soft is NOT decided here -- see optimization.demandInterpretation.
-# The V7 reference ILP reads `minimum` only, and reads it as a soft target.
+# These three numbers are DATA. Whether a solver reads each as hard, soft or ignored is not
+# stated in v3.0 -- it is deferred to the solver (see FUTURE.md). The V7 reference ILP, for
+# instance, reads `minimum` only and treats it as a soft target.
 #
 # MIGRATING FROM v2.6: the header was minimum,ideal,estimated and `ideal` was the UPPER bound in
 # the MIDDLE column. empiric <- estimated, maximum <- ideal: the last two columns SWAP VALUES.

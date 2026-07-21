@@ -10,20 +10,15 @@
   },
   "generatedFrom": {
     "declarativeProblemId": "SISQUAL_OCTOBER_2025",
-    "generatedAt": "2026-07-16T17:25:03+01:00",
+    "generatedAt": "2026-07-21T19:52:58+01:00",
     "transformerVersion": "3.0.0"
   },
   "timeGrid": {
     "slotMinutes": 15
   },
   "temporalScope": {
-    "year": 2025,
-    "numDays": 31,
-    "targetPeriod": {
-      "start": "2025-10-01",
-      "end": "2025-10-31",
-      "includeBufferWeeks": false
-    }
+    "start": "2025-10-01",
+    "end": "2025-10-31"
   },
   "contracts": {
     "definitions": [
@@ -475,8 +470,7 @@
           "startMin": 510,
           "endMin": 990
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0002",
@@ -485,8 +479,7 @@
           "startMin": 525,
           "endMin": 1005
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0003",
@@ -495,8 +488,7 @@
           "startMin": 540,
           "endMin": 1020
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0004",
@@ -505,8 +497,7 @@
           "startMin": 555,
           "endMin": 1035
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0005",
@@ -515,8 +506,7 @@
           "startMin": 570,
           "endMin": 1050
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0006",
@@ -525,8 +515,7 @@
           "startMin": 585,
           "endMin": 1065
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0007",
@@ -535,8 +524,7 @@
           "startMin": 600,
           "endMin": 1080
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0008",
@@ -545,8 +533,7 @@
           "startMin": 615,
           "endMin": 1095
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0009",
@@ -555,8 +542,7 @@
           "startMin": 630,
           "endMin": 1110
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0010",
@@ -565,8 +551,7 @@
           "startMin": 645,
           "endMin": 1125
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0011",
@@ -575,8 +560,7 @@
           "startMin": 660,
           "endMin": 1140
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0012",
@@ -585,8 +569,7 @@
           "startMin": 675,
           "endMin": 1155
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0013",
@@ -595,8 +578,7 @@
           "startMin": 690,
           "endMin": 1170
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0014",
@@ -605,8 +587,7 @@
           "startMin": 705,
           "endMin": 1185
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0015",
@@ -615,8 +596,7 @@
           "startMin": 720,
           "endMin": 1200
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0016",
@@ -625,8 +605,7 @@
           "startMin": 735,
           "endMin": 1215
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0017",
@@ -635,8 +614,7 @@
           "startMin": 750,
           "endMin": 1230
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0018",
@@ -645,8 +623,7 @@
           "startMin": 765,
           "endMin": 1245
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0019",
@@ -655,8 +632,7 @@
           "startMin": 780,
           "endMin": 1260
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0020",
@@ -665,8 +641,7 @@
           "startMin": 795,
           "endMin": 1275
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0021",
@@ -675,8 +650,7 @@
           "startMin": 810,
           "endMin": 1290
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0022",
@@ -685,8 +659,7 @@
           "startMin": 825,
           "endMin": 1305
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0023",
@@ -695,8 +668,7 @@
           "startMin": 840,
           "endMin": 1320
         }
-      ],
-      "weightMinutes": 480
+      ]
     },
     {
       "id": "A0024",
@@ -705,8 +677,7 @@
           "startMin": 510,
           "endMin": 810
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0025",
@@ -715,8 +686,7 @@
           "startMin": 525,
           "endMin": 825
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0026",
@@ -725,8 +695,7 @@
           "startMin": 540,
           "endMin": 840
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0027",
@@ -735,8 +704,7 @@
           "startMin": 555,
           "endMin": 855
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0028",
@@ -745,8 +713,7 @@
           "startMin": 570,
           "endMin": 870
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0029",
@@ -755,8 +722,7 @@
           "startMin": 585,
           "endMin": 885
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0030",
@@ -765,8 +731,7 @@
           "startMin": 600,
           "endMin": 900
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0031",
@@ -775,8 +740,7 @@
           "startMin": 615,
           "endMin": 915
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0032",
@@ -785,8 +749,7 @@
           "startMin": 630,
           "endMin": 930
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0033",
@@ -795,8 +758,7 @@
           "startMin": 645,
           "endMin": 945
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0034",
@@ -805,8 +767,7 @@
           "startMin": 660,
           "endMin": 960
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0035",
@@ -815,8 +776,7 @@
           "startMin": 675,
           "endMin": 975
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0036",
@@ -825,8 +785,7 @@
           "startMin": 690,
           "endMin": 990
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0037",
@@ -835,8 +794,7 @@
           "startMin": 705,
           "endMin": 1005
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0038",
@@ -845,8 +803,7 @@
           "startMin": 720,
           "endMin": 1020
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0039",
@@ -855,8 +812,7 @@
           "startMin": 735,
           "endMin": 1035
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0040",
@@ -865,8 +821,7 @@
           "startMin": 750,
           "endMin": 1050
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0041",
@@ -875,8 +830,7 @@
           "startMin": 765,
           "endMin": 1065
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0042",
@@ -885,8 +839,7 @@
           "startMin": 780,
           "endMin": 1080
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0043",
@@ -895,8 +848,7 @@
           "startMin": 795,
           "endMin": 1095
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0044",
@@ -905,8 +857,7 @@
           "startMin": 810,
           "endMin": 1110
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0045",
@@ -915,8 +866,7 @@
           "startMin": 825,
           "endMin": 1125
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0046",
@@ -925,9 +875,7 @@
           "startMin": 840,
           "endMin": 1140
         }
-      ],
-      "weightMinutes": 300,
-      "workPeriod": "MANAGEMENT_1400_1900"
+      ]
     },
     {
       "id": "A0047",
@@ -936,8 +884,7 @@
           "startMin": 855,
           "endMin": 1155
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0048",
@@ -946,8 +893,7 @@
           "startMin": 870,
           "endMin": 1170
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0049",
@@ -956,8 +902,7 @@
           "startMin": 885,
           "endMin": 1185
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0050",
@@ -966,8 +911,7 @@
           "startMin": 900,
           "endMin": 1200
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0051",
@@ -976,8 +920,7 @@
           "startMin": 915,
           "endMin": 1215
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0052",
@@ -986,8 +929,7 @@
           "startMin": 930,
           "endMin": 1230
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0053",
@@ -996,8 +938,7 @@
           "startMin": 945,
           "endMin": 1245
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0054",
@@ -1006,8 +947,7 @@
           "startMin": 960,
           "endMin": 1260
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0055",
@@ -1016,8 +956,7 @@
           "startMin": 975,
           "endMin": 1275
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0056",
@@ -1026,8 +965,7 @@
           "startMin": 990,
           "endMin": 1290
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0057",
@@ -1036,8 +974,7 @@
           "startMin": 1005,
           "endMin": 1305
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0058",
@@ -1046,8 +983,7 @@
           "startMin": 1020,
           "endMin": 1320
         }
-      ],
-      "weightMinutes": 300
+      ]
     },
     {
       "id": "A0059",
@@ -1056,8 +992,7 @@
           "startMin": 510,
           "endMin": 750
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0060",
@@ -1066,8 +1001,7 @@
           "startMin": 525,
           "endMin": 765
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0061",
@@ -1076,8 +1010,7 @@
           "startMin": 540,
           "endMin": 780
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0062",
@@ -1086,8 +1019,7 @@
           "startMin": 555,
           "endMin": 795
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0063",
@@ -1096,8 +1028,7 @@
           "startMin": 570,
           "endMin": 810
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0064",
@@ -1106,8 +1037,7 @@
           "startMin": 585,
           "endMin": 825
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0065",
@@ -1116,8 +1046,7 @@
           "startMin": 600,
           "endMin": 840
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0066",
@@ -1126,8 +1055,7 @@
           "startMin": 615,
           "endMin": 855
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0067",
@@ -1136,8 +1064,7 @@
           "startMin": 630,
           "endMin": 870
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0068",
@@ -1146,8 +1073,7 @@
           "startMin": 645,
           "endMin": 885
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0069",
@@ -1156,8 +1082,7 @@
           "startMin": 660,
           "endMin": 900
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0070",
@@ -1166,8 +1091,7 @@
           "startMin": 675,
           "endMin": 915
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0071",
@@ -1176,8 +1100,7 @@
           "startMin": 690,
           "endMin": 930
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0072",
@@ -1186,8 +1109,7 @@
           "startMin": 705,
           "endMin": 945
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0073",
@@ -1196,8 +1118,7 @@
           "startMin": 720,
           "endMin": 960
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0074",
@@ -1206,8 +1127,7 @@
           "startMin": 735,
           "endMin": 975
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0075",
@@ -1216,8 +1136,7 @@
           "startMin": 750,
           "endMin": 990
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0076",
@@ -1226,8 +1145,7 @@
           "startMin": 765,
           "endMin": 1005
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0077",
@@ -1236,8 +1154,7 @@
           "startMin": 780,
           "endMin": 1020
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0078",
@@ -1246,8 +1163,7 @@
           "startMin": 795,
           "endMin": 1035
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0079",
@@ -1256,8 +1172,7 @@
           "startMin": 810,
           "endMin": 1050
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0080",
@@ -1266,8 +1181,7 @@
           "startMin": 825,
           "endMin": 1065
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0081",
@@ -1276,8 +1190,7 @@
           "startMin": 840,
           "endMin": 1080
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0082",
@@ -1286,8 +1199,7 @@
           "startMin": 855,
           "endMin": 1095
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0083",
@@ -1296,8 +1208,7 @@
           "startMin": 870,
           "endMin": 1110
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0084",
@@ -1306,8 +1217,7 @@
           "startMin": 885,
           "endMin": 1125
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0085",
@@ -1316,8 +1226,7 @@
           "startMin": 900,
           "endMin": 1140
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0086",
@@ -1326,8 +1235,7 @@
           "startMin": 915,
           "endMin": 1155
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0087",
@@ -1336,8 +1244,7 @@
           "startMin": 930,
           "endMin": 1170
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0088",
@@ -1346,8 +1253,7 @@
           "startMin": 945,
           "endMin": 1185
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0089",
@@ -1356,8 +1262,7 @@
           "startMin": 960,
           "endMin": 1200
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0090",
@@ -1366,8 +1271,7 @@
           "startMin": 975,
           "endMin": 1215
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0091",
@@ -1376,8 +1280,7 @@
           "startMin": 990,
           "endMin": 1230
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0092",
@@ -1386,8 +1289,7 @@
           "startMin": 1005,
           "endMin": 1245
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0093",
@@ -1396,8 +1298,7 @@
           "startMin": 1020,
           "endMin": 1260
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0094",
@@ -1406,8 +1307,7 @@
           "startMin": 1035,
           "endMin": 1275
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0095",
@@ -1416,8 +1316,7 @@
           "startMin": 1050,
           "endMin": 1290
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0096",
@@ -1426,8 +1325,7 @@
           "startMin": 1065,
           "endMin": 1305
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0097",
@@ -1436,8 +1334,7 @@
           "startMin": 1080,
           "endMin": 1320
         }
-      ],
-      "weightMinutes": 240
+      ]
     },
     {
       "id": "A0098",
@@ -1446,9 +1343,7 @@
           "startMin": 510,
           "endMin": 930
         }
-      ],
-      "weightMinutes": 420,
-      "workPeriod": "STORAGE_0830_1530"
+      ]
     },
     {
       "id": "A0099",
@@ -1457,8 +1352,7 @@
           "startMin": 525,
           "endMin": 945
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0100",
@@ -1467,8 +1361,7 @@
           "startMin": 540,
           "endMin": 960
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0101",
@@ -1477,8 +1370,7 @@
           "startMin": 555,
           "endMin": 975
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0102",
@@ -1487,8 +1379,7 @@
           "startMin": 570,
           "endMin": 990
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0103",
@@ -1497,8 +1388,7 @@
           "startMin": 585,
           "endMin": 1005
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0104",
@@ -1507,8 +1397,7 @@
           "startMin": 600,
           "endMin": 1020
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0105",
@@ -1517,8 +1406,7 @@
           "startMin": 615,
           "endMin": 1035
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0106",
@@ -1527,8 +1415,7 @@
           "startMin": 630,
           "endMin": 1050
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0107",
@@ -1537,8 +1424,7 @@
           "startMin": 645,
           "endMin": 1065
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0108",
@@ -1547,8 +1433,7 @@
           "startMin": 660,
           "endMin": 1080
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0109",
@@ -1557,8 +1442,7 @@
           "startMin": 675,
           "endMin": 1095
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0110",
@@ -1567,8 +1451,7 @@
           "startMin": 690,
           "endMin": 1110
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0111",
@@ -1577,8 +1460,7 @@
           "startMin": 705,
           "endMin": 1125
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0112",
@@ -1587,8 +1469,7 @@
           "startMin": 720,
           "endMin": 1140
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0113",
@@ -1597,8 +1478,7 @@
           "startMin": 735,
           "endMin": 1155
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0114",
@@ -1607,8 +1487,7 @@
           "startMin": 750,
           "endMin": 1170
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0115",
@@ -1617,8 +1496,7 @@
           "startMin": 765,
           "endMin": 1185
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0116",
@@ -1627,8 +1505,7 @@
           "startMin": 780,
           "endMin": 1200
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0117",
@@ -1637,8 +1514,7 @@
           "startMin": 795,
           "endMin": 1215
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0118",
@@ -1647,8 +1523,7 @@
           "startMin": 810,
           "endMin": 1230
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0119",
@@ -1657,8 +1532,7 @@
           "startMin": 825,
           "endMin": 1245
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0120",
@@ -1667,8 +1541,7 @@
           "startMin": 840,
           "endMin": 1260
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0121",
@@ -1677,8 +1550,7 @@
           "startMin": 855,
           "endMin": 1275
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0122",
@@ -1687,8 +1559,7 @@
           "startMin": 870,
           "endMin": 1290
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0123",
@@ -1697,8 +1568,7 @@
           "startMin": 885,
           "endMin": 1305
         }
-      ],
-      "weightMinutes": 420
+      ]
     },
     {
       "id": "A0124",
@@ -1707,8 +1577,7 @@
           "startMin": 900,
           "endMin": 1320
         }
-      ],
-      "weightMinutes": 420
+      ]
     }
   ],
   "availability": [
@@ -17201,44 +17070,6 @@
       ]
     }
   ],
-  "constraints": {
-    "hard": [
-      {
-        "id": "min-rest",
-        "type": "min_rest_minutes",
-        "params": {
-          "minutes": 660
-        },
-        "enabled": true
-      }
-    ]
-  },
-  "optimization": {
-    "algorithm": "CSPv2",
-    "maxTimeMinutes": 10,
-    "demandInterpretation": {
-      "minimum": "soft",
-      "empiric": "ignore",
-      "maximum": "ignore"
-    },
-    "objectives": [
-      {
-        "goal": "minimize_shortages",
-        "weight": 1000,
-        "priority": 1
-      },
-      {
-        "goal": "skill_priority_weight",
-        "weight": 10,
-        "priority": 2
-      },
-      {
-        "goal": "preferable_days_off_worked",
-        "weight": 100,
-        "priority": 3
-      }
-    ]
-  },
   "calendar": {
     "weekStart": "monday",
     "holidays": [

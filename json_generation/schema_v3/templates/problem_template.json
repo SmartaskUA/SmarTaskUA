@@ -11,18 +11,13 @@
     "description": "What this problem is"
   },
 
-  "features": {
-    "useAdvancedConstraints": false,
-    "usePriorityOrder": false
-  },
-
   "_comment_timeGrid": "slotMinutes must divide 1440. 15 represents 08:30/15:30/06:30 exactly; 60 cannot represent any half-hour. Fewer slots = smaller model.",
   "timeGrid": { "slotMinutes": 15 },
 
+  "_comment_temporalScope": "start/end are the sole source of WHEN the schedule is for -- full calendar dates, so the year lives here (and in every CSV date column). The number of schedule_input date columns must equal this span.",
   "temporalScope": {
-    "year": 2025,
-    "numDays": 7,
-    "targetPeriod": { "start": "2025-10-01", "end": "2025-10-07" }
+    "start": "2025-10-01",
+    "end": "2025-10-05"
   },
 
   "_comment_calendar": "weekStart may be any of the 7 days; it defines the weeks that per-week limits are counted over. Marking a holiday lets it carry its own demand in demand.csv -- it does NOT make anyone unavailable. hasEve says the day before is its eve, so that day can carry its own demand too; the eve's date needs no stating.",
@@ -40,6 +35,7 @@
         "workMinutesPerDay": 480,
         "constraints": { "maxMinutesPerWeek": 2400, "maxConsecutiveDays": 5 }
       },
+      { "id": "partTime_5h", "name": "Part time - 5h/day", "workMinutesPerDay": 300 },
       { "id": "partTime_4h", "name": "Part time - 4h/day", "workMinutesPerDay": 240 }
     ]
   },
@@ -57,21 +53,52 @@
         "teamAssignments": [
           { "team": "TeamA", "level": 1, "start": "2025-01-01", "end": null }
         ]
+      },
+      {
+        "id": "EMP002",
+        "name": "Employee 002",
+        "contractAssignments": [
+          { "contractType": "fullTime_8h", "start": "2025-01-01", "end": null }
+        ],
+        "teamAssignments": [
+          { "team": "TeamA", "level": 1, "start": "2025-01-01", "end": null }
+        ]
+      },
+      {
+        "id": "EMP003",
+        "name": "Employee 003",
+        "contractAssignments": [
+          { "contractType": "partTime_5h", "start": "2025-01-01", "end": null }
+        ],
+        "teamAssignments": [
+          { "team": "TeamA", "level": 2, "start": "2025-01-01", "end": null }
+        ]
+      },
+      {
+        "id": "EMP004",
+        "name": "Employee 004",
+        "contractAssignments": [
+          { "contractType": "partTime_4h", "start": "2025-01-01", "end": null }
+        ],
+        "teamAssignments": [
+          { "team": "TeamA", "level": 2, "start": "2025-01-01", "end": null }
+        ]
       }
     ]
   },
 
   "_comment_demand": "workPeriods are DEMAND BUCKETS, not a menu of shifts. They say where coverage is wanted and, together, delimit the operating window. A worker works a contiguous block of their contracted length anywhere inside it.",
+  "_comment_priorityOrder": "demand.priorityOrder decides which team/level combinations get filled first -- it applies whenever present (no toggle). Sort by `order`, first match wins; a bare {team} matches any level, add `level` to name one exactly. Anything unlisted sorts last, tied. Ordering follows `order`, NOT array position. Level 1 is the HIGHEST, so {team, level: 1} means that team's most senior.",
   "demand": {
-    "dataFile": "demand.csv",
+    "dataFile": "demand_template.csv",
     "organizationalUnits": {
       "teams": [{ "code": "TeamA", "name": "Team A" }]
     },
     "workPeriods": [
       { "code": "MORNING", "name": "Morning", "timeRange": { "start": "08:30", "end": "16:30" } },
+      { "code": "AFTERNOON", "name": "Afternoon", "timeRange": { "start": "14:00", "end": "22:00" } },
       { "code": "NIGHT", "name": "Night (crosses midnight)", "timeRange": { "start": "22:00", "end": "06:30" } }
     ],
-    "_comment_priorityOrder": "Which team/level combinations get filled first. Sort by `order`, first match wins; a bare {team} matches any level, add `level` to name one exactly. Anything unlisted sorts last, tied. Ordering follows `order`, NOT array position, so you can rearrange these freely. Remember level 1 is the HIGHEST, so {team, level: 1} means that team's most senior. Needs usePriorityOrder.",
     "priorityOrder": [
       { "order": 1, "team": "TeamA", "level": 1, "description": "TeamA's most senior first" },
       { "order": 2, "team": "TeamA", "description": "then anyone else in TeamA" }
@@ -80,31 +107,12 @@
 
   "_comment_scheduleInput": "dayOffCodes declares AND classifies every non-standard cell code, keyed by code. kind is 'preferable' (may be worked at a penalty) or 'unavailable' (cannot). description is optional. Every custom code you use must be here, VAC/NOT included; VAC/NOT must be 'unavailable'.",
   "scheduleInput": {
-    "dataFile": "schedule_input.csv",
+    "dataFile": "schedule_input_template.csv",
     "dayOffCodes": {
       "DO":  { "kind": "preferable",  "description": "Day off - may be swapped, at a penalty" },
       "FDO": { "kind": "unavailable", "description": "Forced day off - cannot be changed" },
       "VAC": { "kind": "unavailable", "description": "Vacation - cannot work" },
       "NOT": { "kind": "unavailable", "description": "Unavailable - cannot work" }
     }
-  },
-
-  "_comment_constraints": "hard[] carries ONLY what nothing else can express -- min_rest_minutes is currently the sole type. Coverage, day-off penalties and skill priority are objectives, not rules; day-off classification is dayOffCodes; contract limits are on the contract. `type` is enumerated, so a typo is an error, not a silent no-op. `scope` is reserved for v3.1 per-employee rules and only accepts \"global\".",
-  "constraints": {
-    "hard": [
-      { "id": "min-rest", "type": "min_rest_minutes", "params": { "minutes": 660 }, "enabled": true }
-    ]
-  },
-
-  "_comment_optimization": "Use `algorithm` for one run, or `pipeline: [...]` for phases (exactly one of the two). demandInterpretation is where hard/soft is decided, per phase -- the demand data itself takes no position. `goal` is one of MathematicalDefinition7's three objective functions.",
-  "optimization": {
-    "algorithm": "CSPv2",
-    "maxTimeMinutes": 10,
-    "demandInterpretation": { "minimum": "soft", "empiric": "ignore", "maximum": "ignore" },
-    "objectives": [
-      { "goal": "minimize_shortages", "weight": 1000, "priority": 1 },
-      { "goal": "skill_priority_weight", "weight": 10, "priority": 2 },
-      { "goal": "preferable_days_off_worked", "weight": 100, "priority": 3 }
-    ]
   }
 }

@@ -14,9 +14,7 @@
     "contracts",
     "employees",
     "demand",
-    "scheduleInput",
-    "constraints",
-    "optimization"
+    "scheduleInput"
   ],
   "properties": {
     "schemaVersion": {
@@ -52,26 +50,6 @@
     "demand": {
       "$ref": "#/$defs/demand"
     },
-    "constraints": {
-      "$ref": "#/$defs/constraints"
-    },
-    "optimization": {
-      "$ref": "#/$defs/optimization"
-    },
-    "features": {
-      "type": "object",
-      "properties": {
-        "useAdvancedConstraints": {
-          "type": "boolean",
-          "default": false
-        },
-        "usePriorityOrder": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enables demand.priorityOrder, the list deciding which team/level combinations are filled first."
-        }
-      }
-    },
     "scheduleInput": {
       "type": "object",
       "required": [
@@ -88,12 +66,17 @@
           "description": "Declares and classifies every non-standard cell code, keyed by the code. A custom code can only ever mean the worker is off (work is expressed by A, numbers, and EQUALS/INCLUDE/EXCEPT), so this one map both declares valid codes and says what each means. Each code has exactly one kind, so it cannot be both soft and hard. Both kinds feed the per-week working-day equality n_wk = open days - |unavailable| - |preferable|, so a misclassification shifts that week's target.",
           "additionalProperties": {
             "type": "object",
-            "required": ["kind"],
+            "required": [
+              "kind"
+            ],
             "additionalProperties": false,
             "properties": {
               "kind": {
                 "type": "string",
-                "enum": ["preferable", "unavailable"],
+                "enum": [
+                  "preferable",
+                  "unavailable"
+                ],
                 "description": "'preferable' [D_wk]: soft -- the worker would rather be off, but may be scheduled at a penalty. 'unavailable' [U_wk]: hard -- no assignment permitted. VAC and NOT, if used, must be 'unavailable'."
               },
               "description": {
@@ -104,12 +87,19 @@
           },
           "examples": [
             {
-              "DO": { "kind": "preferable", "description": "Day off - may be swapped" },
-              "VAC": { "kind": "unavailable", "description": "Vacation" }
+              "DO": {
+                "kind": "preferable",
+                "description": "Day off - may be swapped"
+              },
+              "VAC": {
+                "kind": "unavailable",
+                "description": "Vacation"
+              }
             }
           ]
         }
-      }
+      },
+      "additionalProperties": false
     }
   },
   "$defs": {
@@ -140,33 +130,10 @@
       "minimum": 1,
       "description": "Proficiency in a team [l_ws]. LEVEL 1 IS THE HIGHEST; larger numbers are progressively lower. A demand.priorityOrder entry naming level 1 therefore means that team's most senior workers."
     },
-    "datedAssignment": {
-      "type": "object",
-      "required": [
-        "start"
-      ],
-      "properties": {
-        "start": {
-          "$ref": "#/$defs/date"
-        },
-        "end": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/date"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Inclusive; null means ongoing."
-        }
-      }
-    },
     "metadata": {
       "type": "object",
       "required": [
-        "problemId",
-        "createdAt"
+        "problemId"
       ],
       "properties": {
         "problemId": {
@@ -182,7 +149,8 @@
         "source": {
           "type": "string"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "timeGrid": {
       "type": "object",
@@ -234,46 +202,25 @@
           "default": 15,
           "description": "Timeslot length. Must divide 1440 (the enum is exactly its divisors). Smaller is more precise but grows the model: 15 gives 96 slots/day, 60 gives 24."
         }
-      }
+      },
+      "additionalProperties": false
     },
     "temporalScope": {
       "type": "object",
       "required": [
-        "year",
-        "numDays"
+        "start",
+        "end"
       ],
-      "description": "The scheduling horizon [D].",
+      "description": "The scheduling horizon [D]. start and end are full calendar dates -- the sole source of WHEN the schedule is for (the year lives here, and in every CSV date column). The number of schedule_input date columns must equal this span.",
       "properties": {
-        "year": {
-          "type": "integer",
-          "minimum": 2020,
-          "maximum": 2100
+        "start": {
+          "$ref": "#/$defs/date"
         },
-        "numDays": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 366
-        },
-        "targetPeriod": {
-          "type": "object",
-          "required": [
-            "start",
-            "end"
-          ],
-          "properties": {
-            "start": {
-              "$ref": "#/$defs/date"
-            },
-            "end": {
-              "$ref": "#/$defs/date"
-            },
-            "includeBufferWeeks": {
-              "type": "boolean",
-              "default": false
-            }
-          }
+        "end": {
+          "$ref": "#/$defs/date"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "calendar": {
       "type": "object",
@@ -286,7 +233,7 @@
         },
         "holidays": {
           "type": "array",
-          "description": "Public holidays. Marking a day here does NOT make anyone unavailable: it exists so the enterprise can give that day its own minimum/empiric/maximum in demand.csv. Shops open on holidays, and whether a worker is entitled to take one off is a per-employee rule (v3.1). A holiday reaches a worker's unavailable set [U_wk] only through their schedule-input cell, like any other day.",
+          "description": "Public holidays. Marking a day here does NOT make anyone unavailable: it exists so the enterprise can give that day its own minimum/empiric/maximum in demand.csv. Shops open on holidays, and whether a worker is entitled to take one off is a per-employee rule (deferred; see FUTURE.md). A holiday reaches a worker's unavailable set [U_wk] only through their schedule-input cell, like any other day.",
           "items": {
             "type": "object",
             "required": [
@@ -304,10 +251,12 @@
                 "default": false,
                 "description": "Whether the preceding day counts as this holiday's eve, so it can carry its own demand. The eve's date is the holiday's date minus one day; only whether it exists needs stating."
               }
-            }
+            },
+            "additionalProperties": false
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     "contracts": {
       "type": "object",
@@ -366,12 +315,15 @@
                     "minimum": 0,
                     "maximum": 7
                   }
-                }
+                },
+                "additionalProperties": false
               }
-            }
+            },
+            "additionalProperties": false
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     "employees": {
       "type": "object",
@@ -434,7 +386,8 @@
                         }
                       ]
                     }
-                  }
+                  },
+                  "additionalProperties": false
                 }
               },
               "teamAssignments": {
@@ -468,17 +421,21 @@
                         }
                       ]
                     }
-                  }
+                  },
+                  "additionalProperties": false
                 }
               }
-            }
+            },
+            "additionalProperties": false
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     "demand": {
       "type": "object",
       "required": [
+        "dataFile",
         "organizationalUnits",
         "workPeriods"
       ],
@@ -511,10 +468,12 @@
                   "name": {
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             }
-          }
+          },
+          "additionalProperties": false
         },
         "workPeriods": {
           "type": "array",
@@ -548,84 +507,11 @@
                   "end": {
                     "$ref": "#/$defs/hhmm"
                   }
-                }
-              },
-              "breaks": {
-                "type": "array",
-                "description": "Breaks within this period. Unpaid ones are subtracted from the weightMinutes of an assignment that coincides exactly with it, while still occupying clock time.",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "type",
-                    "durationMinutes"
-                  ],
-                  "properties": {
-                    "type": {
-                      "type": "string",
-                      "enum": [
-                        "meal",
-                        "rest",
-                        "other"
-                      ]
-                    },
-                    "durationMinutes": {
-                      "type": "integer",
-                      "minimum": 1
-                    },
-                    "timing": {
-                      "type": "object",
-                      "required": [
-                        "mode"
-                      ],
-                      "properties": {
-                        "mode": {
-                          "type": "string",
-                          "enum": [
-                            "fixed",
-                            "window",
-                            "afterWork"
-                          ]
-                        },
-                        "fixedTime": {
-                          "$ref": "#/$defs/hhmm"
-                        },
-                        "window": {
-                          "type": "object",
-                          "required": [
-                            "start",
-                            "end"
-                          ],
-                          "properties": {
-                            "start": {
-                              "$ref": "#/$defs/hhmm"
-                            },
-                            "end": {
-                              "$ref": "#/$defs/hhmm"
-                            }
-                          }
-                        },
-                        "afterMinutes": {
-                          "type": "integer",
-                          "minimum": 1
-                        }
-                      }
-                    },
-                    "paid": {
-                      "type": "boolean",
-                      "default": false
-                    },
-                    "required": {
-                      "type": "boolean",
-                      "default": true
-                    },
-                    "canStagger": {
-                      "type": "boolean",
-                      "default": true
-                    }
-                  }
-                }
+                },
+                "additionalProperties": false
               }
-            }
+            },
+            "additionalProperties": false
           }
         },
         "priorityOrder": {
@@ -654,208 +540,12 @@
               "description": {
                 "type": "string"
               }
-            }
-          }
-        }
-      }
-    },
-    "rule": {
-      "description": "A hard rule the solver must honour. Typed: `type` is an enum and its params are schema-checked, so a mistyped rule is a validation error rather than a silently ignored no-op. Kept deliberately small -- most of what a v2.6 problem stated in constraints[] is now structural (dayOffCodes, contract limits, priorityOrder) or an objective, and only what none of those can express belongs here. Adding a type later is additive to the oneOf.",
-      "oneOf": [
-        {
-          "title": "min_rest_minutes",
-          "type": "object",
-          "required": [
-            "id",
-            "type",
-            "params"
-          ],
-          "properties": {
-            "id": {
-              "type": "string"
             },
-            "type": {
-              "const": "min_rest_minutes"
-            },
-            "params": {
-              "type": "object",
-              "required": [
-                "minutes"
-              ],
-              "properties": {
-                "minutes": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "description": "Minimum rest between the end of one day's work and the start of the next. The one rule the live solvers read from constraints[], and not part of MathematicalDefinition7 -- a deliberate extension."
-                }
-              },
-              "additionalProperties": false
-            },
-            "enabled": {
-              "type": "boolean",
-              "default": true
-            },
-            "scope": {
-              "type": "string",
-              "enum": [
-                "global"
-              ],
-              "default": "global",
-              "description": "Reserved. v3.0 supports 'global' only; per-employee scoping is planned for v3.1. Other values are rejected rather than ignored, so a future rule cannot silently do nothing here."
-            }
-          },
-          "additionalProperties": false
-        }
-      ]
-    },
-    "constraints": {
-      "type": "object",
-      "required": [
-        "hard"
-      ],
-      "description": "General rules applying to everyone, and ONLY what nothing else can express. Precedence, so nothing is stated twice: structure (dayOffCodes, demandInterpretation, contract constraints, cells, priorityOrder) says what the data IS; optimization.objectives says what to optimise and its cost; constraints.hard says the rest. v2.6's soft[] and advanced[] are gone -- soft constraints were objective weights under another name, and advanced.dayOffSwapping.rules was prose no solver parsed.",
-      "properties": {
-        "hard": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/rule"
+            "additionalProperties": false
           }
         }
       },
       "additionalProperties": false
-    },
-    "boundInterpretation": {
-      "type": "string",
-      "enum": [
-        "hard",
-        "soft",
-        "ignore"
-      ],
-      "description": "How one algorithm phase reads one demand bound. 'hard' = must hold; 'soft' = a target entering the objective through a slack variable; 'ignore' = not read."
-    },
-    "phase": {
-      "type": "object",
-      "required": [
-        "algorithm"
-      ],
-      "properties": {
-        "algorithm": {
-          "type": "string",
-          "enum": [
-            "ILP",
-            "ILPv2",
-            "CSP",
-            "CSPv2",
-            "ILP Engine",
-            "CSP_ENGINE",
-            "Greedy Randomized",
-            "Greedy Randomized Engine",
-            "Greedy Randomized + Hill Climbing",
-            "GRHC_ENGINE"
-          ]
-        },
-        "maxTimeMinutes": {
-          "type": "integer",
-          "minimum": 1,
-          "default": 10
-        },
-        "demandInterpretation": {
-          "type": "object",
-          "description": "Where hard-vs-soft is decided; the demand data itself takes no position, so different phases can read the same numbers differently. The reference ILP is {minimum: soft, empiric: ignore, maximum: ignore}: its alpha_dts is the number of workers DESIRED, pursued only through the shortfall variable in ObjectiveFunction1. That model defines no hard coverage constraint and no upper bound, so empiric and maximum exist for other phases and for KPI reporting.",
-          "properties": {
-            "minimum": {
-              "$ref": "#/$defs/boundInterpretation",
-              "default": "soft"
-            },
-            "empiric": {
-              "$ref": "#/$defs/boundInterpretation",
-              "default": "ignore"
-            },
-            "maximum": {
-              "$ref": "#/$defs/boundInterpretation",
-              "default": "ignore"
-            }
-          }
-        },
-        "objectives": {
-          "type": "array",
-          "description": "What to optimise and what each costs. The goals are exactly MathematicalDefinition7's three objective functions; an unknown goal is a validation error, not a silently dropped term.",
-          "items": {
-            "type": "object",
-            "required": [
-              "goal",
-              "weight"
-            ],
-            "properties": {
-              "goal": {
-                "type": "string",
-                "enum": [
-                  "minimize_shortages",
-                  "skill_priority_weight",
-                  "preferable_days_off_worked"
-                ],
-                "description": "minimize_shortages = OF1 (minimise total under-staffing, sum of z_dts); skill_priority_weight = OF2 (minimise the priority weight of assigned team/level combinations, sum of p_sl*y', driven by demand.priorityOrder); preferable_days_off_worked = OF3 (minimise preferable days-off that get worked, sum of x'_wd)."
-              },
-              "weight": {
-                "type": "number",
-                "minimum": 0
-              },
-              "priority": {
-                "type": "integer",
-                "minimum": 1
-              }
-            }
-          }
-        },
-        "warmStartFromPreviousPhase": {
-          "type": "boolean",
-          "default": false
-        }
-      }
-    },
-    "optimization": {
-      "type": "object",
-      "description": "One algorithm run, or a pipeline of phases. Exactly one of `algorithm` / `pipeline`.",
-      "oneOf": [
-        {
-          "title": "single run",
-          "allOf": [
-            {
-              "$ref": "#/$defs/phase"
-            }
-          ],
-          "type": "object",
-          "required": [
-            "algorithm"
-          ],
-          "not": {
-            "required": [
-              "pipeline"
-            ]
-          }
-        },
-        {
-          "title": "pipeline of phases",
-          "type": "object",
-          "required": [
-            "pipeline"
-          ],
-          "not": {
-            "required": [
-              "algorithm"
-            ]
-          },
-          "properties": {
-            "pipeline": {
-              "type": "array",
-              "minItems": 1,
-              "items": {
-                "$ref": "#/$defs/phase"
-              }
-            }
-          }
-        }
-      ]
     }
   }
 }

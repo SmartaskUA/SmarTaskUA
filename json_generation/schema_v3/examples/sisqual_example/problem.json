@@ -8,21 +8,12 @@
     "description": "Retail store, October 2025. Competency model: 15 employees across 3 teams (Storage, Checkout, Management) with proficiency levels 1-5, level 1 highest. Migrated from the v2.6 example of the same name.",
     "source": "sisqual_example"
   },
-  "features": {
-    "useAdvancedConstraints": true,
-    "usePriorityOrder": true
-  },
   "timeGrid": {
     "slotMinutes": 15
   },
   "temporalScope": {
-    "year": 2025,
-    "numDays": 31,
-    "targetPeriod": {
-      "start": "2025-10-01",
-      "end": "2025-10-31",
-      "includeBufferWeeks": false
-    }
+    "start": "2025-10-01",
+    "end": "2025-10-31"
   },
   "calendar": {
     "weekStart": "monday",
@@ -500,43 +491,5 @@
         "description": "Medical - cannot work"
       }
     }
-  },
-  "constraints": {
-    "hard": [
-      {
-        "id": "min-rest",
-        "type": "min_rest_minutes",
-        "params": {
-          "minutes": 660
-        },
-        "enabled": true
-      }
-    ]
-  },
-  "optimization": {
-    "algorithm": "CSPv2",
-    "maxTimeMinutes": 10,
-    "demandInterpretation": {
-      "minimum": "soft",
-      "empiric": "ignore",
-      "maximum": "ignore"
-    },
-    "objectives": [
-      {
-        "goal": "minimize_shortages",
-        "weight": 1000,
-        "priority": 1
-      },
-      {
-        "goal": "skill_priority_weight",
-        "weight": 10,
-        "priority": 2
-      },
-      {
-        "goal": "preferable_days_off_worked",
-        "weight": 100,
-        "priority": 3
-      }
-    ]
   }
 }

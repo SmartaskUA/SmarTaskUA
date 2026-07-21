@@ -121,8 +121,7 @@ class SchemaValidator:
     # -- layer 2 ---------------------------------------------------------
     def horizon(self) -> list[date]:
         scope = self.problem.get("temporalScope", {})
-        tp = scope.get("targetPeriod") or {}
-        start, end = iso(tp.get("start", "")), iso(tp.get("end", ""))
+        start, end = iso(scope.get("start", "")), iso(scope.get("end", ""))
         if not start or not end:
             return []
         return [start + timedelta(days=i) for i in range((end - start).days + 1)]
@@ -134,18 +133,18 @@ class SchemaValidator:
         if p.get("schemaVersion") != "3.0":
             r.error(f"schemaVersion must be '3.0', got {p.get('schemaVersion')!r}")
 
-        scope = p.get("temporalScope", {})
-        days = self.horizon()
-        if days and scope.get("numDays") != len(days):
-            r.error(
-                f"temporalScope.numDays is {scope.get('numDays')} but targetPeriod spans "
-                f"{len(days)} days"
-            )
-
         slot = p.get("timeGrid", {}).get("slotMinutes")
         if slot and MINUTES_PER_DAY % slot:
             r.error(f"timeGrid.slotMinutes {slot} does not divide {MINUTES_PER_DAY}")
 
+        # A reversed horizon makes horizon() empty, which would silently skip every
+        # date-dependent check below and "validate" a schedule of nothing.
+        scope = p.get("temporalScope", {})
+        s, e = iso(scope.get("start", "")), iso(scope.get("end", ""))
+        if s and e and s > e:
+            r.error(f"temporalScope.start ({scope['start']}) is after end ({scope['end']})")
+
+        days = self.horizon()
         horizon = set(days)
         for item in p.get("calendar", {}).get("holidays", []):
             d = iso(item.get("date", ""))
@@ -177,19 +176,6 @@ class SchemaValidator:
         for emp in p.get("employees", {}).get("list", []):
             eid = emp.get("id", "?")
             emp_ids.append(eid)
-
-            # v2.6 carried a per-employee 'restrictions' block. Employee items take
-            # additionalProperties, so a leftover one would validate clean and be
-            # ignored -- silently making the worker AVAILABLE on blacked-out dates.
-            # An error, not a warning: the file passes and the schedule is wrong.
-            if "restrictions" in emp:
-                r.error(
-                    f"employee {eid}: 'restrictions' was removed in v3.0 and is ignored. "
-                    "blackoutDates -> an unavailable code (NOT) in schedule_input.csv; "
-                    "cannotSwapDayOffs -> write FDO instead of DO in that cell; "
-                    "preferredWorkPeriods -> removed (work periods are demand buckets, "
-                    "not shifts). See MIGRATION-2.6-to-3.0.md."
-                )
 
             self._check_periods(emp.get("contractAssignments", []), eid, "contractAssignments")
             for a in emp.get("contractAssignments", []):
@@ -224,11 +210,18 @@ class SchemaValidator:
 
         self._check_priority_order(teams, levels_by_team, model)
 
-        for rule in p.get("constraints", {}).get("hard", []) + p.get("constraints", {}).get("soft", []):
-            if rule.get("scope", "global") != "global":
+        # v3.0 carries no solve directives: how to schedule (algorithm, objectives,
+        # demand interpretation, rules) reached no solver and was cut. These blocks
+        # take no additionalProperties guard at the root, so a leftover one would
+        # validate clean and be silently ignored. Errors, naming the deferred
+        # registry (FUTURE.md), so a carried-over file cannot quietly lose its rules.
+        for block in ("optimization", "constraints"):
+            if block in p:
                 r.error(
-                    f"constraint {rule.get('id')!r}: scope {rule.get('scope')!r} is reserved for "
-                    "v3.1; v3.0 supports 'global' only"
+                    f"{block!r} was removed in v3.0 and is ignored. Solve directives "
+                    "(algorithm, objectives, demandInterpretation, rules such as min_rest) "
+                    "reached no solver; they return as one explicit registry when a v3 "
+                    "solver is built (see FUTURE.md). See MIGRATION-2.6-to-3.0.md."
                 )
 
         r.stats["employees"] = len(emp_ids)
@@ -241,14 +234,9 @@ class SchemaValidator:
         """demand.priorityOrder: ordered, first-match-wins fill order."""
         r = self.report
         p = self.problem
+        # priorityOrder is honoured by presence: entries here mean "fill in this
+        # order", an empty/absent list means "no preference". No separate toggle.
         entries = p.get("demand", {}).get("priorityOrder", [])
-
-        flag = p.get("features", {}).get("usePriorityOrder")
-        if entries and flag is False:
-            r.warn("demand.priorityOrder is populated but features.usePriorityOrder is false; "
-                   "the fill order will be ignored")
-        if not entries and flag is True:
-            r.warn("features.usePriorityOrder is true but demand.priorityOrder is empty")
 
         seen_order: dict[int, dict] = {}
         for e in entries:
@@ -504,10 +492,6 @@ class SchemaValidator:
         for team in sorted(set(held) - teams):
             r.warn(f"team {team!r} is held by employees but never appears in demand")
 
-        if p.get("features", {}).get("useAdvancedConstraints") is False and \
-                p.get("constraints", {}).get("advanced"):
-            r.warn("constraints.advanced is present but features.useAdvancedConstraints is false")
-
         # minimum vs the number of people who could possibly serve that team that day
         data_file = p.get("demand", {}).get("dataFile")
         if not data_file:
@@ -517,28 +501,29 @@ class SchemaValidator:
             return
         flagged = set()
         with path.open(newline="") as fh:
-            for row in csv.DictReader(fh):
-                d = iso(row.get("date", ""))
-                team = row.get("team")
-                if not d or team not in held:
-                    continue
-                try:
-                    minimum = float(row.get("minimum", 0))
-                except ValueError:
-                    continue
-                if minimum <= 0:
-                    continue
-                headcount = sum(
-                    1 for ta in held[team]
-                    if iso(ta["start"]) and iso(ta["start"]) <= d
-                    and (ta.get("end") is None or (iso(ta["end"]) and d <= iso(ta["end"])))
+            rows_iter = list(csv.DictReader(core.csv_lines(fh)))
+        for row in rows_iter:
+            d = iso(row.get("date", ""))
+            team = row.get("team")
+            if not d or team not in held:
+                continue
+            try:
+                minimum = float(row.get("minimum", 0))
+            except ValueError:
+                continue
+            if minimum <= 0:
+                continue
+            headcount = sum(
+                1 for ta in held[team]
+                if iso(ta["start"]) and iso(ta["start"]) <= d
+                and (ta.get("end") is None or (iso(ta["end"]) and d <= iso(ta["end"])))
+            )
+            if minimum > headcount and (team, headcount) not in flagged:
+                flagged.add((team, headcount))
+                r.warn(
+                    f"demand for team {team!r} asks for {minimum:g} on {row['date']} but only "
+                    f"{headcount} employee(s) hold that team then; a shortfall is guaranteed"
                 )
-                if minimum > headcount and (team, headcount) not in flagged:
-                    flagged.add((team, headcount))
-                    r.warn(
-                        f"demand for team {team!r} asks for {minimum:g} on {row['date']} but only "
-                        f"{headcount} employee(s) hold that team then; a shortfall is guaranteed"
-                    )
 
     def _feasibility_preflight(self) -> None:
         """Tier 1: every cell that asks for work no assignment can provide is an error.
@@ -576,7 +561,7 @@ class SchemaValidator:
         seen = set()
         rows = 0
         with path.open(newline="") as fh:
-            reader = csv.DictReader(fh)
+            reader = csv.DictReader(core.csv_lines(fh))
             fields = reader.fieldnames or []
             if "ideal" in fields or "estimated" in fields:
                 # An unmigrated v2.6 file. Renaming the header alone is NOT the
@@ -669,7 +654,7 @@ class SchemaValidator:
         emp_ids = {e["id"] for e in self.problem.get("employees", {}).get("list", [])}
 
         with path.open(newline="") as fh:
-            reader = csv.reader(fh)
+            reader = csv.reader(core.csv_lines(fh))
             header = next(reader, [])
             if not header or header[0] != "employee_id":
                 r.error(f"{path.name}: first column must be 'employee_id'")
@@ -678,9 +663,10 @@ class SchemaValidator:
             for d in dates:
                 if not iso(d):
                     r.error(f"{path.name}: column header {d!r} is not a date")
-            num_days = self.problem.get("temporalScope", {}).get("numDays")
-            if num_days and len(dates) != num_days:
-                r.error(f"{path.name}: {len(dates)} date columns but temporalScope.numDays is {num_days}")
+            span = len(self.horizon())
+            if span and len(dates) != span:
+                r.error(f"{path.name}: {len(dates)} date columns but temporalScope spans {span} days "
+                        f"({self.problem['temporalScope'].get('start')}..{self.problem['temporalScope'].get('end')})")
 
             seen_ids = set()
             for row in reader:
@@ -899,7 +885,7 @@ class SchemaValidator:
                     periods[wp["code"]] = rng
 
         with path.open(newline="") as fh:
-            for row in csv.DictReader(fh):
+            for row in csv.DictReader(core.csv_lines(fh)):
                 if not row.get("date"):
                     continue
                 if row.get("start") and row.get("end"):
