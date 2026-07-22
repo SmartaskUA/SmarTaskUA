@@ -3,7 +3,7 @@
 How Sisqual's scheduling exchange format lines up with schema v3.0, tiered by how hard each piece is
 to merge, plus what to do about the parts only Sisqual has. Sources compared:
 `reference/sisqual-json-import-export/JSON-Import.md` and `JSON-Export.md` against the three v3.0
-schemas (`schemas/`), the two CSVs, and the template. This is the reconnaissance for **`FUTURE.md`
+schemas (`schemas/`), the two CSVs, and the template. This is the reconnaissance for **`../FUTURE.md`
 §6** ("Reconciling the Sisqual import/export format").
 
 ## TL;DR
@@ -18,7 +18,7 @@ schemas (`schemas/`), the two CSVs, and the template. This is the reconnaissance
   **synthesizes** assignments from contract length + demand window. Resolvable — *ingest* their
   catalog instead of synthesizing — and the **expanded form is the natural seam** for it.
 - **What only Sisqual has is mostly the roadmap we already wrote.** Tasks, responsibilities,
-  generation rules, labour-law objects — each lands on an existing `FUTURE.md` item, not a new backlog.
+  generation rules, labour-law objects — each lands on an existing `../FUTURE.md` item, not a new backlog.
 - **Chosen path:** a **middle-ground merged schema** — v3.0 as the base, absorbing the Sisqual concepts
   that earn their place tier by tier; not a forever-adapter, not a full superset. Decisions live in the
   [tier files](SISQUAL-MERGE-PROPOSAL.md).
@@ -64,7 +64,7 @@ the per-tier **decisions** built from them live in the tier files (see the [inde
 | `InpServiceLevelByShifts[]` (`ShiftTypeCode` M/T/N; `Minimum/Empiric/Estimated/Maximum/Total Value`) and `InpServiceLevelByPeriods[]` (headcount per window) | `demand.csv` rows (`workPeriod`, `minimum`, `empiric`, `maximum`) | `ShiftTypeCode`/period ↔ `workPeriod`; Sisqual keys demand on `TableName`/`TableValue` (e.g. `"Task"/"7"`) ↔ our `team`; **drop `Estimated` + `Total`** (we kept `empiric`, dropped `estimated` in v2.6→3.0); float → int |
 | `InpRosterSchedulesCollection[]` / `InpRosterTeamDays[]` per employee-day (`AbsenceCodeFullDay`, `ScheduleCode`, `Locked`, `ScheduleAvailabilityCode`) | `schedule_input.csv` cells; `Locked` → expanded `availability.days[].forced` | same role (per-worker-per-day input), different container (JSON ↔ CSV) and vocabulary (`ScheduleCode` ref ↔ `A`/minutes/`EQUALS`/`INCLUDE`/`EXCEPT`/code) |
 | `DayType` (0 work, 1 *Folga Complementar*, 2 *Folga Obrigatória*, 3 *Folga*) + `AbsenceCodeCountAsDayOff` | `scheduleInput.dayOffCodes` (`kind`: `preferable`\|`unavailable`) | ours is *soft vs hard*; theirs is *which rest* (Sat-complementary vs Sun-obligatory) + *counts-toward-limits*. Build a code-translation table; the "counts as day off" bit has no home yet (→ set aside) |
-| `InpEmployeeAbilities.AbilityID` vs `InpRosterLines.TeamCode` (skill and team are **separate**) | `teamAssignments[].team` (we conflate **team = skill dimension `S`**) | pick: collapse Ability→team, or keep team as an org grouping and map Ability→a v3 "team". Touches `FUTURE.md` §4 |
+| `InpEmployeeAbilities.AbilityID` vs `InpRosterLines.TeamCode` (skill and team are **separate**) | `teamAssignments[].team` (we conflate **team = skill dimension `S`**) | pick: collapse Ability→team, or keep team as an org grouping and map Ability→a v3 "team". Touches `../FUTURE.md` §4 |
 | `OutRosterTeamDays[]` (`ScheduleCode` per emp-day) | `solution.assignments[].days[].assignmentId` | id-scheme bridge: `ScheduleCode` ↔ synthesized `A####` (depends on the catalog decision, Tier 3) |
 | `OutScheduleUseds[]` (`ScheduleCode`, `ScheduleWeight` min, `StartDate1/2`–`EndDate1/2`) | expanded `assignmentCatalog[]` (`id`, `intervals[]`) | near-direct analog. Two date pairs = **split shift** = two `intervals`. `ScheduleWeight` (paid minutes) = total interval length (v3 has no break, so paid = clock) |
 
@@ -93,17 +93,17 @@ The other hard items are whole feature-areas v3 simply doesn't have. They have n
 ## Set aside — what only Sisqual has (the backlog)
 
 These are Sisqual capabilities with no v3.0 equivalent. The point of the list: **almost every one is
-already a `FUTURE.md` item** — Sisqual's extra surface validates our roadmap instead of adding to it.
+already a `../FUTURE.md` item** — Sisqual's extra surface validates our roadmap instead of adding to it.
 
 | Sisqual feature | what it is | lands on |
 |---|---|---|
-| **Tasks** — `OutRosterTeamDayTasks[]` (`TaskID` + start/end within a shift), `InpTaskAbilityCollection[]` | intra-shift task allocation (worker does Task 8 07:30–09:30, Task 14 09:30–13:00…). Our `solution.skillPerSlot` is coarser (team per slot, not named task) | `FUTURE.md` §4 (org model) |
-| **Responsibilities** — `OutRosterTeamDayResponsibilities[]`, `InResponsabilityCollection[]` (cost-centre, group, pool, profile, type), `InpResponsibilityAbilityCollection[]` | a second assignment axis alongside tasks | `FUTURE.md` §4 (explicitly names responsibilities) |
-| **Generation rules** — the entire `InpGenerationRules` block (rule indices/versions, algorithm steps, alarm tables, generation sequence, per-weekday `GenerateOn*` flags, `GenerateScheduleGetPriorityType`, `FollowLevelByLevel`, responsibility waste/override/cover, schedule blacklists, min/max weekly weight, `FindScheduleType`, `DaysForwardToValidateLegislation`) | *how to solve* — algorithm selection, objectives, directives | `FUTURE.md` §2 (solve-directives registry) — the big one |
-| **Labour-law objects** — `InpLabourLawCollection[]` + per-employee `InpEmployeeLLabourLawLegislationCollection[]`; `DistanceBetweenShiftsInMinutes` | named, date-ranged, per-employee legislation. `DistanceBetweenShiftsInMinutes` is exactly the min-rest we cut | `FUTURE.md` §1 (rest) + §2 (registry) + §3 (per-employee scope) |
-| **Per-weekday & holiday contract weights** — `WeightMonday…Sunday`, `WeightHolidayBusinessDay/Saturday/Sunday` | different shift length per weekday / per holiday type; our `workMinutesPerDay` is one number | contract extension; relates to `FUTURE.md` §5 |
+| **Tasks** — `OutRosterTeamDayTasks[]` (`TaskID` + start/end within a shift), `InpTaskAbilityCollection[]` | intra-shift task allocation (worker does Task 8 07:30–09:30, Task 14 09:30–13:00…). Our `solution.skillPerSlot` is coarser (team per slot, not named task) | `../FUTURE.md` §4 (org model) |
+| **Responsibilities** — `OutRosterTeamDayResponsibilities[]`, `InResponsabilityCollection[]` (cost-centre, group, pool, profile, type), `InpResponsibilityAbilityCollection[]` | a second assignment axis alongside tasks | `../FUTURE.md` §4 (explicitly names responsibilities) |
+| **Generation rules** — the entire `InpGenerationRules` block (rule indices/versions, algorithm steps, alarm tables, generation sequence, per-weekday `GenerateOn*` flags, `GenerateScheduleGetPriorityType`, `FollowLevelByLevel`, responsibility waste/override/cover, schedule blacklists, min/max weekly weight, `FindScheduleType`, `DaysForwardToValidateLegislation`) | *how to solve* — algorithm selection, objectives, directives | `../FUTURE.md` §2 (solve-directives registry) — the big one |
+| **Labour-law objects** — `InpLabourLawCollection[]` + per-employee `InpEmployeeLLabourLawLegislationCollection[]`; `DistanceBetweenShiftsInMinutes` | named, date-ranged, per-employee legislation. `DistanceBetweenShiftsInMinutes` is exactly the min-rest we cut | `../FUTURE.md` §1 (rest) + §2 (registry) + §3 (per-employee scope) |
+| **Per-weekday & holiday contract weights** — `WeightMonday…Sunday`, `WeightHolidayBusinessDay/Saturday/Sunday` | different shift length per weekday / per holiday type; our `workMinutesPerDay` is one number | contract extension; relates to `../FUTURE.md` §5 |
 | **Monthly / yearly caps** — `TotalMonthlyMinutes`, `TotalYearMinutes` | limits beyond daily/weekly | contract extension |
-| **Split-shift authoring** — two `StartDate/EndDate` pairs per schedule | the **expanded** form already represents this (multi-interval); the **declarative** form can't author it | `FUTURE.md` §1 (breaks) |
+| ~~**Split-shift authoring**~~ — two `StartDate/EndDate` pairs per schedule | **DONE** — both forms now handle it: the expanded catalog is multi-interval and the declarative `EQUALS:a-b,c-d` cell authors it (see MEDIUM M2.a) | resolved |
 | **Estimated + workload demand** — `EstimatedValue`; `InpServiceLevelByDays[]` (minutes of workload, not headcount) | our demand is headcount only (`alpha_dts`) | demand extension / new demand mode |
 | **Minor advisory fields** — `Legend`/`Description`, `ScheduleAvailabilityCode`, `PotentialCycleScheduleWeightWhenScheduleIsSpace`, `InpEmployeeGeneratedParameterCollection`, `AlarmTable*` | display labels, cycle hints, generation params | drop on import, or fold into the §2 registry |
 
@@ -124,7 +124,7 @@ Two ways to reconcile the formats were weighed:
 
 **v3.0 as the base, growing to absorb the Sisqual concepts that earn their place, tier by tier.** The
 genuine additions surfaced in review (S1 roster, S2 datetime, S3 labour law, …) join the schema; the rest
-stays deferred behind its `FUTURE.md` item. Neither a forever-translator nor a full superset. The tiered
+stays deferred behind its `../FUTURE.md` item. Neither a forever-translator nor a full superset. The tiered
 decisions live in the tier files — see the [index](SISQUAL-MERGE-PROPOSAL.md).
 
 ### What v3 brings that Sisqual doesn't (kept in the merge)

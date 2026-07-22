@@ -33,6 +33,12 @@ designed against a real reader instead of ahead of one. This is also where the q
 open — *how a solver reads each demand bound (hard / soft / ignore)* — finally gets a home, instead
 of the demand numbers being plain data.
 
+One global directive the Sisqual merge already needs (`sisqual/SISQUAL-MERGE-MEDIUM.md` M2.a): **pins bypass
+`T_d`** — a locked/`forced` (or `EQUALS`) assignment is honoured even outside the demanded window,
+relaxing the hard `H_wd ⊆ T_d` invariant the transform and validator enforce today. The domain-specific
+work that *rides* this registry has its own sections below: **warm-start** (§7) and **labour law**
+(§8) — the registry is the mechanism; those are the rules that flow through it.
+
 ## 3. Per-employee rules
 
 Some rules target specific people (e.g. holiday entitlement, below), not everyone. That needs a rule
@@ -46,11 +52,18 @@ demand `beta_dtsl`, so demand stays skill-keyed exactly as before — revisit on
 genuinely needs more than team+level.
 
 **Configurable org units (from the Sisqual merge).** Sisqual implies a level *above* team — the
-roster/*quadro* (see `SISQUAL-MERGE-PROPOSAL.md` S1). Rather than hardcode a fixed depth, let the client
+roster/*quadro* (see `sisqual/SISQUAL-MERGE-PROPOSAL.md` S1). Rather than hardcode a fixed depth, let the client
 **define their own org hierarchy** — `store > roster > team`, or just `store > team` — and have the schema
 adapt to however many levels they declare, each with date-ranged employee membership (the
 `teamAssignments` pattern generalised). This is the general form of the open S1 question (how many levels
 are real) and the concrete answer to "when the org model needs more than team+level".
+
+**Finer assignment axes (from the Sisqual merge).** Sisqual assigns, within a shift, both
+**responsibilities** (`InResponsabilityCollection` — cost-centre / group / pool) and **tasks**
+(`OutRosterTeamDayTasks` + `InpTaskAbilityCollection` — a `TaskID` over a sub-interval, mapped to an
+ability). v3 has only the day-level assignment plus a coarse per-slot skill (`y_wdts`). Both are
+sub-assignment layers this section would grow to cover (see `sisqual/SISQUAL-MERGE-SET-ASIDE.md`); revisit if a
+consumer needs intra-shift task/responsibility allocation.
 
 ## 5. Holiday entitlement
 
@@ -66,3 +79,49 @@ Nothing speaks v3 yet — `sisqual_hours_utils.py`, the four Sisqual solvers, `P
 `data/problems/` is still `schemaVersion: "2.2"`. The schema is only worth having once something is
 migrated onto it, so this is the item that unblocks the rest. Reconciling the Sisqual import/export
 format (notes L26) and the workflow/PM platform (L38) live here too.
+
+## 7. Warm-start & re-runs
+
+Re-optimising from an existing schedule — a Sisqual `InpRosterTeamDays` roster, or a prior v3 solution.
+Two pieces, both deferred until a warm-start consumer exists so neither is stored-but-ignored:
+
+- **Seed lock** — an optional per-day `locked` flag on the solution/seed (hard = the expanded problem's
+  `forced`; absent = a soft, re-optimizable seed), so a whole roster round-trips as one seed
+  (`sisqual/SISQUAL-MERGE-MEDIUM.md` M2.a). The solver honours locked days as fixed, via the pins-bypass-`T_d`
+  directive (§2).
+- **Package validator** — the validator checks one file at a time today (a solution gets only the
+  JSON-Schema layer, never cross-checked against its problem). A warm-start package (expanded problem +
+  demand.csv + optional solution/seed) must be verified as a whole: `problemId` matches, every solution
+  `assignmentId` resolves in that worker-day's `availability`, and locks agree across both sides — a
+  `forced`/`locked` day names the same assignment on each side, never one locking assignment A while
+  the other avoids it or locks B.
+
+## 8. Labour law
+
+v3.0 has no labour-law layer; the merge adds one (`sisqual/SISQUAL-MERGE-EASY.md` S3): named rule-sets — min
+rest between shifts (`DistanceBetweenShiftsInMinutes`, the rest cut in v3.0), max consecutive days, max
+weekly minutes, week start — assigned to employees date-ranged, with contracts refining **within**
+those bounds, never beyond. The level is decided; its schema shape and enforcement (the
+tighten-never-loosen check and the rules below, run by the validator and the §2 registry) are the
+build. Labour-law assignment is per-employee, so it also draws on §3.
+
+- **Rest-type accounting** (`sisqual/SISQUAL-MERGE-MEDIUM.md` M3) — whether v3's soft/hard day-off `kind` is
+  enough, or the rest *type* must be carried (Sisqual's *Folga Complementar* vs *Folga Obrigatória*),
+  hinges on whether labour law must **count each type over a window** — e.g. "≥1 obligatory rest per
+  week, ≥N complementary per period". If it does, the type becomes a labour-law-linked value and the
+  per-type counts — with `AbsenceCodeCountAsDayOff` (whether an absence counts toward the rest quota) —
+  are rules the registry enforces over the window. ⚑ Confirm with Sisqual whether their logic counts by
+  type before building it.
+
+## 9. Richer contracts & demand
+
+Sisqual carries contract and demand richness v3.0 does not (see `sisqual/SISQUAL-MERGE-SET-ASIDE.md`). Each is a
+small extension, deferred until a consumer reads it so none becomes stored-but-ignored:
+
+- **Per-weekday & holiday contract weights** — `WeightMonday…Sunday`, `WeightHolidayBusinessDay/Saturday/Sunday`:
+  a different shift length per weekday / per holiday type, where v3 has one `workMinutesPerDay`.
+- **Monthly / yearly caps** — `TotalMonthlyMinutes`, `TotalYearMinutes`, beyond v3's daily/weekly limits.
+  The cheapest to add — plain optional contract fields — but held back for the same reason as M5's
+  weekly target: no solver reads them yet.
+- **Workload demand mode** — `InpServiceLevelByDays` states demand as **minutes of workload**, not a
+  headcount (`alpha_dts`); a second demand unit alongside the headcount `demand.csv` (merge M1).

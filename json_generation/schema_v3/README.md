@@ -39,8 +39,8 @@ cross-reference and feasibility passes. Start a new problem from `templates/`.
 schemas/          the spec — three standalone JSON Schemas (declarative, expanded, solution)
 src/schema_v3/    the Python tooling — core (shared domain), transform, validator
 tests/            conformance suite
-docs/             FORMAT (formats + semantics), MIGRATION (2.6 -> 3.0), FUTURE (roadmap),
-                  SISQUAL-MERGE (vendor-format comparison + merge proposal)
+docs/             FORMAT (formats + semantics), MIGRATION (2.6 -> 3.0), FUTURE (roadmap)
+docs/sisqual/     Sisqual merge — tiered comparison, per-tier decisions, meeting guide
 examples/         two worked examples, each in both forms
 templates/        commented starting points
 reference/        maths spec, vendor docs, working notes
@@ -51,5 +51,6 @@ reference/        maths spec, vendor docs, working notes
 - [docs/FORMAT.md](docs/FORMAT.md) — CSV formats, cell semantics, and what v3.0 deliberately leaves out.
 - [docs/MIGRATION-2.6-to-3.0.md](docs/MIGRATION-2.6-to-3.0.md) — what changed and what will bite you.
 - [docs/FUTURE.md](docs/FUTURE.md) — what's next and why (break logic first).
-- [docs/SISQUAL-MERGE.md](docs/SISQUAL-MERGE.md) — how the Sisqual import/export format maps onto v3.0, tiered easy/medium/hard, with a merge proposal.
-- [docs/SISQUAL-MERGE-PROPOSAL.md](docs/SISQUAL-MERGE-PROPOSAL.md) — merged-schema proposal index: foundational decisions + per-tier decision files (easy/medium/hard/set-aside).
+- [docs/sisqual/SISQUAL-MERGE.md](docs/sisqual/SISQUAL-MERGE.md) — how the Sisqual import/export format maps onto v3.0, tiered easy/medium/hard, with a merge proposal.
+- [docs/sisqual/SISQUAL-MERGE-PROPOSAL.md](docs/sisqual/SISQUAL-MERGE-PROPOSAL.md) — merged-schema proposal index: foundational decisions + per-tier decision files (easy/medium/hard/set-aside).
+- [docs/sisqual/MEETING-GUIDE.md](docs/sisqual/MEETING-GUIDE.md) — questions to ask Sisqual, decisions to ratify, and what's deferred to future work.

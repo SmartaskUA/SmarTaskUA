@@ -68,7 +68,7 @@ row is stamped roster+team+employee, and service-level demand carries `RosterCod
 
 *Future generalization:* rather than hardcoding roster ⊃ team, let the client define their own org
 hierarchy depth (`store > roster > team`, or just `store > team`) and have the schema adapt — see
-`FUTURE.md` §4. That is the general form of this same S1 question.
+`../FUTURE.md` §4. That is the general form of this same S1 question.
 
 ### S2 — time: datetime-defined boundaries, grid-sliced interior, day-anchored
 
