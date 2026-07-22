@@ -30,7 +30,6 @@ import core  # sibling module in this package
 from core import (
     ALWAYS_UNAVAILABLE,
     MINUTES_PER_DAY,
-    WEEKDAY_NAMES,
     DomainError,
     active_period,
     iso,
