@@ -35,7 +35,68 @@ a solution cross-validator — are both **shipped** (see the status table above)
 
 ---
 
-## 2. Decisions to ratify (team sign-off)
+## 2. Schema-3 ↔ Sisqual, at a glance
+
+**Read the direction first:** Sisqual **Export** (`Inp*`) is data going *into* their generator — it is
+**the problem**. Sisqual **Import** (`Out*`) is the generator's result read *back* — it is **the
+solution**. The full field-level map is in [SISQUAL-MERGE.md](SISQUAL-MERGE.md); the digest:
+
+| concept | schema v3.0 | Sisqual |
+|---|---|---|
+| problem / board id | `metadata.problemId` | `RosterCode` |
+| horizon | `temporalScope {start, end}` | `InpRosterDetail.StartDate/EndDate` |
+| employee | `employees.list[].id` | `EmployeeCode` |
+| contract | `contracts` + `contractAssignments` | `InpContractCollection` + `InpEmployeeContracts` |
+| **skill** (+ level) | `teamAssignments {team, level}` | `InpEmployeeAbilities {AbilityID, Level}` |
+| **org grouping** | roster level *(S1, future)* | `TeamCode` |
+| demand | `demand.csv` (date, workPeriod, team, min/emp/max) | `InpServiceLevelBy{Shifts,Periods,Days}` |
+| per-day input | `schedule_input.csv` cells | `InpRosterTeamDays` (`ScheduleCode`, `Locked`, `AbsenceCode…`) |
+| shift | synthesized `assignmentCatalog` / `EQUALS` cell | `InpScheduleUsedCollection` (`ScheduleCode` + intervals) |
+| day-off / rest | `dayOffCodes` (preferable / unavailable) | `DayType` (Folga complementar / obrigatória) |
+| labour law | `labourLaw` level *(S3, future)* | `InpLabourLawCollection` |
+| **the result** | `solution` (`assignmentId`, `skillPerSlot`, `shortfalls`) | `OutRosterTeamDays` + `OutScheduleUseds` |
+| how-to-solve | — *(deferred, FUTURE §2)* | `InpGenerationRules` |
+
+The one alignment to flag out loud: **v3's `team` ≈ Sisqual's `Ability`** (the skill/coverage axis), and
+**Sisqual's `TeamCode` ≈ the future roster/org level** (M4 + S1). Per-field detail and the tier
+decisions are in the tier files.
+
+---
+
+## 3. Where Sisqual import/export enters — the packages
+
+v3 holds a problem in **packages**: a *declarative package* = `problem.json` + `demand.csv` +
+`schedule_input.csv`; an *expanded package* = `problem.expanded.json` + `demand.csv` (+ optional
+`solution.json`). Sisqual's two payloads dock onto these at the **adapter boundary** — everything inside
+is v3 files the validator already checks (single file, whole package, or a folder).
+
+```
+Sisqual EXPORT  (Inp*:  RosterDetail · MasterData · ServiceLevelDetail · GenerationRules)   = the PROBLEM
+    │  sisqual_import   (adapter — FUTURE §6)
+    ▼
+v3 DECLARATIVE package    problem.json + demand.csv + schedule_input.csv
+    │  transform.py       (menu-based problems skip this: ingest straight to expanded — H2)
+    ▼
+v3 EXPANDED package       problem.expanded.json + demand.csv  ──►  solver  ──►  v3 solution.json
+    ▲                                                                              │
+    │  sisqual_export     (adapter)                                                 │
+    └────────────  Sisqual IMPORT  (Out*: OutRosterTeamDays + OutScheduleUseds)  ◄──┘   = the RESULT
+```
+
+- **Export `Inp*` (the problem)** → the v3 **problem** side: a declarative package, or straight to an
+  **expanded** package for menu-based problems (H2). `InpScheduleUsedCollection` → the `assignmentCatalog`.
+- **Import `Out*` (the result)** → the v3 **solution** (`solution.json`) — cross-checked by
+  `validate_solution` against the expanded — and the **warm-start seed** on a re-run (M2 / FUTURE §7).
+- **`InpGenerationRules`** (how-to-solve) and the **set-aside features** (tasks, responsibilities, …) →
+  *not* package files; they ride an adapter **sidecar** only if a lossless round-trip is required.
+
+The boundary is the adapter (`sisqual_import.py` / `sisqual_export.py` — the edge adapter, FUTURE §6).
+So a full round-trip is: **Sisqual → adapt → v3 package *(validated)* → solve → v3 solution *(validated)*
+→ adapt → Sisqual.** The package/folder validation shipped this session is exactly the "validated" step.
+
+---
+
+## 4. Decisions to ratify (team sign-off)
 
 - **v3.0 is the base schema** — grow it to absorb Sisqual concepts tier by tier; not a forever-adapter,
   not a full superset.
@@ -51,7 +112,7 @@ a solution cross-validator — are both **shipped** (see the status table above)
 
 ---
 
-## 3. Questions for Sisqual
+## 5. Questions for Sisqual
 
 Each: **the question → why it matters → what the answer changes.**
 
@@ -77,7 +138,7 @@ Each: **the question → why it matters → what the answer changes.**
 
 ---
 
-## 4. What we do NOT have — future work
+## 6. What we do NOT have — future work
 
 Deliberately deferred, **not lost**. The point to make: **most Sisqual-only features map onto a roadmap
 v3 already wrote** — the merge *validates* the roadmap rather than adding to it. Full detail in
@@ -102,12 +163,14 @@ Two things worth calling out in the talk:
 
 ---
 
-## 5. Suggested flow
+## 7. Suggested flow
 
 1. **Progress** — what already shipped (§1), so the merge is grounded in working code.
-2. **The frame** — v3 as base, JSON+CSV hybrid; the merge grows two small hierarchies (org, rules) + a
+2. **The map & the plumbing** — how schema-3 lines up with Sisqual, and where their import/export enters
+   our packages (§2–§3).
+3. **The frame** — v3 as base, JSON+CSV hybrid; the merge grows two small hierarchies (org, rules) + a
    datetime time-model.
-3. **What merges cleanly** — the Easy tier + the decided Medium/Hard calls (ratify §2).
-4. **The real decisions** — the structural ones (roster, skill-vs-team, menu ingest) and the open
-   questions for Sisqual (§3).
-5. **Future work** — what's deferred and why it's the roadmap, not a gap (§4).
+4. **What merges cleanly** — the Easy tier + the decided Medium/Hard calls (ratify §4).
+5. **The real decisions** — the structural ones (roster, skill-vs-team, menu ingest) and the open
+   questions for Sisqual (§5).
+6. **Future work** — what's deferred and why it's the roadmap, not a gap (§6).
