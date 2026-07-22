@@ -243,3 +243,37 @@ them, but recording the windows lets the validator **re-verify** — every offer
 cover each `mustCover` window and avoid each `mustAvoid` window — so the constraint holds against the
 expanded file alone, even one produced or edited outside the transformer. `EQUALS` needs no such
 field: its day offers exactly the one (possibly split) assignment it names.
+
+## Solution form
+
+The third form (`schema-v3-solution.json`) is the **output** half: what a solver chose — the daily
+assignment each worker took (`x_wdh`), optionally the skill served per slot (`skillPerSlot`, `y_wdts`),
+and where coverage fell short (`shortfalls`, `z_dts`). It is also the shape a **warm-start seed** would
+take. A solution does not restate the problem; it *references* the expanded problem it solves:
+
+- `problemId` must equal that problem's `metadata.problemId`.
+- each day's `assignmentId` must be one of that worker-day's `availability.assignmentIds` (its `H_wd`),
+  or `null` for not working.
+- `workedPreferableDayOff` may be true only on a day the problem marked `dayOff: "preferable"`.
+- each `skillPerSlot.team` must be a team the worker holds that day, and its interval must lie inside
+  the chosen assignment.
+- `shortfalls` name a known team on an in-horizon date, on the grid.
+
+Because these references point into another file, the JSON Schema layer cannot enforce them. The
+validator does, given the problem to check against:
+
+```bash
+python3 src/schema_v3/validator.py solution.json --against problem.expanded.json
+# or, if a single *.expanded.json sits beside the solution, just:
+python3 src/schema_v3/validator.py solution.json
+```
+
+Without an expanded problem to resolve against, the validator runs the schema layer only and **warns**
+that the cross-checks were skipped. `examples/sisqual_example/solution.json` is a worked instance.
+
+Point the validator at a **folder** to validate whole packages — each directory's declarative /
+expanded / solution forms (plus their CSVs), with a cross-form check that they name the same problem:
+
+```bash
+python3 src/schema_v3/validator.py examples/      # validates every package under it
+```

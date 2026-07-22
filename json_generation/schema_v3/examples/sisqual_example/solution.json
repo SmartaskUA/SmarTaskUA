@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "3.0",
+  "form": "solution",
+  "problemId": "SISQUAL_OCTOBER_2025",
+  "producedBy": {
+    "algorithm": "ILP_Sisqual_Hours (illustrative)",
+    "solvedAt": "2025-09-20T14:32:00Z",
+    "solveTimeSeconds": 12.4,
+    "status": "feasible"
+  },
+  "objectiveValues": [
+    {
+      "goal": "minimize_shortages",
+      "value": 1
+    },
+    {
+      "goal": "skill_priority_weight",
+      "value": 87.0
+    },
+    {
+      "goal": "preferable_days_off_worked",
+      "value": 1
+    }
+  ],
+  "assignments": [
+    {
+      "employeeId": "20072412",
+      "days": [
+        {
+          "date": "2025-10-01",
+          "assignmentId": "A0001",
+          "skillPerSlot": [
+            {
+              "startMin": 510,
+              "endMin": 990,
+              "team": "Management"
+            }
+          ]
+        },
+        {
+          "date": "2025-10-05",
+          "assignmentId": "A0011",
+          "workedPreferableDayOff": true
+        },
+        {
+          "date": "2025-10-13",
+          "assignmentId": null
+        }
+      ]
+    },
+    {
+      "employeeId": "20066543",
+      "days": [
+        {
+          "date": "2025-10-02",
+          "assignmentId": "A0001"
+        }
+      ]
+    },
+    {
+      "employeeId": "20067009",
+      "days": [
+        {
+          "date": "2025-10-02",
+          "assignmentId": "A0024",
+          "skillPerSlot": [
+            {
+              "startMin": 510,
+              "endMin": 810,
+              "team": "Checkout"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "shortfalls": [
+    {
+      "date": "2025-10-05",
+      "team": "Management",
+      "startMin": 510,
+      "endMin": 990,
+      "shortfall": 1
+    }
+  ]
+}

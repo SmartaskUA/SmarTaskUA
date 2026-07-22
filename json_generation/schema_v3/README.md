@@ -27,18 +27,24 @@ contiguous block of their contracted length, not a named period).
 python3 src/schema_v3/validator.py examples/sisqual_example/problem.json -v
 python3 src/schema_v3/transform.py examples/sisqual_example/problem.json --stats
 python3 src/schema_v3/validator.py examples/sisqual_example/problem.expanded.json -v
-python3 tests/test_v3_conformance.py          # conformance suite
+python3 src/schema_v3/validator.py examples/                 # a folder -> every package
+pip install -r requirements.txt && pytest tests/             # the conformance suite
 ```
 
-Needs `jsonschema>=4.18` (`requirements.txt`); without it the validator still runs its
-cross-reference and feasibility passes. Start a new problem from `templates/`.
+The validator takes a single file (form-aware — a solution is cross-checked against a sibling
+`*.expanded.json`, or one named with `--against`) or a **folder**, which it validates package by
+package (a directory's declarative/expanded/solution forms + their CSVs). Runtime needs
+`jsonschema>=4.18` (`requirements.txt`); without it the validator still runs its cross-reference and
+feasibility passes. Tests additionally need `pytest` (also in `requirements.txt`, marked test-only).
+Start a new problem from `templates/`.
 
 ## Layout
 
 ```
 schemas/          the spec — three standalone JSON Schemas (declarative, expanded, solution)
-src/schema_v3/    the Python tooling — core (shared domain), transform, validator
-tests/            conformance suite
+src/schema_v3/    core (shared domain) · transform · validator (orchestrator + CLI) with the
+                  validation layers: common, validate_declarative, validate_expanded, validate_solution
+tests/            pytest suite, one file per type (schemas, core, transform, validator_*, packages, …)
 docs/             FORMAT (formats + semantics), MIGRATION (2.6 -> 3.0), FUTURE (roadmap)
 docs/sisqual/     Sisqual merge — tiered comparison, per-tier decisions, meeting guide
 examples/         two worked examples, each in both forms

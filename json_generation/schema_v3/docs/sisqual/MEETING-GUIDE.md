@@ -12,11 +12,13 @@ the [index](SISQUAL-MERGE-PROPOSAL.md)); this is the talking-points layer.
 
 | what | state |
 |---|---|
-| Multi-window cells `EQUALS` / `INCLUDE` / `EXCEPT` (`a-b,c-d…`) | done — 87/87 conformance tests |
+| Multi-window cells `EQUALS` / `INCLUDE` / `EXCEPT` (`a-b,c-d…`) | done — 96/96 conformance tests |
 | **Split-shift authoring** (`EQUALS:07:30-14:00,18:15-21:15` → one two-interval assignment) | done |
 | Overlap **coalescing** (`08:00-12:00,10:00-14:00` → `08:00-14:00`) | done |
 | `mustCover` / `mustAvoid` recorded in expanded form + validator re-checks them | done |
 | `forced` pin (expanded) — already present, now test-covered | done |
+| **Worked solution example** (`examples/sisqual_example/solution.json`) — the third form now has an instance | done |
+| **Solution cross-validator** (`validate_solution` / `--against`) — a solution is checked against its problem | done |
 
 **Merge analysis (all four tiers decided):**
 
@@ -28,8 +30,8 @@ the [index](SISQUAL-MERGE-PROPOSAL.md)); this is the talking-points layer.
 | Set aside | decided — defer-map + round-trip decision |
 
 Headline: **no open item forces a schema change now.** Everything left is either a *question for
-Sisqual* or *deferred future work*. Two things we *can* start immediately (a solution example + a
-solution cross-validator) are in [QUICK-WINS.md](QUICK-WINS.md).
+Sisqual* or *deferred future work*. The two immediately-buildable items — a worked solution example and
+a solution cross-validator — are both **shipped** (see the status table above).
 
 ---
 

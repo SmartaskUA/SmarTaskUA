@@ -89,12 +89,13 @@ Two pieces, both deferred until a warm-start consumer exists so neither is store
   `forced`; absent = a soft, re-optimizable seed), so a whole roster round-trips as one seed
   (`sisqual/SISQUAL-MERGE-MEDIUM.md` M2.a). The solver honours locked days as fixed, via the pins-bypass-`T_d`
   directive (§2).
-- **Package validator** — the validator checks one file at a time today (a solution gets only the
-  JSON-Schema layer, never cross-checked against its problem). A warm-start package (expanded problem +
-  demand.csv + optional solution/seed) must be verified as a whole: `problemId` matches, every solution
-  `assignmentId` resolves in that worker-day's `availability`, and locks agree across both sides — a
-  `forced`/`locked` day names the same assignment on each side, never one locking assignment A while
-  the other avoids it or locks B.
+- **Package validator** — the **solution↔problem cross-check is done**: `validator.py` now validates a
+  solution against its expanded problem (`validate_solution` / `--against`) — `problemId` matches, every
+  `assignmentId` resolves in that worker-day's `availability`, `skillPerSlot`/`workedPreferableDayOff`/
+  `shortfalls` are consistent (see `../FORMAT.md` "Solution form"). What remains for warm-start is
+  **lock-agreement** — once the `locked` seed flag exists, a `forced`/`locked` day must name the same
+  assignment on both sides (never one locking assignment A while the other avoids it or locks B) — and
+  bundling the whole package (expanded + demand.csv + seed) as one check.
 
 ## 8. Labour law
 

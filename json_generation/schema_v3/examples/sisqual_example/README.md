@@ -16,7 +16,11 @@ to see every v3.0 change on real data.
 python3 ../../src/schema_v3/validator.py problem.json -v
 python3 ../../src/schema_v3/transform.py problem.json --stats
 python3 ../../src/schema_v3/validator.py problem.expanded.json -v
+python3 ../../src/schema_v3/validator.py solution.json -v   # cross-checks against problem.expanded.json
 ```
+
+`solution.json` is a worked example of the third form — a solver's output, cross-validated against the
+expanded problem it solves (see `../../docs/FORMAT.md` "Solution form").
 
 ## What it demonstrates
 

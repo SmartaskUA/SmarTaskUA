@@ -147,8 +147,10 @@ docs point to "always skill" — if confirmed, the three-concept split is unambi
 ## M5 — Weekly minutes: target vs cap *(resolves E6b)*
 
 ✅ **Decision — carry both.** Add `weeklyContractedMinutes` (Sisqual `TotalWeeklyMinutes`, a **target** the
-generator aims to hit) alongside `maxMinutesPerWeek` (the **cap**). The field is added now for lossless
-round-trip; whether a solver *treats* it as a target is a **FUTURE §2** directive (enforcement deferred).
+generator aims to hit) alongside `maxMinutesPerWeek` (the **cap**). The field is added **with the adapter**
+(when a round-trip consumer exists) — not before, since nothing reads it yet and an unenforced field is the
+stored-but-ignored trap the v3 cleanup removed (same discipline as the monthly/yearly caps in SET-ASIDE).
+Whether a solver *treats* it as a target is then a **FUTURE §2** directive (enforcement deferred).
 
 ## M6 — Result bridge (the solution side)
 

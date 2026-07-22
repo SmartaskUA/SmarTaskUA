@@ -23,8 +23,7 @@ code preservation).
 | [Set aside](SISQUAL-MERGE-SET-ASIDE.md) | Sisqual-only features (tasks, responsibilities, rules…) | decided — defer map + round-trip |
 
 For the meeting itself — decisions to ratify, questions for Sisqual, and future work — see the
-[meeting guide](MEETING-GUIDE.md). For what's implementable immediately, see
-[quick wins](QUICK-WINS.md).
+[meeting guide](MEETING-GUIDE.md).
 
 ### Open choices to settle in the meeting
 

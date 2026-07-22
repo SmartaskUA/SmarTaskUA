@@ -12,6 +12,14 @@ python3 ../src/schema_v3/transform.py problem.json --stats
 python3 ../src/schema_v3/validator.py problem.expanded.json -v
 ```
 
+`problem_template.solution.json` is **not** an input you author — it shows the *output* form (a solver's
+result). Validating it cross-checks it against `problem_template.expanded.json`; validating the whole
+folder checks all three forms as one package:
+
+```bash
+python3 ../src/schema_v3/validator.py .
+```
+
 ## The four things that catch people
 
 **Minutes, not hours.** `workMinutesPerDay: 480`, and a schedule_input cell of `480`. A cell of

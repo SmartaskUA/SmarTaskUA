@@ -1,0 +1,81 @@
+{
+  "_comment": "v3.0 solution template -- a solver's output for problem_template. Delete every _comment key.",
+  "schemaVersion": "3.0",
+  "form": "solution",
+  "problemId": "MY_PROBLEM_2025",
+  "producedBy": {
+    "algorithm": "your-algorithm-name",
+    "solvedAt": "2025-10-01T10:00:00Z",
+    "solveTimeSeconds": 3.2,
+    "status": "feasible"
+  },
+  "_comment_objectiveValues": "reported components, for comparing runs; goals are free strings.",
+  "objectiveValues": [
+    {
+      "goal": "minimize_shortages",
+      "value": 1
+    },
+    {
+      "goal": "preferable_days_off_worked",
+      "value": 0
+    }
+  ],
+  "_comment_assignments": "one entry per employee; assignmentId must be one of that worker-day's H_wd in the expanded problem, or null. Days assigned nothing may be omitted.",
+  "assignments": [
+    {
+      "employeeId": "EMP001",
+      "days": [
+        {
+          "date": "2025-10-01",
+          "assignmentId": "A0001",
+          "skillPerSlot": [
+            {
+              "startMin": 510,
+              "endMin": 990,
+              "team": "TeamA"
+            }
+          ]
+        },
+        {
+          "date": "2025-10-04",
+          "assignmentId": null
+        }
+      ]
+    },
+    {
+      "employeeId": "EMP002",
+      "days": [
+        {
+          "date": "2025-10-01",
+          "assignmentId": "A0001"
+        }
+      ]
+    },
+    {
+      "employeeId": "EMP003",
+      "days": [
+        {
+          "date": "2025-10-01",
+          "assignmentId": "A0058",
+          "skillPerSlot": [
+            {
+              "startMin": 600,
+              "endMin": 900,
+              "team": "TeamA"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "_comment_shortfalls": "where coverage fell below alpha_dts [z_dts > 0]; a feasible solution may still under-cover.",
+  "shortfalls": [
+    {
+      "date": "2025-10-01",
+      "team": "TeamA",
+      "startMin": 510,
+      "endMin": 990,
+      "shortfall": 1
+    }
+  ]
+}
