@@ -45,6 +45,13 @@ verificar"*). v3.0 keeps v2.6's team+level model. V7 makes a change cheap: it dr
 demand `beta_dtsl`, so demand stays skill-keyed exactly as before — revisit only if the org model
 genuinely needs more than team+level.
 
+**Configurable org units (from the Sisqual merge).** Sisqual implies a level *above* team — the
+roster/*quadro* (see `SISQUAL-MERGE-PROPOSAL.md` S1). Rather than hardcode a fixed depth, let the client
+**define their own org hierarchy** — `store > roster > team`, or just `store > team` — and have the schema
+adapt to however many levels they declare, each with date-ranged employee membership (the
+`teamAssignments` pattern generalised). This is the general form of the open S1 question (how many levels
+are real) and the concrete answer to "when the org model needs more than team+level".
+
 ## 5. Holiday entitlement
 
 `calendar.holidays` lets a holiday carry its own demand; it does **not** decide who works — shops
