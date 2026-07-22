@@ -121,6 +121,28 @@ class Interval:
         return self.end - self.start
 
 
+def coalesce(intervals: list[Interval]) -> tuple[Interval, ...]:
+    """Merge overlapping or touching intervals into ascending, disjoint ones.
+
+    Two exact-presence blocks that overlap or abut unambiguously mean one
+    continuous stretch -- you cannot be in two places, and back-to-back presence
+    is continuous presence.  So a cell listing 08:00-12:00,10:00-14:00 is the same
+    request as 08:00-14:00, and 08:00-12:00,12:00-16:00 the same as 08:00-16:00.
+    A genuine split shift keeps a gap (07:30-14:00,18:15-21:15) and stays separate.
+    Normalising here keeps the result disjoint/ascending -- what the expanded
+    catalogue requires -- and makes the worked duration count each minute once.
+    """
+    ordered = sorted(intervals)
+    merged: list[Interval] = []
+    for iv in ordered:
+        if merged and iv.start <= merged[-1].end:
+            last = merged[-1]
+            merged[-1] = Interval(last.start, max(last.end, iv.end))
+        else:
+            merged.append(iv)
+    return tuple(merged)
+
+
 def slots_of(intervals: tuple[Interval, ...], slot_minutes: int) -> set[int]:
     """Timeslot indices covered by the intervals -- the model's delta_wdht."""
     covered: set[int] = set()
@@ -349,7 +371,7 @@ class CellRule:
 
     kind: str  # auto | exact_minutes | equals | include | except | dayoff | empty
     minutes: int | None = None
-    window: Interval | None = None
+    windows: tuple[Interval, ...] = ()  # one or more, for equals/include/except
     day_off: str | None = None  # preferable | unavailable
     reason: str | None = None
     code: str | None = None
@@ -371,14 +393,20 @@ def classify_cell(raw: str, problem: dict) -> CellRule:
     for op in ("EQUALS", "INCLUDE", "EXCEPT"):
         if upper.startswith(op + ":"):
             body = text.split(":", 1)[1]
-            try:
-                start, end = body.split("-")
-            except ValueError as exc:
-                raise DomainError(
-                    f"malformed time-window constraint {text!r}, expected {op}:HH:MM-HH:MM"
-                ) from exc
-            lo, hi = parse_range(start, end)
-            return CellRule(kind=op.lower(), window=Interval(lo, hi), code=text)
+            windows = []
+            for segment in body.split(","):
+                try:
+                    start, end = segment.split("-")
+                except ValueError as exc:
+                    raise DomainError(
+                        f"malformed time-window constraint {text!r}, expected "
+                        f"{op}:HH:MM-HH:MM (comma-separate ranges for several windows)"
+                    ) from exc
+                lo, hi = parse_range(start, end)
+                windows.append(Interval(lo, hi))
+            # Coalesce so overlapping/touching ranges become one, and the result is
+            # the disjoint, ascending set the rest of the pipeline expects.
+            return CellRule(kind=op.lower(), windows=coalesce(windows), code=text)
 
     if upper == "A":
         return CellRule(kind="auto", code=text)
@@ -462,16 +490,21 @@ def build_day_candidates(
     operating window -- which is how the live solver reads a numeric cell and why
     the sisqual example can ask a full-timer for 8h when no declared period is 8h.
 
-    The cell fixes the block's length, its position, or both:
-      A                     contract's daily minutes, any position
-      <minutes>             exactly that many minutes, any position
-      EQUALS:a-b            exactly that block
-      INCLUDE:a-b           contract length, must cover [a,b]
-      EXCEPT:a-b            contract length, must avoid [a,b]
+    The cell fixes the block's length, its position, or both.  Each window may be a
+    comma-separated list; EQUALS then pins a split shift, INCLUDE/EXCEPT apply to
+    every window:
+      A                      contract's daily minutes, any position
+      <minutes>              exactly that many minutes, any position
+      EQUALS:a-b[,c-d]       exactly these block(s) -- several = one split shift
+      INCLUDE:a-b[,c-d]      contract length, must cover every window
+      EXCEPT:a-b[,c-d]       contract length, must avoid every window
     """
     if rule.kind == "equals":
-        blocks = [rule.window]
-    elif rule.kind in ("auto", "include", "except", "exact_minutes") or (
+        # The windows are already coalesced and disjoint: they ARE the assignment,
+        # a single (possibly split) block of exact coverage.
+        return [Candidate(tuple(rule.windows))]
+
+    if rule.kind in ("auto", "include", "except", "exact_minutes") or (
         rule.kind == "dayoff" and rule.day_off == "preferable"
     ):
         # A preferable day off still gets the full menu: it is a soft wish, and the
@@ -485,22 +518,22 @@ def build_day_candidates(
             duration = contract["workMinutesPerDay"]
         blocks = generate_blocks(duration, window, slot)
         if rule.kind == "include":
-            blocks = [b for b in blocks if b.contains(rule.window)]
+            blocks = [b for b in blocks if all(b.contains(w) for w in rule.windows)]
         elif rule.kind == "except":
-            blocks = [b for b in blocks if not b.overlaps(rule.window)]
-    else:
-        return []
+            blocks = [b for b in blocks if not any(b.overlaps(w) for w in rule.windows)]
+        # An assignment is pure time coverage: a single contiguous block. It carries
+        # no link back to a demand bucket -- which bucket a block happens to align
+        # with is derivable from its intervals and adds no fact the model reads.
+        return [Candidate((block,)) for block in blocks]
 
-    # An assignment is pure time coverage: a single contiguous block. It carries no
-    # link back to a demand bucket -- which bucket a block happens to align with is
-    # derivable from its intervals and adds no fact the model reads.
-    return [Candidate((block,)) for block in blocks]
+    return []
 
 
 def required_duration(rule: CellRule, contract: dict | None) -> int | None:
     """Minutes of work the cell asks for, or None if it asks for none."""
     if rule.kind == "equals":
-        return rule.window.length
+        # Windows are coalesced, so summing counts each worked minute once.
+        return sum(w.length for w in rule.windows)
     if rule.kind == "exact_minutes":
         return rule.minutes
     if rule.kind in ("auto", "include", "except"):
@@ -530,26 +563,35 @@ def diagnose(
         return f"{min_to_hhmm(iv.start)}-{min_to_hhmm(iv.end)}"
 
     if rule.kind == "equals":
-        if not window.contains(rule.window):
-            return (
-                f"it asks for {clock(rule.window)}, which is outside the operating window "
-                f"{clock(window)}"
-            )
-        for bound in (rule.window.start, rule.window.end):
-            if bound % slot:
-                return f"the boundary {min_to_hhmm(bound)} is not on the {slot}-minute grid"
+        for w in rule.windows:
+            if not window.contains(w):
+                return (
+                    f"it asks for {clock(w)}, which is outside the operating window "
+                    f"{clock(window)}"
+                )
+        for w in rule.windows:
+            for bound in (w.start, w.end):
+                if bound % slot:
+                    return f"the boundary {min_to_hhmm(bound)} is not on the {slot}-minute grid"
 
     if rule.kind == "include":
-        if rule.window.length > duration:
+        # One contiguous block must contain every window, so it must span from the
+        # earliest start to the latest end -- if that exceeds the worked duration,
+        # no single block can hold them all.
+        lo = min(w.start for w in rule.windows)
+        hi = max(w.end for w in rule.windows)
+        cover = ", ".join(clock(w) for w in rule.windows)
+        if hi - lo > duration:
             return (
-                f"it asks to cover {clock(rule.window)} ({rule.window.length} min) but only "
-                f"{duration} min is worked that day, so no block can contain it"
+                f"it asks to cover {cover} (spanning {hi - lo} min) but only {duration} min is "
+                f"worked that day, so no single block can contain them"
             )
-        if not window.contains(rule.window):
-            return (
-                f"it asks to cover {clock(rule.window)}, which is outside the operating window "
-                f"{clock(window)}"
-            )
+        for w in rule.windows:
+            if not window.contains(w):
+                return (
+                    f"it asks to cover {clock(w)}, which is outside the operating window "
+                    f"{clock(window)}"
+                )
 
     if duration % slot:
         return (
@@ -563,8 +605,9 @@ def diagnose(
         )
 
     if rule.kind == "except":
+        avoid = ", ".join(clock(w) for w in rule.windows)
         return (
-            f"excluding {clock(rule.window)} leaves no room for a {duration}-min block inside "
+            f"excluding {avoid} leaves no room for a {duration}-min block inside "
             f"the operating window {clock(window)}"
         )
 

@@ -170,6 +170,20 @@ def transform(problem: dict, base: Path) -> tuple[dict, dict, list[Diagnostic]]:
                 stats["preferable"] -= 1
                 stats["unavailable"] += 1
 
+            # Record the INCLUDE/EXCEPT windows so the constraint survives into the
+            # expanded form and the validator can re-check it against this file
+            # alone.  Only on a workable day: an unavailable day offers no
+            # assignments, so there is nothing to cover or avoid.
+            if entry["assignmentIds"] and entry.get("dayOff") != "unavailable":
+                if rule.kind == "include":
+                    entry["mustCover"] = [
+                        {"startMin": w.start, "endMin": w.end} for w in rule.windows
+                    ]
+                elif rule.kind == "except":
+                    entry["mustAvoid"] = [
+                        {"startMin": w.start, "endMin": w.end} for w in rule.windows
+                    ]
+
             days_out.append(entry)
 
         availability.append({"employeeId": emp_id, "days": days_out})

@@ -2,12 +2,13 @@
 # Lines starting with '#' and blank lines are ignored, so these notes can stay.
 #
 # CELL VALUES
-#   A                    work the contract's workMinutesPerDay
-#   480                  work exactly 480 MINUTES  (v2.6 wrote "8" for 8 hours -- multiply by 60)
-#   EQUALS:HH:MM-HH:MM   work exactly this range
-#   INCLUDE:HH:MM-HH:MM  work at least this range; may extend
-#   EXCEPT:HH:MM-HH:MM   unavailable during this range
-#   VAC / NOT            always unavailable
+#   A                       work the contract's workMinutesPerDay
+#   480                     work exactly 480 MINUTES  (v2.6 wrote "8" for 8 hours -- multiply by 60)
+#   EQUALS:a-b[,c-d]        work exactly this block; comma-separate ranges for a split shift
+#   INCLUDE:a-b[,c-d]       one block covering ALL listed windows; may extend
+#   EXCEPT:a-b[,c-d]        unavailable during ALL listed windows
+#   (overlapping/touching ranges are merged: 08:00-12:00,10:00-14:00 == 08:00-14:00)
+#   VAC / NOT               always unavailable
 #   <your code>          must be declared in scheduleInput.dayOffCodes (kind preferable|unavailable)
 #   (blank)              NO ASSIGNMENTS -- not "unconstrained"
 #

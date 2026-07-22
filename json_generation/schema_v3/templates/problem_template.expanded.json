@@ -9,7 +9,7 @@
   },
   "generatedFrom": {
     "declarativeProblemId": "MY_PROBLEM_2025",
-    "generatedAt": "2026-07-21T19:52:58+01:00",
+    "generatedAt": "2026-07-22T14:20:49+01:00",
     "transformerVersion": "3.0.0"
   },
   "timeGrid": {
@@ -1834,6 +1834,12 @@
           "date": "2025-10-01",
           "assignmentIds": [
             "A0058"
+          ],
+          "mustCover": [
+            {
+              "startMin": 600,
+              "endMin": 900
+            }
           ]
         },
         {
@@ -1842,6 +1848,12 @@
             "A0059",
             "A0060",
             "A0061"
+          ],
+          "mustAvoid": [
+            {
+              "startMin": 840,
+              "endMin": 1320
+            }
           ]
         },
         {

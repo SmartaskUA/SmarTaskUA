@@ -161,6 +161,46 @@
                 "forced": {
                   "type": "string",
                   "description": "If present, this assignment is pre-committed for this date. Must also appear in assignmentIds."
+                },
+                "mustCover": {
+                  "type": "array",
+                  "description": "Time windows that EVERY assignment offered this day must fully cover, compiled from an INCLUDE cell. The transformer already filtered assignmentIds to satisfy this; the windows are recorded so the validator can re-verify coverage independently of the transformer -- a hand-edited or externally-produced expansion cannot silently drop an INCLUDE. Boundaries are minutes from the scheduling day's start.",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "startMin",
+                      "endMin"
+                    ],
+                    "properties": {
+                      "startMin": {
+                        "$ref": "#/$defs/minutes"
+                      },
+                      "endMin": {
+                        "$ref": "#/$defs/minutes"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "mustAvoid": {
+                  "type": "array",
+                  "description": "Time windows that NO assignment offered this day may overlap, compiled from an EXCEPT cell. Same verification purpose as mustCover: recorded so the EXCEPT constraint is re-checkable against the expanded file alone. Boundaries are minutes from the scheduling day's start.",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "startMin",
+                      "endMin"
+                    ],
+                    "properties": {
+                      "startMin": {
+                        "$ref": "#/$defs/minutes"
+                      },
+                      "endMin": {
+                        "$ref": "#/$defs/minutes"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
                 }
               },
               "if": {

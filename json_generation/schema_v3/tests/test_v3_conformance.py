@@ -278,7 +278,7 @@ check(f"12a. the 3 original v2.6 cells are all caught ({len(impossible)} found)"
 check("12b. EQUALS:08:00-16:00 diagnosed as outside the operating window",
       any("outside the operating window" in e and "EQUALS:08:00-16:00" in e for e in impossible))
 check("12c. INCLUDE:08:00-20:00 diagnosed as wider than the worked duration",
-      any("no block can contain it" in e and "INCLUDE:08:00-20:00" in e for e in impossible))
+      any("no single block can contain them" in e and "INCLUDE:08:00-20:00" in e for e in impossible))
 r = subprocess.run([PY, str(SRC / "transform.py"), str(td / "problem.json"),
                     "--strict", "-o", str(td / "out.json")], capture_output=True, text=True)
 check("12d. transform --strict exits non-zero on them", r.returncode != 0)
@@ -438,6 +438,113 @@ import core as _core
 _tc = json.loads((V3 / "examples/time_constraints_example/problem.json").read_text())
 _diags = _core.scan_feasibility(_tc, V3 / "examples/time_constraints_example")
 check("20e. core.scan_feasibility is the single diagnostics source", _diags == [])
+
+# 21. multi-window cells: split shift (EQUALS), cover-all (INCLUDE), avoid-all (EXCEPT),
+# coalescing, and the mustCover/mustAvoid re-check in the expanded form.
+_stub = {"scheduleInput": {"dayOffCodes": {}}}
+
+r_split = C.classify_cell("EQUALS:07:30-14:00,18:15-21:15", _stub)
+check("21a. EQUALS with a gap keeps two windows",
+      [(w.start, w.end) for w in r_split.windows] == [(450, 840), (1095, 1275)],
+      str(r_split.windows))
+cand = C.build_day_candidates(r_split, {"workMinutesPerDay": 480}, C.Interval(450, 1320), 15)
+check("21b. a split EQUALS builds ONE assignment with two intervals",
+      len(cand) == 1 and len(cand[0].intervals) == 2, str(cand))
+check("21c. split EQUALS required_duration sums both blocks (390+180)",
+      C.required_duration(r_split, None) == 570)
+check("21d. overlapping EQUALS coalesces to one interval (08:00-12:00,10:00-14:00 -> 480-840)",
+      [(w.start, w.end) for w in C.classify_cell("EQUALS:08:00-12:00,10:00-14:00", _stub).windows]
+      == [(480, 840)])
+check("21e. touching EQUALS coalesces (08:00-12:00,12:00-16:00 -> 480-960)",
+      [(w.start, w.end) for w in C.classify_cell("EQUALS:08:00-12:00,12:00-16:00", _stub).windows]
+      == [(480, 960)])
+
+_win = C.Interval(480, 1320)  # 08:00-22:00
+inc = C.classify_cell("INCLUDE:09:00-10:00,15:00-16:00", _stub)
+inc_blocks = C.build_day_candidates(inc, {"workMinutesPerDay": 480}, _win, 15)
+check("21f. multi-window INCLUDE: every built block covers BOTH windows",
+      inc_blocks and all(b.contains(C.Interval(540, 600)) and b.contains(C.Interval(900, 960))
+                         for c in inc_blocks for b in c.intervals), f"{len(inc_blocks)} blocks")
+# two edge windows an 8h block can actually leave free (one before, one after)
+exc = C.classify_cell("EXCEPT:08:00-08:30,21:30-22:00", _stub)
+exc_blocks = C.build_day_candidates(exc, {"workMinutesPerDay": 480}, _win, 15)
+check("21g. multi-window EXCEPT: every built block avoids BOTH windows",
+      exc_blocks and all(not b.overlaps(C.Interval(480, 510)) and not b.overlaps(C.Interval(1290, 1320))
+                         for c in exc_blocks for b in c.intervals), f"{len(exc_blocks)} blocks")
+
+# transform -> expanded: mustCover / mustAvoid recorded and satisfied, and it validates
+td = fixture(schedule_rows={("EMP002", "2030-10-02"): "INCLUDE:09:00-10:00,15:00-16:00",
+                            ("EMP003", "2030-10-02"): "EXCEPT:12:00-13:00"})
+subprocess.run([PY, str(SRC / "transform.py"), str(td / "problem.json"), "-o", str(td / "e.json")],
+               check=True, capture_output=True)
+_e = json.loads((td / "e.json").read_text())
+_cat = {a["id"]: a for a in _e["assignmentCatalog"]}
+def _covered(aid):
+    s = set()
+    for iv in _cat[aid]["intervals"]:
+        s |= set(range(iv["startMin"] // 15, iv["endMin"] // 15))
+    return s
+_d2 = {(e["employeeId"], d["date"]): d for e in _e["availability"] for d in e["days"]}
+inc_day = _d2[("EMP002", "2030-10-02")]
+check("21h. INCLUDE records mustCover with both windows",
+      [(w["startMin"], w["endMin"]) for w in inc_day.get("mustCover", [])] == [(540, 600), (900, 960)],
+      str(inc_day.get("mustCover")))
+check("21i. every offered assignment covers each mustCover window",
+      inc_day["assignmentIds"] and all(
+          set(range(540 // 15, 600 // 15)) <= _covered(a) and set(range(900 // 15, 960 // 15)) <= _covered(a)
+          for a in inc_day["assignmentIds"]))
+exc_day = _d2[("EMP003", "2030-10-02")]
+check("21j. EXCEPT records mustAvoid",
+      [(w["startMin"], w["endMin"]) for w in exc_day.get("mustAvoid", [])] == [(720, 780)],
+      str(exc_day.get("mustAvoid")))
+check("21k. the untampered expansion validates", run_validator(td / "e.json")["valid"])
+
+# independent re-check: tamper the expansion and the validator must catch it
+_bad = json.loads((td / "e.json").read_text())
+for e in _bad["availability"]:
+    for d in e["days"]:
+        if (e["employeeId"], d["date"]) == ("EMP002", "2030-10-02"):
+            d["mustCover"] = [{"startMin": 480, "endMin": 510}]  # 08:00-08:30, which no block need cover
+(td / "bad.json").write_text(json.dumps(_bad))
+_bres = run_validator(td / "bad.json")
+check("21l. validator catches an assignment that fails a mustCover window",
+      not _bres["valid"] and any("does not cover required window" in e for e in _bres["errors"]),
+      str(_bres["errors"][:2]))
+_bad2 = json.loads((td / "e.json").read_text())
+for e in _bad2["availability"]:
+    for d in e["days"]:
+        if (e["employeeId"], d["date"]) == ("EMP003", "2030-10-02") and d.get("assignmentIds"):
+            first = _cat[d["assignmentIds"][0]]["intervals"][0]
+            d["mustAvoid"] = [{"startMin": first["startMin"], "endMin": first["startMin"] + 15}]
+(td / "bad2.json").write_text(json.dumps(_bad2))
+_b2 = run_validator(td / "bad2.json")
+check("21m. validator catches an assignment that hits a mustAvoid window",
+      not _b2["valid"] and any("overlaps forbidden window" in e for e in _b2["errors"]),
+      str(_b2["errors"][:2]))
+shutil.rmtree(td, ignore_errors=True)
+
+# forced (pre-existing expanded feature): valid pin accepted, dangling pin rejected
+_sx = json.loads((V3 / "examples/sisqual_example/problem.expanded.json").read_text())
+_pinned = False
+for e in _sx["availability"]:
+    for d in e["days"]:
+        if not _pinned and d.get("assignmentIds"):
+            d["forced"] = d["assignmentIds"][0]
+            _pinned = True
+_ftd = Path(tempfile.mkdtemp())
+shutil.copy(V3 / "examples/sisqual_example/demand.csv", _ftd / "demand.csv")
+(_ftd / "e.json").write_text(json.dumps(_sx))
+check("21n. a forced pin equal to an offered assignment validates", run_validator(_ftd / "e.json")["valid"])
+for e in _sx["availability"]:
+    for d in e["days"]:
+        if d.get("forced"):
+            d["forced"] = "A9999"
+(_ftd / "bad.json").write_text(json.dumps(_sx))
+_fr = run_validator(_ftd / "bad.json")
+check("21o. a forced pin not in assignmentIds is rejected",
+      not _fr["valid"] and any("forced assignment" in e for e in _fr["errors"]), str(_fr["errors"][:2]))
+shutil.rmtree(_ftd, ignore_errors=True)
+
 
 print(f"\n{'='*60}\n{len(passed)} passed, {len(failed)} failed")
 if failed:

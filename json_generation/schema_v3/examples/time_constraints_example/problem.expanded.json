@@ -10,7 +10,7 @@
   },
   "generatedFrom": {
     "declarativeProblemId": "TIME_CONSTRAINTS_DEMO",
-    "generatedAt": "2026-07-21T19:52:58+01:00",
+    "generatedAt": "2026-07-22T14:20:49+01:00",
     "transformerVersion": "3.0.0"
   },
   "timeGrid": {
@@ -2365,6 +2365,12 @@
           "date": "2030-10-01",
           "assignmentIds": [
             "A0003"
+          ],
+          "mustCover": [
+            {
+              "startMin": 540,
+              "endMin": 1020
+            }
           ]
         },
         {
@@ -2704,6 +2710,12 @@
             "A0055",
             "A0056",
             "A0057"
+          ],
+          "mustAvoid": [
+            {
+              "startMin": 840,
+              "endMin": 1320
+            }
           ]
         },
         {
@@ -3101,6 +3113,12 @@
             "A0005",
             "A0006",
             "A0007"
+          ],
+          "mustCover": [
+            {
+              "startMin": 600,
+              "endMin": 900
+            }
           ]
         },
         {
@@ -3281,6 +3299,12 @@
             "A0055",
             "A0056",
             "A0057"
+          ],
+          "mustAvoid": [
+            {
+              "startMin": 360,
+              "endMin": 840
+            }
           ]
         },
         {
@@ -3682,6 +3706,12 @@
             "A0009",
             "A0010",
             "A0011"
+          ],
+          "mustCover": [
+            {
+              "startMin": 660,
+              "endMin": 900
+            }
           ]
         },
         {
@@ -3844,6 +3874,12 @@
             "A0055",
             "A0056",
             "A0057"
+          ],
+          "mustAvoid": [
+            {
+              "startMin": 480,
+              "endMin": 960
+            }
           ]
         },
         {
@@ -4235,6 +4271,12 @@
             "A0055",
             "A0056",
             "A0057"
+          ],
+          "mustAvoid": [
+            {
+              "startMin": 840,
+              "endMin": 1320
+            }
           ]
         },
         {
@@ -4366,6 +4408,12 @@
           "date": "2030-10-06",
           "assignmentIds": [
             "A0003"
+          ],
+          "mustCover": [
+            {
+              "startMin": 540,
+              "endMin": 1020
+            }
           ]
         },
         {

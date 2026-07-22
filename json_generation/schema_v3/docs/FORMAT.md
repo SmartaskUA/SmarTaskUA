@@ -105,14 +105,20 @@ employee_id,2025-10-01,2025-10-02,2025-10-03
 |---|---|
 | `A` | work the contract's `workMinutesPerDay` |
 | `480` | work exactly 480 **minutes** |
-| `EQUALS:HH:MM-HH:MM` | work exactly this range |
-| `INCLUDE:HH:MM-HH:MM` | work at least this range; may extend |
-| `EXCEPT:HH:MM-HH:MM` | unavailable during this range |
+| `EQUALS:a-b[,c-d…]` | work exactly this block; several comma-separated ranges = one **split shift** |
+| `INCLUDE:a-b[,c-d…]` | one block that covers **all** listed windows; may extend |
+| `EXCEPT:a-b[,c-d…]` | unavailable during **all** listed windows |
 | any other code | must be declared in `dayOffCodes` (`VAC`, `NOT` included) |
 | *(blank)* | **no assignments** — not "unconstrained" |
 
 Numeric cells are **minutes**. Values in 1–24 are rejected: they are v2.6 hours that were never
 migrated, and 8 minutes is not a shift.
+
+Each of `EQUALS`/`INCLUDE`/`EXCEPT` takes one or more comma-separated `HH:MM-HH:MM` ranges.
+Overlapping or touching ranges are **coalesced** into their union — `EQUALS:08:00-12:00,10:00-14:00`
+means `08:00-14:00`, and `08:00-12:00,12:00-16:00` means `08:00-16:00` — so only a real gap
+(`07:30-14:00,18:15-21:15`) yields a split shift. `INCLUDE`/`EXCEPT` record their windows into the
+expanded form (`mustCover`/`mustAvoid`, below) so the constraint stays re-checkable there.
 
 ### Day-off codes
 
@@ -190,9 +196,9 @@ cell fixes length, position, or both:
 |---|---|
 | `A` | contract length, every grid position |
 | `480` | 480 minutes, every grid position |
-| `EQUALS:a-b` | exactly that block |
-| `INCLUDE:a-b` | contract length, must cover `[a,b]` |
-| `EXCEPT:a-b` | contract length, must avoid `[a,b]` |
+| `EQUALS:a-b[,c-d…]` | exactly that block, or one split-shift assignment across the (coalesced) ranges |
+| `INCLUDE:a-b[,c-d…]` | contract length, must cover **every** window |
+| `EXCEPT:a-b[,c-d…]` | contract length, must avoid **every** window |
 | `preferable` day off | contract length, every grid position (it is only a wish) |
 
 This is what the live solver does with a numeric cell
@@ -230,3 +236,10 @@ non-operating time disappear rather than being silently reshaped.
 `availability` gives each worker's `H_wd` per day, plus `dayOff` (`preferable` | `unavailable`) and
 an optional `forced` pre-commitment. An `unavailable` day must carry no assignments; a
 `preferable` day must carry some.
+
+An `INCLUDE`/`EXCEPT` cell also records its windows on the worker-day as `mustCover`/`mustAvoid`
+(arrays of `{startMin, endMin}`). The transformer has already filtered `assignmentIds` to satisfy
+them, but recording the windows lets the validator **re-verify** — every offered assignment must
+cover each `mustCover` window and avoid each `mustAvoid` window — so the constraint holds against the
+expanded file alone, even one produced or edited outside the transformer. `EQUALS` needs no such
+field: its day offers exactly the one (possibly split) assignment it names.

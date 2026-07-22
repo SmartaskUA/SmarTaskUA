@@ -698,8 +698,12 @@ class SchemaValidator:
         for op in ("EQUALS", "INCLUDE", "EXCEPT"):
             if upper.startswith(op + ":"):
                 body = cell.split(":", 1)[1]
-                if "-" not in body or parse_range(*body.split("-", 1)) is None:
-                    r.error(f"{fname}: {eid} {day}: malformed {op} constraint {cell!r}")
+                # Each comma-separated segment must be a valid HH:MM-HH:MM range.
+                # Overlaps are not an error: the parser coalesces them.
+                for segment in body.split(","):
+                    if "-" not in segment or parse_range(*segment.split("-", 1)) is None:
+                        r.error(f"{fname}: {eid} {day}: malformed {op} constraint {cell!r}")
+                        return
                 return
         if upper == "A":
             return
@@ -807,6 +811,26 @@ class SchemaValidator:
                         "V7 constraint (6) unsatisfiable."
                     )
 
+                # mustCover / mustAvoid carry the INCLUDE / EXCEPT constraints into the
+                # expanded form so they are re-checkable here, not merely trusted from
+                # the transformer.  Validate the windows are well-formed once, then
+                # turn each into a slot-set to test every offered assignment against.
+                def window_slots(windows, label):
+                    out = []
+                    for w in windows:
+                        lo, hi = w["startMin"], w["endMin"]
+                        if hi <= lo:
+                            r.error(f"{eid} {iso_d}: {label} window {lo}-{hi} min has endMin <= startMin")
+                        for bound in (lo, hi):
+                            if bound % slot:
+                                r.error(f"{eid} {iso_d}: {label} boundary {bound} min is not on the "
+                                        f"{slot}-minute grid")
+                        out.append((lo, hi, set(range(lo // slot, hi // slot))))
+                    return out
+
+                cover = window_slots(day.get("mustCover", []), "mustCover")
+                avoid = window_slots(day.get("mustAvoid", []), "mustAvoid")
+
                 # H_wd must not reach outside the demanded window (V7, H_wd definition).
                 demanded = t_d.get(iso_d, set())
                 for aid in ids:
@@ -821,6 +845,18 @@ class SchemaValidator:
                             f"{eid} {iso_d}: assignment {aid} covers timeslots outside T_d; V7 "
                             "requires H_wd to exclude such assignments entirely"
                         )
+                    for lo, hi, wslots in cover:
+                        if not wslots <= covered:
+                            r.error(
+                                f"{eid} {iso_d}: assignment {aid} does not cover required window "
+                                f"{lo}-{hi} min (from an INCLUDE cell, recorded in mustCover)"
+                            )
+                    for lo, hi, wslots in avoid:
+                        if wslots & covered:
+                            r.error(
+                                f"{eid} {iso_d}: assignment {aid} overlaps forbidden window "
+                                f"{lo}-{hi} min (from an EXCEPT cell, recorded in mustAvoid)"
+                            )
 
                 if iso_d in open_days and origin:
                     dd = iso(iso_d)
