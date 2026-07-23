@@ -5,7 +5,8 @@
 #   A                       work the contract's workMinutesPerDay
 #   480                     work exactly 480 MINUTES  (v2.6 wrote "8" for 8 hours -- multiply by 60)
 #   EQUALS:a-b[,c-d]        work exactly this block; comma-separate ranges for a split shift
-#   INCLUDE:a-b[,c-d]       one block covering ALL listed windows; may extend
+#   INCLUDE:a-b[,c-d]       one block COVERING all listed windows (shift >= window); may extend
+#   WITHIN:a-b[,c-d]        one block fitting INSIDE one listed window (shift <= window)
 #   EXCEPT:a-b[,c-d]        unavailable during ALL listed windows
 #   (overlapping/touching ranges are merged: 08:00-12:00,10:00-14:00 == 08:00-14:00)
 #   VAC / NOT               always unavailable
@@ -21,5 +22,5 @@
 employee_id,2025-10-01,2025-10-02,2025-10-03,2025-10-04,2025-10-05
 EMP001,A,A,480,DO,VAC
 EMP002,EQUALS:08:30-16:30,A,FDO,A,VAC
-EMP003,INCLUDE:10:00-15:00,EXCEPT:14:00-22:00,A,A,DO
+EMP003,INCLUDE:10:00-15:00,EXCEPT:14:00-22:00,A,A,MED
 EMP004,300,A,DO,NOT,A

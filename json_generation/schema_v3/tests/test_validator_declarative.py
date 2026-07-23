@@ -3,7 +3,7 @@ raises exactly the right complaint -- feasibility diagnoses, structural infeasib
 tier-3 integrity, priorityOrder, and the removed-block / typo guards."""
 from helpers import SIS, assert_isolated, validate
 
-DEMAND_HEADER = ["date", "workPeriod", "team", "minimum", "empiric", "maximum", "start", "end"]
+DEMAND_HEADER = ["date", "workPeriod", "competency", "minimum", "empiric", "maximum", "start", "end"]
 _BASE = [[f"2030-10-0{d}", wp, "TeamA", 1, 2, 2, "", ""]
          for d in range(1, 8) for wp in ["MORNING", "AFTERNOON", "NIGHT"]]
 
@@ -54,6 +54,18 @@ def test_three_original_v26_cells_all_caught(make_fixture):
 def test_except_swallows_window(make_fixture):
     assert_isolated(validate(make_fixture(schedule_rows={("EMP003", "2030-10-01"): "EXCEPT:08:00-23:59"}) / "problem.json"),
                     "leaves no room")
+
+
+def test_within_window_too_short_is_infeasible(make_fixture):
+    # a 3h window can't hold an 8h block -> the opposite failure to INCLUDE:08:00-20:00
+    assert_isolated(validate(make_fixture(schedule_rows={("EMP003", "2030-10-01"): "WITHIN:08:00-11:00"}) / "problem.json"),
+                    "no window leaves room")
+
+
+def test_within_wide_window_is_feasible(make_fixture):
+    # an 8h block fits inside a 12h window -> clean (contrast INCLUDE:08:00-20:00, which is not)
+    rep = validate(make_fixture(schedule_rows={("EMP003", "2030-10-01"): "WITHIN:08:00-20:00"}) / "problem.json")
+    assert not any("can never be satisfied" in e for e in rep.errors), rep.errors[:2]
 
 
 def test_duration_exceeds_window(make_fixture):
@@ -141,23 +153,25 @@ def _po(entries):
 
 
 def test_priority_duplicate_order(make_fixture):
-    d = make_fixture(_po([{"order": 1, "team": "TeamA", "level": 1},
-                          {"order": 1, "team": "TeamA", "level": 2}]))
+    # both entries name a level the fixture's employees actually hold (all are level 1),
+    # so the duplicate order is the only finding
+    d = make_fixture(_po([{"order": 1, "competency": "TeamA", "level": 1},
+                          {"order": 1, "competency": "TeamA"}]))
     assert_isolated(validate(d / "problem.json"), "order must be unique")
 
 
-def test_priority_unknown_team(make_fixture):
-    assert_isolated(validate(make_fixture(_po([{"order": 1, "team": "Nope"}])) / "problem.json"),
-                    "unknown team")
+def test_priority_unknown_competency(make_fixture):
+    assert_isolated(validate(make_fixture(_po([{"order": 1, "competency": "Nope"}])) / "problem.json"),
+                    "unknown competency")
 
 
-def test_priority_bare_team_shadows_later(make_fixture):
-    d = make_fixture(_po([{"order": 1, "team": "TeamA"}, {"order": 2, "team": "TeamA", "level": 1}]))
+def test_priority_bare_competency_shadows_later(make_fixture):
+    d = make_fixture(_po([{"order": 1, "competency": "TeamA"}, {"order": 2, "competency": "TeamA", "level": 1}]))
     assert_isolated(validate(d / "problem.json"), "unreachable", want_error=False)
 
 
 def test_priority_order_drives_not_array_position(make_fixture):
-    d = make_fixture(_po([{"order": 2, "team": "TeamA", "level": 1}, {"order": 1, "team": "TeamA"}]))
+    d = make_fixture(_po([{"order": 2, "competency": "TeamA", "level": 1}, {"order": 1, "competency": "TeamA"}]))
     assert_isolated(validate(d / "problem.json"), "unreachable", want_error=False)
 
 

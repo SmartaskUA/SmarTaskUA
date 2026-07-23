@@ -36,7 +36,7 @@ def test_competency_levels_preserved_from_v26():
     v26 = json.loads((V3.parent / "schema_v2.6/examples/sisqual_example/problem.json").read_text())
     old = {e["id"]: {t["code"]: t["level"] for t in e["teams"]} for e in v26["employees"]["competency"]}
     new = json.loads((SIS / "problem.json").read_text())
-    newlv = {e["id"]: {t["team"]: t["level"] for t in e["teamAssignments"]} for e in new["employees"]["list"]}
+    newlv = {e["id"]: {t["competency"]: t["level"] for t in e["competencyAssignments"]} for e in new["employees"]["list"]}
     assert old == newlv
 
 
@@ -44,13 +44,13 @@ def test_fulltimers_hold_top_level_management():
     new = json.loads((SIS / "problem.json").read_text())
     fulltimers = [e for e in new["employees"]["list"]
                   if e["contractAssignments"][0]["contractType"] == "fullTime_8h"]
-    assert all(min(t["level"] for t in e["teamAssignments"]) <= 2 for e in fulltimers)
+    assert all(min(t["level"] for t in e["competencyAssignments"]) <= 2 for e in fulltimers)
 
 
 def test_priority_order_is_1to1_carryover_of_v26_ranks():
     v26 = json.loads((V3.parent / "schema_v2.6/examples/sisqual_example/problem.json").read_text())
     old_ranks = {h["team"]: h["rank"] for h in v26["demand"]["priorityHierarchy"]}
     new = json.loads((SIS / "problem.json").read_text())
-    new_order = {e["team"]: e["order"] for e in new["demand"]["priorityOrder"]}
+    new_order = {e["competency"]: e["order"] for e in new["demand"]["priorityOrder"]}
     assert old_ranks == new_order
     assert all("level" not in e for e in new["demand"]["priorityOrder"])

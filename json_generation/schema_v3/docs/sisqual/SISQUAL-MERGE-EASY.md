@@ -93,6 +93,13 @@ with why v3 dropped bare `HH:MM` — they remove the rollover guess entirely.)*
 Sisqual-native — the extra characters buy an explicit date on every boundary. *(The `date` + `HH:MM` pair
 was the lighter alternative; rejected for the clarity.)*
 
+⚠️ **Scope — decided in principle, built later.** The *decision* stands. Today's files are unchanged:
+`workPeriods[].timeRange` still uses the `hhmm` def and a work period with `end <= start` still *infers*
+midnight-crossing — the one inference S2 exists to remove. Building it touches the declarative schema
+(`$defs/hhmm` → a datetime boundary), the parser (`core.parse_range`), the templates and both examples,
+so it waits for ratification rather than pre-empting it. The minutes half of S2 — grid-sliced interior,
+day-anchored, `startMin`/`endMin` in the expanded and solution forms — **is** already in place.
+
 ### S3 — labour law as a ground-rules level above contracts
 
 ✅ **Decision — add a `labourLaw` level; contracts refine *within* it, never beyond it.** *(Promoted out of

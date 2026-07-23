@@ -32,7 +32,7 @@ ALWAYS_UNAVAILABLE = {"VAC", "NOT"}
 
 # Cell kinds that ask for work to happen. A day-off code does not, and a blank
 # cell does not, so neither can ever be "impossible".
-ASKS_FOR_WORK = frozenset({"auto", "exact_minutes", "equals", "include", "except"})
+ASKS_FOR_WORK = frozenset({"auto", "exact_minutes", "equals", "include", "within", "except"})
 # 'auto' means "fill this day from the contract IF the contract allows it", so it
 # is not a contradiction on a weekday the contract excludes. Naming a shift
 # explicitly on such a day is.
@@ -208,8 +208,8 @@ def active_period(assignments: list[dict], day: date | None, key: str):
     return None
 
 
-def active_teams(assignments: list[dict], day: date | None) -> list[dict]:
-    """All team assignments covering `day`."""
+def active_competencies(assignments: list[dict], day: date | None) -> list[dict]:
+    """All competency assignments covering `day`."""
     if day is None:
         return []
     return [entry for entry in assignments if _covers(entry, day)]
@@ -390,7 +390,7 @@ def classify_cell(raw: str, problem: dict) -> CellRule:
 
     upper = text.upper()
 
-    for op in ("EQUALS", "INCLUDE", "EXCEPT"):
+    for op in ("EQUALS", "INCLUDE", "EXCEPT", "WITHIN"):
         if upper.startswith(op + ":"):
             body = text.split(":", 1)[1]
             windows = []
@@ -496,7 +496,8 @@ def build_day_candidates(
       A                      contract's daily minutes, any position
       <minutes>              exactly that many minutes, any position
       EQUALS:a-b[,c-d]       exactly these block(s) -- several = one split shift
-      INCLUDE:a-b[,c-d]      contract length, must cover every window
+      INCLUDE:a-b[,c-d]      contract length, must cover every window (block >= window)
+      WITHIN:a-b[,c-d]       contract length, must fit inside one window (block <= window)
       EXCEPT:a-b[,c-d]       contract length, must avoid every window
     """
     if rule.kind == "equals":
@@ -504,7 +505,7 @@ def build_day_candidates(
         # a single (possibly split) block of exact coverage.
         return [Candidate(tuple(rule.windows))]
 
-    if rule.kind in ("auto", "include", "except", "exact_minutes") or (
+    if rule.kind in ("auto", "include", "within", "except", "exact_minutes") or (
         rule.kind == "dayoff" and rule.day_off == "preferable"
     ):
         # A preferable day off still gets the full menu: it is a soft wish, and the
@@ -519,6 +520,11 @@ def build_day_candidates(
         blocks = generate_blocks(duration, window, slot)
         if rule.kind == "include":
             blocks = [b for b in blocks if all(b.contains(w) for w in rule.windows)]
+        elif rule.kind == "within":
+            # Opposite of INCLUDE: the block must sit inside one of the windows
+            # (block <= window).  Several windows = split availability, so fitting
+            # inside any one suffices.
+            blocks = [b for b in blocks if any(w.contains(b) for w in rule.windows)]
         elif rule.kind == "except":
             blocks = [b for b in blocks if not any(b.overlaps(w) for w in rule.windows)]
         # An assignment is pure time coverage: a single contiguous block. It carries
@@ -536,7 +542,7 @@ def required_duration(rule: CellRule, contract: dict | None) -> int | None:
         return sum(w.length for w in rule.windows)
     if rule.kind == "exact_minutes":
         return rule.minutes
-    if rule.kind in ("auto", "include", "except"):
+    if rule.kind in ("auto", "include", "within", "except"):
         return contract["workMinutesPerDay"] if contract else None
     return None
 
@@ -592,6 +598,23 @@ def diagnose(
                     f"it asks to cover {clock(w)}, which is outside the operating window "
                     f"{clock(window)}"
                 )
+
+    if rule.kind == "within":
+        # The block must fit inside one window; the usable room in each is its
+        # overlap with the operating window.  If none leaves a duration-long gap,
+        # no block can be placed -- covers both "window too short" and "window
+        # outside opening hours".
+        def room(w: Interval) -> int:
+            return max(0, min(w.end, window.end) - max(w.start, window.start))
+
+        best = max(room(w) for w in rule.windows)
+        if duration > best:
+            within_desc = ", ".join(clock(w) for w in rule.windows)
+            return (
+                f"it asks to work inside {within_desc} but no window leaves room for a "
+                f"{duration}-min block (largest usable span is {best} min within the "
+                f"operating window {clock(window)})"
+            )
 
     if duration % slot:
         return (
@@ -682,7 +705,7 @@ def scan_feasibility(problem: dict, base: Path) -> list[Diagnostic]:
             # diagnosed -- the worker simply isn't available, by design.
             if rule.kind == "dayoff" and rule.day_off == "unavailable":
                 continue
-            if contract_id is None or not active_teams(emp["teamAssignments"], day):
+            if contract_id is None or not active_competencies(emp["competencyAssignments"], day):
                 continue
 
             if not day_allowed(contract, weekday):

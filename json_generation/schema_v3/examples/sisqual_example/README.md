@@ -5,7 +5,7 @@ to see every v3.0 change on real data.
 
 | | |
 |---|---|
-| Model | competency, 15 employees, 3 teams (Storage, Checkout, Management), levels 1–5 |
+| Workers | 15 employees, 3 competencies (Storage, Checkout, Management), levels 1–5 |
 | Horizon | 31 days, 2025-10-01 → 10-31, week starts Monday |
 | Contracts | 480 / 420 / 300 / 240 minutes per day |
 | Work periods | 9 (Storage 08:30–15:30; Checkout and Management slices across 10:00–22:00) |
@@ -36,7 +36,7 @@ expansion reports 1484 such exclusions.
 solver may schedule over them and pay ObjectiveFunction3. The 55 `VAC`/`Med`/`NOT`/`FDO` cells
 become `dayOff: "unavailable"` with no options at all.
 
-**`priorityOrder`.** v2.6 ranked teams only — Management > Checkout > Storage, with no entry
+**`priorityOrder`.** v2.6 ranked competencies only — Management > Checkout > Storage, with no entry
 naming a level. That carries over **1:1** as three entries and nothing is invented. Levels
 deliberately do not appear: v2.6 never said they mattered, and per-level ordering is the
 enterprise's to add. The solver derives the model's weights from the entry positions.
@@ -56,7 +56,7 @@ suggestive rather than conclusive. The maths is the authority.
 - v2.6's `constraints` and `optimization` (min_rest, algorithm, objectives) are dropped: v3.0
   defines the problem, not how to solve it — those solve directives reached no solver (see
   `../../docs/FUTURE.md`).
-- `weekDefinition` → `calendar.weekStart`. Static teams → one open-ended `teamAssignment`.
+- `weekDefinition` → `calendar.weekStart`. Static competencies → one open-ended `competencyAssignment`.
 - v2.6's `markingTypes` + `dayOffCodes` collapse into one `dayOffCodes` map keyed by code
   (`{DO: {kind: "preferable", …}}`); the numeric codes `"8"/"7"/"5"/"4"` are dropped — numeric
   cells are work requirements, never day-off codes.

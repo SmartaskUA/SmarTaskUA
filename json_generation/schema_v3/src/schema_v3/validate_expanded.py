@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Expanded-form validation: conformance with MathematicalDefinition7 that a JSON
 Schema cannot express -- the assignment catalog's intervals, H_wd within T_d,
-mustCover/mustAvoid re-checks, forced pins, and the per-week working-day count.
+mustCover/mustAvoid/mustBeWithin re-checks, forced pins, and the per-week working-day count.
 
 A mixin on SchemaValidator (reads self.problem/base/report). Imports core and the
 shared foundation; never transform.
@@ -118,6 +118,7 @@ class ExpandedChecksMixin:
 
                 cover = window_slots(day.get("mustCover", []), "mustCover")
                 avoid = window_slots(day.get("mustAvoid", []), "mustAvoid")
+                within = window_slots(day.get("mustBeWithin", []), "mustBeWithin")
 
                 # H_wd must not reach outside the demanded window (V7, H_wd definition).
                 demanded = t_d.get(iso_d, set())
@@ -145,6 +146,13 @@ class ExpandedChecksMixin:
                                 f"{eid} {iso_d}: assignment {aid} overlaps forbidden window "
                                 f"{lo}-{hi} min (from an EXCEPT cell, recorded in mustAvoid)"
                             )
+                    # WITHIN: the assignment must fit entirely inside one of the windows.
+                    if within and not any(covered <= wslots for _, _, wslots in within):
+                        allowed = ", ".join(f"{lo}-{hi} min" for lo, hi, _ in within)
+                        r.error(
+                            f"{eid} {iso_d}: assignment {aid} is not contained in any WITHIN "
+                            f"window ({allowed}, recorded in mustBeWithin)"
+                        )
 
                 if iso_d in open_days and origin:
                     dd = iso(iso_d)

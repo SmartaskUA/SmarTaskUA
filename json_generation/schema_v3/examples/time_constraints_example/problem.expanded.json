@@ -10,7 +10,7 @@
   },
   "generatedFrom": {
     "declarativeProblemId": "TIME_CONSTRAINTS_DEMO",
-    "generatedAt": "2026-07-22T14:20:49+01:00",
+    "generatedAt": "2026-07-23T15:14:06+01:00",
     "transformerVersion": "3.0.0"
   },
   "timeGrid": {
@@ -30,7 +30,6 @@
     ]
   },
   "employees": {
-    "model": "team",
     "list": [
       {
         "id": "EMP001",
@@ -42,9 +41,10 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
+            "level": 1,
             "start": "2030-10-01",
             "end": null
           }
@@ -60,9 +60,10 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
+            "level": 1,
             "start": "2030-10-01",
             "end": null
           }
@@ -78,9 +79,10 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
+            "level": 1,
             "start": "2030-10-01",
             "end": null
           }
@@ -96,9 +98,10 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
+            "level": 1,
             "start": "2030-10-01",
             "end": null
           }
@@ -114,9 +117,10 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
+            "level": 1,
             "start": "2030-10-01",
             "end": null
           }
@@ -132,9 +136,10 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
+            "level": 1,
             "start": "2030-10-01",
             "end": null
           }
@@ -150,9 +155,10 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
+            "level": 1,
             "start": "2030-10-01",
             "end": null
           }
@@ -168,9 +174,10 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
+            "level": 1,
             "start": "2030-10-01",
             "end": null
           }
@@ -181,7 +188,7 @@
   "demand": {
     "dataFile": "demand.csv",
     "organizationalUnits": {
-      "teams": [
+      "competencies": [
         {
           "code": "TeamA",
           "name": "Team A"
@@ -2055,49 +2062,13 @@
             "A0012",
             "A0013",
             "A0014",
-            "A0015",
-            "A0016",
-            "A0017",
-            "A0018",
-            "A0019",
-            "A0020",
-            "A0021",
-            "A0022",
-            "A0023",
-            "A0024",
-            "A0025",
-            "A0026",
-            "A0027",
-            "A0028",
-            "A0029",
-            "A0030",
-            "A0031",
-            "A0032",
-            "A0033",
-            "A0034",
-            "A0035",
-            "A0036",
-            "A0037",
-            "A0038",
-            "A0039",
-            "A0040",
-            "A0041",
-            "A0042",
-            "A0043",
-            "A0044",
-            "A0045",
-            "A0046",
-            "A0047",
-            "A0048",
-            "A0049",
-            "A0050",
-            "A0051",
-            "A0052",
-            "A0053",
-            "A0054",
-            "A0055",
-            "A0056",
-            "A0057"
+            "A0015"
+          ],
+          "mustBeWithin": [
+            {
+              "startMin": 480,
+              "endMin": 1200
+            }
           ]
         },
         {

@@ -20,10 +20,12 @@
     "end": "2025-10-05"
   },
 
-  "_comment_calendar": "weekStart may be any of the 7 days; it defines the weeks that per-week limits are counted over. Marking a holiday lets it carry its own demand in demand.csv -- it does NOT make anyone unavailable. hasEve says the day before is its eve, so that day can carry its own demand too; the eve's date needs no stating.",
+  "_comment_calendar": "weekStart may be any of the 7 days; it defines the weeks that per-week limits are counted over. Marking a holiday lets it carry its own demand in demand.csv -- it does NOT make anyone unavailable. hasEve says the day before is its eve, so that day can carry its own demand too; the eve's date needs no stating. A holiday may carry an optional code/name/description -- labels only, ignored by the solver.",
   "calendar": {
     "weekStart": "monday",
-    "holidays": [{ "date": "2025-10-05", "name": "A public holiday", "hasEve": true }]
+    "holidays": [
+      { "date": "2025-10-05", "code": "REP", "name": "Implantacao da Republica", "description": "Public holiday, 5 October", "hasEve": true }
+    ]
   },
 
   "_comment_contracts": "workMinutesPerDay is MINUTES. 8h = 480, 7h45 = 465.",
@@ -40,9 +42,8 @@
     ]
   },
 
-  "_comment_employees": "One list for both models. contractAssignments and teamAssignments are date-ranged: multiple, possibly discontinuous, must not overlap (per team). end: null = ongoing. LEVEL 1 IS THE HIGHEST.",
+  "_comment_employees": "contractAssignments and competencyAssignments are date-ranged: multiple, possibly discontinuous, must not overlap (per competency). end: null = ongoing. Every competency carries a level; LEVEL 1 IS THE HIGHEST.",
   "employees": {
-    "model": "competency",
     "list": [
       {
         "id": "EMP001",
@@ -50,8 +51,8 @@
         "contractAssignments": [
           { "contractType": "fullTime_8h", "start": "2025-01-01", "end": null }
         ],
-        "teamAssignments": [
-          { "team": "TeamA", "level": 1, "start": "2025-01-01", "end": null }
+        "competencyAssignments": [
+          { "competency": "TeamA", "level": 1, "start": "2025-01-01", "end": null }
         ]
       },
       {
@@ -60,8 +61,8 @@
         "contractAssignments": [
           { "contractType": "fullTime_8h", "start": "2025-01-01", "end": null }
         ],
-        "teamAssignments": [
-          { "team": "TeamA", "level": 1, "start": "2025-01-01", "end": null }
+        "competencyAssignments": [
+          { "competency": "TeamA", "level": 1, "start": "2025-01-01", "end": null }
         ]
       },
       {
@@ -70,8 +71,8 @@
         "contractAssignments": [
           { "contractType": "partTime_5h", "start": "2025-01-01", "end": null }
         ],
-        "teamAssignments": [
-          { "team": "TeamA", "level": 2, "start": "2025-01-01", "end": null }
+        "competencyAssignments": [
+          { "competency": "TeamA", "level": 2, "start": "2025-01-01", "end": null }
         ]
       },
       {
@@ -80,39 +81,42 @@
         "contractAssignments": [
           { "contractType": "partTime_4h", "start": "2025-01-01", "end": null }
         ],
-        "teamAssignments": [
-          { "team": "TeamA", "level": 2, "start": "2025-01-01", "end": null }
+        "competencyAssignments": [
+          { "competency": "TeamA", "level": 2, "start": "2025-01-01", "end": null }
         ]
       }
     ]
   },
 
   "_comment_demand": "workPeriods are DEMAND BUCKETS, not a menu of shifts. They say where coverage is wanted and, together, delimit the operating window. A worker works a contiguous block of their contracted length anywhere inside it.",
-  "_comment_priorityOrder": "demand.priorityOrder decides which team/level combinations get filled first -- it applies whenever present (no toggle). Sort by `order`, first match wins; a bare {team} matches any level, add `level` to name one exactly. Anything unlisted sorts last, tied. Ordering follows `order`, NOT array position. Level 1 is the HIGHEST, so {team, level: 1} means that team's most senior.",
+  "_comment_priorityOrder": "demand.priorityOrder decides which competency/level combinations get filled first -- it applies whenever present (no toggle). Sort by `order`, first match wins; a bare {competency} matches any level, add `level` to name one exactly. Anything unlisted sorts last, tied. Ordering follows `order`, NOT array position. Level 1 is the HIGHEST, so {competency, level: 1} means that competency's most senior.",
   "demand": {
     "dataFile": "demand_template.csv",
     "organizationalUnits": {
-      "teams": [{ "code": "TeamA", "name": "Team A" }]
+      "competencies": [
+        { "code": "TeamA", "name": "Team A", "description": "Optional longer text -- labels are ignored by the solver" }
+      ]
     },
     "workPeriods": [
-      { "code": "MORNING", "name": "Morning", "timeRange": { "start": "08:30", "end": "16:30" } },
+      { "code": "MORNING", "name": "Morning", "description": "Opening block", "timeRange": { "start": "08:30", "end": "16:30" } },
       { "code": "AFTERNOON", "name": "Afternoon", "timeRange": { "start": "14:00", "end": "22:00" } },
       { "code": "NIGHT", "name": "Night (crosses midnight)", "timeRange": { "start": "22:00", "end": "06:30" } }
     ],
     "priorityOrder": [
-      { "order": 1, "team": "TeamA", "level": 1, "description": "TeamA's most senior first" },
-      { "order": 2, "team": "TeamA", "description": "then anyone else in TeamA" }
+      { "order": 1, "competency": "TeamA", "level": 1, "description": "TeamA's most senior first" },
+      { "order": 2, "competency": "TeamA", "description": "then anyone else in TeamA" }
     ]
   },
 
-  "_comment_scheduleInput": "dayOffCodes declares AND classifies every non-standard cell code, keyed by code. kind is 'preferable' (may be worked at a penalty) or 'unavailable' (cannot). description is optional. Every custom code you use must be here, VAC/NOT included; VAC/NOT must be 'unavailable'.",
+  "_comment_scheduleInput": "dayOffCodes declares AND classifies every non-standard cell code, keyed by code. This is the palette: add a new day-off type by adding one entry here, then use its code in the CSV. kind is 'preferable' (may be worked at a penalty) or 'unavailable' (cannot). name/description are optional labels (ignored by the solver). Every custom code you use must be here, VAC/NOT included; VAC/NOT must be 'unavailable'.",
   "scheduleInput": {
     "dataFile": "schedule_input_template.csv",
     "dayOffCodes": {
-      "DO":  { "kind": "preferable",  "description": "Day off - may be swapped, at a penalty" },
-      "FDO": { "kind": "unavailable", "description": "Forced day off - cannot be changed" },
-      "VAC": { "kind": "unavailable", "description": "Vacation - cannot work" },
-      "NOT": { "kind": "unavailable", "description": "Unavailable - cannot work" }
+      "DO":  { "kind": "preferable",  "name": "Folga",             "description": "Day off - may be swapped, at a penalty" },
+      "FDO": { "kind": "unavailable", "name": "Folga obrigatoria", "description": "Forced day off - cannot be changed" },
+      "VAC": { "kind": "unavailable", "name": "Ferias",            "description": "Vacation - cannot work" },
+      "MED": { "kind": "unavailable", "name": "Baixa medica",      "description": "Medical leave - cannot work" },
+      "NOT": { "kind": "unavailable", "name": "Indisponivel",      "description": "Unavailable - cannot work" }
     }
   }
 }

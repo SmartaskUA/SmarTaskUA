@@ -43,7 +43,7 @@ class DeclarativeChecksMixin:
             else:
                 periods[wp["code"]] = None
 
-        teams = {t["code"] for t in p["demand"]["organizationalUnits"]["teams"]}
+        competencies = {t["code"] for t in p["demand"]["organizationalUnits"]["competencies"]}
         horizon = set(self.horizon())
 
         window = None
@@ -68,10 +68,10 @@ class DeclarativeChecksMixin:
                 )
 
         self._check_day_off_codes()
-        open_days = self._validate_demand_csv(periods, teams, horizon, slot)
+        open_days = self._validate_demand_csv(periods, competencies, horizon, slot)
         cells, date_cols = self._validate_schedule_csv(horizon, slot)
         self._check_structural(open_days, cells, date_cols)
-        self._check_reachability(open_days, cells, teams)
+        self._check_reachability(open_days, cells, competencies)
         self._feasibility_preflight()
 
     def _check_day_off_codes(self) -> None:
@@ -193,7 +193,7 @@ class DeclarativeChecksMixin:
                     )
                     break
 
-    def _check_reachability(self, open_days: set[str], cells: dict, teams: set) -> None:
+    def _check_reachability(self, open_days: set[str], cells: dict, competencies: set) -> None:
         """Tier 4: coverage that cannot be met, and configuration that does nothing."""
         p = self.problem
         r = self.report
@@ -206,14 +206,14 @@ class DeclarativeChecksMixin:
 
         held: dict[str, list] = defaultdict(list)
         for emp in p.get("employees", {}).get("list", []):
-            for ta in emp.get("teamAssignments", []):
-                held[ta.get("team")].append(ta)
-        for team in sorted(teams - set(held)):
-            r.warn(f"team {team!r} is defined but no employee holds it; its demand can never be met")
-        for team in sorted(set(held) - teams):
-            r.warn(f"team {team!r} is held by employees but never appears in demand")
+            for ca in emp.get("competencyAssignments", []):
+                held[ca.get("competency")].append(ca)
+        for competency in sorted(competencies - set(held)):
+            r.warn(f"competency {competency!r} is defined but no employee holds it; its demand can never be met")
+        for competency in sorted(set(held) - competencies):
+            r.warn(f"competency {competency!r} is held by employees but never appears in demand")
 
-        # minimum vs the number of people who could possibly serve that team that day
+        # minimum vs the number of people who could possibly serve that competency that day
         data_file = p.get("demand", {}).get("dataFile")
         if not data_file:
             return
@@ -225,8 +225,8 @@ class DeclarativeChecksMixin:
             rows_iter = list(csv.DictReader(core.csv_lines(fh)))
         for row in rows_iter:
             d = iso(row.get("date", ""))
-            team = row.get("team")
-            if not d or team not in held:
+            competency = row.get("competency")
+            if not d or competency not in held:
                 continue
             try:
                 minimum = float(row.get("minimum", 0))
@@ -235,15 +235,15 @@ class DeclarativeChecksMixin:
             if minimum <= 0:
                 continue
             headcount = sum(
-                1 for ta in held[team]
-                if iso(ta["start"]) and iso(ta["start"]) <= d
-                and (ta.get("end") is None or (iso(ta["end"]) and d <= iso(ta["end"])))
+                1 for ca in held[competency]
+                if iso(ca["start"]) and iso(ca["start"]) <= d
+                and (ca.get("end") is None or (iso(ca["end"]) and d <= iso(ca["end"])))
             )
-            if minimum > headcount and (team, headcount) not in flagged:
-                flagged.add((team, headcount))
+            if minimum > headcount and (competency, headcount) not in flagged:
+                flagged.add((competency, headcount))
                 r.warn(
-                    f"demand for team {team!r} asks for {minimum:g} on {row['date']} but only "
-                    f"{headcount} employee(s) hold that team then; a shortfall is guaranteed"
+                    f"demand for competency {competency!r} asks for {minimum:g} on {row['date']} but only "
+                    f"{headcount} employee(s) hold that competency then; a shortfall is guaranteed"
                 )
 
     def _feasibility_preflight(self) -> None:
@@ -266,7 +266,7 @@ class DeclarativeChecksMixin:
         for d in diagnostics:
             r.error(str(d))
 
-    def _validate_demand_csv(self, periods, teams, horizon, slot) -> set[str]:
+    def _validate_demand_csv(self, periods, competencies, horizon, slot) -> set[str]:
         r = self.report
         open_days: set[str] = set()
         data_file = self.problem["demand"].get("dataFile")
@@ -278,7 +278,7 @@ class DeclarativeChecksMixin:
             r.error(f"demand file not found: {path}")
             return open_days
 
-        required = ["date", "workPeriod", "team", "minimum", "empiric", "maximum"]
+        required = ["date", "workPeriod", "competency", "minimum", "empiric", "maximum"]
         seen = set()
         rows = 0
         with path.open(newline="") as fh:
@@ -313,10 +313,10 @@ class DeclarativeChecksMixin:
                     r.error(f"{path.name}:{lineno}: date {row['date']} is outside the target period")
                 if row["workPeriod"] not in periods:
                     r.error(f"{path.name}:{lineno}: unknown workPeriod {row['workPeriod']!r}")
-                if row["team"] not in teams:
-                    r.error(f"{path.name}:{lineno}: unknown team {row['team']!r}")
+                if row["competency"] not in competencies:
+                    r.error(f"{path.name}:{lineno}: unknown competency {row['competency']!r}")
 
-                key = (row["date"], row["workPeriod"], row["team"])
+                key = (row["date"], row["workPeriod"], row["competency"])
                 if key in seen:
                     r.error(f"{path.name}:{lineno}: duplicate row for {key}")
                 seen.add(key)
@@ -417,7 +417,7 @@ class DeclarativeChecksMixin:
         if not cell:
             return
         upper = cell.upper()
-        for op in ("EQUALS", "INCLUDE", "EXCEPT"):
+        for op in ("EQUALS", "INCLUDE", "EXCEPT", "WITHIN"):
             if upper.startswith(op + ":"):
                 body = cell.split(":", 1)[1]
                 # Each comma-separated segment must be a valid HH:MM-HH:MM range.

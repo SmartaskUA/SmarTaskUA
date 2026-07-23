@@ -28,7 +28,6 @@
     ]
   },
   "employees": {
-    "model": "team",
     "list": [
       {
         "id": "EMP001",
@@ -40,9 +39,10 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
+            "level": 1,
             "start": "2030-10-01",
             "end": null
           }
@@ -58,9 +58,10 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
+            "level": 1,
             "start": "2030-10-01",
             "end": null
           }
@@ -76,9 +77,10 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
+            "level": 1,
             "start": "2030-10-01",
             "end": null
           }
@@ -94,9 +96,10 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
+            "level": 1,
             "start": "2030-10-01",
             "end": null
           }
@@ -112,9 +115,10 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
+            "level": 1,
             "start": "2030-10-01",
             "end": null
           }
@@ -130,9 +134,10 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
+            "level": 1,
             "start": "2030-10-01",
             "end": null
           }
@@ -148,9 +153,10 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
+            "level": 1,
             "start": "2030-10-01",
             "end": null
           }
@@ -166,9 +172,10 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
+            "level": 1,
             "start": "2030-10-01",
             "end": null
           }
@@ -179,7 +186,7 @@
   "demand": {
     "dataFile": "demand.csv",
     "organizationalUnits": {
-      "teams": [
+      "competencies": [
         {
           "code": "TeamA",
           "name": "Team A"

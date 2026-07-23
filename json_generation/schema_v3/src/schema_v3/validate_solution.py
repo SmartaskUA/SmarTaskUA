@@ -67,7 +67,7 @@ class SolutionChecksMixin:
             )
 
         slot = exp.get("timeGrid", {}).get("slotMinutes", 15)
-        teams = {t["code"] for t in exp.get("demand", {}).get("organizationalUnits", {}).get("teams", [])}
+        competencies = {t["code"] for t in exp.get("demand", {}).get("organizationalUnits", {}).get("competencies", [])}
         catalog = {a["id"]: a for a in exp.get("assignmentCatalog", [])}
         emp_by_id = {e["id"]: e for e in exp.get("employees", {}).get("list", [])}
 
@@ -121,6 +121,21 @@ class SolutionChecksMixin:
                             "recorded; an infeasible/error run carries no assignments"
                         )
 
+                # A locked (hard) seed must actually name a shift -- you cannot pin a rest.
+                if day.get("locked") and aid is None:
+                    r.error(
+                        f"{eid} {iso_d}: locked is true but assignmentId is null; a locked day must "
+                        "name an assignment (express a fixed day off on the expanded side, not here)"
+                    )
+                # Seed <-> expanded merge coherence: a forced pin on the expanded side fixes the day,
+                # so a stated (seeded/locked) assignment may not disagree with it.
+                forced = a_day.get("forced")
+                if forced is not None and aid is not None and aid != forced:
+                    r.error(
+                        f"{eid} {iso_d}: assignmentId {aid!r} contradicts the expanded problem's "
+                        f"forced pin {forced!r} for this worker-day"
+                    )
+
                 if day.get("workedPreferableDayOff") and a_day.get("dayOff") != "preferable":
                     r.error(
                         f"{eid} {iso_d}: workedPreferableDayOff is true, but this day is not a "
@@ -129,31 +144,34 @@ class SolutionChecksMixin:
 
                 covered = covered_slots(aid) if aid is not None else set()
                 day_obj = date.fromisoformat(iso_d)
-                for sp in day.get("skillPerSlot", []):
-                    lo, hi, team = sp["startMin"], sp["endMin"], sp["team"]
-                    if team not in teams:
-                        r.error(f"{eid} {iso_d}: skillPerSlot team {team!r} is not a known team")
-                    elif team not in {t.get("team") for t in core.active_teams(emp.get("teamAssignments", []), day_obj)}:
-                        r.error(f"{eid} {iso_d}: skillPerSlot serves team {team!r}, which the worker does not hold that day")
+                for sp in day.get("competencyPerSlot", []):
+                    lo, hi, competency = sp["startMin"], sp["endMin"], sp["competency"]
+                    if competency not in competencies:
+                        r.error(f"{eid} {iso_d}: competencyPerSlot competency {competency!r} is not a known competency")
+                    elif competency not in {t.get("competency") for t in core.active_competencies(emp.get("competencyAssignments", []), day_obj)}:
+                        r.error(f"{eid} {iso_d}: competencyPerSlot serves competency {competency!r}, which the worker does not hold that day")
                     if hi <= lo:
-                        r.error(f"{eid} {iso_d}: skillPerSlot endMin {hi} is not after startMin {lo}")
+                        r.error(f"{eid} {iso_d}: competencyPerSlot endMin {hi} is not after startMin {lo}")
                     for bound in (lo, hi):
                         if bound % slot:
-                            r.error(f"{eid} {iso_d}: skillPerSlot boundary {bound} is not on the {slot}-minute grid")
+                            r.error(f"{eid} {iso_d}: competencyPerSlot boundary {bound} is not on the {slot}-minute grid")
                     if aid is not None and not set(range(lo // slot, hi // slot)) <= covered:
-                        r.error(f"{eid} {iso_d}: skillPerSlot {lo}-{hi} falls outside the chosen assignment {aid!r}")
+                        r.error(f"{eid} {iso_d}: competencyPerSlot {lo}-{hi} falls outside the chosen assignment {aid!r}")
 
         for sf in sol.get("shortfalls", []):
             if horizon and sf["date"] not in horizon:
                 r.error(f"shortfall on {sf['date']}: date is outside the problem's horizon")
-            if sf["team"] not in teams:
-                r.error(f"shortfall on {sf['date']}: unknown team {sf['team']!r}")
+            if sf["competency"] not in competencies:
+                r.error(f"shortfall on {sf['date']}: unknown competency {sf['competency']!r}")
             if sf["endMin"] <= sf["startMin"]:
                 r.error(f"shortfall on {sf['date']}: endMin {sf['endMin']} is not after startMin {sf['startMin']}")
             for bound in (sf["startMin"], sf["endMin"]):
                 if bound % slot:
                     r.error(f"shortfall on {sf['date']}: boundary {bound} is not on the {slot}-minute grid")
 
+        all_days = [d for a in sol.get("assignments", []) for d in a.get("days", [])]
         r.stats["employeesAssigned"] = len(sol.get("assignments", []))
+        r.stats["seededDays"] = sum(1 for d in all_days if d.get("assignmentId") is not None)
+        r.stats["lockedDays"] = sum(1 for d in all_days if d.get("locked"))
         r.stats["shortfalls"] = len(sol.get("shortfalls", []))
         r.stats["crossCheckedAgainst"] = exp_path.name

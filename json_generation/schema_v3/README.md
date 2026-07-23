@@ -15,7 +15,12 @@ A problem exists in two interchangeable forms that share every section but one:
 
 ```
 declarative problem  --[ src/schema_v3/transform.py ]-->  expanded problem  -->  solver  -->  solution
+                                                                 ▲                              │
+                                        seeded expanded  --[ src/schema_v3/merge.py ]------------┘
 ```
+
+A solution doubles as a partial **warm-start seed**: `merge.py` folds its `locked` days into a problem
+(declarative or expanded) as `forced` pins, producing a seeded — but otherwise ordinary — expanded.
 
 See [docs/FORMAT.md](docs/FORMAT.md) for the CSV formats and cell semantics — including the one
 that trips everyone up: **work periods are demand buckets, not shifts** (a worker works a
@@ -28,6 +33,8 @@ python3 src/schema_v3/validator.py examples/sisqual_example/problem.json -v
 python3 src/schema_v3/transform.py examples/sisqual_example/problem.json --stats
 python3 src/schema_v3/validator.py examples/sisqual_example/problem.expanded.json -v
 python3 src/schema_v3/validator.py examples/                 # a folder -> every package
+python3 src/schema_v3/merge.py examples/sisqual_example/problem.expanded.json \
+        examples/sisqual_example/solution.json --stats       # seed's locks -> forced pins
 pip install -r requirements.txt && pytest tests/             # the conformance suite
 ```
 
@@ -42,8 +49,9 @@ Start a new problem from `templates/`.
 
 ```
 schemas/          the spec — three standalone JSON Schemas (declarative, expanded, solution)
-src/schema_v3/    core (shared domain) · transform · validator (orchestrator + CLI) with the
-                  validation layers: common, validate_declarative, validate_expanded, validate_solution
+src/schema_v3/    core (shared domain) · transform · merge (seed's locks -> forced) · validator
+                  (orchestrator + CLI) with the validation layers: common, validate_declarative,
+                  validate_expanded, validate_solution
 tests/            pytest suite, one file per type (schemas, core, transform, validator_*, packages, …)
 docs/             FORMAT (formats + semantics), MIGRATION (2.6 -> 3.0), FUTURE (roadmap)
 docs/sisqual/     Sisqual merge — tiered comparison, per-tier decisions, meeting guide
@@ -59,4 +67,4 @@ reference/        maths spec, vendor docs, working notes
 - [docs/FUTURE.md](docs/FUTURE.md) — what's next and why (break logic first).
 - [docs/sisqual/SISQUAL-MERGE.md](docs/sisqual/SISQUAL-MERGE.md) — how the Sisqual import/export format maps onto v3.0, tiered easy/medium/hard, with a merge proposal.
 - [docs/sisqual/SISQUAL-MERGE-PROPOSAL.md](docs/sisqual/SISQUAL-MERGE-PROPOSAL.md) — merged-schema proposal index: foundational decisions + per-tier decision files (easy/medium/hard/set-aside).
-- [docs/sisqual/MEETING-GUIDE.md](docs/sisqual/MEETING-GUIDE.md) — questions to ask Sisqual, decisions to ratify, and what's deferred to future work.
+- [docs/sisqual/MEETING-GUIDE.md](docs/sisqual/MEETING-GUIDE.md) — slide-by-slide speaker guide for the merge meeting: decisions made, questions for Sisqual, and what's deferred to future work.

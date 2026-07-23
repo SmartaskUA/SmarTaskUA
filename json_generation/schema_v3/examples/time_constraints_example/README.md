@@ -1,11 +1,11 @@
 # time_constraints_example — time-window operators
 
-Small synthetic demo of `EQUALS` / `INCLUDE` / `EXCEPT` and a midnight-crossing night shift.
+Small synthetic demo of `EQUALS` / `INCLUDE` / `WITHIN` / `EXCEPT` and a midnight-crossing night shift.
 Migrated from the v2.6 example of the same name.
 
 | | |
 |---|---|
-| Model | team, 8 employees, 1 team (TeamA) |
+| Workers | 8 employees, 1 competency (TeamA), all level 1 |
 | Horizon | 7 days, 2030-10-01 → 10-07 |
 | Contracts | `fullTime_8h` → 480 minutes/day |
 | Work periods | MORNING 08:30–16:30, AFTERNOON 14:00–22:00, **NIGHT 22:00–06:30** |
@@ -29,8 +29,12 @@ and the operating window runs to 06:30 next day. `EQUALS:22:00-06:00` becomes th
 | `A` / `480` | every 480-minute block on the grid |
 | `EQUALS:08:30-16:30` | exactly one |
 | `INCLUDE:09:00-17:00` | exactly one — a 480-minute window leaves an 8h contract no slack |
-| `INCLUDE:11:00-15:00` | several — the block must cover 11:00–15:00 and may sit anywhere around it |
+| `INCLUDE:11:00-15:00` | several — the block must **cover** 11:00–15:00 and may sit anywhere around it |
+| `WITHIN:08:00-20:00` | several — the 8h block must sit **inside** the window (08:00 clamps to the 08:30 opening), e.g. 08:30–16:30 … 12:00–20:00. The opposite of `INCLUDE:08:00-20:00`, which no 8h block can cover |
 | `EXCEPT:14:00-22:00` | only the late-night ones; nothing fits before 14:00 |
+
+`WITHIN` is demonstrated on EMP001 2030-10-02 (`WITHIN:08:00-20:00`); the constraint is recorded in
+the expanded form as `mustBeWithin` and re-checked by the validator.
 
 **`D_wk` vs `U_wk`.** `DL` is classified `preferable` (10 cells, keep their options); EMP007's full
 week of `VAC` is `unavailable` (7 cells, no options).

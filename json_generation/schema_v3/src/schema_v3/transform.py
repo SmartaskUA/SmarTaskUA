@@ -100,7 +100,7 @@ def transform(problem: dict, base: Path) -> tuple[dict, dict, list[Diagnostic]]:
             rule = core.classify_cell(cells[emp_id].get(iso_d, ""), problem)
             contract_id = core.active_period(emp["contractAssignments"], day, "contractType")
             contract = contracts.get(contract_id) if contract_id else None
-            teams = core.active_teams(emp["teamAssignments"], day)
+            competencies = core.active_competencies(emp["competencyAssignments"], day)
 
             # Hard unavailability, in precedence order.  Each of these puts the day
             # in U_wk, which matters beyond this day: n_wk is derived by subtracting
@@ -119,8 +119,8 @@ def transform(problem: dict, base: Path) -> tuple[dict, dict, list[Diagnostic]]:
                 reason = rule.reason or "other"
             elif contract_id is None:
                 reason = "contract_inactive"
-            elif not teams:
-                reason = "other"  # no skill held on this date -> cannot cover anything
+            elif not competencies:
+                reason = "other"  # no competency held on this date -> cannot cover anything
 
             if reason is not None:
                 entry["assignmentIds"] = []
@@ -170,13 +170,17 @@ def transform(problem: dict, base: Path) -> tuple[dict, dict, list[Diagnostic]]:
                 stats["preferable"] -= 1
                 stats["unavailable"] += 1
 
-            # Record the INCLUDE/EXCEPT windows so the constraint survives into the
-            # expanded form and the validator can re-check it against this file
+            # Record the INCLUDE/WITHIN/EXCEPT windows so the constraint survives into
+            # the expanded form and the validator can re-check it against this file
             # alone.  Only on a workable day: an unavailable day offers no
-            # assignments, so there is nothing to cover or avoid.
+            # assignments, so there is nothing to cover, contain or avoid.
             if entry["assignmentIds"] and entry.get("dayOff") != "unavailable":
                 if rule.kind == "include":
                     entry["mustCover"] = [
+                        {"startMin": w.start, "endMin": w.end} for w in rule.windows
+                    ]
+                elif rule.kind == "within":
+                    entry["mustBeWithin"] = [
                         {"startMin": w.start, "endMin": w.end} for w in rule.windows
                     ]
                 elif rule.kind == "except":

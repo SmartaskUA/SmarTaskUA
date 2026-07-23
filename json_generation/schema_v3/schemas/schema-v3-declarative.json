@@ -79,9 +79,13 @@
                 ],
                 "description": "'preferable' [D_wk]: soft -- the worker would rather be off, but may be scheduled at a penalty. 'unavailable' [U_wk]: hard -- no assignment permitted. VAC and NOT, if used, must be 'unavailable'."
               },
+              "name": {
+                "type": "string",
+                "description": "Optional short human-readable label for this code."
+              },
               "description": {
                 "type": "string",
-                "description": "Optional human-readable label for this code."
+                "description": "Optional longer explanation. Author/UI label only -- the solver ignores it."
               }
             }
           },
@@ -89,11 +93,23 @@
             {
               "DO": {
                 "kind": "preferable",
-                "description": "Day off - may be swapped"
+                "name": "Folga",
+                "description": "Day off -- may be swapped"
+              },
+              "FDO": {
+                "kind": "unavailable",
+                "name": "Folga obrigatoria",
+                "description": "Mandatory day off -- cannot be scheduled"
               },
               "VAC": {
                 "kind": "unavailable",
+                "name": "Ferias",
                 "description": "Vacation"
+              },
+              "MED": {
+                "kind": "unavailable",
+                "name": "Baixa medica",
+                "description": "Medical leave"
               }
             }
           ]
@@ -128,7 +144,7 @@
     "competenceLevel": {
       "type": "integer",
       "minimum": 1,
-      "description": "Proficiency in a team [l_ws]. LEVEL 1 IS THE HIGHEST; larger numbers are progressively lower. A demand.priorityOrder entry naming level 1 therefore means that team's most senior workers."
+      "description": "Proficiency in a competency [l_ws]. LEVEL 1 IS THE HIGHEST; larger numbers are progressively lower. A demand.priorityOrder entry naming level 1 therefore means that competency's most senior workers."
     },
     "metadata": {
       "type": "object",
@@ -243,8 +259,17 @@
               "date": {
                 "$ref": "#/$defs/date"
               },
+              "code": {
+                "type": "string",
+                "description": "Optional short identifier for this holiday (e.g. 'XMAS'). Author/UI label only -- the solver ignores it; the date is the identifier."
+              },
               "name": {
-                "type": "string"
+                "type": "string",
+                "description": "Short human-readable label."
+              },
+              "description": {
+                "type": "string",
+                "description": "Optional longer explanation. Author/UI label only -- the solver ignores it."
               },
               "hasEve": {
                 "type": "boolean",
@@ -328,19 +353,10 @@
     "employees": {
       "type": "object",
       "required": [
-        "model",
         "list"
       ],
       "description": "The workers [W].",
       "properties": {
-        "model": {
-          "type": "string",
-          "enum": [
-            "team",
-            "competency"
-          ],
-          "description": "'team' = membership only; 'competency' = membership carries a proficiency level, where LEVEL 1 IS THE HIGHEST (see $defs/competenceLevel)."
-        },
         "list": {
           "type": "array",
           "minItems": 1,
@@ -349,7 +365,7 @@
             "required": [
               "id",
               "contractAssignments",
-              "teamAssignments"
+              "competencyAssignments"
             ],
             "properties": {
               "id": {
@@ -390,20 +406,21 @@
                   "additionalProperties": false
                 }
               },
-              "teamAssignments": {
+              "competencyAssignments": {
                 "type": "array",
                 "minItems": 1,
-                "description": "Which teams/skills [S_w] the worker holds over which dates. Holding several teams at once is normal; two entries for the SAME team must not overlap.",
+                "description": "Which competencies [S_w] the worker holds over which dates, each with a proficiency level. Holding several competencies at once is normal; two entries for the SAME competency must not overlap.",
                 "items": {
                   "type": "object",
                   "required": [
-                    "team",
+                    "competency",
+                    "level",
                     "start"
                   ],
                   "properties": {
-                    "team": {
+                    "competency": {
                       "type": "string",
-                      "description": "References demand.organizationalUnits.teams[].code"
+                      "description": "References demand.organizationalUnits.competencies[].code"
                     },
                     "level": {
                       "$ref": "#/$defs/competenceLevel"
@@ -443,18 +460,18 @@
       "properties": {
         "dataFile": {
           "type": "string",
-          "description": "Path to demand.csv, relative to this file. Columns: date,workPeriod,team,minimum,empiric,maximum,start,end -- see FORMAT.md."
+          "description": "Path to demand.csv, relative to this file. Columns: date,workPeriod,competency,minimum,empiric,maximum,start,end -- see FORMAT.md."
         },
         "organizationalUnits": {
           "type": "object",
           "required": [
-            "teams"
+            "competencies"
           ],
           "properties": {
-            "teams": {
+            "competencies": {
               "type": "array",
               "minItems": 1,
-              "description": "Teams. These are the skill dimension [S] for both employee models; demand is keyed on them.",
+              "description": "Competencies. These are the skill dimension [S]; demand is keyed on them and every worker holds them at a level.",
               "items": {
                 "type": "object",
                 "required": [
@@ -463,10 +480,16 @@
                 ],
                 "properties": {
                   "code": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Short identifier used to reference this competency (demand.csv, teamAssignments, priorityOrder)."
                   },
                   "name": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Short human-readable label."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Optional longer explanation. Author/UI label only -- the solver ignores it."
                   }
                 },
                 "additionalProperties": false
@@ -488,10 +511,16 @@
             ],
             "properties": {
               "code": {
-                "type": "string"
+                "type": "string",
+                "description": "Short identifier used to reference this work period (demand.csv workPeriod column)."
               },
               "name": {
-                "type": "string"
+                "type": "string",
+                "description": "Short human-readable label."
+              },
+              "description": {
+                "type": "string",
+                "description": "Optional longer explanation. Author/UI label only -- the solver ignores it."
               },
               "timeRange": {
                 "type": "object",
@@ -516,26 +545,26 @@
         },
         "priorityOrder": {
           "type": "array",
-          "description": "Which team/level combinations to fill first. Ordered and sparse: sort entries by `order` ascending, then the FIRST entry matching a worker's (team, level) decides their priority. A bare {team} matches any level of that team; add `level` to name one exactly. Any combination not listed sorts last, all tied -- listing is opt-in, and nothing is ever excluded from the model. This drives the objective that steers multi-skilled workers toward the combinations you care about [ObjectiveFunction2]: the solver derives the model's numeric weight [p_sl] from the matched entry's position, so no weights are authored here and there is no direction to get backwards.",
+          "description": "Which competency/level combinations to fill first. Ordered and sparse: sort entries by `order` ascending, then the FIRST entry matching a worker's (competency, level) decides their priority. A bare {competency} matches any level of that competency; add `level` to name one exactly. Any combination not listed sorts last, all tied -- listing is opt-in, and nothing is ever excluded from the model. This drives the objective that steers multi-skilled workers toward the combinations you care about [ObjectiveFunction2]: the solver derives the model's numeric weight [p_sl] from the matched entry's position, so no weights are authored here and there is no direction to get backwards.",
           "items": {
             "type": "object",
             "required": [
               "order",
-              "team"
+              "competency"
             ],
             "properties": {
               "order": {
                 "type": "integer",
                 "minimum": 1,
-                "description": "Evaluation position; lower is filled first. Must be unique. Ordering follows this field, NOT array position, so entries can be stored or displayed in any arrangement -- grouped by team, say -- without changing meaning. Gaps are allowed so entries can be inserted later."
+                "description": "Evaluation position; lower is filled first. Must be unique. Ordering follows this field, NOT array position, so entries can be stored or displayed in any arrangement -- grouped by competency, say -- without changing meaning. Gaps are allowed so entries can be inserted later."
               },
-              "team": {
+              "competency": {
                 "type": "string",
-                "description": "References demand.organizationalUnits.teams[].code"
+                "description": "References demand.organizationalUnits.competencies[].code"
               },
               "level": {
                 "$ref": "#/$defs/competenceLevel",
-                "description": "Optional. Omit to match any level of this team. Remember level 1 is the HIGHEST, so {team: X, level: 1} means X's most senior, not its juniors."
+                "description": "Optional. Omit to match any level of this competency. Remember level 1 is the HIGHEST, so {competency: X, level: 1} means X's most senior, not its juniors."
               },
               "description": {
                 "type": "string"

@@ -1,4 +1,4 @@
-date,workPeriod,team,minimum,empiric,maximum,start,end
+date,workPeriod,competency,minimum,empiric,maximum,start,end
 2025-10-01,STORAGE_0830_1530,Storage,1,1,1,,
 2025-10-01,CHECKOUT_1000_1100,Checkout,1,1,1,,
 2025-10-01,CHECKOUT_1100_2100,Checkout,1,1,1,,

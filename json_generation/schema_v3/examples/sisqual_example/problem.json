@@ -20,7 +20,9 @@
     "holidays": [
       {
         "date": "2025-10-05",
+        "code": "REP",
         "name": "Implantacao da Republica",
+        "description": "National holiday, 5 October",
         "hasEve": true
       }
     ]
@@ -50,7 +52,6 @@
     ]
   },
   "employees": {
-    "model": "competency",
     "list": [
       {
         "id": "20072412",
@@ -62,9 +63,9 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "Management",
+            "competency": "Management",
             "level": 1,
             "start": "2024-01-01",
             "end": null
@@ -81,9 +82,9 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "Management",
+            "competency": "Management",
             "level": 2,
             "start": "2024-01-01",
             "end": null
@@ -100,15 +101,15 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "Checkout",
+            "competency": "Checkout",
             "level": 1,
             "start": "2024-01-01",
             "end": null
           },
           {
-            "team": "Management",
+            "competency": "Management",
             "level": 3,
             "start": "2024-01-01",
             "end": null
@@ -125,15 +126,15 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "Checkout",
+            "competency": "Checkout",
             "level": 2,
             "start": "2024-01-01",
             "end": null
           },
           {
-            "team": "Management",
+            "competency": "Management",
             "level": 4,
             "start": "2024-01-01",
             "end": null
@@ -150,9 +151,9 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "Checkout",
+            "competency": "Checkout",
             "level": 1,
             "start": "2024-01-01",
             "end": null
@@ -169,15 +170,15 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "Checkout",
+            "competency": "Checkout",
             "level": 3,
             "start": "2024-01-01",
             "end": null
           },
           {
-            "team": "Management",
+            "competency": "Management",
             "level": 4,
             "start": "2024-01-01",
             "end": null
@@ -194,9 +195,9 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "Checkout",
+            "competency": "Checkout",
             "level": 2,
             "start": "2024-01-01",
             "end": null
@@ -213,9 +214,9 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "Checkout",
+            "competency": "Checkout",
             "level": 2,
             "start": "2024-01-01",
             "end": null
@@ -232,9 +233,9 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "Checkout",
+            "competency": "Checkout",
             "level": 2,
             "start": "2024-01-01",
             "end": null
@@ -251,9 +252,9 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "Checkout",
+            "competency": "Checkout",
             "level": 2,
             "start": "2024-01-01",
             "end": null
@@ -270,9 +271,9 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "Checkout",
+            "competency": "Checkout",
             "level": 3,
             "start": "2024-01-01",
             "end": null
@@ -289,9 +290,9 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "Checkout",
+            "competency": "Checkout",
             "level": 4,
             "start": "2024-01-01",
             "end": null
@@ -308,9 +309,9 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "Storage",
+            "competency": "Storage",
             "level": 1,
             "start": "2024-01-01",
             "end": null
@@ -327,9 +328,9 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "Checkout",
+            "competency": "Checkout",
             "level": 4,
             "start": "2024-01-01",
             "end": null
@@ -346,9 +347,9 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "Checkout",
+            "competency": "Checkout",
             "level": 5,
             "start": "2024-01-01",
             "end": null
@@ -360,18 +361,21 @@
   "demand": {
     "dataFile": "demand.csv",
     "organizationalUnits": {
-      "teams": [
+      "competencies": [
         {
           "code": "Storage",
-          "name": "Storage Team"
+          "name": "Storage Team",
+          "description": "Stockroom and replenishment"
         },
         {
           "code": "Checkout",
-          "name": "Checkout Team"
+          "name": "Checkout Team",
+          "description": "Tills and customer checkout"
         },
         {
           "code": "Management",
-          "name": "Management Team"
+          "name": "Management Team",
+          "description": "Shift supervision and store management"
         }
       ]
     },
@@ -452,17 +456,17 @@
     "priorityOrder": [
       {
         "order": 1,
-        "team": "Management",
+        "competency": "Management",
         "description": "Management Team - Highest priority"
       },
       {
         "order": 2,
-        "team": "Checkout",
+        "competency": "Checkout",
         "description": "Checkout Team - Medium priority"
       },
       {
         "order": 3,
-        "team": "Storage",
+        "competency": "Storage",
         "description": "Storage Team - Standard priority"
       }
     ]

@@ -78,6 +78,22 @@ def test_include_except_record_mustcover_mustavoid(make_fixture):
     assert validate(d / "e.json").ok                             # the untampered expansion validates
 
 
+def test_within_records_mustbewithin_and_blocks_sit_inside(make_fixture):
+    d = make_fixture(schedule_rows={("EMP002", "2030-10-02"): "WITHIN:08:00-20:00"})
+    subprocess.run([PY, str(SRC / "transform.py"), str(d / "problem.json"), "-o", str(d / "e.json")],
+                   check=True, capture_output=True)
+    e = load(d / "e.json")
+    cat = {a["id"]: a for a in e["assignmentCatalog"]}
+    d2 = {(x["employeeId"], dd["date"]): dd for x in e["availability"] for dd in x["days"]}
+    day = d2[("EMP002", "2030-10-02")]
+    assert [(w["startMin"], w["endMin"]) for w in day.get("mustBeWithin", [])] == [(480, 1200)]
+    # every offered assignment fits entirely inside 08:00-20:00 (480-1200 min)
+    assert day["assignmentIds"] and all(
+        all(480 <= iv["startMin"] and iv["endMin"] <= 1200 for iv in cat[a]["intervals"])
+        for a in day["assignmentIds"])
+    assert validate(d / "e.json").ok
+
+
 def test_transform_strict_exits_nonzero_on_impossible_cell(make_fixture):
     d = make_fixture(schedule_rows={("EMP001", "2030-10-04"): "EQUALS:08:00-16:00"})
     r = subprocess.run([PY, str(SRC / "transform.py"), str(d / "problem.json"), "--strict",

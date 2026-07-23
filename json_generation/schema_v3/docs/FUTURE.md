@@ -83,19 +83,27 @@ format (notes L26) and the workflow/PM platform (L38) live here too.
 ## 7. Warm-start & re-runs
 
 Re-optimising from an existing schedule — a Sisqual `InpRosterTeamDays` roster, or a prior v3 solution.
-Two pieces, both deferred until a warm-start consumer exists so neither is stored-but-ignored:
 
-- **Seed lock** — an optional per-day `locked` flag on the solution/seed (hard = the expanded problem's
+**Done — the solution doubles as a partial warm-start seed.**
+- **Seed lock** — the per-day `locked` flag on the solution/seed exists (hard = the expanded problem's
   `forced`; absent = a soft, re-optimizable seed), so a whole roster round-trips as one seed
-  (`sisqual/SISQUAL-MERGE-MEDIUM.md` M2.a). The solver honours locked days as fixed, via the pins-bypass-`T_d`
-  directive (§2).
-- **Package validator** — the **solution↔problem cross-check is done**: `validator.py` now validates a
-  solution against its expanded problem (`validate_solution` / `--against`) — `problemId` matches, every
-  `assignmentId` resolves in that worker-day's `availability`, `skillPerSlot`/`workedPreferableDayOff`/
-  `shortfalls` are consistent (see `../FORMAT.md` "Solution form"). What remains for warm-start is
-  **lock-agreement** — once the `locked` seed flag exists, a `forced`/`locked` day must name the same
-  assignment on both sides (never one locking assignment A while the other avoids it or locks B) — and
-  bundling the whole package (expanded + demand.csv + seed) as one check.
+  (`sisqual/SISQUAL-MERGE-MEDIUM.md` M2.a).
+- **Cross-check + lock-agreement** — `validator.py` validates a solution against its expanded problem
+  (`validate_solution` / `--against`): `problemId` matches, every `assignmentId` resolves in that
+  worker-day's `availability`, `competencyPerSlot`/`workedPreferableDayOff`/`shortfalls` are consistent,
+  a `locked` day names a real assignment, and a stated assignment may not contradict the expanded
+  `forced` pin (the seed↔expanded merge check — see `../FORMAT.md` "Solution form").
+
+- **The merge operation** — `merge.py` folds a seed's `locked` days into the problem as `forced` pins,
+  from **either** a declarative or an expanded input, and carries the demand CSV with the output. The
+  result is a plain expanded (no new fields), so existing consumers honour it unchanged.
+
+**Remaining.**
+- **Soft-seed warm start** — a soft (unlocked) seed is deliberately *not* merged: the expanded form has
+  no field for a non-binding starting point, and adding one before a solver reads it would be the
+  stored-but-ignored trap. It needs the solver plus the **soft-seed penalty** directive (§2). Locked
+  days additionally want the pins-bypass-`T_d` directive (§2) to be honoured regardless of demand.
+- **Whole-package bundling** — validating expanded + demand.csv + seed as one unit.
 
 ## 8. Labour law
 

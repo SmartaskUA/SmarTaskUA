@@ -14,7 +14,7 @@
       "value": 1
     },
     {
-      "goal": "skill_priority_weight",
+      "goal": "competency_priority_weight",
       "value": 87.0
     },
     {
@@ -29,11 +29,12 @@
         {
           "date": "2025-10-01",
           "assignmentId": "A0001",
-          "skillPerSlot": [
+          "locked": true,
+          "competencyPerSlot": [
             {
               "startMin": 510,
               "endMin": 990,
-              "team": "Management"
+              "competency": "Management"
             }
           ]
         },
@@ -63,11 +64,11 @@
         {
           "date": "2025-10-02",
           "assignmentId": "A0024",
-          "skillPerSlot": [
+          "competencyPerSlot": [
             {
               "startMin": 510,
               "endMin": 810,
-              "team": "Checkout"
+              "competency": "Checkout"
             }
           ]
         }
@@ -77,7 +78,7 @@
   "shortfalls": [
     {
       "date": "2025-10-05",
-      "team": "Management",
+      "competency": "Management",
       "startMin": 510,
       "endMin": 990,
       "shortfall": 1

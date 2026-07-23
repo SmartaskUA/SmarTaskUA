@@ -94,12 +94,11 @@ class CommonChecksMixin:
             r.error(f"duplicate contract id {dup!r}")
         contract_ids = set(ids)
 
-        teams = {t["code"] for t in p.get("demand", {}).get("organizationalUnits", {}).get("teams", [])}
+        competencies = {t["code"] for t in p.get("demand", {}).get("organizationalUnits", {}).get("competencies", [])}
 
         # employees
-        model = p.get("employees", {}).get("model")
         emp_ids: list[str] = []
-        levels_by_team: dict[str, set[int]] = defaultdict(set)
+        levels_by_competency: dict[str, set[int]] = defaultdict(set)
         for emp in p.get("employees", {}).get("list", []):
             eid = emp.get("id", "?")
             emp_ids.append(eid)
@@ -112,20 +111,19 @@ class CommonChecksMixin:
                         f"{a.get('contractType')!r}"
                     )
 
-            by_team: dict[str, list[dict]] = defaultdict(list)
-            for a in emp.get("teamAssignments", []):
-                if a.get("team") not in teams:
-                    r.error(f"employee {eid}: teamAssignments references unknown team {a.get('team')!r}")
-                by_team[a.get("team")].append(a)
-                if model == "competency":
-                    if "level" not in a:
-                        r.error(f"employee {eid}: team {a.get('team')!r} has no level "
-                                "(required for the competency model)")
-                    else:
-                        levels_by_team[a["team"]].add(a["level"])
-            # Overlap is only wrong within one team: holding two teams at once is normal.
-            for team, entries in by_team.items():
-                self._check_periods(entries, eid, f"teamAssignments[{team}]")
+            by_competency: dict[str, list[dict]] = defaultdict(list)
+            for a in emp.get("competencyAssignments", []):
+                if a.get("competency") not in competencies:
+                    r.error(f"employee {eid}: competencyAssignments references unknown competency {a.get('competency')!r}")
+                by_competency[a.get("competency")].append(a)
+                if "level" not in a:
+                    r.error(f"employee {eid}: competency {a.get('competency')!r} has no level "
+                            "(every competency assignment must carry one)")
+                else:
+                    levels_by_competency[a["competency"]].add(a["level"])
+            # Overlap is only wrong within one competency: holding two at once is normal.
+            for competency, entries in by_competency.items():
+                self._check_periods(entries, eid, f"competencyAssignments[{competency}]")
 
             # A worker with no contract on a working day cannot be scheduled; catching
             # gaps here is cheaper than discovering an infeasible model later.
@@ -135,7 +133,7 @@ class CommonChecksMixin:
         for dup in {i for i in emp_ids if emp_ids.count(i) > 1}:
             r.error(f"duplicate employee id {dup!r}")
 
-        self._check_priority_order(teams, levels_by_team, model)
+        self._check_priority_order(competencies, levels_by_competency)
 
         # v3.0 carries no solve directives: how to schedule (algorithm, objectives,
         # demand interpretation, rules) reached no solver and was cut. These blocks
@@ -153,11 +151,10 @@ class CommonChecksMixin:
 
         r.stats["employees"] = len(emp_ids)
         r.stats["contracts"] = len(contract_ids)
-        r.stats["teams"] = len(teams)
+        r.stats["competencies"] = len(competencies)
         r.stats["days"] = len(days)
-        r.stats["model"] = model
 
-    def _check_priority_order(self, teams, levels_by_team, model) -> None:
+    def _check_priority_order(self, competencies, levels_by_competency) -> None:
         """demand.priorityOrder: ordered, first-match-wins fill order."""
         r = self.report
         p = self.problem
@@ -173,13 +170,13 @@ class CommonChecksMixin:
                 # first-match-wins depend on array position, which is exactly what
                 # `order` exists to avoid.
                 r.error(f"demand.priorityOrder: duplicate order {o} "
-                        f"({seen_order[o].get('team')!r} and {e.get('team')!r}); order must be unique")
+                        f"({seen_order[o].get('competency')!r} and {e.get('competency')!r}); order must be unique")
             seen_order[o] = e
-            if e.get("team") not in teams:
-                r.error(f"demand.priorityOrder: unknown team {e.get('team')!r}")
-            elif model == "competency" and "level" in e:
-                if e["level"] not in levels_by_team.get(e["team"], set()):
-                    r.warn(f"demand.priorityOrder: no employee holds team {e['team']!r} at level "
+            if e.get("competency") not in competencies:
+                r.error(f"demand.priorityOrder: unknown competency {e.get('competency')!r}")
+            elif "level" in e:
+                if e["level"] not in levels_by_competency.get(e["competency"], set()):
+                    r.warn(f"demand.priorityOrder: no employee holds competency {e['competency']!r} at level "
                            f"{e['level']}; entry order {o} never matches anyone")
 
         # first match wins, so an earlier broader entry hides a later narrower one
@@ -187,11 +184,11 @@ class CommonChecksMixin:
                          key=lambda e: e["order"])
         for i, e in enumerate(ordered):
             for earlier in ordered[:i]:
-                if earlier.get("team") != e.get("team"):
+                if earlier.get("competency") != e.get("competency"):
                     continue
                 if earlier.get("level") is None or earlier.get("level") == e.get("level"):
-                    what = (f"team {e['team']!r}" if e.get("level") is None
-                            else f"team {e['team']!r} level {e['level']}")
+                    what = (f"competency {e['competency']!r}" if e.get("level") is None
+                            else f"competency {e['competency']!r} level {e['level']}")
                     r.warn(
                         f"demand.priorityOrder: entry order {e['order']} ({what}) is unreachable -- "
                         f"order {earlier['order']} already matches it, and the first match wins"

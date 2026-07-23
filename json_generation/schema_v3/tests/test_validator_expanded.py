@@ -1,6 +1,6 @@
 """Expanded-form validation: n_wk is non-negative on the shipped example, the
-mustCover/mustAvoid windows are re-checked against every offered assignment, and a
-forced pin must be one of the day's options."""
+mustCover/mustBeWithin/mustAvoid windows are re-checked against every offered
+assignment, and a forced pin must be one of the day's options."""
 import json
 import shutil
 import subprocess
@@ -13,10 +13,11 @@ def test_n_wk_non_negative_on_shipped_example():
 
 
 def _tampered_expansion(make_fixture, mutate):
-    """Transform a fixture with an INCLUDE + EXCEPT, then mutate the expansion."""
+    """Transform a fixture with an INCLUDE + WITHIN + EXCEPT, then mutate the expansion."""
     d = make_fixture(schedule_rows={
         ("EMP002", "2030-10-02"): "INCLUDE:09:00-10:00,15:00-16:00",
         ("EMP003", "2030-10-02"): "EXCEPT:12:00-13:00",
+        ("EMP004", "2030-10-02"): "WITHIN:08:00-20:00",
     })
     subprocess.run([PY, str(SRC / "transform.py"), str(d / "problem.json"), "-o", str(d / "e.json")],
                    check=True, capture_output=True)
@@ -45,6 +46,17 @@ def test_mustavoid_violation_is_caught(make_fixture):
                     day["mustAvoid"] = [{"startMin": first["startMin"], "endMin": first["startMin"] + 15}]
     rep = validate(_tampered_expansion(make_fixture, mutate))
     assert not rep.ok and any("overlaps forbidden window" in e for e in rep.errors), rep.errors[:2]
+
+
+def test_mustbewithin_violation_is_caught(make_fixture):
+    def mutate(e, _cat):
+        for x in e["availability"]:
+            for day in x["days"]:
+                if (x["employeeId"], day["date"]) == ("EMP004", "2030-10-02"):
+                    # shrink the window so no 8h assignment can fit inside it
+                    day["mustBeWithin"] = [{"startMin": 480, "endMin": 510}]
+    rep = validate(_tampered_expansion(make_fixture, mutate))
+    assert not rep.ok and any("not contained in any WITHIN window" in e for e in rep.errors), rep.errors[:2]
 
 
 def _sisqual_expanded_with_forced(tmp_path, forced_value):

@@ -1,4 +1,4 @@
-# demand.csv -- coverage wanted per date / work period / team.
+# demand.csv -- coverage wanted per date / work period / competency.
 # Lines starting with '#' and blank lines are ignored, so these notes can stay.
 #
 # minimum  workers desired (the model's alpha_dts)
@@ -9,7 +9,7 @@
 #   minimum <= empiric <= maximum, applied ONLY to non-zero values
 #   0 means UNSET, not zero workers:  "1,0,0" = minimum 1, no opinion above it
 #   start/end optionally override the work period's times for THIS ROW ONLY; both or neither
-#   one row per (date, workPeriod, team)
+#   one row per (date, workPeriod, competency)
 #   a MISSING row = that period is not operating that day
 #   a date with NO rows at all = closed; outside D_o, so outside every week
 #
@@ -19,7 +19,7 @@
 #
 # MIGRATING FROM v2.6: the header was minimum,ideal,estimated and `ideal` was the UPPER bound in
 # the MIDDLE column. empiric <- estimated, maximum <- ideal: the last two columns SWAP VALUES.
-date,workPeriod,team,minimum,empiric,maximum,start,end
+date,workPeriod,competency,minimum,empiric,maximum,start,end
 2025-10-01,MORNING,TeamA,1,2,3,,
 2025-10-01,AFTERNOON,TeamA,2,2,4,,
 2025-10-01,NIGHT,TeamA,1,1,1,,

@@ -43,7 +43,6 @@
     ]
   },
   "employees": {
-    "model": "competency",
     "list": [
       {
         "id": "EMP001",
@@ -55,9 +54,9 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
             "level": 1,
             "start": "2025-01-01",
             "end": null
@@ -74,9 +73,9 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
             "level": 1,
             "start": "2025-01-01",
             "end": null
@@ -93,9 +92,9 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
             "level": 2,
             "start": "2025-01-01",
             "end": null
@@ -112,9 +111,9 @@
             "end": null
           }
         ],
-        "teamAssignments": [
+        "competencyAssignments": [
           {
-            "team": "TeamA",
+            "competency": "TeamA",
             "level": 2,
             "start": "2025-01-01",
             "end": null
@@ -126,10 +125,11 @@
   "demand": {
     "dataFile": "demand_template.csv",
     "organizationalUnits": {
-      "teams": [
+      "competencies": [
         {
           "code": "TeamA",
-          "name": "Team A"
+          "name": "Team A",
+          "description": "Optional longer text -- labels are ignored by the solver"
         }
       ]
     },
@@ -137,6 +137,7 @@
       {
         "code": "MORNING",
         "name": "Morning",
+        "description": "Opening block",
         "timeRange": {
           "start": "08:30",
           "end": "16:30"
@@ -162,13 +163,13 @@
     "priorityOrder": [
       {
         "order": 1,
-        "team": "TeamA",
+        "competency": "TeamA",
         "level": 1,
         "description": "TeamA's most senior first"
       },
       {
         "order": 2,
-        "team": "TeamA",
+        "competency": "TeamA",
         "description": "then anyone else in TeamA"
       }
     ]
@@ -2019,7 +2020,9 @@
     "holidays": [
       {
         "date": "2025-10-05",
-        "name": "A public holiday",
+        "code": "REP",
+        "name": "Implantacao da Republica",
+        "description": "Public holiday, 5 October",
         "hasEve": true
       }
     ]

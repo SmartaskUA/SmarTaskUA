@@ -53,6 +53,25 @@ def test_multi_window_except_every_block_avoids_all():
     )
 
 
+def test_within_every_block_sits_inside_one_window():
+    win = C.Interval(480, 1320)  # 08:00-22:00 operating window
+    wit = C.classify_cell("WITHIN:08:00-20:00", STUB)  # 480-1200
+    assert wit.kind == "within"
+    blocks = C.build_day_candidates(wit, {"workMinutesPerDay": 480}, win, 15)
+    assert blocks and all(
+        C.Interval(480, 1200).contains(b) for c in blocks for b in c.intervals
+    )
+
+
+def test_within_window_shorter_than_contract_has_no_block():
+    win = C.Interval(480, 1320)
+    wit = C.classify_cell("WITHIN:08:00-11:00", STUB)  # 180 min < 480 contract
+    blocks = C.build_day_candidates(wit, {"workMinutesPerDay": 480}, win, 15)
+    assert blocks == []
+    why = C.diagnose(wit, {"workMinutesPerDay": 480}, win, 15, set(range(32, 88)), False)
+    assert "no window leaves room" in why
+
+
 def test_hwd_subset_of_t_d_dropped_not_truncated():
     prob = load(TC / "problem.json")
     periods = C.period_ranges(prob)

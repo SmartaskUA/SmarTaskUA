@@ -35,6 +35,20 @@ def test_core_imports_neither_tool():
     assert not any(s in src for s in ("import transform", "import validator"))
 
 
+def test_merge_orchestrates_above_transform_without_the_validator():
+    """merge may use transform (it sits above it), but never the validator."""
+    src = (SRC / "merge.py").read_text()
+    assert "import transform" in src
+    assert "import validator" not in src and "from validator" not in src
+
+
+def test_nothing_imports_merge():
+    """merge is a leaf orchestrator: core, transform and the validators ignore it."""
+    for mod in ["core.py", "transform.py", *VALIDATION_MODULES]:
+        src = (SRC / mod).read_text()
+        assert "import merge" not in src and "from merge" not in src, mod
+
+
 def test_feasibility_diagnostics_come_from_the_one_shared_scan():
     tc = json.loads((TC / "problem.json").read_text())
     assert core.scan_feasibility(tc, TC) == []
