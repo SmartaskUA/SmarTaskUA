@@ -9,7 +9,7 @@ from vacation_template_generation import create_vacation_cases
 
 
 def main():
-    employee_counts = (24, 48, 96, 192)
+    employee_counts = (24, 48, 96, 192, 384,)
     output_base = "data/vacationData_3shifts"
 
     for count in employee_counts:
