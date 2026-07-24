@@ -84,3 +84,21 @@ src/scheduler/rules.json
 /logs*.txt
 /Combinacoes
 /Processed_Extract
+
+learning_pygad/
+
+# Intermediate GA parameter-tuning experiments (superseded by results_final/)
+src/scheduler/algorithms/GA/results_demand_plus_surplus/
+src/scheduler/algorithms/GA/results_final_repair_aware/
+src/scheduler/algorithms/GA/results_final_repair_aware_p100/
+src/scheduler/algorithms/GA/results_final_repair_aware_p100_delta1/
+src/scheduler/algorithms/GA/results_final_repair_aware_p100_delta1_gen2000/
+
+# QIGA exploratory work (not part of the main GA pipeline)
+src/scheduler/algorithms/GA/results_qiga_compare/
+src/scheduler/algorithms/GA/run_postprocess.py
+src/scheduler/algorithms/GA/run_qiga_compare.py
+src/scheduler/algorithms/GA/ga_qiga.py
+src/scheduler/algorithms/GA/QIGA_Analysis.md
+src/scheduler/algorithms/GA/Results_GA_2Shifts.tex
+src/scheduler/algorithms/GA/Results_GA_3Shifts.tex
