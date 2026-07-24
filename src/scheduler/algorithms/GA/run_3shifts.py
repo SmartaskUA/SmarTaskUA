@@ -27,11 +27,11 @@ from ga3 import run_ga
 DATA_DIR = os.path.join(os.path.dirname(__file__), "../../../../data/problems")
 
 SCENARIOS = [
-    ("SMARTASK_3SHIFTS_2TEAMS_2025",  10),
-    #("SMARTASK_3SHIFTS_4TEAMS_2025",  3),
-    #("SMARTASK_3SHIFTS_8TEAMS_2025",  3),
-    #("SMARTASK_3SHIFTS_16TEAMS_2025",  2),
-    #("SMARTASK_3SHIFTS_32TEAMS_2025",  2),
+    ("SMARTASK_3SHIFTS_2TEAMS_2025",   10),
+    ("SMARTASK_3SHIFTS_4TEAMS_2025",   10),
+    ("SMARTASK_3SHIFTS_8TEAMS_2025",   10),
+    ("SMARTASK_3SHIFTS_16TEAMS_2025",   3),
+    ("SMARTASK_3SHIFTS_32TEAMS_2025",   3),
 ]
 
 PARAMS = {
@@ -80,11 +80,26 @@ def run_scenario(scenario: str, n_runs: int, summary_rows: list) -> None:
     min_results  = []
     elapsed_list = []
 
-    with open(csv_path, "w", newline="") as csv_file:
+    done_runs  = set()
+    write_mode = "w"
+    if os.path.exists(csv_path):
+        with open(csv_path, newline="") as f:
+            for row in csv.DictReader(f):
+                done_runs.add(int(row["run"]))
+                min_results.append(int(row["min_coverage_unmet"]))
+                elapsed_list.append(float(row["elapsed_s"]))
+        write_mode = "a"
+
+    with open(csv_path, write_mode, newline="") as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=CSV_FIELDS)
-        writer.writeheader()
+        if write_mode == "w":
+            writer.writeheader()
 
         for run_idx in range(1, n_runs + 1):
+            if run_idx in done_runs:
+                print(f"  Run {run_idx}/{n_runs} already done, skipping.")
+                continue
+
             print(f"  Run {run_idx}/{n_runs} ...", flush=True)
 
             t0 = time.time()

@@ -1,15 +1,16 @@
 """
-run_final.py — Final validation runs for all 2-shift scenarios.
+run_final.py — GA validation runs for all 2-shift scenarios.
 
 Configuration: nbts + demand_guided + crossover_prob=0.8
-patience=50 for 2-team instance (SIMPLE), 100 for all others.
+patience=100 for all scenarios, early_stop_min_delta=1.
 
 Usage:
     python run_final.py
 
 Output:
-    results_final/<scenario>/final_results.csv
+    results_final/<scenario>/ga_results.csv
     results_final/<scenario>/convergence/run*.npy
+    results_final/<scenario>/schedules/run*.npy
 """
 
 import os
@@ -21,7 +22,7 @@ from problem import load_problem, _compute_penalties
 from ga import run_ga
 
 SCENARIOS = [
-    {"data_dir": "SMARTASK_SIMPLE_2025",  "n_runs": 10, "early_stop_patience": 50,  "n_workers": None},
+    #{"data_dir": "SMARTASK_SIMPLE_2025",  "n_runs": 10, "early_stop_patience": 100, "n_workers": None},
     {"data_dir": "SMARTASK_4TEAMS_2025",  "n_runs": 10, "early_stop_patience": 100, "n_workers": None},
     {"data_dir": "SMARTASK_8TEAMS_2025",  "n_runs": 10, "early_stop_patience": 100, "n_workers": None},
     {"data_dir": "SMARTASK_16TEAMS_2025", "n_runs": 10, "early_stop_patience": 100, "n_workers": None},
@@ -29,13 +30,14 @@ SCENARIOS = [
 ]
 
 BASE_PARAMS = {
-    "crossover_type":  "nbts",
-    "mutation_type":   "demand_guided",
-    "crossover_prob":  0.8,
-    "pop_size":        200,
-    "gene_mut_prob":   0.003,
-    "tournament_size": 7,
-    "num_generations": 1000,
+    "crossover_type":       "nbts",
+    "mutation_type":        "demand_guided",
+    "crossover_prob":       0.8,
+    "pop_size":             200,
+    "gene_mut_prob":        0.003,
+    "tournament_size":      7,
+    "num_generations":      1000,
+    "early_stop_min_delta": 1,
 }
 
 CSV_FIELDS = [
@@ -49,7 +51,9 @@ def run_scenario(data_dir, n_runs, patience, n_workers):
 
     output_dir = os.path.join("results_final", data_dir)
     conv_dir   = os.path.join(output_dir, "convergence")
-    os.makedirs(conv_dir, exist_ok=True)
+    sched_dir  = os.path.join(output_dir, "schedules")
+    os.makedirs(conv_dir,  exist_ok=True)
+    os.makedirs(sched_dir, exist_ok=True)
 
     print(f"\n{'='*56}")
     print(f"  {data_dir}  (patience={patience}, runs={n_runs})")
@@ -60,7 +64,7 @@ def run_scenario(data_dir, n_runs, patience, n_workers):
     n_days = problem_data["n_days"]
     print(f"  {n_emp} employees × {n_days} days\n")
 
-    csv_path   = os.path.join(output_dir, "final_results.csv")
+    csv_path   = os.path.join(output_dir, "ga_results.csv")
     done_runs  = set()
     write_mode = "w"
     if os.path.exists(csv_path):
@@ -88,11 +92,13 @@ def run_scenario(data_dir, n_runs, patience, n_workers):
         schedule = np.array(best_ind["genes"], dtype=int).reshape(n_emp, n_days)
         min_unmet, ideal_unmet = _compute_penalties(schedule, problem_data)
 
-        print(f"fitness={best_fitness:.0f}  min_unmet={min_unmet}  gen={stopped_at}  {elapsed:.0f}s")
-        results.append(min_unmet)
+        print(f"fitness={best_fitness:.0f}  min_unmet={min_unmet}  "
+              f"ideal_unmet={ideal_unmet}  gen={stopped_at}  {elapsed:.0f}s")
+        results.append(ideal_unmet)
 
-        np.save(os.path.join(conv_dir, f"run{run_idx}.npy"),
+        np.save(os.path.join(conv_dir,  f"run{run_idx}.npy"),
                 np.array([r["best"] for r in logbook]))
+        np.save(os.path.join(sched_dir, f"run{run_idx}.npy"), schedule)
 
         writer.writerow({
             "run":                  run_idx,
@@ -107,7 +113,7 @@ def run_scenario(data_dir, n_runs, patience, n_workers):
     csv_file.close()
 
     if results:
-        print(f"\n  Summary: best={min(results)}  mean={sum(results)/len(results):.1f}  worst={max(results)}")
+        print(f"\n  Summary (GA): best={min(results)}  mean={sum(results)/len(results):.1f}  worst={max(results)}")
     print(f"  Saved to '{csv_path}'")
 
 

@@ -494,7 +494,7 @@ def _repair_workday_count(schedule: np.ndarray, problem_data: dict) -> np.ndarra
     return schedule
 
 
-def repair_schedule(schedule: np.ndarray, problem_data: dict) -> np.ndarray:
+def repair_schedule(schedule: np.ndarray, problem_data: dict, debug: bool = False):
     """
     Apply all Phase 2 repair operators in one pass:
       1. Vacations          (forces OFF on all vacation days)
@@ -502,13 +502,30 @@ def repair_schedule(schedule: np.ndarray, problem_data: dict) -> np.ndarray:
       3. Special days cap   (sets excess special days to OFF)
       4. 6-day window cap   (sets excess days to OFF)
       5. Workday count      (rebalances total; adds only constraint-safe days)
+
+    If debug=True, returns (schedule, changes_dict) where changes_dict maps
+    operator name to number of cells changed.
     """
-    schedule = _repair_vacations(schedule, problem_data)
-    schedule = _repair_no_backward_shift(schedule, problem_data)
-    schedule = _repair_special_days(schedule, problem_data)
-    schedule = _repair_6day_window(schedule, problem_data)
-    schedule = _repair_workday_count(schedule, problem_data)
-    return schedule
+    if not debug:
+        schedule = _repair_vacations(schedule, problem_data)
+        schedule = _repair_no_backward_shift(schedule, problem_data)
+        schedule = _repair_special_days(schedule, problem_data)
+        schedule = _repair_6day_window(schedule, problem_data)
+        schedule = _repair_workday_count(schedule, problem_data)
+        return schedule
+
+    changes = {}
+    for name, fn in [
+        ("vacations",     _repair_vacations),
+        ("no_backward",   _repair_no_backward_shift),
+        ("special_days",  _repair_special_days),
+        ("6day_window",   _repair_6day_window),
+        ("workday_count", _repair_workday_count),
+    ]:
+        before = schedule.copy()
+        schedule = fn(schedule, problem_data)
+        changes[name] = int(np.sum(schedule != before))
+    return schedule, changes
 
 
 def compute_phase2_violations(schedule: np.ndarray, problem_data: dict) -> dict:

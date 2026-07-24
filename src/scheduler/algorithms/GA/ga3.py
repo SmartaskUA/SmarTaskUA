@@ -318,14 +318,14 @@ def evaluate(individual, problem_data):
     Repair (Lamarckian — repaired chromosome written back) then compute fitness.
     The individual's genes are updated in-place so crossover and mutation
     always operate on valid chromosomes.
-    Returns a float.
+    Returns (fitness, total_repair_changes).
     """
     n_emp  = problem_data["n_employees"]
     n_days = problem_data["n_days"]
     schedule = np.array(individual["genes"], dtype=int).reshape(n_emp, n_days)
-    schedule = repair_schedule(schedule, problem_data)
+    schedule, changes = repair_schedule(schedule, problem_data, debug=True)
     individual["genes"] = schedule.flatten().tolist()
-    return compute_fitness(schedule, problem_data)
+    return compute_fitness(schedule, problem_data), sum(changes.values())
 
 
 # ── Individual helpers ────────────────────────────────────────────────────────
@@ -349,8 +349,8 @@ def _init_worker(problem_data):
 def _evaluate_worker(genes):
     """Repair + fitness for one individual. Runs inside a worker process."""
     individual = {"genes": genes, "fitness": None}
-    individual["fitness"] = evaluate(individual, _worker_problem_data)
-    return individual["genes"], individual["fitness"]
+    individual["fitness"], repair_changes = evaluate(individual, _worker_problem_data)
+    return individual["genes"], individual["fitness"], repair_changes
 
 
 # ── Core GA runner ────────────────────────────────────────────────────────────
@@ -396,11 +396,14 @@ def run_ga(problem_data, params):
     def _eval_population(pool, individuals):
         to_eval = [ind for ind in individuals if ind["fitness"] is None]
         if not to_eval:
-            return
+            return 0
         results = pool.map(_evaluate_worker, [ind["genes"] for ind in to_eval])
-        for ind, (genes, fitness) in zip(to_eval, results):
+        total_repair = 0
+        for ind, (genes, fitness, repair_changes) in zip(to_eval, results):
             ind["genes"]   = genes
             ind["fitness"] = fitness
+            total_repair  += repair_changes
+        return total_repair
 
     with Pool(processes=n_workers,
               initializer=_init_worker,
