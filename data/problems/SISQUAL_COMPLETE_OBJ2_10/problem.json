@@ -2,10 +2,10 @@
   "schemaVersion": "2.2",
   "problemType": "employee_scheduling",
   "metadata": {
-    "problemId": "SISQUAL_COMPLETE_STORAGE_PLUS1",
-    "name": "Sisqual Complete Storage Plus 1",
-    "createdAt": "2026-04-27T00:00:00Z",
-    "description": "Sisqual complete base problem with one added Storage backup employee.",
+    "problemId": "SISQUAL_COMPLETE_OBJ2_10",
+    "name": "Sisqual Complete OBJ2=10",
+    "createdAt": "2026-04-14T12:00:00Z",
+    "description": "Full BFarias Sisqual problem with the same CSV bundle and soft constraints as the original complete instance, except Objective 2 weight is reduced from 100 to 10.",
     "source": "BFarias_Doc_Sisqual.pdf + BFarias_Problema2.pdf"
   },
   "features": {
@@ -285,21 +285,6 @@
           }
         ],
         "contractType": "partTime_4h"
-      },
-      {
-        "id": "900100001",
-        "name": "Storage Backup",
-        "teams": [
-          {
-            "code": "Storage",
-            "level": 2
-          },
-          {
-            "code": "Employees",
-            "level": 6
-          }
-        ],
-        "contractType": "partTime_7h"
       }
     ]
   },
@@ -629,7 +614,7 @@
       {
         "id": "obj2-skill-priority-assignment",
         "type": "objective2",
-        "weight": 100,
+        "weight": 10,
         "enabled": true
       },
       {

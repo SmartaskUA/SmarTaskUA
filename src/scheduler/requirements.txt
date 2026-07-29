@@ -13,3 +13,4 @@ tabulate
 tenacity
 ortools
 docplex
+reportlab

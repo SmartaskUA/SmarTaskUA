@@ -64,6 +64,10 @@ public class SchedulingAlgorithmRegistry {
         register(specs, "CSP General", UiMode.PROBLEM, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
         register(specs, "ILP_Sisqual_Hours", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
         register(specs, "CSP_Sisqual_Hours", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
+        register(specs, "ILP_Sisqual_Hours_MathematicalDefinition7", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
+        register(specs, "CSP_Sisqual_Hours_MathematicalDefinition7", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
+        register(specs, "ILP_Sisqual_Hours_MathematicalDefinition5", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
+        register(specs, "CSP_Sisqual_Hours_MathematicalDefinition5", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
 
         register(specs, "hill climbing", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
         register(specs, "linear programming", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);

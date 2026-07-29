@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from MongoDBClient import MongoDBClient
 from TaskManager import TaskManager
+from validators.sisqual_feasibility import SisqualValidationError
 
 
 class RabbitMQClient:
@@ -274,9 +275,11 @@ class RabbitMQClient:
             if isinstance(result, dict) and "schedule" in result:
                 schedule_data = result.get("schedule")
                 kpis = result.get("kpis")
+                result_metadata = result.get("metadata") or {}
             else:
                 schedule_data = result
                 kpis = None
+                result_metadata = {}
 
             print("ELAPSED TIME:", elapsed_time)
             problem_metadata = self.load_problem_bundle_metadata(problem_path) if problem_path else {}
@@ -301,6 +304,7 @@ class RabbitMQClient:
                 metadata.setdefault("analysis", {})
                 metadata["analysis"]["kpis"] = kpis
             metadata.update(problem_metadata)
+            metadata.update(result_metadata)
 
             self.mongodb_client.insert_schedule(
                 data=schedule_data,
@@ -313,15 +317,34 @@ class RabbitMQClient:
             print(f"[RabbitMQClient] Schedule complete for Task ID: {task_id}")
             self.send_task_status(task_id, "COMPLETED")
 
+        except SisqualValidationError as e:
+            import traceback
+            print("======== VALIDATION TRACEBACK ========")
+            traceback.print_exc()
+            print("======== END VALIDATION TRACE ========")
+            print(f"Validation failed during schedule execution: {e.summary}")
+            self.send_task_status(
+                task_id,
+                "FAILED_VALIDATION",
+                failure_type=e.failure_type,
+                failure_summary=e.summary,
+                report_artifacts=e.report_artifacts,
+            )
+
         except Exception as e:
             import traceback
             print("======== TRACEBACK ========")
             traceback.print_exc()
             print("======== END TRACE ========")
             print(f"Error during schedule execution: {e}")
-            self.send_task_status(task_id, "FAILED")
+            self.send_task_status(
+                task_id,
+                "FAILED",
+                failure_type="TECHNICAL_ERROR",
+                failure_summary=str(e),
+            )
 
-    def send_task_status(self, task_id, status):
+    def send_task_status(self, task_id, status, failure_type=None, failure_summary=None, report_artifacts=None):
         updated_at = datetime.now().isoformat()
         print("UpdatedAt:", updated_at)  # Verifica o formato da data
         task_status_message = {
@@ -329,6 +352,12 @@ class RabbitMQClient:
             "status": status,
             "updatedAt": datetime.now().isoformat()
         }
+        if failure_type:
+            task_status_message["failureType"] = failure_type
+        if failure_summary:
+            task_status_message["failureSummary"] = failure_summary
+        if report_artifacts:
+            task_status_message["reportArtifacts"] = report_artifacts
         print(json.dumps(task_status_message))
 
         while True:

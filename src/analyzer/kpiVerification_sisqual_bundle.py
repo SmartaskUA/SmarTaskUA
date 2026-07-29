@@ -6,24 +6,37 @@ from collections import Counter, defaultdict
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-OFF_MARKERS = {"", "0", "DO", "FDO", "VAC", "NOT", "MED"}
+OFF_MARKERS = {"", "0", "OFF", "DO", "FDO", "VAC", "NOT", "MED"}
+HARD_UNAVAILABLE_MARKERS = {"VAC", "NOT", "MED", "FDO", "ENFD", "DC-E"}
 EXACT_PATTERN = re.compile(r"^EQUALS:(\d{1,2}:\d{2})-(\d{1,2}:\d{2})$", re.IGNORECASE)
 SEGMENT_PATTERN = re.compile(r"^(\d{1,2}:\d{2})-(\d{1,2}:\d{2})@(.+)$")
 DEFAULT_MAX_CONSECUTIVE_DAYS = 5
 DEFAULT_MIN_REST_HOURS = 11
 STAFF_TEAM_CODE = "Employees"
+DEFAULT_SISQUAL_COVERAGE_PRIORITY_TIERS = (
+    ("Storage", 1, None, "RESP ALMACEN N>=1"),
+    ("Management", 1, 1, "RESP - EQUIPO GESTION N=1"),
+    ("Checkout", 1, 1, "CAJA N=1"),
+    ("Management", 2, 2, "RESP - EQUIPO GESTION N=2"),
+    ("Checkout", 2, 2, "CAJA N=2"),
+    ("Management", 3, 3, "RESP - EQUIPO GESTION N=3"),
+    ("Management", 4, None, "RESP - EQUIPO GESTION N>=4"),
+    ("Checkout", 3, None, "CAJA N>=3"),
+)
 
 
 def analyze(file_path, problem_path, employees=None, year=None):
     bundle = load_problem_bundle(problem_path)
     schedule = load_schedule_csv(file_path)
     employees = employees if isinstance(employees, list) and employees else bundle["employees"]
+    schedule_dates = set(schedule.get("dates") or [])
 
     employee_meta = build_employee_meta(employees)
     slot_coverage = build_slot_coverage(schedule)
+    integrity_metrics = compute_schedule_integrity_metrics(schedule)
 
     coverage_metrics = compute_coverage_metrics(
-        bundle["demand_rows"],
+        filter_rows_by_dates(bundle["demand_rows"], schedule_dates),
         bundle["work_periods"],
         slot_coverage,
     )
@@ -33,12 +46,14 @@ def analyze(file_path, problem_path, employees=None, year=None):
         employee_meta,
         bundle["min_rest_hours"],
         bundle["max_consecutive_days"],
+        bundle["coverage_priority_tiers"],
     )
 
     result = {
         "weightedMinimumCoverageRate": coverage_metrics["weightedMinimumCoverageRate"],
         "criticalUnderfilledPeriods": coverage_metrics["criticalUnderfilledPeriods"],
         "maxPeriodShortage": coverage_metrics["maxPeriodShortage"],
+        "maxShortageSingleSlot": coverage_metrics["maxShortageSingleSlot"],
         "totalMinimumGap": coverage_metrics["totalMinimumGap"],
         "totalOverstaff": coverage_metrics["totalOverstaff"],
         "coverageByTeam": coverage_metrics["coverageByTeam"],
@@ -50,12 +65,23 @@ def analyze(file_path, problem_path, employees=None, year=None):
         "nonPrimaryTeamHours": assignment_metrics["nonPrimaryTeamHours"],
         "durationComplianceRate": assignment_metrics["durationComplianceRate"],
         "demandedHoursComplianceRate": assignment_metrics["demandedHoursComplianceRate"],
+        "preferredDayOffWorkedDays": assignment_metrics["preferredDayOffWorkedDays"],
+        "preferredDayOffPreservationRate": assignment_metrics["preferredDayOffPreservationRate"],
+        "skillPriorityPenaltyScore": assignment_metrics["skillPriorityPenaltyScore"],
+        "duplicatedAssignmentsPerDay": integrity_metrics["duplicatedAssignmentsPerDay"],
+        "uncoveredSlotsWithoutSkill": integrity_metrics["uncoveredSlotsWithoutSkill"],
         "consecutiveDaysViolations": assignment_metrics["consecutiveDaysViolations"],
         "minRestViolations": assignment_metrics["minRestViolations"],
         "availabilityViolations": assignment_metrics["availabilityViolations"],
         "employeeAssignmentQuality": assignment_metrics["employeeAssignmentQuality"],
     }
     return result
+
+
+def filter_rows_by_dates(rows, dates):
+    if not dates:
+        return list(rows or [])
+    return [row for row in rows or [] if row.get("date") in dates]
 
 
 def is_bundle_native_hour_problem(problem_path):
@@ -100,6 +126,8 @@ def load_problem_bundle(problem_path):
     schedule_rules = load_schedule_rules(schedule_input_path)
 
     employees = extract_problem_employees(problem)
+    skill_codes = extract_skill_codes(problem, employees)
+    coverage_priority_tiers = parse_coverage_priority_tiers(problem, skill_codes, STAFF_TEAM_CODE)
     hard_constraints = problem.get("constraints", {}).get("hard", [])
     min_rest_hours = DEFAULT_MIN_REST_HOURS
     for constraint in hard_constraints:
@@ -115,6 +143,7 @@ def load_problem_bundle(problem_path):
         "demand_rows": demand_rows,
         "work_periods": work_periods,
         "schedule_rules": schedule_rules,
+        "coverage_priority_tiers": coverage_priority_tiers,
         "min_rest_hours": min_rest_hours,
         "max_consecutive_days": DEFAULT_MAX_CONSECUTIVE_DAYS,
     }
@@ -146,6 +175,153 @@ def extract_problem_employees(problem):
     return source if isinstance(source, list) else []
 
 
+def extract_skill_codes(problem, employees):
+    skills = []
+    for employee in employees or []:
+        if not isinstance(employee, dict):
+            continue
+        for team in employee.get("teams") or []:
+            if isinstance(team, str):
+                code = str(team).strip()
+            elif isinstance(team, dict):
+                code = first_non_blank(team.get("code"), team.get("id"), team.get("name"))
+            else:
+                code = None
+            if code:
+                skills.append(code)
+
+    for team in (((problem or {}).get("demand", {}).get("organizationalUnits", {}) or {}).get("teams", [])):
+        if not isinstance(team, dict):
+            continue
+        code = first_non_blank(team.get("code"), team.get("id"), team.get("name"))
+        if code:
+            skills.append(code)
+
+    deduped = []
+    seen = set()
+    for skill in skills:
+        if skill in seen:
+            continue
+        seen.add(skill)
+        deduped.append(skill)
+    if STAFF_TEAM_CODE not in seen:
+        deduped.append(STAFF_TEAM_CODE)
+    return deduped
+
+
+def parse_coverage_priority_tiers(problem, skills, staff_team_code="Employees"):
+    raw_hierarchy = sorted(
+        ((problem or {}).get("demand", {}) or {}).get("priorityHierarchy", []),
+        key=lambda item: parse_int_value(item.get("rank")) or 10 ** 6,
+    )
+
+    if any(isinstance(entry, dict) and entry.get("minLevel") is not None for entry in raw_hierarchy):
+        priority_tiers = []
+        for index, entry in enumerate(raw_hierarchy):
+            if not isinstance(entry, dict):
+                continue
+            skill = str(entry.get("team", "")).strip()
+            if not skill:
+                continue
+            min_n = parse_int_value(entry.get("minLevel")) or 1
+            max_n = parse_int_value(entry.get("maxLevel"))
+            label = str(entry.get("label", f"{skill} N>={min_n}")).strip()
+            priority_tiers.append(
+                {
+                    "priority": index + 1,
+                    "skill": skill,
+                    "min_n": min_n,
+                    "max_n": max_n,
+                    "label": label,
+                }
+            )
+    else:
+        priority_tiers = [
+            {
+                "priority": index + 1,
+                "skill": skill,
+                "min_n": min_n,
+                "max_n": max_n,
+                "label": label,
+            }
+            for index, (skill, min_n, max_n, label) in enumerate(DEFAULT_SISQUAL_COVERAGE_PRIORITY_TIERS)
+        ]
+
+    known_skill_levels = {(tier["skill"], tier["min_n"]) for tier in priority_tiers}
+    if (staff_team_code, 1) not in known_skill_levels:
+        priority_tiers.append(
+            {
+                "priority": len(priority_tiers) + 1,
+                "skill": staff_team_code,
+                "min_n": 1,
+                "max_n": None,
+                "label": "EQUIPA Empleados N>=1",
+            }
+        )
+
+    known_skills = {tier["skill"] for tier in priority_tiers}
+    for skill in skills:
+        if not skill or skill in known_skills:
+            continue
+        priority_tiers.append(
+            {
+                "priority": len(priority_tiers) + 1,
+                "skill": skill,
+                "min_n": 1,
+                "max_n": None,
+                "label": f"{skill} N>=1",
+            }
+        )
+        known_skills.add(skill)
+
+    return priority_tiers
+
+
+def match_coverage_priority_tier(skill, nth_worker, coverage_priority_tiers):
+    for index, tier in enumerate(coverage_priority_tiers or []):
+        if tier["skill"] != skill:
+            continue
+        if nth_worker < tier["min_n"]:
+            continue
+        max_n = tier["max_n"]
+        if max_n is not None and nth_worker > max_n:
+            continue
+        return index
+    raise ValueError(f"No priority tier matches skill '{skill}' worker #{nth_worker}")
+
+
+def build_employee_priority_summary(meta, coverage_priority_tiers):
+    best = None
+    for team in meta.get("teams", []) or []:
+        skill = team.get("code")
+        level = parse_int_value(team.get("level"))
+        if not skill or level is None:
+            continue
+        try:
+            tier_index = match_coverage_priority_tier(skill, level, coverage_priority_tiers)
+        except ValueError:
+            continue
+        tier = coverage_priority_tiers[tier_index]
+        candidate = {
+            "priorityRank": int(tier.get("priority", tier_index + 1)),
+            "priorityLabel": str(tier.get("label") or f"{skill} priority {tier_index + 1}"),
+            "priorityTeam": skill,
+            "priorityLevel": level,
+        }
+        if best is None or candidate["priorityRank"] < best["priorityRank"]:
+            best = candidate
+
+    if best is not None:
+        return best
+
+    return {
+        "priorityRank": len(coverage_priority_tiers or []) + 1,
+        "priorityLabel": "Unmapped priority",
+        "priorityTeam": meta.get("primary_team"),
+        "priorityLevel": None,
+    }
+
+
 def load_schedule_rules(path):
     rules = {}
     if not path.is_file():
@@ -170,11 +346,12 @@ def load_schedule_csv(path):
         rows = list(csv.reader(fh))
 
     if not rows:
-        return {"dates": [], "employees": {}}
+        return {"dates": [], "employees": {}, "rawEmployees": {}}
 
     header = rows[0]
     dates = [str(value).strip() for value in header[1:] if str(value).strip()]
     employees = {}
+    raw_employees = {}
     for row in rows[1:]:
         if not row:
             continue
@@ -182,14 +359,18 @@ def load_schedule_csv(path):
         if not employee_id:
             continue
         day_map = {}
+        raw_day_map = {}
         for index, day in enumerate(dates, start=1):
             cell = row[index] if index < len(row) else ""
+            raw_day_map[day] = str(cell or "").strip()
             day_map[day] = parse_schedule_cell(cell)
         employees[employee_id] = day_map
+        raw_employees[employee_id] = raw_day_map
 
     return {
         "dates": dates,
         "employees": employees,
+        "rawEmployees": raw_employees,
     }
 
 
@@ -225,6 +406,54 @@ def parse_schedule_cell(cell):
     return segments
 
 
+def compute_schedule_integrity_metrics(schedule):
+    duplicated = 0
+    duplicated_details = []
+    uncovered = 0
+    uncovered_details = []
+    raw_employees = schedule.get("rawEmployees") or {}
+
+    for employee_id, day_cells in raw_employees.items():
+        for day, raw_cell in day_cells.items():
+            cell = str(raw_cell or "").strip()
+            if not cell or cell.upper() in OFF_MARKERS:
+                continue
+
+            if "@" not in cell:
+                uncovered += 1
+                uncovered_details.append(
+                    {"employeeId": employee_id, "date": day, "cell": cell}
+                )
+                continue
+
+            intervals = []
+            for part in cell.split("|"):
+                match = SEGMENT_PATTERN.match(part.strip())
+                if not match:
+                    continue
+                start = parse_minutes(match.group(1))
+                end = parse_minutes(match.group(2))
+                if start is None or end is None:
+                    continue
+                intervals.append((start, end))
+
+            intervals.sort()
+            for index in range(1, len(intervals)):
+                if intervals[index][0] < intervals[index - 1][1]:
+                    duplicated += 1
+                    duplicated_details.append(
+                        {"employeeId": employee_id, "date": day, "cell": cell}
+                    )
+                    break
+
+    return {
+        "duplicatedAssignmentsPerDay": duplicated,
+        "duplicatedAssignmentsPerDayDetails": duplicated_details,
+        "uncoveredSlotsWithoutSkill": uncovered,
+        "uncoveredSlotsWithoutSkillDetails": uncovered_details,
+    }
+
+
 def build_employee_meta(employees):
     meta = {}
     for raw in employees or []:
@@ -253,11 +482,16 @@ def build_employee_meta(employees):
 
         teams.sort(key=lambda item: (item["level"], item["code"]))
         primary_team = teams[0]["code"] if teams else None
+        skill_levels = {
+            team["code"]: int(team["level"]) if float(team["level"]).is_integer() else team["level"]
+            for team in teams
+        }
         meta[str(employee_id).strip()] = {
             "id": str(employee_id).strip(),
             "name": str(name).strip(),
             "teams": teams,
             "primary_team": primary_team,
+            "skill_levels": skill_levels,
         }
     return meta
 
@@ -288,6 +522,9 @@ def compute_coverage_metrics(demand_rows, work_periods, slot_coverage):
     overstaff_total = 0
     critical_underfilled_periods = 0
     max_period_shortage = 0
+    max_slot_shortage = 0
+    gap_distribution = Counter()
+    details_by_gap = defaultdict(list)
     team_totals = defaultdict(lambda: {"required": 0, "fulfilled": 0, "actual": 0, "overstaff": 0})
     underfilled_periods = []
 
@@ -307,6 +544,24 @@ def compute_coverage_metrics(demand_rows, work_periods, slot_coverage):
         period_actual = min(slot_values) if slot_values else 0
         period_shortage = max(required - period_actual, 0)
         underfilled_slot_count = sum(1 for actual in slot_values if actual < required)
+        for slot_start, actual in zip(slots, slot_values):
+            slot_shortage = max(required - actual, 0)
+            if slot_shortage <= 0:
+                continue
+            max_slot_shortage = max(max_slot_shortage, slot_shortage)
+            gap_distribution[slot_shortage] += 1
+            gap_key = str(slot_shortage)
+            if len(details_by_gap[gap_key]) < 20:
+                details_by_gap[gap_key].append(
+                    {
+                        "date": date_key,
+                        "team": team,
+                        "period": f"{minutes_to_time(slot_start)}-{minutes_to_time(slot_start + 30)}",
+                        "workPeriod": row["workPeriod"],
+                        "covered": actual,
+                        "required": required,
+                    }
+                )
 
         if period_shortage > 0:
             critical_underfilled_periods += underfilled_slot_count
@@ -368,6 +623,14 @@ def compute_coverage_metrics(demand_rows, work_periods, slot_coverage):
         "weightedMinimumCoverageRate": weighted_coverage_rate,
         "criticalUnderfilledPeriods": critical_underfilled_periods,
         "maxPeriodShortage": max_period_shortage,
+        "maxShortageSingleSlot": {
+            "max_gap": max_slot_shortage,
+            "gap_distribution": {
+                str(gap): count
+                for gap, count in sorted(gap_distribution.items(), reverse=True)
+            },
+            "details_by_gap": dict(details_by_gap),
+        },
         "totalMinimumGap": total_minimum_gap,
         "totalOverstaff": overstaff_total,
         "coverageByTeam": coverage_by_team,
@@ -376,7 +639,7 @@ def compute_coverage_metrics(demand_rows, work_periods, slot_coverage):
     }
 
 
-def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest_hours, max_consecutive_days):
+def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest_hours, max_consecutive_days, coverage_priority_tiers):
     dates = [parse_iso_date(value) for value in schedule.get("dates", [])]
     ordered_dates = [value for value in dates if value is not None]
     ordered_date_keys = [value.isoformat() for value in ordered_dates]
@@ -389,6 +652,9 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
     total_evaluated_days = 0
     total_hours_match_days = 0
     total_hours_evaluated_days = 0
+    total_preferred_day_off_worked_days = 0
+    total_preferred_day_off_days = 0
+    total_skill_priority_penalty = 0
     total_availability_violations = 0
     total_consecutive_violations = 0
     total_min_rest_violations = 0
@@ -401,6 +667,7 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
         meta = employee_meta.get(employee_id, {"id": employee_id, "name": employee_id, "primary_team": None, "teams": []})
         employee_schedule = schedule_employees.get(employee_id, {})
         employee_rules = schedule_rules.get(employee_id, {})
+        priority_summary = build_employee_priority_summary(meta, coverage_priority_tiers)
 
         team_switches = 0
         fragmented_days = 0
@@ -410,17 +677,23 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
         evaluated_days = 0
         hours_match_days = 0
         hours_evaluated_days = 0
+        active_work_days = 0
+        preferred_day_off_worked_days = 0
+        preferred_day_off_days = 0
+        skill_priority_penalty = 0
         availability_violations = 0
         consecutive_violations = 0
         min_rest_violations = 0
-        team_minutes = defaultdict(int)
         streak = 0
         previous_day_end = None
         previous_day_date = None
+        team_minutes = defaultdict(int)
 
         for date_key in ordered_date_keys:
             segments = sort_segments(employee_schedule.get(date_key, []))
             worked = bool(segments)
+            if worked:
+                active_work_days += 1
             day_minutes = total_segment_minutes(segments)
             worked_minutes += day_minutes
             primary_minutes += sum(
@@ -449,6 +722,11 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
             rule = employee_rules.get(date_key)
             if rule is not None:
                 evaluated_days += 1
+                rule_upper = str(rule).strip().upper()
+                if rule_upper == "DO":
+                    preferred_day_off_days += 1
+                    if worked:
+                        preferred_day_off_worked_days += 1
                 if is_day_rule_compliant(rule, segments):
                     compliant_days += 1
                 else:
@@ -484,6 +762,7 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
         duration_rate = round((compliant_days / evaluated_days) * 100, 2) if evaluated_days else 100.0
         demanded_hours_rate = round((hours_match_days / hours_evaluated_days) * 100, 2) if hours_evaluated_days else 100.0
         primary_rate = round((primary_minutes / worked_minutes) * 100, 2) if worked_minutes else 100.0
+        mean_skill_changes_per_day = round(team_switches / active_work_days, 2) if active_work_days else 0.0
         team_work_breakdown = [
             {
                 "team": team,
@@ -501,6 +780,9 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
         total_evaluated_days += evaluated_days
         total_hours_match_days += hours_match_days
         total_hours_evaluated_days += hours_evaluated_days
+        total_preferred_day_off_worked_days += preferred_day_off_worked_days
+        total_preferred_day_off_days += preferred_day_off_days
+        total_skill_priority_penalty += skill_priority_penalty
         total_availability_violations += availability_violations
         total_consecutive_violations += consecutive_violations
         total_min_rest_violations += min_rest_violations
@@ -509,7 +791,12 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
             {
                 "employeeId": employee_id,
                 "name": meta.get("name") or employee_id,
+                "priorityRank": priority_summary["priorityRank"],
+                "priorityLabel": priority_summary["priorityLabel"],
+                "priorityTeam": priority_summary["priorityTeam"],
+                "priorityLevel": priority_summary["priorityLevel"],
                 "workedHours": round(worked_minutes / 60.0, 2),
+                "activeWorkDays": active_work_days,
                 "primaryTeam": meta.get("primary_team"),
                 "primaryTeamUtilizationRate": primary_rate,
                 "nonPrimaryTeamHours": round(non_primary_minutes / 60.0, 2),
@@ -519,19 +806,37 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
                     for item in team_work_breakdown
                 },
                 "teamSwitches": team_switches,
+                "meanSkillChangesPerDay": mean_skill_changes_per_day,
                 "fragmentedWorkDays": fragmented_days,
                 "durationComplianceRate": duration_rate,
                 "demandedHoursComplianceRate": demanded_hours_rate,
+                "preferredDayOffWorkedDays": preferred_day_off_worked_days,
+                "preferredDayOffPreservationRate": round(
+                    ((preferred_day_off_days - preferred_day_off_worked_days) / preferred_day_off_days) * 100,
+                    2,
+                ) if preferred_day_off_days else 100.0,
+                "skillPriorityPenaltyScore": skill_priority_penalty,
                 "availabilityViolations": availability_violations,
                 "consecutiveDaysViolations": consecutive_violations,
                 "minRestViolations": min_rest_violations,
             }
         )
 
-    employee_rows.sort(key=lambda item: (-item["availabilityViolations"], -item["teamSwitches"], item["employeeId"]))
+    employee_rows.sort(
+        key=lambda item: (
+            item.get("priorityRank", 10 ** 6),
+            -item["workedHours"],
+            item.get("name") or item["employeeId"],
+        )
+    )
     primary_team_utilization_rate = round((total_primary_minutes / total_worked_minutes) * 100, 2) if total_worked_minutes else 100.0
     duration_compliance_rate = round((total_compliant_days / total_evaluated_days) * 100, 2) if total_evaluated_days else 100.0
     demanded_hours_compliance_rate = round((total_hours_match_days / total_hours_evaluated_days) * 100, 2) if total_hours_evaluated_days else 100.0
+    preferred_day_off_preservation_rate = (
+        round(((total_preferred_day_off_days - total_preferred_day_off_worked_days) / total_preferred_day_off_days) * 100, 2)
+        if total_preferred_day_off_days
+        else 100.0
+    )
 
     return {
         "intraDayTeamSwitches": total_team_switches,
@@ -540,6 +845,9 @@ def compute_assignment_metrics(schedule, schedule_rules, employee_meta, min_rest
         "nonPrimaryTeamHours": round(max(total_worked_minutes - total_primary_minutes, 0) / 60.0, 2),
         "durationComplianceRate": duration_compliance_rate,
         "demandedHoursComplianceRate": demanded_hours_compliance_rate,
+        "preferredDayOffWorkedDays": total_preferred_day_off_worked_days,
+        "preferredDayOffPreservationRate": preferred_day_off_preservation_rate,
+        "skillPriorityPenaltyScore": total_skill_priority_penalty,
         "availabilityViolations": total_availability_violations,
         "consecutiveDaysViolations": total_consecutive_violations,
         "minRestViolations": total_min_rest_violations,
@@ -696,6 +1004,15 @@ def parse_iso_date(value):
             return datetime.fromisoformat(text).date()
         except ValueError:
             return None
+
+
+def parse_int_value(value):
+    try:
+        if value is None or value == "":
+            return None
+        return int(float(value))
+    except (TypeError, ValueError):
+        return None
 
 
 def first_non_blank(*values):
