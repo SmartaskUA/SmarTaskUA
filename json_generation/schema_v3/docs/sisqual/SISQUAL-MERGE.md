@@ -123,7 +123,7 @@ Two ways to reconcile the formats were weighed:
 ### Chosen — a middle-ground merged schema
 
 **v3.0 as the base, growing to absorb the Sisqual concepts that earn their place, tier by tier.** The
-genuine additions surfaced in review (S1 roster, S2 datetime, S3 labour law, …) join the schema; the rest
+genuine additions surfaced in review (S1 roster, S3 labour law, …) join the schema; the rest
 stays deferred behind its `../FUTURE.md` item. Neither a forever-translator nor a full superset. The tiered
 decisions live in the tier files — see the [index](SISQUAL-MERGE-PROPOSAL.md).
 

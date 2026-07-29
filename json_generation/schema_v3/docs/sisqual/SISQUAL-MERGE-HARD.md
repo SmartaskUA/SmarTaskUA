@@ -115,7 +115,7 @@ A **synthesized** `H_wd` is `T_d`-filtered (blocks outside the demanded window a
 
 | decision | how Tier 3 touches it |
 |---|---|
-| **S2** (datetime, day-anchored) | Sisqual `StartDate/EndDate` datetimes → `intervals` (minutes), day-anchored — consistent |
+| **S2** (time representation, day-anchored) | Sisqual `StartDate/EndDate` datetimes → `intervals` (minutes), day-anchored — consistent whichever author-layer representation S2 lands on |
 | **M4** (team vs skill) | an assignment carries **no team** — skill choice (`y_wdts`) is separate — so the catalog is skill-agnostic and works for both modes and either org model |
 | **M2.a / M6** | pin layering + the identity map, as in H3 |
 | **ids** | synthesis mints `A0001…`; ingest reuses the `ScheduleCode`. Opaque strings — no schema change |

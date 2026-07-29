@@ -17,7 +17,7 @@ code preservation).
 
 | tier | what's in it | status |
 |---|---|---|
-| [Easy](SISQUAL-MERGE-EASY.md) | clean renames + three structural decisions (S1 roster, S2 datetime, S3 labour law) | decided |
+| [Easy](SISQUAL-MERGE-EASY.md) | clean renames + two structural decisions (S1 roster, S3 labour law) + one open question (S2 time representation) | decided — S2 open |
 | [Medium](SISQUAL-MERGE-MEDIUM.md) | demand tables, per-day state, rest taxonomy, team-vs-ability, weekly target, result bridge | decided — 4 open choices |
 | [Hard](SISQUAL-MERGE-HARD.md) | shift catalog vs synthesis; the schema-form question | decided (A) — 1 flagged limitation |
 | [Set aside](SISQUAL-MERGE-SET-ASIDE.md) | Sisqual-only features (tasks, responsibilities, rules…) | decided — defer map + round-trip |
@@ -29,7 +29,10 @@ For the meeting itself — decisions to ratify, questions for Sisqual, and futur
 
 - **N1** — canonical vocabulary (v3 names vs Sisqual names) — *foundational, in the hub*.
 - **S1.a** — are team codes roster-scoped? *(needs Sisqual)* — plus the roster-vs-board semantics.
-- **S2.a** — ✅ settled: full ISO datetime at the JSON layer.
+- **S2** — ❓ open, to settle with Sisqual: author-layer time boundary as `HH:MM` vs minutes, and the
+  overnight marker (`end ≤ start` inference vs explicit `dayOffset`/`≥ 1440`). Day-anchor and `timeGrid`
+  are settled; only the boundary *representation* is open. *(The earlier "full ISO datetime" call was
+  withdrawn — it forced a date onto reusable work-period buckets.)*
 - **M1.a** — demand value columns: three, or carry `estimated` for lossless round-trip.
 - **M2.a** — ✅ settled: a fixed shift is an `EQUALS:` cell (split shifts now authorable); a whole
   Sisqual roster merges into one warm-start seed with a per-day `locked` flag (deferred build). T_d

@@ -13,11 +13,12 @@ renames — and they share one shape, so they belong together up front.
 > - **Org:** roster ⊃ team (+level) — via `rosterAssignments` / `teamAssignments`.
 > - **Rules:** labour law ⊃ contract — via `labourLawAssignments` / `contractAssignments`; a contract may
 >   *tighten* within its labour-law bounds, never loosen them.
-> - **Time:** an interval stays anchored to one scheduling day, its boundaries defined by datetime, its
->   interior sliced by the `timeGrid`.
+> - **Time:** an interval stays anchored to one scheduling day, its interior sliced by the `timeGrid`;
+>   how its boundaries are *written* — `HH:MM` or minutes — is left open (S2).
 >
 > So "are we just tweaking v3?" — yes for the renames below, **and** the merge adds this small skeleton.
-> The three decisions behind it are **S1 / S2 / S3**, after the table.
+> The items behind it are **S1 / S2 / S3**, after the table — two decisions (S1, S3) and one open
+> question (S2).
 
 The clean renames:
 
@@ -32,7 +33,7 @@ The clean renames:
 | E6b | Weekly limit | `TotalWeeklyMinutes` | `constraints.maxMinutesPerWeek` | `constraints.maxMinutesPerWeek` | ✅ as a cap / → **M5** for weekly *target* |
 | E6c | Max consecutive days | `MaxConsecutiveWorkDaysInWeek` (LabourLaw) | `constraints.maxConsecutiveDays` | `constraints.maxConsecutiveDays` on the contract | ✅ / per-employee override → Set aside |
 | E6d | Week start | `DayOfWeek` (LabourLaw, 0=Sun) | `calendar.weekStart` | `calendar.weekStart` (weekday name); convert the index | ✅ |
-| E7 | Time unit & grid | ISO datetimes | minutes + `timeGrid.slotMinutes` | **datetime-defined boundaries + `timeGrid`-sliced interior, day-anchored** → **S2** | ✅ (revised) |
+| E7 | Time unit & grid | ISO datetimes | minutes + `timeGrid.slotMinutes` | `timeGrid`-sliced interior, day-anchored (settled); boundary representation `HH:MM` vs minutes → **S2** | ❓ open |
 | E8 | Holidays | `IsHolliday` per row | `calendar.holidays[]` | `calendar.holidays[]`; import folds the flags in, export stamps `IsHolliday` back onto dated rows | ✅ |
 
 ## Structural decisions (raised in review)
@@ -70,35 +71,59 @@ row is stamped roster+team+employee, and service-level demand carries `RosterCod
 hierarchy depth (`store > roster > team`, or just `store > team`) and have the schema adapt — see
 `../FUTURE.md` §4. That is the general form of this same S1 question.
 
-### S2 — time: datetime-defined boundaries, grid-sliced interior, day-anchored
+### S2 — time boundary representation: `HH:MM` vs minutes (OPEN — to settle with Sisqual)
 
-✅ **Decision — define interval boundaries as datetimes; keep the `timeGrid` and the scheduling-day anchor.**
-This *merges* both logics rather than picking one:
+❓ **Open question — not a decision.** How a time boundary is *written* at the author (JSON/CSV) layer —
+clock `HH:MM` or integer minutes — and how midnight roll-over is expressed. An earlier draft recorded this
+as "full ISO datetime everywhere" (a since-withdrawn S2.a); that call is **dropped** because it forced an
+absolute date onto reusable work-period buckets, which have no single date (see below). Reopened to settle
+with Sisqual, whose export format is datetime-native and so is a direct input to the choice.
 
-| layer | representation | why |
+**Settled regardless of the outcome — this part is not in question:**
+- **Day-anchor.** An assignment belongs to ONE scheduling `date`, so week partitioning and `n_wk` hold.
+  Overnight is the *next day relative to that one anchor*, never a second anchor. Sisqual anchors the same
+  way — an `OutRosterTeamDays` row carries a single `Date` while its datetimes may cross midnight.
+- **`timeGrid.slotMinutes`.** The slice size of the interior, orthogonal to how a boundary is written —
+  untouched by whatever S2 decides.
+- **The model layer.** The expanded/solution forms already state grid-aligned **minutes from the day's
+  start** (`startMin`/`endMin`, a value `≥ 1440` = past midnight). Whatever the author layer uses compiles
+  down to these. This half is built.
+
+**The decomposition that frames the choice.** Every boundary splits into an absolute part and a relative
+part, and they have different needs — a fused date+time (`2030-10-02T06:30`) is never actually required:
+
+| boundary | absolute part | relative (time-of-day) part |
 |---|---|---|
-| JSON boundaries (`temporalScope`, work-period ranges, assignment intervals) | ISO **datetime** (or `date`+time) | explicit dates kill all midnight-rollover ambiguity — Sisqual-native |
-| CSV cells | `HH:MM` (date = the column header) | no bloat, still unambiguous |
-| model | grid-aligned **minutes from the scheduling day's start**, derived | the ILP's `T` timeslots are unchanged |
+| `temporalScope {start,end}` | **date** — day-granular, no hour | — |
+| worker-day / assignment anchor | **date** — day-granular, no hour | — |
+| **work-period `timeRange`** | **none** — a reusable template applied to every date; **cannot carry a date** | ✅ time-of-day |
+| assignment interval (`intervals`) | inherited from the day-anchor | ✅ time-of-day (already minutes) |
 
-- **Day-anchor kept:** an assignment still belongs to ONE `date`, so week partitioning and `n_wk` hold.
-  Overnight becomes a next-day datetime (≡ v3's minutes > 1440). Sisqual anchors the same way — its
-  `OutRosterTeamDays` row carries a single `Date` while the schedule's datetimes may cross midnight.
-- **`timeGrid.slotMinutes` is untouched** — it is the slice size, orthogonal to how a boundary is written.
+So the absolute part is *always day-granular* (a `date`); only the **relative time-of-day part** needs a
+representation chosen — and for work periods it must stay **date-free** (they are templates, not instances).
 
-*(This revises the earlier "keep minutes, reject datetime" call: datetimes are actually **more** aligned
-with why v3 dropped bare `HH:MM` — they remove the rollover guess entirely.)*
+**The two candidates for that relative part:**
 
-✅ **Decision S2.a — full ISO datetime at the JSON layer.** Verbose, but the least ambiguous and
-Sisqual-native — the extra characters buy an explicit date on every boundary. *(The `date` + `HH:MM` pair
-was the lighter alternative; rejected for the clarity.)*
+| | `HH:MM` string | minutes from day-start |
+|---|---|---|
+| author ergonomics | ✅ human-native (`22:00`) | ✗ mental math (`1320`) |
+| arithmetic / grid-align | ✗ parse → convert first | ✅ plain `int`, `v % slotMinutes` |
+| **overnight** | ✗ **inferred** from `end ≤ start` (field capped at 23:59) — the v2.6 trap, every reader re-implements | ✅ **stated** via `≥ 1440` |
+| reusable across dates | ✅ date-free | ✅ date-free |
 
-⚠️ **Scope — decided in principle, built later.** The *decision* stands. Today's files are unchanged:
-`workPeriods[].timeRange` still uses the `hhmm` def and a work period with `end <= start` still *infers*
-midnight-crossing — the one inference S2 exists to remove. Building it touches the declarative schema
-(`$defs/hhmm` → a datetime boundary), the parser (`core.parse_range`), the templates and both examples,
-so it waits for ratification rather than pre-empting it. The minutes half of S2 — grid-sliced interior,
-day-anchored, `startMin`/`endMin` in the expanded and solution forms — **is** already in place.
+Today the author layer already mixes the two: `HH:MM` in work periods and cell windows, minutes in the
+model. The question is whether to **unify on minutes** (killing the `end ≤ start` inference at the author
+layer too) or **keep `HH:MM`** for ergonomics and remove only the *inference* — e.g. an explicit next-day
+marker (`{time: "06:30", dayOffset: 1}`) instead of guessing from `end ≤ start`.
+
+**Sub-question — the overnight marker**, independent of `HH:MM`-vs-minutes: infer from `end ≤ start`
+(status quo) · an explicit `dayOffset` flag · minutes `≥ 1440`. The latter two remove the one inference;
+the first keeps it.
+
+⚑ **To resolve with Sisqual**, then build. Until then files are unchanged: `workPeriods[].timeRange` keeps
+the `hhmm` def and a work period with `end <= start` still *infers* midnight-crossing — the one inference
+this question exists to remove. Whichever way it lands, the build touches the declarative schema
+(`$defs/hhmm`), the parser (`core.parse_range`), the templates and both examples.
 
 ### S3 — labour law as a ground-rules level above contracts
 

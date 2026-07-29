@@ -16,8 +16,9 @@ as **minutes from 00:00** in the expanded form. Minutes may exceed 1440 to expre
 midnight, so `22:00-06:30` is `1320-1830`. A work period whose `end <= start` is read as crossing
 midnight — the one place a reader still infers roll-over, and it is confined to that author-facing
 field: the expanded form the model reads always states the minutes outright. v2.6 by contrast made
-every reader infer, everywhere, from bare `HH:MM`. Removing that last inference is merge decision
-[S2](sisqual/SISQUAL-MERGE-EASY.md) (datetime-defined boundaries) — decided, not yet built.
+every reader infer, everywhere, from bare `HH:MM`. Whether to remove that last author-layer inference —
+and whether the author layer keeps `HH:MM` or unifies on minutes — is open merge question
+[S2](sisqual/SISQUAL-MERGE-EASY.md), to settle with Sisqual.
 
 Every boundary must land on the grid. At the default 15 minutes, `08:30`, `15:30`, `21:00` and
 `06:30` are all exact; at 60 minutes, `08:30` is not representable and the validator rejects it.
