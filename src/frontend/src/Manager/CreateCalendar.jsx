@@ -284,11 +284,11 @@ const CreateCalendar = () => {
     { value: "CSP_Sisqual_Hours", label: "CSP Sisqual Hours" },
     {
       value: "ILP_Sisqual_Hours_MathematicalDefinition7",
-      label: "ILP Sisqual Hours MD7",
+      label: "ILP Sisqual Hours Final Version",
     },
     {
       value: "CSP_Sisqual_Hours_MathematicalDefinition7",
-      label: "CSP Sisqual Hours MD7",
+      label: "CSP Sisqual Hours Final Version",
     },
   ];
   const problemHourAlgorithms = SIMPLE_MODE
