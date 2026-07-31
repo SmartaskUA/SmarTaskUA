@@ -3,8 +3,10 @@ import csv
 from collections import defaultdict
 import datetime
 from itertools import cycle, groupby
+import json
 import threading
 import os
+from xml.parsers.expat import model
 
 import numpy as np
 import pandas as pd
@@ -39,6 +41,7 @@ from algorithms.utils_Heuristics_New import (
     construct_mins_table,
     construct_ideals_table,
 )
+from algorithms.Puzzle_Heuristic_Calibrate import calibrate_max_admissible
 
 
 # =============================================================================
@@ -67,24 +70,30 @@ class Heuristica:
     evaluate_Day_Toshifts_ideais  = evaluate_Day_Toshifts_ideais
     construct_mins_table          = construct_mins_table
     construct_ideals_table        = construct_ideals_table
+    calibrate_max_admissible          = calibrate_max_admissible
+    
+    CALIBRATE = False  # mudar para True para correr calibração
 
     MAX_DAYS             = 223
     MAX_SUN_HOL          = 22
     MAX_CONSECUTIVE      = 5
-    TARGET_DAYS_PER_WEEK = 201 / 52
 
     # ILP time limit por semana (segundos) — CBC abandona e retorna a melhor solução encontrada
-    ILP_TIME_LIMIT_SECONDS = 30
+    ILP_TIME_LIMIT_SECONDS = 600
 
     # Employee scoring weights
     W_PACE    = 0.52
     W_SEQ     = 0.38
     W_SUN_HOL = 0.00
-    W_TEAMS   = 0.05
+    W_TEAMS   = 0.03
     W_TRANS   = 0.15
 
+
+    MAX_ADMISSIBLE_PER_EMP = 2000  # ajustar empiricamente
+
+
     def __init__(self, vacations_rows, minimums_rows, employees,
-                 maxTime, year=2025, shifts=2, w_min=100, w_ideal=1):
+                 maxTime, year=2025, w_min=100, w_ideal=1, spacing=None, full=None, **kwargs):
         """
         Weighted ILP scheduler.
 
@@ -98,10 +107,30 @@ class Heuristica:
         self.vacations_rows = vacations_rows
         self.minimums_rows = minimums_rows
         self.maxTime = maxTime
+        
+        self.full = full
+        if self.full is None:
+            print("Warning: 'full' parameter not provided. Defaulting to False.")
+
         self.year = year
         self.shifts = 3
         self.w_min = w_min
         self.w_ideal = w_ideal
+
+        # --- tracking do tempo gasto pelo ILP (Pontuate), por semana ---
+        self.total_ilp_time = 0.0
+        self.ilp_times_log = []   # [(week_start_day, seconds), ...]
+
+        self.patterns_used = set()
+
+        if spacing is None:
+            # Throw error if spacing is not provided, as it's required for the algorithm to function correctly.
+            raise ValueError("The 'spacing' parameter must be provided and cannot be None.")
+        else:
+            self.spacing = spacing
+        
+        
+        self.TARGET_DAYS_PER_WEEK = 201 / (365 / self.spacing)
 
         # === Preprocessing ===
         self.teams = self._build_teams(self.employee_rows)
@@ -159,6 +188,10 @@ class Heuristica:
         self.sundays_holidays_worked = {f: 0 for f in self.employees}
 
         self.removed_days = 0
+        self.solution_history = []
+        self.exact_solution_state = None
+        self.best_solution_state = None
+        self.best_solution_kpis = None
 
     def order_of_ranks(self, scores):
         ranked = list(scores.items())
@@ -176,23 +209,33 @@ class Heuristica:
             for day in range(1, self.num_days + 1)
         }
         return sorted_days
+    
+    def export_ilp_time_summary(self, filename="/app/ilp_time_summary.csv"):
+        file_exists = os.path.exists(filename) and os.path.getsize(filename) > 0
+        with open(filename, "a", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            if not file_exists:
+                writer.writerow(["spacing", "num_weeks", "total_ilp_seconds", "avg_ilp_seconds"])
+            n_weeks = len(self.ilp_times_log)
+            avg = self.total_ilp_time / n_weeks if n_weeks else 0.0
+            writer.writerow([self.spacing, n_weeks, f"{self.total_ilp_time:.3f}", f"{avg:.3f}"])
 
     def choose_Employee(self, Worked_Total_Days, Worked_Sequential_Days,
                         Worked_Previous_Day, emp_allowed_teams, f, d):
 
         total_days = Worked_Total_Days.get(f, 0)
         pace_delta = total_days / self.MAX_DAYS
-        pace_component = max(0.0, 1.0 - pace_delta ** 2)
+        pace_component = 1.0 - pace_delta ** 2
 
         streak = Worked_Sequential_Days.get(f, 0)
-        seq_component = max(0.0, 1.0 - (streak / self.MAX_CONSECUTIVE) ** 2)
+        seq_component = 1.0 - (streak / self.MAX_CONSECUTIVE) ** 2
 
         sun_hol = self.sundays_holidays_worked.get(f, 0)
-        sun_hol_component = max(0.0, 1.0 - sun_hol / self.MAX_SUN_HOL)
+        sun_hol_component = 1.0 - sun_hol / self.MAX_SUN_HOL
 
         num_teams = len(emp_allowed_teams)
         max_teams = max(len(v) for v in self.emp_allowed_teams.values())
-        team_component = max(0.0, 0.6 - (num_teams) / (max_teams)) if max_teams > 1 else 0.0
+        team_component = (1.0 - (num_teams) / (max_teams)) if max_teams > 1 else 0.0
 
         prev = Worked_Previous_Day.get(f) if isinstance(Worked_Previous_Day, dict) else Worked_Previous_Day
         if prev == 3:
@@ -215,38 +258,176 @@ class Heuristica:
     # PATTERN GENERATION
     # =========================================================================
 
-    def build_Weekly_Possible_Atributions(self, week_length=7):
+    def build_Weekly_Possible_Atributions(self, sun_hol_offsets=None):
         weekly_attributions = {}
-
+        week_length = self.spacing
         if week_length <= 0:
             return weekly_attributions
 
-        def backtrack(day_index, previous_shift, worked_streak, current_pattern):
+        target = self.TARGET_DAYS_PER_WEEK
+        rounded = round(target)
+
+        # Semana "cheia" (sem domingos/feriados) → janela mais apertada
+        # Semana "normal" → janela mais larga para flexibilidade
+        is_full_week = (sun_hol_offsets is None or len(sun_hol_offsets) == 0)
+        #margin = 1 if is_full_week else 2
+        margin = 1
+
+        sigma_min = rounded - margin
+        sigma_max = rounded + margin
+
+        def backtrack(day_index, previous_shift, worked_streak, 
+                      current_pattern, days_worked, work_blocks, last_was_work):
             if day_index == week_length:
-                zero_positions = [i for i, s in enumerate(current_pattern) if s == 0]
-                if all(
-                    (nz - pz) > self.MAX_CONSECUTIVE
-                    for pz, nz in zip(zero_positions, zero_positions[1:])
-                ):
-                    weekly_attributions[tuple(current_pattern)] = 0
+                # Filtro sigma 
+                if not (sigma_min <= days_worked <= sigma_max):
+                    # Excepção: sigma=0 sempre válido (funcionário de férias)
+                    if days_worked != 0:
+                        return
+                # Filtro de blocos: em semanas cheias, limitar fragmentação
+                # Filtro só faz sentido para períodos curtos onde fragmentação é real
+                # Um bloco é uma sequência contínua de dias trabalhados, separada por pelo menos um dia de descanso.
+                if is_full_week:
+                    max_blocks = max(2, week_length // 3)
+                else:
+                    max_blocks = max(2, week_length // 2)  # mais permissivo para semanas parciais
+
+                if work_blocks > max_blocks:
+                    # print(f"Pattern {current_pattern} rejected: {work_blocks} blocks > {max_blocks}")
+                    # time.sleep(0.5)  # para evitar flood de prints
+                    return
+                
+                weekly_attributions[tuple(current_pattern)] = 0
                 return
 
+            remaining = week_length - day_index - 1
+
+            # Poda por sigma mínimo (já existia)
+            if days_worked + remaining < sigma_min and days_worked != 0:
+                return
+
+            # Dia de descanso
             current_pattern.append(0)
-            backtrack(day_index + 1, None, 0, current_pattern)
+            backtrack(day_index + 1, None, 0, current_pattern,
+                      days_worked, work_blocks, False)
             current_pattern.pop()
 
             if worked_streak >= self.MAX_CONSECUTIVE:
                 return
 
+            # Poda por sigma máximo
+            if days_worked >= sigma_max:
+                return
+
             for shift in range(1, self.shifts + 1):
                 if previous_shift is not None and not self._validate_block_transition(previous_shift, shift):
                     continue
+                new_blocks = work_blocks + (1 if not last_was_work else 0)
                 current_pattern.append(shift)
-                backtrack(day_index + 1, shift, worked_streak + 1, current_pattern)
+                backtrack(day_index + 1, shift, worked_streak + 1, current_pattern,
+                          days_worked + 1, new_blocks, True)
                 current_pattern.pop()
 
-        backtrack(0, None, 0, [])
+        backtrack(0, None, 0, [], 0, 0, False)
         return weekly_attributions
+    
+
+    def _reduce_patterns(self, patterns, sun_hol_offsets, target_days, max_keep=None):
+        """
+        Reduz a lista de padrões admissíveis mantendo apenas os mais úteis.
+
+        Estratégia em 3 camadas aplicadas por ordem:
+
+        1. CLUSTER por vector de cobertura
+           Dois padrões com o mesmo vector (offset→shift) têm impacto idêntico
+           na cobertura dos slots. Mantém apenas um por cluster.
+
+        2. FILTRO por proximidade ao target de dias
+           Dentro de cada cluster (ou directamente se não houver clusters),
+           ordena por |dias_trabalhados - target| e mantém os mais próximos.
+
+        3. CAP final
+           Limita ao máximo definido por max_keep.
+
+        Parâmetros
+        ----------
+        patterns       : list of tuples  — padrões já mascarados (dom/feriados = 0)
+        sun_hol_offsets: set of int      — offsets a ignorar na cobertura
+        target_days    : float           — TARGET_DAYS_PER_WEEK
+        max_keep       : int | None      — limite máximo de padrões a manter
+
+        Retorna
+        -------
+        list of tuples  — padrões reduzidos
+        """
+
+        if not patterns:
+            return patterns
+
+        # ── 1. Cluster por vector de cobertura ────────────────────────────────
+        # A chave é: quais offsets têm turno 1, 2 ou 3 (ignorando dom/feriados).
+        # Dois padrões com a mesma chave têm impacto idêntico no ILP.
+
+        def coverage_key(pattern):
+            return tuple(
+                pattern[offset] if offset not in sun_hol_offsets else 0
+                for offset in range(len(pattern))
+            )
+
+        clusters = {}
+        for p in patterns:
+            key = coverage_key(p)
+            if key not in clusters:
+                clusters[key] = p   # mantém o primeiro representante
+        
+        reduced = list(clusters.values())
+
+        # ── 2. Ordenar por proximidade ao target ──────────────────────────────
+        # Dentro dos representantes, prefere os mais próximos do número de dias alvo.
+        # Secundariamente, prefere padrões com dias distribuídos (menos blocos).
+
+        def sort_key(p):
+            days_worked  = sum(1 for s in p if s != 0)
+            dist_target  = abs(days_worked - target_days)
+
+            # Contar blocos de trabalho contíguos (menos = melhor distribuição)
+            blocks = 0
+            in_block = False
+            for s in p:
+                if s != 0 and not in_block:
+                    blocks += 1
+                    in_block = True
+                elif s == 0:
+                    in_block = False
+
+            return (dist_target, blocks)
+
+        reduced.sort(key=sort_key)
+
+        # ── 3. Cap final ──────────────────────────────────────────────────────
+        if max_keep is not None and len(reduced) > max_keep:
+            reduced = reduced[:max_keep]
+
+        return reduced
+
+
+    def _build_cap_table(self):
+        """
+        Devolve o número máximo de padrões a manter por funcionário,
+        em função do spacing. Valores calibrados empiricamente.
+        """
+        cap_table = {
+            2:  7,
+            3:  26,
+            4:  18,
+            5:  201,
+            6:  77,
+            7:  139,
+            8:  335,
+            9:  694,
+        }
+        return cap_table.get(self.spacing, 200)
+
 
     # =========================================================================
     # ILP — PONTUATE
@@ -279,12 +460,15 @@ class Heuristica:
         O CBC tem um limite de ILP_TIME_LIMIT_SECONDS segundos por semana —
         se ultrapassar, retorna a melhor solução parcial encontrada.
         """
+
+        start_wall = time.time()
+        
         sun_hol_set = set(self.sundays_holidays)
 
         # Offsets relativos à semana actual que são domingos ou feriados
         sun_hol_offsets = set()
         if week_start_day is not None:
-            for offset in range(7):
+            for offset in range(self.spacing):
                 day_1b = week_start_day + offset
                 if 1 <= day_1b <= self.num_days and self.dates[day_1b - 1] in sun_hol_set:
                     sun_hol_offsets.add(offset)
@@ -302,7 +486,7 @@ class Heuristica:
             # Offsets relativos à semana actual que são férias do empregado
             emp_vac_offsets = set()
             if week_start_day is not None:
-                for offset in range(7):
+                for offset in range(self.spacing):
                     day_1b = week_start_day + offset
                     if day_1b in self.vacs_1based.get(emp_id, []):
                         emp_vac_offsets.add(offset)
@@ -327,11 +511,12 @@ class Heuristica:
             filtered = []
             seen = set()
 
+            # Validar relativamente a semana anterior
             for pattern in Weekly_Attributions:
                 start_streak = 0
                 valid = True
                 for shift in pattern:
-                    if shift == 0:
+                    if shift == 0: # Se for 0, nao ha streak nem transicao invalida, logo da break
                         break
                     if shift not in first_allowed:
                         valid = False
@@ -341,21 +526,62 @@ class Heuristica:
                 if not valid or start_streak > max_start_streak:
                     continue
 
+                # Trnsformar o padrão para a forma final, com 0s em domingos/feriados e férias
                 masked = mask_pattern_emp(pattern, emp_vac_offsets)
                 if masked not in seen:
                     seen.add(masked)
                     filtered.append(masked)
 
+            # Se não houver padrões filtrados, usar o primeiro padrão disponível
             if not filtered and Weekly_Attributions:
                 filtered = [mask_pattern_emp(next(iter(Weekly_Attributions)), emp_vac_offsets)]
+            
 
-            admissible[emp_id] = filtered
+            if not self.full:
+                cap = self._build_cap_table()
+                admissible[emp_id] = self._reduce_patterns(
+                    filtered,
+                    sun_hol_offsets,
+                    self.TARGET_DAYS_PER_WEEK,
+                    max_keep=cap,
+                )
 
+            else:
+                admissible[emp_id] = filtered
+            
+            
+            # No Pontuate, substituir o cap fixo por:
+            # cap_table = {
+            #     2:  (12,  13, 9), # (full, partial) 9 used :  4 not used
+            #     3:  (26,  41, 31), # 31 used :  10 not used
+            #     4:  (46,  100, 60), # 60 used : 54 not used
+            #     5:  (144, 300, 232), # 232 used :  174 not used
+            #     6:  (274, 500, 348), # 348 used : 902 not used
+            #     7:  (1038, 800, 574), # 574 used :  1945 not used
+            #     8:  (1200, 2000, 700), # 700 used :  500 not used
+            #     9:  (1400, 3200, 900), # 900 used :  300 not used
+            #     10: (1600, 4400, 1100), # 1100 used :  500 not used
+# 
+            # }
+# 
+            # cap_full, cap_partial, cap_used_pat = cap_table.get(self.spacing, (200, 300, 500))
+            # cap = cap_partial
+ 
+            # if len(filtered) > cap:
+            #     target = self.TARGET_DAYS_PER_WEEK
+            #     filtered.sort(key=lambda p: abs(sum(1 for s in p if s != 0) - target))
+            #     filtered = filtered[:cap]
+ 
+            # admissible[emp_id] = filtered
+
+        # for e, pat in admissible.items():
+        #     print(f"Employee {e} has {len(pat)} admissible patterns.")
+            
         all_slots_min = {}
         all_slots_ideal = {}
 
         for day_1b, shift_team_dict in mins.items():
-            offset = (day_1b - 1) % 7
+            offset = (day_1b - 1) % self.spacing
             if offset in sun_hol_offsets:
                 continue
             for (shift, team_code), count in shift_team_dict.items():
@@ -363,7 +589,7 @@ class Heuristica:
                 all_slots_min[key] = all_slots_min.get(key, 0) + count
 
         for day_1b, shift_team_dict in ideals.items():
-            offset = (day_1b - 1) % 7
+            offset = (day_1b - 1) % self.spacing
             if offset in sun_hol_offsets:
                 continue
             for (shift, team_code), count in shift_team_dict.items():
@@ -374,7 +600,7 @@ class Heuristica:
 
         delta = {}
         for pattern in all_patterns:
-            for offset in range(7):
+            for offset in range(self.spacing):
                 if offset in sun_hol_offsets:
                     continue
                 for shift in range(1, self.shifts + 1):
@@ -413,7 +639,8 @@ class Heuristica:
             for emp_id in employees_this_week
         }
 
-        w_days = 2.6
+        # Em Pontuate, antes de construir o modelo:
+        w_days = 2.5 if self.spacing >= 5 else 2.23
 
         model += (
             w_min   * pulp.lpSum(miss_min.values())   +
@@ -456,10 +683,64 @@ class Heuristica:
             offset, shift, team_code = slot
             model += coverage_expr(offset, shift, team_code) + miss_ideal[slot] >= target, f"c3_{offset}_{shift}_{team_code}"
 
+        medium_time = time.time() - start_wall
+        
+        # print(f"ILP model built in {medium_time:.2f} seconds. Starting solver...")
+
+        preferred_solver = os.environ.get("SCHEDULER_SOLVER", "CBC").upper()
+
         # timeLimit faz o CBC parar ao fim de N segundos e retornar
         # a melhor solução inteira encontrada até esse momento.
-        solver = pulp.PULP_CBC_CMD(msg=0, timeLimit=self.ILP_TIME_LIMIT_SECONDS)
-        model.solve(solver)
+        solver = None
+        if preferred_solver == "GUROBI":
+            try:
+                solver = pulp.GUROBI(
+                    msg=0,
+                    timeLimit=self.ILP_TIME_LIMIT_SECONDS,
+                    gapRel=0.02,
+                    Threads=8,
+                    Method=2,      # Barrier method
+                    Presolve=2     # Aggressive presolve
+                )
+                # print("Using GUROBI solver")
+            except Exception as exc:
+                print(f"GUROBI not available ({exc}), falling back to CBC")
+
+        if solver is None:
+            solver = pulp.PULP_CBC_CMD(
+                msg=0,
+                timeLimit=self.ILP_TIME_LIMIT_SECONDS,
+                gapRel=0.02,   # para de procurar quando a melhoria possível for < 2% do objective
+                gapAbs=1.0,    # para de procurar quando a melhoria possível for < 1 unidade do objective
+                threads=4,      # força 1 thread para evitar problemas de concorrência
+            )
+            print("Using CBC solver")
+
+        # print(f"Number of variables: {len(model.variables())}, Number of constraints: {len(model.constraints)}")
+        
+        try:
+            model.solve(solver)
+        except Exception as exc:
+            if not isinstance(solver, pulp.PULP_CBC_CMD):
+                print(f"Solver execution failed with {type(solver).__name__} ({exc}), retrying with CBC")
+                solver = pulp.PULP_CBC_CMD(
+                    msg=0,
+                    timeLimit=self.ILP_TIME_LIMIT_SECONDS,
+                    gapRel=0.02,
+                    gapAbs=1.0,
+                    threads=4,
+                )
+                model.solve(solver)
+            else:
+                raise
+        # print(f"Status: {pulp.LpStatus[model.status]}, Objective: {pulp.value(model.objective)}")
+
+        wall_time = time.time() - medium_time - start_wall
+
+        # print(f"ILP solved in {wall_time:.2f} seconds. Status: {pulp.LpStatus[model.status]}")
+
+        self.total_ilp_time += wall_time
+        self.ilp_times_log.append((week_start_day, wall_time))
 
         result = {}
         team_assignments = {}
@@ -489,10 +770,9 @@ class Heuristica:
     # =========================================================================
 
     def build_ideals(self):
-        Weekly_Attributions = self.build_Weekly_Possible_Atributions()
-        self.weekly_possible_attributions = Weekly_Attributions
+        
 
-        weeks = (self.num_days + 6) // 7
+        weeks = (self.num_days + self.spacing - 1) // self.spacing
 
         employees = self.employees
         Previous_weekrank = {f: None for f in employees}
@@ -501,13 +781,25 @@ class Heuristica:
             print(f"Week {week_index + 1}")
 
             week_number    = week_index + 1
-            week_start_day = week_index * 7 + 1
-            week_end_day   = min(week_start_day + 6, self.num_days)
+            week_start_day = week_index * self.spacing + 1 
+            week_end_day   = min(week_start_day + self.spacing - 1, self.num_days)
+
+            print (f"Week {week_number}: days {week_start_day} to {week_end_day}")
+
+            sun_hol_offsets_week = set()
+            
+            for offset in range(self.spacing):
+                day_1b = week_start_day + offset
+                if 1 <= day_1b <= self.num_days and self.dates[day_1b - 1] in self._sun_hol_set:
+                    sun_hol_offsets_week.add(offset)
+
+            Weekly_Attributions = self.build_Weekly_Possible_Atributions(sun_hol_offsets=sun_hol_offsets_week)
+            self.weekly_possible_attributions = Weekly_Attributions
 
             Weekly_Attributions_Dyn = {f: [] for f in employees}
 
-            mins   = self.construct_mins_table(self.minimos, self.dates, self.teams, week_number, self.shifts)
-            ideals = self.construct_ideals_table(self.ideais, self.dates, self.teams, week_number, self.shifts)
+            mins   = self.construct_mins_table(self.minimos, self.dates, self.teams, week_number, self.shifts, self.spacing)
+            ideals = self.construct_ideals_table(self.ideais, self.dates, self.teams, week_number, self.shifts, self.spacing)
 
             chosen_patterns, team_assignments = self.EvaluateWeeks(
                 week_index,
@@ -519,6 +811,9 @@ class Heuristica:
                 ideals,
                 week_start_day=week_start_day,
             )
+
+            # print(f"Chosen patterns for week {week_number}:")
+            # print(chosen_patterns)
 
             random.shuffle(employees)
 
@@ -542,6 +837,12 @@ class Heuristica:
 
                 Weekly_Attributions_Dyn[e] = attribution
                 Previous_weekrank[e]       = attribution
+                self.patterns_used.add(attribution)
+        
+        patterns_not_used = set(Weekly_Attributions.keys()) - self.patterns_used
+        print(f"Patterns not used: {(patterns_not_used)} - length: {len(patterns_not_used)}")
+        print(f"================================")
+        print(f"Patterns used: {(self.patterns_used)} - length: {len(self.patterns_used)}")
 
         return True
 
@@ -969,15 +1270,26 @@ class Heuristica:
 
         self.Remove_Excessive_Ideals(date_to_day, max_days, total_days_emp, cov, sun_hol_emp, sun_hol_set)
         self.Add_Sunday_Holiday_Workers(total_days_emp, cov, sun_hol_emp, sun_hol_set)
+        
+        
         self.Fix_Weekday_Ideals(total_days_emp, sun_hol_emp, sun_hol_set)
         # self.build_ideal_assignments(total_days_emp, sun_hol_emp, sun_hol_set)
+        
+        
+        # Check days worked in total per employee
+        for emp_id in self.employees:
+            if total_days_emp.get(emp_id, 0) > max_days:
+                print(f"Warning: Employee {emp_id} has {total_days_emp[emp_id]} days assigned, exceeding max_days {max_days}.")
+            if sun_hol_emp.get(emp_id, 0) > max_sun_hol:
+                print(f"Warning: Employee {emp_id} has {sun_hol_emp[emp_id]} Sundays/Holidays assigned, exceeding max_sun_hol {max_sun_hol}.")
+        
         return True
 
     # =========================================================================
     # MAIN SOLVE
     # =========================================================================
 
-    def solve(self):
+    def solve(self, n_grasp_runs=1, record_history=True, history_file=None):
 
         print(f"\n{'='*80}")
         print(f"[Heuristica] EXECUTING")
@@ -985,13 +1297,51 @@ class Heuristica:
 
         start_wall = time.time()
 
+        self.solution_history = []
+        self.best_solution_state = None
+        self.best_solution_kpis = None
+
         self.build_ideals()
-        self.Pos_Weeks()
+        self.exact_solution_state = self._capture_ideal_state()
+
+        runs = max(1, int(n_grasp_runs or 1))
+        best_score = None
+
+        for run_index in range(1, runs + 1):
+            self._restore_ideal_state(self.exact_solution_state)
+            self.Pos_Weeks()
+
+            kpis = self.evaluate_kpis()
+            solution_state = self._capture_ideal_state()
+            solution_table = self.to_table()
+
+            if record_history:
+                self.solution_history.append({
+                    "run": run_index,
+                    "kpis": copy.deepcopy(kpis),
+                    "table": copy.deepcopy(solution_table),
+                })
+
+            # NOVO: escrever esta run para ficheiro imediatamente
+            if history_file:
+                with open(history_file, "a", encoding="utf-8") as fh:
+                    fh.write(f"Run {run_index}: missed_mins={kpis['missed_mins']}, missed_ideals={kpis['missed_ideals']}\n")
+
+            
+            score = (kpis["missed_mins"], kpis["missed_ideals"])
+            if best_score is None or score < best_score:
+                best_score = score
+                self.best_solution_state = solution_state
+                self.best_solution_kpis = copy.deepcopy(kpis)
+
+        if self.best_solution_state is not None:
+            self._restore_ideal_state(self.best_solution_state)
 
         kpis = self.evaluate_kpis()
 
         print(f"  Mins por cumprir  : {kpis['missed_mins']}")
         print(f"  Ideais por cumprir: {kpis['missed_ideals']}")
+        print(f"  Solucoes GRASP    : {runs}")
 
         wall_time = time.time() - start_wall
         print(f"\n[Heuristica] Concluído em {wall_time:.1f}s")
@@ -999,9 +1349,11 @@ class Heuristica:
         note_filename = "/app/heuristica_note.txt"
 
         with open(note_filename, "a", encoding="utf-8") as note_file:
+            note_file.write(f"Spacing: {self.spacing}\n")
             note_file.write(f"Heuristica completed in {wall_time:.1f} seconds.\n")
             note_file.write(f"Missed minimums: {kpis['missed_mins']}\n")
             note_file.write(f"Missed ideals: {kpis['missed_ideals']}\n")
+            note_file.write(f"GRASP runs: {runs}\n")
             note_file.write("-" * 50 + "\n")
 
         return True
@@ -1092,59 +1444,70 @@ class Heuristica:
 def solve(vacations=None, minimuns=None, employees=None, maxTime=None,
           year=2021, hours=13, work_blocks=None, rules=None, **kwargs):
 
-    # maxTime vem em minutos — converter para segundos
     max_seconds = int(maxTime * 60) if maxTime else 3600
+    grasp_runs = 3000
+    solution_history_path = kwargs.get("solution_history_path")
+    spacing_list = [3]
+    history_file = "/app/grasp_history.txt"
+    Full = False
 
-    # threading.Event partilhado: quando activado, o loop verifica e lança SchedulerTimeout.
-    # Funciona em qualquer thread, ao contrário de signal.SIGALRM.
+    # Limpar o ficheiro antes de começar
+    open(history_file, "w").close()
+
     timeout_event = threading.Event()
     timer = threading.Timer(max_seconds, timeout_event.set)
 
     def check_timeout():
         if timeout_event.is_set():
-            raise SchedulerTimeout(
-                f"O scheduler excedeu o tempo máximo ({max_seconds}s)."
-            )
+            raise SchedulerTimeout(f"O scheduler excedeu o tempo máximo ({max_seconds}s).")
 
     timer.start()
     best_table = None
     best_kpis  = {"missed_mins": float("inf"), "missed_ideals": float("inf")}
 
     try:
-        scheduler = Heuristica(
-            vacations_rows=vacations,
-            minimums_rows=minimuns,
-            employees=employees,
-            maxTime=maxTime,
-            year=year,
-            shifts=hours,
-        )
+        for spacing in spacing_list:
+            print(f"\n[Heuristica] Executando com spacing={spacing}...")
 
-        for i in range(1, 11):
+            # Escrever cabeçalho do spacing no ficheiro
+            with open(history_file, "a", encoding="utf-8") as fh:
+                fh.write(f"\n{'-'*58}\n")
+                fh.write(f"Spacing = {spacing}\n")
+                fh.write(f"{'-'*58}\n")
+
+            scheduler = Heuristica(
+                vacations_rows=vacations,
+                minimums_rows=minimuns,
+                employees=employees,
+                maxTime=maxTime,
+                year=year,
+                shifts=hours,
+                spacing=spacing,
+                full=Full
+            )
+
+            check_timeout()
+            scheduler.solve(n_grasp_runs=grasp_runs, record_history=True, history_file=history_file)
             check_timeout()
 
-            print(f"\n{'='*80}")
-            print(f"[Heuristica] Outer loop iteration {i}")
-            print(f"{'='*80}")
-
-            scheduler.solve()
-            check_timeout()
+            scheduler.export_ilp_time_summary("/app/ilp_times.csv")
+            n_weeks = len(scheduler.ilp_times_log)
+            avg = scheduler.total_ilp_time / n_weeks if n_weeks else 0.0
+            print(f"[Heuristica] Spacing {spacing}: tempo total ILP = "
+                  f"{scheduler.total_ilp_time:.1f}s em {n_weeks} semanas "
+                  f"(média {avg:.2f}s/semana)")
 
             kpis = scheduler.evaluate_kpis()
             if (kpis["missed_mins"], kpis["missed_ideals"]) < (best_kpis["missed_mins"], best_kpis["missed_ideals"]):
                 best_kpis  = kpis
                 best_table = scheduler.to_table()
 
-            scheduler._reset_for_new_outer()
-
     except SchedulerTimeout:
         print(f"\n[Heuristica] Timeout após {max_seconds}s — a retornar a melhor solução encontrada.")
         if best_table is None:
-            raise SchedulerTimeout(
-                f"O scheduler excedeu o tempo máximo ({max_seconds}s) "
-                "antes de completar uma iteração."
-            )
+            raise SchedulerTimeout(f"O scheduler excedeu o tempo máximo ({max_seconds}s) antes de completar uma iteração.")
     finally:
         timer.cancel()
 
     return best_table
+    

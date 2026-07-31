@@ -140,10 +140,10 @@ def evaluate_Day_Toshifts_ideais(self, day, ideals):
 # =========================================================================
 # TABLE CONSTRUCTION HELPERS
 # =========================================================================
-def construct_mins_table(self, minimos, dates, teams, week_number, turnos):
+def construct_mins_table(self, minimos, dates, teams, week_number, turnos, spacing):
     mins = {}
-    week_start_day = (week_number - 1) * 7 + 1
-    week_end_day = min(week_number * 7, len(dates))
+    week_start_day = (week_number - 1) * spacing + 1
+    week_end_day = min(week_number * spacing, len(dates))
     if week_start_day > week_end_day:
         return mins
     for day in range(week_start_day, week_end_day + 1):
@@ -154,13 +154,14 @@ def construct_mins_table(self, minimos, dates, teams, week_number, turnos):
                 key = (d, s, team_code)
                 if key in self.minimos:
                     mins[day][(s, team_code)] = self.minimos[key]
+        # print(f"Day {day}: {mins[day]}")  # Debugging line to check the contents of mins for each day
     return mins
 
 
-def construct_ideals_table(self, ideais, dates, teams, week_number, turnos):
+def construct_ideals_table(self, ideais, dates, teams, week_number, turnos, spacing):
     ideals = {}
-    week_start_day = (week_number - 1) * 7 + 1
-    week_end_day = min(week_number * 7, len(dates))
+    week_start_day = (week_number - 1) * spacing + 1
+    week_end_day = min(week_number * spacing, len(dates))
     if week_start_day > week_end_day:
         return ideals
     for day in range(week_start_day, week_end_day + 1):
@@ -171,4 +172,6 @@ def construct_ideals_table(self, ideais, dates, teams, week_number, turnos):
                 key = (d, s, team_code)
                 if key in self.ideais:
                     ideals[day][(s, team_code)] = self.ideais[key]
+        # print(f"Day {day}: {ideals[day]}")  # Debugging line to check the contents of ideals for each day
+
     return ideals
