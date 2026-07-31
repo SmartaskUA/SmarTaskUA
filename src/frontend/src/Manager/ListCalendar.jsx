@@ -39,6 +39,7 @@ const ListCalendar = () => {
   const navigate = useNavigate();
 
   const isFailedCalendar = (calendar) => calendar.itemType === "failed-task";
+  const isInProgressCalendar = (calendar) => calendar.itemType === "in-progress-task";
 
   const normalizeFailedTask = (task) => ({
     id: task.taskId,
@@ -50,6 +51,16 @@ const ListCalendar = () => {
     updatedAt: task.updatedAt,
     failureSummary: task.failureSummary,
     hasReport: Boolean(task.reportArtifacts?.pdf),
+  });
+
+  const normalizeInProgressTask = (task) => ({
+    id: task.taskId,
+    taskId: task.taskId,
+    itemType: "in-progress-task",
+    title: task.scheduleRequest?.title || "Untitled schedule",
+    algorithm: task.scheduleRequest?.algorithm || "No algorithm specified",
+    status: task.status,
+    updatedAt: task.updatedAt,
   });
 
   const handleDownloadReport = (taskId) => {
@@ -68,11 +79,18 @@ const ListCalendar = () => {
           ...schedule,
           itemType: "schedule",
         }));
+        const completedTitles = new Set(schedules.map((schedule) => schedule.title));
+
         const failedTasks = (tasksResponse.data || [])
           .filter((task) => task.status === "FAILED" || task.status === "FAILED_VALIDATION")
           .map(normalizeFailedTask);
 
-        setCalendars([...failedTasks, ...schedules]);
+        const inProgressTasks = (tasksResponse.data || [])
+          .filter((task) => task.status === "PENDING" || task.status === "IN_PROGRESS")
+          .filter((task) => !completedTitles.has(task.scheduleRequest?.title))
+          .map(normalizeInProgressTask);
+
+        setCalendars([...failedTasks, ...inProgressTasks, ...schedules]);
         setError(null);
       } else {
         setError("No data found.");
@@ -275,7 +293,11 @@ const ListCalendar = () => {
                 flexDirection: "column",
                 justifyContent: "flex-start",
                 gap: "16px",
-                border: isFailedCalendar(calendar) ? "1px solid #dc3545" : "1px solid #ddd",
+                border: isFailedCalendar(calendar)
+                  ? "1px solid #dc3545"
+                  : isInProgressCalendar(calendar)
+                  ? "1px solid #006FD5"
+                  : "1px solid #ddd",
                 borderRadius: "8px",
                 margin: "0.65%",
                 boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
@@ -283,7 +305,7 @@ const ListCalendar = () => {
                 boxSizing: "border-box",
               }}
             >
-              {!isFailedCalendar(calendar) && (
+              {!isFailedCalendar(calendar) && !isInProgressCalendar(calendar) && (
                 <IconButton
                   size="small"
                   onClick={() => confirmDeleteCalendar(calendar)}
@@ -311,7 +333,11 @@ const ListCalendar = () => {
                   className="status-dot"
                   style={{
                     marginTop: "8px",
-                    backgroundColor: isFailedCalendar(calendar) ? "#dc3545" : undefined,
+                    backgroundColor: isFailedCalendar(calendar)
+                      ? "#dc3545"
+                      : isInProgressCalendar(calendar)
+                      ? "#006FD5"
+                      : undefined,
                   }}
                 />
                 <div className="calendar-card-main">
@@ -335,6 +361,21 @@ const ListCalendar = () => {
                 )}
               </div>
 
+              {isInProgressCalendar(calendar) && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    color: "#006FD5",
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  <CircularProgress size={16} thickness={5} sx={{ color: "#006FD5" }} />
+                  {calendar.status === "IN_PROGRESS" ? "Calculating schedule..." : "Queued..."}
+                </div>
+              )}
+
               {isFailedCalendar(calendar) && calendar.failureSummary && (
                 <div
                   style={{
@@ -353,47 +394,49 @@ const ListCalendar = () => {
                 </div>
               )}
 
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                {isFailedCalendar(calendar) ? (
-                  calendar.hasReport && (
-                    <button
+              {!isInProgressCalendar(calendar) && (
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  {isFailedCalendar(calendar) ? (
+                    calendar.hasReport && (
+                      <button
+                        className="open-button"
+                        style={{
+                          backgroundColor: "#dc3545",
+                          color: "#fff",
+                          padding: "8px 18px",
+                          textAlign: "center",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontWeight: "bold",
+                          fontSize: "0.95rem",
+                          cursor: "pointer",
+                          width: "100%",
+                        }}
+                        onClick={() => handleDownloadReport(calendar.taskId)}
+                      >
+                        Download PDF
+                      </button>
+                    )
+                  ) : (
+                    <Link
+                      to={`/manager/calendar/${calendar.id}`}
                       className="open-button"
                       style={{
-                        backgroundColor: "#dc3545",
+                        backgroundColor: "#4CAF50",
                         color: "#fff",
-                        padding: "8px 18px",
+                        padding: "8px 35%",
                         textAlign: "center",
-                        border: "none",
+                        textDecoration: "none",
                         borderRadius: "8px",
                         fontWeight: "bold",
-                        fontSize: "0.95rem",
-                        cursor: "pointer",
-                        width: "100%",
+                        fontSize: "1rem",
                       }}
-                      onClick={() => handleDownloadReport(calendar.taskId)}
                     >
-                      Download PDF
-                    </button>
-                  )
-                ) : (
-                  <Link
-                    to={`/manager/calendar/${calendar.id}`}
-                    className="open-button"
-                    style={{
-                      backgroundColor: "#4CAF50",
-                      color: "#fff",
-                      padding: "8px 35%",
-                      textAlign: "center",
-                      textDecoration: "none",
-                      borderRadius: "8px",
-                      fontWeight: "bold",
-                      fontSize: "1rem",
-                    }}
-                  >
-                    Open
-                  </Link>
-                )}
-              </div>
+                      Open
+                    </Link>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>

@@ -14,11 +14,15 @@ import {
 function SectionLabel({ children }) {
   return (
     <Typography
-      variant="caption"
-      color="text.secondary"
-      fontWeight={500}
-      display="block"
-      mb={1}
+      variant="overline"
+      sx={{
+        display: "block",
+        mb: 1.5,
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: "0.08em",
+        color: "text.secondary",
+      }}
     >
       {children}
     </Typography>
@@ -68,9 +72,9 @@ function EmployeeUtilList({ employees }) {
   const visible = showAll ? sorted : sorted.slice(0, 8);
 
   const statusStyle = (status) => {
-    if (status === "overloaded") return { bg: "#FCEBEB", text: "#791F1F" };
-    if (status === "idle")       return { bg: "#FAEEDA", text: "#633806" };
-    return { bg: "#EAF3DE", text: "#27500A" };
+    if (status === "overloaded") return { bg: "#FEF2F2", text: "#7F1D1D", bar: "#DC2626" };
+    if (status === "idle")       return { bg: "#FFFBEB", text: "#78350F", bar: "#D97706" };
+    return { bg: "#ECFDF5", text: "#065F46", bar: "#059669" };
   };
 
   return (
@@ -118,12 +122,7 @@ function EmployeeUtilList({ employees }) {
                       height: "100%",
                       width: `${Math.min(pct, 100)}%`,
                       borderRadius: 2,
-                      bgcolor:
-                        emp.status === "overloaded"
-                          ? "#A32D2D"
-                          : emp.status === "idle"
-                          ? "#854F0B"
-                          : "#3B6D11",
+                      bgcolor: s.bar,
                       transition: "width .3s ease",
                     }}
                   />
@@ -203,30 +202,29 @@ function SkillAllocationSection({ data }) {
   );
 
   const durColor =
-    mean_segment_duration_hours >= 3 ? "#3B6D11"
-    : mean_segment_duration_hours >= 1.5 ? "#854F0B"
-    : "#A32D2D";
+    mean_segment_duration_hours >= 3 ? "#059669"
+    : mean_segment_duration_hours >= 1.5 ? "#D97706"
+    : "#DC2626";
 
-  // Max changes for bar scaling
   const maxChanges = per_employee
     ? Math.max(...per_employee.map(e => e.mean_changes_per_day), 0.01)
     : 0.01;
 
   const switchColor = (val) =>
-    val < 1 ? "#3B6D11" : val < 2 ? "#854F0B" : "#A32D2D";
+    val < 1 ? "#059669" : val < 2 ? "#D97706" : "#DC2626";
 
   return (
     <Box mt={2}>
       <Divider sx={{ mb: 1.5 }} />
       <Typography
-        variant="subtitle2"
-        color="text.secondary"
+        variant="overline"
         sx={{
+          display: "block",
           mb: 1.5,
-          textTransform: "uppercase",
-          letterSpacing: ".05em",
-          fontSize: 11,
-          fontWeight: 600,
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: "0.08em",
+          color: "text.secondary",
         }}
       >
         Skill allocation
@@ -370,14 +368,14 @@ export default function WorkloadUtilisationPanel({ kpis }) {
     <Box mt={3}>
       <Divider sx={{ mb: 1.5 }} />
       <Typography
-        variant="subtitle2"
-        color="text.secondary"
+        variant="overline"
         sx={{
+          display: "block",
           mb: 2,
-          textTransform: "uppercase",
-          letterSpacing: ".05em",
-          fontSize: 11,
-          fontWeight: 600,
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: "0.08em",
+          color: "text.secondary",
         }}
       >
         Workload utilisation
@@ -394,13 +392,13 @@ export default function WorkloadUtilisationPanel({ kpis }) {
           label="Idle employees"
           value={idle_employees}
           sub={`below ${idle_threshold_pct}% utilisation`}
-          accent={idle_employees > 0 ? "#854F0B" : undefined}
+          accent={idle_employees > 0 ? "#D97706" : undefined}
         />
         <StatCard
           label="Overloaded employees"
           value={overloaded_employees}
           sub="exceed contracted hours"
-          accent={overloaded_employees > 0 ? "#A32D2D" : undefined}
+          accent={overloaded_employees > 0 ? "#DC2626" : undefined}
         />
         <StatCard
           label="Assignments used"
