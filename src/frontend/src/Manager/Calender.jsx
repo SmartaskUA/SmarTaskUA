@@ -31,6 +31,8 @@ const Calendar = () => {
   const [elapsed_time, setElapsedTime] = useState(null);
   const [viewMode, setViewMode] = useState("schedule");
   const [coverageMode, setCoverageMode] = useState("min");
+  const [hasSisqualExport, setHasSisqualExport] = useState(false);
+  const [isExportingSisqual, setIsExportingSisqual] = useState(false);
   const resolvedYear = Number(metadata?.year) || new Date().getFullYear();
   const scheduleType = inferScheduleType(metadata);
   const scheduleColumns = useMemo(
@@ -62,6 +64,7 @@ const Calendar = () => {
             setKpiSummary(responseData.metadata.analysis.kpis);
           }
           setElapsedTime(elapsed_time);
+          setHasSisqualExport(Boolean(responseData.sisqualExport));
           console.log("Elapsed time:", elapsed_time);
           fetchNationalHolidays(responseData.metadata?.year || new Date().getFullYear());
         }
@@ -226,6 +229,22 @@ const Calendar = () => {
     link.click();
   };
 
+  const downloadSisqualExport = async () => {
+    setIsExportingSisqual(true);
+    try {
+      const response = await axios.get(`${BaseUrl}/schedules/fetch/${calendarId}/sisqual-export`);
+      const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `${calendarId}_sisqual_import.json`;
+      link.click();
+    } catch (err) {
+      console.error("Failed to download Sisqual export:", err);
+    } finally {
+      setIsExportingSisqual(false);
+    }
+  };
+
   const formatElapsedTime = (seconds) => {
   if (!seconds && seconds !== 0) return null;
   if (seconds < 60) return `${seconds.toFixed(2)} sec`;
@@ -272,6 +291,8 @@ const Calendar = () => {
           selectedMonth={selectedMonth}
           setSelectedMonth={setSelectedMonth}
           downloadCSV={downloadCSV}
+          onDownloadSisqualExport={hasSisqualExport ? downloadSisqualExport : null}
+          isExportingSisqual={isExportingSisqual}
           calendarTitle={metadata?.scheduleName || "Work Calendar"}
           algorithmName={metadata?.algorithmType}
           scheduleType={scheduleType}

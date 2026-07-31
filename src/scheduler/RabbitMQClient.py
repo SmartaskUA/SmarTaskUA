@@ -276,10 +276,12 @@ class RabbitMQClient:
                 schedule_data = result.get("schedule")
                 kpis = result.get("kpis")
                 result_metadata = result.get("metadata") or {}
+                sisqual_export = result.get("sisqual_export")
             else:
                 schedule_data = result
                 kpis = None
                 result_metadata = {}
+                sisqual_export = None
 
             print("ELAPSED TIME:", elapsed_time)
             problem_metadata = self.load_problem_bundle_metadata(problem_path) if problem_path else {}
@@ -311,7 +313,8 @@ class RabbitMQClient:
                 title=title,
                 algorithm=algorithm_name,
                 metadata=metadata,
-                elapsed_time=elapsed_time
+                elapsed_time=elapsed_time,
+                sisqual_export=sisqual_export
             )
 
             print(f"[RabbitMQClient] Schedule complete for Task ID: {task_id}")

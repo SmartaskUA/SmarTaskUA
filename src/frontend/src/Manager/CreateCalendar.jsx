@@ -17,10 +17,15 @@ import {
   MenuItem,
 } from "@mui/material";
 
+// Production-simplified scheduling: hides Manual mode and restricts the
+// Problem-mode algorithm picker to only the Mathematical Formulation (MD7)
+// solvers. Controlled by VITE_SIMPLE_MODE — see docs/development/simple-mode.md.
+const SIMPLE_MODE = import.meta.env.VITE_SIMPLE_MODE === "true";
+
 const CreateCalendar = () => {
   const [searchParams] = useSearchParams();
   const initialProblemId = searchParams.get("problemId") || "";
-  const initialMode = initialProblemId ? "problem" : "manual";
+  const initialMode = SIMPLE_MODE ? "problem" : (initialProblemId ? "problem" : "manual");
   const [mode, setMode] = useState(initialMode);
   const [title, setTitle] = useState("");
   const [groupNames, setGroupNames] = useState([]); 
@@ -266,22 +271,29 @@ const CreateCalendar = () => {
     setMaxDurationError(!intValue || intValue <= 0 || !/^\d+$/.test(value));
   };
 
-  const problemShiftAlgorithms = [
-    { value: "ILP General", label: "ILP General" },
-    { value: "CSP General", label: "CSP General" },
-  ];
-  const problemHourAlgorithms = [
+  // Simple mode has no shift-based Mathematical Formulation solver, so
+  // shift-type problems aren't solvable in that mode at all.
+  const problemShiftAlgorithms = SIMPLE_MODE
+    ? []
+    : [
+        { value: "ILP General", label: "ILP General" },
+        { value: "CSP General", label: "CSP General" },
+      ];
+  const problemHourAlgorithmsFull = [
     { value: "ILP_Sisqual_Hours", label: "ILP Sisqual Hours" },
     { value: "CSP_Sisqual_Hours", label: "CSP Sisqual Hours" },
     {
       value: "ILP_Sisqual_Hours_MathematicalDefinition7",
-      label: "ILP Sisqual Hours MD7",
+      label: "ILP Sisqual Hours Final Version",
     },
     {
       value: "CSP_Sisqual_Hours_MathematicalDefinition7",
-      label: "CSP Sisqual Hours MD7",
+      label: "CSP Sisqual Hours Final Version",
     },
   ];
+  const problemHourAlgorithms = SIMPLE_MODE
+    ? problemHourAlgorithmsFull.filter((alg) => alg.value.includes("MathematicalDefinition7"))
+    : problemHourAlgorithmsFull;
 
   const manualShiftAlgorithms = [
     { value: "hill climbing", label: "Hill Climbing" },
@@ -383,24 +395,26 @@ const CreateCalendar = () => {
                 helperText={maxDurationError ? "Duration must be a positive integer (até 1000)" : ""}
               />
 
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="mode-select-label">Mode</InputLabel>
-                <Select
-                  labelId="mode-select-label"
-                  value={mode}
-                  label="Mode"
-                  onChange={(e) => {
-                    const nextMode = e.target.value;
-                    setMode(nextMode);
-                    if (nextMode === "manual") {
-                      setSelectedProblemId("");
-                    }
-                  }}
-                >
-                  <MenuItem value="problem">Problem</MenuItem>
-                  <MenuItem value="manual">Manual</MenuItem>
-                </Select>
-              </FormControl>
+              {!SIMPLE_MODE && (
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="mode-select-label">Mode</InputLabel>
+                  <Select
+                    labelId="mode-select-label"
+                    value={mode}
+                    label="Mode"
+                    onChange={(e) => {
+                      const nextMode = e.target.value;
+                      setMode(nextMode);
+                      if (nextMode === "manual") {
+                        setSelectedProblemId("");
+                      }
+                    }}
+                  >
+                    <MenuItem value="problem">Problem</MenuItem>
+                    <MenuItem value="manual">Manual</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
 
               {mode === "problem" && (
                 <FormControl fullWidth margin="normal">

@@ -12,6 +12,8 @@ const CalendarHeader = ({
   viewMode,
   onToggleView,
   toggleViewLabel = "View Minimums",
+  onDownloadSisqualExport,
+  isExportingSisqual = false,
 }) => {
   const selectedIndex = months.findIndex((month) => month.value === selectedMonth);
   const canGoPrev = selectedIndex > 0;
@@ -147,6 +149,25 @@ const CalendarHeader = ({
         >
           Download CSV
         </button>
+        {onDownloadSisqualExport && (
+          <button
+            onClick={onDownloadSisqualExport}
+            disabled={isExportingSisqual}
+            style={{
+              padding: "8px 12px",
+              backgroundColor: "#5b3fd6",
+              color: "white",
+              border: "none",
+              cursor: isExportingSisqual ? "default" : "pointer",
+              borderRadius: "5px",
+              fontSize: "14px",
+              transition: "background 0.3s",
+              opacity: isExportingSisqual ? 0.7 : 1,
+            }}
+          >
+            {isExportingSisqual ? "Exporting..." : "Download Sisqual JSON"}
+          </button>
+        )}
         {onToggleView && (
           <button
             onClick={onToggleView}
