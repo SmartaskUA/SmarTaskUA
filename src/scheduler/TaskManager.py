@@ -89,11 +89,9 @@ class TaskManager:
             "CSP_Sisqual_Hours_MathematicalDefinition5": CSP_Sisqual_Hours_MathematicalDefinition7_solver,
             "COP_1_Half_Intervals": COP_1_Half_Intervals_solver,
             "COP_2_Half_Intervals": COP_2_Half_Intervals_Solver,
-            "LNS_Scheduler": lns_scheduler_solver,
             "Hybrid_Heuristic": hybrid_heuristic_solver,
             "R2_Heuristic": r2_heuristic_solver,
             "Puzzle_Heuristic": puzzle_heuristic_solver,
-            "Inverted_Puzzle_Heuristic": Inverted_Puzzle_Heuristic_solver
         }
 
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13, solver="CBC", problem_path=None):
@@ -167,7 +165,6 @@ class TaskManager:
             "Hybrid_Heuristic",
             "R2_Heuristic",
             "Puzzle_Heuristic",
-            "Inverted_Puzzle_Heuristic",
         ]
         if algorithm_name in algs_with_shifts:
             if uses_rules:
