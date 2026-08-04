@@ -41,7 +41,7 @@ from algorithms.utils_Heuristics_New import (
     construct_mins_table,
     construct_ideals_table,
 )
-from algorithms.Puzzle_Heuristic_Calibrate import calibrate_max_admissible
+# from algorithms.Puzzle_Heuristic_Calibrate import calibrate_max_admissible
 
 
 # =============================================================================
@@ -70,7 +70,7 @@ class Heuristica:
     evaluate_Day_Toshifts_ideais  = evaluate_Day_Toshifts_ideais
     construct_mins_table          = construct_mins_table
     construct_ideals_table        = construct_ideals_table
-    calibrate_max_admissible          = calibrate_max_admissible
+    # calibrate_max_admissible          = calibrate_max_admissible
     
     CALIBRATE = False  # mudar para True para correr calibração
 
