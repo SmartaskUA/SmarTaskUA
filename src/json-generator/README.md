@@ -1,6 +1,6 @@
-# JSON Generator - Schema v2.2
+# JSON Generator - Schema v2.6
 
-User-friendly frontend wizard for generating schema v2.2 JSON + CSV pairs for employee scheduling problems.
+User-friendly frontend wizard for generating schema v2.6 JSON + CSV pairs for employee scheduling problems.
 
 ## Features
 
@@ -11,39 +11,44 @@ User-friendly frontend wizard for generating schema v2.2 JSON + CSV pairs for em
 - ✅ **Validation**: Real-time validation with error feedback
 - ✅ **Responsive**: Works on tablets and desktops
 
-The application will be available at: http://localhost:5174
+The application is served at **http://localhost/json-gen** (via the nginx proxy); the standalone Vite dev server runs on port 5174.
 
 ## Project Structure
 
 ```
 src/
 ├── components/
-│   ├── wizard/          # Wizard components (Stepper, Navigation, StepCard)
-│   ├── tables/          # Table components (coming soon)
-│   ├── calendar/        # Calendar components (coming soon)
-│   ├── import/          # CSV import components (coming soon)
-│   ├── validation/      # Validation components (coming soon)
-│   ├── preview/         # Preview components (coming soon)
-│   └── forms/           # Form dialogs (coming soon)
+│   ├── wizard/          # Stepper, NavigationButtons, StepCard
+│   ├── calendar/        # ScheduleMatrix, TimeConstraintDialog, MatrixCell
+│   ├── constraints/     # ConstraintCard, ConstraintsList, ParamEditor
+│   ├── demand/          # DemandCalendarGrid, WeeklyTemplateBuilder, DayDemandDetail
+│   ├── employees/       # EmployeeTable, EmployeeForm, CompetencyBuilder
+│   ├── import/          # CSVImporter, CSVPreview, ColumnMapper
+│   ├── organizational/  # OrganizationalUnitTable, OrganizationalUnitForm
+│   ├── optimization/    # AlgorithmSelector, ObjectiveDialog
+│   ├── preview/         # JsonPreview, CsvPreview
+│   ├── review/          # ValidationPanel, PreviewTabs, SummaryAccordions, DownloadPanel
+│   ├── shared/          # ImportPreviewModal
+│   ├── shifts/          # WorkPeriodForm, WorkPeriodTable, BreakBuilder
+│   └── project/         # ProjectManagerDialog (save/load/export projects)
 ├── context/
 │   └── WizardContext.jsx    # Central state management
 ├── steps/
 │   ├── Step1_QuickSetup.jsx         # ✅ Implemented
 │   ├── Step2_Contracts.jsx          # ✅ Implemented
-│   ├── Step3_OrganizationalUnits.jsx # 🔄 Placeholder
-│   ├── Step4_Employees.jsx          # 🔄 Placeholder
-│   ├── Step5_ScheduleInput.jsx      # 🔄 Placeholder
-│   ├── Step6_Work Periods.jsx             # 🔄 Placeholder
-│   ├── Step7_Demand.jsx             # 🔄 Placeholder
-│   ├── Step8_Constraints.jsx        # 🔄 Placeholder
-│   ├── Step9_Optimization.jsx       # 🔄 Placeholder
-│   └── Step10_ReviewGenerate.jsx    # 🔄 Placeholder
+│   ├── Step3_OrganizationalUnits.jsx # ✅ Implemented
+│   ├── Step4_Employees.jsx          # ✅ Implemented
+│   ├── Step5_ScheduleInput.jsx      # ✅ Implemented
+│   ├── Step6_WorkPeriods.jsx        # ✅ Implemented
+│   ├── Step7_Demand.jsx             # ✅ Implemented
+│   ├── Step8_Constraints.jsx        # ✅ Implemented (hidden from stepper)
+│   ├── Step9_Optimization.jsx       # ✅ Implemented (hidden from stepper)
+│   └── Step10_ReviewGenerate.jsx    # ✅ Implemented
 ├── utils/
-│   ├── generators/      # JSON/CSV generation logic (coming soon)
-│   ├── validators/      # Validation logic (coming soon)
-│   ├── parsers/         # CSV/JSON parsing (coming soon)
-│   ├── storage/         # LocalStorage helpers (coming soon)
-│   └── helpers/         # Helper functions (coming soon)
+│   ├── generators/      # JSON/CSV generation logic
+│   ├── validators/      # Validation logic (master + per-step + cross-step)
+│   ├── parsers/         # CSV/JSON parsing
+│   └── helpers/         # Date, time, template, color helpers
 ├── App.jsx              # Main application
 ├── main.jsx             # Entry point
 ├── theme.config.js      # 🎨 EDITABLE THEME CONFIGURATION
@@ -83,43 +88,45 @@ export const themeConfig = {
 - Optional constraints (weekends only, max hours, etc.)
 - Add/Edit/Delete contracts
 
-### 🔄 Step 3: Organizational Units (Coming Soon)
+### ✅ Step 3: Organizational Units (Implemented)
 - Define teams (team model) or competencies (competency model)
 
-### 🔄 Step 4: Employees (Coming Soon)
-- Manual entry or CSV import
+### ✅ Step 4: Employees (Implemented)
+- Manual entry or CSV import (with preview & column mapping)
 - Assign teams/competencies and contracts
 
-### 🔄 Step 5: Schedule Input Matrix (Coming Soon)
+### ✅ Step 5: Schedule Input Matrix (Implemented)
 - Visual matrix for employee availability and work requirements
 - **Work Requirements**: A (auto-allocate), 1-16 (specific hours)
-- **Time Window Constraints (v2.2)**: EQUALS:HH:MM-HH:MM, INCLUDE:HH:MM-HH:MM, EXCEPT:HH:MM-HH:MM
+- **Time Window Constraints (v2.6)**: EQUALS:HH:MM-HH:MM, INCLUDE:HH:MM-HH:MM, EXCEPT:HH:MM-HH:MM
 - **Standard Constraints**: VAC (vacation), NOT (unavailable)
 - **Custom Constraints**: Define project-specific codes (DL, DLF, etc.)
 
-### 🔄 Step 6: Work Periods (Coming Soon)
+### ✅ Step 6: Work Periods (Implemented)
 - Define work period codes, names, time ranges
 - Fixed or flexible work periods
 - Break rules (meal, rest, other)
 - Timing modes: fixed, window, afterWork
 
-### 🔄 Step 7: Demand Calendar (Coming Soon)
+### ✅ Step 7: Demand Calendar (Implemented)
 - Coverage requirements per date/shift/team
 - Minimum, Ideal, Estimated values
 
-### 🔄 Step 8: Constraints (Coming Soon)
+### ✅ Step 8: Constraints (Implemented — hidden from stepper UI)
 - **Hard Constraints**: Must be satisfied (max_consecutive_days, min_rest_hours, vacation_block, etc.)
 - **Soft Constraints**: With penalty weights (min_coverage, balance_workload, etc.)
 - **Advanced**: Day-off swapping, break rules, priority hierarchy (requires useAdvancedConstraints feature flag)
 
-### 🔄 Step 9: Optimization (Coming Soon)
+### ✅ Step 9: Optimization (Implemented — hidden from stepper UI)
 - Algorithm selection
 - Objectives and weights
 
-### 🔄 Step 10: Review & Generate (Coming Soon)
-- Validation
+### ✅ Step 10: Review & Generate (Implemented)
+- Master validation (per-step + cross-step) with errors/warnings
 - Preview JSON/CSV
-- Download files
+- Download `problem.json` + `demand.csv` + `schedule_input.csv` as a ZIP
+
+> **Note on hidden steps:** Steps 8 (Constraints) and 9 (Optimization) are intentionally hidden from the visible stepper to keep the main flow simple, but they are fully functional and editable. Sensible defaults are applied; advanced users can reach them programmatically or via the review step.
 
 ## Development Roadmap
 
@@ -131,32 +138,32 @@ export const themeConfig = {
 - [x] Step 1: Quick Setup
 - [x] Step 2: Contracts
 
-### Phase 2: Core Data (Next)
-- [ ] Step 3: Organizational Units
-- [ ] Step 4: Employees (with CSV import)
-- [ ] Reusable table components
+### Phase 2: Core Data ✅ COMPLETE
+- [x] Step 3: Organizational Units
+- [x] Step 4: Employees (with CSV import)
+- [x] Reusable table components
 
-### Phase 3: Scheduling
-- [ ] Step 5: Schedule Input Matrix
-- [ ] Step 6: Work Periods
-- [ ] Step 7: Demand Calendar
+### Phase 3: Scheduling ✅ COMPLETE
+- [x] Step 5: Schedule Input Matrix
+- [x] Step 6: Work Periods
+- [x] Step 7: Demand Calendar
 
-### Phase 4: Configuration
-- [ ] Step 8: Constraints
-- [ ] Step 9: Optimization
+### Phase 4: Configuration ✅ COMPLETE
+- [x] Step 8: Constraints
+- [x] Step 9: Optimization
 
-### Phase 5: Generation & Polish
-- [ ] Step 10: Review & Generate
-- [ ] JSON/CSV generation logic
-- [ ] Python validator integration
-- [ ] File downloads (ZIP)
-- [ ] Testing and polish
+### Phase 5: Generation & Polish ✅ COMPLETE
+- [x] Step 10: Review & Generate
+- [x] JSON/CSV generation logic
+- [x] File downloads (ZIP)
+- [ ] Python validator integration (deferred)
+- [ ] User-testing pass (in progress)
 
 ## State Management
 
 The wizard uses React Context API for state management. All state is automatically saved to localStorage and restored on page reload.
 
-State structure matches schema v2.2:
+State structure matches schema v2.6:
 ```javascript
 {
   currentStep: 0,
@@ -181,9 +188,9 @@ State structure matches schema v2.2:
 - **Material-UI v7**: Component library
 - **React Router v6**: Navigation
 - **date-fns**: Date operations
-- **PapaParse**: CSV parsing (when implemented)
-- **JSZip**: File bundling (when implemented)
-- **file-saver**: File downloads (when implemented)
+- **PapaParse**: CSV parsing
+- **JSZip**: File bundling
+- **file-saver**: File downloads
 
 ## Contributing
 

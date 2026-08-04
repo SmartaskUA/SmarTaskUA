@@ -2,7 +2,6 @@ package smartask.api.bootstrap;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import smartask.api.models.Employee;
@@ -14,7 +13,9 @@ import smartask.api.services.SchedulesService;
 import smartask.api.services.TeamService;
 import smartask.api.services.VacationService;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -77,12 +78,14 @@ public class ScenarioSeeder {
         // createScenarioWithCrossing(4, 24, 0.20);
         // createScenarioWithCrossing(8, 48, 0.20);
         // createScenarioWithCrossing(16, 96, 0.20);
+        // createScenarioWithCrossing(32, 192, 0.20);
 
         // 3-shift scenarios
         createScenarioWithCrossing(2, 24, 0.20);
         createScenarioWithCrossing(4, 48, 0.20);
         createScenarioWithCrossing(8, 96, 0.20);
         createScenarioWithCrossing(16, 192, 0.20);
+        createScenarioWithCrossing(32, 384, 0.20);
 
         loadTemplatesIntoDatabase();
 
@@ -145,10 +148,10 @@ public class ScenarioSeeder {
         System.out.printf("%nInitializing %s -> %d teams, %d employees, cross=%.0f%%%n",
                 groupName, numTeams, numEmployees, crossRatio * 100);
 
-        // Create teams A..(A+numTeams-1)
+        // Create teams A..(A+numTeams-1), supporting multi-char labels beyond Z (AA, AB, ...)
         List<Team> teams = new ArrayList<>();
         for (int t = 0; t < numTeams; t++) {
-            String teamName = "Equipa " + (char) ('A' + t);
+            String teamName = "Equipa " + teamLabel(t);
             teams.add(createOrGetTeam(teamName, groupName));
         }
 
@@ -202,6 +205,21 @@ public class ScenarioSeeder {
     // ----------------------------------------------------------------
     // Helpers
     // ----------------------------------------------------------------
+
+    /**
+     * Convert a 0-based team index to a label: A, B, ..., Z, AA, AB, ..., AF, ...
+     * Mirrors Python _team_label() in minimum_generation_template.py.
+     */
+    private static String teamLabel(int t) {
+        StringBuilder label = new StringBuilder();
+        int n = t;
+        do {
+            label.insert(0, (char) ('A' + n % 26));
+            n = n / 26 - 1;
+        } while (n >= 0);
+        return label.toString();
+    }
+
     private Team createOrGetTeam(String name, String groupName) {
         return teamService.getTeams().stream()
                 .filter(t -> name.equals(t.getName()) && groupName.equals(t.getGroupName()))
@@ -328,7 +346,7 @@ public class ScenarioSeeder {
                 try (InputStream is = new ClassPathResource("minimuns/" + file).getInputStream()) {
                     if (is != null) {
                         String name = file.replace(".csv", "");
-                        MultipartFile mf = new MockMultipartFile(name, file, "text/csv", is.readAllBytes());
+                        MultipartFile mf = new InMemoryMultipartFile(name, file, "text/csv", is.readAllBytes());
                         referenceService.createTemplateFromCsv(name, mf);
                         System.out.println("Reference template loaded: " + name);
                     }
@@ -446,6 +464,60 @@ public class ScenarioSeeder {
                 System.err.printf("[WARN] Error checking status of '%s': %s%n", title, e.getMessage());
                 break;
             }
+        }
+    }
+
+    private static class InMemoryMultipartFile implements MultipartFile {
+        private final String name;
+        private final String originalFilename;
+        private final String contentType;
+        private final byte[] content;
+
+        private InMemoryMultipartFile(String name, String originalFilename, String contentType, byte[] content) {
+            this.name = name;
+            this.originalFilename = originalFilename;
+            this.contentType = contentType;
+            this.content = content;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public String getOriginalFilename() {
+            return originalFilename;
+        }
+
+        @Override
+        public String getContentType() {
+            return contentType;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return content.length == 0;
+        }
+
+        @Override
+        public long getSize() {
+            return content.length;
+        }
+
+        @Override
+        public byte[] getBytes() {
+            return content;
+        }
+
+        @Override
+        public InputStream getInputStream() {
+            return new ByteArrayInputStream(content);
+        }
+
+        @Override
+        public void transferTo(File dest) throws IOException {
+            Files.write(dest.toPath(), content);
         }
     }
 }

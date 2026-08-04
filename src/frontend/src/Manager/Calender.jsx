@@ -31,6 +31,8 @@ const Calendar = () => {
   const [elapsed_time, setElapsedTime] = useState(null);
   const [viewMode, setViewMode] = useState("schedule");
   const [coverageMode, setCoverageMode] = useState("min");
+  const [hasSisqualExport, setHasSisqualExport] = useState(false);
+  const [isExportingSisqual, setIsExportingSisqual] = useState(false);
   const resolvedYear = Number(metadata?.year) || new Date().getFullYear();
   const scheduleType = inferScheduleType(metadata);
   const scheduleColumns = useMemo(
@@ -62,13 +64,20 @@ const Calendar = () => {
             setKpiSummary(responseData.metadata.analysis.kpis);
           }
           setElapsedTime(elapsed_time);
+          setHasSisqualExport(Boolean(responseData.sisqualExport));
           console.log("Elapsed time:", elapsed_time);
           fetchNationalHolidays(responseData.metadata?.year || new Date().getFullYear());
-          analyzeScheduleViaWebSocket(scheduleData, responseData.metadata);
         }
       })
       .catch(console.error);
   }, [calendarId]);
+
+  useEffect(() => {
+    if (!data?.length || !metadata || !monthColumns.length) {
+      return;
+    }
+    analyzeScheduleViaWebSocket(data, metadata, monthColumns);
+  }, [data, metadata, monthColumns, calendarId]);
 
   useEffect(() => {
     if (!monthOptions.length) {
@@ -96,9 +105,14 @@ const Calendar = () => {
               if (mappedCalId === calendarId && item.result) {
                 console.log("KPI recebido via WebSocket:", item.result);
                 setKpiSummary((prev) => {
-                  // Se já temos KPIs Sisqual (calculados em memória),
-                  // não deixar o WebSocket legacy sobrescrever
-                  if (prev && prev["Total_Shortage"] !== undefined) {
+                  const prevIsSisqualHourly =
+                    prev?.weightedMinimumCoverageRate !== undefined ||
+                    Array.isArray(prev?.teamCoverageBreakdown) ||
+                    prev?.["Total_Shortage"] !== undefined;
+                  const nextIsSisqualHourly =
+                    item.result?.weightedMinimumCoverageRate !== undefined ||
+                    Array.isArray(item.result?.teamCoverageBreakdown);
+                  if (prevIsSisqualHourly && !nextIsSisqualHourly) {
                     console.log("KPIs Sisqual já presentes — ignorando WebSocket.");
                     return prev;
                   }
@@ -119,7 +133,19 @@ const Calendar = () => {
     return () => stompClient.deactivate();
   }, [calendarId]);
 
-  const analyzeScheduleViaWebSocket = async (scheduleData, metadata) => {
+  const buildMonthScopedScheduleData = (scheduleData, columns) => {
+    if (!Array.isArray(scheduleData) || !scheduleData.length || !columns?.length) {
+      return scheduleData;
+    }
+    const selectedIndexes = columns.map((column) => column.index + 1);
+    return scheduleData.map((row, rowIndex) => {
+      if (!Array.isArray(row)) return row;
+      const firstCell = rowIndex === 0 ? "employee_id" : row[0];
+      return [firstCell, ...selectedIndexes.map((index) => row[index] ?? "")];
+    });
+  };
+
+  const analyzeScheduleViaWebSocket = async (scheduleData, metadata, columns) => {
     try {
       const hasVacationTemplate =
         Array.isArray(metadata?.vacationTemplateData) &&
@@ -135,8 +161,19 @@ const Calendar = () => {
         return;
       }
 
+      // Server-computed KPIs (stored in metadata.analysis.kpis) cover the full
+      // schedule and are already loaded into state. Don't wipe them — the
+      // WebSocket re-analysis is month-scoped and would overwrite a richer result.
+      if (metadata?.analysis?.kpis) {
+        console.info("Skipping WebSocket KPI re-analysis: server-computed KPIs already present.");
+        return;
+      }
+
+      const scopedScheduleData = buildMonthScopedScheduleData(scheduleData, columns);
+      setKpiSummary(null);
+
       const toCsvString = (rows) => rows.map((row) => row.join(",")).join("\n");
-      const blob = new Blob([toCsvString(scheduleData)], {
+      const blob = new Blob([toCsvString(scopedScheduleData)], {
         type: "text/csv;charset=utf-8",
       });
 
@@ -196,6 +233,22 @@ const Calendar = () => {
     link.click();
   };
 
+  const downloadSisqualExport = async () => {
+    setIsExportingSisqual(true);
+    try {
+      const response = await axios.get(`${BaseUrl}/schedules/fetch/${calendarId}/sisqual-export`);
+      const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `${calendarId}_sisqual_import.json`;
+      link.click();
+    } catch (err) {
+      console.error("Failed to download Sisqual export:", err);
+    } finally {
+      setIsExportingSisqual(false);
+    }
+  };
+
   const formatElapsedTime = (seconds) => {
   if (!seconds && seconds !== 0) return null;
   if (seconds < 60) return `${seconds.toFixed(2)} sec`;
@@ -243,6 +296,8 @@ const Calendar = () => {
           selectedMonth={selectedMonth}
           setSelectedMonth={setSelectedMonth}
           downloadCSV={downloadCSV}
+          onDownloadSisqualExport={hasSisqualExport ? downloadSisqualExport : null}
+          isExportingSisqual={isExportingSisqual}
           calendarTitle={metadata?.scheduleName || "Work Calendar"}
           algorithmName={metadata?.algorithmType}
           scheduleType={scheduleType}
@@ -376,7 +431,9 @@ const Calendar = () => {
 
         <MetadataInfo metadata={metadata} />
 
-        {kpiSummary?.["Total_Shortage"] !== undefined ? (
+        {kpiSummary?.weightedMinimumCoverageRate !== undefined || Array.isArray(kpiSummary?.teamCoverageBreakdown) ? (
+          <KPIReport metrics={kpiSummary || {}} scheduleType={scheduleType} />
+        ) : kpiSummary?.["Total_Shortage"] !== undefined ? (
           <SisqualKPIReport kpis={kpiSummary} />
         ) : (
           <KPIReport metrics={kpiSummary || {}} scheduleType={scheduleType} />

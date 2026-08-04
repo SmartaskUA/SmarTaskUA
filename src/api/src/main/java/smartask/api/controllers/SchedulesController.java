@@ -108,6 +108,26 @@ public class SchedulesController {
         }
     }
 
+    /**
+     * Retrieves the Sisqual partner-import JSON for a solved schedule, if one
+     * was generated at solve time (only Sisqual "hours" algorithms produce it).
+     *
+     * @param id the id of the schedule.
+     * @return the Sisqual import JSON if present, otherwise 404.
+     */
+    @Operation(
+            summary = "Get the Sisqual import JSON for a schedule",
+            description = "Returns the OutRosterTeamDays/OutScheduleUseds JSON precomputed for Sisqual algorithms. 404 if the schedule doesn't exist or has no Sisqual export."
+    )
+    @GetMapping("/fetch/{id}/sisqual-export")
+    public ResponseEntity<Map<String, Object>> fetchSisqualExport(@PathVariable String id) {
+        Optional<Schedule> optionalSchedule = service.getScheduleById(id);
+        if (optionalSchedule.isEmpty() || optionalSchedule.get().getSisqualExport() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(optionalSchedule.get().getSisqualExport());
+    }
+
 
     @PostMapping("/analyze")
     public ResponseEntity<?> analyzeSchedules(@RequestParam("files") List<MultipartFile> files,

@@ -196,6 +196,57 @@
   background-color: #999;
 }
 
+.manager-result-card-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.manager-result-card-header .status-dot {
+  flex: 0 0 auto;
+  margin-right: 0;
+}
+
+.calendar-card-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.calendar-card-title {
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.calendar-card-algorithm {
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.calendar-card-tag {
+  align-self: flex-start;
+  border-radius: 5px;
+  color: #fff;
+  flex: 0 0 auto;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  max-width: 82px;
+  padding: 4px 6px;
+  text-align: center;
+}
+
+.calendar-card-tag-failed {
+  background-color: #dc3545;
+}
+
+.calendar-card-tag-completed {
+  background-color: #28a745;
+}
+
 .search-input {
   padding: 8px;
   border: 1px solid #ccc;
@@ -333,3 +384,18 @@
   margin-top: 4px;
 }
 
+.manager-result-card-header.calendar-card-header {
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.manager-result-card-header .calendar-card-title,
+.manager-result-card-header .calendar-card-algorithm {
+  margin-left: 0;
+  max-width: 100%;
+}
+
+.manager-result-card-header .calendar-card-title {
+  line-height: 1.2;
+}

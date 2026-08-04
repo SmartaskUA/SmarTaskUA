@@ -17,6 +17,7 @@ import NavigationButtons from '../components/wizard/NavigationButtons';
 import WeeklyTemplateBuilder from '../components/demand/WeeklyTemplateBuilder';
 import DemandCalendarGrid from '../components/demand/DemandCalendarGrid';
 import DemandCalendarToolbar from '../components/demand/DemandCalendarToolbar';
+import ImportPreviewModal from '../components/shared/ImportPreviewModal';
 import { useWizard } from '../context/WizardContext';
 import { parseDemandCsv } from '../utils/parsers/demandCsvParser';
 import { downloadDemandCsv } from '../utils/generators/demandCsvGenerator';
@@ -47,6 +48,8 @@ const Step7_Demand = () => {
   const [activeTab, setActiveTab] = useState(0); // 0 = Phase 1, 1 = Phase 2
   const [error, setError] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [pendingDemand, setPendingDemand] = useState(null);
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   // Get data from state
   const employeeModel = state.employees.model;
@@ -124,6 +127,12 @@ const Step7_Demand = () => {
     updateState('demand.demandData', updatedData);
   };
 
+  // Handle demand addition from day-click modal
+  const handleAddDemand = (newEntry) => {
+    updateState('demand.demandData', [...demandData, newEntry]);
+    setSnackbar({ open: true, message: 'Demand entry added', severity: 'success' });
+  };
+
   // Handle demand deletion from calendar grid
   const handleDeleteDemand = (entryToDelete) => {
     const teamField = employeeModel === 'team' ? 'team' : 'competency';
@@ -137,31 +146,66 @@ const Step7_Demand = () => {
     setSnackbar({ open: true, message: 'Demand entry deleted', severity: 'info' });
   };
 
-  // Handle CSV import
+  // Handle CSV import — shows preview modal before applying
   const handleImportCSV = async (file) => {
     try {
       const result = await parseDemandCsv(file, employeeModel);
 
-      if (result.errors.length > 0) {
+      if (result.errors.length > 0 && result.data.length === 0) {
         setError(`CSV import errors:\n${result.errors.join('\n')}`);
         return;
       }
 
-      updateState('demand.demandData', result.data);
-      setSnackbar({
-        open: true,
-        message: `Successfully imported ${result.data.length} demand entries`,
-        severity: 'success'
+      const teamField = employeeModel === 'team' ? 'team' : 'competency';
+      const existingMap = new Map(demandData.map(e => [`${e.date}|${e.workPeriod}|${e[teamField]}`, e]));
+      let newEntries = 0, modifiedEntries = 0, unchangedEntries = 0;
+
+      result.data.forEach(entry => {
+        const key = `${entry.date}|${entry.workPeriod}|${entry[teamField]}`;
+        const existing = existingMap.get(key);
+        if (!existing) {
+          newEntries++;
+        } else if (existing.minimum !== entry.minimum || existing.ideal !== entry.ideal || existing.estimated !== entry.estimated) {
+          modifiedEntries++;
+        } else {
+          unchangedEntries++;
+        }
       });
+
+      const summary = `${newEntries} new entries, ${modifiedEntries} modified, ${unchangedEntries} unchanged. ${result.data.length} total entries in file.`;
+
+      const previewColumns = [
+        { field: 'date', label: 'Date' },
+        { field: teamField, label: employeeModel === 'team' ? 'Team' : 'Competency' },
+        { field: 'workPeriod', label: 'Work Period' },
+        { field: 'minimum', label: 'Min' },
+        { field: 'ideal', label: 'Ideal' },
+        { field: 'estimated', label: 'Est.' }
+      ];
+
+      setPendingDemand({ data: result.data, columns: previewColumns, summary, warnings: result.errors });
+      setImportModalOpen(true);
       setError('');
     } catch (err) {
       setError(`Failed to import CSV: ${err.message}`);
     }
   };
 
+  const handleImportConfirm = () => {
+    if (!pendingDemand) return;
+    updateState('demand.demandData', pendingDemand.data);
+    setSnackbar({
+      open: true,
+      message: `Successfully imported ${pendingDemand.data.length} demand entries`,
+      severity: 'success'
+    });
+    setImportModalOpen(false);
+    setPendingDemand(null);
+  };
+
   // Handle CSV export
   const handleExportCSV = () => {
-    downloadDemandCsv(demandData, employeeModel, 'demand.csv');
+    downloadDemandCsv(demandData, employeeModel, 'demand.csv', workPeriods);
     setSnackbar({ open: true, message: 'Demand CSV exported successfully', severity: 'success' });
   };
 
@@ -251,7 +295,7 @@ const Step7_Demand = () => {
                       <Chip
                         label={`${demandData.length} entries`}
                         size="small"
-                        color="primary"
+                        color="success"
                         sx={{ height: '20px', fontSize: '0.7rem' }}
                       />
                     )}
@@ -307,8 +351,11 @@ const Step7_Demand = () => {
                   dates={allDates}
                   demandData={demandData}
                   workPeriods={workPeriods}
+                  teams={teams}
+                  workPeriodModel={workPeriodModel}
                   onUpdate={handleUpdateDemand}
                   onDelete={handleDeleteDemand}
+                  onAdd={handleAddDemand}
                   employeeModel={employeeModel}
                 />
               ) : (
@@ -339,6 +386,18 @@ const Step7_Demand = () => {
         autoHideDuration={4000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
         message={snackbar.message}
+      />
+
+      {/* Import Preview Confirmation Modal */}
+      <ImportPreviewModal
+        open={importModalOpen}
+        title={`Import Preview — ${pendingDemand?.data?.length ?? 0} demand entries`}
+        summary={pendingDemand?.summary}
+        warnings={pendingDemand?.warnings || []}
+        rows={pendingDemand?.data?.slice(0, 10) || []}
+        columns={pendingDemand?.columns || []}
+        onConfirm={handleImportConfirm}
+        onCancel={() => { setImportModalOpen(false); setPendingDemand(null); }}
       />
     </Box>
   );

@@ -7,18 +7,20 @@
  */
 
 import Papa from 'papaparse';
+import { getWorkPeriodTimeRange, isTimeOverride } from '../helpers/demandTimeHelpers';
 
 /**
  * Generates demand CSV content from demand data
  * @param {Array} demandData - Array of demand entries
  * @param {string} employeeModel - 'team' or 'competency' to determine column name
+ * @param {Array} workPeriods - Work period definitions, used to detect per-day time overrides
  * @returns {string} CSV content
  */
-export function generateDemandCsv(demandData, employeeModel = 'team') {
+export function generateDemandCsv(demandData, employeeModel = 'team', workPeriods = []) {
   if (!demandData || demandData.length === 0) {
     // Return empty CSV with just headers
     const teamField = employeeModel === 'team' ? 'team' : 'competency';
-    return `date,workPeriod,${teamField},minimum,ideal,estimated\n`;
+    return `date,workPeriod,${teamField},minimum,ideal,estimated,start,end\n`;
   }
 
   const teamField = employeeModel === 'team' ? 'team' : 'competency';
@@ -37,19 +39,29 @@ export function generateDemandCsv(demandData, employeeModel = 'team') {
     return (a[teamField] || '').localeCompare(b[teamField] || '');
   });
 
-  // Prepare data for CSV generation
-  const csvData = sorted.map(entry => ({
-    date: entry.date,
-    workPeriod: entry.workPeriod,
-    [teamField]: entry[teamField],
-    minimum: entry.minimum,
-    ideal: entry.ideal,
-    estimated: entry.estimated
-  }));
+  // Prepare data for CSV generation. `start`/`end` are per-day overrides: only
+  // written when the entry's time differs from its work period default (empty
+  // otherwise, so the scheduler falls back to the JSON timeRange).
+  const csvData = sorted.map(entry => {
+    const override = isTimeOverride(
+      entry.timeRange,
+      getWorkPeriodTimeRange(workPeriods, entry.workPeriod)
+    );
+    return {
+      date: entry.date,
+      workPeriod: entry.workPeriod,
+      [teamField]: entry[teamField],
+      minimum: entry.minimum,
+      ideal: entry.ideal,
+      estimated: entry.estimated,
+      start: override ? entry.timeRange.start : '',
+      end: override ? entry.timeRange.end : ''
+    };
+  });
 
   // Generate CSV
   const csv = Papa.unparse(csvData, {
-    columns: ['date', 'workPeriod', teamField, 'minimum', 'ideal', 'estimated'],
+    columns: ['date', 'workPeriod', teamField, 'minimum', 'ideal', 'estimated', 'start', 'end'],
     header: true
   });
 
@@ -61,9 +73,10 @@ export function generateDemandCsv(demandData, employeeModel = 'team') {
  * @param {Array} demandData - Array of demand entries
  * @param {string} employeeModel - 'team' or 'competency'
  * @param {string} filename - Filename for download (default: 'demand.csv')
+ * @param {Array} workPeriods - Work period definitions, used to detect per-day time overrides
  */
-export function downloadDemandCsv(demandData, employeeModel = 'team', filename = 'demand.csv') {
-  const csv = generateDemandCsv(demandData, employeeModel);
+export function downloadDemandCsv(demandData, employeeModel = 'team', filename = 'demand.csv', workPeriods = []) {
+  const csv = generateDemandCsv(demandData, employeeModel, workPeriods);
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);

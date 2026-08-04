@@ -1,0 +1,3308 @@
+{
+  "schemaVersion": "2.2",
+  "problemType": "employee_scheduling",
+  "metadata": {
+    "problemId": "SMARTASK_3SHIFTS_32TEAMS_2025",
+    "createdAt": "2026-05-09T00:00:00Z",
+    "description": "32-team 3-shift scheduling problem. 384 unique employees: 11 primary per team (round-robin), 32 dual-team members (1 per adjacent team pair A-B, ..., AF-A).",
+    "source": "Derived from ScenarioSeeder.java createScenarioWithCrossing(32, 384, 0.20) \u2014 3-shift variant"
+  },
+  "features": {
+    "useShiftBasedScheduling": true,
+    "useAdvancedConstraints": false,
+    "usePriorityHierarchy": false
+  },
+  "temporalScope": {
+    "year": 2025,
+    "numDays": 365,
+    "targetPeriod": {
+      "start": "2025-01-01",
+      "end": "2025-12-31",
+      "includeBufferWeeks": false
+    }
+  },
+  "contracts": {
+    "definitions": [
+      {
+        "id": "fullTime_8h",
+        "name": "Full-time 8h",
+        "workHoursPerDay": 8
+      }
+    ]
+  },
+  "employees": {
+    "model": "team",
+    "simple": [
+      {
+        "id": "Employee 1",
+        "name": "Employee 1",
+        "teams": [
+          "A",
+          "AF"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 2",
+        "name": "Employee 2",
+        "teams": [
+          "B",
+          "A"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 3",
+        "name": "Employee 3",
+        "teams": [
+          "C",
+          "B"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 4",
+        "name": "Employee 4",
+        "teams": [
+          "D",
+          "C"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 5",
+        "name": "Employee 5",
+        "teams": [
+          "E",
+          "D"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 6",
+        "name": "Employee 6",
+        "teams": [
+          "F",
+          "E"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 7",
+        "name": "Employee 7",
+        "teams": [
+          "G",
+          "F"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 8",
+        "name": "Employee 8",
+        "teams": [
+          "H",
+          "G"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 9",
+        "name": "Employee 9",
+        "teams": [
+          "I",
+          "H"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 10",
+        "name": "Employee 10",
+        "teams": [
+          "J",
+          "I"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 11",
+        "name": "Employee 11",
+        "teams": [
+          "K",
+          "J"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 12",
+        "name": "Employee 12",
+        "teams": [
+          "L",
+          "K"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 13",
+        "name": "Employee 13",
+        "teams": [
+          "M",
+          "L"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 14",
+        "name": "Employee 14",
+        "teams": [
+          "N",
+          "M"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 15",
+        "name": "Employee 15",
+        "teams": [
+          "O",
+          "N"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 16",
+        "name": "Employee 16",
+        "teams": [
+          "P",
+          "O"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 17",
+        "name": "Employee 17",
+        "teams": [
+          "Q",
+          "P"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 18",
+        "name": "Employee 18",
+        "teams": [
+          "R",
+          "Q"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 19",
+        "name": "Employee 19",
+        "teams": [
+          "S",
+          "R"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 20",
+        "name": "Employee 20",
+        "teams": [
+          "T",
+          "S"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 21",
+        "name": "Employee 21",
+        "teams": [
+          "U",
+          "T"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 22",
+        "name": "Employee 22",
+        "teams": [
+          "V",
+          "U"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 23",
+        "name": "Employee 23",
+        "teams": [
+          "W",
+          "V"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 24",
+        "name": "Employee 24",
+        "teams": [
+          "X",
+          "W"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 25",
+        "name": "Employee 25",
+        "teams": [
+          "Y",
+          "X"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 26",
+        "name": "Employee 26",
+        "teams": [
+          "Z",
+          "Y"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 27",
+        "name": "Employee 27",
+        "teams": [
+          "AA",
+          "Z"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 28",
+        "name": "Employee 28",
+        "teams": [
+          "AB",
+          "AA"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 29",
+        "name": "Employee 29",
+        "teams": [
+          "AC",
+          "AB"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 30",
+        "name": "Employee 30",
+        "teams": [
+          "AD",
+          "AC"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 31",
+        "name": "Employee 31",
+        "teams": [
+          "AE",
+          "AD"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 32",
+        "name": "Employee 32",
+        "teams": [
+          "AF",
+          "AE"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 33",
+        "name": "Employee 33",
+        "teams": [
+          "A",
+          "AF"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 34",
+        "name": "Employee 34",
+        "teams": [
+          "B",
+          "A"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 35",
+        "name": "Employee 35",
+        "teams": [
+          "C",
+          "B"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 36",
+        "name": "Employee 36",
+        "teams": [
+          "D",
+          "C"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 37",
+        "name": "Employee 37",
+        "teams": [
+          "E",
+          "D"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 38",
+        "name": "Employee 38",
+        "teams": [
+          "F",
+          "E"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 39",
+        "name": "Employee 39",
+        "teams": [
+          "G",
+          "F"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 40",
+        "name": "Employee 40",
+        "teams": [
+          "H",
+          "G"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 41",
+        "name": "Employee 41",
+        "teams": [
+          "I",
+          "H"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 42",
+        "name": "Employee 42",
+        "teams": [
+          "J",
+          "I"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 43",
+        "name": "Employee 43",
+        "teams": [
+          "K",
+          "J"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 44",
+        "name": "Employee 44",
+        "teams": [
+          "L",
+          "K"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 45",
+        "name": "Employee 45",
+        "teams": [
+          "M",
+          "L"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 46",
+        "name": "Employee 46",
+        "teams": [
+          "N",
+          "M"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 47",
+        "name": "Employee 47",
+        "teams": [
+          "O",
+          "N"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 48",
+        "name": "Employee 48",
+        "teams": [
+          "P",
+          "O"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 49",
+        "name": "Employee 49",
+        "teams": [
+          "Q",
+          "P"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 50",
+        "name": "Employee 50",
+        "teams": [
+          "R",
+          "Q"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 51",
+        "name": "Employee 51",
+        "teams": [
+          "S",
+          "R"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 52",
+        "name": "Employee 52",
+        "teams": [
+          "T",
+          "S"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 53",
+        "name": "Employee 53",
+        "teams": [
+          "U",
+          "T"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 54",
+        "name": "Employee 54",
+        "teams": [
+          "V",
+          "U"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 55",
+        "name": "Employee 55",
+        "teams": [
+          "W",
+          "V"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 56",
+        "name": "Employee 56",
+        "teams": [
+          "X",
+          "W"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 57",
+        "name": "Employee 57",
+        "teams": [
+          "Y",
+          "X"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 58",
+        "name": "Employee 58",
+        "teams": [
+          "Z",
+          "Y"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 59",
+        "name": "Employee 59",
+        "teams": [
+          "AA",
+          "Z"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 60",
+        "name": "Employee 60",
+        "teams": [
+          "AB",
+          "AA"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 61",
+        "name": "Employee 61",
+        "teams": [
+          "AC",
+          "AB"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 62",
+        "name": "Employee 62",
+        "teams": [
+          "AD",
+          "AC"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 63",
+        "name": "Employee 63",
+        "teams": [
+          "AE",
+          "AD"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 64",
+        "name": "Employee 64",
+        "teams": [
+          "AF",
+          "AE"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 65",
+        "name": "Employee 65",
+        "teams": [
+          "A"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 66",
+        "name": "Employee 66",
+        "teams": [
+          "B"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 67",
+        "name": "Employee 67",
+        "teams": [
+          "C"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 68",
+        "name": "Employee 68",
+        "teams": [
+          "D"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 69",
+        "name": "Employee 69",
+        "teams": [
+          "E"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 70",
+        "name": "Employee 70",
+        "teams": [
+          "F"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 71",
+        "name": "Employee 71",
+        "teams": [
+          "G"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 72",
+        "name": "Employee 72",
+        "teams": [
+          "H"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 73",
+        "name": "Employee 73",
+        "teams": [
+          "I"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 74",
+        "name": "Employee 74",
+        "teams": [
+          "J"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 75",
+        "name": "Employee 75",
+        "teams": [
+          "K"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 76",
+        "name": "Employee 76",
+        "teams": [
+          "L"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 77",
+        "name": "Employee 77",
+        "teams": [
+          "M"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 78",
+        "name": "Employee 78",
+        "teams": [
+          "N"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 79",
+        "name": "Employee 79",
+        "teams": [
+          "O"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 80",
+        "name": "Employee 80",
+        "teams": [
+          "P"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 81",
+        "name": "Employee 81",
+        "teams": [
+          "Q"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 82",
+        "name": "Employee 82",
+        "teams": [
+          "R"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 83",
+        "name": "Employee 83",
+        "teams": [
+          "S"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 84",
+        "name": "Employee 84",
+        "teams": [
+          "T"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 85",
+        "name": "Employee 85",
+        "teams": [
+          "U"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 86",
+        "name": "Employee 86",
+        "teams": [
+          "V"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 87",
+        "name": "Employee 87",
+        "teams": [
+          "W"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 88",
+        "name": "Employee 88",
+        "teams": [
+          "X"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 89",
+        "name": "Employee 89",
+        "teams": [
+          "Y"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 90",
+        "name": "Employee 90",
+        "teams": [
+          "Z"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 91",
+        "name": "Employee 91",
+        "teams": [
+          "AA"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 92",
+        "name": "Employee 92",
+        "teams": [
+          "AB"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 93",
+        "name": "Employee 93",
+        "teams": [
+          "AC"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 94",
+        "name": "Employee 94",
+        "teams": [
+          "AD"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 95",
+        "name": "Employee 95",
+        "teams": [
+          "AE"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 96",
+        "name": "Employee 96",
+        "teams": [
+          "AF"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 97",
+        "name": "Employee 97",
+        "teams": [
+          "A"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 98",
+        "name": "Employee 98",
+        "teams": [
+          "B"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 99",
+        "name": "Employee 99",
+        "teams": [
+          "C"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 100",
+        "name": "Employee 100",
+        "teams": [
+          "D"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 101",
+        "name": "Employee 101",
+        "teams": [
+          "E"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 102",
+        "name": "Employee 102",
+        "teams": [
+          "F"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 103",
+        "name": "Employee 103",
+        "teams": [
+          "G"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 104",
+        "name": "Employee 104",
+        "teams": [
+          "H"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 105",
+        "name": "Employee 105",
+        "teams": [
+          "I"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 106",
+        "name": "Employee 106",
+        "teams": [
+          "J"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 107",
+        "name": "Employee 107",
+        "teams": [
+          "K"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 108",
+        "name": "Employee 108",
+        "teams": [
+          "L"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 109",
+        "name": "Employee 109",
+        "teams": [
+          "M"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 110",
+        "name": "Employee 110",
+        "teams": [
+          "N"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 111",
+        "name": "Employee 111",
+        "teams": [
+          "O"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 112",
+        "name": "Employee 112",
+        "teams": [
+          "P"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 113",
+        "name": "Employee 113",
+        "teams": [
+          "Q"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 114",
+        "name": "Employee 114",
+        "teams": [
+          "R"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 115",
+        "name": "Employee 115",
+        "teams": [
+          "S"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 116",
+        "name": "Employee 116",
+        "teams": [
+          "T"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 117",
+        "name": "Employee 117",
+        "teams": [
+          "U"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 118",
+        "name": "Employee 118",
+        "teams": [
+          "V"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 119",
+        "name": "Employee 119",
+        "teams": [
+          "W"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 120",
+        "name": "Employee 120",
+        "teams": [
+          "X"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 121",
+        "name": "Employee 121",
+        "teams": [
+          "Y"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 122",
+        "name": "Employee 122",
+        "teams": [
+          "Z"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 123",
+        "name": "Employee 123",
+        "teams": [
+          "AA"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 124",
+        "name": "Employee 124",
+        "teams": [
+          "AB"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 125",
+        "name": "Employee 125",
+        "teams": [
+          "AC"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 126",
+        "name": "Employee 126",
+        "teams": [
+          "AD"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 127",
+        "name": "Employee 127",
+        "teams": [
+          "AE"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 128",
+        "name": "Employee 128",
+        "teams": [
+          "AF"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 129",
+        "name": "Employee 129",
+        "teams": [
+          "A"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 130",
+        "name": "Employee 130",
+        "teams": [
+          "B"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 131",
+        "name": "Employee 131",
+        "teams": [
+          "C"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 132",
+        "name": "Employee 132",
+        "teams": [
+          "D"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 133",
+        "name": "Employee 133",
+        "teams": [
+          "E"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 134",
+        "name": "Employee 134",
+        "teams": [
+          "F"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 135",
+        "name": "Employee 135",
+        "teams": [
+          "G"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 136",
+        "name": "Employee 136",
+        "teams": [
+          "H"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 137",
+        "name": "Employee 137",
+        "teams": [
+          "I"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 138",
+        "name": "Employee 138",
+        "teams": [
+          "J"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 139",
+        "name": "Employee 139",
+        "teams": [
+          "K"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 140",
+        "name": "Employee 140",
+        "teams": [
+          "L"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 141",
+        "name": "Employee 141",
+        "teams": [
+          "M"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 142",
+        "name": "Employee 142",
+        "teams": [
+          "N"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 143",
+        "name": "Employee 143",
+        "teams": [
+          "O"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 144",
+        "name": "Employee 144",
+        "teams": [
+          "P"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 145",
+        "name": "Employee 145",
+        "teams": [
+          "Q"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 146",
+        "name": "Employee 146",
+        "teams": [
+          "R"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 147",
+        "name": "Employee 147",
+        "teams": [
+          "S"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 148",
+        "name": "Employee 148",
+        "teams": [
+          "T"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 149",
+        "name": "Employee 149",
+        "teams": [
+          "U"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 150",
+        "name": "Employee 150",
+        "teams": [
+          "V"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 151",
+        "name": "Employee 151",
+        "teams": [
+          "W"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 152",
+        "name": "Employee 152",
+        "teams": [
+          "X"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 153",
+        "name": "Employee 153",
+        "teams": [
+          "Y"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 154",
+        "name": "Employee 154",
+        "teams": [
+          "Z"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 155",
+        "name": "Employee 155",
+        "teams": [
+          "AA"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 156",
+        "name": "Employee 156",
+        "teams": [
+          "AB"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 157",
+        "name": "Employee 157",
+        "teams": [
+          "AC"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 158",
+        "name": "Employee 158",
+        "teams": [
+          "AD"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 159",
+        "name": "Employee 159",
+        "teams": [
+          "AE"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 160",
+        "name": "Employee 160",
+        "teams": [
+          "AF"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 161",
+        "name": "Employee 161",
+        "teams": [
+          "A"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 162",
+        "name": "Employee 162",
+        "teams": [
+          "B"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 163",
+        "name": "Employee 163",
+        "teams": [
+          "C"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 164",
+        "name": "Employee 164",
+        "teams": [
+          "D"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 165",
+        "name": "Employee 165",
+        "teams": [
+          "E"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 166",
+        "name": "Employee 166",
+        "teams": [
+          "F"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 167",
+        "name": "Employee 167",
+        "teams": [
+          "G"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 168",
+        "name": "Employee 168",
+        "teams": [
+          "H"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 169",
+        "name": "Employee 169",
+        "teams": [
+          "I"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 170",
+        "name": "Employee 170",
+        "teams": [
+          "J"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 171",
+        "name": "Employee 171",
+        "teams": [
+          "K"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 172",
+        "name": "Employee 172",
+        "teams": [
+          "L"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 173",
+        "name": "Employee 173",
+        "teams": [
+          "M"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 174",
+        "name": "Employee 174",
+        "teams": [
+          "N"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 175",
+        "name": "Employee 175",
+        "teams": [
+          "O"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 176",
+        "name": "Employee 176",
+        "teams": [
+          "P"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 177",
+        "name": "Employee 177",
+        "teams": [
+          "Q"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 178",
+        "name": "Employee 178",
+        "teams": [
+          "R"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 179",
+        "name": "Employee 179",
+        "teams": [
+          "S"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 180",
+        "name": "Employee 180",
+        "teams": [
+          "T"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 181",
+        "name": "Employee 181",
+        "teams": [
+          "U"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 182",
+        "name": "Employee 182",
+        "teams": [
+          "V"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 183",
+        "name": "Employee 183",
+        "teams": [
+          "W"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 184",
+        "name": "Employee 184",
+        "teams": [
+          "X"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 185",
+        "name": "Employee 185",
+        "teams": [
+          "Y"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 186",
+        "name": "Employee 186",
+        "teams": [
+          "Z"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 187",
+        "name": "Employee 187",
+        "teams": [
+          "AA"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 188",
+        "name": "Employee 188",
+        "teams": [
+          "AB"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 189",
+        "name": "Employee 189",
+        "teams": [
+          "AC"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 190",
+        "name": "Employee 190",
+        "teams": [
+          "AD"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 191",
+        "name": "Employee 191",
+        "teams": [
+          "AE"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 192",
+        "name": "Employee 192",
+        "teams": [
+          "AF"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 193",
+        "name": "Employee 193",
+        "teams": [
+          "A"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 194",
+        "name": "Employee 194",
+        "teams": [
+          "B"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 195",
+        "name": "Employee 195",
+        "teams": [
+          "C"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 196",
+        "name": "Employee 196",
+        "teams": [
+          "D"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 197",
+        "name": "Employee 197",
+        "teams": [
+          "E"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 198",
+        "name": "Employee 198",
+        "teams": [
+          "F"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 199",
+        "name": "Employee 199",
+        "teams": [
+          "G"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 200",
+        "name": "Employee 200",
+        "teams": [
+          "H"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 201",
+        "name": "Employee 201",
+        "teams": [
+          "I"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 202",
+        "name": "Employee 202",
+        "teams": [
+          "J"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 203",
+        "name": "Employee 203",
+        "teams": [
+          "K"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 204",
+        "name": "Employee 204",
+        "teams": [
+          "L"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 205",
+        "name": "Employee 205",
+        "teams": [
+          "M"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 206",
+        "name": "Employee 206",
+        "teams": [
+          "N"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 207",
+        "name": "Employee 207",
+        "teams": [
+          "O"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 208",
+        "name": "Employee 208",
+        "teams": [
+          "P"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 209",
+        "name": "Employee 209",
+        "teams": [
+          "Q"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 210",
+        "name": "Employee 210",
+        "teams": [
+          "R"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 211",
+        "name": "Employee 211",
+        "teams": [
+          "S"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 212",
+        "name": "Employee 212",
+        "teams": [
+          "T"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 213",
+        "name": "Employee 213",
+        "teams": [
+          "U"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 214",
+        "name": "Employee 214",
+        "teams": [
+          "V"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 215",
+        "name": "Employee 215",
+        "teams": [
+          "W"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 216",
+        "name": "Employee 216",
+        "teams": [
+          "X"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 217",
+        "name": "Employee 217",
+        "teams": [
+          "Y"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 218",
+        "name": "Employee 218",
+        "teams": [
+          "Z"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 219",
+        "name": "Employee 219",
+        "teams": [
+          "AA"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 220",
+        "name": "Employee 220",
+        "teams": [
+          "AB"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 221",
+        "name": "Employee 221",
+        "teams": [
+          "AC"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 222",
+        "name": "Employee 222",
+        "teams": [
+          "AD"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 223",
+        "name": "Employee 223",
+        "teams": [
+          "AE"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 224",
+        "name": "Employee 224",
+        "teams": [
+          "AF"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 225",
+        "name": "Employee 225",
+        "teams": [
+          "A"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 226",
+        "name": "Employee 226",
+        "teams": [
+          "B"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 227",
+        "name": "Employee 227",
+        "teams": [
+          "C"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 228",
+        "name": "Employee 228",
+        "teams": [
+          "D"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 229",
+        "name": "Employee 229",
+        "teams": [
+          "E"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 230",
+        "name": "Employee 230",
+        "teams": [
+          "F"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 231",
+        "name": "Employee 231",
+        "teams": [
+          "G"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 232",
+        "name": "Employee 232",
+        "teams": [
+          "H"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 233",
+        "name": "Employee 233",
+        "teams": [
+          "I"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 234",
+        "name": "Employee 234",
+        "teams": [
+          "J"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 235",
+        "name": "Employee 235",
+        "teams": [
+          "K"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 236",
+        "name": "Employee 236",
+        "teams": [
+          "L"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 237",
+        "name": "Employee 237",
+        "teams": [
+          "M"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 238",
+        "name": "Employee 238",
+        "teams": [
+          "N"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 239",
+        "name": "Employee 239",
+        "teams": [
+          "O"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 240",
+        "name": "Employee 240",
+        "teams": [
+          "P"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 241",
+        "name": "Employee 241",
+        "teams": [
+          "Q"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 242",
+        "name": "Employee 242",
+        "teams": [
+          "R"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 243",
+        "name": "Employee 243",
+        "teams": [
+          "S"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 244",
+        "name": "Employee 244",
+        "teams": [
+          "T"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 245",
+        "name": "Employee 245",
+        "teams": [
+          "U"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 246",
+        "name": "Employee 246",
+        "teams": [
+          "V"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 247",
+        "name": "Employee 247",
+        "teams": [
+          "W"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 248",
+        "name": "Employee 248",
+        "teams": [
+          "X"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 249",
+        "name": "Employee 249",
+        "teams": [
+          "Y"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 250",
+        "name": "Employee 250",
+        "teams": [
+          "Z"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 251",
+        "name": "Employee 251",
+        "teams": [
+          "AA"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 252",
+        "name": "Employee 252",
+        "teams": [
+          "AB"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 253",
+        "name": "Employee 253",
+        "teams": [
+          "AC"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 254",
+        "name": "Employee 254",
+        "teams": [
+          "AD"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 255",
+        "name": "Employee 255",
+        "teams": [
+          "AE"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 256",
+        "name": "Employee 256",
+        "teams": [
+          "AF"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 257",
+        "name": "Employee 257",
+        "teams": [
+          "A"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 258",
+        "name": "Employee 258",
+        "teams": [
+          "B"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 259",
+        "name": "Employee 259",
+        "teams": [
+          "C"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 260",
+        "name": "Employee 260",
+        "teams": [
+          "D"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 261",
+        "name": "Employee 261",
+        "teams": [
+          "E"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 262",
+        "name": "Employee 262",
+        "teams": [
+          "F"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 263",
+        "name": "Employee 263",
+        "teams": [
+          "G"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 264",
+        "name": "Employee 264",
+        "teams": [
+          "H"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 265",
+        "name": "Employee 265",
+        "teams": [
+          "I"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 266",
+        "name": "Employee 266",
+        "teams": [
+          "J"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 267",
+        "name": "Employee 267",
+        "teams": [
+          "K"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 268",
+        "name": "Employee 268",
+        "teams": [
+          "L"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 269",
+        "name": "Employee 269",
+        "teams": [
+          "M"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 270",
+        "name": "Employee 270",
+        "teams": [
+          "N"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 271",
+        "name": "Employee 271",
+        "teams": [
+          "O"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 272",
+        "name": "Employee 272",
+        "teams": [
+          "P"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 273",
+        "name": "Employee 273",
+        "teams": [
+          "Q"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 274",
+        "name": "Employee 274",
+        "teams": [
+          "R"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 275",
+        "name": "Employee 275",
+        "teams": [
+          "S"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 276",
+        "name": "Employee 276",
+        "teams": [
+          "T"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 277",
+        "name": "Employee 277",
+        "teams": [
+          "U"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 278",
+        "name": "Employee 278",
+        "teams": [
+          "V"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 279",
+        "name": "Employee 279",
+        "teams": [
+          "W"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 280",
+        "name": "Employee 280",
+        "teams": [
+          "X"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 281",
+        "name": "Employee 281",
+        "teams": [
+          "Y"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 282",
+        "name": "Employee 282",
+        "teams": [
+          "Z"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 283",
+        "name": "Employee 283",
+        "teams": [
+          "AA"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 284",
+        "name": "Employee 284",
+        "teams": [
+          "AB"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 285",
+        "name": "Employee 285",
+        "teams": [
+          "AC"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 286",
+        "name": "Employee 286",
+        "teams": [
+          "AD"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 287",
+        "name": "Employee 287",
+        "teams": [
+          "AE"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 288",
+        "name": "Employee 288",
+        "teams": [
+          "AF"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 289",
+        "name": "Employee 289",
+        "teams": [
+          "A"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 290",
+        "name": "Employee 290",
+        "teams": [
+          "B"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 291",
+        "name": "Employee 291",
+        "teams": [
+          "C"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 292",
+        "name": "Employee 292",
+        "teams": [
+          "D"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 293",
+        "name": "Employee 293",
+        "teams": [
+          "E"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 294",
+        "name": "Employee 294",
+        "teams": [
+          "F"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 295",
+        "name": "Employee 295",
+        "teams": [
+          "G"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 296",
+        "name": "Employee 296",
+        "teams": [
+          "H"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 297",
+        "name": "Employee 297",
+        "teams": [
+          "I"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 298",
+        "name": "Employee 298",
+        "teams": [
+          "J"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 299",
+        "name": "Employee 299",
+        "teams": [
+          "K"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 300",
+        "name": "Employee 300",
+        "teams": [
+          "L"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 301",
+        "name": "Employee 301",
+        "teams": [
+          "M"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 302",
+        "name": "Employee 302",
+        "teams": [
+          "N"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 303",
+        "name": "Employee 303",
+        "teams": [
+          "O"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 304",
+        "name": "Employee 304",
+        "teams": [
+          "P"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 305",
+        "name": "Employee 305",
+        "teams": [
+          "Q"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 306",
+        "name": "Employee 306",
+        "teams": [
+          "R"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 307",
+        "name": "Employee 307",
+        "teams": [
+          "S"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 308",
+        "name": "Employee 308",
+        "teams": [
+          "T"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 309",
+        "name": "Employee 309",
+        "teams": [
+          "U"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 310",
+        "name": "Employee 310",
+        "teams": [
+          "V"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 311",
+        "name": "Employee 311",
+        "teams": [
+          "W"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 312",
+        "name": "Employee 312",
+        "teams": [
+          "X"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 313",
+        "name": "Employee 313",
+        "teams": [
+          "Y"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 314",
+        "name": "Employee 314",
+        "teams": [
+          "Z"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 315",
+        "name": "Employee 315",
+        "teams": [
+          "AA"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 316",
+        "name": "Employee 316",
+        "teams": [
+          "AB"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 317",
+        "name": "Employee 317",
+        "teams": [
+          "AC"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 318",
+        "name": "Employee 318",
+        "teams": [
+          "AD"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 319",
+        "name": "Employee 319",
+        "teams": [
+          "AE"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 320",
+        "name": "Employee 320",
+        "teams": [
+          "AF"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 321",
+        "name": "Employee 321",
+        "teams": [
+          "A"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 322",
+        "name": "Employee 322",
+        "teams": [
+          "B"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 323",
+        "name": "Employee 323",
+        "teams": [
+          "C"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 324",
+        "name": "Employee 324",
+        "teams": [
+          "D"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 325",
+        "name": "Employee 325",
+        "teams": [
+          "E"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 326",
+        "name": "Employee 326",
+        "teams": [
+          "F"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 327",
+        "name": "Employee 327",
+        "teams": [
+          "G"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 328",
+        "name": "Employee 328",
+        "teams": [
+          "H"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 329",
+        "name": "Employee 329",
+        "teams": [
+          "I"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 330",
+        "name": "Employee 330",
+        "teams": [
+          "J"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 331",
+        "name": "Employee 331",
+        "teams": [
+          "K"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 332",
+        "name": "Employee 332",
+        "teams": [
+          "L"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 333",
+        "name": "Employee 333",
+        "teams": [
+          "M"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 334",
+        "name": "Employee 334",
+        "teams": [
+          "N"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 335",
+        "name": "Employee 335",
+        "teams": [
+          "O"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 336",
+        "name": "Employee 336",
+        "teams": [
+          "P"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 337",
+        "name": "Employee 337",
+        "teams": [
+          "Q"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 338",
+        "name": "Employee 338",
+        "teams": [
+          "R"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 339",
+        "name": "Employee 339",
+        "teams": [
+          "S"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 340",
+        "name": "Employee 340",
+        "teams": [
+          "T"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 341",
+        "name": "Employee 341",
+        "teams": [
+          "U"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 342",
+        "name": "Employee 342",
+        "teams": [
+          "V"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 343",
+        "name": "Employee 343",
+        "teams": [
+          "W"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 344",
+        "name": "Employee 344",
+        "teams": [
+          "X"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 345",
+        "name": "Employee 345",
+        "teams": [
+          "Y"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 346",
+        "name": "Employee 346",
+        "teams": [
+          "Z"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 347",
+        "name": "Employee 347",
+        "teams": [
+          "AA"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 348",
+        "name": "Employee 348",
+        "teams": [
+          "AB"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 349",
+        "name": "Employee 349",
+        "teams": [
+          "AC"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 350",
+        "name": "Employee 350",
+        "teams": [
+          "AD"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 351",
+        "name": "Employee 351",
+        "teams": [
+          "AE"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 352",
+        "name": "Employee 352",
+        "teams": [
+          "AF"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 353",
+        "name": "Employee 353",
+        "teams": [
+          "A"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 354",
+        "name": "Employee 354",
+        "teams": [
+          "B"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 355",
+        "name": "Employee 355",
+        "teams": [
+          "C"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 356",
+        "name": "Employee 356",
+        "teams": [
+          "D"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 357",
+        "name": "Employee 357",
+        "teams": [
+          "E"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 358",
+        "name": "Employee 358",
+        "teams": [
+          "F"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 359",
+        "name": "Employee 359",
+        "teams": [
+          "G"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 360",
+        "name": "Employee 360",
+        "teams": [
+          "H"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 361",
+        "name": "Employee 361",
+        "teams": [
+          "I"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 362",
+        "name": "Employee 362",
+        "teams": [
+          "J"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 363",
+        "name": "Employee 363",
+        "teams": [
+          "K"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 364",
+        "name": "Employee 364",
+        "teams": [
+          "L"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 365",
+        "name": "Employee 365",
+        "teams": [
+          "M"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 366",
+        "name": "Employee 366",
+        "teams": [
+          "N"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 367",
+        "name": "Employee 367",
+        "teams": [
+          "O"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 368",
+        "name": "Employee 368",
+        "teams": [
+          "P"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 369",
+        "name": "Employee 369",
+        "teams": [
+          "Q"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 370",
+        "name": "Employee 370",
+        "teams": [
+          "R"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 371",
+        "name": "Employee 371",
+        "teams": [
+          "S"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 372",
+        "name": "Employee 372",
+        "teams": [
+          "T"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 373",
+        "name": "Employee 373",
+        "teams": [
+          "U"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 374",
+        "name": "Employee 374",
+        "teams": [
+          "V"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 375",
+        "name": "Employee 375",
+        "teams": [
+          "W"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 376",
+        "name": "Employee 376",
+        "teams": [
+          "X"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 377",
+        "name": "Employee 377",
+        "teams": [
+          "Y"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 378",
+        "name": "Employee 378",
+        "teams": [
+          "Z"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 379",
+        "name": "Employee 379",
+        "teams": [
+          "AA"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 380",
+        "name": "Employee 380",
+        "teams": [
+          "AB"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 381",
+        "name": "Employee 381",
+        "teams": [
+          "AC"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 382",
+        "name": "Employee 382",
+        "teams": [
+          "AD"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 383",
+        "name": "Employee 383",
+        "teams": [
+          "AE"
+        ],
+        "contractType": "fullTime_8h"
+      },
+      {
+        "id": "Employee 384",
+        "name": "Employee 384",
+        "teams": [
+          "AF"
+        ],
+        "contractType": "fullTime_8h"
+      }
+    ]
+  },
+  "demand": {
+    "shiftModel": "fixed",
+    "dataFile": "demand.csv",
+    "organizationalUnits": {
+      "teams": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        "AA",
+        "AB",
+        "AC",
+        "AD",
+        "AE",
+        "AF"
+      ]
+    },
+    "shifts": [
+      {
+        "code": "M",
+        "name": "Morning",
+        "order": 1,
+        "timeRange": {
+          "start": "08:00",
+          "end": "16:00"
+        }
+      },
+      {
+        "code": "T",
+        "name": "Afternoon",
+        "order": 2,
+        "timeRange": {
+          "start": "14:00",
+          "end": "22:00"
+        }
+      },
+      {
+        "code": "N",
+        "name": "Night",
+        "order": 3,
+        "timeRange": {
+          "start": "22:00",
+          "end": "06:00"
+        }
+      }
+    ]
+  },
+  "constraints": {
+    "hard": [
+      {
+        "id": "max-consecutive-days",
+        "type": "max_consecutive_days",
+        "params": {
+          "window": 6,
+          "max_worked": 5
+        },
+        "enabled": true
+      },
+      {
+        "id": "total-workdays",
+        "type": "total_workdays",
+        "params": {
+          "min": 223,
+          "max": 223
+        },
+        "enabled": true
+      },
+      {
+        "id": "max-special-days",
+        "type": "max_special_days",
+        "params": {
+          "cap": 22
+        },
+        "enabled": true
+      },
+      {
+        "id": "no-backward-shift-transitions",
+        "type": "no_earlier_shift_next_day",
+        "params": {},
+        "enabled": true
+      },
+      {
+        "id": "vacation-days",
+        "type": "vacation_block",
+        "params": {},
+        "enabled": true
+      }
+    ],
+    "soft": [
+      {
+        "id": "min-coverage",
+        "type": "min_coverage",
+        "params": {
+          "penalty_per_missing": 100
+        },
+        "weight": 100,
+        "enabled": true
+      },
+      {
+        "id": "ideal-coverage",
+        "type": "ideal_coverage",
+        "params": {
+          "penalty_per_missing": 1
+        },
+        "weight": 1,
+        "enabled": true
+      }
+    ]
+  },
+  "vacations": {
+    "dataFile": "vacations.csv"
+  }
+}

@@ -38,11 +38,59 @@ const ListCalendar = () => {
 
   const navigate = useNavigate();
 
+  const isFailedCalendar = (calendar) => calendar.itemType === "failed-task";
+  const isInProgressCalendar = (calendar) => calendar.itemType === "in-progress-task";
+
+  const normalizeFailedTask = (task) => ({
+    id: task.taskId,
+    taskId: task.taskId,
+    itemType: "failed-task",
+    title: task.scheduleRequest?.title || "Failed schedule",
+    algorithm: task.scheduleRequest?.algorithm || "No algorithm specified",
+    status: task.status,
+    updatedAt: task.updatedAt,
+    failureSummary: task.failureSummary,
+    hasReport: Boolean(task.reportArtifacts?.pdf),
+  });
+
+  const normalizeInProgressTask = (task) => ({
+    id: task.taskId,
+    taskId: task.taskId,
+    itemType: "in-progress-task",
+    title: task.scheduleRequest?.title || "Untitled schedule",
+    algorithm: task.scheduleRequest?.algorithm || "No algorithm specified",
+    status: task.status,
+    updatedAt: task.updatedAt,
+  });
+
+  const handleDownloadReport = (taskId) => {
+    window.open(`${baseurl}/tasks/${taskId}/report/pdf`, "_blank", "noopener,noreferrer");
+  };
+
   const fetchCalendars = async () => {
     try {
-      const response = await axios.get(`${baseurl}/schedules/fetch`);
-      if (response.data) {
-        setCalendars(response.data);
+      const [schedulesResponse, tasksResponse] = await Promise.all([
+        axios.get(`${baseurl}/schedules/fetch`),
+        axios.get(`${baseurl}/tasks`),
+      ]);
+
+      if (schedulesResponse.data) {
+        const schedules = schedulesResponse.data.map((schedule) => ({
+          ...schedule,
+          itemType: "schedule",
+        }));
+        const completedTitles = new Set(schedules.map((schedule) => schedule.title));
+
+        const failedTasks = (tasksResponse.data || [])
+          .filter((task) => task.status === "FAILED" || task.status === "FAILED_VALIDATION")
+          .map(normalizeFailedTask);
+
+        const inProgressTasks = (tasksResponse.data || [])
+          .filter((task) => task.status === "PENDING" || task.status === "IN_PROGRESS")
+          .filter((task) => !completedTitles.has(task.scheduleRequest?.title))
+          .map(normalizeInProgressTask);
+
+        setCalendars([...failedTasks, ...inProgressTasks, ...schedules]);
         setError(null);
       } else {
         setError("No data found.");
@@ -80,6 +128,7 @@ const ListCalendar = () => {
         (calendar) => calendar.title.toLowerCase() === title.toLowerCase()
       );
       if (!calendarMatch) return alert("Calendar does not exist.");
+      if (isFailedCalendar(calendarMatch)) return alert("This schedule failed and has no calendar to open.");
       try {
         const response = await axios.get(`${baseurl}/schedules/${calendarMatch.title}`);
         if (response.data) {
@@ -238,75 +287,156 @@ const ListCalendar = () => {
               onMouseLeave={() => setHoveredCardId(null)}
               style={{
                 width: "300px",
-                height: "165px",
+                minHeight: isFailedCalendar(calendar) ? "220px" : "165px",
                 padding: "20px",
                 display: "flex",
                 flexDirection: "column",
-                justifyContent: "space-between",
-                border: "1px solid #ddd",
+                justifyContent: "flex-start",
+                gap: "16px",
+                border: isFailedCalendar(calendar)
+                  ? "1px solid #dc3545"
+                  : isInProgressCalendar(calendar)
+                  ? "1px solid #006FD5"
+                  : "1px solid #ddd",
                 borderRadius: "8px",
                 margin: "0.65%",
                 boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
                 position: "relative",
+                boxSizing: "border-box",
               }}
             >
-              <IconButton
-                size="small"
-                onClick={() => confirmDeleteCalendar(calendar)}
-                sx={{
-                  position: "absolute",
-                  top: 6,
-                  right: 6,
-                  backgroundColor:
-                    hoveredCardId === calendar.id ? "#ff5252" : "#e0e0e0",
-                  color: hoveredCardId === calendar.id ? "#fff" : "#555",
-                  "&:hover": {
-                    backgroundColor: "#ff1744",
-                  },
-                  width: "20px",
-                  height: "20px",
-                  padding: "2px",
-                }}
-              >
-                <Close fontSize="10px" />
-              </IconButton>
+              {!isFailedCalendar(calendar) && !isInProgressCalendar(calendar) && (
+                <IconButton
+                  size="small"
+                  onClick={() => confirmDeleteCalendar(calendar)}
+                  sx={{
+                    position: "absolute",
+                    top: 6,
+                    right: 6,
+                    backgroundColor:
+                      hoveredCardId === calendar.id ? "#ff5252" : "#e0e0e0",
+                    color: hoveredCardId === calendar.id ? "#fff" : "#555",
+                    "&:hover": {
+                      backgroundColor: "#ff1744",
+                    },
+                    width: "20px",
+                    height: "20px",
+                    padding: "2px",
+                  }}
+                >
+                  <Close fontSize="10px" />
+                </IconButton>
+              )}
 
-              <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
-                <span className="status-dot" style={{ marginTop: "4%" }} />
-                <div style={{ marginLeft: "10px" }}>
+              <div className="calendar-card-header manager-result-card-header">
+                <span
+                  className="status-dot"
+                  style={{
+                    marginTop: "8px",
+                    backgroundColor: isFailedCalendar(calendar)
+                      ? "#dc3545"
+                      : isInProgressCalendar(calendar)
+                      ? "#006FD5"
+                      : undefined,
+                  }}
+                />
+                <div className="calendar-card-main">
                   <div
                     className="calendar-card-title"
-                    style={{ fontSize: "1.3rem", fontWeight: "600", color: "#333" }}
+                    style={{ fontSize: "1.05rem", fontWeight: "600", color: "#333" }}
                   >
                     {calendar.title}
                   </div>
                   <div
                     className="calendar-card-algorithm"
-                    style={{ fontSize: "1rem", color: "#777", marginTop: "5%", marginLeft: "3%" }}
+                    style={{ fontSize: "0.78rem", color: "#777", marginTop: "8px" }}
                   >
                     {calendar.algorithm || "No algorithm specified"}
                   </div>
                 </div>
+                {isFailedCalendar(calendar) && (
+                  <div className="calendar-card-tag calendar-card-tag-failed">
+                    {calendar.status === "FAILED_VALIDATION" ? "VALIDATION" : "FAILED"}
+                  </div>
+                )}
               </div>
 
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                <Link
-                  to={`/manager/calendar/${calendar.id}`}
-                  className="open-button"
+              {isInProgressCalendar(calendar) && (
+                <div
                   style={{
-                    backgroundColor: "#4CAF50",
-                    color: "#fff",
-                    padding: "8px 35%",
-                    textAlign: "center",
-                    textDecoration: "none",
-                    borderRadius: "8px",
-                    fontWeight: "bold",
-                    fontSize: "1rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    color: "#006FD5",
+                    fontSize: "0.85rem",
                   }}
                 >
-                  Open
-                </Link>
-              </div>
+                  <CircularProgress size={16} thickness={5} sx={{ color: "#006FD5" }} />
+                  {calendar.status === "IN_PROGRESS" ? "Calculating schedule..." : "Queued..."}
+                </div>
+              )}
+
+              {isFailedCalendar(calendar) && calendar.failureSummary && (
+                <div
+                  style={{
+                    color: "#5f2120",
+                    backgroundColor: "#fdecea",
+                    borderRadius: "6px",
+                    padding: "8px 10px",
+                    fontSize: "0.78rem",
+                    lineHeight: "1.3",
+                    maxHeight: "64px",
+                    overflow: "hidden",
+                  }}
+                  title={calendar.failureSummary}
+                >
+                  {calendar.failureSummary}
+                </div>
+              )}
+
+              {!isInProgressCalendar(calendar) && (
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  {isFailedCalendar(calendar) ? (
+                    calendar.hasReport && (
+                      <button
+                        className="open-button"
+                        style={{
+                          backgroundColor: "#dc3545",
+                          color: "#fff",
+                          padding: "8px 18px",
+                          textAlign: "center",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontWeight: "bold",
+                          fontSize: "0.95rem",
+                          cursor: "pointer",
+                          width: "100%",
+                        }}
+                        onClick={() => handleDownloadReport(calendar.taskId)}
+                      >
+                        Download PDF
+                      </button>
+                    )
+                  ) : (
+                    <Link
+                      to={`/manager/calendar/${calendar.id}`}
+                      className="open-button"
+                      style={{
+                        backgroundColor: "#4CAF50",
+                        color: "#fff",
+                        padding: "8px 35%",
+                        textAlign: "center",
+                        textDecoration: "none",
+                        borderRadius: "8px",
+                        fontWeight: "bold",
+                        fontSize: "1rem",
+                      }}
+                    >
+                      Open
+                    </Link>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>

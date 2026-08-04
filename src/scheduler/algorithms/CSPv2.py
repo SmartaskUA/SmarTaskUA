@@ -10,6 +10,7 @@ from algorithms.utils import (
     TEAM_ID_TO_CODE,
     get_team_id,
     get_team_code,
+    export_schedule_to_csv,
     export_schedule_to_csv_shifts,
     build_calendar,
     schedule_to_table
@@ -209,6 +210,7 @@ def solve(*, vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, 
     v.employees = list(range(1, n_employees + 1))
     v.vacs = {emp_id: vacs_dict.get(emp_id, []) for emp_id in v.employees}
     v.assignment = assign
+    v.shifts = int(shifts)
     export_schedule_to_csv(v, "schedule_cpsat.csv", num_days=num_days)
 
     return schedule_to_table(

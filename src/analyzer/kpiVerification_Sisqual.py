@@ -34,8 +34,16 @@ MAX_CONSECUTIVE  = 5
 # Low-level helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _has_shift(cell: str) -> bool:
+    return any(
+        re.match(r"^\d{1,2}:\d{2}-\d{1,2}:\d{2}@\S+", segment.strip())
+        for segment in cell.strip().split("|")
+    )
+
+
 def _is_off(cell: str) -> bool:
-    return cell.strip().upper() in OFF_MARKERS or cell.strip() == ""
+    cell = cell.strip()
+    return cell.upper() in OFF_MARKERS or not _has_shift(cell)
 
 
 def _is_unavailable(cell: str) -> bool:
