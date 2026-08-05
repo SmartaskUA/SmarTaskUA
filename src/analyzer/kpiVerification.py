@@ -328,7 +328,7 @@ def analyze(file, holidays, mins, employees, year=2025, rules=None):
         """Return (prefix, team) if val matches 'M_X'/'T_X'/'N_X', else (None, None)."""
         if not isinstance(val, str):
             return (None, None)
-        m = re.match(r'^\s*([MTN])\s*_\s*([A-Za-z])\s*$', val)
+        m = re.match(r'^\s*([MTN])\s*[_-]\s*([A-Za-z])\s*$', val)
         if m:
             return (m.group(1), m.group(2).upper())
         return (None, None)
@@ -433,32 +433,34 @@ def analyze(file, holidays, mins, employees, year=2025, rules=None):
                 satisfaction_pct = round((preferred_count / total_worked) * 100.0, 2)
                 team_satisfaction_values.append(satisfaction_pct)
 
+        # ✅ FIX: Per-employee shift balance calculation moved INSIDE the loop
+        # Previously this block was outside the for loop and only ran for the
+        # last employee, making the result incorrect.
+        emp_morning   = sum(1 for col in dia_cols if parse_shift(row[col])[0] == 'M')
+        emp_afternoon = sum(1 for col in dia_cols if parse_shift(row[col])[0] == 'T')
+        emp_night     = sum(1 for col in dia_cols if parse_shift(row[col])[0] == 'N')
 
-    # Per-employee shift balance (adapts to 2 or 3 shifts; best possible = 50)
-    emp_morning  = sum(parse_shift(row[col])[0] == 'M' for col in dia_cols)
-    emp_afternoon = sum(parse_shift(row[col])[0] == 'T' for col in dia_cols)
-    emp_night    = sum(parse_shift(row[col])[0] == 'N' for col in dia_cols)
+        total_emp_shifts_all = emp_morning + emp_afternoon + emp_night
+        if total_emp_shifts_all > 0:
+            morning_pct_all   = (emp_morning  / total_emp_shifts_all) * 100.0
+            afternoon_pct_all = (emp_afternoon / total_emp_shifts_all) * 100.0
+            night_pct_all     = (emp_night    / total_emp_shifts_all) * 100.0
 
-    total_emp_shifts_all = emp_morning + emp_afternoon + emp_night
-    if total_emp_shifts_all > 0:
-        morning_pct_all   = (emp_morning  / total_emp_shifts_all) * 100.0
-        afternoon_pct_all = (emp_afternoon / total_emp_shifts_all) * 100.0
-        night_pct_all     = (emp_night    / total_emp_shifts_all) * 100.0
+            # Only consider shifts the employee actually worked (non-zero).
+            pcts = [p for p in [morning_pct_all, afternoon_pct_all, night_pct_all] if p > 0]
+            active_shifts = len(pcts)
 
-        # Only consider shifts the employee actually worked (non-zero).
-        pcts = [p for p in [morning_pct_all, afternoon_pct_all, night_pct_all] if p > 0]
-        active_shifts = len(pcts)
+            if active_shifts >= 2:
+                min_pct = min(pcts)
+                ideal_min = 100.0 / active_shifts
+                scale = 50.0 / ideal_min
+                balanced_score = min(50.0, min_pct * scale)
+            else:
+                balanced_score = 0.0
 
-        if active_shifts >= 2:
-            min_pct = min(pcts)
-            ideal_min = 100.0 / active_shifts       
-            scale = 50.0 / ideal_min                
-            balanced_score = min(50.0, min_pct * scale)
-        else:
-            balanced_score = 0.0
+            per_employee_shift_balance.append(balanced_score)
 
-        per_employee_shift_balance.append(balanced_score)
-
+    # end of employee loop
 
     if team_satisfaction_values:
         team_satisfaction = round(sum(team_satisfaction_values) / len(team_satisfaction_values), 2)
@@ -537,6 +539,13 @@ def parse_requirements(requirements_text):
     """
     mins, ideals = {}, {}
     shift_map = {"M": 1, "T": 2, "N": 3}
+
+    # Guard: if requirements_text is None or not a string, return empty dicts.
+    if not requirements_text or not isinstance(requirements_text, str):
+        print(f"[parse_requirements] WARNING: received non-string input "
+              f"(type={type(requirements_text).__name__}). "
+              f"missedTeamMin and missedTeamIdeal will be 0.")
+        return mins, ideals
 
     requirements_text = requirements_text.replace('\r\n', '\n').replace('\r', '\n').strip()
     lines = requirements_text.split('\n')

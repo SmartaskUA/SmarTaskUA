@@ -39,12 +39,12 @@ const CreateCalendar = () => {
   const problemSelected = mode === "problem" && Boolean(selectedProblem);
   const [problemJson, setProblemJson] = useState(null);
   const [problemJsonLoading, setProblemJsonLoading] = useState(false);
-  const [year, setYear] = useState("2021");
+  const [year, setYear] = useState("2025");
   const [maxDuration, setMaxDuration] = useState("100");
-  const [scheduleType, setScheduleType] = useState("Horas"); // "Turno" ou "Horas"
+  const [scheduleType, setScheduleType] = useState("Turno"); // "Turno" ou "Horas"
   const [selectedAlgorithm, setSelectedAlgorithm] = useState("Heuristica");
-  const [shifts, setShifts] = useState("13");
-  const [vacationTemplate, setVacationTemplate] = useState("VacationTemplate_Case1_21");
+  const [shifts, setShifts] = useState("3");
+  const [vacationTemplate, setVacationTemplate] = useState("VacationTemplate_Case1_24");
   const [minimumTemplate, setMinimumTemplate] = useState("Mins_R10-R62_30min.");
   const [selectedSolver, setSelectedSolver] = useState("CBC"); // "CBC" ou "GUROBI"
 
@@ -302,6 +302,11 @@ const CreateCalendar = () => {
     { value: "CSP Scheduling", label: "CSP Scheduling" },
     { value: "linear programming", label: "Integer Linear Programming" },
     { value: "linear programming 2", label: "Integer Linear Programming 2" },
+    { value: "Hybrid_Heuristic", label: "Hybrid Heuristic" },
+    { value: "R2_Heuristic", label: "R2 Heuristic" },
+    { value: "Heuristic Solver", label: "Heuristic Solver" },
+    { value: "Puzzle_Heuristic", label: "Puzzle Heuristic" },
+    { value: "Inverted_Puzzle_Heuristic", label: "Inverted Puzzle Heuristic" }
   ];
   const manualHourAlgorithms = [
     { value: "CSP_Afonso_Hours", label: "CSP Afonso 13 Hours" },

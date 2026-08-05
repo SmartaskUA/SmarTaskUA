@@ -40,6 +40,9 @@ from algorithms.COP_2_Half_Intervals import solve as COP_2_Half_Intervals_Solver
 from algorithms.COP_1_Half_Intervals import solve as COP_1_Half_Intervals_solver
 from algorithms.general.heuristic_general import solve as heuristic_general_solver
 from analyzer.kpiVerification_Sisqual import KpiEvaluator_Sisqual
+from algorithms.Hybrid_Heuristic import solve as hybrid_heuristic_solver
+from algorithms.R2_Heuristic import solve as r2_heuristic_solver
+from algorithms.Puzzle_Heuristic import solve as puzzle_heuristic_solver
 from validators.sisqual_feasibility import validate_sisqual_problem_or_raise
 from sisqual_monthly_runner import run_sisqual_monthly, should_run_monthly
 from algorithms.sisqual_export import build_sisqual_import_json
@@ -86,6 +89,9 @@ class TaskManager:
             "CSP_Sisqual_Hours_MathematicalDefinition5": CSP_Sisqual_Hours_MathematicalDefinition7_solver,
             "COP_1_Half_Intervals": COP_1_Half_Intervals_solver,
             "COP_2_Half_Intervals": COP_2_Half_Intervals_Solver,
+            "Hybrid_Heuristic": hybrid_heuristic_solver,
+            "R2_Heuristic": r2_heuristic_solver,
+            "Puzzle_Heuristic": puzzle_heuristic_solver,
         }
 
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13, solver="CBC", problem_path=None):
@@ -156,6 +162,9 @@ class TaskManager:
             "Heuristic Solver",
             "Heuristic Solver Restarts",
             "ilp_greedy",
+            "Hybrid_Heuristic",
+            "R2_Heuristic",
+            "Puzzle_Heuristic",
         ]
         if algorithm_name in algs_with_shifts:
             if uses_rules:
