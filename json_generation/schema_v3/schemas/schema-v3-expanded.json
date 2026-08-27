@@ -1,0 +1,722 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smartask.ua/schemas/scheduling-problem-v3.0-expanded.json",
+  "title": "Employee Scheduling Problem v3.0 - expanded (pre-processed) form",
+  "description": "The same problem with each worker's workable time stated explicitly instead of implied. Where the declarative form says 'this worker has a 7h contract, these buckets exist, and this cell says EQUALS:10:00-14:00', this form says 'on 2025-10-03 this worker may take A12 or A31, and nothing else'. That is the model's set of possible daily working assignments [H_wd], and the timeslots each covers is [delta_wdht] -- both defined by MathematicalDefinition7 and stored by no earlier schema. Produced by transformer/transform.py. Everything except the workable-time representation carries over unchanged: contracts, employees, demand and calendar still describe this form. Standalone: this file does not reference any other schema.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "form",
+    "problemType",
+    "metadata",
+    "timeGrid",
+    "temporalScope",
+    "contracts",
+    "employees",
+    "demand",
+    "assignmentCatalog",
+    "availability"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "3.0"
+    },
+    "form": {
+      "type": "string",
+      "const": "expanded"
+    },
+    "problemType": {
+      "type": "string",
+      "const": "employee_scheduling"
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    },
+    "timeGrid": {
+      "$ref": "#/$defs/timeGrid"
+    },
+    "temporalScope": {
+      "$ref": "#/$defs/temporalScope"
+    },
+    "calendar": {
+      "$ref": "#/$defs/calendar"
+    },
+    "contracts": {
+      "$ref": "#/$defs/contracts"
+    },
+    "employees": {
+      "$ref": "#/$defs/employees"
+    },
+    "demand": {
+      "$ref": "#/$defs/demand"
+    },
+    "generatedFrom": {
+      "type": "object",
+      "description": "Provenance of this expansion. Advisory only.",
+      "properties": {
+        "declarativeProblemId": {
+          "type": "string"
+        },
+        "generatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "transformerVersion": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "assignmentCatalog": {
+      "type": "array",
+      "description": "Every distinct daily working assignment referenced by `availability`, deduplicated. An assignment is pure time coverage: it says WHEN the worker is present, not which competency they serve. Competency choice is a separate decision [y_wdts], bounded only by the worker's own competencies [S_w], so one assignment can be shared by workers of different competencies.",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "intervals"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "intervals": {
+            "type": "array",
+            "minItems": 1,
+            "description": "Disjoint, ascending clock intervals covered by this assignment. More than one expresses a split shift (07:30-14:00 plus 18:15-21:15). Boundaries must land on the timeGrid.",
+            "items": {
+              "type": "object",
+              "required": [
+                "startMin",
+                "endMin"
+              ],
+              "properties": {
+                "startMin": {
+                  "$ref": "#/$defs/minutes"
+                },
+                "endMin": {
+                  "$ref": "#/$defs/minutes",
+                  "description": "Exclusive end; must exceed startMin. Values at or past 1440 run beyond midnight."
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "availability": {
+      "type": "array",
+      "description": "Per worker, per day: what may happen. One entry per employee in employees.list.",
+      "items": {
+        "type": "object",
+        "required": [
+          "employeeId",
+          "days"
+        ],
+        "properties": {
+          "employeeId": {
+            "type": "string"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "date"
+              ],
+              "properties": {
+                "date": {
+                  "$ref": "#/$defs/date"
+                },
+                "assignmentIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The worker's possible daily working assignments for this date [H_wd]; each id must resolve in assignmentCatalog. Empty means the worker cannot work this day. MATERIALISATION RULE, stated in bold by MathematicalDefinition7: 'H_wd does not include assignments with timeslots t not belonging to T_d'. A candidate reaching outside the day's demanded window is excluded whole -- never trimmed to fit, which would invent an assignment the enterprise never defined."
+                },
+                "dayOff": {
+                  "type": "string",
+                  "enum": [
+                    "preferable",
+                    "unavailable"
+                  ],
+                  "description": "Absent = an ordinary workable day. 'preferable' [D_wk] is SOFT: the worker would rather be off but may be scheduled at a penalty (ObjectiveFunction3 minimises x'_wd), so assignmentIds stays populated. 'unavailable' [U_wk] is HARD: constraint (5) forbids any assignment, so assignmentIds must be empty. The two are also subtracted separately when deriving the per-week working-day count n_wk, so they cannot be collapsed into one flag."
+                },
+                "unavailableReason": {
+                  "type": "string",
+                  "enum": [
+                    "vacation",
+                    "fixed_day_off",
+                    "medical",
+                    "not_available",
+                    "contract_inactive",
+                    "other"
+                  ],
+                  "description": "Reporting only; the model treats every unavailable day identically."
+                },
+                "forced": {
+                  "type": "string",
+                  "description": "If present, this assignment is pre-committed for this date. Must also appear in assignmentIds."
+                },
+                "mustCover": {
+                  "type": "array",
+                  "description": "Time windows that EVERY assignment offered this day must fully cover, compiled from an INCLUDE cell. The transformer already filtered assignmentIds to satisfy this; the windows are recorded so the validator can re-verify coverage independently of the transformer -- a hand-edited or externally-produced expansion cannot silently drop an INCLUDE. Boundaries are minutes from the scheduling day's start.",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "startMin",
+                      "endMin"
+                    ],
+                    "properties": {
+                      "startMin": {
+                        "$ref": "#/$defs/minutes"
+                      },
+                      "endMin": {
+                        "$ref": "#/$defs/minutes"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "mustAvoid": {
+                  "type": "array",
+                  "description": "Time windows that NO assignment offered this day may overlap, compiled from an EXCEPT cell. Same verification purpose as mustCover: recorded so the EXCEPT constraint is re-checkable against the expanded file alone. Boundaries are minutes from the scheduling day's start.",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "startMin",
+                      "endMin"
+                    ],
+                    "properties": {
+                      "startMin": {
+                        "$ref": "#/$defs/minutes"
+                      },
+                      "endMin": {
+                        "$ref": "#/$defs/minutes"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "mustBeWithin": {
+                  "type": "array",
+                  "description": "Time windows, one of which EVERY assignment offered this day must fit entirely inside, compiled from a WITHIN cell (the opposite containment to mustCover). The transformer already filtered assignmentIds to satisfy this; the windows are recorded so the validator can re-verify independently of the transformer. Boundaries are minutes from the scheduling day's start.",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "startMin",
+                      "endMin"
+                    ],
+                    "properties": {
+                      "startMin": {
+                        "$ref": "#/$defs/minutes"
+                      },
+                      "endMin": {
+                        "$ref": "#/$defs/minutes"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "if": {
+                "properties": {
+                  "dayOff": {
+                    "const": "unavailable"
+                  }
+                },
+                "required": [
+                  "dayOff"
+                ]
+              },
+              "then": {
+                "title": "an unavailable day offers nothing",
+                "properties": {
+                  "assignmentIds": {
+                    "maxItems": 0
+                  }
+                },
+                "not": {
+                  "required": [
+                    "forced"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "$defs": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "weekday": {
+      "type": "string",
+      "enum": [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday"
+      ]
+    },
+    "hhmm": {
+      "type": "string",
+      "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+      "description": "Clock time HH:MM."
+    },
+    "competenceLevel": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Proficiency in a competency [l_ws]. LEVEL 1 IS THE HIGHEST; larger numbers are progressively lower. A demand.priorityOrder entry naming level 1 therefore means that competency's most senior workers."
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "problemId"
+      ],
+      "properties": {
+        "problemId": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "description": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "timeGrid": {
+      "type": "object",
+      "required": [
+        "slotMinutes"
+      ],
+      "description": "Cuts the day into the timeslots the model reasons over [T]. Every interval boundary must land on this grid.",
+      "properties": {
+        "slotMinutes": {
+          "type": "integer",
+          "enum": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            8,
+            9,
+            10,
+            12,
+            15,
+            16,
+            18,
+            20,
+            24,
+            30,
+            32,
+            36,
+            40,
+            45,
+            48,
+            60,
+            72,
+            80,
+            90,
+            96,
+            120,
+            144,
+            160,
+            180,
+            240,
+            288,
+            360,
+            480,
+            720,
+            1440
+          ],
+          "default": 15,
+          "description": "Timeslot length. Must divide 1440 (the enum is exactly its divisors). Smaller is more precise but grows the model: 15 gives 96 slots/day, 60 gives 24."
+        }
+      },
+      "additionalProperties": false
+    },
+    "temporalScope": {
+      "type": "object",
+      "required": [
+        "start",
+        "end"
+      ],
+      "description": "The scheduling horizon [D]. start and end are full calendar dates -- the sole source of WHEN the schedule is for (the year lives here, and in every CSV date column). The number of schedule_input date columns must equal this span.",
+      "properties": {
+        "start": {
+          "$ref": "#/$defs/date"
+        },
+        "end": {
+          "$ref": "#/$defs/date"
+        }
+      },
+      "additionalProperties": false
+    },
+    "calendar": {
+      "type": "object",
+      "description": "Day classification and week structure.",
+      "properties": {
+        "weekStart": {
+          "$ref": "#/$defs/weekday",
+          "default": "monday",
+          "description": "First day of the week. Defines the week partition [K, D_k] that per-week limits and the working-day count [n_wk] are counted over."
+        },
+        "holidays": {
+          "type": "array",
+          "description": "Public holidays. Marking a day here does NOT make anyone unavailable: it exists so the enterprise can give that day its own minimum/empiric/maximum in demand.csv. Shops open on holidays, and whether a worker is entitled to take one off is a per-employee rule (deferred; see FUTURE.md). A holiday reaches a worker's unavailable set [U_wk] only through their schedule-input cell, like any other day.",
+          "items": {
+            "type": "object",
+            "required": [
+              "date"
+            ],
+            "properties": {
+              "date": {
+                "$ref": "#/$defs/date"
+              },
+              "code": {
+                "type": "string",
+                "description": "Optional short identifier for this holiday (e.g. 'XMAS'). Author/UI label only -- the solver ignores it; the date is the identifier."
+              },
+              "name": {
+                "type": "string",
+                "description": "Short human-readable label."
+              },
+              "description": {
+                "type": "string",
+                "description": "Optional longer explanation. Author/UI label only -- the solver ignores it."
+              },
+              "hasEve": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether the preceding day counts as this holiday's eve, so it can carry its own demand. The eve's date is the holiday's date minus one day; only whether it exists needs stating."
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "contracts": {
+      "type": "object",
+      "required": [
+        "definitions"
+      ],
+      "properties": {
+        "definitions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "workMinutesPerDay"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "workMinutesPerDay": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1440,
+                "description": "Paid minutes per day, used when a schedule-input cell says 'A'. Minutes throughout, so 7h45 is 465."
+              },
+              "constraints": {
+                "type": "object",
+                "properties": {
+                  "weekendsOnly": {
+                    "type": "boolean"
+                  },
+                  "weekdaysOnly": {
+                    "type": "boolean"
+                  },
+                  "availableDays": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/weekday"
+                    }
+                  },
+                  "maxMinutesPerWeek": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "maxConsecutiveDays": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "minRestDaysPerWeek": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 7
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "employees": {
+      "type": "object",
+      "required": [
+        "list"
+      ],
+      "description": "The workers [W].",
+      "properties": {
+        "list": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "contractAssignments",
+              "competencyAssignments"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "contractAssignments": {
+                "type": "array",
+                "minItems": 1,
+                "description": "Which contract applies over which dates. Multiple entries allowed and may be discontinuous (a seasonal worker returning), but must not overlap.",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "contractType",
+                    "start"
+                  ],
+                  "properties": {
+                    "contractType": {
+                      "type": "string",
+                      "description": "References contracts.definitions[].id"
+                    },
+                    "start": {
+                      "$ref": "#/$defs/date"
+                    },
+                    "end": {
+                      "oneOf": [
+                        {
+                          "$ref": "#/$defs/date"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "competencyAssignments": {
+                "type": "array",
+                "minItems": 1,
+                "description": "Which competencies [S_w] the worker holds over which dates, each with a proficiency level. Holding several competencies at once is normal; two entries for the SAME competency must not overlap.",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "competency",
+                    "level",
+                    "start"
+                  ],
+                  "properties": {
+                    "competency": {
+                      "type": "string",
+                      "description": "References demand.organizationalUnits.competencies[].code"
+                    },
+                    "level": {
+                      "$ref": "#/$defs/competenceLevel"
+                    },
+                    "start": {
+                      "$ref": "#/$defs/date"
+                    },
+                    "end": {
+                      "oneOf": [
+                        {
+                          "$ref": "#/$defs/date"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "demand": {
+      "type": "object",
+      "required": [
+        "dataFile",
+        "organizationalUnits",
+        "workPeriods"
+      ],
+      "description": "Coverage wanted. The per-date numbers live in the CSV named by dataFile; this section carries the structure they reference.",
+      "properties": {
+        "dataFile": {
+          "type": "string",
+          "description": "Path to demand.csv, relative to this file. Columns: date,workPeriod,competency,minimum,empiric,maximum,start,end -- see FORMAT.md."
+        },
+        "organizationalUnits": {
+          "type": "object",
+          "required": [
+            "competencies"
+          ],
+          "properties": {
+            "competencies": {
+              "type": "array",
+              "minItems": 1,
+              "description": "Competencies. These are the skill dimension [S]; demand is keyed on them and every worker holds them at a level.",
+              "items": {
+                "type": "object",
+                "required": [
+                  "code",
+                  "name"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "Short identifier used to reference this competency (demand.csv, teamAssignments, priorityOrder)."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Short human-readable label."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Optional longer explanation. Author/UI label only -- the solver ignores it."
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "workPeriods": {
+          "type": "array",
+          "minItems": 1,
+          "description": "The buckets demand is keyed on: a demand.csv row names one of these and states how many workers that slice of the day wants. Together they also delimit the operating window. These are NOT a menu of shifts a worker picks from -- asking for one person on an 11:00-21:00 bucket is not asking anyone to work ten hours. What a worker may actually work is a contiguous block of their contracted length, anywhere on the grid inside the operating window.",
+          "items": {
+            "type": "object",
+            "required": [
+              "code",
+              "name",
+              "timeRange"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Short identifier used to reference this work period (demand.csv workPeriod column)."
+              },
+              "name": {
+                "type": "string",
+                "description": "Short human-readable label."
+              },
+              "description": {
+                "type": "string",
+                "description": "Optional longer explanation. Author/UI label only -- the solver ignores it."
+              },
+              "timeRange": {
+                "type": "object",
+                "required": [
+                  "start",
+                  "end"
+                ],
+                "description": "An end at or before the start means the bucket crosses midnight: 22:00-06:30 spans minutes 1320-1830.",
+                "properties": {
+                  "start": {
+                    "$ref": "#/$defs/hhmm"
+                  },
+                  "end": {
+                    "$ref": "#/$defs/hhmm"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "priorityOrder": {
+          "type": "array",
+          "description": "Which competency/level combinations to fill first. Ordered and sparse: sort entries by `order` ascending, then the FIRST entry matching a worker's (competency, level) decides their priority. A bare {competency} matches any level of that competency; add `level` to name one exactly. Any combination not listed sorts last, all tied -- listing is opt-in, and nothing is ever excluded from the model. This drives the objective that steers multi-skilled workers toward the combinations you care about [ObjectiveFunction2]: the solver derives the model's numeric weight [p_sl] from the matched entry's position, so no weights are authored here and there is no direction to get backwards.",
+          "items": {
+            "type": "object",
+            "required": [
+              "order",
+              "competency"
+            ],
+            "properties": {
+              "order": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Evaluation position; lower is filled first. Must be unique. Ordering follows this field, NOT array position, so entries can be stored or displayed in any arrangement -- grouped by competency, say -- without changing meaning. Gaps are allowed so entries can be inserted later."
+              },
+              "competency": {
+                "type": "string",
+                "description": "References demand.organizationalUnits.competencies[].code"
+              },
+              "level": {
+                "$ref": "#/$defs/competenceLevel",
+                "description": "Optional. Omit to match any level of this competency. Remember level 1 is the HIGHEST, so {competency: X, level: 1} means X's most senior, not its juniors."
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "minutes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2880,
+      "description": "Minutes from the start of the scheduling day (00:00). Values at or past 1440 express times after midnight, so a night shift 22:00-06:30 is 1320-1830 with no ambiguity."
+    }
+  }
+}
