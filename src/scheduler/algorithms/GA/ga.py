@@ -26,6 +26,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from problem import (
     load_problem, compute_fitness, random_schedule,
     decode_schedule, print_summary, export_schedule, repair_schedule,
+    local_search_one_pass,
     GENE_OFF, SHIFTS, SHIFT_IDX,
 )
 
@@ -447,12 +448,25 @@ def run_ga(problem_data, params):
         hof = max(pop, key=lambda ind: ind["fitness"])
         hof = clone(hof)
 
+        # Hall of fame — top elite_size individuals seen across all generations.
+        # Each new entrant gets one-pass local search applied (Lamarckian).
+        # def _ls_elite(ind):
+        #     schedule = np.array(ind["genes"], dtype=int).reshape(n_emp, n_days)
+        #     schedule, _ = local_search_one_pass(schedule, problem_data)
+        #     ind["genes"]   = schedule.flatten().tolist()
+        #     ind["fitness"] = compute_fitness(schedule, problem_data)
+        #     return ind
+        #
+        # hof_list = sorted(pop, key=lambda ind: ind["fitness"], reverse=True)[:elite_size]
+        # hof_list = [_ls_elite(clone(h)) for h in hof_list]
+
         logbook = []
         fitnesses = [ind["fitness"] for ind in pop]
         logbook.append({"gen": 0, "best": max(fitnesses), "mean": np.mean(fitnesses)})
 
         # Early stopping state
         best_so_far = hof["fitness"]
+        # best_so_far = hof_list[0]["fitness"]
         no_improve  = 0
         stopped_at  = num_generations
 
@@ -494,6 +508,17 @@ def run_ga(problem_data, params):
                 hof = clone(current_best)
             pop = [clone(hof)] + offspring
 
+            # elite_size individuals: update hof_list with any offspring that beat
+            # the current worst elite; apply one-pass LS to new entrants.
+            # worst_elite = hof_list[-1]["fitness"]
+            # for ind in offspring:
+            #     if ind["fitness"] > worst_elite:
+            #         hof_list.append(_ls_elite(clone(ind)))
+            #         hof_list.sort(key=lambda x: x["fitness"], reverse=True)
+            #         hof_list = hof_list[:elite_size]
+            #         worst_elite = hof_list[-1]["fitness"]
+            # pop = [clone(h) for h in hof_list] + offspring
+
             fitnesses = [ind["fitness"] for ind in pop]
             record = {"gen": gen, "best": max(fitnesses), "mean": np.mean(fitnesses)}
             logbook.append(record)
@@ -509,6 +534,7 @@ def run_ga(problem_data, params):
                 break
 
     return hof, hof["fitness"], logbook, stopped_at
+    # return hof_list[0], hof_list[0]["fitness"], logbook, stopped_at
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
