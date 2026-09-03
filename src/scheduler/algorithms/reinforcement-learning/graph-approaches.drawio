@@ -1,0 +1,304 @@
+<mxfile host="app.diagrams.net" agent="claude" version="24.0.0" pages="4">
+  <diagram id="approach1-fully-connected" name="1 · Fully Connected">
+    <mxGraphModel dx="800" dy="600" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p1-title" value="Approach 1 — Fully Connected Graph" style="text;html=1;fontSize=18;fontStyle=1;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="15" width="600" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-subtitle" value="employee ↔ team (membership) · team ↔ day (demand) · dense employee ↔ day (every employee connected to every day)" style="text;html=1;fontSize=12;fontStyle=2;align=left;verticalAlign=middle;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="40" y="45" width="900" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-cap-emp" value="employee — 3 feats" style="text;html=1;fontSize=11;fontStyle=2;align=center;fontColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="100" y="85" width="130" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-cap-day" value="day — 2·S+2 feats" style="text;html=1;fontSize=11;fontStyle=2;align=center;fontColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="825" y="80" width="130" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-cap-team" value="team — 1+2·S feats" style="text;html=1;fontSize=11;fontStyle=2;align=center;fontColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="420" y="612" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e1" value="E1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="120" y="120" width="90" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e2" value="E2" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="120" y="210" width="90" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e3" value="E3" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="120" y="300" width="90" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e4" value="E4" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="120" y="390" width="90" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-d1" value="Day 1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="840" y="115" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-d2" value="Day 2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="840" y="215" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-d3" value="Day 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="840" y="315" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-ta" value="Team A" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="360" y="545" width="120" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-tb" value="Team B" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="600" y="545" width="120" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-ed11" style="endArrow=none;html=1;strokeColor=#bbbbbb;strokeWidth=1;" edge="1" parent="1" source="p1-e1" target="p1-d1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-ed12" style="endArrow=none;html=1;strokeColor=#bbbbbb;strokeWidth=1;" edge="1" parent="1" source="p1-e1" target="p1-d2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-ed13" style="endArrow=none;html=1;strokeColor=#bbbbbb;strokeWidth=1;" edge="1" parent="1" source="p1-e1" target="p1-d3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-ed21" style="endArrow=none;html=1;strokeColor=#bbbbbb;strokeWidth=1;" edge="1" parent="1" source="p1-e2" target="p1-d1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-ed22" style="endArrow=none;html=1;strokeColor=#bbbbbb;strokeWidth=1;" edge="1" parent="1" source="p1-e2" target="p1-d2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-ed23" style="endArrow=none;html=1;strokeColor=#bbbbbb;strokeWidth=1;" edge="1" parent="1" source="p1-e2" target="p1-d3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-ed31" style="endArrow=none;html=1;strokeColor=#bbbbbb;strokeWidth=1;" edge="1" parent="1" source="p1-e3" target="p1-d1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-ed32" style="endArrow=none;html=1;strokeColor=#bbbbbb;strokeWidth=1;" edge="1" parent="1" source="p1-e3" target="p1-d2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-ed33" style="endArrow=none;html=1;strokeColor=#bbbbbb;strokeWidth=1;" edge="1" parent="1" source="p1-e3" target="p1-d3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-ed41" style="endArrow=none;html=1;strokeColor=#bbbbbb;strokeWidth=1;" edge="1" parent="1" source="p1-e4" target="p1-d1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-ed42" style="endArrow=none;html=1;strokeColor=#bbbbbb;strokeWidth=1;" edge="1" parent="1" source="p1-e4" target="p1-d2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-ed43" style="endArrow=none;html=1;strokeColor=#bbbbbb;strokeWidth=1;" edge="1" parent="1" source="p1-e4" target="p1-d3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-m1" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p1-e1" target="p1-ta"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-m2" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p1-e2" target="p1-ta"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-m3" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p1-e3" target="p1-tb"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-m4" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p1-e4" target="p1-tb"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-td1" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p1-ta" target="p1-d1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-td2" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p1-ta" target="p1-d2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-td3" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p1-ta" target="p1-d3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-td4" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p1-tb" target="p1-d1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-td5" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p1-tb" target="p1-d2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-td6" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p1-tb" target="p1-d3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p1-legend" value="&lt;b&gt;Nodes&lt;/b&gt;: employee — 3 feats (days worked, consecutive streak, id position) · team — 1+2·S feats (relative size + today&#39;s min/ideal gap per shift) · day — 2·S+2 feats (min/ideal gaps averaged over teams)&lt;br&gt;&lt;b&gt;Edges&lt;/b&gt;: &lt;font color=&quot;#82b366&quot;&gt;green = employee ↔ team (membership, moved out of features into topology)&lt;/font&gt; · &lt;font color=&quot;#d79b00&quot;&gt;orange = team ↔ day (demand relation)&lt;/font&gt; · &lt;font color=&quot;#999999&quot;&gt;gray = employee ↔ day, DENSE: every employee connected to every day&lt;/font&gt;&lt;br&gt;&lt;b&gt;Topology&lt;/b&gt;: static — one graph per scenario, node features refreshed once per day. Each drawn line = a pair of directed relations in the DGL heterograph." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;align=left;verticalAlign=top;spacing=10;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="655" width="1090" height="120" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="approach2-assignment-edges" name="2 · Emp↔Day on Assignment">
+    <mxGraphModel dx="800" dy="600" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p2-title" value="Approach 2 — Employee ↔ Day Only When Assignment Exists" style="text;html=1;fontSize=18;fontStyle=1;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="15" width="700" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-subtitle" value="dense emp ↔ day replaced by sparse per-shift assignment relations works_{shift} / worked_by_{shift} — dynamic topology, graph rebuilt at every day boundary" style="text;html=1;fontSize=12;fontStyle=2;align=left;verticalAlign=middle;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="40" y="45" width="1050" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-cap-emp" value="employee — 3 feats" style="text;html=1;fontSize=11;fontStyle=2;align=center;fontColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="100" y="85" width="130" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-cap-day" value="day — 2·S+2 feats" style="text;html=1;fontSize=11;fontStyle=2;align=center;fontColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="825" y="80" width="130" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-cap-team" value="team — 1+2·S feats" style="text;html=1;fontSize=11;fontStyle=2;align=center;fontColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="420" y="612" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e1" value="E1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="120" y="120" width="90" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e2" value="E2" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="120" y="210" width="90" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e3" value="E3" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="120" y="300" width="90" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e4" value="E4" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="120" y="390" width="90" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-d1" value="Day 1&lt;br&gt;&lt;i&gt;(scheduled)&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="840" y="115" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-d2" value="Day 2&lt;br&gt;&lt;i&gt;(scheduled)&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="840" y="215" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-d3" value="Day 3&lt;br&gt;&lt;i&gt;(future)&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="840" y="315" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-d3note" value="no assignment edges yet" style="text;html=1;fontSize=10;fontStyle=2;align=center;fontColor=#999999;" vertex="1" parent="1">
+          <mxGeometry x="820" y="368" width="140" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-ta" value="Team A" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="360" y="545" width="120" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-tb" value="Team B" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="600" y="545" width="120" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-w1" value="works_M" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;fontSize=10;fontColor=#6c8ebf;" edge="1" parent="1" source="p2-e1" target="p2-d1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p2-w2" value="works_T" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;dashed=1;fontSize=10;fontColor=#6c8ebf;" edge="1" parent="1" source="p2-e2" target="p2-d1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p2-w3" value="works_M" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;fontSize=10;fontColor=#6c8ebf;" edge="1" parent="1" source="p2-e3" target="p2-d1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p2-w4" value="works_T" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;dashed=1;fontSize=10;fontColor=#6c8ebf;" edge="1" parent="1" source="p2-e1" target="p2-d2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p2-w5" value="works_M" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;fontSize=10;fontColor=#6c8ebf;" edge="1" parent="1" source="p2-e3" target="p2-d2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p2-w6" value="works_T" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;dashed=1;fontSize=10;fontColor=#6c8ebf;" edge="1" parent="1" source="p2-e4" target="p2-d2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p2-m1" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p2-e1" target="p2-ta"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p2-m2" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p2-e2" target="p2-ta"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p2-m3" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p2-e3" target="p2-tb"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p2-m4" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p2-e4" target="p2-tb"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p2-td1" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p2-ta" target="p2-d1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p2-td2" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p2-ta" target="p2-d2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p2-td3" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p2-ta" target="p2-d3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p2-td4" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p2-tb" target="p2-d1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p2-td5" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p2-tb" target="p2-d2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p2-td6" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p2-tb" target="p2-d3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p2-legend" value="&lt;b&gt;Edges&lt;/b&gt;: &lt;font color=&quot;#82b366&quot;&gt;green = employee ↔ team&lt;/font&gt; · &lt;font color=&quot;#d79b00&quot;&gt;orange = team ↔ day&lt;/font&gt; · &lt;font color=&quot;#6c8ebf&quot;&gt;blue = per-shift assignment relations works_{shift} / worked_by_{shift} (solid = shift M, dashed = shift T)&lt;/font&gt; — an edge exists ONLY where the employee is actually assigned that shift on that day.&lt;br&gt;&lt;b&gt;Topology&lt;/b&gt;: dynamic — rebuilt with build_graph(env) at every day boundary as assignments accumulate; trajectories store one heterograph per day snapshot.&lt;br&gt;&lt;b&gt;PPO&lt;/b&gt;: minibatch day-snapshot graphs merged into one big graph of disconnected components via dgl.batch (assignments add edges but never change node count, so view(n, E, -1) split still works)." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;align=left;verticalAlign=top;spacing=10;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="655" width="1090" height="120" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="approach3-no-emp-day" name="3 · No Emp↔Day">
+    <mxGraphModel dx="800" dy="600" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p3-title" value="Approach 3 — No Employee ↔ Day Connection" style="text;html=1;fontSize=18;fontStyle=1;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="15" width="700" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-subtitle" value="only the 4 static relations remain (employee ↔ team, team ↔ day) — emp↔day information flows through team nodes in 2 hops" style="text;html=1;fontSize=12;fontStyle=2;align=left;verticalAlign=middle;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="40" y="45" width="1000" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-cap-emp" value="employee — 3 feats" style="text;html=1;fontSize=11;fontStyle=2;align=center;fontColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="100" y="85" width="130" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-cap-day" value="day — 2·S+2 feats" style="text;html=1;fontSize=11;fontStyle=2;align=center;fontColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="825" y="80" width="130" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-cap-team" value="team — 1+2·S feats" style="text;html=1;fontSize=11;fontStyle=2;align=center;fontColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="420" y="612" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-e1" value="E1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="120" y="120" width="90" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-e2" value="E2" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="120" y="210" width="90" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-e3" value="E3" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="120" y="300" width="90" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-e4" value="E4" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="120" y="390" width="90" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-d1" value="Day 1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="840" y="115" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-d2" value="Day 2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="840" y="215" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-d3" value="Day 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="840" y="315" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-ta" value="Team A" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="360" y="545" width="120" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-tb" value="Team B" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="600" y="545" width="120" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-nolink" value="✕ no employee ↔ day edges — information passes through the team node (2 hops)" style="text;html=1;fontSize=12;fontStyle=2;align=center;fontColor=#cc0000;" vertex="1" parent="1">
+          <mxGeometry x="330" y="215" width="440" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-m1" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p3-e1" target="p3-ta"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p3-m2" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p3-e2" target="p3-ta"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p3-m3" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p3-e3" target="p3-tb"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p3-m4" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p3-e4" target="p3-tb"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p3-td1" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p3-ta" target="p3-d1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p3-td2" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p3-ta" target="p3-d2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p3-td3" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p3-ta" target="p3-d3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p3-td4" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p3-tb" target="p3-d1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p3-td5" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p3-tb" target="p3-d2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p3-td6" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p3-tb" target="p3-d3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p3-legend" value="&lt;b&gt;Edges&lt;/b&gt;: &lt;font color=&quot;#82b366&quot;&gt;green = employee ↔ team&lt;/font&gt; · &lt;font color=&quot;#d79b00&quot;&gt;orange = team ↔ day&lt;/font&gt; — the per-shift works_* / worked_by_* assignment relations were removed; HeteroGraphConv relation set reduced to these 4 static relations.&lt;br&gt;&lt;b&gt;Topology&lt;/b&gt;: static again — one cached graph per env (get_graph), refreshed once per day via update_graph_features instead of rebuilt at every day boundary.&lt;br&gt;&lt;b&gt;PPO&lt;/b&gt;: back to the v1 fast path — replicate the single static graph with dgl.batch([graph] · n) and overwrite each component&#39;s node features (per-snapshot feature tensors, not per-snapshot graphs)." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;align=left;verticalAlign=top;spacing=10;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="655" width="1090" height="120" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="approach4-demand-nodes" name="4 · Demand Node Graph">
+    <mxGraphModel dx="800" dy="600" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p4-title" value="Approach 4 — Demand Node Graph" style="text;html=1;fontSize=18;fontStyle=1;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="15" width="600" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-subtitle" value="day nodes replaced by demand nodes — one node per slot-queue entry, i.e. one headcount unit of (day, shift, team, kind); the graph mirrors the decision sequence itself" style="text;html=1;fontSize=12;fontStyle=2;align=left;verticalAlign=middle;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="40" y="45" width="1080" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-cap-emp" value="employee — 3 feats" style="text;html=1;fontSize=11;fontStyle=2;align=center;fontColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="100" y="85" width="130" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-cap-dem" value="demand — S+7 feats" style="text;html=1;fontSize=11;fontStyle=2;align=center;fontColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="800" y="70" width="160" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-cap-team" value="team — 1+2·S feats" style="text;html=1;fontSize=11;fontStyle=2;align=center;fontColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="420" y="612" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-e1" value="E1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="120" y="120" width="90" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-e2" value="E2&lt;br&gt;&lt;i&gt;&lt;font style=&quot;font-size:9px&quot;&gt;vacation d2&lt;/font&gt;&lt;/i&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="120" y="210" width="90" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-e3" value="E3" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="120" y="300" width="90" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-e4" value="E4" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="120" y="390" width="90" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-q1" value="Day 1 · shift M · Team A · min" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="780" y="100" width="200" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-q2" value="Day 1 · shift T · Team A · min" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#cc0000;strokeWidth=3;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="780" y="152" width="200" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-q2note" value="← current decision (queue pointer)" style="text;html=1;fontSize=10;fontStyle=2;align=left;fontColor=#cc0000;" vertex="1" parent="1">
+          <mxGeometry x="985" y="160" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-q3" value="Day 1 · shift M · Team B · min" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="780" y="204" width="200" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-q4" value="Day 1 · shift T · Team B · cap" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;dashed=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="780" y="256" width="200" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-q5" value="Day 2 · shift M · Team A · min" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="780" y="308" width="200" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-q6" value="Day 2 · shift M · Team B · min" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="780" y="360" width="200" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-qdots" value="⋮   one demand node per slot-queue entry" style="text;html=1;fontSize=11;fontStyle=2;align=left;fontColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="800" y="402" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-ta" value="Team A" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="360" y="545" width="120" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-tb" value="Team B" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="600" y="545" width="120" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-m1" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p4-e1" target="p4-ta"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-m2" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p4-e2" target="p4-ta"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-m3" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p4-e3" target="p4-tb"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-m4" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p4-e4" target="p4-tb"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-b1" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p4-q1" target="p4-ta"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-b2" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p4-q2" target="p4-ta"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-b3" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p4-q5" target="p4-ta"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-b4" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p4-q3" target="p4-tb"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-b5" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p4-q4" target="p4-tb"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-b6" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="p4-q6" target="p4-tb"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-k1" style="endArrow=none;html=1;strokeColor=#9673a6;strokeWidth=1.5;dashed=1;" edge="1" parent="1" source="p4-e1" target="p4-q1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-k2" style="endArrow=none;html=1;strokeColor=#9673a6;strokeWidth=1.5;dashed=1;" edge="1" parent="1" source="p4-e1" target="p4-q2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-k3" style="endArrow=none;html=1;strokeColor=#9673a6;strokeWidth=1.5;dashed=1;" edge="1" parent="1" source="p4-e1" target="p4-q5"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-k4" style="endArrow=none;html=1;strokeColor=#9673a6;strokeWidth=1.5;dashed=1;" edge="1" parent="1" source="p4-e2" target="p4-q1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-k5" style="endArrow=none;html=1;strokeColor=#9673a6;strokeWidth=1.5;dashed=1;" edge="1" parent="1" source="p4-e2" target="p4-q2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-k6" style="endArrow=none;html=1;strokeColor=#9673a6;strokeWidth=1.5;dashed=1;" edge="1" parent="1" source="p4-e3" target="p4-q3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-k7" style="endArrow=none;html=1;strokeColor=#9673a6;strokeWidth=1.5;dashed=1;" edge="1" parent="1" source="p4-e3" target="p4-q4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-k8" style="endArrow=none;html=1;strokeColor=#9673a6;strokeWidth=1.5;dashed=1;" edge="1" parent="1" source="p4-e3" target="p4-q6"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-k9" style="endArrow=none;html=1;strokeColor=#9673a6;strokeWidth=1.5;dashed=1;" edge="1" parent="1" source="p4-e4" target="p4-q3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-k10" style="endArrow=none;html=1;strokeColor=#9673a6;strokeWidth=1.5;dashed=1;" edge="1" parent="1" source="p4-e4" target="p4-q4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-k11" style="endArrow=none;html=1;strokeColor=#9673a6;strokeWidth=1.5;dashed=1;" edge="1" parent="1" source="p4-e4" target="p4-q6"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4-legend" value="&lt;b&gt;Nodes&lt;/b&gt;: demand — S+7 feats: static (shift one-hot S dims, kind 0=min/1=capacity, day position in year, special-day flag) + dynamic, refreshed at each day boundary (filled flag via env.slot_filled, already-passed flag). Dashed border = kind &#39;cap&#39;; &lt;font color=&quot;#cc0000&quot;&gt;red outline = demand node currently being decided (demand_ids = slot-queue index) — its embedding is the slot context fed to the heads&lt;/font&gt;.&lt;br&gt;&lt;b&gt;Edges (all static, precomputed once per scenario)&lt;/b&gt;: &lt;font color=&quot;#82b366&quot;&gt;green = employee ↔ team&lt;/font&gt; · &lt;font color=&quot;#d79b00&quot;&gt;orange = demand belongs_to / has_demand team&lt;/font&gt; · &lt;font color=&quot;#9673a6&quot;&gt;purple dashed = qualified / qualified_by (team membership + not on vacation — e.g. E2 is on vacation on Day 2, so no edge to the Day-2 Team-A slot)&lt;/font&gt;.&lt;br&gt;&lt;b&gt;GNN&lt;/b&gt;: day_proj → demand_proj; conv over the 6 static relations; the policy sees a slot-specific neighborhood (its qualified employees + team) instead of a day-level average." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;align=left;verticalAlign=top;spacing=10;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="655" width="1090" height="135" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
