@@ -94,7 +94,7 @@ python RabbitMQClient.py
 
 ### Run Any Algorithm from the Terminal
 
-The scheduler now includes a generic CLI that can list algorithms, run one algorithm, or run all registered algorithms.
+The scheduler now includes a generic CLI that can list algorithms, run one algorithm, run all registered algorithms, and inspect which parameters each algorithm accepts.
 
 ```bash
 # List registered algorithms
@@ -106,6 +106,48 @@ python /home/hugo/Desktop/SmarTaskUA/scripts/run_scheduler.py run \
     --problem-path /home/hugo/Desktop/SmarTaskUA/data/problems/SISQUAL_OCTOBER_2025/problem.json \
     --max-time 10 \
     --restarts 3
+```
+
+#### Discovering an Algorithm's Parameters
+
+Each algorithm can accept a different set of arguments (e.g. `R2_Heuristic` uses `n_outer`/`n_inner` debug knobs that other algorithms don't have). Instead of reading the source code, use the `param` subcommand to list, by introspection, exactly which parameters a given algorithm's entry point accepts:
+
+```bash
+python /home/hugo/Desktop/SmarTaskUA/scripts/run_scheduler.py param --algorithm R2_Heuristic
+```
+
+```
+max-time
+vacations
+employees
+minimuns
+year
+shifts
+...
+```
+
+Omit `--algorithm` to list the parameters of every registered algorithm at once, or add `--json` for machine-readable output (which also includes whether each parameter is required and its default value):
+
+```bash
+python /home/hugo/Desktop/SmarTaskUA/scripts/run_scheduler.py param --json --algorithm R2_Heuristic
+```
+
+> Note: the names shown use dashes (`max-time`) purely for readability. When actually passing a value with `--param`, use the underscore form instead (`max_time`), since that's the real Python argument name.
+
+#### Passing Algorithm-Specific Parameters (`--param`)
+
+The CLI only exposes a fixed set of flags directly (`--vacations`, `--employees`, `--minimuns`, `--max-time`, `--restarts`, `--day-order-mode`, ...). Any other parameter an algorithm accepts — for example the `n_outer`, `n_inner`, `debug_daily_trace`, or `debug_day_delay_seconds` knobs on `R2_Heuristic` — has no dedicated flag and must be passed through `--param KEY=VALUE` (repeatable):
+
+```bash
+python /home/hugo/Desktop/SmarTaskUA/scripts/run_scheduler.py run \
+    --algorithm R2_Heuristic \
+    --vacations /home/hugo/Desktop/SmarTaskUA/src/api/src/main/resources/vacationData_3shifts/24_employees/templates/VacationTemplate_Case1_24.csv \
+    --employees /home/hugo/Desktop/SmarTaskUA/tmp/employees_layout.json \
+    --minimuns /home/hugo/Desktop/SmarTaskUA/src/api/src/main/resources/minimuns/minimuns_3shifts_2teams_24emp.csv \
+    --param n_outer=2 \
+    --param n_inner=2 \
+    --param debug_daily_trace=true \
+    --param debug_day_delay_seconds=100
 ```
 
 ### Generate Employees Layout Files

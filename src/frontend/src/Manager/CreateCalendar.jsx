@@ -181,10 +181,6 @@ const CreateCalendar = () => {
       label: "Hybrid Heuristic Sisqual Levels Included",
     },
     {
-      value: "Hybrid_Heuristic_Sisqual_2",
-      label: "Hybrid Heuristic Sisqual 2",
-    },
-    {
       value: "Hybrid_Heuristic_Sisqual_3",
       label: "Hybrid Heuristic Sisqual No Levels Included",
     }

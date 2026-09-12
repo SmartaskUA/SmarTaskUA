@@ -25,7 +25,7 @@ from algorithms.utils import (
 
 class Heuristica:
     def __init__(self, vacations_rows, minimuns_rows, employees,
-                 maxTime, year=2025, shifts=2, w_min=100, w_ideal=1):
+                 maxTime, year=2025, shifts=None, w_min=100, w_ideal=1):
         """
         Weighted ILP scheduler.
 
@@ -42,7 +42,7 @@ class Heuristica:
         self.minimuns_rows = minimuns_rows
         self.maxTime = maxTime
         self.year = year
-        self.shifts = 3
+        self.shifts = shifts if shifts is not None else 3
         self.w_min = w_min
         self.w_ideal = w_ideal
 
@@ -963,7 +963,7 @@ class Heuristica:
     
 
 def solve(vacations=None, minimuns=None, employees=None, maxTime=None,
-          year=2021, hours=13, work_blocks=None, rules=None,
+          year=2021, shifts=None,
           debug_daily_trace=False, debug_day_delay_seconds=10.0,
           n_outer=1, n_inner=1, **kwargs):
     """
@@ -977,7 +977,7 @@ def solve(vacations=None, minimuns=None, employees=None, maxTime=None,
           employees=employees,
           maxTime=maxTime,
           year=year,
-          shifts=hours,
+          shifts=shifts,
       )
     
     scheduler.solve(

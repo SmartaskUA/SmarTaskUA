@@ -314,7 +314,50 @@ def _make_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--json", action="store_true", help="Print machine-readable JSON output")
     run_parser.add_argument("--output", help="Write the aggregated result JSON to this file")
 
+    param_parser = subparsers.add_parser(
+        "param",
+        help="List the parameters accepted by one or all registered algorithms",
+    )
+    param_parser.add_argument(
+        "--algorithm",
+        help="Show parameters for this algorithm only. Omit to list every registered algorithm.",
+    )
+    param_parser.add_argument("--json", action="store_true", help="Print machine-readable JSON output")
+    
     return parser
+
+
+def _algorithm_parameters(algorithm: Any) -> List[Dict[str, Any]]:
+    """Introspect one algorithm callable and return its declared parameters,
+    in declaration order, each as {name, cli_name, required, default}."""
+    signature = inspect.signature(algorithm)
+    parameters: List[Dict[str, Any]] = []
+
+    for name, parameter in signature.parameters.items():
+        if name == "self":
+            continue
+        if parameter.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD):
+            continue
+
+        has_default = parameter.default is not inspect.Parameter.empty
+        parameters.append(
+            {
+                "name": name,
+                "cli_name": name.replace("_", "-"),
+                "required": not has_default,
+                "default": parameter.default if has_default else None,
+            }
+        )
+
+    return parameters
+
+
+def _accepts_arbitrary_kwargs(algorithm: Any) -> bool:
+    signature = inspect.signature(algorithm)
+    return any(
+        parameter.kind == inspect.Parameter.VAR_KEYWORD
+        for parameter in signature.parameters.values()
+    )
 
 
 def _build_shared_kwargs(args: argparse.Namespace, defaults: Mapping[str, Any]) -> Dict[str, Any]:
@@ -458,6 +501,41 @@ def main(argv: List[str] | None = None) -> int:
             print(json.dumps(payload, indent=2, ensure_ascii=False))
         else:
             print(f"Generated employees file: {Path(args.output).expanduser()}")
+        return 0
+
+    if args.command == "param":
+        task_manager = _get_task_manager()
+        registry = task_manager.algorithms
+    
+        if args.algorithm:
+            if args.algorithm not in registry:
+                available = ", ".join(sorted(registry.keys()))
+                raise ValueError(f"Algorithm {args.algorithm!r} not found. Available algorithms: {available}")
+            target_algorithms = {args.algorithm: registry[args.algorithm]}
+        else:
+            target_algorithms = registry
+    
+        report = {
+            name: {
+                "parameters": _algorithm_parameters(algorithm),
+                "accepts_extra_kwargs": _accepts_arbitrary_kwargs(algorithm),
+            }
+            for name, algorithm in target_algorithms.items()
+        }
+    
+        if args.json:
+            print(json.dumps(report, indent=2, default=str))
+        else:
+            for name, info in report.items():
+                if args.algorithm is None:
+                    print(f"[{name}]")
+                for parameter in info["parameters"]:
+                    print(parameter["cli_name"])
+                if info["accepts_extra_kwargs"]:
+                    print("... (accepts additional keyword arguments)")
+                if args.algorithm is None:
+                    print()
+    
         return 0
 
     results = run_selected_algorithms(args)
