@@ -498,7 +498,8 @@ class ILPSchedulerWeighted:
         return rows
 
 
-def solve(vacations, minimuns, employees, maxTime, year=2025, shifts=2, rules=None):
+
+def solve(vacations, minimuns, employees, maxTime=None, year=2025, shifts=2, rules=None):
     ilp = ILPSchedulerWeighted(
         vacations,
         minimuns,

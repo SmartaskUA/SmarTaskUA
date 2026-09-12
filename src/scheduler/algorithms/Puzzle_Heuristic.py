@@ -14,6 +14,7 @@ import holidays
 import time
 import random
 import pulp
+from pathlib import Path
 
 from algorithms.assignmentmap import print_daily_assignment_map
 
@@ -210,7 +211,8 @@ class Heuristica:
         }
         return sorted_days
     
-    def export_ilp_time_summary(self, filename="/app/ilp_time_summary.csv"):
+    def export_ilp_time_summary(self, filename="ilp_time_summary.csv"):
+        Path(filename).parent.mkdir(parents=True, exist_ok=True)
         file_exists = os.path.exists(filename) and os.path.getsize(filename) > 0
         with open(filename, "a", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
@@ -1289,7 +1291,14 @@ class Heuristica:
     # MAIN SOLVE
     # =========================================================================
 
-    def solve(self, n_grasp_runs=1, record_history=True, history_file=None):
+    def solve(
+        self,
+        n_grasp_runs=1,
+        record_history=True,
+        history_file=None,
+        note_file=None,
+        ilp_time_summary_file=None,
+    ):
 
         print(f"\n{'='*80}")
         print(f"[Heuristica] EXECUTING")
@@ -1346,7 +1355,9 @@ class Heuristica:
         wall_time = time.time() - start_wall
         print(f"\n[Heuristica] Concluído em {wall_time:.1f}s")
 
-        note_filename = "/app/heuristica_note.txt"
+        note_filename = note_file or str(Path.cwd() / "heuristica_note.txt")
+
+        Path(note_filename).parent.mkdir(parents=True, exist_ok=True)
 
         with open(note_filename, "a", encoding="utf-8") as note_file:
             note_file.write(f"Spacing: {self.spacing}\n")
@@ -1442,16 +1453,19 @@ class Heuristica:
 # =============================================================================
 
 def solve(vacations=None, minimuns=None, employees=None, maxTime=None,
-          year=2021, hours=13, work_blocks=None, rules=None, **kwargs):
+          year=2021, hours=13, work_blocks=None, rules=None, runs_grasp=None, **kwargs):
 
     max_seconds = int(maxTime * 60) if maxTime else 3600
-    grasp_runs = 3000
+    grasp_runs = runs_grasp or 1
     solution_history_path = kwargs.get("solution_history_path")
+    history_file = kwargs.get("history_file") or kwargs.get("solution_history_path")
     spacing_list = [3]
-    history_file = "/app/grasp_history.txt"
+    if not history_file:
+        history_file = str(Path.cwd() / "grasp_history.txt")
     Full = False
 
     # Limpar o ficheiro antes de começar
+    Path(history_file).parent.mkdir(parents=True, exist_ok=True)
     open(history_file, "w").close()
 
     timeout_event = threading.Event()
@@ -1487,10 +1501,24 @@ def solve(vacations=None, minimuns=None, employees=None, maxTime=None,
             )
 
             check_timeout()
-            scheduler.solve(n_grasp_runs=grasp_runs, record_history=True, history_file=history_file)
+            ilp_time_summary_file = kwargs.get("ilp_time_summary_file") or kwargs.get("ilp_times_file")
+            if not ilp_time_summary_file:
+                ilp_time_summary_file = str(Path.cwd() / "ilp_times.csv")
+
+            note_file = kwargs.get("note_file") or kwargs.get("heuristica_note_file")
+            if not note_file:
+                note_file = str(Path.cwd() / "heuristica_note.txt")
+
+            scheduler.solve(
+                n_grasp_runs=grasp_runs,
+                record_history=True,
+                history_file=history_file,
+                note_file=note_file,
+                ilp_time_summary_file=ilp_time_summary_file,
+            )
             check_timeout()
 
-            scheduler.export_ilp_time_summary("/app/ilp_times.csv")
+            scheduler.export_ilp_time_summary(ilp_time_summary_file)
             n_weeks = len(scheduler.ilp_times_log)
             avg = scheduler.total_ilp_time / n_weeks if n_weeks else 0.0
             print(f"[Heuristica] Spacing {spacing}: tempo total ILP = "

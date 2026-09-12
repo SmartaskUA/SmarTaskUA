@@ -47,6 +47,8 @@ from validators.sisqual_feasibility import validate_sisqual_problem_or_raise
 from sisqual_monthly_runner import run_sisqual_monthly, should_run_monthly
 from algorithms.sisqual_export import build_sisqual_import_json
 from algorithms.sisqual_hours_utils import load_problem_json
+from algorithms.Hybrid_Heuristic_Sisqual_Levels_Included import solve as hybrid_heuristic_sisqual_solver
+from algorithms.Hybrid_Heuristic_Sisqual_No_Levels_Included import solve as hybrid_heuristic_sisqual_3_solver
 
 class TaskManager:
     def __init__(self):
@@ -92,6 +94,8 @@ class TaskManager:
             "Hybrid_Heuristic": hybrid_heuristic_solver,
             "R2_Heuristic": r2_heuristic_solver,
             "Puzzle_Heuristic": puzzle_heuristic_solver,
+            "Hybrid_Heuristic_Sisqual_Levels_Included": hybrid_heuristic_sisqual_solver,
+            "Hybrid_Heuristic_Sisqual_3": hybrid_heuristic_sisqual_3_solver,
         }
 
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13, solver="CBC", problem_path=None):
@@ -128,6 +132,8 @@ class TaskManager:
             "CSP_Sisqual_Hours_MathematicalDefinition7",
             "ILP_Sisqual_Hours_MathematicalDefinition5",
             "CSP_Sisqual_Hours_MathematicalDefinition5",
+            "Hybrid_Heuristic_Sisqual_Levels_Included",
+            "Hybrid_Heuristic_Sisqual_3",
         }
         uses_rules = algorithm_name not in no_rules_algorithms
         rules_json = None
@@ -183,6 +189,8 @@ class TaskManager:
             "CSP_Sisqual_Hours_MathematicalDefinition7",
             "ILP_Sisqual_Hours_MathematicalDefinition5",
             "CSP_Sisqual_Hours_MathematicalDefinition5",
+            "Hybrid_Heuristic_Sisqual_Levels_Included",
+            "Hybrid_Heuristic_Sisqual_3"
         ]:
             # Request the solver to print the returned rows as JSON so the
             # container logs contain the schedule payload sent to the frontend.
