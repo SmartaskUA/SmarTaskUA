@@ -366,6 +366,7 @@ class Hybrid_Heuristic_Sisqual:
     
         if not candidates:
             self.employee_day_block[(employee_id, day)] = None
+            self.unassigned.append((employee_id, day))   # <-- adicionar esta linha
             return False
     
         scored = []
@@ -607,7 +608,7 @@ class Hybrid_Heuristic_Sisqual:
         return val
 
 
-def solve(problem_path=None, maxTime=None, restarts=50000, day_order_mode=None, **kwargs):
+def solve(problem_path=None, maxTime=None, restarts=5, day_order_mode=None, **kwargs):
 
     best_rows = None
     best_key = None
@@ -633,15 +634,19 @@ def solve(problem_path=None, maxTime=None, restarts=50000, day_order_mode=None, 
 
             priority_cost = scheduler.total_priority_cost()
 
+            unassigned_count = len(scheduler.unassigned)
+
+
             # Record this result
             all_results.append({
                 'restart_num': i + 1,
                 'day_order_mode': current_mode,
+                'unassigned_count': unassigned_count,
                 'kpi_shortage': kpi_shortage,
                 'priority_cost': priority_cost,
             })
 
-            key = (kpi_shortage, priority_cost)
+            key = (unassigned_count, kpi_shortage, priority_cost)
             if best_key is None or key < best_key:
                 best_key = key
                 best_rows = scheduler.build_output_rows()
@@ -649,8 +654,7 @@ def solve(problem_path=None, maxTime=None, restarts=50000, day_order_mode=None, 
     # Write results to CSV file
     _write_results_log(problem_path, all_results, best_key)
 
-    print(f"[Heuristica] Best (kpi_shortage, priority_cost) after {restarts} restarts: {best_key}")
-
+    print(f"[Heuristica] Best (unassigned_count, kpi_shortage, priority_cost) after {restarts} restarts: {best_key}")
     return best_rows
 
 
@@ -664,13 +668,13 @@ def _write_results_log(problem_path: str, all_results: list, best_key):
         with log_file.open('w', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(
                 f,
-                fieldnames=['restart_num', 'day_order_mode', 'kpi_shortage', 'priority_cost'],
+                fieldnames=['restart_num', 'day_order_mode', 'unassigned_count', 'kpi_shortage', 'priority_cost'],
             )
             writer.writeheader()
             for row in all_results:
                 writer.writerow(row)
 
         print(f"[Heuristica] Results saved to: {log_file}")
-        print(f"[Heuristica] Best (kpi_shortage, priority_cost): {best_key}")
+        print(f"[Heuristica] Best (unassigned_count, kpi_shortage, priority_cost): {best_key}")
     except Exception as ex:
         print(f"[Heuristica] Warning: Could not write results log: {ex}")

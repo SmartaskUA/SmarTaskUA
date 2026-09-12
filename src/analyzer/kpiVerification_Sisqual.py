@@ -395,12 +395,22 @@ class KpiEvaluator_Sisqual:
 
             # Expected hours from input + contract
             expected_h = None
-            if input_row and contract_h is not None:
-                working_days = sum(
-                    1 for m in input_row.values()
-                    if re.match(r"^\d+$", m.strip()) or m.strip().upper().startswith("EQUALS")
+            if input_row:
+                total_marker_hours = sum(
+                    int(m.strip())
+                    for m in input_row.values()
+                    if re.match(r"^\d+$", m.strip())
                 )
-                expected_h = round(working_days * contract_h, 2)
+                # Para markers EQUALS:hh:mm-hh:mm, soma a duração exata do intervalo
+                for m in input_row.values():
+                    m = m.strip().upper()
+                    if m.startswith("EQUALS:"):
+                        start_text, end_text = m.split(":", 1)[1].split("-", 1)
+                        sh, sm = map(int, start_text.split(":"))
+                        eh, em = map(int, end_text.split(":"))
+                        total_marker_hours += ((eh * 60 + em) - (sh * 60 + sm)) / 60
+            
+                expected_h = round(total_marker_hours, 2)
 
             entry = {
                 "emp_id":               emp_id,
