@@ -52,9 +52,11 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - GRB_LICENSE_FILE=/app/gurobi.lic
+      - SCHEDULE_EXPORT_DIR=/app/exports
     volumes:
       - ../data/problems:/app/data/problems
       - shared_tmp:/shared_tmp
+      - ./exports:/app/exports
       # - /home/hugo/gurobi.lic:/app/gurobi.lic:ro
     healthcheck:
       test:

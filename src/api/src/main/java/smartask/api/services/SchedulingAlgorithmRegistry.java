@@ -70,6 +70,7 @@ public class SchedulingAlgorithmRegistry {
         register(specs, "CSP_Sisqual_Hours_MathematicalDefinition5", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
         register(specs, "Hybrid_Heuristic_Sisqual_Levels_Included", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
         register(specs, "Hybrid_Heuristic_Sisqual_3", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
+        register(specs, "Puzzle_Sisqual", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
 
         register(specs, "hill climbing", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
         register(specs, "linear programming", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);

@@ -10,6 +10,13 @@ import time
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping
 
+from .export_utils import (
+    build_export_filename as _build_export_filename,
+    default_export_dir as _default_export_dir,
+    export_table_to_csv as _export_table_to_csv,
+    is_table as _is_table,
+)
+
 from .layout_generator import build_team_layout_employees, write_json_file
 
 
@@ -446,6 +453,17 @@ def run_selected_algorithms(args: argparse.Namespace) -> List[Dict[str, Any]]:
         try:
             result = algorithm(**call_kwargs)
             elapsed_seconds = time.perf_counter() - start_time
+
+            csv_export_path = None
+            if _is_table(result): 
+                try:
+                    export_dir = Path(args.export_dir) if getattr(args, "export_dir", None) else _default_export_dir()
+                    filename = _build_export_filename(algorithm_name, args.task_id)
+                    csv_export_path = str(_export_table_to_csv(result, export_dir, filename))
+                    print(f"[{algorithm_name}] Schedule exported to CSV: {csv_export_path}")
+                except Exception as export_error:
+                    print(f"[{algorithm_name}] CSV export failed: {export_error}")
+
             results.append(
                 {
                     "algorithm": algorithm_name,
@@ -453,6 +471,7 @@ def run_selected_algorithms(args: argparse.Namespace) -> List[Dict[str, Any]]:
                     "elapsed_seconds": elapsed_seconds,
                     "summary": _summarize_result(result),
                     "result": result,
+                    "csv_export_path": csv_export_path,
                 }
             )
         except Exception as exc:
