@@ -287,8 +287,8 @@ def _make_parser() -> argparse.ArgumentParser:
     )
     generate_parser.add_argument("--layout", required=True, help="Layout like A=6,B=6,AB=6")
     generate_parser.add_argument("--output", required=True, help="Output JSON file")
-    generate_parser.add_argument("--prefix", default="Employee", help="Employee name prefix")
-    generate_parser.add_argument("--contract-type", default="fullTime_8h", help="Contract type to write")
+    # generate_parser.add_argument("--prefix", default="Employee", help="Employee name prefix")
+    # generate_parser.add_argument("--contract-type", default="fullTime_8h", help="Contract type to write")
     generate_parser.add_argument(
         "--wrap-problem",
         action="store_true",
@@ -298,10 +298,10 @@ def _make_parser() -> argparse.ArgumentParser:
 
     run_parser = subparsers.add_parser("run", help="Run one or more algorithms")
     run_parser.add_argument("--algorithm", action="append", default=[], help="Algorithm name to run. Repeatable.")
-    run_parser.add_argument("--all", action="store_true", help="Run every registered algorithm")
-    run_parser.add_argument("--config", help="JSON file with defaults and per-algorithm overrides")
+    # run_parser.add_argument("--all", action="store_true", help="Run every registered algorithm")
+    # run_parser.add_argument("--config", help="JSON file with defaults and per-algorithm overrides")
     run_parser.add_argument("--param", action="append", default=[], help="Shared KEY=VALUE pair passed to the solver. Repeatable.")
-    run_parser.add_argument("--algo-param", action="append", default=[], help="Per-algorithm ALGORITHM.KEY=VALUE override. Repeatable.")
+    # run_parser.add_argument("--algo-param", action="append", default=[], help="Per-algorithm ALGORITHM.KEY=VALUE override. Repeatable.")
     run_parser.add_argument("--problem-path", help="Problem bundle directory or problem.json file")
     run_parser.add_argument("--max-time", type=float, help="Maximum solver time in minutes")
     run_parser.add_argument("--restarts", type=int, help="Number of restarts for restart-based algorithms")
@@ -402,7 +402,7 @@ def _build_shared_kwargs(args: argparse.Namespace, defaults: Mapping[str, Any]) 
 
 def _build_algorithm_overrides(args: argparse.Namespace, config_overrides: Mapping[str, Mapping[str, Any]]) -> Dict[str, Dict[str, Any]]:
     overrides = {name: dict(values) for name, values in config_overrides.items()}
-    for algorithm_name, value in _parse_algorithm_key_value_pairs(args.algo_param).items():
+    for algorithm_name, value in _parse_algorithm_key_value_pairs([]).items():
         overrides.setdefault(algorithm_name, {}).update(value)
     return overrides
 
@@ -421,17 +421,15 @@ def run_selected_algorithms(args: argparse.Namespace) -> List[Dict[str, Any]]:
     task_manager = _get_task_manager()
     registry = task_manager.algorithms
 
-    if args.all:
-        selected_algorithms = list(registry.keys())
-    else:
-        selected_algorithms = []
-        for item in args.algorithm:
-            selected_algorithms.extend(part.strip() for part in item.split(",") if part.strip())
+
+    selected_algorithms = []
+    for item in args.algorithm:
+        selected_algorithms.extend(part.strip() for part in item.split(",") if part.strip())
 
     if not selected_algorithms:
         raise ValueError("Select at least one algorithm with --algorithm or use --all.")
 
-    defaults, config_overrides = _load_config_file(args.config)
+    defaults, config_overrides = _load_config_file(None)
     shared_kwargs = _build_shared_kwargs(args, defaults)
     algorithm_overrides = _build_algorithm_overrides(args, config_overrides)
 
@@ -499,6 +497,7 @@ def main(argv: List[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "list":
+        # Chama o task manager via import para obter a lista de algoritmos registrados
         task_manager = _get_task_manager()
         algorithm_names = list(task_manager.algorithms.keys())
         if args.json:
@@ -511,8 +510,8 @@ def main(argv: List[str] | None = None) -> int:
     if args.command == "generate-employees":
         payload = build_team_layout_employees(
             layout_spec=args.layout,
-            prefix=args.prefix,
-            contract_type=args.contract_type,
+            # prefix=args.prefix,
+            # contract_type=args.contract_type,
             include_wrapper=args.wrap_problem,
         )
         write_json_file(args.output, payload)
