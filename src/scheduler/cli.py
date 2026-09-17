@@ -10,6 +10,13 @@ import time
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping
 
+from .export_utils import (
+    build_export_filename as _build_export_filename,
+    default_export_dir as _default_export_dir,
+    export_table_to_csv as _export_table_to_csv,
+    is_table as _is_table,
+)
+
 from .layout_generator import build_team_layout_employees, write_json_file
 
 
@@ -280,8 +287,8 @@ def _make_parser() -> argparse.ArgumentParser:
     )
     generate_parser.add_argument("--layout", required=True, help="Layout like A=6,B=6,AB=6")
     generate_parser.add_argument("--output", required=True, help="Output JSON file")
-    generate_parser.add_argument("--prefix", default="Employee", help="Employee name prefix")
-    generate_parser.add_argument("--contract-type", default="fullTime_8h", help="Contract type to write")
+    # generate_parser.add_argument("--prefix", default="Employee", help="Employee name prefix")
+    # generate_parser.add_argument("--contract-type", default="fullTime_8h", help="Contract type to write")
     generate_parser.add_argument(
         "--wrap-problem",
         action="store_true",
@@ -291,10 +298,10 @@ def _make_parser() -> argparse.ArgumentParser:
 
     run_parser = subparsers.add_parser("run", help="Run one or more algorithms")
     run_parser.add_argument("--algorithm", action="append", default=[], help="Algorithm name to run. Repeatable.")
-    run_parser.add_argument("--all", action="store_true", help="Run every registered algorithm")
-    run_parser.add_argument("--config", help="JSON file with defaults and per-algorithm overrides")
+    # run_parser.add_argument("--all", action="store_true", help="Run every registered algorithm")
+    # run_parser.add_argument("--config", help="JSON file with defaults and per-algorithm overrides")
     run_parser.add_argument("--param", action="append", default=[], help="Shared KEY=VALUE pair passed to the solver. Repeatable.")
-    run_parser.add_argument("--algo-param", action="append", default=[], help="Per-algorithm ALGORITHM.KEY=VALUE override. Repeatable.")
+    # run_parser.add_argument("--algo-param", action="append", default=[], help="Per-algorithm ALGORITHM.KEY=VALUE override. Repeatable.")
     run_parser.add_argument("--problem-path", help="Problem bundle directory or problem.json file")
     run_parser.add_argument("--max-time", type=float, help="Maximum solver time in minutes")
     run_parser.add_argument("--restarts", type=int, help="Number of restarts for restart-based algorithms")
@@ -395,7 +402,7 @@ def _build_shared_kwargs(args: argparse.Namespace, defaults: Mapping[str, Any]) 
 
 def _build_algorithm_overrides(args: argparse.Namespace, config_overrides: Mapping[str, Mapping[str, Any]]) -> Dict[str, Dict[str, Any]]:
     overrides = {name: dict(values) for name, values in config_overrides.items()}
-    for algorithm_name, value in _parse_algorithm_key_value_pairs(args.algo_param).items():
+    for algorithm_name, value in _parse_algorithm_key_value_pairs([]).items():
         overrides.setdefault(algorithm_name, {}).update(value)
     return overrides
 
@@ -414,17 +421,15 @@ def run_selected_algorithms(args: argparse.Namespace) -> List[Dict[str, Any]]:
     task_manager = _get_task_manager()
     registry = task_manager.algorithms
 
-    if args.all:
-        selected_algorithms = list(registry.keys())
-    else:
-        selected_algorithms = []
-        for item in args.algorithm:
-            selected_algorithms.extend(part.strip() for part in item.split(",") if part.strip())
+
+    selected_algorithms = []
+    for item in args.algorithm:
+        selected_algorithms.extend(part.strip() for part in item.split(",") if part.strip())
 
     if not selected_algorithms:
         raise ValueError("Select at least one algorithm with --algorithm or use --all.")
 
-    defaults, config_overrides = _load_config_file(args.config)
+    defaults, config_overrides = _load_config_file(None)
     shared_kwargs = _build_shared_kwargs(args, defaults)
     algorithm_overrides = _build_algorithm_overrides(args, config_overrides)
 
@@ -446,6 +451,17 @@ def run_selected_algorithms(args: argparse.Namespace) -> List[Dict[str, Any]]:
         try:
             result = algorithm(**call_kwargs)
             elapsed_seconds = time.perf_counter() - start_time
+
+            csv_export_path = None
+            if _is_table(result): 
+                try:
+                    export_dir = Path(args.export_dir) if getattr(args, "export_dir", None) else _default_export_dir()
+                    filename = _build_export_filename(algorithm_name, args.task_id)
+                    csv_export_path = str(_export_table_to_csv(result, export_dir, filename))
+                    print(f"[{algorithm_name}] Schedule exported to CSV: {csv_export_path}")
+                except Exception as export_error:
+                    print(f"[{algorithm_name}] CSV export failed: {export_error}")
+
             results.append(
                 {
                     "algorithm": algorithm_name,
@@ -453,6 +469,7 @@ def run_selected_algorithms(args: argparse.Namespace) -> List[Dict[str, Any]]:
                     "elapsed_seconds": elapsed_seconds,
                     "summary": _summarize_result(result),
                     "result": result,
+                    "csv_export_path": csv_export_path,
                 }
             )
         except Exception as exc:
@@ -480,6 +497,7 @@ def main(argv: List[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "list":
+        # Chama o task manager via import para obter a lista de algoritmos registrados
         task_manager = _get_task_manager()
         algorithm_names = list(task_manager.algorithms.keys())
         if args.json:
@@ -492,8 +510,8 @@ def main(argv: List[str] | None = None) -> int:
     if args.command == "generate-employees":
         payload = build_team_layout_employees(
             layout_spec=args.layout,
-            prefix=args.prefix,
-            contract_type=args.contract_type,
+            # prefix=args.prefix,
+            # contract_type=args.contract_type,
             include_wrapper=args.wrap_problem,
         )
         write_json_file(args.output, payload)

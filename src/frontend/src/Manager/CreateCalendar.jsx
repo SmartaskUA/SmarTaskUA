@@ -183,6 +183,10 @@ const CreateCalendar = () => {
     {
       value: "Hybrid_Heuristic_Sisqual_3",
       label: "Hybrid Heuristic Sisqual No Levels Included",
+    },
+    {
+      value: "Puzzle_Sisqual",
+      label: "Puzzle Heuristic Sisqual",
     }
 
   ];

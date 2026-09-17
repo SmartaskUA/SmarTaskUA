@@ -41,12 +41,18 @@ class Heuristica:
         self.vacations_rows = vacations_rows
         self.minimuns_rows = minimuns_rows
         self.maxTime = maxTime
-        self.year = year
+        
+
+        try:
+            self.year = int(year) if year not in (None, "") else 2025
+        except (ValueError, TypeError):
+            self.year = 2025
+
         self.shifts = shifts if shifts is not None else 3
         self.w_min = w_min
         self.w_ideal = w_ideal
 
-        # === Preprocessing ===
+        # === Preprocessing ===x    
         self.teams = self._build_teams(self.employee_rows)
 
         self.emp_allowed_teams = self._build_emp_team_map(self.employee_rows)

@@ -13,3 +13,4 @@ tenacity
 ortools
 docplex
 reportlab
+openpyxl
