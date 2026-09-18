@@ -102,3 +102,7 @@ src/scheduler/algorithms/GA/ga_qiga.py
 src/scheduler/algorithms/GA/QIGA_Analysis.md
 src/scheduler/algorithms/GA/Results_GA_2Shifts.tex
 src/scheduler/algorithms/GA/Results_GA_3Shifts.tex
+
+# Solver output artifacts (keep generated CSVs out of source dirs)
+infra/*.csv
+schedule_cpsat*.csv

@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import List
 
 from ortools.sat.python import cp_model
+from ortools.sat.python.cp_model import LinearExpr
 
 from algorithms.sisqual_hours_utils import (
     OFF_MARKERS,
@@ -59,8 +60,8 @@ class SisqualProblem1CSP:
         self.alpha = parse_demand_minimums(self.base_dir, self.problem, self.coverage_by_period)
         self.assignments = build_assignments(self.employees, self.days, self.schedule_markers, self.time_slots)
 
-        self.model = None
-        self.solver = None
+        self.model = cp_model.CpModel()
+        self.solver = cp_model.CpSolver()
         self.x = {}
         self.y = {}
         self.shortage = {}
@@ -78,13 +79,12 @@ class SisqualProblem1CSP:
         return 11.0
 
     def build_model(self):
-        model = cp_model.CpModel()
 
         for employee in self.employees:
             employee_id = employee["id"]
             for day in self.days:
                 for assignment in self.assignments[(employee_id, day)]:
-                    self.x[(employee_id, day, assignment.key)] = model.NewBoolVar(
+                    self.x[(employee_id, day, assignment.key)] = self.model.NewBoolVar(
                         f"x_{employee_id}_{day.replace('-', '')}_{assignment.key.split('_')[-2]}_{assignment.key.split('_')[-1]}"
                     )
 
@@ -96,14 +96,14 @@ class SisqualProblem1CSP:
                     continue
                 for slot in self.time_slots:
                     for skill in skills:
-                        self.y[(employee_id, day, slot.index, skill)] = model.NewBoolVar(
+                        self.y[(employee_id, day, slot.index, skill)] = self.model.NewBoolVar(
                             f"y_{employee_id}_{day.replace('-', '')}_{slot.index}_{skill}"
                         )
 
         for (day, slot_idx, skill), minimum in self.alpha.items():
-            self.shortage[(day, slot_idx, skill)] = model.NewIntVar(
+            self.shortage[(day, slot_idx, skill)] = self.model.NewIntVar(
                 0,
-                int(minimum),
+                len(self.employees),
                 f"z_{day.replace('-', '')}_{slot_idx}_{skill}",
             )
 
@@ -113,9 +113,9 @@ class SisqualProblem1CSP:
                 marker = normalize_marker(self.schedule_markers[employee_id][day])
                 x_vars = [self.x[(employee_id, day, assignment.key)] for assignment in self.assignments[(employee_id, day)]]
                 if marker in OFF_MARKERS or not marker:
-                    model.Add(sum(x_vars) == 0)
+                    self.model.Add(LinearExpr.Sum(x_vars) == 0)
                 else:
-                    model.Add(sum(x_vars) == 1)
+                    self.model.Add(LinearExpr.Sum(x_vars) == 1)
 
         for employee in self.employees:
             employee_id = employee["id"]
@@ -133,18 +133,24 @@ class SisqualProblem1CSP:
                         if slot.index in assignment.slot_indices:
                             rhs_terms.append(self.x[(employee_id, day, assignment.key)])
                     lhs_terms = [self.y[(employee_id, day, slot.index, skill)] for skill in skills]
-                    model.Add(sum(lhs_terms) == sum(rhs_terms))
+                    if lhs_terms:
+                        self.model.Add(
+                            cp_model.LinearExpr.Sum(lhs_terms) == cp_model.LinearExpr.Sum(rhs_terms)
+                        )
+                    else:
+                        # ninguém pode trabalhar → força RHS = 0
+                        self.model.Add(cp_model.LinearExpr.Sum(rhs_terms) == 0)
 
         for employee in self.employees:
             employee_id = employee["id"]
             for start in range(0, len(self.days) - 5):
                 window = self.days[start:start + 6]
-                model.Add(
-                    sum(
+                self.model.Add(
+                    LinearExpr.Sum([
                         self.x[(employee_id, day, assignment.key)]
                         for day in window
                         for assignment in self.assignments[(employee_id, day)]
-                    ) <= 5
+                    ]) <= 5
                 )
 
         for employee in self.employees:
@@ -158,7 +164,7 @@ class SisqualProblem1CSP:
                     for next_assignment in next_day_assignments:
                         rest_hours = ((24 * 60 - today_assignment.end_min) + next_assignment.start_min) / 60.0
                         if rest_hours < self.min_rest_hours:
-                            model.Add(
+                            self.model.Add(
                                 self.x[(employee_id, day, today_assignment.key)]
                                 + self.x[(employee_id, next_day, next_assignment.key)]
                                 <= 1
@@ -178,25 +184,36 @@ class SisqualProblem1CSP:
                     y_key = (employee_id, day, slot_idx, skill)
                     if skill in employee["assignable_skills"] and y_key in self.y:
                         coverage_terms.append(self.y[y_key])
-            model.Add(self.shortage[(day, slot_idx, skill)] + sum(coverage_terms) >= minimum)
+            if coverage_terms:
+                self.model.Add(
+                    self.shortage[(day, slot_idx, skill)] +
+                    LinearExpr.Sum(coverage_terms)
+                    >= minimum
+                )
+            else:
+                self.model.Add(self.shortage[(day, slot_idx, skill)] >= minimum)
 
-        model.Minimize(sum(self.shortage.values()))
-        self.model = model
+        self.model.Minimize(
+            LinearExpr.Sum(list(self.shortage.values()))
+        )
+        self.model = self.model
 
     def solve(self):
         if self.model is None:
             self.build_model()
 
-        solver = cp_model.CpSolver()
         if self.max_time_seconds is not None:
-            solver.parameters.max_time_in_seconds = float(self.max_time_seconds)
-        solver.parameters.num_search_workers = 8
-        solver.parameters.log_search_progress = True
+            self.solver.parameters.max_time_in_seconds = float(self.max_time_seconds)
+        self.solver.parameters.num_search_workers = 8
+        self.solver.parameters.log_search_progress = True
+        self.solver.parameters.cp_model_presolve = True
+        self.solver.parameters.linearization_level = 2
+        self.solver.parameters.search_branching = cp_model.PORTFOLIO_SEARCH
 
-        self.status = solver.Solve(self.model)
-        self.solver = solver
+        self.status = self.solver.Solve(self.model)
+        self.solver = self.solver
         if self.status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-            self.objective_value = solver.ObjectiveValue()
+            self.objective_value = self.solver.ObjectiveValue()
         return self.status
 
     def solution_status(self) -> str:
@@ -223,14 +240,10 @@ class SisqualProblem1CSP:
                     row.append(marker or "OFF")
                     continue
 
-                if not solved:
-                    row.append("UNASSIGNED")
-                    continue
-
                 chosen = None
                 for assignment in self.assignments[(employee_id, day)]:
-                    value = self.solver.Value(self.x[(employee_id, day, assignment.key)])
-                    if value > 0:
+                    var = self.x.get((employee_id, day, assignment.key))
+                    if var is not None and self.solver.Value(var) == 1:                   
                         chosen = assignment
                         break
 
@@ -242,14 +255,16 @@ class SisqualProblem1CSP:
                 current_skill = None
                 current_start = None
                 current_end = None
-                for slot_idx in chosen.slot_indices:
+                for slot_idx in sorted(chosen.slot_indices):
                     slot = self.time_slots[slot_idx]
                     assigned_skill = None
                     for skill in employee["assignable_skills"]:
                         y_var = self.y.get((employee_id, day, slot_idx, skill))
-                        if y_var is not None and self.solver.Value(y_var) > 0:
-                            assigned_skill = skill
-                            break
+                        if y_var is not None:
+                            val = self.solver.Value(y_var)
+                            if val is not None and val > 0.5:
+                                assigned_skill = skill
+                                break
                     if assigned_skill is None:
                         if employee["assignable_skills"]:
                             assigned_skill = employee["assignable_skills"][0]
@@ -282,7 +297,8 @@ def solve(problem_path=None, maxTime=None, **kwargs):
     scheduler = SisqualProblem1CSP(problem_path, max_time_minutes=maxTime)
     scheduler.build_model()
     scheduler.solve()
-    return scheduler.build_output_rows()
+    rows = scheduler.build_output_rows()
+    return rows
 
 
 def main():
@@ -290,6 +306,7 @@ def main():
     parser.add_argument("problem_json", help="Path to problem.json")
     parser.add_argument("--max-time", dest="max_time", default="10", help="Solver time limit in minutes")
     parser.add_argument("--output", dest="output", default=None, help="Optional output CSV path")
+    parser.add_argument("--print-json", dest="print_json", action="store_true", help="Print JSON of returned rows to stdout")
     args = parser.parse_args()
 
     scheduler = SisqualProblem1CSP(args.problem_json, max_time_minutes=args.max_time)

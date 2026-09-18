@@ -17,20 +17,22 @@ import {
   Paper,
   IconButton,
   Chip,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Checkbox,
-  FormControlLabel,
-  FormGroup,
   Grid,
-  Alert
+  Alert,
+  // Optional Constraints UI (hidden; kept for re-enable):
+  // Accordion,
+  // AccordionSummary,
+  // AccordionDetails,
+  // Checkbox,
+  // FormControlLabel,
+  // FormGroup,
 } from '@mui/material';
 import {
   Add,
   Edit,
-  Delete,
-  ExpandMore
+  Delete
+  // Optional Constraints UI (hidden; kept for re-enable):
+  // ExpandMore
 } from '@mui/icons-material';
 import StepCard from '../components/wizard/StepCard';
 import NavigationButtons from '../components/wizard/NavigationButtons';
@@ -51,20 +53,23 @@ const Step2_Contracts = () => {
   const [editingContract, setEditingContract] = useState(null);
   const [errors, setErrors] = useState({});
 
+  // Default (empty) constraint values used by the form inputs
+  const emptyConstraints = {
+    weekendsOnly: false,
+    weekdaysOnly: false,
+    availableDays: [],
+    maxHoursPerWeek: '',
+    maxConsecutiveDays: '',
+    minRestDaysPerWeek: '',
+    flexibleHours: false
+  };
+
   // Form state
   const [formData, setFormData] = useState({
     id: '',
     name: '',
     workHoursPerDay: 8,
-    constraints: {
-      weekendsOnly: false,
-      weekdaysOnly: false,
-      availableDays: [],
-      maxHoursPerWeek: '',
-      maxConsecutiveDays: '',
-      minRestDaysPerWeek: '',
-      flexibleHours: false
-    }
+    constraints: { ...emptyConstraints }
   });
 
   const handleAddContract = () => {
@@ -73,15 +78,7 @@ const Step2_Contracts = () => {
       id: '',
       name: '',
       workHoursPerDay: 8,
-      constraints: {
-        weekendsOnly: false,
-        weekdaysOnly: false,
-        availableDays: [],
-        maxHoursPerWeek: '',
-        maxConsecutiveDays: '',
-        minRestDaysPerWeek: '',
-        flexibleHours: false
-      }
+      constraints: { ...emptyConstraints }
     });
     setErrors({});
     setOpenDialog(true);
@@ -89,7 +86,15 @@ const Step2_Contracts = () => {
 
   const handleEditContract = (contract) => {
     setEditingContract(contract);
-    setFormData(contract);
+    // Rehydrate a complete form shape: saved contracts omit `constraints`
+    // (and individual empty fields), so merge over defaults to keep every
+    // field the dialog reads defined.
+    setFormData({
+      id: contract.id,
+      name: contract.name,
+      workHoursPerDay: contract.workHoursPerDay,
+      constraints: { ...emptyConstraints, ...(contract.constraints || {}) }
+    });
     setErrors({});
     setOpenDialog(true);
   };
@@ -173,6 +178,7 @@ const Step2_Contracts = () => {
     }
   };
 
+  /* Optional Constraints handler (hidden; kept for re-enable):
   const handleConstraintChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -185,6 +191,7 @@ const Step2_Contracts = () => {
       setErrors(prev => ({ ...prev, constraints: null }));
     }
   };
+  */
 
   const validate = () => {
     if (contracts.length === 0) {
@@ -348,7 +355,7 @@ const Step2_Contracts = () => {
                 />
               </Grid>
 
-              {/* Optional Constraints */}
+              {/* Optional Constraints (hidden; kept for re-enable):
               <Grid item xs={12}>
                 <Accordion>
                   <AccordionSummary expandIcon={<ExpandMore />}>
@@ -426,6 +433,7 @@ const Step2_Contracts = () => {
                   </AccordionDetails>
                 </Accordion>
               </Grid>
+              */}
             </Grid>
           </Box>
         </DialogContent>

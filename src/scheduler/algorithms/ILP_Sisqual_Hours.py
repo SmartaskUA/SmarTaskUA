@@ -304,31 +304,6 @@ def solve(problem_path=None, maxTime=None, **kwargs):
     scheduler = SisqualProblem1ILP(problem_path, max_time_minutes=maxTime)
     scheduler.build_model()
     scheduler.solve()
-    return scheduler.build_output_rows()
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Solve sisqual_example_2 with the hour-based ILP Problem 1 model.")
-    parser.add_argument("problem_json", help="Path to problem.json")
-    parser.add_argument("--max-time", dest="max_time", default="10", help="Solver time limit in minutes")
-    parser.add_argument("--output", dest="output", default=None, help="Optional output CSV path")
-    args = parser.parse_args()
-
-    scheduler = SisqualProblem1ILP(args.problem_json, max_time_minutes=args.max_time)
-    scheduler.build_model()
-    status = scheduler.solve()
     rows = scheduler.build_output_rows()
 
-    print(f"Status: {pulp.LpStatus.get(status, 'Unknown')}")
-    print(f"Objective: {scheduler.objective_value}")
-
-    if args.output:
-        scheduler.export_csv(args.output)
-        print(f"Wrote schedule to {args.output}")
-    else:
-        for row in rows[:5]:
-            print(row[:6])
-
-
-if __name__ == "__main__":
-    main()
+    return rows

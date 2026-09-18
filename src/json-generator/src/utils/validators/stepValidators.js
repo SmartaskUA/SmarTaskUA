@@ -103,8 +103,9 @@ export function validateStep3(state) {
       errors.push('At least one team is required');
     }
   } else if (state.employees.model === 'competency') {
-    // Competency model: at least one competency required
-    if (!state.organizationalUnits.competencies || state.organizationalUnits.competencies.length === 0) {
+    // Competency model: units are stored under organizationalUnits.teams
+    // (both models share the same storage; the model flag distinguishes them)
+    if (!state.organizationalUnits.teams || state.organizationalUnits.teams.length === 0) {
       errors.push('At least one competency is required');
     }
   } else {
@@ -151,7 +152,9 @@ export function validateStep4(state) {
         if (!emp.id) {
           errors.push(`Employee ${index + 1}: ID is required`);
         }
-        if (!emp.competencies || emp.competencies.length === 0) {
+        // Competency-model employees store their assignments under emp.teams
+        // (array of {code, name, level}); there is no emp.competencies field.
+        if (!emp.teams || emp.teams.length === 0) {
           errors.push(`Employee ${index + 1}: At least one competency is required`);
         }
         if (!emp.contractType) {
@@ -175,18 +178,8 @@ export function validateStep4(state) {
  * @returns {object} {valid: boolean, errors: string[]}
  */
 export function validateStep5(state) {
-  const errors = [];
-
-  // Optional validation: Check if schedule matrix has data
-  // For now, schedule input is optional, so we just warn if empty
-  if (!state.scheduleInput.dataMatrix || Object.keys(state.scheduleInput.dataMatrix).length === 0) {
-    errors.push('Schedule input matrix is empty (this is optional, but you may want to add employee availability)');
-  }
-
-  return {
-    valid: errors.length === 0,
-    errors
-  };
+  // Schedule input is entirely optional — no validation errors/warnings needed
+  return { valid: true, errors: [] };
 }
 
 /**

@@ -9,16 +9,17 @@ Centralized configuration directory containing business rules and data import te
 ```
 config/
 ├── rules.json                              # Business rules (master copy)
-└── templates/                              # CSV import templates
+└── templates/                              # Data-import templates (examples below)
     ├── minimuns.csv                        # Basic minimum coverage template
     ├── minimuns3shifts.csv                 # 3 shifts coverage template
     ├── minimuns3teams.csv                  # 3 teams coverage template
     ├── minimuns3shifts_3teams.csv          # Combined 3 shifts + 3 teams
-    ├── VacationTemplate.csv                # Basic vacation template
-    ├── VacationTemplateAlternative.csv
-    ├── VacationTemplate17Employees.csv
-    └── VacationTemplate30employees.csv
+    ├── VacationTemplate*.csv               # Several vacation templates (17/30 employees, etc.)
+    └── …                                   # plus more minimums variants and .xlsx/.ods sources
 ```
+
+> The listing above is illustrative — `templates/` also holds additional minimums/vacation
+> variants and a few `.xlsx`/`.ods` source workbooks.
 
 ---
 

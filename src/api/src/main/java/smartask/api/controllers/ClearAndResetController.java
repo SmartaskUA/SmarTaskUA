@@ -16,7 +16,7 @@ public class ClearAndResetController {
 
     @Operation(
             summary = "Reset employees and teams",
-            description = "Deletes all current employees and teams, and recreates a default setup with teams 'Equipa A' and 'Equipa B' and 12 employees."
+            description = "Deletes all current employees and teams, and recreates a default setup with teams 'Equipa A' and 'Equipa B' and 24 employees."
     )
     @PostMapping("reset-employees-teams")
     public String resetEmployeesAndTeams() {

@@ -94,7 +94,7 @@ const WorkPeriodTable = ({
                 {workPeriodModel === 'fixed' ? 'Time Range' : 'Duration'}
               </strong>
             </TableCell>
-            <TableCell><strong>Breaks</strong></TableCell>
+            {/* <TableCell><strong>Breaks</strong></TableCell> — not yet implemented */}
             <TableCell align="center"><strong>Actions</strong></TableCell>
           </TableRow>
         </TableHead>
@@ -151,10 +151,9 @@ const WorkPeriodTable = ({
                 )}
               </TableCell>
 
-              {/* Breaks */}
-              <TableCell>
-                {formatBreaks(workPeriod.breaks)}
-              </TableCell>
+              {/* Breaks — not yet implemented
+              <TableCell>{formatBreaks(workPeriod.breaks)}</TableCell>
+              */}
 
               {/* Actions */}
               <TableCell align="center">

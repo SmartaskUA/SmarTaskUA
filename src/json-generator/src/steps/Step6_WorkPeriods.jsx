@@ -12,6 +12,10 @@ import WorkPeriodTable from '../components/shifts/WorkPeriodTable';
 import WorkPeriodForm from '../components/shifts/WorkPeriodForm';
 import { useWizard } from '../context/WizardContext';
 import { validateWorkPeriodsExist } from '../utils/validators/workPeriodValidator';
+import {
+  pruneTemplateForWorkPeriods,
+  pruneDemandDataForWorkPeriods
+} from '../utils/helpers/templateHelpers';
 
 /**
  * Step 6: Work Periods
@@ -43,10 +47,26 @@ const Step6_WorkPeriods = () => {
     setFormOpen(true);
   };
 
+  // Keep the demand weekly template and demand data in sync with the set of
+  // work periods: drop any blocks/rows whose work period code no longer exists
+  // (removed on delete, or renamed away on edit).
+  const reconcileDemandWithWorkPeriods = (newWorkPeriods) => {
+    const validCodes = newWorkPeriods.map((wp) => wp.code);
+    updateState(
+      'demand.weeklyTemplate',
+      pruneTemplateForWorkPeriods(state.demand.weeklyTemplate, validCodes)
+    );
+    updateState(
+      'demand.demandData',
+      pruneDemandDataForWorkPeriods(state.demand.demandData, validCodes)
+    );
+  };
+
   // Delete work period
   const handleDelete = (code) => {
     const newWorkPeriods = workPeriods.filter((wp) => wp.code !== code);
     updateState('demand.workPeriods', newWorkPeriods);
+    reconcileDemandWithWorkPeriods(newWorkPeriods);
   };
 
   // Save work period (add or edit)
@@ -57,6 +77,7 @@ const Step6_WorkPeriods = () => {
         wp.code === editWorkPeriod.code ? workPeriodData : wp
       );
       updateState('demand.workPeriods', newWorkPeriods);
+      reconcileDemandWithWorkPeriods(newWorkPeriods);
     } else {
       // Add mode: append new work period
       updateState('demand.workPeriods', [...workPeriods, workPeriodData]);

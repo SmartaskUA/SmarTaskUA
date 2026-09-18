@@ -21,7 +21,21 @@ const CalendarCard = ({
   buttonColor,
   showFailedTag,
   showCompletedTag,
+  failedLabel,
+  failureSummary,
+  hasReport,
+  onDownloadReport,
 }) => {
+  const statusTag = showFailedTag ? (
+    <div className="calendar-card-tag calendar-card-tag-failed">
+      {failedLabel || "FAILED"}
+    </div>
+  ) : showCompletedTag ? (
+    <div className="calendar-card-tag calendar-card-tag-completed">
+      COMPLETED
+    </div>
+  ) : null;
+
   const getBorderStyle = () => {
     if (showFailedTag) return "1px solid #dc3545";
     if (status === "orange") return "2px dashed #FFA500";
@@ -29,6 +43,7 @@ const CalendarCard = ({
   };
 
   const getDotColor = () => {
+    if (showFailedTag) return "#dc3545";
     if (status === "orange") return "#FFA500";
     if (status === "blue") return "#007BFF";
     if (status === "failed") return "#dc3545";
@@ -40,68 +55,33 @@ const CalendarCard = ({
       className={`calendar-card ${className || ""}`}
       style={{
         width: "300px",
-        height: "165px",
+        minHeight: showFailedTag && failureSummary ? "220px" : "165px",
         padding: "20px",
         position: "relative",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between",
+        justifyContent: "flex-start",
+        gap: "16px",
         border: getBorderStyle(),
         borderRadius: "8px",
         boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+        boxSizing: "border-box",
       }}
     >
-      {/* Tags */}
-      {showFailedTag && (
-        <div
-          style={{
-            position: "absolute",
-            top: "8px",
-            right: "10px",
-            backgroundColor: "#dc3545",
-            color: "white",
-            padding: "2px 8px",
-            borderRadius: "5px",
-            fontSize: "0.75rem",
-            fontWeight: "bold",
-          }}
-        >
-          FAILED
-        </div>
-      )}
-
-      {showCompletedTag && (
-        <div
-          style={{
-            position: "absolute",
-            top: "8px",
-            right: "10px",
-            backgroundColor: "#28a745",
-            color: "white",
-            padding: "2px 8px",
-            borderRadius: "5px",
-            fontSize: "0.75rem",
-            fontWeight: "bold",
-          }}
-        >
-          COMPLETED
-        </div>
-      )}
-
       {/* Card Header */}
-      <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
+      <div className="calendar-card-header manager-result-card-header">
         <span
           className="status-dot"
           style={{
-            marginTop: "4%",
+            marginTop: "8px",
             backgroundColor: getDotColor(),
           }}
         />
-        <div style={{ marginLeft: "10px" }}>
+        <div className="calendar-card-main">
           <div
             className="calendar-card-title"
             style={{
-              fontSize: "1.3rem",
+              fontSize: "1.05rem",
               fontWeight: "600",
               color: "#333",
             }}
@@ -112,19 +92,37 @@ const CalendarCard = ({
             <div
               className="calendar-card-algorithm"
               style={{
-                fontSize: "1rem",
+                fontSize: "0.78rem",
                 color: "#777",
-                marginTop: "5%",
-                marginLeft: "3%",
+                marginTop: "8px",
               }}
             >
               {algorithm}
             </div>
           )}
         </div>
+        {statusTag}
       </div>
 
       {time && <span className="draft-time" style={{ fontSize: "14px" }}>{time}</span>}
+
+      {showFailedTag && failureSummary && (
+        <div
+          style={{
+            color: "#5f2120",
+            backgroundColor: "#fdecea",
+            borderRadius: "6px",
+            padding: "8px 10px",
+            fontSize: "0.78rem",
+            lineHeight: "1.3",
+            maxHeight: "64px",
+            overflow: "hidden",
+          }}
+          title={failureSummary}
+        >
+          {failureSummary}
+        </div>
+      )}
 
       {/* Button */}
       {!showFailedTag && buttonLabel && (
@@ -144,6 +142,26 @@ const CalendarCard = ({
           onClick={onClick}
         >
           {buttonLabel}
+        </button>
+      )}
+
+      {showFailedTag && hasReport && (
+        <button
+          className="open-button"
+          style={{
+            backgroundColor: "#dc3545",
+            color: "#fff",
+            padding: "8px 18px",
+            textAlign: "center",
+            border: "none",
+            borderRadius: "8px",
+            fontWeight: "bold",
+            fontSize: "0.95rem",
+            cursor: "pointer",
+          }}
+          onClick={onDownloadReport}
+        >
+          Download PDF
         </button>
       )}
 
@@ -184,13 +202,13 @@ const LastProcessedSection = ({ refreshTrigger }) => {
         const tasks = response.data;
 
         const recent = tasks
-          .filter((t) => t.status === "COMPLETED" || t.status === "FAILED")
+          .filter((t) => t.status === "COMPLETED" || t.status === "FAILED" || t.status === "FAILED_VALIDATION")
           .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
           .slice(0, 6);
 
         const validTasks = await Promise.all(
           recent.map(async (task) => {
-            if (task.status === "FAILED") return task;
+            if (task.status === "FAILED" || task.status === "FAILED_VALIDATION") return task;
             const title = task.scheduleRequest?.title;
             try {
               const res = await axios.get(`${BaseUrl}/schedules/${title}`, { signal: controller.signal });
@@ -233,6 +251,10 @@ const LastProcessedSection = ({ refreshTrigger }) => {
     }
   };
 
+  const handleDownloadReport = (taskId) => {
+    window.open(`${BaseUrl}/tasks/${taskId}/report/pdf`, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <>
       <h3 className="section-title" style={{ marginTop: "20px" }}>
@@ -247,7 +269,8 @@ const LastProcessedSection = ({ refreshTrigger }) => {
             const title = scheduleRequest?.title || "No Title";
             const algorithm = scheduleRequest?.algorithm || "";
             const isCompleted = status === "COMPLETED";
-            const isFailed = status === "FAILED";
+            const isFailed = status === "FAILED" || status === "FAILED_VALIDATION";
+            const hasReport = Boolean(task.reportArtifacts?.pdf);
 
             return (
               <CalendarCard
@@ -259,7 +282,11 @@ const LastProcessedSection = ({ refreshTrigger }) => {
                 buttonColor={isCompleted ? "#4CAF50" : null}
                 className={isFailed ? "failed-card" : ""}
                 showFailedTag={isFailed}
+                failedLabel={status === "FAILED_VALIDATION" ? "VALIDATION" : "FAILED"}
                 showCompletedTag={isCompleted}
+                failureSummary={task.failureSummary}
+                hasReport={hasReport}
+                onDownloadReport={hasReport ? () => handleDownloadReport(taskId) : null}
                 onClick={isCompleted ? () => handleOpenCalendar(title) : null}
               />
             );
@@ -276,6 +303,21 @@ const LastProcessedSection = ({ refreshTrigger }) => {
 const CalendarsInProcessSection = ({ setRefreshTrigger }) => {
   const [processingCalendars, setProcessingCalendars] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
+  const STALE_PROCESSING_MINUTES = 20;
+
+  const isFreshProcessingTask = (task) => {
+    const status = task.status?.toLowerCase();
+    if (status !== "in_progress" && status !== "pending") return false;
+
+    const timestamp = task.updatedAt || task.createdAt;
+    if (!timestamp) return true;
+
+    const updatedAt = new Date(timestamp).getTime();
+    if (Number.isNaN(updatedAt)) return true;
+
+    const ageMinutes = (Date.now() - updatedAt) / (1000 * 60);
+    return ageMinutes <= STALE_PROCESSING_MINUTES;
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -285,10 +327,7 @@ const CalendarsInProcessSection = ({ setRefreshTrigger }) => {
         const response = await axios.get(`${BaseUrl}/tasks`);
         const data = response.data;
 
-        const stillProcessing = data.filter((task) => {
-          const s = task.status?.toLowerCase();
-          return s === "in_progress" || s === "pending";
-        });
+        const stillProcessing = data.filter(isFreshProcessingTask);
 
         if (!isMounted) return;
 
@@ -337,7 +376,7 @@ const CalendarsInProcessSection = ({ setRefreshTrigger }) => {
         ) : processingCalendars.length > 0 ? (
           processingCalendars.map((calendar) => (
             <CalendarCard
-              key={calendar.id}
+              key={calendar.taskId || calendar.id}
               title={calendar.scheduleRequest?.title || "Unknown"}
               algorithm={calendar.scheduleRequest?.algorithm}
               status="orange"

@@ -204,7 +204,7 @@ def solve_heuristic(
     rules=None,
     target_workdays=223,
     special_cap=22,
-    iterations=100,
+    iterations=1,
 ):
     """
     Heuristic schedule generator.
@@ -416,6 +416,7 @@ def solve_heuristic(
         # PASS 3: Fill remaining deficit anywhere feasible, even if overstaffing
         # =====================================================
 
+        
         for e in Employees:
             deficit = target_workdays - total_work[e]
             if deficit <= 0:
@@ -511,15 +512,40 @@ def solve_heuristic(
     best_v = None
     best_table = None
     best_score = None
+    best_min_short = None
+    best_ideal_short = None
+    total_min_short = 0
+    total_ideal_short = 0
 
     for _ in range(iterations):
-        v, table, score, _min_short, _ideal_short = _run_once()
+        v, table, score, min_short, ideal_short = _run_once()
+        total_min_short += min_short
+        total_ideal_short += ideal_short
+        if best_min_short is None or min_short < best_min_short:
+            best_min_short = min_short
+        if best_ideal_short is None or ideal_short < best_ideal_short:
+            best_ideal_short = ideal_short
         if best_score is None or score < best_score:
             best_score = score
             best_v = v
             best_table = table
 
     export_schedule_to_csv(best_v, "schedule_heuristic.csv", num_days=num_days)
+
+    avg_min_short = total_min_short / iterations
+    avg_ideal_short = total_ideal_short / iterations
+    print(
+        f"Best score: {best_score} "
+        f"(avg_min_short={avg_min_short:.2f}, avg_ideal_short={avg_ideal_short:.2f})"
+    )
+    print(
+        f"Best minimums result across {iterations} iterations: "
+        f"{best_min_short if best_min_short is not None else 0}"
+    )
+    print(
+        f"Best ideals result across {iterations} iterations: "
+        f"{best_ideal_short if best_ideal_short is not None else 0}"
+    )
 
     return best_table
 

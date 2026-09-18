@@ -29,6 +29,7 @@ public class Schedule {
     private List<List<String>> data;
     private Map<String, Object> metadata;
     private Double elapsed_time;
+    private Map<String, Object> sisqualExport;
 
     public Schedule(List<List<String>> data, String title, String algorithm) {
         this.data = data;

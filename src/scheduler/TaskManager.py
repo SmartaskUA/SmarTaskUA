@@ -4,6 +4,7 @@ import json
 import time
 import os
 import sys
+from pathlib import Path
 from algorithms.hillClimbing import solve as hill_clibing_alg_solver
 from algorithms.ILP import solve as ilp_solver
 from algorithms.greedyRandomized import solve as greedy_randomized_solver
@@ -21,6 +22,8 @@ from algorithms.CSPv2 import solve as cspv2_solver
 from algorithms.CSP_Afonso_Hours import solve as CSP_Afonso_Hours_solver
 from algorithms.ILP_Sisqual_Hours import solve as ILP_Sisqual_Hours_solver
 from algorithms.CSP_Sisqual_Hours import solve as CSP_Sisqual_Hours_solver
+from algorithms.ILP_Sisqual_Hours_MathematicalDefinition7 import solve as ILP_Sisqual_Hours_MathematicalDefinition7_solver
+from algorithms.CSP_Sisqual_Hours_MathematicalDefinition7 import solve as CSP_Sisqual_Hours_MathematicalDefinition7_solver
 from algorithms.ILP_2 import solve as ILP_2
 from algorithms.ILP_2_Half_Intervals import solve as ILP_2_Half_Intervals
 from algorithms.ILP_3 import solve as ILP_3
@@ -36,8 +39,18 @@ from algorithms.ILP_4_Half_Intervals import solve as ILP_4_Half_Intervals
 from algorithms.COP_2_Half_Intervals import solve as COP_2_Half_Intervals_Solver
 from algorithms.COP_1_Half_Intervals import solve as COP_1_Half_Intervals_solver
 from algorithms.general.heuristic_general import solve as heuristic_general_solver
-from algorithms.GA.ga import solve as ga_solver
 from analyzer.kpiVerification_Sisqual import KpiEvaluator_Sisqual
+from algorithms.Hybrid_Heuristic import solve as hybrid_heuristic_solver
+from algorithms.R2_Heuristic import solve as r2_heuristic_solver
+from algorithms.Puzzle_Heuristic import solve as puzzle_heuristic_solver
+from validators.sisqual_feasibility import validate_sisqual_problem_or_raise
+from sisqual_monthly_runner import run_sisqual_monthly, should_run_monthly
+from algorithms.sisqual_export import build_sisqual_import_json
+from algorithms.sisqual_hours_utils import load_problem_json
+from algorithms.Hybrid_Heuristic_Sisqual_Levels_Included import solve as hybrid_heuristic_sisqual_solver
+from algorithms.Hybrid_Heuristic_Sisqual_No_Levels_Included import solve as hybrid_heuristic_sisqual_3_solver
+from algorithms.Puzzle_Sisqual import solve as puzzle_sisqual_solver
+
 
 class TaskManager:
     def __init__(self):
@@ -74,9 +87,18 @@ class TaskManager:
             "ilp_greedy": ilp_greedy,
             "ILP_Sisqual_Hours": ILP_Sisqual_Hours_solver,
             "CSP_Sisqual_Hours": CSP_Sisqual_Hours_solver,
+            "ILP_Sisqual_Hours_MathematicalDefinition7": ILP_Sisqual_Hours_MathematicalDefinition7_solver,
+            "CSP_Sisqual_Hours_MathematicalDefinition7": CSP_Sisqual_Hours_MathematicalDefinition7_solver,
+            "ILP_Sisqual_Hours_MathematicalDefinition5": ILP_Sisqual_Hours_MathematicalDefinition7_solver,
+            "CSP_Sisqual_Hours_MathematicalDefinition5": CSP_Sisqual_Hours_MathematicalDefinition7_solver,
             "COP_1_Half_Intervals": COP_1_Half_Intervals_solver,
             "COP_2_Half_Intervals": COP_2_Half_Intervals_Solver,
-            "Genetic Algorithm": ga_solver,
+            "Hybrid_Heuristic": hybrid_heuristic_solver,
+            "R2_Heuristic": r2_heuristic_solver,
+            "Puzzle_Heuristic": puzzle_heuristic_solver,
+            "Hybrid_Heuristic_Sisqual_Levels_Included": hybrid_heuristic_sisqual_solver,
+            "Hybrid_Heuristic_Sisqual_3": hybrid_heuristic_sisqual_3_solver,
+            "Puzzle_Sisqual": puzzle_sisqual_solver
         }
 
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13, solver="CBC", problem_path=None):
@@ -87,6 +109,8 @@ class TaskManager:
         print(f"[DEBUG] Problem path received: {problem_path}")
 
         kpis = None  # Initialize KPIs variable
+        extra_metadata = None
+        sisqual_export = None
 
         if algorithm_name not in self.algorithms:
             raise ValueError(f"Algorithm '{algorithm_name}' not found.")
@@ -102,12 +126,22 @@ class TaskManager:
         print(f"[TaskManager] Executing algorithm '{algorithm_name}' with Task ID: {task_id}")
         algorithm = self.algorithms[algorithm_name]
 
-        no_rules_algorithms = {"ILP General", "CSP General", "ILP_Sisqual_Hours", "CSP_Sisqual_Hours"}
+        no_rules_algorithms = {
+            "ILP General",
+            "CSP General",
+            "ILP_Sisqual_Hours",
+            "CSP_Sisqual_Hours",
+            "ILP_Sisqual_Hours_MathematicalDefinition7",
+            "CSP_Sisqual_Hours_MathematicalDefinition7",
+            "ILP_Sisqual_Hours_MathematicalDefinition5",
+            "CSP_Sisqual_Hours_MathematicalDefinition5",
+            "Hybrid_Heuristic_Sisqual_Levels_Included",
+            "Hybrid_Heuristic_Sisqual_3",
+        }
         uses_rules = algorithm_name not in no_rules_algorithms
         rules_json = None
         if uses_rules:
             if not rules:
-                from pathlib import Path
                 current_dir = Path(__file__).parent
                 rules_path = current_dir /  "rules.json"
                 with open(rules_path) as f:
@@ -137,6 +171,9 @@ class TaskManager:
             "Heuristic Solver",
             "Heuristic Solver Restarts",
             "ilp_greedy",
+            "Hybrid_Heuristic",
+            "R2_Heuristic",
+            "Puzzle_Heuristic",
         ]
         if algorithm_name in algs_with_shifts:
             if uses_rules:
@@ -148,12 +185,33 @@ class TaskManager:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, rules=rules_json)
             else:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, constraints=rules)
-        elif algorithm_name == "Genetic Algorithm":
-            schedule_data = algorithm(problem_path=problem_path, maxTime=maxTime)
-        elif algorithm_name in ["ILP_Sisqual_Hours", "CSP_Sisqual_Hours"]:
+        elif algorithm_name in [
+            "ILP_Sisqual_Hours",
+            "CSP_Sisqual_Hours",
+            "ILP_Sisqual_Hours_MathematicalDefinition7",
+            "CSP_Sisqual_Hours_MathematicalDefinition7",
+            "ILP_Sisqual_Hours_MathematicalDefinition5",
+            "CSP_Sisqual_Hours_MathematicalDefinition5",
+            "Hybrid_Heuristic_Sisqual_Levels_Included",
+            "Hybrid_Heuristic_Sisqual_3",
+            "Puzzle_Sisqual"
+        ]:
             # Request the solver to print the returned rows as JSON so the
             # container logs contain the schedule payload sent to the frontend.
-            schedule_data = algorithm(problem_path=problem_path, maxTime=maxTime, print_json=True)
+            validate_sisqual_problem_or_raise(problem_path, task_id, algorithm_name=algorithm_name)
+            if should_run_monthly(problem_path):
+                monthly_result = run_sisqual_monthly(
+                    problem_path=problem_path,
+                    algorithm=algorithm,
+                    algorithm_name=algorithm_name,
+                    max_time=maxTime,
+                    task_id=task_id,
+                )
+                schedule_data = monthly_result.schedule
+                extra_metadata = {"monthlyExecution": monthly_result.metadata}
+            else:
+                solver_kwargs = {"problem_path": problem_path, "maxTime": maxTime, "print_json": True, "task_id": task_id}
+                schedule_data = algorithm(**solver_kwargs)
             # print(f"[Taskmaster] Schedule data returned by '{algorithm_name}': {schedule_data}")
             try:
                 # Attempt to locate expected problem bundle files (demand.csv, schedule_input.csv, problem.json)
@@ -183,7 +241,15 @@ class TaskManager:
             except Exception as e:
                 print(f"[TaskManager] KPI evaluation failed: {e}")
                 kpis = None
-        
+
+            if kp_problem:
+                try:
+                    problem_json = load_problem_json(Path(kp_problem))
+                    sisqual_export = build_sisqual_import_json(schedule_data, problem_json, roster_code=title)
+                except Exception as e:
+                    print(f"[TaskManager] Sisqual export generation failed: {e}")
+                    sisqual_export = None
+
         elif algorithm_name in [
             "ILP_2",
             "ILP_2_Half_Intervals",
@@ -201,10 +267,16 @@ class TaskManager:
             schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, solver=solver)
         else:
             raise ValueError(f"Algorithm '{algorithm_name}' not configured in TaskManager.")
+
+
         end_time = time.time()
         elapsed_time = end_time - start_time
         print(f"[TaskManager] Algorithm '{algorithm_name}' executed in {elapsed_time:.2f} seconds.")
 
         print(f"[TaskManager] Algorithm '{algorithm_name}' successfully finalized.")
         print(f"[TaskManager] Schedule generated by '{algorithm_name}' algorithm")
-        return {"schedule": schedule_data, "kpis": kpis}, elapsed_time
+
+        result = {"schedule": schedule_data, "kpis": kpis, "sisqual_export": sisqual_export}
+        if extra_metadata:
+            result["metadata"] = extra_metadata
+        return result, elapsed_time

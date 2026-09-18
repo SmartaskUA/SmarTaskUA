@@ -4,6 +4,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import smartask.api.models.requests.ScheduleRequest;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Document(collection = "task_status")
 public class TaskStatus {
@@ -15,6 +16,9 @@ public class TaskStatus {
     private String status = "PENDING"; // PENDING, IN_PROGRESS, COMPLETED, FAILED
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String failureType;
+    private String failureSummary;
+    private Map<String, String> reportArtifacts;
 
     private ScheduleRequest scheduleRequest; // Store the original request
 
@@ -46,6 +50,15 @@ public class TaskStatus {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getFailureType() { return failureType; }
+    public void setFailureType(String failureType) { this.failureType = failureType; }
+
+    public String getFailureSummary() { return failureSummary; }
+    public void setFailureSummary(String failureSummary) { this.failureSummary = failureSummary; }
+
+    public Map<String, String> getReportArtifacts() { return reportArtifacts; }
+    public void setReportArtifacts(Map<String, String> reportArtifacts) { this.reportArtifacts = reportArtifacts; }
 
     public ScheduleRequest getScheduleRequest() { return scheduleRequest; }
     public void setScheduleRequest(ScheduleRequest scheduleRequest) { this.scheduleRequest = scheduleRequest; }

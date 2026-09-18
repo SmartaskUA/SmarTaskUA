@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Button } from '@mui/material';
 import { ArrowBack, ArrowForward, CheckCircle } from '@mui/icons-material';
 import { useWizard } from '../../context/WizardContext';
+import { LAST_STEP_INDEX, getNextStepIndex, getPrevStepIndex } from '../../constants/wizardSteps';
 
 /**
  * NavigationButtons - Consistent navigation buttons for wizard steps
@@ -23,13 +24,13 @@ const NavigationButtons = ({
   const { currentStep } = state;
 
   const isFirstStep = currentStep === 0;
-  const isLastStep = currentStep === 9; // 10 steps total (0-9)
+  const isLastStep = currentStep === LAST_STEP_INDEX;
 
   const handlePrevious = () => {
     if (onPrevious) {
       onPrevious();
     }
-    goToStep(currentStep - 1);
+    goToStep(getPrevStepIndex(currentStep));
   };
 
   const handleNext = async () => {
@@ -38,11 +39,12 @@ const NavigationButtons = ({
       if (canProceed === false) return;
     }
 
-    // Mark current step as completed
     completeStep(currentStep);
 
-    // Go to next step
-    goToStep(currentStep + 1);
+    // On the last step onNext IS the action (e.g. ZIP download) — don't navigate
+    if (!isLastStep) {
+      goToStep(getNextStepIndex(currentStep));
+    }
   };
 
   return (

@@ -94,9 +94,16 @@ const WeeklyTemplateBuilder = ({
     });
   };
 
-  // Get blocks for a specific day
+  // Get blocks for a specific day.
+  // Resolve each block's timeRange live from the current work period (by code)
+  // so retimed work periods reposition/relabel their blocks instead of using a
+  // stale snapshot captured when the block was created.
   const getBlocksForDay = (dayKey) => {
-    return weeklyTemplate[dayKey] || [];
+    const blocks = weeklyTemplate[dayKey] || [];
+    return blocks.map((block) => {
+      const wp = workPeriods.find((w) => w.code === block.workPeriod);
+      return wp && wp.timeRange ? { ...block, timeRange: wp.timeRange } : block;
+    });
   };
 
   // Get the previous day key (wraps around from Monday to Sunday)

@@ -55,7 +55,7 @@ services:
     volumes:
       - ../data/problems:/app/data/problems
       - shared_tmp:/shared_tmp
-      - /home/hugo/gurobi.lic:/app/gurobi.lic:ro
+      # - /home/hugo/gurobi.lic:/app/gurobi.lic:ro
     healthcheck:
       test:
         [

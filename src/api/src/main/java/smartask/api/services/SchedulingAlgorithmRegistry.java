@@ -65,6 +65,13 @@ public class SchedulingAlgorithmRegistry {
         register(specs, "Genetic Algorithm", UiMode.PROBLEM, Granularity.SHIFT, InputKind.PROBLEM_BUNDLE);
         register(specs, "ILP_Sisqual_Hours", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
         register(specs, "CSP_Sisqual_Hours", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
+        register(specs, "ILP_Sisqual_Hours_MathematicalDefinition7", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
+        register(specs, "CSP_Sisqual_Hours_MathematicalDefinition7", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
+        register(specs, "ILP_Sisqual_Hours_MathematicalDefinition5", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
+        register(specs, "CSP_Sisqual_Hours_MathematicalDefinition5", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
+        register(specs, "Hybrid_Heuristic_Sisqual_Levels_Included", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
+        register(specs, "Hybrid_Heuristic_Sisqual_3", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
+        register(specs, "Puzzle_Sisqual", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
 
         register(specs, "hill climbing", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
         register(specs, "linear programming", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
@@ -81,6 +88,10 @@ public class SchedulingAlgorithmRegistry {
         register(specs, "Heuristic Solver", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
         register(specs, "Heuristic General", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
         register(specs, "ilp_greedy", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "R2_Heuristic", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "Hybrid_Heuristic", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
+        register(specs, "Puzzle_Heuristic", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
+
 
         register(specs, "CSP_Afonso_Hours", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
         register(specs, "ILP_2", UiMode.MANUAL, Granularity.HOURS, InputKind.CONVERTED_TEMPLATE);
