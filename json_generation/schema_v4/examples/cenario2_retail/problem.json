@@ -1,0 +1,870 @@
+{
+  "schemaVersion": "4.0",
+  "form": "declarative",
+  "problemType": "employee_scheduling",
+  "metadata": {
+    "problemId": "C2_January_2026",
+    "createdAt": "2026-09-17T10:29:12Z",
+    "description": "C2_2026-01-01_2026-01-31",
+    "source": "SISQUAL",
+    "rosterCode": "C2"
+  },
+  "timeGrid": {
+    "slotMinutes": 30
+  },
+  "temporalScope": {
+    "start": "2026-01-01",
+    "end": "2026-01-31"
+  },
+  "calendar": {
+    "weekStart": "monday",
+    "holidays": [
+      {
+        "date": "2026-01-01",
+        "code": "H1",
+        "name": "New Year's Day / Nieuwjaarsdag",
+        "description": "New Year's Day / Nieuwjaarsdag",
+        "hasEve": false
+      }
+    ]
+  },
+  "contracts": {
+    "definitions": [
+      {
+        "id": "PT_10",
+        "name": "[PT] 10h Semanais - Part-Time",
+        "workMinutesPerDay": 300
+      },
+      {
+        "id": "PT_12",
+        "name": "[PT] 12h Semanais - Part-Time",
+        "workMinutesPerDay": 240
+      },
+      {
+        "id": "PT_20",
+        "name": "[PT] 20h Semanais - Part-Time",
+        "workMinutesPerDay": 240
+      },
+      {
+        "id": "PT_25",
+        "name": "[PT] 25h Semanais - Part-Time",
+        "workMinutesPerDay": 300
+      },
+      {
+        "id": "PT_35",
+        "name": "[PT] 35h Semanais - Full-Time",
+        "workMinutesPerDay": 420
+      },
+      {
+        "id": "PT_40",
+        "name": "[PT] 40h Semanais - Full-Time",
+        "workMinutesPerDay": 480
+      }
+    ]
+  },
+  "employees": {
+    "list": [
+      {
+        "id": "20072412",
+        "name": "Emp_20072412",
+        "contractAssignments": [
+          {
+            "contractType": "PT_40",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 1,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 1,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "C",
+            "level": 1,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "G",
+            "level": 1,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          }
+        ]
+      },
+      {
+        "id": "20066543",
+        "name": "Emp_20066543",
+        "contractAssignments": [
+          {
+            "contractType": "PT_40",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "C",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "G",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          }
+        ]
+      },
+      {
+        "id": "20067009",
+        "name": "Emp_20067009",
+        "contractAssignments": [
+          {
+            "contractType": "PT_25",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 3,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 3,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "C",
+            "level": 3,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "G",
+            "level": 3,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 1,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 1,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "C",
+            "level": 1,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "G",
+            "level": 1,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          }
+        ]
+      },
+      {
+        "id": "20054956",
+        "name": "Emp_20054956",
+        "contractAssignments": [
+          {
+            "contractType": "PT_20",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 4,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 4,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "C",
+            "level": 4,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "G",
+            "level": 4,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "C",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "G",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          }
+        ]
+      },
+      {
+        "id": "20056459",
+        "name": "Emp_20056459",
+        "contractAssignments": [
+          {
+            "contractType": "PT_40",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 1,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 1,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "C",
+            "level": 1,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "G",
+            "level": 1,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          }
+        ]
+      },
+      {
+        "id": "20062688",
+        "name": "Emp_20062688",
+        "contractAssignments": [
+          {
+            "contractType": "PT_20",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 4,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 4,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "C",
+            "level": 4,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "G",
+            "level": 4,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 3,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 3,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "C",
+            "level": 3,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "G",
+            "level": 3,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          }
+        ]
+      },
+      {
+        "id": "20067696",
+        "name": "Emp_20067696",
+        "contractAssignments": [
+          {
+            "contractType": "PT_20",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "C",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "G",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          }
+        ]
+      },
+      {
+        "id": "20058959",
+        "name": "Emp_20058959",
+        "contractAssignments": [
+          {
+            "contractType": "PT_20",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "C",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "G",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          }
+        ]
+      },
+      {
+        "id": "20068397",
+        "name": "Emp_20068397",
+        "contractAssignments": [
+          {
+            "contractType": "PT_12",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "C",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "G",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          }
+        ]
+      },
+      {
+        "id": "20038706",
+        "name": "Emp_20038706",
+        "contractAssignments": [
+          {
+            "contractType": "PT_10",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "C",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "G",
+            "level": 2,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          }
+        ]
+      },
+      {
+        "id": "20066338",
+        "name": "Emp_20066338",
+        "contractAssignments": [
+          {
+            "contractType": "PT_10",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 3,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 3,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "C",
+            "level": 3,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "G",
+            "level": 3,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          }
+        ]
+      },
+      {
+        "id": "900027719",
+        "name": "Emp_900027719",
+        "contractAssignments": [
+          {
+            "contractType": "PT_10",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 4,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 4,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "C",
+            "level": 4,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "G",
+            "level": 4,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          }
+        ]
+      },
+      {
+        "id": "20051291",
+        "name": "Emp_20051291",
+        "contractAssignments": [
+          {
+            "contractType": "PT_35",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 1,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 1,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "C",
+            "level": 1,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "G",
+            "level": 1,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          }
+        ]
+      },
+      {
+        "id": "20055066",
+        "name": "Emp_20055066",
+        "contractAssignments": [
+          {
+            "contractType": "PT_20",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 4,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 4,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "C",
+            "level": 4,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "G",
+            "level": 4,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          }
+        ]
+      },
+      {
+        "id": "900027718",
+        "name": "Emp_900027718",
+        "contractAssignments": [
+          {
+            "contractType": "PT_12",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 5,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 5,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "C",
+            "level": 5,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "G",
+            "level": 5,
+            "start": "2026-01-01",
+            "end": "2026-01-31"
+          }
+        ]
+      }
+    ]
+  },
+  "demand": {
+    "dimensions": [
+      {
+        "tableName": "Responsibility",
+        "tableValue": "A"
+      },
+      {
+        "tableName": "Responsibility",
+        "tableValue": "C"
+      },
+      {
+        "tableName": "Responsibility",
+        "tableValue": "G"
+      },
+      {
+        "tableName": "Team",
+        "tableValue": "T1"
+      }
+    ],
+    "dataFileDays": "days_demand.csv",
+    "dataFilePeriods": "periods_demand.csv",
+    "dataFileShifts": "shifts_demand.csv"
+  },
+  "scheduleInput": {
+    "dataFile": "schedule_input.csv",
+    "dayOffCodes": {
+      "NOT": {
+        "kind": "unavailable",
+        "description": "Unavailable - cannot work"
+      },
+      "HOL": {
+        "kind": "unavailable",
+        "description": "Holiday - cannot work"
+      },
+      "DO": {
+        "kind": "preferable",
+        "description": "May be swapped, at a penalty"
+      }
+    }
+  },
+  "priorityHierarchy": [
+    {
+      "rank": 1,
+      "label": "EQUIPA",
+      "tableName": "Team",
+      "tableValue": "T1",
+      "maxAlarmTableType": "MaxAlarmLevel_Estimate_Ideal_Minimum",
+      "generationSequenceType": "BY_LEVEL",
+      "minAbilityLevel": 1,
+      "maxAbilityLevel": 9,
+      "alarmLevelPercentage": 100
+    },
+    {
+      "rank": 2,
+      "label": "RESPONSABILIDADES",
+      "tableName": "Responsibility",
+      "tableValue": "A",
+      "maxAlarmTableType": "MaxAlarmLevel_Estimate_Ideal_Minimum",
+      "generationSequenceType": "BY_ALARM_TABLE",
+      "minAbilityLevel": 1,
+      "maxAbilityLevel": 9,
+      "alarmLevelPercentage": 100
+    },
+    {
+      "rank": 3,
+      "label": "RESPONSABILIDADES",
+      "tableName": "Responsibility",
+      "tableValue": "C",
+      "maxAlarmTableType": "MaxAlarmLevel_Estimate_Ideal_Minimum",
+      "generationSequenceType": "BY_ALARM_TABLE",
+      "minAbilityLevel": 1,
+      "maxAbilityLevel": 9,
+      "alarmLevelPercentage": 100
+    },
+    {
+      "rank": 4,
+      "label": "RESPONSABILIDADES",
+      "tableName": "Responsibility",
+      "tableValue": "G",
+      "maxAlarmTableType": "MaxAlarmLevel_Estimate_Ideal_Minimum",
+      "generationSequenceType": "BY_ALARM_TABLE",
+      "minAbilityLevel": 1,
+      "maxAbilityLevel": 9,
+      "alarmLevelPercentage": 100
+    }
+  ],
+  "constraints": {
+    "hard": [
+      {
+        "id": "0101010101",
+        "type": "RosterLegislation",
+        "parameters": {
+          "MaxConsecutiveWorkDaysInWeek": 5,
+          "MinDistanceBetweenShiftsInMinutes": 660,
+          "MaxConsecutiveWorkDays": 5
+        },
+        "startDate": "2026-01-01T00:00:00",
+        "enabled": true
+      }
+    ],
+    "soft": []
+  }
+}

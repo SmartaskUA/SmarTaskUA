@@ -1,0 +1,20 @@
+# days_demand.csv -- whole-day WORKLOAD, in MINUTES. Not headcount.
+# Lines starting with '#' and blank lines are ignored, so these notes can stay.
+#
+# This file has a header byte-identical to periods_demand.csv but a DIFFERENT
+# UNIT: SISQUAL's InpServiceLevelByDays states minutes of work to be covered,
+# while ByPeriods and ByShifts state numbers of people. Nothing in the file says
+# which is which -- only the JSON key that points here does, so never sniff the
+# header to decide. See docs/next_meeting.md item 2.
+#
+# start/end are not used on this grain (the row covers the whole day) and are
+# left empty. `minimum` should be a multiple of timeGrid.slotMinutes.
+#
+# Every bundle SISQUAL has sent has this file EMPTY (header only). It is still
+# required, so that a package states all three grains even when two are unused.
+date,tableName,tableValue,minimum,ideal,estimated,start,end
+2026-03-02,Team,T1,960,0,0,,
+2026-03-03,Team,T1,960,0,0,,
+2026-03-04,Team,T1,960,0,0,,
+2026-03-05,Team,T1,480,0,0,,
+2026-03-06,Team,T1,960,0,0,,

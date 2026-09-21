@@ -1,0 +1,24 @@
+# schedules.csv -- the ScheduleCode catalogue: the menu a result picks from.
+# Lines starting with '#' and blank lines are ignored, so these notes can stay.
+#
+# code                    the ScheduleCode a result names in OutRosterTeamDays
+# description             "HH:MM-HH:MM", or a label for a code that has no window
+# scheduleWeightMinutes   paid length, in minutes
+# startMin,endMin         the window in minutes from 00:00; endMin passes 1440
+#                         when the shift crosses midnight, so no reader infers it
+#
+# Codes with no window are left blank in startMin/endMin. SISQUAL's real
+# catalogue has four: 1 Espaco, 3 Day off, 4 Vazio, and 1020 Flexible -- the
+# last one has a LENGTH (480) but no fixed position, which is v3.0's synthesis
+# model appearing inside the menu. Ask what a solver may do with it.
+#
+# SISQUAL's catalogue is on a 15-minute grid while their problems declare a
+# 30-minute one, so 914 of its 1277 codes cannot be emitted on that grid.
+# reference/schedules/schedules_without_meal.csv is the real thing.
+code,description,scheduleWeightMinutes,startMin,endMin
+3,Day off,0,,
+4,Vazio,0,,
+9001,09:00-13:00,240,540,780
+9002,13:00-17:00,240,780,1020
+9003,09:00-17:00,480,540,1020
+9004,22:00-06:00,480,1320,1800

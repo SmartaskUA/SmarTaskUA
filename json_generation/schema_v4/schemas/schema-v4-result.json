@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smartask.ua/schemas/scheduling-problem-v4.0-result.json",
+  "title": "Employee Scheduling Result v4.0 - SISQUAL WFM import payload",
+  "description": "What a solver produced, in the shape SISQUAL WFM ingests. Unlike the problem schema, this one keeps SISQUAL's own PascalCase vocabulary verbatim: the problem format is a spec we co-design, so we assert correct spelling there; this is their existing import API, so we conform to it. Specified by JSON-Import.docx (from WFM's viewpoint \"Import\" means data coming IN, i.e. our output). A result does not restate the problem - it references it by RosterCode, EmployeeCode, Date and ScheduleCode, so the cross-checks live in src/schema_v4/validate_result.py, not here. Standalone: this file does not reference any other schema.",
+  "type": "object",
+  "required": ["OutRosterTeamDays"],
+  "properties": {
+    "OutRosterTeamDays": {
+      "type": "array",
+      "description": "One entry per employee per planned day.",
+      "items": {
+        "type": "object",
+        "required": ["RosterCode", "EmployeeCode", "Date", "ScheduleCode"],
+        "additionalProperties": false,
+        "properties": {
+          "RosterCode": { "type": "string", "minLength": 1, "description": "The quadro. Must match the problem's metadata.rosterCode." },
+          "TeamCode": { "type": "string", "description": "Org grouping. Renders as the Nr column in the WFM roster grid." },
+          "EmployeeCode": {
+            "type": ["string", "integer"],
+            "description": "JSON-Import.docx says string, but SISQUAL's own sample emits an integer. Both are accepted; validate_result.py warns when it does not match the problem's string ids by type."
+          },
+          "Date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}([T ]\\d{2}:\\d{2}:\\d{2})?$",
+            "description": "The spec says YYYY-MM-DD; the sample emits naive YYYY-MM-DDTHH:MM:SS at midnight. Both are accepted."
+          },
+          "ScheduleCode": {
+            "type": "integer",
+            "description": "The chosen shift, referencing the ScheduleCode catalogue (schedules.dataFile). Sentinels: 1 = Espaco, 3 = Day off, 4 = Vazio."
+          },
+          "OutRosterTeamDayTasks": {
+            "type": "array",
+            "description": "Intra-shift task allocation. Empty in every sample seen; SmarTask does not populate it yet.",
+            "items": {
+              "type": "object",
+              "required": ["TaskID"],
+              "additionalProperties": false,
+              "properties": {
+                "TaskID": { "type": ["string", "integer"] },
+                "StartDate": { "type": "string", "description": "YYYY-MM-DDTHH:MM:SS, inside the chosen shift." },
+                "EndDate": { "type": "string" }
+              }
+            }
+          },
+          "OutRosterTeamDayResponsibilities": {
+            "type": "array",
+            "description": "The second assignment axis. Empty in every sample seen.",
+            "items": {
+              "type": "object",
+              "required": ["ResponsibilityCode"],
+              "additionalProperties": false,
+              "properties": {
+                "ResponsibilityCode": { "type": ["string", "integer"] }
+              }
+            }
+          }
+        }
+      }
+    },
+    "OutScheduleUseds": {
+      "type": "array",
+      "description": "Definitions of the shifts referenced above - the result-side twin of the ScheduleCode catalogue. Optional: SISQUAL's own sample omits it, relying on codes already known to WFM. Supply it when a result uses codes WFM may not hold.",
+      "items": {
+        "type": "object",
+        "required": ["ScheduleCode"],
+        "additionalProperties": false,
+        "properties": {
+          "ScheduleCode": { "type": "integer" },
+          "DayType": {
+            "type": "integer",
+            "enum": [0, 1, 2, 3],
+            "description": "0 WeekDay (dia de trabalho), 1 WeekEndSaturday (folga complementar), 2 WeekEndSunday (folga obrigatoria), 3 Empty (V folga)."
+          },
+          "ScheduleWeight": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Paid length of the shift. JSON-Import.docx labels it h/dia but JSON-Export.docx and the catalogue spreadsheet both use MINUTES; the catalogue's ScheduleWeightMinutes settles it as minutes."
+          },
+          "StartDate1": { "type": "string", "description": "YYYY-MM-DDTHH:MM:SS. First leg of the shift." },
+          "EndDate1": { "type": "string" },
+          "StartDate2": { "type": "string", "description": "Second leg - present only for a split shift." },
+          "EndDate2": { "type": "string" }
+        }
+      }
+    }
+  }
+}
