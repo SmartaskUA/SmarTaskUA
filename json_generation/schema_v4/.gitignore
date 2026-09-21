@@ -1,0 +1,12 @@
+# Secrets handed over with the Sisqual integration drop.
+# These were committed in 49fd827; untracking them here stops further tracking,
+# but the blobs REMAIN IN GIT HISTORY. The SSH key and the four WFM passwords
+# must be rotated -- see reference/README.md.
+IntegracaoUA_SISQUAL/ServidoresSISQUAL/
+*.ppk
+credenciais*.md
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/

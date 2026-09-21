@@ -1,0 +1,353 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smartask.ua/schemas/scheduling-problem-v4.0-declarative.json",
+  "title": "Employee Scheduling Problem v4.0 - declarative form",
+  "description": "The problem as SISQUAL's exporter produces it, spelled canonically. JSON carries the structure; four CSVs carry the matrices (three demand grains plus the per-employee-per-day input). v4.0 keys coverage on a two-dimensional (tableName, tableValue) coordinate rather than v3.0's single competency code, and re-admits the priorityHierarchy and constraints blocks that v3.0 had cut. Standalone: this file does not reference any other schema. Symbols in square brackets refer to MathematicalDefinition7. SISQUAL's raw emission does NOT validate against this file - run src/schema_v4/sisqual_adapt.py first; docs/DIALECT.md lists every difference.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "form",
+    "problemType",
+    "metadata",
+    "timeGrid",
+    "temporalScope",
+    "contracts",
+    "employees",
+    "demand",
+    "scheduleInput"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "4.0" },
+    "form": { "type": "string", "const": "declarative" },
+    "problemType": { "type": "string", "const": "employee_scheduling" },
+    "metadata": { "$ref": "#/$defs/metadata" },
+    "timeGrid": { "$ref": "#/$defs/timeGrid" },
+    "temporalScope": { "$ref": "#/$defs/temporalScope" },
+    "calendar": { "$ref": "#/$defs/calendar" },
+    "contracts": { "$ref": "#/$defs/contracts" },
+    "employees": { "$ref": "#/$defs/employees" },
+    "demand": { "$ref": "#/$defs/demand" },
+    "scheduleInput": { "$ref": "#/$defs/scheduleInput" },
+    "schedules": { "$ref": "#/$defs/schedules" },
+    "priorityHierarchy": { "$ref": "#/$defs/priorityHierarchy" },
+    "constraints": { "$ref": "#/$defs/constraints" }
+  },
+  "$defs": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "weekday": {
+      "type": "string",
+      "enum": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+    },
+    "hhmm": {
+      "type": "string",
+      "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+      "description": "Clock time HH:MM."
+    },
+    "minutes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2880,
+      "description": "Minutes from 00:00. Values at or past 1440 express times after midnight."
+    },
+    "competenceLevel": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Proficiency in a (tableName, tableValue) competency [l_ws]. LEVEL 1 IS THE HIGHEST; larger numbers are progressively lower. A priorityHierarchy entry whose minAbilityLevel is 1 therefore reaches that competency's most senior workers."
+    },
+
+    "metadata": {
+      "type": "object",
+      "required": ["problemId"],
+      "additionalProperties": false,
+      "properties": {
+        "problemId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Identity of the problem. SISQUAL emits <RosterCode>_<Month>_<Year>, e.g. C2_January_2026; a result's RosterCode must be this id's leading segment."
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "description": { "type": "string" },
+        "source": { "type": "string", "description": "Who produced the bundle. SISQUAL's exporter writes \"SISQUAL\"." },
+        "rosterCode": {
+          "type": "string",
+          "description": "SISQUAL's RosterCode (the \"quadro\"), carried explicitly rather than parsed back out of problemId. The adapter fills this in."
+        }
+      }
+    },
+
+    "timeGrid": {
+      "type": "object",
+      "required": ["slotMinutes"],
+      "additionalProperties": false,
+      "properties": {
+        "slotMinutes": {
+          "type": "integer",
+          "default": 30,
+          "enum": [1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 15, 16, 18, 20, 24, 30, 32, 36, 40, 45, 48, 60, 72, 80, 90, 96, 120, 144, 160, 180, 240, 288, 360, 480, 720, 1440],
+          "description": "Width of one timeslot [T]. Must divide 1440. SISQUAL emits 30."
+        }
+      }
+    },
+
+    "temporalScope": {
+      "type": "object",
+      "required": ["start", "end"],
+      "additionalProperties": false,
+      "properties": {
+        "start": { "$ref": "#/$defs/date" },
+        "end": { "$ref": "#/$defs/date", "description": "Inclusive. schedule_input.csv carries one date column per day in start..end." }
+      }
+    },
+
+    "calendar": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "weekStart": { "$ref": "#/$defs/weekday", "default": "monday" },
+        "holidays": {
+          "type": "array",
+          "description": "Days the enterprise may give their own demand rows. Marking a holiday does NOT make anyone unavailable. SISQUAL emits this as inpUAHolidaysCollection; the adapter renames it.",
+          "items": {
+            "type": "object",
+            "required": ["date"],
+            "additionalProperties": false,
+            "properties": {
+              "date": { "$ref": "#/$defs/date" },
+              "code": { "type": "string" },
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "hasEve": {
+                "type": "boolean",
+                "default": false,
+                "description": "The preceding day is this holiday's eve and may carry its own demand. The eve's date is this date minus one, so only its existence needs stating."
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "contracts": {
+      "type": "object",
+      "required": ["definitions"],
+      "additionalProperties": false,
+      "properties": {
+        "definitions": {
+          "type": "array",
+          "description": "The contract catalogue. May be empty - SISQUAL's July bundle emitted [] while every employee referenced a contract, which the validator reports as a dangling reference.",
+          "items": {
+            "type": "object",
+            "required": ["id", "workMinutesPerDay"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "name": {
+                "type": "string",
+                "description": "SISQUAL's pattern is \"[<CC>] <N>h Semanais - <Full-Time|Part-Time>\", where N is WEEKLY hours. Do not derive workMinutesPerDay from it."
+              },
+              "workMinutesPerDay": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1440,
+                "description": "Length of one working day in minutes [H_w]. SISQUAL's TotalDailyMinutes. Note the unit clash: schedule_input.csv states the same quantity in HOURS."
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "employees": {
+      "type": "object",
+      "required": ["list"],
+      "additionalProperties": false,
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "contractAssignments", "competencyAssignments"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "minLength": 1, "description": "Employee identifier [w]. A string even when it looks numeric." },
+              "name": { "type": "string" },
+              "contractAssignments": {
+                "type": "array",
+                "description": "Date-ranged contract membership. SISQUAL misspells the key as contractAssigments; the adapter corrects it.",
+                "items": {
+                  "type": "object",
+                  "required": ["contractType", "start"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "contractType": { "type": "string", "description": "References contracts.definitions[].id." },
+                    "start": { "$ref": "#/$defs/date" },
+                    "end": {
+                      "oneOf": [{ "$ref": "#/$defs/date" }, { "type": "null" }],
+                      "description": "null means open-ended. SISQUAL writes the sentinel 9999-12-31; the adapter converts it to null."
+                    }
+                  }
+                }
+              },
+              "competencyAssignments": {
+                "type": "array",
+                "description": "Date-ranged, levelled competencies [S_w]. May be empty - Cenario 1 ships with no competencies at all.",
+                "items": {
+                  "type": "object",
+                  "required": ["tableName", "tableValue", "level", "start"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "tableName": { "type": "string", "description": "Coverage dimension. Must appear in demand.dimensions[]." },
+                    "tableValue": { "type": "string", "description": "Value within that dimension. The pair must appear in demand.dimensions[]." },
+                    "level": { "$ref": "#/$defs/competenceLevel" },
+                    "start": { "$ref": "#/$defs/date" },
+                    "end": { "oneOf": [{ "$ref": "#/$defs/date" }, { "type": "null" }] }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "demand": {
+      "type": "object",
+      "required": ["dimensions", "dataFileDays", "dataFilePeriods", "dataFileShifts"],
+      "additionalProperties": false,
+      "description": "Coverage wanted, split across three CSVs by grain. Only the periods file carries data in every bundle seen so far, but all three pointers are required so a package is self-describing.",
+      "properties": {
+        "dimensions": {
+          "type": "array",
+          "description": "The catalogue of (tableName, tableValue) coordinates this problem uses - the v4 replacement for v3.0's demand.organizationalUnits.competencies[]. Required, because it is the only thing that makes tableName checkable: SISQUAL's bundles declare no catalogue, and the three places the pairs appear disagree on the dimension name. The adapter synthesises it.",
+          "items": {
+            "type": "object",
+            "required": ["tableName", "tableValue"],
+            "additionalProperties": false,
+            "properties": {
+              "tableName": { "type": "string", "minLength": 1 },
+              "tableValue": { "type": "string", "minLength": 1 },
+              "name": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "dataFileDays": {
+          "type": "string",
+          "description": "CSV of whole-day WORKLOAD demand, in minutes - SISQUAL's InpServiceLevelByDays. Different unit from the other two. Resolved relative to this JSON file."
+        },
+        "dataFilePeriods": {
+          "type": "string",
+          "description": "CSV of HEADCOUNT demand per time window - SISQUAL's InpServiceLevelByPeriods. Byte-identical header to the days file; only this key tells them apart."
+        },
+        "dataFileShifts": {
+          "type": "string",
+          "description": "CSV of HEADCOUNT demand per shift type - SISQUAL's InpServiceLevelByShifts. Adds a workPeriod column."
+        }
+      }
+    },
+
+    "scheduleInput": {
+      "type": "object",
+      "required": ["dataFile", "dayOffCodes"],
+      "additionalProperties": false,
+      "description": "Per-employee-per-day requirements, held as a CSV matrix (one row per employee, one column per date).",
+      "properties": {
+        "dataFile": { "type": "string", "description": "Resolved relative to this JSON file. Numeric cells are HOURS in v4.0 - see docs/FORMAT.md." },
+        "dayOffCodes": {
+          "type": "object",
+          "description": "The palette of non-working cell codes, keyed by the code itself. Every non-numeric cell in the CSV must be a key here. Keys may be non-ASCII (SISQUAL uses \"Fer\" with an accent).",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["kind"],
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["preferable", "unavailable"],
+                "description": "preferable [D_wk] is soft - the solver may schedule over it at a penalty. unavailable [U_wk] is hard - no assignment permitted. SISQUAL capitalises both; the adapter lowercases them."
+              },
+              "name": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "schedules": {
+      "type": "object",
+      "required": ["dataFile"],
+      "additionalProperties": false,
+      "description": "The ScheduleCode catalogue - the menu a result must pick from. SISQUAL specifies it as InpScheduleUsedCollection but does not export it; it arrived as a spreadsheet. Optional, because two of the three bundles have no copy.",
+      "properties": {
+        "dataFile": { "type": "string", "description": "CSV of code,description,scheduleWeightMinutes,startMin,endMin. Resolved relative to this JSON file." }
+      }
+    },
+
+    "priorityHierarchy": {
+      "type": "array",
+      "description": "Fill order and the alarm-table settings that drive it - SISQUAL's priorityHierachy (sic), a nine-field projection of InpGenerationRules. Lower rank is filled first. Absent from the July bundle, so optional.",
+      "items": {
+        "type": "object",
+        "required": ["rank", "tableName", "tableValue"],
+        "additionalProperties": false,
+        "properties": {
+          "rank": { "type": "integer", "minimum": 1, "description": "Fill order; lower is filled first. Must be unique. Ordering follows rank, not array position." },
+          "label": { "type": "string", "description": "UI caption. SISQUAL emits Portuguese (EQUIPA, RESPONSABILIDADES). Advisory; the solver ignores it." },
+          "tableName": { "type": "string", "description": "Must appear in demand.dimensions[]." },
+          "tableValue": { "type": "string" },
+          "maxAlarmTableType": {
+            "type": "string",
+            "description": "Which demand columns the alarm table consults and in what fallback order. Observed: MaxAlarmLevel_Estimate_Ideal_Minimum."
+          },
+          "generationSequenceType": {
+            "type": "string",
+            "description": "How the generator walks this rank. Observed: BY_LEVEL, BY_ALARM_TABLE. Not closed as an enum - SISQUAL's InpGenerationRules may carry more."
+          },
+          "minAbilityLevel": { "$ref": "#/$defs/competenceLevel", "description": "Lowest-numbered (most senior) level this entry reaches." },
+          "maxAbilityLevel": { "$ref": "#/$defs/competenceLevel", "description": "Highest-numbered (most junior) level this entry reaches." },
+          "alarmLevelPercentage": { "type": "number", "minimum": 0, "description": "Percent of the alarm level to pursue. Observed: 100." }
+        }
+      }
+    },
+
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Rules above the contract level. v3.0 removed this block and treated a leftover as an error; v4.0 re-admits it because SISQUAL's exporter now emits real labour-law data here (InpLabourLawCollection). Absent from the July bundle, so optional.",
+      "properties": {
+        "hard": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/constraintEntry" }
+        },
+        "soft": {
+          "type": "array",
+          "description": "Never populated in any bundle seen, so the element shape is unknown and deliberately unconstrained. Do not tighten this without a real sample.",
+          "items": { "type": "object" }
+        }
+      }
+    },
+
+    "constraintEntry": {
+      "type": "object",
+      "required": ["id", "type", "parameters"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "type": { "type": "string", "minLength": 1, "description": "Observed: RosterLegislation. Left open - it names which vendor rule the parameters belong to." },
+        "parameters": {
+          "type": "object",
+          "description": "A vendor bag, deliberately open. Observed PascalCase keys: MaxConsecutiveWorkDays, MaxConsecutiveWorkDaysInWeek, MinDistanceBetweenShiftsInMinutes (all integer minutes or day counts).",
+          "additionalProperties": true
+        },
+        "startDate": { "type": "string", "description": "Naive datetime YYYY-MM-DDTHH:MM:SS - a third datetime format alongside date and date-time." },
+        "endDate": { "type": "string" },
+        "enabled": { "type": "boolean", "default": true }
+      }
+    }
+  }
+}
