@@ -11,5 +11,5 @@ gurobipy
 holidays
 tabulate
 tenacity
-ortools
+ortools==9.7.2996
 docplex
