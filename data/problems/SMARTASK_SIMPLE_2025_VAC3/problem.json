@@ -3,9 +3,9 @@
   "problemType": "employee_scheduling",
 
   "metadata": {
-    "problemId": "SMARTASK_SIMPLE_2025",
+    "problemId": "SMARTASK_SIMPLE_2025_VAC3",
     "createdAt": "2026-01-24T14:56:23Z",
-    "description": "Simple team-based scheduling problem derived from the initial Sisqual problem",
+    "description": "Simple team-based scheduling problem with staggered vacation template (variant 3)",
     "source": "Created by reading the report of Final Informatics Project"
   },
 

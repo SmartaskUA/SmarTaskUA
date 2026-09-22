@@ -140,7 +140,7 @@ const Calendar = () => {
     const selectedIndexes = columns.map((column) => column.index + 1);
     return scheduleData.map((row, rowIndex) => {
       if (!Array.isArray(row)) return row;
-      const firstCell = rowIndex === 0 ? "employee_id" : row[0];
+      const firstCell = row[0];
       return [firstCell, ...selectedIndexes.map((index) => row[index] ?? "")];
     });
   };

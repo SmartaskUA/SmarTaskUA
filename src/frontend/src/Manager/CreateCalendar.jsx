@@ -37,7 +37,7 @@ const getNextAutoTitle = () => {
 };
 
 const CreateCalendar = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const initialProblemId = searchParams.get("problemId") || DEFAULT_PROBLEM_ID;
   const initialMode = "problem";
   const [mode, setMode] = useState(initialMode);
@@ -253,7 +253,9 @@ const CreateCalendar = () => {
 
     const available = Array.isArray(demand.workPeriods) && demand.workPeriods.length > 0
       ? problemHourAlgorithms
-      : [];
+      : Array.isArray(demand.shifts) && demand.shifts.length > 0
+        ? problemShiftAlgorithms
+        : [];
 
     if (available.length) {
       const nextAlgorithm = available.some((alg) => alg.value === selectedAlgorithm)
@@ -475,7 +477,10 @@ const CreateCalendar = () => {
                     labelId="problem-select-label"
                     value={selectedProblemId}
                     label="Problem"
-                    onChange={(e) => setSelectedProblemId(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedProblemId(e.target.value);
+                      setSearchParams({ problemId: e.target.value });
+                    }}
                   >
                     <MenuItem value="">
                       <em>None</em>

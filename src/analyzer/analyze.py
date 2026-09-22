@@ -311,11 +311,11 @@ def callback(ch, method, properties, body):
 
         # For problem-bundle shift algorithms (e.g. GA), mins template is empty.
         # Load minimums from demand.csv inside the bundle instead.
-        if problem_type == "shifts" and problem_path and (not mins or not mins.strip()):
+        if problem_type == "shifts" and problem_path and (not mins_content or not mins_content.strip()):
             print(f"[INFO] mins template empty — loading from problem bundle: {problem_path}")
             loaded = load_mins_from_problem_bundle(problem_path)
             if loaded:
-                mins = loaded
+                mins_content = loaded
         use_sisqual_bundle_verifier = (
             problem_type == "hours"
             and problem_path
