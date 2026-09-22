@@ -38,7 +38,7 @@ public class RabbitMqStatusConsumer {
 
             System.out.println("Received status update: " + taskId + " -> " + newStatus);
 
-            updateTaskStatus(taskId, newStatus);
+            updateTaskStatus(taskId, receivedStatus);
         } catch (Exception e) {
             System.err.println("Error processing status message: " + e.getMessage());
             e.printStackTrace();
@@ -47,11 +47,14 @@ public class RabbitMqStatusConsumer {
 
 
 
-    private void updateTaskStatus(String taskId, String status) {
+    private void updateTaskStatus(String taskId, TaskStatus receivedStatus) {
         Optional<TaskStatus> taskOpt = taskStatusRepository.findById(taskId);
         if (taskOpt.isPresent()) {
             TaskStatus task = taskOpt.get();
-            task.setStatus(status);
+            task.setStatus(receivedStatus.getStatus());
+            task.setFailureType(receivedStatus.getFailureType());
+            task.setFailureSummary(receivedStatus.getFailureSummary());
+            task.setReportArtifacts(receivedStatus.getReportArtifacts());
             task.setUpdatedAt(java.time.LocalDateTime.now());
             taskStatusRepository.save(task);
         } else {

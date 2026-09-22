@@ -12,21 +12,23 @@ import {
   CardContent,
   IconButton,
   Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button
+  // Work Period Model UI (hidden; kept for re-enable):
+  // Dialog,
+  // DialogTitle,
+  // DialogContent,
+  // DialogContentText,
+  // DialogActions,
+  // Button
 } from '@mui/material';
 import {
   Groups as GroupsIcon,
   Engineering as EngineeringIcon,
   Info as InfoIcon,
-  CheckCircle as CheckCircleIcon,
-  Schedule as ScheduleIcon,
-  HourglassEmpty as HourglassIcon,
-  Warning as WarningIcon
+  CheckCircle as CheckCircleIcon
+  // Work Period Model UI (hidden; kept for re-enable):
+  // Schedule as ScheduleIcon,
+  // HourglassEmpty as HourglassIcon,
+  // Warning as WarningIcon
 } from '@mui/icons-material';
 import { StaticDatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -47,15 +49,17 @@ import { useWizard } from '../context/WizardContext';
 const Step1_Setup = () => {
   const { state, updateState } = useWizard();
   const [errors, setErrors] = useState({});
-  const [workPeriodModelWarningOpen, setWorkPeriodModelWarningOpen] = useState(false);
-  const [pendingWorkPeriodModel, setPendingWorkPeriodModel] = useState(null);
+  // Work Period Model (hidden; kept for re-enable):
+  // const [workPeriodModelWarningOpen, setWorkPeriodModelWarningOpen] = useState(false);
+  // const [pendingWorkPeriodModel, setPendingWorkPeriodModel] = useState(null);
 
   // Extract values from state
   const { problemId, description } = state.metadata;
   const { year, numDays, targetPeriod } = state.temporalScope;
   const selectedModel = state.employees.model;
-  const selectedWorkPeriodModel = state.demand.workPeriodModel;
-  const workPeriods = state.demand.workPeriods || [];
+  // Work Period Model (hidden; kept for re-enable):
+  // const selectedWorkPeriodModel = state.demand.workPeriodModel;
+  // const workPeriods = state.demand.workPeriods || [];
 
   // Local state for date range picker
   const [startDate, setStartDate] = useState(
@@ -96,6 +100,7 @@ const Step1_Setup = () => {
     }
   };
 
+  /* Work Period Model handlers (hidden; kept for re-enable):
   const handleWorkPeriodModelSelect = (model) => {
     // Check if there are existing work periods
     if (workPeriods.length > 0 && model !== selectedWorkPeriodModel) {
@@ -122,6 +127,7 @@ const Step1_Setup = () => {
     setWorkPeriodModelWarningOpen(false);
     setPendingWorkPeriodModel(null);
   };
+  */
 
   // Handle date selection from single calendar
   const handleDateChange = (date) => {
@@ -185,7 +191,7 @@ const Step1_Setup = () => {
     }
   ];
 
-  // Work period model options
+  /* Work period model options (hidden; kept for re-enable):
   const workPeriodModelOptions = [
     {
       value: 'fixed',
@@ -204,6 +210,7 @@ const Step1_Setup = () => {
       color: 'primary.main'
     }
   ];
+  */
 
   // Validation
   const validate = () => {
@@ -229,9 +236,10 @@ const Step1_Setup = () => {
       newErrors.model = 'Employee model selection is required';
     }
 
-    if (!selectedWorkPeriodModel || selectedWorkPeriodModel === '') {
-      newErrors.workPeriodModel = 'Work period model selection is required';
-    }
+    // Work Period Model (hidden; kept for re-enable):
+    // if (!selectedWorkPeriodModel || selectedWorkPeriodModel === '') {
+    //   newErrors.workPeriodModel = 'Work period model selection is required';
+    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -396,9 +404,8 @@ const Step1_Setup = () => {
               </Grid>
             </Box>
 
+            {/* Work Period Model section (hidden; kept for re-enable):
             <Divider sx={{ my: 3 }} />
-
-            {/* Work Period Model Selection */}
             <Box>
               <Typography variant="h6" gutterBottom fontWeight={600}>
                 Work Period Model
@@ -435,7 +442,7 @@ const Step1_Setup = () => {
                           }
                         }}
                       >
-                        {/* Info Icon */}
+                        Info Icon
                         <Tooltip title={option.tooltip} arrow placement="top">
                           <IconButton
                             sx={{
@@ -452,7 +459,7 @@ const Step1_Setup = () => {
                           </IconButton>
                         </Tooltip>
 
-                        {/* Selected Indicator */}
+                        Selected Indicator
                         {isSelected && (
                           <CheckCircleIcon
                             sx={{
@@ -499,6 +506,7 @@ const Step1_Setup = () => {
                 })}
               </Grid>
             </Box>
+            */}
           </Grid>
 
           {/* VERTICAL DIVIDER */}
@@ -600,7 +608,7 @@ const Step1_Setup = () => {
           <NavigationButtons onNext={handleNext} nextDisabled={false} />
         </Box>
 
-        {/* Work Period Model Change Warning Dialog */}
+        {/* Work Period Model Change Warning Dialog (hidden; kept for re-enable):
         <Dialog
           open={workPeriodModelWarningOpen}
           onClose={handleCancelWorkPeriodModelChange}
@@ -630,6 +638,8 @@ const Step1_Setup = () => {
             </Button>
           </DialogActions>
         </Dialog>
+        */}
+
       </Box>
     </LocalizationProvider>
   );

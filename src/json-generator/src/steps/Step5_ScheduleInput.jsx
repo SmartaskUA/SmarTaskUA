@@ -4,6 +4,7 @@ import { CalendarMonth as CalendarIcon } from '@mui/icons-material';
 import StepCard from '../components/wizard/StepCard';
 import NavigationButtons from '../components/wizard/NavigationButtons';
 import ScheduleMatrixModal from '../components/calendar/ScheduleMatrixModal';
+import ImportPreviewModal from '../components/shared/ImportPreviewModal';
 import { useWizard } from '../context/WizardContext';
 import { generateDateRange } from '../utils/helpers/dateHelpers';
 import { downloadScheduleInputCsv } from '../utils/generators/scheduleInputCsvGenerator';
@@ -23,6 +24,8 @@ import { isTimeConstraint, getConstraintType } from '../utils/validators/timeCon
 const Step5_ScheduleInput = () => {
   const { state, updateState } = useWizard();
   const [modalOpen, setModalOpen] = useState(false);
+  const [importPreview, setImportPreview] = useState(null);
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   // Get required data from state
   const employeeModel = state.employees.model;
@@ -104,10 +107,66 @@ const Step5_ScheduleInput = () => {
     }
   };
 
-  // Handle import CSV
-  const handleImportCsv = () => {
-    // For now, just show alert - full implementation would open file picker
-    alert('CSV Import: Please use the browser file picker (implementation pending)');
+  // Handle import CSV — receives a File object from MatrixToolbar
+  const handleImportCsv = (file) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const text = e.target.result;
+        const { dataMatrix: parsed, errors } = await parseScheduleInputCsv(text, employees, dateRange);
+
+        if (!parsed && errors.length > 0) {
+          alert(`CSV import failed:\n${errors.join('\n')}`);
+          return;
+        }
+
+        const dateSet = new Set(dateRange);
+        const empIds = new Set(employees.map(emp => emp.id));
+        const previewRows = [];
+        let changedCells = 0;
+        let unchangedCells = 0;
+
+        Object.entries(parsed || {}).forEach(([empId, empData]) => {
+          if (!empIds.has(empId)) return;
+          Object.entries(empData).forEach(([date, value]) => {
+            if (!dateSet.has(date)) return;
+            const current = dataMatrix[empId]?.[date];
+            if (current !== value) {
+              changedCells++;
+              if (previewRows.length < 10) {
+                const emp = employees.find(e => e.id === empId);
+                previewRows.push({
+                  employee: emp?.name || empId,
+                  date,
+                  from: current || '—',
+                  to: value
+                });
+              }
+            } else {
+              unchangedCells++;
+            }
+          });
+        });
+
+        const summary = `${changedCells} cells will be updated, ${unchangedCells} cells unchanged.`;
+        setImportPreview({ parsed, previewRows, summary, warnings: errors });
+        setImportModalOpen(true);
+      } catch (err) {
+        alert(`Import failed: ${err.message}`);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleImportConfirm = () => {
+    if (!importPreview?.parsed) return;
+    const merged = { ...dataMatrix };
+    Object.entries(importPreview.parsed).forEach(([empId, empData]) => {
+      merged[empId] = { ...(merged[empId] || {}), ...empData };
+    });
+    updateState('scheduleInput.dataMatrix', merged);
+    setImportModalOpen(false);
+    setImportPreview(null);
   };
 
   // Handle clear all
@@ -133,36 +192,29 @@ const Step5_ScheduleInput = () => {
     return validate();
   };
 
-  // Calculate summary statistics
+  // Calculate summary statistics — scoped to current employees × current dateRange only
   const stats = useMemo(() => {
+    const dateSet = new Set(dateRange);
+    const employeeIds = new Set(employees.map(e => e.id));
+
     let autoAllocate = 0;
     let specificHours = 0;
     let vacation = 0;
     let notAvailable = 0;
-    let timeConstraints = {
-      equals: 0,
-      include: 0,
-      except: 0
-    };
+    let timeConstraints = { equals: 0, include: 0, except: 0 };
     let invalid = 0;
 
-    Object.values(dataMatrix).forEach(empData => {
-      Object.values(empData).forEach(value => {
-        // Handle null/undefined
-        if (value === null || value === undefined) {
-          invalid++;
-          return;
-        }
+    Object.entries(dataMatrix).forEach(([empId, empData]) => {
+      if (!employeeIds.has(empId)) return; // employee no longer in roster
+
+      Object.entries(empData).forEach(([date, value]) => {
+        if (!dateSet.has(date)) return; // date outside current range
+
+        if (value === null || value === undefined) { invalid++; return; }
 
         const val = value.toString().trim();
+        if (val === '' || val === '-') { invalid++; return; }
 
-        // Handle empty or placeholder values
-        if (val === '' || val === '-') {
-          invalid++;
-          return;
-        }
-
-        // Check for time window constraints (EQUALS, INCLUDE, EXCEPT)
         if (isTimeConstraint(val)) {
           const type = getConstraintType(val);
           if (type === 'EQUALS') timeConstraints.equals++;
@@ -172,8 +224,6 @@ const Step5_ScheduleInput = () => {
         }
 
         const valUpper = val.toUpperCase();
-
-        // Standard value types
         if (valUpper === 'A') {
           autoAllocate++;
         } else if (valUpper === 'VAC') {
@@ -181,7 +231,6 @@ const Step5_ScheduleInput = () => {
         } else if (valUpper === 'NOT') {
           notAvailable++;
         } else {
-          // Try to parse as numeric value
           const numVal = parseFloat(val);
           if (!isNaN(numVal) && numVal > 0 && numVal <= 24) {
             specificHours++;
@@ -192,15 +241,8 @@ const Step5_ScheduleInput = () => {
       });
     });
 
-    return {
-      autoAllocate,
-      specificHours,
-      vacation,
-      notAvailable,
-      timeConstraints,
-      invalid
-    };
-  }, [dataMatrix]);
+    return { autoAllocate, specificHours, vacation, notAvailable, timeConstraints, invalid };
+  }, [dataMatrix, dateRange, employees]);
 
   // Guard: Check prerequisites
   if (employees.length === 0) {
@@ -281,37 +323,17 @@ const Step5_ScheduleInput = () => {
               <Chip label={`Specific hours: ${stats.specificHours}`} color="info" size="small" />
               <Chip label={`Vacation: ${stats.vacation}`} color="warning" size="small" />
               <Chip label={`Not available: ${stats.notAvailable}`} color="error" size="small" />
-              {(stats.timeConstraints.equals + stats.timeConstraints.include + stats.timeConstraints.except) > 0 && (
-                <>
-                  {stats.timeConstraints.equals > 0 && (
-                    <Chip
-                      label={`EQUALS constraints: ${stats.timeConstraints.equals}`}
-                      size="small"
-                      sx={{ bgcolor: '#e1bee7', color: '#4a148c' }}
-                    />
-                  )}
-                  {stats.timeConstraints.include > 0 && (
-                    <Chip
-                      label={`INCLUDE constraints: ${stats.timeConstraints.include}`}
-                      size="small"
-                      sx={{ bgcolor: '#ffe0b2', color: '#e65100' }}
-                    />
-                  )}
-                  {stats.timeConstraints.except > 0 && (
-                    <Chip
-                      label={`EXCEPT constraints: ${stats.timeConstraints.except}`}
-                      size="small"
-                      sx={{ bgcolor: '#f8bbd0', color: '#880e4f' }}
-                    />
-                  )}
-                </>
+              {stats.timeConstraints.equals > 0 && (
+                <Chip label={`EQUALS: ${stats.timeConstraints.equals}`} size="small" sx={{ bgcolor: '#e1bee7', color: '#4a148c' }} />
+              )}
+              {stats.timeConstraints.include > 0 && (
+                <Chip label={`INCLUDE: ${stats.timeConstraints.include}`} size="small" sx={{ bgcolor: '#ffe0b2', color: '#e65100' }} />
+              )}
+              {stats.timeConstraints.except > 0 && (
+                <Chip label={`EXCEPT: ${stats.timeConstraints.except}`} size="small" sx={{ bgcolor: '#f8bbd0', color: '#880e4f' }} />
               )}
               {stats.invalid > 0 && (
-                <Chip
-                  label={`Invalid/Empty: ${stats.invalid}`}
-                  size="small"
-                  sx={{ bgcolor: '#bdbdbd', color: '#424242' }}
-                />
+                <Chip label={`Pending: ${stats.invalid}`} size="small" sx={{ bgcolor: '#bdbdbd', color: '#424242' }} />
               )}
             </Box>
             <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
@@ -355,6 +377,23 @@ const Step5_ScheduleInput = () => {
         onImportCsv={handleImportCsv}
         onExportCsv={handleExportCsv}
         onClearAll={handleClearAll}
+      />
+
+      {/* Import Preview Confirmation Modal */}
+      <ImportPreviewModal
+        open={importModalOpen}
+        title={`Import Preview — Schedule Matrix`}
+        summary={importPreview?.summary}
+        warnings={importPreview?.warnings || []}
+        rows={importPreview?.previewRows || []}
+        columns={[
+          { field: 'employee', label: 'Employee' },
+          { field: 'date', label: 'Date' },
+          { field: 'from', label: 'Current Value' },
+          { field: 'to', label: 'New Value' }
+        ]}
+        onConfirm={handleImportConfirm}
+        onCancel={() => { setImportModalOpen(false); setImportPreview(null); }}
       />
     </Box>
   );

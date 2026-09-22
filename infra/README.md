@@ -8,38 +8,48 @@ Infrastructure as Code (IaC) for the SmarTask application. Contains Docker Compo
 
 ```
 infra/
-├── docker-compose.yml           # Orchestrates all 6 services
-└── docker/                      # Service Dockerfiles
-    ├── api/Dockerfile           # Java Spring Boot API
-    ├── frontend/Dockerfile      # React frontend
-    ├── scheduler/Dockerfile     # Python scheduler worker
-    └── analyzer/Dockerfile      # Python analyzer worker
+├── docker-compose.yml             # Orchestrates all 8 services
+└── docker/                        # Service Dockerfiles
+    ├── nginx/Dockerfile           # nginx reverse proxy
+    ├── nginx/nginx.conf           # Proxy routes (/, /api/, /json-gen/)
+    ├── api/Dockerfile             # Java Spring Boot API
+    ├── frontend/Dockerfile        # React frontend (main app)
+    ├── json-generator/Dockerfile  # React problem.json wizard
+    ├── scheduler/Dockerfile       # Python scheduler worker
+    └── analyzer/Dockerfile        # Python analyzer worker
 ```
 
 ## Services Architecture
 
-The `docker-compose.yml` orchestrates **6 services**:
+The `docker-compose.yml` orchestrates **8 services**:
 
-1. **frontend** - React web UI (port 5173)
-2. **api** - Spring Boot REST API (port 8081)
-3. **scheduler** - Python worker for schedule generation
-4. **analyzer** - Python worker for KPI analysis
-5. **mongodb** - Database (port 27017)
-6. **rabbitmq** - Message broker (ports 5672, 15672)
+1. **nginx** - Reverse proxy and single public entry point (port 80)
+2. **frontend** - React web UI / main app (internal port 5173)
+3. **json-generator** - React wizard that builds `problem.json` + CSVs (internal port 5174)
+4. **api** - Spring Boot REST API + WebSocket (internal port 8081)
+5. **scheduler** - Python worker for schedule generation
+6. **analyzer** - Python worker for KPI analysis
+7. **mongodb** - Database (port 27017)
+8. **rabbitmq** - Message broker (ports 5672, 15672)
 
 ## Service Communication
 
 ```
-┌─────────┐     HTTP      ┌─────┐     RabbitMQ    ┌───────────┐
-│ Browser │ ────────────> │ API │ ──────────────> │ Scheduler │
-└─────────┘               └─────┘                 └───────────┘
-     │                       │                            │
-     │    WebSocket          │        MongoDB             │
-     │<─────────────────────>│ <─────────────────────────>│
-                             │                            │
-                             │     RabbitMQ     ┌──────────┐
-                             └─────────────────>│ Analyzer │
-                                                └──────────┘
+┌─────────┐  HTTP :80   ┌───────┐  (reverse proxy)
+│ Browser │ ──────────> │ nginx │
+└─────────┘             └───┬───┘
+                            │ routes by path
+        ┌───────────────────┼────────────────────┐
+        │ /                 │ /json-gen           │ /api
+        ▼                   ▼                     ▼
+   ┌──────────┐      ┌───────────────┐         ┌─────┐   RabbitMQ   ┌───────────┐
+   │ Frontend │      │ JSON Generator│         │ API │ ───────────> │ Scheduler │
+   └──────────┘      └───────────────┘         └──┬──┘              └───────────┘
+                                                  │ RabbitMQ / MongoDB
+                                                  ▼
+                                           ┌──────────┐      ┌──────────┐
+                                           │ Analyzer │      │ MongoDB  │
+                                           └──────────┘      └──────────┘
 ```
 
 ## Docker Images
@@ -63,6 +73,16 @@ The `docker-compose.yml` orchestrates **6 services**:
 - Base: `python:3.11-slim`
 - Installs Python dependencies
 - Runs analyze.py
+
+### JSON Generator (`docker/json-generator/Dockerfile`)
+- Base: `node:18-alpine`
+- Builds the React wizard with Vite
+- Served at `/json-gen` via nginx
+
+### nginx (`docker/nginx/Dockerfile`)
+- Base: `nginx:alpine`
+- Reverse proxy; config in `docker/nginx/nginx.conf`
+- Routes `/` → frontend, `/json-gen/` → json-generator, `/api/` → api
 
 ## Volumes
 
@@ -111,13 +131,17 @@ make build-analyzer
 
 ## Ports
 
-| Service   | Port  | Purpose                |
-|-----------|-------|------------------------|
-| Frontend  | 5173  | Web UI                 |
-| API       | 8081  | REST API               |
-| MongoDB   | 27017 | Database               |
-| RabbitMQ  | 5672  | AMQP protocol          |
-| RabbitMQ  | 15672 | Management UI          |
+| Service        | Port  | Exposure | Purpose              |
+|----------------|-------|----------|----------------------|
+| nginx          | 80    | public   | Reverse proxy entry  |
+| Frontend       | 5173  | internal | Web UI               |
+| JSON Generator | 5174  | internal | problem.json wizard  |
+| API            | 8081  | internal | REST API + WebSocket |
+| MongoDB        | 27017 | published| Database             |
+| RabbitMQ       | 5672  | published| AMQP protocol        |
+| RabbitMQ       | 15672 | published| Management UI        |
+
+> "internal" = reachable only through nginx / the Docker network; "published" = mapped to the host.
 
 ## Environment Variables
 
@@ -134,7 +158,7 @@ Configured in `docker-compose.yml`:
 - Debug logging enabled
 
 **For Production:** Requires changes
-- Use production builds
+- Use production builds (currently Vite dev servers behind nginx)
 - Proper secrets management
-- Reverse proxy (nginx)
-- SSL/TLS certificates
+- SSL/TLS termination at nginx (reverse proxy is already in place)
+- Restrict the published MongoDB/RabbitMQ host ports

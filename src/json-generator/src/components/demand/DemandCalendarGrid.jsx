@@ -22,8 +22,11 @@ const DemandCalendarGrid = ({
   dates = [],
   demandData = [],
   workPeriods = [],
+  teams = [],
+  workPeriodModel = 'fixed',
   onUpdate,
   onDelete,
+  onAdd,
   employeeModel = 'team'
 }) => {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -153,6 +156,10 @@ const DemandCalendarGrid = ({
           demandEntries={getDemandForDate(selectedDate)}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
+          onAdd={onAdd}
+          workPeriods={workPeriods}
+          teams={teams}
+          workPeriodModel={workPeriodModel}
           employeeModel={employeeModel}
         />
       )}

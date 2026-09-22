@@ -79,7 +79,7 @@ class MongoDBClient:
             print(schedule["title"], ", ", schedule["algorithm"])
         return schedules
 
-    def insert_schedule(self, data, title, algorithm, timestamp=None, metadata=None, elapsed_time=None):
+    def insert_schedule(self, data, title, algorithm, timestamp=None, metadata=None, elapsed_time=None, sisqual_export=None):
         try:
             timestamp = timestamp if isinstance(timestamp, datetime) else datetime.now(tz=pytz.UTC)
             print(f"Inserting schedule titled '{title}' using algorithm '{algorithm}' at {timestamp.isoformat()}")
@@ -94,6 +94,9 @@ class MongoDBClient:
 
             if metadata:
                 schedule_document["metadata"] = metadata
+
+            if sisqual_export:
+                schedule_document["sisqualExport"] = sisqual_export
 
             result = self.schedules_collection.insert_one(schedule_document)
             print(f"Schedule inserted successfully with ID: {result.inserted_id}")

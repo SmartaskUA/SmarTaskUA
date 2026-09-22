@@ -2,11 +2,23 @@
 
 ## Available Algorithms
 
-SmarTask supports 11 scheduling algorithms with different approaches and performance characteristics.
+SmarTask ships a range of scheduling algorithms with different approaches and performance characteristics. All are registered in `src/scheduler/TaskManager.py` (the `algorithms` dictionary); the primary ones are grouped by family below.
+
+### General family (constraint-driven, read `problem.json`)
+
+These consume the structured `constraints` from a `problem.json` (parsed into a `ConstraintPlan`) instead of the global `rules.json`, and are the focus of the flow docs (`docs/algorithms/general-algorithms-flow.md`).
 
 | Algorithm Name | Type | Description |
 |----------------|------|-------------|
-| **CSP** | Constraint Satisfaction | Uses Google OR-Tools CP-SAT solver to find feasible schedules |
+| **ILP General** | Integer Linear Programming | General ILP solver driven by the `problem.json` constraint plan |
+| **CSP General** | Constraint Satisfaction | General CP-SAT solver driven by the `problem.json` constraint plan |
+| **Heuristic General** | Heuristic | General heuristic solver driven by the `problem.json` constraint plan |
+
+### Classic families
+
+| Algorithm Name | Type | Description |
+|----------------|------|-------------|
+| **CSP** (alias *CSP Scheduling*) | Constraint Satisfaction | Google OR-Tools CP-SAT solver to find feasible schedules |
 | **CSPv2** | Constraint Satisfaction | Enhanced version of CSP with additional optimizations |
 | **CSP_ENGINE** | Constraint Satisfaction | CSP with integrated rules engine for complex constraints |
 | **linear programming** | Integer Linear Programming | ILP solver using PuLP library for optimization |
@@ -17,6 +29,10 @@ SmarTask supports 11 scheduling algorithms with different approaches and perform
 | **Greedy Randomized + Hill Climbing** | Hybrid | Combines greedy initial solution with local search refinement |
 | **GRHC_ENGINE** | Hybrid | Greedy + Hill Climbing with rules engine |
 | **hill climbing** | Local Search | Iterative improvement through neighbor exploration |
+
+### Experimental / hourly / legacy variants
+
+`TaskManager.py` also registers interval- and hour-based experiments and dataset-specific solvers that are **not** part of the main flow: `ILP_2`, `ILP_3`, `ILP_4` (each with a `_Half_Intervals` variant), `ILP_Sisqual_Hours`, `CSP_Sisqual_Hours`, `CSP_Afonso_Hours`, and `ilp_greedy`. Treat these as experimental.
 
 ## Algorithm Types
 
@@ -29,6 +45,8 @@ SmarTask supports 11 scheduling algorithms with different approaches and perform
 **Local Search (Hill Climbing):** Improves solutions iteratively. Good for refinement.
 
 **Hybrid:** Combines multiple approaches for better results.
+
+**General (constraint-driven):** The `* General` solvers read the structured `constraints` block from `problem.json` (parsed into a `ConstraintPlan`) rather than the global `rules.json`. See `docs/algorithms/general-algorithms-flow.md`.
 
 **Engine Variants:** Algorithms with "_ENGINE" or "Engine" suffix integrate the rules engine for better constraint handling.
 

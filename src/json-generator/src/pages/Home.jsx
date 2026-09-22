@@ -5,7 +5,7 @@ function Home() {
     <div className="min-h-screen bg-base-200">
       <div className="navbar bg-base-100 shadow-lg">
         <div className="flex-1">
-          <a className="btn btn-ghost text-xl">JSON Generator v2.2</a>
+          <a className="btn btn-ghost text-xl">JSON Generator v2.6</a>
         </div>
       </div>
 
@@ -14,7 +14,7 @@ function Home() {
           <div className="card-body">
             <h2 className="card-title text-3xl">Welcome to JSON Generator</h2>
             <p className="text-lg">
-              Generate JSON + CSV pairs for schema v2.2 more easily
+              Generate JSON + CSV pairs for schema v2.6 more easily
             </p>
             <div className="divider"></div>
             <div className="alert alert-info">

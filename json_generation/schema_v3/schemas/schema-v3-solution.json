@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smartask.ua/schemas/scheduling-problem-v3.0-solution.json",
+  "title": "Employee Scheduling Solution v3.0",
+  "description": "The output half of a package: problem + optional solution -> algorithm -> package. Records which daily working assignment each worker took on each day [x_wdh = 1]. Serves two roles with one shape: a FULL solution (every worker-day stated) and a PARTIAL warm-start seed (a subset stated, the rest left to the solver) -- see assignments. Assignment ids and employee ids refer to the expanded problem this solution belongs to. Standalone: this file does not reference any other schema. Symbols in square brackets refer to MathematicalDefinition7.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "form",
+    "problemId",
+    "assignments"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "3.0"
+    },
+    "form": {
+      "type": "string",
+      "const": "solution"
+    },
+    "problemId": {
+      "type": "string",
+      "description": "metadata.problemId of the problem this solves."
+    },
+    "producedBy": {
+      "type": "object",
+      "description": "Which run produced this. Advisory.",
+      "properties": {
+        "algorithm": {
+          "type": "string"
+        },
+        "solvedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "solveTimeSeconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "optimal",
+            "feasible",
+            "infeasible",
+            "timeout",
+            "error"
+          ],
+          "description": "A 'feasible' or 'timeout' solution may still be worth warm-starting from; 'infeasible' and 'error' carry no assignments."
+        }
+      },
+      "additionalProperties": false
+    },
+    "objectiveValues": {
+      "type": "array",
+      "description": "Reported objective components, for comparing phases and runs.",
+      "items": {
+        "type": "object",
+        "required": [
+          "goal",
+          "value"
+        ],
+        "properties": {
+          "goal": {
+            "type": "string",
+            "description": "e.g. 'minimize_shortages' (ObjectiveFunction1, sum of z_dts), 'competency_priority_weight' (ObjectiveFunction2 -- the total priority weight of the assigned competency/level combinations, derived from demand.priorityOrder), 'preferable_days_off_worked' (ObjectiveFunction3, sum of x'_wd)."
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "assignments": {
+      "type": "array",
+      "description": "One entry per employee. A worker-day is SEEDED when it names a non-null assignmentId. As a partial warm-start seed, only seeded days constrain the solver: a null assignmentId (not working) and an omitted day are both OPEN -- the solver decides them. A full solution simply states every worker-day. A seeded day is a SOFT starting point (the solver may change it) unless locked = true makes it a HARD pin.",
+      "items": {
+        "type": "object",
+        "required": [
+          "employeeId",
+          "days"
+        ],
+        "properties": {
+          "employeeId": {
+            "type": "string"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "date"
+              ],
+              "properties": {
+                "date": {
+                  "$ref": "#/$defs/date"
+                },
+                "assignmentId": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The chosen assignment [the h with x_wdh = 1], which must be one of this worker-day's assignmentIds in the expanded problem. null = not working. A non-null value is the SEED for this day; null is an open day in the seed role."
+                },
+                "locked": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "true = a HARD pre-commitment: the solver must keep this exact assignment (the solution-side twin of the expanded problem's availability.days[].forced). Requires a non-null assignmentId. Absent/false = a SOFT seed the solver may change. Whether the solver penalises changing a soft seed is a solve-directive, not enforced here (see FUTURE.md)."
+                },
+                "workedPreferableDayOff": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "True when this day was the worker's preferable day-off [D_wk] and was scheduled anyway [x'_wd = 1]. Surfaced because it is what ObjectiveFunction3 penalises."
+                },
+                "competencyPerSlot": {
+                  "type": "array",
+                  "description": "Optional detail: which competency the worker served in each covered timeslot [y_wdts]. Omit when only the daily assignment matters.",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "startMin",
+                      "endMin",
+                      "competency"
+                    ],
+                    "properties": {
+                      "startMin": {
+                        "$ref": "#/$defs/minutes"
+                      },
+                      "endMin": {
+                        "$ref": "#/$defs/minutes"
+                      },
+                      "competency": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "shortfalls": {
+      "type": "array",
+      "description": "Where coverage fell below the desired minimum [z_dts > 0]. There is no hard coverage constraint -- alpha_dts is the number of workers DESIRED and is pursued only through ObjectiveFunction1 -- so a perfectly feasible solution can still report shortfalls. This is the KPI surface for that.",
+      "items": {
+        "type": "object",
+        "required": [
+          "date",
+          "competency",
+          "startMin",
+          "endMin",
+          "shortfall"
+        ],
+        "properties": {
+          "date": {
+            "$ref": "#/$defs/date"
+          },
+          "competency": {
+            "type": "string"
+          },
+          "startMin": {
+            "$ref": "#/$defs/minutes"
+          },
+          "endMin": {
+            "$ref": "#/$defs/minutes"
+          },
+          "shortfall": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "$defs": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "minutes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2880,
+      "description": "Minutes from the start of the scheduling day (00:00). Values at or past 1440 express times after midnight, so a night shift 22:00-06:30 is 1320-1830 with no ambiguity."
+    }
+  }
+}

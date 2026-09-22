@@ -1,0 +1,5371 @@
+{
+  "OutRosterTeamDays": [
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-01",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-02",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-03",
+      "ScheduleCode": 9138,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-04",
+      "ScheduleCode": 9031,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-05",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-06",
+      "ScheduleCode": 9031,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-07",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-08",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-09",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-10",
+      "ScheduleCode": 9690,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-11",
+      "ScheduleCode": 9093,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-12",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-13",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-14",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-15",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-16",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-17",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-18",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-19",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-20",
+      "ScheduleCode": 9553,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-21",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-22",
+      "ScheduleCode": 9553,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-23",
+      "ScheduleCode": 9690,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-24",
+      "ScheduleCode": 9690,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-25",
+      "ScheduleCode": 9500,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-26",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-27",
+      "ScheduleCode": 9138,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-28",
+      "ScheduleCode": 9031,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-29",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-30",
+      "ScheduleCode": 9690,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20072412",
+      "Date": "2025-10-31",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-01",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-02",
+      "ScheduleCode": 9690,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-03",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-04",
+      "ScheduleCode": 9028,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-05",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-06",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-07",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-08",
+      "ScheduleCode": 9138,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-09",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-10",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-11",
+      "ScheduleCode": 9028,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-12",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-13",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-14",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-15",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-16",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-17",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-18",
+      "ScheduleCode": 9138,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-19",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-20",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-21",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-22",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-23",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-24",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-25",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-26",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-27",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-28",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-29",
+      "ScheduleCode": 9690,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-30",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20066543",
+      "Date": "2025-10-31",
+      "ScheduleCode": 9690,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-01",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-02",
+      "ScheduleCode": 9002,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-02",
+      "ScheduleCode": 9441,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-03",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-04",
+      "ScheduleCode": 9378,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-04",
+      "ScheduleCode": 9115,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-05",
+      "ScheduleCode": 9669,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-06",
+      "ScheduleCode": 9858,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-06",
+      "ScheduleCode": 9271,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-07",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-08",
+      "ScheduleCode": 9014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-08",
+      "ScheduleCode": 9331,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-09",
+      "ScheduleCode": 9284,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-09",
+      "ScheduleCode": 9712,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-10",
+      "ScheduleCode": 9459,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-10",
+      "ScheduleCode": 9100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-11",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-12",
+      "ScheduleCode": 9669,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-13",
+      "ScheduleCode": 9267,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-13",
+      "ScheduleCode": 9023,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-14",
+      "ScheduleCode": 9173,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-14",
+      "ScheduleCode": 9833,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-15",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-16",
+      "ScheduleCode": 9882,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-17",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-18",
+      "ScheduleCode": 9216,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-18",
+      "ScheduleCode": 9248,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-19",
+      "ScheduleCode": 9376,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-19",
+      "ScheduleCode": 9827,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-20",
+      "ScheduleCode": 9882,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-21",
+      "ScheduleCode": 9262,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-21",
+      "ScheduleCode": 9298,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-22",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-23",
+      "ScheduleCode": 9100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-23",
+      "ScheduleCode": 9311,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-24",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-25",
+      "ScheduleCode": 9835,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-25",
+      "ScheduleCode": 9045,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-26",
+      "ScheduleCode": 9669,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-27",
+      "ScheduleCode": 9273,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-28",
+      "ScheduleCode": 9001,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-29",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-30",
+      "ScheduleCode": 9166,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-30",
+      "ScheduleCode": 9263,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20067009",
+      "Date": "2025-10-31",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-01",
+      "ScheduleCode": 9802,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-01",
+      "ScheduleCode": 9242,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-02",
+      "ScheduleCode": 9176,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-03",
+      "ScheduleCode": 9376,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-03",
+      "ScheduleCode": 9134,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-04",
+      "ScheduleCode": 9443,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-04",
+      "ScheduleCode": 9723,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-05",
+      "ScheduleCode": 6,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-06",
+      "ScheduleCode": 9538,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-06",
+      "ScheduleCode": 9399,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-07",
+      "ScheduleCode": 9805,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-08",
+      "ScheduleCode": 9189,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-08",
+      "ScheduleCode": 9709,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-09",
+      "ScheduleCode": 9146,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-09",
+      "ScheduleCode": 9000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-10",
+      "ScheduleCode": 9001,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-10",
+      "ScheduleCode": 9201,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-11",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-12",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-13",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-14",
+      "ScheduleCode": 9423,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-14",
+      "ScheduleCode": 9546,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-15",
+      "ScheduleCode": 9586,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-15",
+      "ScheduleCode": 9482,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-16",
+      "ScheduleCode": 9116,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-16",
+      "ScheduleCode": 9596,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-17",
+      "ScheduleCode": 9805,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-18",
+      "ScheduleCode": 9170,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-18",
+      "ScheduleCode": 9582,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-19",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-20",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-21",
+      "ScheduleCode": 9384,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-21",
+      "ScheduleCode": 9331,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-22",
+      "ScheduleCode": 9026,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-23",
+      "ScheduleCode": 9792,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-24",
+      "ScheduleCode": 9263,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-25",
+      "ScheduleCode": 9406,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-25",
+      "ScheduleCode": 9880,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-26",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-27",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-28",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-29",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-30",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20054956",
+      "Date": "2025-10-31",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-01",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-02",
+      "ScheduleCode": 9792,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-03",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-04",
+      "ScheduleCode": 9038,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-05",
+      "ScheduleCode": 9430,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-06",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-07",
+      "ScheduleCode": 9176,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-08",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-09",
+      "ScheduleCode": 9792,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-10",
+      "ScheduleCode": 5,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-11",
+      "ScheduleCode": 9844,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-12",
+      "ScheduleCode": 9783,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-13",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-14",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-15",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-16",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-17",
+      "ScheduleCode": 9358,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-18",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-19",
+      "ScheduleCode": 9601,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-20",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-21",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-22",
+      "ScheduleCode": 9176,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-23",
+      "ScheduleCode": 9788,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-24",
+      "ScheduleCode": 9601,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-25",
+      "ScheduleCode": 9038,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-26",
+      "ScheduleCode": 9601,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-27",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-28",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-29",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-30",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20056459",
+      "Date": "2025-10-31",
+      "ScheduleCode": 9204,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-01",
+      "ScheduleCode": 9779,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-01",
+      "ScheduleCode": 9837,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-02",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-03",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-04",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-05",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-06",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-07",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-08",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-09",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-10",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-11",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-12",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-13",
+      "ScheduleCode": 9805,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-14",
+      "ScheduleCode": 9596,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-14",
+      "ScheduleCode": 9274,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-15",
+      "ScheduleCode": 9498,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-15",
+      "ScheduleCode": 9687,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-16",
+      "ScheduleCode": 9390,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-16",
+      "ScheduleCode": 9882,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-17",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-18",
+      "ScheduleCode": 9563,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-18",
+      "ScheduleCode": 9881,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-19",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-20",
+      "ScheduleCode": 9211,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-20",
+      "ScheduleCode": 9127,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-21",
+      "ScheduleCode": 9019,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-21",
+      "ScheduleCode": 9236,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-22",
+      "ScheduleCode": 9566,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-22",
+      "ScheduleCode": 9230,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-23",
+      "ScheduleCode": 9263,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-24",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Management",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-25",
+      "ScheduleCode": 9284,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-25",
+      "ScheduleCode": 9610,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-26",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-27",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-28",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-29",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-30",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20062688",
+      "Date": "2025-10-31",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-01",
+      "ScheduleCode": 9792,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-02",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-03",
+      "ScheduleCode": 9844,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-04",
+      "ScheduleCode": 9038,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-05",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-06",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-07",
+      "ScheduleCode": 9792,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-08",
+      "ScheduleCode": 9251,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-09",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-10",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-11",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-12",
+      "ScheduleCode": 9430,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-13",
+      "ScheduleCode": 9844,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-14",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-15",
+      "ScheduleCode": 9358,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-16",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-17",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-18",
+      "ScheduleCode": 9358,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-19",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-20",
+      "ScheduleCode": 9792,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-21",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-22",
+      "ScheduleCode": 9354,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-23",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-24",
+      "ScheduleCode": 9885,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-25",
+      "ScheduleCode": 9251,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-26",
+      "ScheduleCode": 9176,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-27",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-28",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-29",
+      "ScheduleCode": 9792,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-30",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20067696",
+      "Date": "2025-10-31",
+      "ScheduleCode": 9358,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-01",
+      "ScheduleCode": 6,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-02",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-03",
+      "ScheduleCode": 9444,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-04",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-05",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-06",
+      "ScheduleCode": 9792,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-07",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-08",
+      "ScheduleCode": 9358,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-09",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-10",
+      "ScheduleCode": 9792,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-11",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-12",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-13",
+      "ScheduleCode": 9358,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-14",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-15",
+      "ScheduleCode": 9172,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-16",
+      "ScheduleCode": 9788,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-17",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-18",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-19",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-20",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-21",
+      "ScheduleCode": 9176,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-22",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-23",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-24",
+      "ScheduleCode": 9172,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-25",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-26",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-27",
+      "ScheduleCode": 9792,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-28",
+      "ScheduleCode": 9176,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-29",
+      "ScheduleCode": 9038,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-30",
+      "ScheduleCode": 9176,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20058959",
+      "Date": "2025-10-31",
+      "ScheduleCode": 9792,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-01",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-02",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-03",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-04",
+      "ScheduleCode": 9038,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-05",
+      "ScheduleCode": 9601,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-06",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-07",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-08",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-09",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-10",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-11",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-12",
+      "ScheduleCode": 9176,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-13",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-14",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-15",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-16",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-17",
+      "ScheduleCode": 9147,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-18",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-19",
+      "ScheduleCode": 9601,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-20",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-21",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-22",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-23",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-24",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-25",
+      "ScheduleCode": 9038,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-26",
+      "ScheduleCode": 9844,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-27",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-28",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-29",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-30",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20068397",
+      "Date": "2025-10-31",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-01",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-02",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-03",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-04",
+      "ScheduleCode": 9001,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-05",
+      "ScheduleCode": 9001,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-06",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-07",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-08",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-09",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-10",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-11",
+      "ScheduleCode": 9001,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-12",
+      "ScheduleCode": 9001,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-13",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-14",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-15",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-16",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-17",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-18",
+      "ScheduleCode": 9452,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-19",
+      "ScheduleCode": 9273,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-20",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-21",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-22",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-23",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-24",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-25",
+      "ScheduleCode": 9273,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-26",
+      "ScheduleCode": 9367,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-27",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-28",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-29",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-30",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20038706",
+      "Date": "2025-10-31",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-01",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-02",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-03",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-04",
+      "ScheduleCode": 9452,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-05",
+      "ScheduleCode": 9425,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-06",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-07",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-08",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-09",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-10",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-11",
+      "ScheduleCode": 9769,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-12",
+      "ScheduleCode": 9757,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-13",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-14",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-15",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-16",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-17",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-18",
+      "ScheduleCode": 9777,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-19",
+      "ScheduleCode": 9273,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-20",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-21",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-22",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-23",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-24",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-25",
+      "ScheduleCode": 9657,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-26",
+      "ScheduleCode": 9769,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-27",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-28",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-29",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-30",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20066338",
+      "Date": "2025-10-31",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-01",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-02",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-03",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-04",
+      "ScheduleCode": 9748,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-05",
+      "ScheduleCode": 9141,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-06",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-07",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-08",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-09",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-10",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-11",
+      "ScheduleCode": 9273,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-12",
+      "ScheduleCode": 9777,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-13",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-14",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-15",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-16",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-17",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-18",
+      "ScheduleCode": 9769,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-19",
+      "ScheduleCode": 9769,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-20",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-21",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-22",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-23",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-24",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-25",
+      "ScheduleCode": 9757,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-26",
+      "ScheduleCode": 9001,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-27",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-28",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-29",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-30",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027719",
+      "Date": "2025-10-31",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Storage",
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-01",
+      "ScheduleCode": 9743,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Storage",
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-02",
+      "ScheduleCode": 9743,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Storage",
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-03",
+      "ScheduleCode": 9743,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-04",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-05",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Storage",
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-06",
+      "ScheduleCode": 9743,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Storage",
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-07",
+      "ScheduleCode": 9743,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Storage",
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-08",
+      "ScheduleCode": 9743,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Storage",
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-09",
+      "ScheduleCode": 9743,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Storage",
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-10",
+      "ScheduleCode": 9743,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-11",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-12",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Storage",
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-13",
+      "ScheduleCode": 9743,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Storage",
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-14",
+      "ScheduleCode": 9743,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Storage",
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-15",
+      "ScheduleCode": 9743,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Storage",
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-16",
+      "ScheduleCode": 9743,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Storage",
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-17",
+      "ScheduleCode": 9743,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-18",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-19",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Storage",
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-20",
+      "ScheduleCode": 9743,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Storage",
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-21",
+      "ScheduleCode": 9743,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Storage",
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-22",
+      "ScheduleCode": 9743,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Storage",
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-23",
+      "ScheduleCode": 9743,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Storage",
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-24",
+      "ScheduleCode": 9743,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-25",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-26",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-27",
+      "ScheduleCode": 6,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-28",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-29",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-30",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20051291",
+      "Date": "2025-10-31",
+      "ScheduleCode": 4,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-01",
+      "ScheduleCode": 7,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-02",
+      "ScheduleCode": 7,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-03",
+      "ScheduleCode": 7,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-04",
+      "ScheduleCode": 7,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-05",
+      "ScheduleCode": 7,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-06",
+      "ScheduleCode": 7,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-07",
+      "ScheduleCode": 7,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-08",
+      "ScheduleCode": 7,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-09",
+      "ScheduleCode": 7,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-10",
+      "ScheduleCode": 7,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-11",
+      "ScheduleCode": 7,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-12",
+      "ScheduleCode": 7,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-13",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-14",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-15",
+      "ScheduleCode": 9792,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-16",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-17",
+      "ScheduleCode": 9354,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-18",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-19",
+      "ScheduleCode": 9354,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-20",
+      "ScheduleCode": 9885,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-21",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-22",
+      "ScheduleCode": 9844,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-23",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-24",
+      "ScheduleCode": 9696,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-25",
+      "ScheduleCode": 9038,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-26",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-27",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-28",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-29",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-30",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "20055066",
+      "Date": "2025-10-31",
+      "ScheduleCode": 9844,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-01",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-02",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-03",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-04",
+      "ScheduleCode": 9358,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-05",
+      "ScheduleCode": 9783,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-06",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-07",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-08",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-09",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-10",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-11",
+      "ScheduleCode": 9358,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-12",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-13",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-14",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-15",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-16",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-17",
+      "ScheduleCode": 9601,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-18",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-19",
+      "ScheduleCode": 9430,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-20",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-21",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-22",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-23",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-24",
+      "ScheduleCode": 9244,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-25",
+      "ScheduleCode": 9430,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-26",
+      "ScheduleCode": 9484,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-27",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-28",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-29",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": null,
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-30",
+      "ScheduleCode": 2,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "SISQUAL_OCTOBER_2025",
+      "TeamCode": "Checkout",
+      "EmployeeCode": "900027718",
+      "Date": "2025-10-31",
+      "ScheduleCode": 9792,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    }
+  ],
+  "OutScheduleUseds": [
+    {
+      "ScheduleCode": 9484,
+      "DayType": 0,
+      "ScheduleWeight": 480,
+      "StartDate1": "2026-01-01T14:00:00",
+      "EndDate1": "2026-01-01T22:00:00"
+    },
+    {
+      "ScheduleCode": 9138,
+      "DayType": 0,
+      "ScheduleWeight": 480,
+      "StartDate1": "2026-01-01T09:00:00",
+      "EndDate1": "2026-01-01T17:00:00"
+    },
+    {
+      "ScheduleCode": 9031,
+      "DayType": 0,
+      "ScheduleWeight": 480,
+      "StartDate1": "2026-01-01T08:30:00",
+      "EndDate1": "2026-01-01T16:30:00"
+    },
+    {
+      "ScheduleCode": 2,
+      "DayType": 1,
+      "ScheduleWeight": 0
+    },
+    {
+      "ScheduleCode": 9690,
+      "DayType": 0,
+      "ScheduleWeight": 480,
+      "StartDate1": "2026-01-01T10:00:00",
+      "EndDate1": "2026-01-01T18:00:00"
+    },
+    {
+      "ScheduleCode": 9093,
+      "DayType": 0,
+      "ScheduleWeight": 480,
+      "StartDate1": "2026-01-01T10:30:00",
+      "EndDate1": "2026-01-01T18:30:00"
+    },
+    {
+      "ScheduleCode": 4,
+      "DayType": 3,
+      "ScheduleWeight": 0
+    },
+    {
+      "ScheduleCode": 9553,
+      "DayType": 0,
+      "ScheduleWeight": 480,
+      "StartDate1": "2026-01-01T09:30:00",
+      "EndDate1": "2026-01-01T17:30:00"
+    },
+    {
+      "ScheduleCode": 9500,
+      "DayType": 0,
+      "ScheduleWeight": 480,
+      "StartDate1": "2026-01-01T13:00:00",
+      "EndDate1": "2026-01-01T21:00:00"
+    },
+    {
+      "ScheduleCode": 9028,
+      "DayType": 0,
+      "ScheduleWeight": 480,
+      "StartDate1": "2026-01-01T13:30:00",
+      "EndDate1": "2026-01-01T21:30:00"
+    },
+    {
+      "ScheduleCode": 9002,
+      "DayType": 0,
+      "ScheduleWeight": 210,
+      "StartDate1": "2026-01-01T12:30:00",
+      "EndDate1": "2026-01-01T13:00:00",
+      "StartDate2": "2026-01-01T13:30:00",
+      "EndDate2": "2026-01-01T16:30:00"
+    },
+    {
+      "ScheduleCode": 9441,
+      "DayType": 0,
+      "ScheduleWeight": 90,
+      "StartDate1": "2026-01-01T13:00:00",
+      "EndDate1": "2026-01-01T13:30:00",
+      "StartDate2": "2026-01-01T16:30:00",
+      "EndDate2": "2026-01-01T17:30:00"
+    },
+    {
+      "ScheduleCode": 9378,
+      "DayType": 0,
+      "ScheduleWeight": 60,
+      "StartDate1": "2026-01-01T09:00:00",
+      "EndDate1": "2026-01-01T09:30:00",
+      "StartDate2": "2026-01-01T10:30:00",
+      "EndDate2": "2026-01-01T11:00:00"
+    },
+    {
+      "ScheduleCode": 9115,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T09:30:00",
+      "EndDate1": "2026-01-01T10:30:00",
+      "StartDate2": "2026-01-01T11:00:00",
+      "EndDate2": "2026-01-01T14:00:00"
+    },
+    {
+      "ScheduleCode": 9669,
+      "DayType": 0,
+      "ScheduleWeight": 300,
+      "StartDate1": "2026-01-01T11:00:00",
+      "EndDate1": "2026-01-01T16:00:00"
+    },
+    {
+      "ScheduleCode": 9858,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T08:30:00",
+      "EndDate1": "2026-01-01T09:30:00",
+      "StartDate2": "2026-01-01T10:00:00",
+      "EndDate2": "2026-01-01T11:30:00"
+    },
+    {
+      "ScheduleCode": 9271,
+      "DayType": 0,
+      "ScheduleWeight": 60,
+      "StartDate1": "2026-01-01T09:30:00",
+      "EndDate1": "2026-01-01T10:00:00",
+      "StartDate2": "2026-01-01T11:30:00",
+      "EndDate2": "2026-01-01T12:00:00"
+    },
+    {
+      "ScheduleCode": 9014,
+      "DayType": 0,
+      "ScheduleWeight": 120,
+      "StartDate1": "2026-01-01T13:30:00",
+      "EndDate1": "2026-01-01T14:00:00",
+      "StartDate2": "2026-01-01T16:30:00",
+      "EndDate2": "2026-01-01T18:00:00"
+    },
+    {
+      "ScheduleCode": 9331,
+      "DayType": 0,
+      "ScheduleWeight": 180,
+      "StartDate1": "2026-01-01T14:00:00",
+      "EndDate1": "2026-01-01T16:30:00",
+      "StartDate2": "2026-01-01T18:00:00",
+      "EndDate2": "2026-01-01T18:30:00"
+    },
+    {
+      "ScheduleCode": 9284,
+      "DayType": 0,
+      "ScheduleWeight": 90,
+      "StartDate1": "2026-01-01T09:00:00",
+      "EndDate1": "2026-01-01T10:00:00",
+      "StartDate2": "2026-01-01T13:30:00",
+      "EndDate2": "2026-01-01T14:00:00"
+    },
+    {
+      "ScheduleCode": 9712,
+      "DayType": 0,
+      "ScheduleWeight": 210,
+      "StartDate1": "2026-01-01T10:00:00",
+      "EndDate1": "2026-01-01T13:30:00"
+    },
+    {
+      "ScheduleCode": 9459,
+      "DayType": 0,
+      "ScheduleWeight": 30,
+      "StartDate1": "2026-01-01T09:00:00",
+      "EndDate1": "2026-01-01T09:30:00"
+    },
+    {
+      "ScheduleCode": 9100,
+      "DayType": 0,
+      "ScheduleWeight": 270,
+      "StartDate1": "2026-01-01T09:30:00",
+      "EndDate1": "2026-01-01T14:00:00"
+    },
+    {
+      "ScheduleCode": 9267,
+      "DayType": 0,
+      "ScheduleWeight": 180,
+      "StartDate1": "2026-01-01T17:00:00",
+      "EndDate1": "2026-01-01T18:30:00",
+      "StartDate2": "2026-01-01T19:30:00",
+      "EndDate2": "2026-01-01T20:00:00"
+    },
+    {
+      "ScheduleCode": 9023,
+      "DayType": 0,
+      "ScheduleWeight": 120,
+      "StartDate1": "2026-01-01T18:30:00",
+      "EndDate1": "2026-01-01T19:30:00",
+      "StartDate2": "2026-01-01T20:00:00",
+      "EndDate2": "2026-01-01T21:00:00"
+    },
+    {
+      "ScheduleCode": 9173,
+      "DayType": 0,
+      "ScheduleWeight": 150,
+      "StartDate1": "2026-01-01T10:00:00",
+      "EndDate1": "2026-01-01T10:30:00",
+      "StartDate2": "2026-01-01T12:00:00",
+      "EndDate2": "2026-01-01T13:00:00"
+    },
+    {
+      "ScheduleCode": 9833,
+      "DayType": 0,
+      "ScheduleWeight": 150,
+      "StartDate1": "2026-01-01T10:30:00",
+      "EndDate1": "2026-01-01T12:00:00",
+      "StartDate2": "2026-01-01T13:00:00",
+      "EndDate2": "2026-01-01T14:00:00"
+    },
+    {
+      "ScheduleCode": 9882,
+      "DayType": 0,
+      "ScheduleWeight": 300,
+      "StartDate1": "2026-01-01T17:00:00",
+      "EndDate1": "2026-01-01T22:00:00"
+    },
+    {
+      "ScheduleCode": 9216,
+      "DayType": 0,
+      "ScheduleWeight": 210,
+      "StartDate1": "2026-01-01T17:00:00",
+      "EndDate1": "2026-01-01T18:30:00",
+      "StartDate2": "2026-01-01T19:00:00",
+      "EndDate2": "2026-01-01T21:00:00"
+    },
+    {
+      "ScheduleCode": 9248,
+      "DayType": 0,
+      "ScheduleWeight": 90,
+      "StartDate1": "2026-01-01T18:30:00",
+      "EndDate1": "2026-01-01T19:00:00",
+      "StartDate2": "2026-01-01T21:00:00",
+      "EndDate2": "2026-01-01T22:00:00"
+    },
+    {
+      "ScheduleCode": 9376,
+      "DayType": 0,
+      "ScheduleWeight": 60,
+      "StartDate1": "2026-01-01T10:00:00",
+      "EndDate1": "2026-01-01T10:30:00",
+      "StartDate2": "2026-01-01T14:00:00",
+      "EndDate2": "2026-01-01T14:30:00"
+    },
+    {
+      "ScheduleCode": 9827,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T10:30:00",
+      "EndDate1": "2026-01-01T14:00:00",
+      "StartDate2": "2026-01-01T14:30:00",
+      "EndDate2": "2026-01-01T15:00:00"
+    },
+    {
+      "ScheduleCode": 9262,
+      "DayType": 0,
+      "ScheduleWeight": 270,
+      "StartDate1": "2026-01-01T17:00:00",
+      "EndDate1": "2026-01-01T20:30:00",
+      "StartDate2": "2026-01-01T21:00:00",
+      "EndDate2": "2026-01-01T22:00:00"
+    },
+    {
+      "ScheduleCode": 9298,
+      "DayType": 0,
+      "ScheduleWeight": 30,
+      "StartDate1": "2026-01-01T20:30:00",
+      "EndDate1": "2026-01-01T21:00:00"
+    },
+    {
+      "ScheduleCode": 9311,
+      "DayType": 0,
+      "ScheduleWeight": 120,
+      "StartDate1": "2026-01-01T09:00:00",
+      "EndDate1": "2026-01-01T10:00:00",
+      "StartDate2": "2026-01-01T12:00:00",
+      "EndDate2": "2026-01-01T13:00:00"
+    },
+    {
+      "ScheduleCode": 9835,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T08:30:00",
+      "EndDate1": "2026-01-01T10:00:00",
+      "StartDate2": "2026-01-01T10:30:00",
+      "EndDate2": "2026-01-01T12:00:00"
+    },
+    {
+      "ScheduleCode": 9045,
+      "DayType": 0,
+      "ScheduleWeight": 60,
+      "StartDate1": "2026-01-01T10:00:00",
+      "EndDate1": "2026-01-01T10:30:00",
+      "StartDate2": "2026-01-01T12:00:00",
+      "EndDate2": "2026-01-01T12:30:00"
+    },
+    {
+      "ScheduleCode": 9273,
+      "DayType": 0,
+      "ScheduleWeight": 300,
+      "StartDate1": "2026-01-01T09:00:00",
+      "EndDate1": "2026-01-01T14:00:00"
+    },
+    {
+      "ScheduleCode": 9001,
+      "DayType": 0,
+      "ScheduleWeight": 300,
+      "StartDate1": "2026-01-01T17:00:00",
+      "EndDate1": "2026-01-01T22:00:00"
+    },
+    {
+      "ScheduleCode": 9166,
+      "DayType": 0,
+      "ScheduleWeight": 60,
+      "StartDate1": "2026-01-01T17:00:00",
+      "EndDate1": "2026-01-01T18:00:00"
+    },
+    {
+      "ScheduleCode": 9263,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T18:00:00",
+      "EndDate1": "2026-01-01T22:00:00"
+    },
+    {
+      "ScheduleCode": 9802,
+      "DayType": 0,
+      "ScheduleWeight": 180,
+      "StartDate1": "2026-01-01T10:00:00",
+      "EndDate1": "2026-01-01T12:30:00",
+      "StartDate2": "2026-01-01T13:00:00",
+      "EndDate2": "2026-01-01T13:30:00"
+    },
+    {
+      "ScheduleCode": 9242,
+      "DayType": 0,
+      "ScheduleWeight": 60,
+      "StartDate1": "2026-01-01T12:30:00",
+      "EndDate1": "2026-01-01T13:00:00",
+      "StartDate2": "2026-01-01T13:30:00",
+      "EndDate2": "2026-01-01T14:00:00"
+    },
+    {
+      "ScheduleCode": 9176,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T10:00:00",
+      "EndDate1": "2026-01-01T14:00:00"
+    },
+    {
+      "ScheduleCode": 9134,
+      "DayType": 0,
+      "ScheduleWeight": 30,
+      "StartDate1": "2026-01-01T09:30:00",
+      "EndDate1": "2026-01-01T10:00:00"
+    },
+    {
+      "ScheduleCode": 9443,
+      "DayType": 0,
+      "ScheduleWeight": 210,
+      "StartDate1": "2026-01-01T17:00:00",
+      "EndDate1": "2026-01-01T17:30:00",
+      "StartDate2": "2026-01-01T18:00:00",
+      "EndDate2": "2026-01-01T21:00:00"
+    },
+    {
+      "ScheduleCode": 9723,
+      "DayType": 0,
+      "ScheduleWeight": 30,
+      "StartDate1": "2026-01-01T17:30:00",
+      "EndDate1": "2026-01-01T18:00:00"
+    },
+    {
+      "ScheduleCode": 6,
+      "DayType": 5,
+      "ScheduleWeight": 0
+    },
+    {
+      "ScheduleCode": 9538,
+      "DayType": 0,
+      "ScheduleWeight": 150,
+      "StartDate1": "2026-01-01T11:30:00",
+      "EndDate1": "2026-01-01T14:00:00"
+    },
+    {
+      "ScheduleCode": 9399,
+      "DayType": 0,
+      "ScheduleWeight": 90,
+      "StartDate1": "2026-01-01T14:00:00",
+      "EndDate1": "2026-01-01T15:30:00"
+    },
+    {
+      "ScheduleCode": 9805,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T10:00:00",
+      "EndDate1": "2026-01-01T14:00:00"
+    },
+    {
+      "ScheduleCode": 9189,
+      "DayType": 0,
+      "ScheduleWeight": 210,
+      "StartDate1": "2026-01-01T11:00:00",
+      "EndDate1": "2026-01-01T13:30:00",
+      "StartDate2": "2026-01-01T14:00:00",
+      "EndDate2": "2026-01-01T15:00:00"
+    },
+    {
+      "ScheduleCode": 9709,
+      "DayType": 0,
+      "ScheduleWeight": 30,
+      "StartDate1": "2026-01-01T13:30:00",
+      "EndDate1": "2026-01-01T14:00:00"
+    },
+    {
+      "ScheduleCode": 9146,
+      "DayType": 0,
+      "ScheduleWeight": 90,
+      "StartDate1": "2026-01-01T12:30:00",
+      "EndDate1": "2026-01-01T13:30:00",
+      "StartDate2": "2026-01-01T14:30:00",
+      "EndDate2": "2026-01-01T15:00:00"
+    },
+    {
+      "ScheduleCode": 9000,
+      "DayType": 0,
+      "ScheduleWeight": 150,
+      "StartDate1": "2026-01-01T13:30:00",
+      "EndDate1": "2026-01-01T14:30:00",
+      "StartDate2": "2026-01-01T15:00:00",
+      "EndDate2": "2026-01-01T16:30:00"
+    },
+    {
+      "ScheduleCode": 9201,
+      "DayType": 0,
+      "ScheduleWeight": 180,
+      "StartDate1": "2026-01-01T17:30:00",
+      "EndDate1": "2026-01-01T20:30:00"
+    },
+    {
+      "ScheduleCode": 9423,
+      "DayType": 0,
+      "ScheduleWeight": 180,
+      "StartDate1": "2026-01-01T15:00:00",
+      "EndDate1": "2026-01-01T18:00:00"
+    },
+    {
+      "ScheduleCode": 9546,
+      "DayType": 0,
+      "ScheduleWeight": 60,
+      "StartDate1": "2026-01-01T18:00:00",
+      "EndDate1": "2026-01-01T19:00:00"
+    },
+    {
+      "ScheduleCode": 9586,
+      "DayType": 0,
+      "ScheduleWeight": 150,
+      "StartDate1": "2026-01-01T10:00:00",
+      "EndDate1": "2026-01-01T11:00:00",
+      "StartDate2": "2026-01-01T11:30:00",
+      "EndDate2": "2026-01-01T12:00:00"
+    },
+    {
+      "ScheduleCode": 9482,
+      "DayType": 0,
+      "ScheduleWeight": 90,
+      "StartDate1": "2026-01-01T11:00:00",
+      "EndDate1": "2026-01-01T11:30:00",
+      "StartDate2": "2026-01-01T12:00:00",
+      "EndDate2": "2026-01-01T12:30:00"
+    },
+    {
+      "ScheduleCode": 9116,
+      "DayType": 0,
+      "ScheduleWeight": 90,
+      "StartDate1": "2026-01-01T14:00:00",
+      "EndDate1": "2026-01-01T15:00:00",
+      "StartDate2": "2026-01-01T16:30:00",
+      "EndDate2": "2026-01-01T17:00:00"
+    },
+    {
+      "ScheduleCode": 9596,
+      "DayType": 0,
+      "ScheduleWeight": 150,
+      "StartDate1": "2026-01-01T15:00:00",
+      "EndDate1": "2026-01-01T16:30:00",
+      "StartDate2": "2026-01-01T17:00:00",
+      "EndDate2": "2026-01-01T18:00:00"
+    },
+    {
+      "ScheduleCode": 9170,
+      "DayType": 0,
+      "ScheduleWeight": 210,
+      "StartDate1": "2026-01-01T17:00:00",
+      "EndDate1": "2026-01-01T18:00:00",
+      "StartDate2": "2026-01-01T18:30:00",
+      "EndDate2": "2026-01-01T21:00:00"
+    },
+    {
+      "ScheduleCode": 9582,
+      "DayType": 0,
+      "ScheduleWeight": 30,
+      "StartDate1": "2026-01-01T18:00:00",
+      "EndDate1": "2026-01-01T18:30:00"
+    },
+    {
+      "ScheduleCode": 9384,
+      "DayType": 0,
+      "ScheduleWeight": 90,
+      "StartDate1": "2026-01-01T14:00:00",
+      "EndDate1": "2026-01-01T14:30:00",
+      "StartDate2": "2026-01-01T16:00:00",
+      "EndDate2": "2026-01-01T17:00:00"
+    },
+    {
+      "ScheduleCode": 9026,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T17:30:00",
+      "EndDate1": "2026-01-01T21:30:00"
+    },
+    {
+      "ScheduleCode": 9792,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T14:00:00",
+      "EndDate1": "2026-01-01T18:00:00"
+    },
+    {
+      "ScheduleCode": 9406,
+      "DayType": 0,
+      "ScheduleWeight": 180,
+      "StartDate1": "2026-01-01T17:30:00",
+      "EndDate1": "2026-01-01T19:30:00",
+      "StartDate2": "2026-01-01T20:30:00",
+      "EndDate2": "2026-01-01T21:30:00"
+    },
+    {
+      "ScheduleCode": 9880,
+      "DayType": 0,
+      "ScheduleWeight": 60,
+      "StartDate1": "2026-01-01T19:30:00",
+      "EndDate1": "2026-01-01T20:30:00"
+    },
+    {
+      "ScheduleCode": 9244,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T18:00:00",
+      "EndDate1": "2026-01-01T22:00:00"
+    },
+    {
+      "ScheduleCode": 9038,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T11:30:00",
+      "EndDate1": "2026-01-01T15:30:00"
+    },
+    {
+      "ScheduleCode": 9430,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T17:30:00",
+      "EndDate1": "2026-01-01T21:30:00"
+    },
+    {
+      "ScheduleCode": 5,
+      "DayType": 4,
+      "ScheduleWeight": 0
+    },
+    {
+      "ScheduleCode": 9844,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T13:00:00",
+      "EndDate1": "2026-01-01T17:00:00"
+    },
+    {
+      "ScheduleCode": 9783,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T09:30:00",
+      "EndDate1": "2026-01-01T13:30:00"
+    },
+    {
+      "ScheduleCode": 9358,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T09:00:00",
+      "EndDate1": "2026-01-01T13:00:00"
+    },
+    {
+      "ScheduleCode": 9601,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T17:00:00",
+      "EndDate1": "2026-01-01T21:00:00"
+    },
+    {
+      "ScheduleCode": 9788,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T10:30:00",
+      "EndDate1": "2026-01-01T14:30:00"
+    },
+    {
+      "ScheduleCode": 9204,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T16:00:00",
+      "EndDate1": "2026-01-01T20:00:00"
+    },
+    {
+      "ScheduleCode": 9779,
+      "DayType": 0,
+      "ScheduleWeight": 180,
+      "StartDate1": "2026-01-01T10:00:00",
+      "EndDate1": "2026-01-01T12:30:00",
+      "StartDate2": "2026-01-01T13:00:00",
+      "EndDate2": "2026-01-01T13:30:00"
+    },
+    {
+      "ScheduleCode": 9837,
+      "DayType": 0,
+      "ScheduleWeight": 60,
+      "StartDate1": "2026-01-01T12:30:00",
+      "EndDate1": "2026-01-01T13:00:00",
+      "StartDate2": "2026-01-01T13:30:00",
+      "EndDate2": "2026-01-01T14:00:00"
+    },
+    {
+      "ScheduleCode": 9274,
+      "DayType": 0,
+      "ScheduleWeight": 150,
+      "StartDate1": "2026-01-01T10:30:00",
+      "EndDate1": "2026-01-01T12:00:00",
+      "StartDate2": "2026-01-01T13:00:00",
+      "EndDate2": "2026-01-01T14:00:00"
+    },
+    {
+      "ScheduleCode": 9498,
+      "DayType": 0,
+      "ScheduleWeight": 90,
+      "StartDate1": "2026-01-01T10:30:00",
+      "EndDate1": "2026-01-01T11:00:00",
+      "StartDate2": "2026-01-01T12:30:00",
+      "EndDate2": "2026-01-01T13:30:00"
+    },
+    {
+      "ScheduleCode": 9687,
+      "DayType": 0,
+      "ScheduleWeight": 150,
+      "StartDate1": "2026-01-01T11:00:00",
+      "EndDate1": "2026-01-01T12:30:00",
+      "StartDate2": "2026-01-01T13:30:00",
+      "EndDate2": "2026-01-01T14:30:00"
+    },
+    {
+      "ScheduleCode": 9390,
+      "DayType": 0,
+      "ScheduleWeight": 30,
+      "StartDate1": "2026-01-01T10:00:00",
+      "EndDate1": "2026-01-01T10:30:00"
+    },
+    {
+      "ScheduleCode": 9563,
+      "DayType": 0,
+      "ScheduleWeight": 30,
+      "StartDate1": "2026-01-01T13:30:00",
+      "EndDate1": "2026-01-01T14:00:00"
+    },
+    {
+      "ScheduleCode": 9881,
+      "DayType": 0,
+      "ScheduleWeight": 210,
+      "StartDate1": "2026-01-01T14:00:00",
+      "EndDate1": "2026-01-01T17:30:00"
+    },
+    {
+      "ScheduleCode": 9211,
+      "DayType": 0,
+      "ScheduleWeight": 210,
+      "StartDate1": "2026-01-01T10:00:00",
+      "EndDate1": "2026-01-01T12:30:00",
+      "StartDate2": "2026-01-01T13:00:00",
+      "EndDate2": "2026-01-01T14:00:00"
+    },
+    {
+      "ScheduleCode": 9127,
+      "DayType": 0,
+      "ScheduleWeight": 30,
+      "StartDate1": "2026-01-01T12:30:00",
+      "EndDate1": "2026-01-01T13:00:00"
+    },
+    {
+      "ScheduleCode": 9019,
+      "DayType": 0,
+      "ScheduleWeight": 210,
+      "StartDate1": "2026-01-01T18:00:00",
+      "EndDate1": "2026-01-01T20:30:00",
+      "StartDate2": "2026-01-01T21:00:00",
+      "EndDate2": "2026-01-01T22:00:00"
+    },
+    {
+      "ScheduleCode": 9236,
+      "DayType": 0,
+      "ScheduleWeight": 30,
+      "StartDate1": "2026-01-01T20:30:00",
+      "EndDate1": "2026-01-01T21:00:00"
+    },
+    {
+      "ScheduleCode": 9566,
+      "DayType": 0,
+      "ScheduleWeight": 210,
+      "StartDate1": "2026-01-01T18:00:00",
+      "EndDate1": "2026-01-01T21:30:00"
+    },
+    {
+      "ScheduleCode": 9230,
+      "DayType": 0,
+      "ScheduleWeight": 30,
+      "StartDate1": "2026-01-01T21:30:00",
+      "EndDate1": "2026-01-01T22:00:00"
+    },
+    {
+      "ScheduleCode": 9610,
+      "DayType": 0,
+      "ScheduleWeight": 30,
+      "StartDate1": "2026-01-01T10:30:00",
+      "EndDate1": "2026-01-01T11:00:00"
+    },
+    {
+      "ScheduleCode": 9251,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T13:30:00",
+      "EndDate1": "2026-01-01T17:30:00"
+    },
+    {
+      "ScheduleCode": 9354,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T14:30:00",
+      "EndDate1": "2026-01-01T18:30:00"
+    },
+    {
+      "ScheduleCode": 9885,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T12:30:00",
+      "EndDate1": "2026-01-01T16:30:00"
+    },
+    {
+      "ScheduleCode": 9444,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T15:00:00",
+      "EndDate1": "2026-01-01T19:00:00"
+    },
+    {
+      "ScheduleCode": 9172,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T16:30:00",
+      "EndDate1": "2026-01-01T20:30:00"
+    },
+    {
+      "ScheduleCode": 9147,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T11:00:00",
+      "EndDate1": "2026-01-01T15:00:00"
+    },
+    {
+      "ScheduleCode": 9452,
+      "DayType": 0,
+      "ScheduleWeight": 300,
+      "StartDate1": "2026-01-01T11:00:00",
+      "EndDate1": "2026-01-01T16:00:00"
+    },
+    {
+      "ScheduleCode": 9367,
+      "DayType": 0,
+      "ScheduleWeight": 300,
+      "StartDate1": "2026-01-01T16:30:00",
+      "EndDate1": "2026-01-01T21:30:00"
+    },
+    {
+      "ScheduleCode": 9425,
+      "DayType": 0,
+      "ScheduleWeight": 300,
+      "StartDate1": "2026-01-01T12:30:00",
+      "EndDate1": "2026-01-01T17:30:00"
+    },
+    {
+      "ScheduleCode": 9769,
+      "DayType": 0,
+      "ScheduleWeight": 300,
+      "StartDate1": "2026-01-01T08:30:00",
+      "EndDate1": "2026-01-01T13:30:00"
+    },
+    {
+      "ScheduleCode": 9757,
+      "DayType": 0,
+      "ScheduleWeight": 300,
+      "StartDate1": "2026-01-01T13:30:00",
+      "EndDate1": "2026-01-01T18:30:00"
+    },
+    {
+      "ScheduleCode": 9777,
+      "DayType": 0,
+      "ScheduleWeight": 300,
+      "StartDate1": "2026-01-01T16:00:00",
+      "EndDate1": "2026-01-01T21:00:00"
+    },
+    {
+      "ScheduleCode": 9657,
+      "DayType": 0,
+      "ScheduleWeight": 300,
+      "StartDate1": "2026-01-01T11:30:00",
+      "EndDate1": "2026-01-01T16:30:00"
+    },
+    {
+      "ScheduleCode": 9748,
+      "DayType": 0,
+      "ScheduleWeight": 300,
+      "StartDate1": "2026-01-01T12:00:00",
+      "EndDate1": "2026-01-01T17:00:00"
+    },
+    {
+      "ScheduleCode": 9141,
+      "DayType": 0,
+      "ScheduleWeight": 300,
+      "StartDate1": "2026-01-01T10:00:00",
+      "EndDate1": "2026-01-01T15:00:00"
+    },
+    {
+      "ScheduleCode": 9743,
+      "DayType": 0,
+      "ScheduleWeight": 420,
+      "StartDate1": "2026-01-01T08:30:00",
+      "EndDate1": "2026-01-01T15:30:00"
+    },
+    {
+      "ScheduleCode": 7,
+      "DayType": 6,
+      "ScheduleWeight": 0
+    },
+    {
+      "ScheduleCode": 9696,
+      "DayType": 0,
+      "ScheduleWeight": 240,
+      "StartDate1": "2026-01-01T12:00:00",
+      "EndDate1": "2026-01-01T16:00:00"
+    }
+  ]
+}

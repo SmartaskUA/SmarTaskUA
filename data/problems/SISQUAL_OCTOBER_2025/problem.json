@@ -711,6 +711,11 @@
         },
         "weight": 100,
         "enabled": true
+      },
+      {
+        "id": "minimize-skill-switches",
+        "type": "minimize_skill_switches",
+        "enabled": true
       }
     ],
     "advanced": {

@@ -172,8 +172,8 @@ function DailySegmentsView({ daily_segments, daily_detail, filterDay }) {
                 sx={{
                   fontSize: 10,
                   height: 18,
-                  bgcolor: segCount > 3 ? "#FCEBEB" : "#EAF3DE",
-                  color: segCount > 3 ? "#791F1F" : "#27500A",
+                  bgcolor: segCount > 3 ? "#FEF2F2" : "#ECFDF5",
+                  color: segCount > 3 ? "#7F1D1D" : "#065F46",
                 }}
               />
             </Box>
@@ -248,14 +248,14 @@ export default function EmployeeKPIPanel({ kpis }) {
       <Divider sx={{ mb: 1.5 }} />
 
       <Typography
-        variant="subtitle2"
-        color="text.secondary"
+        variant="overline"
         sx={{
+          display: "block",
           mb: 1.5,
-          textTransform: "uppercase",
-          letterSpacing: ".05em",
-          fontSize: 11,
-          fontWeight: 600,
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: "0.08em",
+          color: "text.secondary",
         }}
       >
         Per-employee KPIs
@@ -344,9 +344,9 @@ export default function EmployeeKPIPanel({ kpis }) {
               sub={emp.max_consecutive_days > 5 ? "exceeds limit of 5" : "within limit"}
               highlight={
                 emp.max_consecutive_days > 5
-                  ? "#A32D2D"
+                  ? "#DC2626"
                   : emp.max_consecutive_days === 5
-                  ? "#854F0B"
+                  ? "#D97706"
                   : undefined
               }
             />
