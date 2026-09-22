@@ -1,7 +1,9 @@
 """Paths and assertions shared by the suite.
 
-Importing this puts ``schema_v4/src`` on sys.path, which is the only setup the
-suite needs: v4 is a real package, so no module-name juggling is involved.
+`pytest.ini` puts `src` and `tests` on the path, so this module is only about
+locations and assertions. Nothing here reads `reference/` -- the vendor drop is
+provenance, not a fixture, and a test that depends on it breaks the moment
+somebody reorganises it (which is exactly what happened).
 """
 
 from __future__ import annotations
@@ -16,13 +18,8 @@ SRC = V4 / "src"
 SCHEMAS = V4 / "schemas"
 EXAMPLES = V4 / "examples"
 TEMPLATES = V4 / "templates"
-REFERENCE = V4 / "reference"
-RAW = V4 / "IntegracaoUA_SISQUAL" / "JSON" / "20260917_JSON_Cenarios_GeradoSisqual"
-RAW_C1 = RAW / "Cenário_1"
-RAW_C2 = RAW / "Cenário_2"
-RAW_JULY = V4 / "IntegracaoUA_SISQUAL" / "sisqual-alg-input"
-CATALOGUE = REFERENCE / "schedules" / "schedules_without_meal.csv"
 
+#: The one shipped example package.
 C2 = EXAMPLES / "cenario2_retail"
 
 if str(SRC) not in sys.path:
@@ -31,39 +28,33 @@ if str(SRC) not in sys.path:
 from schema_v4 import validator  # noqa: E402  (after sys.path is set)
 
 
-def sisqual_result(tmp_path) -> Path:
-    """Sisqual's own emailed result sample, repaired into `tmp_path`.
-
-    `import_1.Json` is indented with U+2002 EN SPACE characters from an Outlook
-    paste and is not valid JSON, so it cannot be read where it lies. Repairing a
-    copy keeps its two quirks - an integer EmployeeCode and a ScheduleCode that is
-    not in the catalogue we hold - available as fixtures without touching the raw
-    drop.
-    """
-    src = RAW_C1 / "import_1.Json"
-    text = src.read_text(encoding="utf-8-sig").replace("\u2002", " ")
-    out = tmp_path / "result.json"
-    out.write_text(text, encoding="utf-8")
-    return out
-
-
 def load(path) -> dict:
     with Path(path).open(encoding="utf-8") as fh:
         return json.load(fh)
+
+
+def dump(path, doc: dict) -> None:
+    with Path(path).open("w", encoding="utf-8") as fh:
+        json.dump(doc, fh, indent=2, ensure_ascii=False)
+        fh.write("\n")
 
 
 def validate(path, against=None):
     return validator.validate(path, against)
 
 
-def run_cli(*args) -> dict:
-    """Run the validator CLI in a subprocess and return its --json output."""
-    out = subprocess.run(
-        [sys.executable, "-m", "schema_v4.validator", *map(str, args), "--json"],
-        capture_output=True, text=True, cwd=V4,
-        env={"PYTHONPATH": str(SRC), "PATH": "/usr/bin:/bin"},
-    )
-    return json.loads(out.stdout)
+def run_cli(*args, json_output: bool = True):
+    """Run the validator CLI in a subprocess.
+
+    Returns (returncode, stdout, stderr). stderr is kept, because discarding it
+    turns a crash into an opaque JSONDecodeError at the call site.
+    """
+    argv = [sys.executable, "-m", "schema_v4.validator", *map(str, args)]
+    if json_output:
+        argv.append("--json")
+    proc = subprocess.run(argv, capture_output=True, text=True, cwd=V4,
+                          env={"PYTHONPATH": str(SRC), "PATH": "/usr/bin:/bin"})
+    return proc.returncode, proc.stdout, proc.stderr
 
 
 def findings(report, want_error: bool = True) -> list[str]:
@@ -83,3 +74,15 @@ def assert_isolated(report, needle: str, want_error: bool = True) -> None:
     assert len(wanted) == 1, f"expected exactly one {label}, got {wanted}"
     assert needle in wanted[0], f"expected {needle!r} in {wanted[0]!r}"
     assert not other, f"expected no {'warnings' if want_error else 'errors'}, got {other}"
+
+
+def assert_reports(report, needle: str, want_error: bool = True, count: int = 1) -> None:
+    """Assert `count` findings match `needle`, and that at least one exists.
+
+    For the cases where isolation is the wrong demand -- several findings are
+    legitimately expected -- but `any(...)` would pass on an empty list.
+    """
+    pool = findings(report, want_error)
+    hits = [f for f in pool if needle in f]
+    assert hits, f"expected {needle!r} among {pool}"
+    assert len(hits) == count, f"expected {count} matching {needle!r}, got {len(hits)}: {hits}"

@@ -18,7 +18,8 @@
 # minutes: contracts state workMinutesPerDay: 480 and the matching cell is 8.
 # A value above 24 is rejected, because it is almost certainly a v3.0 minute
 # count that was never converted. We are proposing minutes to Sisqual -- see
-# docs/next_meeting.md item 16 -- and until they agree, hours it is.
+# next_meeting.md item 16 ("should be minutes, not hours") -- and until
+# they agree, hours it is.
 #
 # The EQUALS/INCLUDE/WITHIN/EXCEPT operators are carried over from v3.0 and are
 # fully authorable, but SISQUAL's exporter emits none of them.

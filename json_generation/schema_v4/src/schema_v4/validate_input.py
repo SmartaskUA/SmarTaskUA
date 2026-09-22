@@ -1,4 +1,4 @@
-"""Semantic checks for the declarative (problem) form.
+"""Semantic checks for the input (problem) form.
 
 Four tiers, in the order a reader most wants them:
 
@@ -18,18 +18,18 @@ from datetime import date
 from pathlib import Path
 
 from . import core
-from .common import report_grouped
+from .common import _overlapping_pairs, report_grouped
 from .core import DomainError, iso
 
 GRAINS = (("days", "dataFileDays"), ("periods", "dataFilePeriods"), ("shifts", "dataFileShifts"))
 
 
-class DeclarativeChecksMixin:
+class InputChecksMixin:
     problem: dict
     report: object
     base: Path
 
-    def validate_declarative(self) -> None:
+    def validate_input(self) -> None:
         days = self.horizon()
         rows_by_grain, open_days = self._validate_demand_csvs(days)
         cells, date_cols = self._validate_schedule_csv(days)
@@ -124,13 +124,12 @@ class DeclarativeChecksMixin:
             if row.window is not None:
                 buckets[(row.date, row.table_name, row.table_value)].append(row)
         for (day, tn, tv), group in sorted(buckets.items()):
-            group.sort(key=lambda x: x.window.start)
-            for a, b in zip(group, group[1:]):
-                if a.window.overlaps(b.window):
-                    self.report.warn(
-                        f"{name}: {day} {tn}/{tv} has overlapping windows {a.window} (row "
-                        f"{a.line}) and {b.window} (row {b.line}); a worker in the overlap "
-                        f"counts toward both")
+            spans = sorted((r.window.start, r.window.end, r.line, r) for r in group)
+            for a, b in _overlapping_pairs(spans, closed=False):
+                self.report.warn(
+                    f"{name}: {day} {tn}/{tv} has overlapping windows {a[3].window} (row "
+                    f"{a[2]}) and {b[3].window} (row {b[2]}); a worker in the overlap "
+                    f"counts toward both")
 
     # -- Tier 3: schedule_input.csv ---------------------------------------
 
@@ -164,7 +163,6 @@ class DeclarativeChecksMixin:
             r.error(f"{name}: row {extra} is not an employee in employees.list")
 
         contracts = core.contracts_by_id(p)
-        bad_cells: list[tuple[str, str]] = []
         mismatches: list[tuple[str, str]] = []
         for emp in p.get("employees", {}).get("list", []):
             eid = emp.get("id")
@@ -173,8 +171,10 @@ class DeclarativeChecksMixin:
                 raw = row.get(col, "")
                 try:
                     rule = core.classify_cell(raw, p)
-                except DomainError as exc:
-                    bad_cells.append((str(exc), f"{name}: {eid} on {col}: {exc}"))
+                except DomainError:
+                    # Reported once, by the feasibility preflight: core.scan_feasibility
+                    # is the single source of cell diagnostics, and reporting here too
+                    # produced two differently-worded findings for one fact.
                     continue
                 if rule.kind == "exact_hours":
                     cid = core.active_contract(emp, iso(col))
@@ -184,7 +184,6 @@ class DeclarativeChecksMixin:
                             f"{cid}:{rule.minutes}",
                             f"{name}: {eid} on {col}: cell {raw!r} is {rule.minutes} min but "
                             f"contract {cid} states {wanted_min}"))
-        report_grouped(r.error, bad_cells)
         report_grouped(r.warn, mismatches)
         return cells, date_cols
 

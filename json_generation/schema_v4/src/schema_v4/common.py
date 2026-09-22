@@ -51,9 +51,9 @@ class CommonChecksMixin:
         if version != "4.0":
             if version == "3.0":
                 r.error(
-                    "schemaVersion is '3.0'. SISQUAL's exporter still stamps 3.0 on a payload "
-                    "that is not v3.0 - run `python3 -m schema_v4.sisqual_adapt <bundle> -o <out>` "
-                    "to convert it. See docs/DIALECT.md."
+                    "schemaVersion is '3.0'. This is a v3.0 document, or a SISQUAL export - "
+                    "their generator still stamps 3.0 on a payload that is neither v3.0 nor "
+                    "v4.0. See docs/MIGRATION-3.0-to-4.0.md for the field-by-field conversion."
                 )
             else:
                 r.error(f"schemaVersion must be '4.0', found {version!r}")
@@ -155,7 +155,7 @@ class CommonChecksMixin:
             # SISQUAL emits exactly that for some employees, so it is a warning
             # naming the levels rather than an error: the fact is ambiguous, not
             # impossible, and a consumer can resolve it by taking the highest
-            # competence (the LOWEST number). See docs/next_meeting.md item 19.
+            # competence (the LOWEST number). See next_meeting.md item 18 ("the same competency twice").
             for pair, entries in by_pair.items():
                 self._check_competency_overlaps(entries, eid, pair)
             if not comps:
@@ -171,17 +171,15 @@ class CommonChecksMixin:
             end = iso(a["end"]) if a.get("end") else date.max
             if start:
                 spans.append((start, end, a.get("level")))
-        spans.sort()
-        for (s1, e1, l1), (s2, e2, l2) in zip(spans, spans[1:]):
-            if s2 <= e1:
-                if l1 == l2:
-                    detail = f"the same level {l1} twice"
-                else:
-                    detail = (f"levels {l1} and {l2} at once, so its competence level is "
-                              f"ambiguous; take {min(l1, l2)}, the higher competence")
-                self.report.warn(
-                    f"employee {eid}: holds {pair[0]}/{pair[1]} over overlapping dates "
-                    f"({s1}..{e1} and {s2}..{e2}) with {detail}")
+        for (s1, e1, l1), (s2, e2, l2) in _overlapping_pairs(spans):
+            if l1 == l2:
+                detail = f"the same level {l1} twice"
+            else:
+                detail = (f"levels {l1} and {l2} at once, so its competence level is "
+                          f"ambiguous; take {min(l1, l2)}, the higher competence")
+            self.report.warn(
+                f"employee {eid}: holds {pair[0]}/{pair[1]} over overlapping dates "
+                f"({s1}..{e1} and {s2}..{e2}) with {detail}")
 
     def _check_overlaps(self, entries: list[dict], label: str) -> None:
         spans = []
@@ -190,10 +188,8 @@ class CommonChecksMixin:
             end = iso(a["end"]) if a.get("end") else date.max
             if start:
                 spans.append((start, end))
-        spans.sort()
-        for (s1, e1), (s2, e2) in zip(spans, spans[1:]):
-            if s2 <= e1:
-                self.report.error(f"{label}: {s1}..{e1} overlaps {s2}..{e2}")
+        for a, b in _overlapping_pairs(spans):
+            self.report.error(f"{label}: {a[0]}..{a[1]} overlaps {b[0]}..{b[1]}")
 
     @staticmethod
     def _covers_all(entries: list[dict], days: list[date]) -> bool:
@@ -236,3 +232,23 @@ def report_grouped(emit, items: list[tuple[str, str]], keep: int = 3) -> None:
         if len(messages) > keep:
             emit(f"... and {len(messages) - keep} more with the same cause "
                  f"({len(messages)} in total)")
+
+
+def _overlapping_pairs(spans, closed: bool = True):
+    """Every pair of spans that overlap, not merely the adjacent ones.
+
+    The obvious `zip(spans, spans[1:])` after sorting compares neighbours only, so
+    one long span swallowing several later ones reports the first and misses the
+    rest. Spans are tuples whose first two elements are (start, end); anything after
+    that is carried through untouched.
+
+    `closed` says whether the endpoint belongs to the span. Date ranges are closed,
+    so 01-05..01-10 and 01-10..01-15 share the 10th and do overlap. Time windows are
+    half-open, so 20:00-21:00 and 21:00-22:00 merely touch and do not.
+    """
+    ordered = sorted(spans)
+    for i, a in enumerate(ordered):
+        for b in ordered[i + 1:]:
+            if (b[0] > a[1]) if closed else (b[0] >= a[1]):
+                break          # sorted by start, so nothing later can overlap either
+            yield a, b

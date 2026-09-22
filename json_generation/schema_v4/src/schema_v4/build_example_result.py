@@ -3,15 +3,13 @@
 
 **This produces a constructed artifact, not solver output.** No solver has run on
 v4.0 yet; this script assigns each worker-day a shift from the ScheduleCode
-catalogue by a fixed, stated rule, so that the result form and its sidecar CSV have
-a realistic instance to be validated against. Where the catalogue holds no shift of
-the contracted length it substitutes the nearest one, and every substitution is
-counted into the `_comment` block it writes at the top of result.json.
+menu by a fixed, stated rule, so that the result form and its sidecar CSV have a
+realistic instance to be validated against. Any substitution it has to make -- a
+shift that is not the contracted length, or one reaching outside the day's demand --
+is counted into the `_comment` block it writes at the top of result.json.
 
-It lives in reference/ rather than src/ deliberately: it is provenance for one
-example, not a tool the format needs.
-
-    PYTHONPATH=src python3 reference/build_example_result.py
+    make result
+    # or: PYTHONPATH=src python3 -m schema_v4.build_example_result
 
 The rule, in full:
 
@@ -33,10 +31,9 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
-V4 = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(V4 / "src"))
+from . import core
 
-from schema_v4 import core                                    # noqa: E402
+V4 = Path(__file__).resolve().parents[2]
 
 PACKAGE = V4 / "examples" / "cenario2_retail"
 REST_CODE = 3                       # "Day off" in the catalogue
@@ -63,7 +60,7 @@ def overlap(a: core.Interval, windows: list) -> int:
                for w in core.coalesce(windows))
 
 
-def main() -> int:
+def main(argv=None) -> int:
     problem = json.loads((PACKAGE / "problem.json").read_text(encoding="utf-8"))
     slot = problem["timeGrid"]["slotMinutes"]
     roster = problem["metadata"]["rosterCode"]
@@ -128,9 +125,9 @@ def main() -> int:
     result = {
         "_comment": (
             "CONSTRUCTED ARTIFACT, NOT SOLVER OUTPUT. Built by "
-            "reference/build_example_result.py so that the result form and its "
-            "sidecar CSV have a realistic instance to validate against. No v4.0 "
-            "solver exists yet."
+            "`make result` (src/schema_v4/build_example_result.py) so that the result "
+            "form and its sidecar CSV have a realistic instance to validate against. "
+            "No v4.0 solver exists yet."
         ),
         "_comment_coverage": (
             f"{len(entries)} employee-days: {work_days} worked, {rest_days} rest "

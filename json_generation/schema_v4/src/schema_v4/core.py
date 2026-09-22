@@ -130,7 +130,7 @@ def hours_to_minutes(hours: float) -> int | None:
 
     v4.0 cells are HOURS (SISQUAL's unit) while contracts state minutes - the two
     coexist, deliberately and uncomfortably, until Sisqual agrees to switch. See
-    docs/next_meeting.md item 16.
+    next_meeting.md item 16 ("should be minutes, not hours").
     """
     minutes = hours * 60
     if abs(minutes - round(minutes)) > 1e-6:
@@ -570,12 +570,10 @@ def scan_feasibility(problem: dict, base: Path) -> list[Diagnostic]:
                                       f"contract {contract_id!r} is not in contracts.definitions"))
                 continue
 
+            # A numeric cell overriding the contract length is an instruction, not an
+            # impossibility, so it is not diagnosed here -- validate_input warns
+            # about it while reading the CSV. Only genuine infeasibility belongs here.
             wanted = contract.get("workMinutesPerDay")
-            if rule.kind == "exact_hours" and wanted is not None and rule.minutes != wanted:
-                out.append(Diagnostic(
-                    eid, col, raw,
-                    f"{rule.minutes} min does not match contract {contract_id}'s "
-                    f"workMinutesPerDay of {wanted}"))
             duration = rule.minutes if rule.kind == "exact_hours" else wanted
             if duration is not None and not on_grid(duration, slot):
                 out.append(Diagnostic(eid, col, raw,

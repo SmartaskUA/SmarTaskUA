@@ -12,7 +12,7 @@ def test_both_schemas_compile(schemas):
 def test_no_schema_references_another_file(schemas):
     for name, schema in schemas.items():
         blob = json.dumps(schema)
-        for ref in ("scheduling-problem-v4.0-declarative.json",
+        for ref in ("scheduling-problem-v4.0-input.json",
                     "scheduling-problem-v4.0-result.json"):
             assert f'"$ref": "{ref}' not in blob, f"{name} references another schema file"
         assert '"$ref": "http' not in blob, f"{name} has a remote $ref"
@@ -42,7 +42,7 @@ def test_root_is_open_but_nested_objects_are_closed(schemas):
     assert list(v.iter_errors(doc))
 
 
-def test_declarative_documents_level_one_as_highest(schemas):
+def test_the_input_schema_documents_level_one_as_highest(schemas):
     blob = json.dumps(schemas["schema-v4-input.json"])
     assert "LEVEL 1 IS THE HIGHEST" in blob
 

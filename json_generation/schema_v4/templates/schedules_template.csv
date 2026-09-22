@@ -1,20 +1,24 @@
-# schedules.csv -- the ScheduleCode catalogue: the menu a result picks from.
+# schedules.csv -- the shift menu this roster may pick from.
 # Lines starting with '#' and blank lines are ignored, so these notes can stay.
 #
-# code                    the ScheduleCode a result names in OutRosterTeamDays
-# description             "HH:MM-HH:MM", or a label for a code that has no window
-# scheduleWeightMinutes   paid length, in minutes
-# startMin,endMin         the window in minutes from 00:00; endMin passes 1440
-#                         when the shift crosses midnight, so no reader infers it
+# A code stands for a grouping of hours and nothing else: this file IS the
+# translation. The numbering is yours and means nothing on its own -- 9003 is
+# 09:00-13:00 only because the row below says so. Need a grouping that is not here?
+# Add a row with a new code.
 #
-# Codes with no window are left blank in startMin/endMin. SISQUAL's real
-# catalogue has four: 1 Espaco, 3 Day off, 4 Vazio, and 1020 Flexible -- the
-# last one has a LENGTH (480) but no fixed position, which is v3.0's synthesis
-# model appearing inside the menu. Ask what a solver may do with it.
+# code                   what a result names in OutRosterTeamDays
+# description            "HH:MM-HH:MM", or a label for a code with no window
+# scheduleWeightMinutes  paid length in minutes. v4.0 has no break model, so this
+#                        always equals endMin - startMin (see docs/FUTURE.md 2)
+# startMin,endMin        the window in minutes from 00:00; endMin passes 1440 when
+#                        the shift crosses midnight, so no reader has to infer it
 #
-# SISQUAL's catalogue is on a 15-minute grid while their problems declare a
-# 30-minute one, so 914 of its 1277 codes cannot be emitted on that grid.
-# reference/schedules/schedules_without_meal.csv is the real thing.
+# Every boundary must land on timeGrid.slotMinutes, or a solver on that grid cannot
+# emit the code -- the validator warns about any that do not.
+#
+# A row with no window and zero weight is a REST SENTINEL, and that is how the
+# validator recognises one: from the data, not a hardcoded list. Codes 1, 3 and 4
+# keep the numbers WFM uses on import.
 code,description,scheduleWeightMinutes,startMin,endMin
 3,Day off,0,,
 4,Vazio,0,,

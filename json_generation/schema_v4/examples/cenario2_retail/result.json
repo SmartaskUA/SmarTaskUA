@@ -1,4 +1,9 @@
 {
+  "_comment": "CONSTRUCTED ARTIFACT, NOT SOLVER OUTPUT. Built by `make result` (src/schema_v4/build_example_result.py) so that the result form and its sidecar CSV have a realistic instance to validate against. No v4.0 solver exists yet.",
+  "_comment_coverage": "465 employee-days: 270 worked, 195 rest (ScheduleCode 3). 11 distinct codes, defined in result_schedules.csv.",
+  "_comment_substitutions": [
+    "none - every worked day got a shift of exactly the contracted length"
+  ],
   "OutRosterTeamDays": [
     {
       "RosterCode": "C2",
@@ -14,7 +19,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-02T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -23,7 +28,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-03T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9018,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -41,7 +46,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-05T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -59,7 +64,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-07T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -68,7 +73,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-08T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -77,7 +82,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-09T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -86,7 +91,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-10T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9018,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -104,7 +109,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-12T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -122,7 +127,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-14T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -131,7 +136,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-15T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -140,7 +145,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-16T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -149,7 +154,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-17T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9018,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -167,7 +172,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-19T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -185,7 +190,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-21T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -194,7 +199,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-22T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -203,7 +208,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-23T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -212,7 +217,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-24T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9018,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -230,7 +235,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-26T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -248,7 +253,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-28T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -257,7 +262,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-29T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -266,7 +271,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-30T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -275,7 +280,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20072412",
       "Date": "2026-01-31T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9018,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -293,7 +298,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-02T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -302,7 +307,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-03T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9018,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -320,7 +325,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-05T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -329,7 +334,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-06T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -338,7 +343,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-07T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -356,7 +361,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-09T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -365,7 +370,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-10T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9018,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -383,7 +388,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-12T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -392,7 +397,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-13T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -401,7 +406,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-14T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -419,7 +424,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-16T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -428,7 +433,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-17T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9018,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -446,7 +451,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-19T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -455,7 +460,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-20T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -464,7 +469,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-21T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -482,7 +487,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-23T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -491,7 +496,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-24T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9018,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -509,7 +514,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-26T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -518,7 +523,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-27T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -527,7 +532,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-28T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -545,7 +550,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-30T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -554,7 +559,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066543",
       "Date": "2026-01-31T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9018,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -581,7 +586,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-03T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -590,7 +595,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-04T00:00:00",
-      "ScheduleCode": 137768,
+      "ScheduleCode": 9008,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -599,7 +604,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-05T00:00:00",
-      "ScheduleCode": 132104,
+      "ScheduleCode": 9007,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -608,7 +613,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-06T00:00:00",
-      "ScheduleCode": 132104,
+      "ScheduleCode": 9007,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -626,7 +631,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-08T00:00:00",
-      "ScheduleCode": 132104,
+      "ScheduleCode": 9007,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -644,7 +649,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-10T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -653,7 +658,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-11T00:00:00",
-      "ScheduleCode": 137768,
+      "ScheduleCode": 9008,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -662,7 +667,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-12T00:00:00",
-      "ScheduleCode": 132104,
+      "ScheduleCode": 9007,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -671,7 +676,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-13T00:00:00",
-      "ScheduleCode": 132104,
+      "ScheduleCode": 9007,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -689,7 +694,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-15T00:00:00",
-      "ScheduleCode": 132104,
+      "ScheduleCode": 9007,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -707,7 +712,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-17T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -716,7 +721,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-18T00:00:00",
-      "ScheduleCode": 137768,
+      "ScheduleCode": 9008,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -725,7 +730,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-19T00:00:00",
-      "ScheduleCode": 132104,
+      "ScheduleCode": 9007,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -734,7 +739,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-20T00:00:00",
-      "ScheduleCode": 132104,
+      "ScheduleCode": 9007,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -752,7 +757,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-22T00:00:00",
-      "ScheduleCode": 132104,
+      "ScheduleCode": 9007,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -770,7 +775,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-24T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -779,7 +784,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-25T00:00:00",
-      "ScheduleCode": 137768,
+      "ScheduleCode": 9008,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -788,7 +793,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-26T00:00:00",
-      "ScheduleCode": 132104,
+      "ScheduleCode": 9007,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -797,7 +802,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-27T00:00:00",
-      "ScheduleCode": 132104,
+      "ScheduleCode": 9007,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -815,7 +820,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-29T00:00:00",
-      "ScheduleCode": 132104,
+      "ScheduleCode": 9007,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -833,7 +838,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067009",
       "Date": "2026-01-31T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -851,7 +856,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-02T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -878,7 +883,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-05T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -887,7 +892,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-06T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -896,7 +901,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-07T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -905,7 +910,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-08T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -914,7 +919,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-09T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -941,7 +946,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-12T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -950,7 +955,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-13T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -959,7 +964,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-14T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -968,7 +973,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-15T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -977,7 +982,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-16T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1004,7 +1009,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-19T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1013,7 +1018,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-20T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1022,7 +1027,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-21T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1031,7 +1036,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-22T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1040,7 +1045,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-23T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1067,7 +1072,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-26T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1076,7 +1081,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-27T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1085,7 +1090,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-28T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1094,7 +1099,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-29T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1103,7 +1108,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20054956",
       "Date": "2026-01-30T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1130,7 +1135,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-02T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1139,7 +1144,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-03T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9018,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1148,7 +1153,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-04T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9017,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1175,7 +1180,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-07T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1184,7 +1189,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-08T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1193,7 +1198,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-09T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1202,7 +1207,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-10T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9018,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1211,7 +1216,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-11T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9017,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1238,7 +1243,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-14T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1247,7 +1252,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-15T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1256,7 +1261,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-16T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1265,7 +1270,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-17T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9018,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1274,7 +1279,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-18T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9017,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1301,7 +1306,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-21T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1310,7 +1315,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-22T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1319,7 +1324,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-23T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1328,7 +1333,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-24T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9018,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1337,7 +1342,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-25T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9017,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1364,7 +1369,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-28T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1373,7 +1378,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-29T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1382,7 +1387,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-30T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9016,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1391,7 +1396,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20056459",
       "Date": "2026-01-31T00:00:00",
-      "ScheduleCode": 1014,
+      "ScheduleCode": 9018,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1418,7 +1423,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-03T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1436,7 +1441,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-05T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1445,7 +1450,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-06T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1454,7 +1459,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-07T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1463,7 +1468,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-08T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1481,7 +1486,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-10T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1499,7 +1504,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-12T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1508,7 +1513,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-13T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1517,7 +1522,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-14T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1526,7 +1531,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-15T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1544,7 +1549,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-17T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1562,7 +1567,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-19T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1571,7 +1576,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-20T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1580,7 +1585,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-21T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1589,7 +1594,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-22T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1607,7 +1612,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-24T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1625,7 +1630,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-26T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1634,7 +1639,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-27T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1643,7 +1648,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-28T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1652,7 +1657,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-29T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1670,7 +1675,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20062688",
       "Date": "2026-01-31T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1688,7 +1693,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-02T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1697,7 +1702,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-03T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1706,7 +1711,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-04T00:00:00",
-      "ScheduleCode": 137764,
+      "ScheduleCode": 9002,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1715,7 +1720,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-05T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1733,7 +1738,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-07T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1751,7 +1756,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-09T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1760,7 +1765,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-10T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1769,7 +1774,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-11T00:00:00",
-      "ScheduleCode": 137764,
+      "ScheduleCode": 9002,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1778,7 +1783,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-12T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1796,7 +1801,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-14T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1814,7 +1819,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-16T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1823,7 +1828,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-17T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1832,7 +1837,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-18T00:00:00",
-      "ScheduleCode": 137764,
+      "ScheduleCode": 9002,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1841,7 +1846,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-19T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1859,7 +1864,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-21T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1877,7 +1882,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-23T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1886,7 +1891,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-24T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1895,7 +1900,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-25T00:00:00",
-      "ScheduleCode": 137764,
+      "ScheduleCode": 9002,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1904,7 +1909,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-26T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1922,7 +1927,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-28T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1940,7 +1945,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-30T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1949,7 +1954,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20067696",
       "Date": "2026-01-31T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1967,7 +1972,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-02T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -1994,7 +1999,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-05T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2003,7 +2008,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-06T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2012,7 +2017,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-07T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2021,7 +2026,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-08T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2030,7 +2035,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-09T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2057,7 +2062,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-12T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2066,7 +2071,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-13T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2075,7 +2080,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-14T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2084,7 +2089,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-15T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2093,7 +2098,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-16T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2120,7 +2125,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-19T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2129,7 +2134,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-20T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2138,7 +2143,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-21T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2147,7 +2152,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-22T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2156,7 +2161,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-23T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2183,7 +2188,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-26T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2192,7 +2197,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-27T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2201,7 +2206,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-28T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2210,7 +2215,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-29T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2219,7 +2224,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20058959",
       "Date": "2026-01-30T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2246,7 +2251,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20068397",
       "Date": "2026-01-02T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2255,7 +2260,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20068397",
       "Date": "2026-01-03T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2264,7 +2269,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20068397",
       "Date": "2026-01-04T00:00:00",
-      "ScheduleCode": 137764,
+      "ScheduleCode": 9002,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2309,7 +2314,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20068397",
       "Date": "2026-01-09T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2318,7 +2323,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20068397",
       "Date": "2026-01-10T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2327,7 +2332,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20068397",
       "Date": "2026-01-11T00:00:00",
-      "ScheduleCode": 137764,
+      "ScheduleCode": 9002,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2372,7 +2377,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20068397",
       "Date": "2026-01-16T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2381,7 +2386,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20068397",
       "Date": "2026-01-17T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2390,7 +2395,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20068397",
       "Date": "2026-01-18T00:00:00",
-      "ScheduleCode": 137764,
+      "ScheduleCode": 9002,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2435,7 +2440,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20068397",
       "Date": "2026-01-23T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2444,7 +2449,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20068397",
       "Date": "2026-01-24T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2453,7 +2458,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20068397",
       "Date": "2026-01-25T00:00:00",
-      "ScheduleCode": 137764,
+      "ScheduleCode": 9002,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2498,7 +2503,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20068397",
       "Date": "2026-01-30T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2507,7 +2512,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20068397",
       "Date": "2026-01-31T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2534,7 +2539,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20038706",
       "Date": "2026-01-03T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2543,7 +2548,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20038706",
       "Date": "2026-01-04T00:00:00",
-      "ScheduleCode": 137768,
+      "ScheduleCode": 9008,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2597,7 +2602,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20038706",
       "Date": "2026-01-10T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2606,7 +2611,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20038706",
       "Date": "2026-01-11T00:00:00",
-      "ScheduleCode": 137768,
+      "ScheduleCode": 9008,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2660,7 +2665,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20038706",
       "Date": "2026-01-17T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2669,7 +2674,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20038706",
       "Date": "2026-01-18T00:00:00",
-      "ScheduleCode": 137768,
+      "ScheduleCode": 9008,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2723,7 +2728,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20038706",
       "Date": "2026-01-24T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2732,7 +2737,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20038706",
       "Date": "2026-01-25T00:00:00",
-      "ScheduleCode": 137768,
+      "ScheduleCode": 9008,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2786,7 +2791,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20038706",
       "Date": "2026-01-31T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2813,7 +2818,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066338",
       "Date": "2026-01-03T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2822,7 +2827,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066338",
       "Date": "2026-01-04T00:00:00",
-      "ScheduleCode": 137768,
+      "ScheduleCode": 9008,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2876,7 +2881,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066338",
       "Date": "2026-01-10T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2885,7 +2890,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066338",
       "Date": "2026-01-11T00:00:00",
-      "ScheduleCode": 137768,
+      "ScheduleCode": 9008,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2939,7 +2944,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066338",
       "Date": "2026-01-17T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -2948,7 +2953,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066338",
       "Date": "2026-01-18T00:00:00",
-      "ScheduleCode": 137768,
+      "ScheduleCode": 9008,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3002,7 +3007,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066338",
       "Date": "2026-01-24T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3011,7 +3016,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066338",
       "Date": "2026-01-25T00:00:00",
-      "ScheduleCode": 137768,
+      "ScheduleCode": 9008,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3065,7 +3070,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20066338",
       "Date": "2026-01-31T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3092,7 +3097,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027719",
       "Date": "2026-01-03T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3101,7 +3106,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027719",
       "Date": "2026-01-04T00:00:00",
-      "ScheduleCode": 137768,
+      "ScheduleCode": 9008,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3155,7 +3160,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027719",
       "Date": "2026-01-10T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3164,7 +3169,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027719",
       "Date": "2026-01-11T00:00:00",
-      "ScheduleCode": 137768,
+      "ScheduleCode": 9008,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3218,7 +3223,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027719",
       "Date": "2026-01-17T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3227,7 +3232,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027719",
       "Date": "2026-01-18T00:00:00",
-      "ScheduleCode": 137768,
+      "ScheduleCode": 9008,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3281,7 +3286,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027719",
       "Date": "2026-01-24T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3290,7 +3295,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027719",
       "Date": "2026-01-25T00:00:00",
-      "ScheduleCode": 137768,
+      "ScheduleCode": 9008,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3344,7 +3349,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027719",
       "Date": "2026-01-31T00:00:00",
-      "ScheduleCode": 141544,
+      "ScheduleCode": 9009,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3362,7 +3367,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-02T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3389,7 +3394,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-05T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3398,7 +3403,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-06T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3407,7 +3412,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-07T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3416,7 +3421,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-08T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3425,7 +3430,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-09T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3452,7 +3457,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-12T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3461,7 +3466,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-13T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3470,7 +3475,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-14T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3479,7 +3484,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-15T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3488,7 +3493,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-16T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3515,7 +3520,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-19T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3524,7 +3529,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-20T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3533,7 +3538,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-21T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3542,7 +3547,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-22T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3551,7 +3556,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-23T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3578,7 +3583,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-26T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3587,7 +3592,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-27T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3596,7 +3601,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-28T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3605,7 +3610,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-29T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3614,7 +3619,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20051291",
       "Date": "2026-01-30T00:00:00",
-      "ScheduleCode": 300000,
+      "ScheduleCode": 9012,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3641,7 +3646,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-02T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3650,7 +3655,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-03T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3659,7 +3664,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-04T00:00:00",
-      "ScheduleCode": 137764,
+      "ScheduleCode": 9002,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3668,7 +3673,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-05T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3686,7 +3691,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-07T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3704,7 +3709,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-09T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3713,7 +3718,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-10T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3722,7 +3727,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-11T00:00:00",
-      "ScheduleCode": 137764,
+      "ScheduleCode": 9002,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3731,7 +3736,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-12T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3749,7 +3754,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-14T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3767,7 +3772,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-16T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3776,7 +3781,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-17T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3785,7 +3790,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-18T00:00:00",
-      "ScheduleCode": 137764,
+      "ScheduleCode": 9002,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3794,7 +3799,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-19T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3812,7 +3817,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-21T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3830,7 +3835,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-23T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3839,7 +3844,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-24T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3848,7 +3853,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-25T00:00:00",
-      "ScheduleCode": 137764,
+      "ScheduleCode": 9002,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3857,7 +3862,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-26T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3875,7 +3880,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-28T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3893,7 +3898,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-30T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3902,7 +3907,7 @@
       "TeamCode": "1",
       "EmployeeCode": "20055066",
       "Date": "2026-01-31T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3920,7 +3925,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027718",
       "Date": "2026-01-02T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3929,7 +3934,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027718",
       "Date": "2026-01-03T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3938,7 +3943,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027718",
       "Date": "2026-01-04T00:00:00",
-      "ScheduleCode": 137764,
+      "ScheduleCode": 9002,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3983,7 +3988,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027718",
       "Date": "2026-01-09T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -3992,7 +3997,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027718",
       "Date": "2026-01-10T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -4001,7 +4006,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027718",
       "Date": "2026-01-11T00:00:00",
-      "ScheduleCode": 137764,
+      "ScheduleCode": 9002,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -4046,7 +4051,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027718",
       "Date": "2026-01-16T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -4055,7 +4060,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027718",
       "Date": "2026-01-17T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -4064,7 +4069,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027718",
       "Date": "2026-01-18T00:00:00",
-      "ScheduleCode": 137764,
+      "ScheduleCode": 9002,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -4109,7 +4114,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027718",
       "Date": "2026-01-23T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -4118,7 +4123,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027718",
       "Date": "2026-01-24T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -4127,7 +4132,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027718",
       "Date": "2026-01-25T00:00:00",
-      "ScheduleCode": 137764,
+      "ScheduleCode": 9002,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -4172,7 +4177,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027718",
       "Date": "2026-01-30T00:00:00",
-      "ScheduleCode": 132100,
+      "ScheduleCode": 9001,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     },
@@ -4181,7 +4186,7 @@
       "TeamCode": "1",
       "EmployeeCode": "900027718",
       "Date": "2026-01-31T00:00:00",
-      "ScheduleCode": 141540,
+      "ScheduleCode": 9003,
       "OutRosterTeamDayTasks": [],
       "OutRosterTeamDayResponsibilities": []
     }

@@ -1,10 +1,8 @@
 {
   "_comment": "v4.0 declarative problem -- a filled-in starting point. Copy this folder, point the dataFile keys at your CSV names, replace the data. Every _comment* key is ignored by the validator (the schema's root is open), so keep them as reminders or delete them: either way it validates.",
-
   "schemaVersion": "4.0",
-  "form": "declarative",
+  "form": "input",
   "problemType": "employee_scheduling",
-
   "metadata": {
     "problemId": "TEMPLATE_MARCH_2026",
     "createdAt": "2026-03-01T09:00:00Z",
@@ -12,93 +10,183 @@
     "source": "template",
     "rosterCode": "TEMPLATE"
   },
-
   "_comment_timeGrid": "slotMinutes must divide 1440, and EVERY duration must be a multiple of it -- including each contract's workMinutesPerDay. SISQUAL emits 30; a 432-minute contract does not fit a 30-minute grid, which is what makes Sisqual's Cenario 1 bundle unsolvable.",
-  "timeGrid": { "slotMinutes": 30 },
-
+  "timeGrid": {
+    "slotMinutes": 30
+  },
   "_comment_temporalScope": "Inclusive. schedule_input.csv carries exactly one column per day in this range.",
-  "temporalScope": { "start": "2026-03-02", "end": "2026-03-08" },
-
+  "temporalScope": {
+    "start": "2026-03-02",
+    "end": "2026-03-08"
+  },
   "_comment_calendar": "A holiday may carry its own demand rows; marking one makes nobody unavailable. hasEve says the PRECEDING day is its eve, so only the holiday's own date is stated.",
   "calendar": {
     "weekStart": "monday",
     "holidays": [
-      { "date": "2026-03-05", "code": "TPL", "name": "Template Day", "hasEve": true }
+      {
+        "date": "2026-03-05",
+        "code": "TPL",
+        "name": "Template Day",
+        "hasEve": true
+      }
     ]
   },
-
-  "_comment_contracts": "workMinutesPerDay is MINUTES. The matching schedule_input cell is HOURS -- 480 here is 8 there. That mismatch is SISQUAL's; see docs/next_meeting.md item 16.",
+  "_comment_contracts": "workMinutesPerDay is MINUTES. The matching schedule_input cell is HOURS -- 480 here is 8 there. That mismatch is SISQUAL's; see next_meeting.md item 16 (should be minutes, not hours).",
   "contracts": {
     "definitions": [
-      { "id": "FT_8h", "name": "Full time - 8 hours/day", "workMinutesPerDay": 480 },
-      { "id": "PT_4h", "name": "Part time - 4 hours/day", "workMinutesPerDay": 240 }
+      {
+        "id": "FT_8h",
+        "name": "Full time - 8 hours/day",
+        "workMinutesPerDay": 480
+      },
+      {
+        "id": "PT_4h",
+        "name": "Part time - 4 hours/day",
+        "workMinutesPerDay": 240
+      }
     ]
   },
-
   "_comment_employees": "LEVEL 1 IS THE HIGHEST. Your most senior person is level 1. Nothing can validate this for you -- author it backwards and every check still passes while the schedule staffs the wrong people. end: null means open-ended.",
   "employees": {
     "list": [
       {
         "id": "EMP001",
         "name": "Ana",
-        "contractAssignments": [{ "contractType": "FT_8h", "start": "2024-01-01", "end": null }],
+        "contractAssignments": [
+          {
+            "contractType": "FT_8h",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
         "competencyAssignments": [
-          { "tableName": "Team", "tableValue": "T1", "level": 1, "start": "2024-01-01", "end": null },
-          { "tableName": "Responsibility", "tableValue": "A", "level": 1, "start": "2024-01-01", "end": null }
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 1,
+            "start": "2024-01-01",
+            "end": null
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 1,
+            "start": "2024-01-01",
+            "end": null
+          }
         ]
       },
       {
         "id": "EMP002",
         "name": "Bruno",
-        "contractAssignments": [{ "contractType": "FT_8h", "start": "2024-01-01", "end": null }],
+        "contractAssignments": [
+          {
+            "contractType": "FT_8h",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
         "competencyAssignments": [
-          { "tableName": "Team", "tableValue": "T1", "level": 2, "start": "2024-01-01", "end": null },
-          { "tableName": "Responsibility", "tableValue": "A", "level": 2, "start": "2024-01-01", "end": null }
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 2,
+            "start": "2024-01-01",
+            "end": null
+          },
+          {
+            "tableName": "Responsibility",
+            "tableValue": "A",
+            "level": 2,
+            "start": "2024-01-01",
+            "end": null
+          }
         ]
       },
       {
         "id": "EMP003",
         "name": "Carla",
-        "contractAssignments": [{ "contractType": "PT_4h", "start": "2024-01-01", "end": null }],
+        "contractAssignments": [
+          {
+            "contractType": "PT_4h",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
         "competencyAssignments": [
-          { "tableName": "Team", "tableValue": "T1", "level": 3, "start": "2024-01-01", "end": null }
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 3,
+            "start": "2024-01-01",
+            "end": null
+          }
         ]
       },
       {
         "id": "EMP004",
         "name": "Diogo",
-        "contractAssignments": [{ "contractType": "PT_4h", "start": "2024-01-01", "end": null }],
+        "contractAssignments": [
+          {
+            "contractType": "PT_4h",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
         "competencyAssignments": [
-          { "tableName": "Team", "tableValue": "T1", "level": 4, "start": "2024-01-01", "end": null }
+          {
+            "tableName": "Team",
+            "tableValue": "T1",
+            "level": 4,
+            "start": "2024-01-01",
+            "end": null
+          }
         ]
       }
     ]
   },
-
   "_comment_demand": "dimensions[] is the catalogue of (tableName, tableValue) coordinates -- REQUIRED, because it is the only declaration of which coordinates exist. SISQUAL exports none, so the adapter synthesises it. The three CSVs differ in grain AND unit: days is workload MINUTES, periods and shifts are HEADCOUNT.",
   "demand": {
     "dimensions": [
-      { "tableName": "Responsibility", "tableValue": "A", "name": "Floor A", "description": "Front-of-house responsibility" },
-      { "tableName": "Team", "tableValue": "T1", "name": "Team 1", "description": "The main shift team" }
+      {
+        "tableName": "Responsibility",
+        "tableValue": "A",
+        "name": "Floor A",
+        "description": "Front-of-house responsibility"
+      },
+      {
+        "tableName": "Team",
+        "tableValue": "T1",
+        "name": "Team 1",
+        "description": "The main shift team"
+      }
     ],
     "dataFileDays": "days_demand_template.csv",
     "dataFilePeriods": "periods_demand_template.csv",
     "dataFileShifts": "shifts_demand_template.csv"
   },
-
   "_comment_scheduleInput": "Every non-numeric cell must be a key here. There are no implicit codes. preferable may be worked at a penalty; unavailable may not -- guessing wrong yields a file that validates and a model that is wrong.",
   "scheduleInput": {
     "dataFile": "schedule_input_template.csv",
     "dayOffCodes": {
-      "DO": { "kind": "preferable", "description": "Day off - may be swapped, at a penalty" },
-      "VAC": { "kind": "unavailable", "description": "Vacation - cannot work" },
-      "NOT": { "kind": "unavailable", "description": "Unavailable - cannot work" }
+      "DO": {
+        "kind": "preferable",
+        "description": "Day off - may be swapped, at a penalty"
+      },
+      "VAC": {
+        "kind": "unavailable",
+        "description": "Vacation - cannot work"
+      },
+      "NOT": {
+        "kind": "unavailable",
+        "description": "Unavailable - cannot work"
+      }
     }
   },
-
   "_comment_schedules": "The menu a result must pick from. Each code is one shift; a result names codes, not times. Optional -- omit it and a result's ScheduleCodes go unchecked.",
-  "schedules": { "dataFile": "schedules_template.csv" },
-
+  "schedules": {
+    "dataFile": "schedules_template.csv"
+  },
   "_comment_priorityHierarchy": "Fill order. Lower rank is filled first, and ordering follows rank, not array position -- so re-sorting this array is always safe. minAbilityLevel is the SMALLER number, because level 1 is the highest.",
   "priorityHierarchy": [
     {
@@ -124,7 +212,6 @@
       "alarmLevelPercentage": 100
     }
   ],
-
   "_comment_constraints": "Rules above the contract level -- SISQUAL's labour law. parameters is a deliberately open vendor bag; the validator acts on MaxConsecutiveWorkDays and MaxConsecutiveWorkDaysInWeek and carries the rest.",
   "constraints": {
     "hard": [

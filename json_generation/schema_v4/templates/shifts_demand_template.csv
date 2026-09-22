@@ -7,7 +7,7 @@
 # afternoon), N (noite/night). It is NOT a v3.0-style named period code such as
 # CHECKOUT_1100_2100: v4.0 has no named work-period catalogue, and every demand
 # row carries its literal window instead. Confirm the vocabulary before relying
-# on it -- docs/next_meeting.md items 3 and 8.
+# on it -- next_meeting.md items 3 and 8.
 #
 # Every bundle SISQUAL has sent has this file EMPTY (header only).
 date,workPeriod,tableName,tableValue,minimum,ideal,estimated,start,end

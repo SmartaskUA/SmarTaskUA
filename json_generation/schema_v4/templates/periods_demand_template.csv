@@ -15,7 +15,7 @@
 #                       bound sitting in the MIDDLE column.
 #   SISQUAL emits the v2.6 header but 0 in both columns everywhere, so the data
 #   cannot settle it. The validator therefore checks only that all three are
-#   non-negative, and enforces NO ordering. See docs/next_meeting.md item 1.
+#   non-negative, and enforces NO ordering. See next_meeting.md item 1 ("the ordering of").
 #
 # 0 means UNSET, not zero workers: "2,0,0" states a minimum of 2 and no opinion above it.
 #
