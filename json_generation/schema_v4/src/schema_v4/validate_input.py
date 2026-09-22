@@ -1,4 +1,4 @@
-"""Semantic checks for the declarative (problem) form.
+"""Semantic checks for the input (problem) form.
 
 Four tiers, in the order a reader most wants them:
 
@@ -18,17 +18,18 @@ from datetime import date
 from pathlib import Path
 
 from . import core
+from .common import _overlapping_pairs, report_grouped
 from .core import DomainError, iso
 
 GRAINS = (("days", "dataFileDays"), ("periods", "dataFilePeriods"), ("shifts", "dataFileShifts"))
 
 
-class DeclarativeChecksMixin:
+class InputChecksMixin:
     problem: dict
     report: object
     base: Path
 
-    def validate_declarative(self) -> None:
+    def validate_input(self) -> None:
         days = self.horizon()
         rows_by_grain, open_days = self._validate_demand_csvs(days)
         cells, date_cols = self._validate_schedule_csv(days)
@@ -123,13 +124,12 @@ class DeclarativeChecksMixin:
             if row.window is not None:
                 buckets[(row.date, row.table_name, row.table_value)].append(row)
         for (day, tn, tv), group in sorted(buckets.items()):
-            group.sort(key=lambda x: x.window.start)
-            for a, b in zip(group, group[1:]):
-                if a.window.overlaps(b.window):
-                    self.report.warn(
-                        f"{name}: {day} {tn}/{tv} has overlapping windows {a.window} (row "
-                        f"{a.line}) and {b.window} (row {b.line}); a worker in the overlap "
-                        f"counts toward both")
+            spans = sorted((r.window.start, r.window.end, r.line, r) for r in group)
+            for a, b in _overlapping_pairs(spans, closed=False):
+                self.report.warn(
+                    f"{name}: {day} {tn}/{tv} has overlapping windows {a[3].window} (row "
+                    f"{a[2]}) and {b[3].window} (row {b[2]}); a worker in the overlap "
+                    f"counts toward both")
 
     # -- Tier 3: schedule_input.csv ---------------------------------------
 
@@ -163,7 +163,6 @@ class DeclarativeChecksMixin:
             r.error(f"{name}: row {extra} is not an employee in employees.list")
 
         contracts = core.contracts_by_id(p)
-        bad_cells: list[tuple[str, str]] = []
         mismatches: list[tuple[str, str]] = []
         for emp in p.get("employees", {}).get("list", []):
             eid = emp.get("id")
@@ -172,8 +171,10 @@ class DeclarativeChecksMixin:
                 raw = row.get(col, "")
                 try:
                     rule = core.classify_cell(raw, p)
-                except DomainError as exc:
-                    bad_cells.append((str(exc), f"{name}: {eid} on {col}: {exc}"))
+                except DomainError:
+                    # Reported once, by the feasibility preflight: core.scan_feasibility
+                    # is the single source of cell diagnostics, and reporting here too
+                    # produced two differently-worded findings for one fact.
                     continue
                 if rule.kind == "exact_hours":
                     cid = core.active_contract(emp, iso(col))
@@ -183,8 +184,7 @@ class DeclarativeChecksMixin:
                             f"{cid}:{rule.minutes}",
                             f"{name}: {eid} on {col}: cell {raw!r} is {rule.minutes} min but "
                             f"contract {cid} states {wanted_min}"))
-        _report_grouped(r.error, bad_cells)
-        _report_grouped(r.warn, mismatches)
+        report_grouped(r.warn, mismatches)
         return cells, date_cols
 
     # -- Tier 3: integrity -------------------------------------------------
@@ -267,7 +267,7 @@ class DeclarativeChecksMixin:
         except Exception as exc:                      # never let a preflight crash
             r.warn(f"feasibility scan did not complete ({exc}); real errors may be hidden")
             return
-        _report_grouped(r.error, [(d.reason, str(d)) for d in found])
+        report_grouped(r.error, [(d.reason, str(d)) for d in found])
         r.stats["diagnostics"] = len(found)
 
     # -- Tier 2: structural ------------------------------------------------
@@ -370,22 +370,3 @@ class DeclarativeChecksMixin:
             if need > have:
                 r.warn(f"dimension {pair[0]}/{pair[1]} asks for up to "
                        f"{core.format_number(need)} workers but only {have} hold it")
-
-
-def _report_grouped(emit, items: list[tuple[str, str]], keep: int = 3) -> None:
-    """Emit findings, collapsing repeats of one cause.
-
-    A contract whose length does not fit the grid produces one finding per
-    worker-day - 360 identical lines for a 12-employee month, which buries
-    everything else. Grouping by cause keeps the first few and counts the rest,
-    so the report stays the size of the problem rather than the size of the data.
-    """
-    groups: dict[str, list[str]] = {}
-    for cause, message in items:
-        groups.setdefault(cause, []).append(message)
-    for cause, messages in groups.items():
-        for message in messages[:keep]:
-            emit(message)
-        if len(messages) > keep:
-            emit(f"... and {len(messages) - keep} more with the same cause "
-                 f"({len(messages)} in total)")

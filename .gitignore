@@ -88,3 +88,5 @@ src/scheduler/rules.json
 # Solver output artifacts (keep generated CSVs out of source dirs)
 infra/*.csv
 schedule_cpsat*.csv
+
+*.ppk

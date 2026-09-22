@@ -15,18 +15,18 @@ import sys
 from pathlib import Path
 
 from .common import CommonChecksMixin, Report
-from .validate_declarative import DeclarativeChecksMixin
+from .validate_input import InputChecksMixin
 from .validate_result import ResultChecksMixin
 
 SCHEMA_DIR = Path(__file__).resolve().parents[2] / "schemas"
 
 SCHEMA_FILES = {
-    "declarative": "schema-v4-declarative.json",
+    "input": "schema-v4-input.json",
     "result": "schema-v4-result.json",
 }
 
 
-class SchemaValidator(CommonChecksMixin, DeclarativeChecksMixin, ResultChecksMixin):
+class SchemaValidator(CommonChecksMixin, InputChecksMixin, ResultChecksMixin):
     def __init__(self, path: Path, against: Path | None = None):
         self.path = Path(path)
         self.base = self.path.parent
@@ -54,7 +54,7 @@ class SchemaValidator(CommonChecksMixin, DeclarativeChecksMixin, ResultChecksMix
         if self.form is None:
             self.report.error(
                 f"{self.path.name}: cannot tell which form this is. A problem carries "
-                f"form: \"declarative\"; a result carries an OutRosterTeamDays array."
+                f"form: \"input\"; a result carries an OutRosterTeamDays array."
             )
             return False
         return True
@@ -84,17 +84,17 @@ class SchemaValidator(CommonChecksMixin, DeclarativeChecksMixin, ResultChecksMix
             return self.report
         self.report.stats["form"] = self.form
         self.validate_schema()
-        if self.form == "declarative":
+        if self.form == "input":
             self.validate_common()
-            self.validate_declarative()
+            self.validate_input()
         else:
             self.validate_result()
         return self.report
 
 
 def _form_of_doc(doc: dict) -> str | None:
-    if doc.get("form") == "declarative":
-        return "declarative"
+    if doc.get("form") == "input":
+        return "input"
     if "OutRosterTeamDays" in doc:
         return "result"
     return None
@@ -131,11 +131,11 @@ def validate_package(directory) -> dict[str, Report]:
 
     package = Report()
     package.stats["forms"] = sorted(forms)
-    if "declarative" in forms:
-        with forms["declarative"].open(encoding="utf-8") as fh:
+    if "input" in forms:
+        with forms["input"].open(encoding="utf-8") as fh:
             package.stats["problemId"] = json.load(fh).get("metadata", {}).get("problemId")
-    if "result" in forms and "declarative" not in forms:
-        package.warn("a result sits here with no declarative problem to check it against")
+    if "result" in forms and "input" not in forms:
+        package.warn("a result sits here with no input problem to check it against")
     reports["(package)"] = package
     return reports
 
@@ -175,7 +175,7 @@ def main(argv=None) -> int:
     ap.add_argument("target", help="a .json file, or a directory")
     ap.add_argument("-v", "--verbose", action="store_true", help="also print stats")
     ap.add_argument("-j", "--json", action="store_true", help="machine-readable output")
-    ap.add_argument("--against", help="the declarative problem to cross-check a result against")
+    ap.add_argument("--against", help="the input problem to cross-check a result against")
     args = ap.parse_args(argv)
 
     target = Path(args.target)

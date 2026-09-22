@@ -1,6 +1,6 @@
 {
   "schemaVersion": "4.0",
-  "form": "declarative",
+  "form": "input",
   "problemType": "employee_scheduling",
   "metadata": {
     "problemId": "C2_January_2026",
@@ -866,5 +866,8 @@
       }
     ],
     "soft": []
+  },
+  "schedules": {
+    "dataFile": "schedules.csv"
   }
 }

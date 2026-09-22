@@ -5,7 +5,7 @@
 # UNIT: SISQUAL's InpServiceLevelByDays states minutes of work to be covered,
 # while ByPeriods and ByShifts state numbers of people. Nothing in the file says
 # which is which -- only the JSON key that points here does, so never sniff the
-# header to decide. See docs/next_meeting.md item 2.
+# header to decide. See next_meeting.md item 2 ("byte-identical headers").
 #
 # start/end are not used on this grain (the row covers the whole day) and are
 # left empty. `minimum` should be a multiple of timeGrid.slotMinutes.
