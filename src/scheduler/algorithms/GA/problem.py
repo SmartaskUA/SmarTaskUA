@@ -96,7 +96,7 @@ def _build_encoding(teams: list[str]) -> dict:
     for gene, (shift, team) in gene_to_shift_team.items():
         gene_label[gene] = f"{shift}-{team}"
 
-    return {
+    return { # 5 dicts
         "shift_team_to_gene": shift_team_to_gene,
         "gene_to_shift_team": gene_to_shift_team,
         "team_idx":           team_idx,
