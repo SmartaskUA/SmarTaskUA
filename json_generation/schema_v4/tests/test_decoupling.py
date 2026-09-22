@@ -41,10 +41,20 @@ def test_the_adapter_does_not_import_the_validator():
     assert "validator" not in imports_of("sisqual_adapt")
 
 
-def test_check_modules_do_not_import_each_other():
-    for name in ("common", "validate_declarative", "validate_result"):
-        others = {"common", "validate_declarative", "validate_result"} - {name}
-        assert not (imports_of(name) & others), f"{name} reaches sideways"
+def test_the_two_form_checkers_do_not_import_each_other():
+    """They are peers. Anything they share belongs in common, below both."""
+    peers = {"validate_declarative", "validate_result"}
+    for name in peers:
+        assert not (imports_of(name) & (peers - {name})), f"{name} reaches sideways"
+
+
+def test_common_sits_below_both_checkers_and_not_beside_them():
+    """common holds Report and report_grouped, so both checkers may use it -- but
+    it must never reach back up into a form-specific module."""
+    assert "common" in imports_of("validate_declarative")
+    assert "common" in imports_of("validate_result")
+    assert not (imports_of("common") & {"validate_declarative", "validate_result",
+                                        "validator", "sisqual_adapt"})
 
 
 def test_only_the_validator_composes_the_mixins():

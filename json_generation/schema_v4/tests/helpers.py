@@ -20,16 +20,31 @@ REFERENCE = V4 / "reference"
 RAW = V4 / "IntegracaoUA_SISQUAL" / "JSON" / "20260917_JSON_Cenarios_GeradoSisqual"
 RAW_C1 = RAW / "Cenário_1"
 RAW_C2 = RAW / "Cenário_2"
-RAW_JULY = V4 / "sisqual-alg-input"
+RAW_JULY = V4 / "IntegracaoUA_SISQUAL" / "sisqual-alg-input"
 CATALOGUE = REFERENCE / "schedules" / "schedules_without_meal.csv"
 
-C1 = EXAMPLES / "cenario1_nlm"
 C2 = EXAMPLES / "cenario2_retail"
 
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from schema_v4 import validator  # noqa: E402  (after sys.path is set)
+
+
+def sisqual_result(tmp_path) -> Path:
+    """Sisqual's own emailed result sample, repaired into `tmp_path`.
+
+    `import_1.Json` is indented with U+2002 EN SPACE characters from an Outlook
+    paste and is not valid JSON, so it cannot be read where it lies. Repairing a
+    copy keeps its two quirks - an integer EmployeeCode and a ScheduleCode that is
+    not in the catalogue we hold - available as fixtures without touching the raw
+    drop.
+    """
+    src = RAW_C1 / "import_1.Json"
+    text = src.read_text(encoding="utf-8-sig").replace("\u2002", " ")
+    out = tmp_path / "result.json"
+    out.write_text(text, encoding="utf-8")
+    return out
 
 
 def load(path) -> dict:

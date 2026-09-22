@@ -35,8 +35,9 @@ rejected as an unconverted v3.0 minute count. We are asking Sisqual to switch �
 
 **Everything must fit the grid.** `slotMinutes` divides the day, and every duration
 must be a multiple of it — including each contract's `workMinutesPerDay`. This is
-not pedantry: `examples/cenario1_nlm/` is a real SISQUAL bundle that cannot be
-solved at all because its contract is 432 minutes on a 30-minute grid.
+not pedantry: Sisqual's Cenário 1 bundle cannot be solved at all because its
+contract is 432 minutes on a 30-minute grid, which is one of the three reasons it is
+not shipped as an example.
 
 **Level 1 is the highest.** Your most senior person is level 1, and a
 `priorityHierarchy` entry with `minAbilityLevel: 1` reaches that dimension's most
@@ -55,6 +56,7 @@ blocks, which is exactly why v4.0 requires one.
 ## Copying from an existing example
 
 `../examples/cenario2_retail/` is a real 15-employee, 31-day SISQUAL bundle that
-validates. `../examples/cenario1_nlm/` is a real one that **does not**, and its
-README explains the three reasons — read it before you trust a bundle just because
-it arrived from the generator.
+validates, with a worked result and its sidecar catalogue alongside. Sisqual's other
+September bundle is *not* shipped, because it fails three independent ways — see
+[docs/next_meeting.md](../docs/next_meeting.md) item 21 before you trust a bundle
+just because it arrived from the generator.

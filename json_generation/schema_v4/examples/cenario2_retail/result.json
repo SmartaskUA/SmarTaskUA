@@ -1,0 +1,4189 @@
+{
+  "OutRosterTeamDays": [
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-01T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-02T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-03T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-04T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-05T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-06T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-07T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-08T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-09T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-10T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-11T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-12T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-13T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-14T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-15T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-16T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-17T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-18T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-19T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-20T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-21T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-22T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-23T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-24T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-25T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-26T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-27T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-28T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-29T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-30T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20072412",
+      "Date": "2026-01-31T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-01T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-02T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-03T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-04T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-05T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-06T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-07T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-08T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-09T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-10T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-11T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-12T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-13T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-14T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-15T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-16T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-17T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-18T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-19T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-20T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-21T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-22T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-23T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-24T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-25T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-26T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-27T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-28T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-29T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-30T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066543",
+      "Date": "2026-01-31T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-01T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-02T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-03T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-04T00:00:00",
+      "ScheduleCode": 137768,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-05T00:00:00",
+      "ScheduleCode": 132104,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-06T00:00:00",
+      "ScheduleCode": 132104,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-07T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-08T00:00:00",
+      "ScheduleCode": 132104,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-09T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-10T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-11T00:00:00",
+      "ScheduleCode": 137768,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-12T00:00:00",
+      "ScheduleCode": 132104,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-13T00:00:00",
+      "ScheduleCode": 132104,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-14T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-15T00:00:00",
+      "ScheduleCode": 132104,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-16T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-17T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-18T00:00:00",
+      "ScheduleCode": 137768,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-19T00:00:00",
+      "ScheduleCode": 132104,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-20T00:00:00",
+      "ScheduleCode": 132104,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-21T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-22T00:00:00",
+      "ScheduleCode": 132104,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-23T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-24T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-25T00:00:00",
+      "ScheduleCode": 137768,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-26T00:00:00",
+      "ScheduleCode": 132104,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-27T00:00:00",
+      "ScheduleCode": 132104,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-28T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-29T00:00:00",
+      "ScheduleCode": 132104,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-30T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067009",
+      "Date": "2026-01-31T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-01T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-02T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-03T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-04T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-05T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-06T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-07T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-08T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-09T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-10T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-11T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-12T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-13T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-14T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-15T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-16T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-17T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-18T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-19T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-20T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-21T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-22T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-23T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-24T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-25T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-26T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-27T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-28T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-29T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-30T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20054956",
+      "Date": "2026-01-31T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-01T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-02T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-03T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-04T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-05T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-06T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-07T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-08T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-09T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-10T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-11T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-12T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-13T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-14T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-15T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-16T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-17T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-18T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-19T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-20T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-21T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-22T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-23T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-24T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-25T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-26T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-27T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-28T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-29T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-30T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20056459",
+      "Date": "2026-01-31T00:00:00",
+      "ScheduleCode": 1014,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-01T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-02T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-03T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-04T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-05T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-06T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-07T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-08T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-09T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-10T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-11T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-12T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-13T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-14T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-15T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-16T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-17T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-18T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-19T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-20T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-21T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-22T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-23T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-24T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-25T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-26T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-27T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-28T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-29T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-30T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20062688",
+      "Date": "2026-01-31T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-01T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-02T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-03T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-04T00:00:00",
+      "ScheduleCode": 137764,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-05T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-06T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-07T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-08T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-09T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-10T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-11T00:00:00",
+      "ScheduleCode": 137764,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-12T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-13T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-14T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-15T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-16T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-17T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-18T00:00:00",
+      "ScheduleCode": 137764,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-19T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-20T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-21T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-22T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-23T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-24T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-25T00:00:00",
+      "ScheduleCode": 137764,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-26T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-27T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-28T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-29T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-30T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20067696",
+      "Date": "2026-01-31T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-01T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-02T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-03T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-04T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-05T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-06T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-07T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-08T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-09T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-10T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-11T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-12T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-13T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-14T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-15T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-16T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-17T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-18T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-19T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-20T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-21T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-22T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-23T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-24T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-25T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-26T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-27T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-28T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-29T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-30T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20058959",
+      "Date": "2026-01-31T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-01T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-02T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-03T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-04T00:00:00",
+      "ScheduleCode": 137764,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-05T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-06T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-07T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-08T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-09T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-10T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-11T00:00:00",
+      "ScheduleCode": 137764,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-12T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-13T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-14T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-15T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-16T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-17T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-18T00:00:00",
+      "ScheduleCode": 137764,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-19T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-20T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-21T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-22T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-23T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-24T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-25T00:00:00",
+      "ScheduleCode": 137764,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-26T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-27T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-28T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-29T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-30T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20068397",
+      "Date": "2026-01-31T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-01T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-02T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-03T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-04T00:00:00",
+      "ScheduleCode": 137768,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-05T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-06T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-07T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-08T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-09T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-10T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-11T00:00:00",
+      "ScheduleCode": 137768,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-12T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-13T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-14T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-15T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-16T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-17T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-18T00:00:00",
+      "ScheduleCode": 137768,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-19T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-20T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-21T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-22T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-23T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-24T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-25T00:00:00",
+      "ScheduleCode": 137768,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-26T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-27T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-28T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-29T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-30T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20038706",
+      "Date": "2026-01-31T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-01T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-02T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-03T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-04T00:00:00",
+      "ScheduleCode": 137768,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-05T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-06T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-07T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-08T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-09T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-10T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-11T00:00:00",
+      "ScheduleCode": 137768,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-12T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-13T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-14T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-15T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-16T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-17T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-18T00:00:00",
+      "ScheduleCode": 137768,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-19T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-20T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-21T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-22T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-23T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-24T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-25T00:00:00",
+      "ScheduleCode": 137768,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-26T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-27T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-28T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-29T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-30T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20066338",
+      "Date": "2026-01-31T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-01T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-02T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-03T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-04T00:00:00",
+      "ScheduleCode": 137768,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-05T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-06T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-07T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-08T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-09T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-10T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-11T00:00:00",
+      "ScheduleCode": 137768,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-12T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-13T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-14T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-15T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-16T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-17T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-18T00:00:00",
+      "ScheduleCode": 137768,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-19T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-20T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-21T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-22T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-23T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-24T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-25T00:00:00",
+      "ScheduleCode": 137768,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-26T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-27T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-28T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-29T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-30T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027719",
+      "Date": "2026-01-31T00:00:00",
+      "ScheduleCode": 141544,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-01T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-02T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-03T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-04T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-05T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-06T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-07T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-08T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-09T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-10T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-11T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-12T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-13T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-14T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-15T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-16T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-17T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-18T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-19T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-20T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-21T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-22T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-23T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-24T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-25T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-26T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-27T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-28T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-29T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-30T00:00:00",
+      "ScheduleCode": 300000,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20051291",
+      "Date": "2026-01-31T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-01T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-02T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-03T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-04T00:00:00",
+      "ScheduleCode": 137764,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-05T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-06T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-07T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-08T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-09T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-10T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-11T00:00:00",
+      "ScheduleCode": 137764,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-12T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-13T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-14T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-15T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-16T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-17T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-18T00:00:00",
+      "ScheduleCode": 137764,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-19T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-20T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-21T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-22T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-23T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-24T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-25T00:00:00",
+      "ScheduleCode": 137764,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-26T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-27T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-28T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-29T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-30T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "20055066",
+      "Date": "2026-01-31T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-01T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-02T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-03T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-04T00:00:00",
+      "ScheduleCode": 137764,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-05T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-06T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-07T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-08T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-09T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-10T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-11T00:00:00",
+      "ScheduleCode": 137764,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-12T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-13T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-14T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-15T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-16T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-17T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-18T00:00:00",
+      "ScheduleCode": 137764,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-19T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-20T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-21T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-22T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-23T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-24T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-25T00:00:00",
+      "ScheduleCode": 137764,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-26T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-27T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-28T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-29T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-30T00:00:00",
+      "ScheduleCode": 132100,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "C2",
+      "TeamCode": "1",
+      "EmployeeCode": "900027718",
+      "Date": "2026-01-31T00:00:00",
+      "ScheduleCode": 141540,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    }
+  ]
+}

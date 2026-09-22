@@ -13,7 +13,7 @@
     "rosterCode": "TEMPLATE"
   },
 
-  "_comment_timeGrid": "slotMinutes must divide 1440, and EVERY duration must be a multiple of it -- including each contract's workMinutesPerDay. SISQUAL emits 30; a 432-minute contract does not fit a 30-minute grid, which is what breaks the cenario1_nlm example.",
+  "_comment_timeGrid": "slotMinutes must divide 1440, and EVERY duration must be a multiple of it -- including each contract's workMinutesPerDay. SISQUAL emits 30; a 432-minute contract does not fit a 30-minute grid, which is what makes Sisqual's Cenario 1 bundle unsolvable.",
   "timeGrid": { "slotMinutes": 30 },
 
   "_comment_temporalScope": "Inclusive. schedule_input.csv carries exactly one column per day in this range.",

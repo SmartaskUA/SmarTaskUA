@@ -1,7 +1,7 @@
 """The domain layer: no I/O beyond the fixtures, no policy."""
 
 import pytest
-from helpers import CATALOGUE, C1
+from helpers import CATALOGUE, C2, RAW_C2
 
 from schema_v4 import core
 from schema_v4.core import DomainError, Interval
@@ -70,17 +70,18 @@ def test_operators_parse_and_coalesce():
 
 
 def test_csv_reader_strips_bom_and_comments():
-    """SISQUAL's files are UTF-8 with a BOM; a naive reader names column 1 '\\ufeffdate'."""
-    raw = (C1 / "periods_demand.csv")
+    """SISQUAL's files are UTF-8 with a BOM; a naive reader names column 1 BOM+'date'."""
+    raw = next(RAW_C2.glob("*_periods_demand.csv"))
+    assert raw.read_bytes().startswith(b"\xef\xbb\xbf"), "fixture must really carry a BOM"
     header, _ = core.read_rows(raw)
-    assert header and not header[0].startswith("﻿")
+    assert header and not header[0].startswith("\ufeff")
     assert header[0] == "date"
 
 
 def test_read_demand_takes_the_grain_rather_than_sniffing():
     """days and periods have identical headers, so the caller must say which it is."""
-    days_header, _, _ = core.read_demand(C1 / "days_demand.csv", "days")
-    periods_header, _, _ = core.read_demand(C1 / "periods_demand.csv", "periods")
+    days_header, _, _ = core.read_demand(C2 / "days_demand.csv", "days")
+    periods_header, _, _ = core.read_demand(C2 / "periods_demand.csv", "periods")
     assert days_header == periods_header
 
 

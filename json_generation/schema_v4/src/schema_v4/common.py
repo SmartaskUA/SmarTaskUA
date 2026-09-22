@@ -217,3 +217,22 @@ class CommonChecksMixin:
                 "(tableName, tableValue) coordinates exist, so without it nothing can be "
                 "cross-checked - see docs/FORMAT.md."
             )
+
+
+def report_grouped(emit, items: list[tuple[str, str]], keep: int = 3) -> None:
+    """Emit findings, collapsing repeats of one cause.
+
+    A contract whose length does not fit the grid produces one finding per
+    worker-day - 360 identical lines for a 12-employee month, which buries
+    everything else. Grouping by cause keeps the first few and counts the rest,
+    so the report stays the size of the problem rather than the size of the data.
+    """
+    groups: dict[str, list[str]] = {}
+    for cause, message in items:
+        groups.setdefault(cause, []).append(message)
+    for cause, messages in groups.items():
+        for message in messages[:keep]:
+            emit(message)
+        if len(messages) > keep:
+            emit(f"... and {len(messages) - keep} more with the same cause "
+                 f"({len(messages)} in total)")

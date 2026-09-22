@@ -1,6 +1,6 @@
 """The shipped bundles, and the facts about them the docs assert."""
 
-from helpers import C1, C2, CATALOGUE, EXAMPLES, TEMPLATES, load, validate
+from helpers import C2, CATALOGUE, EXAMPLES, TEMPLATES, load, validate
 
 
 def test_cenario2_validates():
@@ -17,27 +17,17 @@ def test_cenario2_only_warns_about_things_the_readme_names():
     r = validate(C2 / "problem.json")
     for w in r.warnings:
         assert ("competence level is ambiguous" in w
-                or "which no cell uses" in w), f"undocumented warning: {w}"
+                or "which no cell uses" in w
+                or "do not land on the 30-minute grid" in w), f"undocumented warning: {w}"
 
 
-def test_cenario1_fails_for_the_three_documented_reasons():
-    """Its README claims three independent defects; this is the claim, checked."""
-    r = validate(C1 / "problem.json")
-    assert not r.ok
-    assert any("432 is not a multiple of the 30-minute grid" in e for e in r.errors)
-    assert any("holds no competencies" in w for w in r.warnings)
-    assert any("every day is closed" in w for w in r.warnings)
+def test_the_example_declares_version_four():
+    assert load(C2 / "problem.json")["schemaVersion"] == "4.0"
 
 
-def test_cenario1_grid_clash_does_not_flood_the_report():
-    r = validate(C1 / "problem.json")
-    assert len(r.errors) < 10, f"{len(r.errors)} errors; repeats should collapse"
-    assert r.stats["diagnostics"] == 335
-
-
-def test_both_examples_declare_version_four():
-    for path in (C1 / "problem.json", C2 / "problem.json"):
-        assert load(path)["schemaVersion"] == "4.0"
+def test_cenario2_is_the_only_shipped_example():
+    """Cenario 1 was dropped: it fails three independent ways. See next_meeting.md 20."""
+    assert sorted(p.name for p in EXAMPLES.iterdir() if p.is_dir()) == ["cenario2_retail"]
 
 
 def test_no_example_carries_a_sisqual_misspelling():

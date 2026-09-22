@@ -18,6 +18,7 @@ from datetime import date
 from pathlib import Path
 
 from . import core
+from .common import report_grouped
 from .core import DomainError, iso
 
 GRAINS = (("days", "dataFileDays"), ("periods", "dataFilePeriods"), ("shifts", "dataFileShifts"))
@@ -183,8 +184,8 @@ class DeclarativeChecksMixin:
                             f"{cid}:{rule.minutes}",
                             f"{name}: {eid} on {col}: cell {raw!r} is {rule.minutes} min but "
                             f"contract {cid} states {wanted_min}"))
-        _report_grouped(r.error, bad_cells)
-        _report_grouped(r.warn, mismatches)
+        report_grouped(r.error, bad_cells)
+        report_grouped(r.warn, mismatches)
         return cells, date_cols
 
     # -- Tier 3: integrity -------------------------------------------------
@@ -267,7 +268,7 @@ class DeclarativeChecksMixin:
         except Exception as exc:                      # never let a preflight crash
             r.warn(f"feasibility scan did not complete ({exc}); real errors may be hidden")
             return
-        _report_grouped(r.error, [(d.reason, str(d)) for d in found])
+        report_grouped(r.error, [(d.reason, str(d)) for d in found])
         r.stats["diagnostics"] = len(found)
 
     # -- Tier 2: structural ------------------------------------------------
@@ -370,22 +371,3 @@ class DeclarativeChecksMixin:
             if need > have:
                 r.warn(f"dimension {pair[0]}/{pair[1]} asks for up to "
                        f"{core.format_number(need)} workers but only {have} hold it")
-
-
-def _report_grouped(emit, items: list[tuple[str, str]], keep: int = 3) -> None:
-    """Emit findings, collapsing repeats of one cause.
-
-    A contract whose length does not fit the grid produces one finding per
-    worker-day - 360 identical lines for a 12-employee month, which buries
-    everything else. Grouping by cause keeps the first few and counts the rest,
-    so the report stays the size of the problem rather than the size of the data.
-    """
-    groups: dict[str, list[str]] = {}
-    for cause, message in items:
-        groups.setdefault(cause, []).append(message)
-    for cause, messages in groups.items():
-        for message in messages[:keep]:
-            emit(message)
-        if len(messages) > keep:
-            emit(f"... and {len(messages) - keep} more with the same cause "
-                 f"({len(messages)} in total)")

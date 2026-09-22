@@ -7,7 +7,7 @@ import json
 import shutil
 
 import pytest
-from helpers import SCHEMAS, TEMPLATES, C1
+from helpers import SCHEMAS, TEMPLATES, C2
 
 
 @pytest.fixture(scope="session")
@@ -70,9 +70,9 @@ def make_fixture(tmp_path):
 
 @pytest.fixture
 def make_result_fixture(tmp_path):
-    """Copy cenario1's problem + result, optionally mutating the result."""
+    """Copy cenario2's whole package, optionally mutating the result."""
     def _make(mutate=None):
-        for src in C1.iterdir():
+        for src in C2.iterdir():
             if src.is_file():
                 shutil.copyfile(src, tmp_path / src.name)
         path = tmp_path / "result.json"

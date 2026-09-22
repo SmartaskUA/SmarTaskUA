@@ -111,3 +111,10 @@ exactly as `JSON-Import.docx` specifies it, with two tolerances the samples forc
   accepted and the mismatch is warned about.
 - `Date` is documented as `YYYY-MM-DD` but emitted as naive `YYYY-MM-DDTHH:MM:SS`;
   both are accepted.
+
+One thing is **added on our side of the wire**: a result ships a sidecar
+`<stem>_schedules.csv` defining the codes it used (see
+[FORMAT.md](FORMAT.md#the-sidecar-catalogue)). It is a separate file rather than a
+key in the document precisely so the document stays verbatim-Sisqual — the addition
+is ours, and it does not travel into their API. It is announced to them as
+[next_meeting.md](next_meeting.md) item 27.

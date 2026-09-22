@@ -32,8 +32,9 @@ minute count.
 ### Everything must fit the grid
 
 Every duration must be a multiple of `slotMinutes`, and **that includes each
-contract's `workMinutesPerDay`**. This is not pedantry. `examples/cenario1_nlm/` is
-a real SISQUAL bundle in which contract `NL_36` is 432 minutes a day on a
+contract's `workMinutesPerDay`**. This is not pedantry. Sisqual's Cenário 1 bundle
+(kept as raw provenance under `IntegracaoUA_SISQUAL/`, and not shipped as an
+example because of this) declares contract `NL_36` at 432 minutes a day on a
 30-minute grid; 432 is not a multiple of 30, so no shift of the contracted length
 can be placed on any day, and all 335 worker-days that ask for work are
 unsatisfiable. The validator reports the contract once and collapses the repeats.
@@ -246,11 +247,15 @@ Codes with no window leave both blank. The real catalogue has four:
 (480 minutes) but no fixed position, which is v3.0's synthesis model appearing
 inside the menu, and nobody has told us what a solver may do with it.
 
-Two facts about the real catalogue that matter to a solver: it holds 1,277 codes,
-and it is built on a **15-minute** grid while every bundle declares a 30-minute
-one, so **914 of its codes are unreachable** on the grid as specified. It is also
-the *without-meal* catalogue: `ScheduleCode 100154`, which appears in SISQUAL's own
-result sample, is not in it. See [next_meeting.md](next_meeting.md) items 5–7.
+Three facts about the real catalogue matter to a solver. It holds 1,277 codes. It
+is built on a **15-minute** grid while every bundle declares a 30-minute one, so
+**914 of its codes are unreachable** on the grid as specified. And its usable band
+is **180–360 minutes** — above six hours there are only 19 one-off codes, so a
+420-minute contract has **no shift at all** and a 480-minute one has three. Six
+hours is the meal-break threshold, and everything past it lives in a *with-meal*
+catalogue we have never been sent; `ScheduleCode 100154`, from SISQUAL's own result
+sample, is absent for that reason. See [next_meeting.md](next_meeting.md) items 5–8
+and [FUTURE.md](FUTURE.md) §2.
 
 ## Result form
 
@@ -263,6 +268,36 @@ restate the problem, it references it:
 - `ScheduleCode` must resolve in the catalogue, when one is supplied. Codes `1`,
   `3` and `4` mean rest rather than a worked block.
 - A day the problem marked `unavailable` may not carry a working ScheduleCode.
+
+### The sidecar catalogue
+
+A result names numeric `ScheduleCode`s and carries no definition of them, so on its
+own it can be neither read nor checked. It therefore ships a **sidecar CSV**:
+`result.json` pairs with `result_schedules.csv`, found by convention, in exactly the
+catalogue's shape.
+
+```
+code,description,scheduleWeightMinutes,startMin,endMin
+1014,08:00-16:00,480,480,960
+300000,10:00-16:30,390,600,990
+```
+
+It holds **the codes the result actually used** — not a copy of the menu. Whatever
+produces the result produces the sidecar; a row nobody uses is a warning, on the
+grounds that the file is meant to describe this result rather than the catalogue it
+was drawn from.
+
+The convention is a file beside the document rather than a key inside it, and that
+is deliberate: `schema-v4-result.json` conforms to Sisqual's WFM import API
+verbatim, and adding a `dataFile` key for our own convenience would break that rule.
+Sisqual's native equivalent is `OutScheduleUseds` in the JSON; when both are present
+they must agree.
+
+The validator checks that every code in the result is defined in the sidecar, that
+every sidecar row is used, and — when the problem also carries a catalogue — that
+every sidecar code is one the problem offers and is defined the same way there. A
+missing sidecar is a **warning**, not an error: Sisqual's own samples will never
+carry one.
 
 Because those references point into another file, the JSON Schema layer cannot
 enforce them; `validate_result.py` does, given the problem:

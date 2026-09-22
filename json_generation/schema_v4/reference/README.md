@@ -6,17 +6,16 @@ it is the provenance behind every claim in [../docs/](../docs/).
 
 ## The raw SISQUAL drop
 
-Three directories at the top of `schema_v4/`, left where they landed in commit
-`49fd827` rather than reorganised — the paths carry dates, and renaming them would
-cost more than the tidiness is worth.
+All of it under `../IntegracaoUA_SISQUAL/`, left as it arrived — the paths carry
+dates, and renaming them would cost more than the tidiness is worth.
 
 | path | what it is |
 |---|---|
 | `../IntegracaoUA_SISQUAL/JSON/20260708_Import_Export_Docs/` | `JSON-Import.docx` and `JSON-Export.docx` — the WFM-side contract, authored by Sisqual 2026-07-08. **Byte-identical** to the copies already transcribed at `../../schema_v3/reference/sisqual-json-import-export/`, so read the `.md` versions there. |
 | `../IntegracaoUA_SISQUAL/JSON/20260723_email_Sisqual_to_UA/` | the `Re: Schema 3.0` thread. Sisqual's reply carries the `OutRosterTeamDays` sample and the schedule catalogue; the `.docx` is a Word printout of the same body. |
-| `../IntegracaoUA_SISQUAL/JSON/20260917_JSON_Cenarios_GeradoSisqual/` | the two September bundles, adapted into `../examples/`. |
-| `../sisqual-alg-input/` | the July bundle. Not promoted to an example: it predates `priorityHierachy` and `constraints`, and its `contracts.definitions` is `[]` while all 15 employees reference `PT_40`. Kept as a negative test fixture. |
-| `../sisqual-alg-output/` | two screenshots of WFM after importing `import_1.Json`. The first is the field-mapping key: `RosterCode` is the scenario tab, `TeamCode` the `Nº` group row, `EmployeeCode` the employee row, and `ScheduleCode 100154` renders as `00:00-07:00` with a `04:00-04:30` meal break. |
+| `../IntegracaoUA_SISQUAL/JSON/20260917_JSON_Cenarios_GeradoSisqual/` | the two September bundles. Cenário 2 is adapted into `../examples/cenario2_retail/`; **Cenário 1 is not shipped as an example** — it fails three independent ways, so it stays here as provenance and as a test fixture (it is the only bundle exercising the decimal-comma path). See [../docs/next_meeting.md](../docs/next_meeting.md) item 21. |
+| `../IntegracaoUA_SISQUAL/sisqual-alg-input/` | the July bundle. Not promoted to an example: it predates `priorityHierachy` and `constraints`, and its `contracts.definitions` is `[]` while all 15 employees reference `PT_40`. Kept as a negative test fixture. |
+| `../IntegracaoUA_SISQUAL/sisqual-alg-output/` | two screenshots of WFM after importing `import_1.Json`. The first is the field-mapping key: `RosterCode` is the scenario tab, `TeamCode` the `Nº` group row, `EmployeeCode` the employee row, and `ScheduleCode 100154` renders as `00:00-07:00` with a `04:00-04:30` meal break. |
 
 Direction is easy to get backwards, and everything follows from it: Sisqual's
 **Export** (`Inp*`) is data leaving WFM and is therefore *the problem*; their
@@ -38,6 +37,20 @@ assumed. Three caveats, all in [../docs/next_meeting.md](../docs/next_meeting.md
 - it is on a **15-minute** grid while the bundles declare 30, so 914 of its codes
   are unreachable as specified (item 6);
 - `1020 Flexible` has a length but no window (item 7).
+
+## `build_example_result.py`
+
+Builds `../examples/cenario2_retail/result.json` and its sidecar
+`result_schedules.csv`. It lives here, not in `src/`, because it is provenance for
+one synthetic artifact rather than a tool the format needs: **no v4.0 solver exists
+yet**, so the result is constructed by a fixed rule (nearest duration, then best
+overlap with that day's demand) purely so the result form has a realistic instance
+to be validated against. The rule is stated in full at the top of the file, and
+every substitution it makes is counted into the `_comment` block it writes.
+
+```bash
+PYTHONPATH=src python3 reference/build_example_result.py
+```
 
 ## Removed from version control
 

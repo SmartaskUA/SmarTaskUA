@@ -866,5 +866,8 @@
       }
     ],
     "soft": []
+  },
+  "schedules": {
+    "dataFile": "schedules_without_meal.csv"
   }
 }

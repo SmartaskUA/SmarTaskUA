@@ -3,7 +3,7 @@
 import json
 
 import pytest
-from helpers import C1, C2, CATALOGUE, RAW_C1, RAW_C2, RAW_JULY, validate
+from helpers import C2, CATALOGUE, RAW_C1, RAW_C2, RAW_JULY, validate
 
 from schema_v4 import sisqual_adapt
 from schema_v4.sisqual_adapt import AdaptError
@@ -14,15 +14,12 @@ def _read(path):
         return fh.read()
 
 
-@pytest.mark.parametrize("raw, expected, schedules", [
-    (RAW_C2, C2, None),
-    (RAW_C1, C1, CATALOGUE),
-])
-def test_adapting_reproduces_the_committed_example(raw, expected, schedules, tmp_path):
-    sisqual_adapt.adapt(raw, tmp_path, schedules)
+def test_adapting_reproduces_the_committed_example(tmp_path):
+    sisqual_adapt.adapt(RAW_C2, tmp_path, CATALOGUE)
     for name in ("problem.json", "days_demand.csv", "periods_demand.csv",
-                 "shifts_demand.csv", "schedule_input.csv"):
-        assert _read(tmp_path / name) == _read(expected / name), f"{name} drifted"
+                 "shifts_demand.csv", "schedule_input.csv",
+                 "schedules_without_meal.csv"):
+        assert _read(tmp_path / name) == _read(C2 / name), f"{name} drifted"
 
 
 def test_every_known_misspelling_is_reported(tmp_path):
@@ -63,8 +60,10 @@ def test_dimensions_are_synthesised_from_all_three_sources(tmp_path):
                      ("Responsibility", "C"), ("Responsibility", "G")}
 
 
-def test_cenario1_dimensions_come_from_priority_alone(tmp_path):
-    """Its employees hold nothing and its demand is empty, so only one source is left."""
+def test_dimensions_can_come_from_priority_alone(tmp_path):
+    """The raw Cenario 1 bundle holds no competencies and no demand, so only one
+    source of coordinates is left. It is not shipped as an example - see
+    docs/next_meeting.md item 20 - but it still exercises this path."""
     problem, _ = sisqual_adapt.adapt(RAW_C1, tmp_path)
     assert len(problem["demand"]["dimensions"]) == 3
     assert all(not e["competencyAssignments"] for e in problem["employees"]["list"])

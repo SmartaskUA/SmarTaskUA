@@ -47,7 +47,7 @@ python3 -m schema_v4.sisqual_adapt \
   -o /tmp/c2 --stats
 
 python3 -m schema_v4.validator examples/cenario2_retail -v   # a package
-python3 -m schema_v4.validator examples/cenario1_nlm/result.json   # a result
+python3 -m schema_v4.validator examples/cenario2_retail/result.json  # a result
 python3 -m schema_v4.validator examples/                     # every package under it
 python3 -m schema_v4.validator templates/                    # the templates too
 
@@ -74,16 +74,17 @@ src/schema_v4/    core (domain + CSV I/O) -- validator (orchestrator + CLI) with
                   sisqual_adapt (their dialect -> canonical)
 tests/            pytest suite, one file per module
 docs/             FORMAT (formats + semantics), MIGRATION (3.0 -> 4.0),
-                  DIALECT (their emission vs ours), next_meeting (the agenda)
-examples/         two real SISQUAL bundles, adapted -- one that validates and one
-                  that deliberately does not
+                  DIALECT (their emission vs ours), FUTURE (what is deferred and
+                  why), next_meeting (the agenda)
+examples/         cenario2_retail -- a real SISQUAL bundle, adapted, with a worked
+                  result and the sidecar catalogue naming the shifts it used
 templates/        commented starting points; validates clean as a package
 reference/        the raw vendor drop, and the ScheduleCode catalogue converted to CSV
 ```
 
-The three directories `IntegracaoUA_SISQUAL/`, `sisqual-alg-input/` and
-`sisqual-alg-output/` are the untouched raw drop; `reference/README.md` explains
-what each piece is.
+`IntegracaoUA_SISQUAL/` is the untouched raw drop -- vendor documents, the
+generated bundles, and the two screenshots; `reference/README.md` explains what
+each piece is.
 
 ## The four things that differ most from v3.0
 
@@ -102,5 +103,6 @@ what each piece is.
 - [docs/FORMAT.md](docs/FORMAT.md) — CSV formats, cell semantics, and what v4.0 leaves out.
 - [docs/MIGRATION-3.0-to-4.0.md](docs/MIGRATION-3.0-to-4.0.md) — what changed and what will bite you.
 - [docs/DIALECT.md](docs/DIALECT.md) — SISQUAL's emission vs canonical v4.0, field by field; the adapter's spec.
+- [docs/FUTURE.md](docs/FUTURE.md) — what v4.0 does not carry and what each item is waiting on.
 - [docs/next_meeting.md](docs/next_meeting.md) — the agenda: what is blocking, what we corrected, and what we are proposing.
 - [../schema_v3/](../schema_v3/) — the previous version, still the reference for the two-form architecture and the transformer.

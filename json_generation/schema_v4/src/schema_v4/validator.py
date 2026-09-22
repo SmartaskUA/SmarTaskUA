@@ -21,7 +21,7 @@ from .validate_result import ResultChecksMixin
 SCHEMA_DIR = Path(__file__).resolve().parents[2] / "schemas"
 
 SCHEMA_FILES = {
-    "declarative": "schema-v4-declarative.json",
+    "declarative": "schema-v4-input.json",
     "result": "schema-v4-result.json",
 }
 
