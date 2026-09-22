@@ -496,6 +496,16 @@ def solve(problem_path, maxTime=None, **kwargs):
     path = Path(str(problem_path))
     if path.is_file():
         path = path.parent
+
+    import pandas as pd
+    demand_path = path / "demand.csv"
+    if demand_path.exists():
+        shifts_present = set(pd.read_csv(demand_path)["shift"].unique())
+        if "N" not in shifts_present:
+            raise ValueError(
+                "Problem has no Night shift — use Genetic Algorithm 2-Shift instead."
+            )
+
     problem_data = load_problem(str(path))
 
     best_ind, _, _, _ = run_ga(problem_data, _GA_PARAMS)
