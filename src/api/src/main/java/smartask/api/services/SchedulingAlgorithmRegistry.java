@@ -62,7 +62,8 @@ public class SchedulingAlgorithmRegistry {
 
         register(specs, "ILP General", UiMode.PROBLEM, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
         register(specs, "CSP General", UiMode.PROBLEM, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
-        register(specs, "Genetic Algorithm", UiMode.PROBLEM, Granularity.SHIFT, InputKind.PROBLEM_BUNDLE);
+        register(specs, "Genetic Algorithm 2-Shift", UiMode.PROBLEM, Granularity.SHIFT, InputKind.PROBLEM_BUNDLE);
+        register(specs, "Genetic Algorithm 3-Shift", UiMode.PROBLEM, Granularity.SHIFT, InputKind.PROBLEM_BUNDLE);
         register(specs, "ILP_Sisqual_Hours", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
         register(specs, "CSP_Sisqual_Hours", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
 
