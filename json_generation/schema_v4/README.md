@@ -43,7 +43,7 @@ docs/             FORMAT (formats + semantics), MIGRATION (3.0 -> 4.0),
                   FUTURE (what is deferred and why), next_meeting (the agenda)
 examples/         cenario2_retail -- a real SISQUAL bundle corrected to v4.0, with a
                   worked result and the sidecar naming the shifts it used
-templates/        commented starting points; validates clean as a package
+templates/        commented starting points -- both forms, validating clean as a package
 reference/        the untouched vendor drop -- documents, bundles, screenshots
 ```
 

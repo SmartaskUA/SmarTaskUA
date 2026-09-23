@@ -20,9 +20,25 @@ def test_the_result_validates():
 
 def test_templates_validate_with_no_warnings():
     """The control the whole suite leans on. If this goes, every isolation
-    assertion elsewhere is measuring noise."""
-    r = validate(TEMPLATES / "problem_template.json")
-    assert r.ok and not r.warnings, (r.errors, r.warnings)
+    assertion elsewhere is measuring noise. Both forms, because a result template
+    that drifted from its problem would be a broken starting point."""
+    for name in ("problem_template.json", "result_template.json"):
+        r = validate(TEMPLATES / name)
+        assert r.ok and not r.warnings, (name, r.errors, r.warnings)
+
+
+def test_the_templates_ship_both_forms():
+    from schema_v4 import validator
+    forms = validator.validate_package(TEMPLATES)["(package)"].stats["forms"]
+    assert forms == ["input", "result"]
+
+
+def test_the_result_template_sidecar_is_exactly_what_it_uses():
+    from schema_v4 import core
+    used = {e["ScheduleCode"] for e in load(TEMPLATES / "result_template.json")
+            ["OutRosterTeamDays"]}
+    sidecar, _ = core.read_schedules(TEMPLATES / "result_template_schedules.csv")
+    assert set(sidecar) == used
 
 
 def test_every_example_warning_is_one_the_readme_names():

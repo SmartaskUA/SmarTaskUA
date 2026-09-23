@@ -1,0 +1,260 @@
+{
+  "_comment": "v4.0 result -- what a solver produced, in the shape SISQUAL WFM ingests. This one answers templates/problem_template.json: same RosterCode, same employees, same dates. Every _comment* key is ignored by the validator, so keep them or delete them.",
+  "_comment_shape": "This form is NOT ours to change: OutRosterTeamDays is SISQUAL's WFM import API and schema-v4-result.json matches JSON-Import.docx verbatim, PascalCase and all. Contrast the input form, where we correct their spelling.",
+  "_comment_sidecar": "A result names numeric codes and carries no definition of them, so it ships result_template_schedules.csv beside it -- same shape as the menu, holding exactly the codes used here. The file is found by convention: <name>.json pairs with <name>_schedules.csv.",
+  "_comment_rest": "ScheduleCode 3 is a rest sentinel -- a menu row with no window and zero weight. That is how the validator recognises one, from the data rather than a hardcoded list. A day the problem marks 'unavailable' (VAC, NOT) may carry only a sentinel.",
+  "OutRosterTeamDays": [
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP001",
+      "Date": "2026-03-02T00:00:00",
+      "ScheduleCode": 9003,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP001",
+      "Date": "2026-03-03T00:00:00",
+      "ScheduleCode": 9003,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP001",
+      "Date": "2026-03-04T00:00:00",
+      "ScheduleCode": 9003,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP001",
+      "Date": "2026-03-05T00:00:00",
+      "ScheduleCode": 9003,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP001",
+      "Date": "2026-03-06T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP001",
+      "Date": "2026-03-07T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP001",
+      "Date": "2026-03-08T00:00:00",
+      "ScheduleCode": 9003,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP002",
+      "Date": "2026-03-02T00:00:00",
+      "ScheduleCode": 9003,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP002",
+      "Date": "2026-03-03T00:00:00",
+      "ScheduleCode": 9003,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP002",
+      "Date": "2026-03-04T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP002",
+      "Date": "2026-03-05T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP002",
+      "Date": "2026-03-06T00:00:00",
+      "ScheduleCode": 9003,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP002",
+      "Date": "2026-03-07T00:00:00",
+      "ScheduleCode": 9003,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP002",
+      "Date": "2026-03-08T00:00:00",
+      "ScheduleCode": 9003,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP003",
+      "Date": "2026-03-02T00:00:00",
+      "ScheduleCode": 9001,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP003",
+      "Date": "2026-03-03T00:00:00",
+      "ScheduleCode": 9002,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP003",
+      "Date": "2026-03-04T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP003",
+      "Date": "2026-03-05T00:00:00",
+      "ScheduleCode": 9001,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP003",
+      "Date": "2026-03-06T00:00:00",
+      "ScheduleCode": 9002,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP003",
+      "Date": "2026-03-07T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP003",
+      "Date": "2026-03-08T00:00:00",
+      "ScheduleCode": 9001,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP004",
+      "Date": "2026-03-02T00:00:00",
+      "ScheduleCode": 9002,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP004",
+      "Date": "2026-03-03T00:00:00",
+      "ScheduleCode": 9001,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP004",
+      "Date": "2026-03-04T00:00:00",
+      "ScheduleCode": 9001,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP004",
+      "Date": "2026-03-05T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP004",
+      "Date": "2026-03-06T00:00:00",
+      "ScheduleCode": 9002,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP004",
+      "Date": "2026-03-07T00:00:00",
+      "ScheduleCode": 3,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    },
+    {
+      "RosterCode": "TEMPLATE",
+      "TeamCode": "1",
+      "EmployeeCode": "EMP004",
+      "Date": "2026-03-08T00:00:00",
+      "ScheduleCode": 9001,
+      "OutRosterTeamDayTasks": [],
+      "OutRosterTeamDayResponsibilities": []
+    }
+  ]
+}
