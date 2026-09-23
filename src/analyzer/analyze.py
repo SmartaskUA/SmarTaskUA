@@ -82,6 +82,41 @@ def fetch_minimums_content(template_name):
 
 
 # ------------------------------------------------------------------------
+# 🔍 Helper: build mins text from a SMARTASK problem bundle's demand.csv
+# ------------------------------------------------------------------------
+def load_mins_from_problem_bundle(problem_path):
+    """
+    Convert demand.csv from a SMARTASK problem bundle into the CSV text
+    format expected by kpiVerification.parse_requirements().
+    Returns a string or None if the file cannot be read.
+    """
+    from pathlib import Path
+    base = Path(problem_path)
+    if base.is_file():
+        base = base.parent
+    demand_path = base / "demand.csv"
+    if not demand_path.exists():
+        print(f"[WARN] demand.csv not found at {demand_path}")
+        return None
+    try:
+        df = pd.read_csv(demand_path)
+        df["date"] = pd.to_datetime(df["date"])
+        df["day"] = df["date"].dt.dayofyear
+        lines = []
+        for (shift, team), grp in df.groupby(["shift", "team"]):
+            grp = grp.sort_values("day")
+            min_vals   = grp["minimum"].tolist()
+            ideal_vals = grp["ideal"].tolist()
+            label = f"Team_{team}"
+            lines.append(f"{label},Minimo,{shift},"  + ",".join(str(int(v)) for v in min_vals))
+            lines.append(f"{label},Ideal,{shift},"   + ",".join(str(int(v)) for v in ideal_vals))
+        return "\n".join(lines)
+    except Exception as e:
+        print(f"[WARN] Could not load mins from problem bundle: {e}")
+        return None
+
+
+# ------------------------------------------------------------------------
 # 🔍 Helper: detectar tipo de problema (shifts vs hours)
 # ------------------------------------------------------------------------
 def detect_schedule_format(file_path, mins_text=None):
@@ -274,6 +309,13 @@ def callback(ch, method, properties, body):
 
         print(f"[DEBUG] Detected problem type: {problem_type} (hour granularity: {hour_granularity})")
 
+        # For problem-bundle shift algorithms (e.g. GA), mins template is empty.
+        # Load minimums from demand.csv inside the bundle instead.
+        if problem_type == "shifts" and problem_path and (not mins_content or not mins_content.strip()):
+            print(f"[INFO] mins template empty — loading from problem bundle: {problem_path}")
+            loaded = load_mins_from_problem_bundle(problem_path)
+            if loaded:
+                mins_content = loaded
         use_sisqual_bundle_verifier = (
             problem_type == "hours"
             and problem_path

@@ -42,6 +42,7 @@ base_targets = [
     (4, 24),
     (8, 48),
     (16, 96),
+    (32, 192),
 ]
 
 employee_multiplier = 2.0
