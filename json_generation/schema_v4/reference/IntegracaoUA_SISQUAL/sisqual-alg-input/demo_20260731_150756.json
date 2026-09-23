@@ -1,0 +1,380 @@
+{
+  "schemaVersion": "3.0",
+  "form": "declarative",
+  "problemType": "employee_scheduling",
+  "metadata": {
+    "problemId": "C2_January_2026",
+    "createdAt": "2026-07-31T14:04:56Z",
+    "description": "C2_2026-01-01_2026-01-31",
+    "source": "SISQUAL"
+  },
+  "timeGrid": {
+    "slotMinutes": 30
+  },
+  "temporalScope": {
+    "start": "2026-01-01",
+    "end": "2026-01-31"
+  },
+  "calendar": {
+    "weekStart": "Monday",
+    "inpUAHolidaysCollection": [
+      {
+        "date": "2026-01-01",
+        "code": "H1",
+        "name": "New Year's Day / Nieuwjaarsdag",
+        "description": "New Year's Day / Nieuwjaarsdag",
+        "hasEve": false
+      }
+    ]
+  },
+  "contracts": {
+    "definitions": []
+  },
+  "employees": {
+    "list": [
+      {
+        "id": "20072412",
+        "name": "Emp_20072412",
+        "contractAssigments": [
+          {
+            "contractType": "PT_40",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Equipa",
+            "tableValue": "T1",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "level": 1
+          }
+        ]
+      },
+      {
+        "id": "20066543",
+        "name": "Emp_20066543",
+        "contractAssigments": [
+          {
+            "contractType": "PT_40",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Equipa",
+            "tableValue": "T1",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "level": 2
+          }
+        ]
+      },
+      {
+        "id": "20067009",
+        "name": "Emp_20067009",
+        "contractAssigments": [
+          {
+            "contractType": "PT_40",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Equipa",
+            "tableValue": "T1",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "level": 3
+          },
+          {
+            "tableName": "Equipa",
+            "tableValue": "T1",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "level": 1
+          }
+        ]
+      },
+      {
+        "id": "20054956",
+        "name": "Emp_20054956",
+        "contractAssigments": [
+          {
+            "contractType": "PT_40",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Equipa",
+            "tableValue": "T1",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "level": 4
+          },
+          {
+            "tableName": "Equipa",
+            "tableValue": "T1",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "level": 2
+          }
+        ]
+      },
+      {
+        "id": "20056459",
+        "name": "Emp_20056459",
+        "contractAssigments": [
+          {
+            "contractType": "PT_40",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Equipa",
+            "tableValue": "T1",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "level": 1
+          }
+        ]
+      },
+      {
+        "id": "20062688",
+        "name": "Emp_20062688",
+        "contractAssigments": [
+          {
+            "contractType": "PT_40",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Equipa",
+            "tableValue": "T1",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "level": 4
+          },
+          {
+            "tableName": "Equipa",
+            "tableValue": "T1",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "level": 3
+          }
+        ]
+      },
+      {
+        "id": "20067696",
+        "name": "Emp_20067696",
+        "contractAssigments": [
+          {
+            "contractType": "PT_40",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Equipa",
+            "tableValue": "T1",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "level": 2
+          }
+        ]
+      },
+      {
+        "id": "20058959",
+        "name": "Emp_20058959",
+        "contractAssigments": [
+          {
+            "contractType": "PT_40",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Equipa",
+            "tableValue": "T1",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "level": 2
+          }
+        ]
+      },
+      {
+        "id": "20068397",
+        "name": "Emp_20068397",
+        "contractAssigments": [
+          {
+            "contractType": "PT_40",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Equipa",
+            "tableValue": "T1",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "level": 2
+          }
+        ]
+      },
+      {
+        "id": "20038706",
+        "name": "Emp_20038706",
+        "contractAssigments": [
+          {
+            "contractType": "PT_40",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Equipa",
+            "tableValue": "T1",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "level": 2
+          }
+        ]
+      },
+      {
+        "id": "20066338",
+        "name": "Emp_20066338",
+        "contractAssigments": [
+          {
+            "contractType": "PT_40",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Equipa",
+            "tableValue": "T1",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "level": 3
+          }
+        ]
+      },
+      {
+        "id": "900027719",
+        "name": "Emp_900027719",
+        "contractAssigments": [
+          {
+            "contractType": "PT_40",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Equipa",
+            "tableValue": "T1",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "level": 4
+          }
+        ]
+      },
+      {
+        "id": "20051291",
+        "name": "Emp_20051291",
+        "contractAssigments": [
+          {
+            "contractType": "PT_40",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Equipa",
+            "tableValue": "T1",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "level": 1
+          }
+        ]
+      },
+      {
+        "id": "20055066",
+        "name": "Emp_20055066",
+        "contractAssigments": [
+          {
+            "contractType": "PT_40",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Equipa",
+            "tableValue": "T1",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "level": 4
+          }
+        ]
+      },
+      {
+        "id": "900027718",
+        "name": "Emp_900027718",
+        "contractAssigments": [
+          {
+            "contractType": "PT_40",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Equipa",
+            "tableValue": "T1",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "level": 5
+          }
+        ]
+      }
+    ]
+  },
+  "demand": {
+    "dataFileShifts": "R_2026-01-01_20260731_150756_shifts_demand.csv",
+    "dataFilePeriods": "R_2026-01-01_20260731_150756_periods_demand.csv",
+    "dataFileDays": "R_2026-01-01_20260731_150756_days_demand.csv"
+  },
+  "scheduleInput": {
+    "dataFile": "R_2026-01-01_20260731_150756_schedule_input.csv",
+    "dayOffCodes": {
+      "NOT": {
+        "kind": "Unavailable",
+        "description": "Unavailable - cannot work"
+      },
+      "HOL": {
+        "kind": "Unavailable",
+        "description": "Holiday - cannot work"
+      },
+      "DO": {
+        "kind": "Preferable",
+        "description": "May be swapped, at a penalty"
+      }
+    }
+  }
+}

@@ -39,6 +39,8 @@ from algorithms.ILP_4_Half_Intervals import solve as ILP_4_Half_Intervals
 from algorithms.COP_2_Half_Intervals import solve as COP_2_Half_Intervals_Solver
 from algorithms.COP_1_Half_Intervals import solve as COP_1_Half_Intervals_solver
 from algorithms.general.heuristic_general import solve as heuristic_general_solver
+from algorithms.GA.ga import solve as ga_solver
+from algorithms.GA.ga3 import solve as ga3_solver
 from analyzer.kpiVerification_Sisqual import KpiEvaluator_Sisqual
 from algorithms.Hybrid_Heuristic import solve as hybrid_heuristic_solver
 from algorithms.R2_Heuristic import solve as r2_heuristic_solver
@@ -93,6 +95,9 @@ class TaskManager:
             "CSP_Sisqual_Hours_MathematicalDefinition5": CSP_Sisqual_Hours_MathematicalDefinition7_solver,
             "COP_1_Half_Intervals": COP_1_Half_Intervals_solver,
             "COP_2_Half_Intervals": COP_2_Half_Intervals_Solver,
+            "Genetic Algorithm": ga_solver,
+            "Genetic Algorithm 2-Shift": ga_solver,
+            "Genetic Algorithm 3-Shift": ga3_solver,
             "Hybrid_Heuristic": hybrid_heuristic_solver,
             "R2_Heuristic": r2_heuristic_solver,
             "Puzzle_Heuristic": puzzle_heuristic_solver,
@@ -185,6 +190,8 @@ class TaskManager:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, rules=rules_json)
             else:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, constraints=rules)
+        elif algorithm_name in ("Genetic Algorithm", "Genetic Algorithm 2-Shift", "Genetic Algorithm 3-Shift"):
+            schedule_data = algorithm(problem_path=problem_path, maxTime=maxTime)
         elif algorithm_name in [
             "ILP_Sisqual_Hours",
             "CSP_Sisqual_Hours",

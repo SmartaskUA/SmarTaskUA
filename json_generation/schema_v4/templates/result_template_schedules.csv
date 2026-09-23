@@ -1,0 +1,18 @@
+# result_template_schedules.csv -- the shifts result_template.json actually used.
+# Lines starting with '#' and blank lines are ignored, so these notes can stay.
+#
+# Found by convention: a result at <name>.json pairs with <name>_schedules.csv in
+# the same folder. Nothing inside the result points at it, deliberately -- the
+# result document stays exactly as JSON-Import.docx specifies it.
+#
+# It holds the codes this result USED, not a copy of the menu. Every code in the
+# result must be defined here, every row here must be used by the result, and each
+# definition must match the problem's own menu (schedules_template.csv). A row
+# nobody uses is a warning; a code with no row is an error.
+#
+# Whatever produces the result produces this file.
+code,description,scheduleWeightMinutes,startMin,endMin
+3,Day off,0,,
+9001,09:00-13:00,240,540,780
+9002,13:00-17:00,240,780,1020
+9003,09:00-17:00,480,540,1020

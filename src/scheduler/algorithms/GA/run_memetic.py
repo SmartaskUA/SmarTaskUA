@@ -23,12 +23,16 @@ from memetic_ga import run_memetic_ga
 
 SCENARIOS = [
     #{"data_dir": "SMARTASK_SIMPLE_2025",  "n_runs": 10, "early_stop_patience": 100, "n_workers": None},
-    {"data_dir": "SMARTASK_4TEAMS_2025",  "n_runs": 10, "early_stop_patience": 100, "n_workers": None},
+    #{"data_dir": "SMARTASK_4TEAMS_2025",  "n_runs": 10, "early_stop_patience": 100, "n_workers": None},
     #{"data_dir": "SMARTASK_8TEAMS_2025",  "n_runs": 10, "early_stop_patience": 100, "n_workers": None},
-    #{"data_dir": "SMARTASK_16TEAMS_2025", "n_runs": 10, "early_stop_patience": 100, "n_workers": None},
-    #{"data_dir": "SMARTASK_32TEAMS_2025", "n_runs": 10, "early_stop_patience": 100, "n_workers": 4},
+    {"data_dir": "SMARTASK_16TEAMS_2025", "n_runs": 10, "early_stop_patience": 100, "n_workers": None},
+    {"data_dir": "SMARTASK_32TEAMS_2025", "n_runs": 10, "early_stop_patience": 100, "n_workers": 4},
 ]
 
+# ls_mode="best" : LS only when a new best individual is found — minimal overhead,
+#                  same number of generations as standard GA.
+# ls_mode="all"  : LS on ls_prob fraction of offspring every generation — heavier,
+#                  use num_generations < 1000 to compensate.
 BASE_PARAMS = {
     "crossover_type":       "nbts",
     "mutation_type":        "demand_guided",
@@ -36,9 +40,10 @@ BASE_PARAMS = {
     "pop_size":             200,
     "gene_mut_prob":        0.003,
     "tournament_size":      7,
-    "num_generations":      500,   # fewer than GA-only since each gen is heavier
+    "num_generations":      1000,
     "early_stop_min_delta": 1,
-    "ls_prob":              0.1,   # apply one-pass LS to 10% of offspring every gen
+    "ls_mode":              "best",  # "best" or "all"
+    "ls_prob":              0.1,     # only used when ls_mode="all"
 }
 
 CSV_FIELDS = [
@@ -50,14 +55,15 @@ CSV_FIELDS = [
 def run_scenario(data_dir, n_runs, patience, n_workers):
     params = {**BASE_PARAMS, "early_stop_patience": patience, "n_workers": n_workers}
 
-    output_dir = os.path.join("results_memetic", data_dir)
+    ls_mode    = params.get("ls_mode", "all")
+    output_dir = os.path.join(f"results_memetic_{ls_mode}", data_dir)
     conv_dir   = os.path.join(output_dir, "convergence")
     sched_dir  = os.path.join(output_dir, "schedules")
     os.makedirs(conv_dir,  exist_ok=True)
     os.makedirs(sched_dir, exist_ok=True)
 
     print(f"\n{'='*56}")
-    print(f"  {data_dir}  (MA, patience={patience}, runs={n_runs})")
+    print(f"  {data_dir}  (MA ls_mode={ls_mode}, patience={patience}, runs={n_runs})")
     print(f"{'='*56}")
 
     problem_data = load_problem(data_dir)

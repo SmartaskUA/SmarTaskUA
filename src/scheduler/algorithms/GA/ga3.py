@@ -16,8 +16,8 @@ Run:
 import time
 import random
 import numpy as np
-import matplotlib.pyplot as plt
 from multiprocessing import Pool
+from pathlib import Path
 
 from problem3 import (
     load_problem, compute_fitness, random_schedule,
@@ -466,6 +466,71 @@ def run_ga(problem_data, params):
     return hof, hof["fitness"], logbook, stopped_at
 
 
+# ── TaskManager entry point ───────────────────────────────────────────────────
+
+_GA_PARAMS = {
+    "crossover_type":      "nbts",
+    "mutation_type":       "demand_guided",
+    "pop_size":            200,
+    "gene_mut_prob":       0.003,
+    "tournament_size":     7,
+    "crossover_prob":      0.8,
+    "num_generations":     1000,
+    "early_stop_patience": 100,
+}
+
+
+def solve(problem_path, maxTime=None, **kwargs):
+    """
+    TaskManager-compatible entry point for the 3-shift Genetic Algorithm.
+
+    Args:
+        problem_path: path to a SMARTASK 3-shift scenario directory
+                      (must contain problem.json, vacations.csv, demand.csv)
+        maxTime:      ignored — GA uses early stopping instead
+    Returns:
+        list of lists: [header_row, emp1_row, ...]
+        header: ["funcionario", "Dia 1", ..., "Dia 365"]
+        cells:  "M_A" / "T_A" / "N_A" / "M_B" / ... (worked), "F" (vacation), "0" (rest)
+    """
+    path = Path(str(problem_path))
+    if path.is_file():
+        path = path.parent
+
+    import pandas as pd
+    demand_path = path / "demand.csv"
+    if demand_path.exists():
+        shifts_present = set(pd.read_csv(demand_path)["shift"].unique())
+        if "N" not in shifts_present:
+            raise ValueError(
+                "Problem has no Night shift — use Genetic Algorithm 2-Shift instead."
+            )
+
+    problem_data = load_problem(str(path))
+
+    best_ind, _, _, _ = run_ga(problem_data, _GA_PARAMS)
+
+    n_emp  = problem_data["n_employees"]
+    n_days = problem_data["n_days"]
+    schedule           = np.array(best_ind["genes"], dtype=int).reshape(n_emp, n_days)
+    gene_to_shift_team = problem_data["gene_to_shift_team"]
+    vac_mask           = problem_data["vac_mask"]
+
+    header = ["funcionario"] + [f"Dia {d}" for d in range(1, n_days + 1)]
+    output = [header]
+    for i in range(n_emp):
+        row = [i + 1]
+        for d in range(n_days):
+            g = schedule[i, d]
+            if g == GENE_OFF:
+                row.append("F" if vac_mask[i, d] else "0")
+            else:
+                shift, team = gene_to_shift_team[g]
+                row.append(f"{shift}_{team}")
+        output.append(row)
+    return output
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
@@ -511,6 +576,7 @@ def main():
     print_summary(best_schedule, pd_data, label="Best Schedule")
     export_schedule(best_schedule, pd_data, path="schedule_ga3.csv")
 
+    import matplotlib.pyplot as plt
     gens  = [r["gen"]  for r in logbook]
     bests = [r["best"] for r in logbook]
     means = [r["mean"] for r in logbook]

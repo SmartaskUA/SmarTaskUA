@@ -159,6 +159,15 @@ def load_problem(data_dir: str = "SMARTASK_SIMPLE_2025") -> dict:
 
     special_days = _build_special_days(year, n_days)
 
+    # Precomputed gene→(shift_idx, team_idx) lookup arrays for fast indexing in LS
+    gene_to_shift_team = enc["gene_to_shift_team"]
+    max_gene = max(gene_to_shift_team.keys()) if gene_to_shift_team else 0
+    gene_shift_arr = np.zeros(max_gene + 1, dtype=np.int32)
+    gene_team_arr  = np.zeros(max_gene + 1, dtype=np.int32)
+    for g, (s_code, t_code) in gene_to_shift_team.items():
+        gene_shift_arr[g] = SHIFT_IDX[s_code]
+        gene_team_arr[g]  = team_idx[t_code]
+
     return {
         "n_employees":       n_employees,
         "n_days":            n_days,
@@ -170,6 +179,8 @@ def load_problem(data_dir: str = "SMARTASK_SIMPLE_2025") -> dict:
         "min_demand":        min_demand,
         "ideal_demand":      ideal_demand,
         "special_days":      special_days,
+        "gene_shift_arr":    gene_shift_arr,
+        "gene_team_arr":     gene_team_arr,
         # encoding lookups
         **enc,
     }
@@ -638,6 +649,310 @@ def export_schedule(
     cov_path = str(Path(path).with_stem(Path(path).stem + "_coverage"))
     pd.DataFrame(coverage_rows).to_csv(cov_path, index=False)
     print(f"Coverage exported → {cov_path}")
+
+
+def local_search_ideal(schedule: np.ndarray, problem_data: dict) -> tuple:
+    """
+    Post-processing local search: day-swap surplus-to-deficit (3-shift).
+
+    For each employee, moves workdays from surplus days (coverage > ideal)
+    to non-worked deficit days. Backward-shift check generalised to 3 shifts
+    using gene_shift_order (M=1, T=2, N=3): shift_order[d+1] >= shift_order[d].
+    Preserves workday count, enforces all Phase 2 constraints.
+
+    Returns:
+        (improved_schedule, n_swaps)
+    """
+    n_emp             = problem_data["n_employees"]
+    n_days            = problem_data["n_days"]
+    allowed_genes     = problem_data["allowed_genes"]
+    min_demand        = problem_data["min_demand"]
+    ideal_demand      = problem_data["ideal_demand"]
+    vac_mask          = problem_data["vac_mask"]
+    special_days      = problem_data["special_days"]
+    gene_shift_arr    = problem_data["gene_shift_arr"]
+    gene_team_arr     = problem_data["gene_team_arr"]
+    gene_shift_order  = problem_data["gene_shift_order"]
+    n_teams           = len(problem_data["teams"])
+
+    schedule = schedule.copy()
+
+    coverage = np.zeros((n_days, len(SHIFTS), n_teams), dtype=int)
+    ei, dj = np.where(schedule != GENE_OFF)
+    if len(ei):
+        gp = schedule[ei, dj]
+        np.add.at(coverage, (dj, gene_shift_arr[gp], gene_team_arr[gp]), 1)
+
+    work_genes_emp = [
+        np.array([g for g in allowed_genes[i] if g != GENE_OFF])
+        for i in range(n_emp)
+    ]
+
+    n_swaps = 0
+
+    while True:
+        improved = False
+
+        for i in range(n_emp):
+            row        = schedule[i]
+            work_genes = work_genes_emp[i]
+            if not len(work_genes):
+                continue
+
+            worked  = np.where(row != GENE_OFF)[0]
+            if not len(worked):
+                continue
+            gw      = row[worked]
+            surplus = (coverage[worked, gene_shift_arr[gw], gene_team_arr[gw]]
+                       - ideal_demand[worked, gene_shift_arr[gw], gene_team_arr[gw]])
+            surplus_days = worked[surplus > 0]
+            if not len(surplus_days):
+                continue
+
+            free_days = np.where((row == GENE_OFF) & ~vac_mask[i])[0]
+            if not len(free_days):
+                continue
+
+            sp_count = int(np.sum(row[list(special_days)] != GENE_OFF))
+
+            emp_improved = True
+            while emp_improved:
+                emp_improved = False
+
+                worked  = np.where(row != GENE_OFF)[0]
+                gw      = row[worked]
+                surplus = (coverage[worked, gene_shift_arr[gw], gene_team_arr[gw]]
+                           - ideal_demand[worked, gene_shift_arr[gw], gene_team_arr[gw]])
+                surplus_days = worked[surplus > 0]
+                free_days    = np.where((row == GENE_OFF) & ~vac_mask[i])[0]
+
+                for d1 in surplus_days:
+                    old_gene   = int(row[d1])
+                    old_s      = int(gene_shift_arr[old_gene])
+                    old_t      = int(gene_team_arr[old_gene])
+                    d1_special = d1 in special_days
+
+                    for d2 in free_days:
+                        d2_special = d2 in special_days
+                        if d2_special and not d1_special and sp_count >= SPECIAL_DAYS_CAP:
+                            continue
+
+                        window_ok = True
+                        for w in range(max(0, d2 - WINDOW_SIZE + 1),
+                                       min(n_days - WINDOW_SIZE + 1, d2 + 1)):
+                            count = int(np.sum(row[w:w + WINDOW_SIZE] != GENE_OFF))
+                            if w <= d1 < w + WINDOW_SIZE:
+                                count -= 1
+                            if count >= WINDOW_MAX:
+                                window_ok = False
+                                break
+                        if not window_ok:
+                            continue
+
+                        s_c   = gene_shift_arr[work_genes]
+                        t_c   = gene_team_arr[work_genes]
+                        cov_c = coverage[d2, s_c, t_c].astype(int)
+                        sc    = np.maximum(0, ideal_demand[d2, s_c, t_c]
+                                           - np.maximum(cov_c, min_demand[d2, s_c, t_c]))
+                        if sc.max() == 0:
+                            continue
+
+                        # Backward-shift check (generalised for 3 shifts)
+                        for k in range(len(work_genes)):
+                            so_new = gene_shift_order[work_genes[k]]
+                            if d2 > 0 and row[d2 - 1] != GENE_OFF:
+                                if gene_shift_order[row[d2 - 1]] > so_new:
+                                    sc[k] = 0; continue
+                            if d2 + 1 < n_days and row[d2 + 1] != GENE_OFF:
+                                if gene_shift_order[row[d2 + 1]] < so_new:
+                                    sc[k] = 0
+
+                        if sc.max() == 0:
+                            continue
+
+                        chosen = int(work_genes[np.argmax(sc)])
+                        coverage[d1, old_s, old_t] -= 1
+                        coverage[d2, gene_shift_arr[chosen], gene_team_arr[chosen]] += 1
+                        row[d1] = GENE_OFF
+                        row[d2] = chosen
+
+                        if d2_special and not d1_special:
+                            sp_count += 1
+                        elif d1_special and not d2_special:
+                            sp_count -= 1
+
+                        n_swaps     += 1
+                        improved     = True
+                        emp_improved = True
+                        break
+
+                    if emp_improved:
+                        break
+
+        if not improved:
+            break
+
+    return schedule, n_swaps
+
+
+def local_search_cyclic(schedule: np.ndarray, problem_data: dict) -> tuple:
+    """
+    Post-processing local search: 2-employee cyclic exchanges (3-shift).
+
+    Same logic as the 2-shift version but backward-shift check generalised
+    using gene_shift_order. For each pair (A, B): A works d1 (surplus), B
+    works d2 (surplus). Swap: A→d2, B→d1 with best deficit gene each.
+
+    Returns:
+        (improved_schedule, n_swaps)
+    """
+    n_emp             = problem_data["n_employees"]
+    n_days            = problem_data["n_days"]
+    allowed_genes     = problem_data["allowed_genes"]
+    min_demand        = problem_data["min_demand"]
+    ideal_demand      = problem_data["ideal_demand"]
+    vac_mask          = problem_data["vac_mask"]
+    special_days      = problem_data["special_days"]
+    gene_shift_arr    = problem_data["gene_shift_arr"]
+    gene_team_arr     = problem_data["gene_team_arr"]
+    gene_shift_order  = problem_data["gene_shift_order"]
+    n_teams           = len(problem_data["teams"])
+
+    schedule = schedule.copy()
+
+    coverage = np.zeros((n_days, len(SHIFTS), n_teams), dtype=int)
+    ei, dj = np.where(schedule != GENE_OFF)
+    if len(ei):
+        gp = schedule[ei, dj]
+        np.add.at(coverage, (dj, gene_shift_arr[gp], gene_team_arr[gp]), 1)
+
+    work_genes_emp = [
+        np.array([g for g in allowed_genes[i] if g != GENE_OFF])
+        for i in range(n_emp)
+    ]
+
+    def _best_gene(wg, d, row, cov_d):
+        s_c = gene_shift_arr[wg]
+        t_c = gene_team_arr[wg]
+        sc  = np.maximum(0, ideal_demand[d, s_c, t_c]
+                         - np.maximum(cov_d[s_c, t_c], min_demand[d, s_c, t_c]))
+        for k in range(len(wg)):
+            so_new = gene_shift_order[wg[k]]
+            if d > 0 and row[d - 1] != GENE_OFF:
+                if gene_shift_order[row[d - 1]] > so_new:
+                    sc[k] = 0; continue
+            if d + 1 < n_days and row[d + 1] != GENE_OFF:
+                if gene_shift_order[row[d + 1]] < so_new:
+                    sc[k] = 0
+        if sc.max() == 0:
+            return None, 0
+        return int(wg[np.argmax(sc)]), int(sc.max())
+
+    def _window_ok(row, d_add, d_remove):
+        for w in range(max(0, d_add - WINDOW_SIZE + 1),
+                       min(n_days - WINDOW_SIZE + 1, d_add + 1)):
+            count = int(np.sum(row[w:w + WINDOW_SIZE] != GENE_OFF))
+            if w <= d_remove < w + WINDOW_SIZE:
+                count -= 1
+            if count >= WINDOW_MAX:
+                return False
+        return True
+
+    n_swaps = 0
+
+    while True:
+        improved = False
+
+        surplus_per_emp = []
+        for i in range(n_emp):
+            row = schedule[i]
+            w   = np.where(row != GENE_OFF)[0]
+            if not len(w):
+                surplus_per_emp.append(np.array([], dtype=int))
+                continue
+            gw  = row[w]
+            sur = (coverage[w, gene_shift_arr[gw], gene_team_arr[gw]]
+                   - ideal_demand[w, gene_shift_arr[gw], gene_team_arr[gw]])
+            surplus_per_emp.append(w[sur > 0])
+
+        found = False
+        for i in range(n_emp):
+            if found:
+                break
+            surplus_i = surplus_per_emp[i]
+            if not len(surplus_i):
+                continue
+            row_i = schedule[i]
+            wg_i  = work_genes_emp[i]
+
+            for j in range(i + 1, n_emp):
+                if found:
+                    break
+                surplus_j = surplus_per_emp[j]
+                if not len(surplus_j):
+                    continue
+                row_j = schedule[j]
+                wg_j  = work_genes_emp[j]
+
+                for d1 in surplus_i:
+                    if found:
+                        break
+                    if row_j[d1] != GENE_OFF or vac_mask[j, d1]:
+                        continue
+
+                    old_gi = int(row_i[d1])
+                    old_si = int(gene_shift_arr[old_gi])
+                    old_ti = int(gene_team_arr[old_gi])
+
+                    for d2 in surplus_j:
+                        if row_i[d2] != GENE_OFF or vac_mask[i, d2]:
+                            continue
+
+                        old_gj = int(row_j[d2])
+                        old_sj = int(gene_shift_arr[old_gj])
+                        old_tj = int(gene_team_arr[old_gj])
+
+                        if not _window_ok(row_i, d2, d1):
+                            continue
+                        if not _window_ok(row_j, d1, d2):
+                            continue
+
+                        d1_sp = d1 in special_days
+                        d2_sp = d2 in special_days
+                        if d2_sp and not d1_sp:
+                            if int(np.sum(row_i[list(special_days)] != GENE_OFF)) >= SPECIAL_DAYS_CAP:
+                                continue
+                        if d1_sp and not d2_sp:
+                            if int(np.sum(row_j[list(special_days)] != GENE_OFF)) >= SPECIAL_DAYS_CAP:
+                                continue
+
+                        cov_d1 = coverage[d1].copy(); cov_d1[old_si, old_ti] -= 1
+                        cov_d2 = coverage[d2].copy(); cov_d2[old_sj, old_tj] -= 1
+
+                        chosen_i, sc_i = _best_gene(wg_i, d2, row_i, cov_d2)
+                        if chosen_i is None:
+                            continue
+                        chosen_j, sc_j = _best_gene(wg_j, d1, row_j, cov_d1)
+                        if chosen_j is None:
+                            continue
+
+                        coverage[d1, old_si, old_ti] -= 1
+                        coverage[d2, old_sj, old_tj] -= 1
+                        coverage[d2, gene_shift_arr[chosen_i], gene_team_arr[chosen_i]] += 1
+                        coverage[d1, gene_shift_arr[chosen_j], gene_team_arr[chosen_j]] += 1
+
+                        row_i[d1] = GENE_OFF; row_i[d2] = chosen_i
+                        row_j[d2] = GENE_OFF; row_j[d1] = chosen_j
+
+                        n_swaps  += 1
+                        improved  = True
+                        found     = True
+                        break
+
+        if not improved:
+            break
+
+    return schedule, n_swaps
 
 
 def print_summary(schedule: np.ndarray, problem_data: dict, label: str = "") -> None:

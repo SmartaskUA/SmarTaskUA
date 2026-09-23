@@ -52,6 +52,7 @@ def run_memetic_ga(problem_data, params):
     indpb_emp            = params.get("indpb_emp",            0.3)
     n_workers            = params.get("n_workers",            None)
     ls_prob              = params.get("ls_prob",              1.0)
+    ls_mode              = params.get("ls_mode",              "all")  # "all" or "best"
 
     n_emp  = problem_data["n_employees"]
     n_days = problem_data["n_days"]
@@ -76,7 +77,7 @@ def run_memetic_ga(problem_data, params):
         return total_repair
 
     def _apply_ls(individuals):
-        """Apply one-pass LS to each individual with probability ls_prob."""
+        """Apply one-pass LS to each individual with probability ls_prob (ls_mode='all')."""
         for ind in individuals:
             if random.random() < ls_prob:
                 schedule = np.array(ind["genes"], dtype=int).reshape(n_emp, n_days)
@@ -84,6 +85,14 @@ def run_memetic_ga(problem_data, params):
                 if n > 0:
                     ind["genes"]   = schedule.flatten().tolist()
                     ind["fitness"] = compute_fitness(schedule, problem_data)
+
+    def _ls_on_ind(ind):
+        """Apply one-pass LS to a single individual in-place."""
+        schedule = np.array(ind["genes"], dtype=int).reshape(n_emp, n_days)
+        schedule, n = local_search_one_pass(schedule, problem_data)
+        if n > 0:
+            ind["genes"]   = schedule.flatten().tolist()
+            ind["fitness"] = compute_fitness(schedule, problem_data)
 
     with Pool(processes=n_workers,
               initializer=_init_worker,
@@ -123,11 +132,15 @@ def run_memetic_ga(problem_data, params):
                         mut_respect_constraints(mutant, problem_data, gene_mut_prob)
 
             _eval_population(pool, offspring)
-            _apply_ls(offspring)   # ← Memetic step: LS inside the evolutionary loop
+
+            if ls_mode == "all":
+                _apply_ls(offspring)   # LS on fraction of offspring every generation
 
             current_best = max(offspring, key=lambda ind: ind["fitness"])
             if current_best["fitness"] > hof["fitness"]:
                 hof = clone(current_best)
+                if ls_mode == "best":
+                    _ls_on_ind(hof)    # LS only when a new best is found
             pop = [clone(hof)] + offspring
 
             fitnesses = [ind["fitness"] for ind in pop]

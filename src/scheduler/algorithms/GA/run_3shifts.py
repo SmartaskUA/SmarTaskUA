@@ -30,7 +30,7 @@ SCENARIOS = [
     ("SMARTASK_3SHIFTS_2TEAMS_2025",   10),
     ("SMARTASK_3SHIFTS_4TEAMS_2025",   10),
     ("SMARTASK_3SHIFTS_8TEAMS_2025",   10),
-    ("SMARTASK_3SHIFTS_16TEAMS_2025",   3),
+    ("SMARTASK_3SHIFTS_16TEAMS_2025",  10),
     ("SMARTASK_3SHIFTS_32TEAMS_2025",   3),
 ]
 
@@ -62,7 +62,9 @@ def run_scenario(scenario: str, n_runs: int, summary_rows: list) -> None:
     data_path  = os.path.join(DATA_DIR, scenario)
     output_dir = os.path.join("results_3shifts", scenario)
     conv_dir   = os.path.join(output_dir, "convergence")
-    os.makedirs(conv_dir, exist_ok=True)
+    sched_dir  = os.path.join(output_dir, "schedules")
+    os.makedirs(conv_dir,  exist_ok=True)
+    os.makedirs(sched_dir, exist_ok=True)
 
     print(f"\n{'='*60}")
     print(f"  {scenario}  ({n_runs} runs)")
@@ -116,8 +118,9 @@ def run_scenario(scenario: str, n_runs: int, summary_rows: list) -> None:
             min_results.append(min_unmet)
             elapsed_list.append(elapsed)
 
-            np.save(os.path.join(conv_dir, f"run{run_idx}.npy"),
+            np.save(os.path.join(conv_dir,  f"run{run_idx}.npy"),
                     np.array([r["best"] for r in logbook]))
+            np.save(os.path.join(sched_dir, f"run{run_idx}.npy"), schedule)
 
             writer.writerow({
                 "run":                  run_idx,

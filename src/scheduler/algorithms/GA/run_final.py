@@ -22,7 +22,7 @@ from problem import load_problem, _compute_penalties
 from ga import run_ga
 
 SCENARIOS = [
-    #{"data_dir": "SMARTASK_SIMPLE_2025",  "n_runs": 10, "early_stop_patience": 100, "n_workers": None},
+    {"data_dir": "SMARTASK_SIMPLE_2025",  "n_runs": 10, "early_stop_patience": 100, "n_workers": None},
     {"data_dir": "SMARTASK_4TEAMS_2025",  "n_runs": 10, "early_stop_patience": 100, "n_workers": None},
     {"data_dir": "SMARTASK_8TEAMS_2025",  "n_runs": 10, "early_stop_patience": 100, "n_workers": None},
     {"data_dir": "SMARTASK_16TEAMS_2025", "n_runs": 10, "early_stop_patience": 100, "n_workers": None},
