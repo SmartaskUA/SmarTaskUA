@@ -1,0 +1,3 @@
+crossover,mean_min_unmet,std_min_unmet,best_min_unmet,worst_min_unmet,mean_elapsed_s
+cx_row_swap,410.0,7.07,405,420,1003.8
+cx_day_point,400.0,11.58,389,416,1045.5

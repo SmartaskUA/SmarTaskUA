@@ -1,0 +1,47 @@
+# periods_demand.csv -- HEADCOUNT wanted per date / dimension / time window.
+# Lines starting with '#' and blank lines are ignored, so these notes can stay.
+#
+# date        YYYY-MM-DD, inside temporalScope
+# tableName   the coverage dimension; must appear in demand.dimensions[]
+# tableValue  the value within it; the PAIR must appear in demand.dimensions[]
+# minimum     workers desired (the model's alpha_dts). A float: 4.5 occurs in real data.
+# ideal       see below
+# estimated   see below
+# start,end   HH:MM-HH:MM, MANDATORY on this grain, and both must land on the grid
+#
+# THE ORDERING OF minimum / ideal / estimated IS NOT SETTLED.
+#   v3.0 was ascending  (minimum <= empiric <= maximum).
+#   v2.6 was            (minimum <= estimated <= ideal) -- `ideal` was the UPPER
+#                       bound sitting in the MIDDLE column.
+#   SISQUAL emits the v2.6 header but 0 in both columns everywhere, so the data
+#   cannot settle it. The validator therefore checks only that all three are
+#   non-negative, and enforces NO ordering. See next_meeting.md item 1 ("the ordering of").
+#
+# 0 means UNSET, not zero workers: "2,0,0" states a minimum of 2 and no opinion above it.
+#
+# RULES
+#   one row per (date, tableName, tableValue, window)
+#   a MISSING row = that dimension is not operating in that window that day
+#   a date with NO windowed row anywhere = closed; it sits outside every week
+#   windows for one (date, dimension) should not overlap -- a worker in the
+#     overlap would count toward both
+date,tableName,tableValue,minimum,ideal,estimated,start,end
+2026-03-02,Team,T1,2,0,0,09:00,13:00
+2026-03-02,Team,T1,2,0,0,13:00,17:00
+2026-03-02,Responsibility,A,1,0,0,09:00,17:00
+2026-03-03,Team,T1,2,0,0,09:00,13:00
+2026-03-03,Team,T1,2,0,0,13:00,17:00
+2026-03-03,Responsibility,A,1,0,0,09:00,17:00
+2026-03-04,Team,T1,2,0,0,09:00,13:00
+2026-03-04,Team,T1,2,0,0,13:00,17:00
+2026-03-04,Responsibility,A,1,0,0,09:00,17:00
+# 2026-03-05 is a holiday (calendar.holidays) given its own reduced demand:
+2026-03-05,Team,T1,1,0,0,10:00,14:00
+2026-03-05,Responsibility,A,1,0,0,10:00,14:00
+2026-03-06,Team,T1,2,0,0,09:00,13:00
+2026-03-06,Team,T1,2,0,0,13:00,17:00
+2026-03-06,Responsibility,A,1,0,0,09:00,17:00
+2026-03-07,Team,T1,1,0,0,09:00,13:00
+2026-03-07,Responsibility,A,1,0,0,09:00,13:00
+2026-03-08,Team,T1,1,0,0,09:00,13:00
+2026-03-08,Responsibility,A,1,0,0,09:00,13:00

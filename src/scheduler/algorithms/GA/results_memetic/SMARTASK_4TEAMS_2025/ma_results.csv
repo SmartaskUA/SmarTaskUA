@@ -1,0 +1,5 @@
+run,best_fitness,min_coverage_unmet,ideal_coverage_unmet,stopped_at_gen,elapsed_s
+1,-537.0,0,537,500,1125.4
+2,-534.0,0,534,500,1076.5
+3,-641.0,1,541,500,1151.8
+4,-641.0,1,541,500,1213.4

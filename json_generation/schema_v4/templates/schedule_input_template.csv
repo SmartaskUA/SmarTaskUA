@@ -1,0 +1,35 @@
+# schedule_input.csv -- one row per employee, one column per date.
+# Lines starting with '#' and blank lines are ignored, so these notes can stay.
+#
+# CELL VALUES
+#   A                    work the contract's workMinutesPerDay
+#   8                    work exactly 8 HOURS  (v3.0 read this column as MINUTES)
+#   7.2                  fractional hours are allowed if they are a whole number
+#                        of minutes (7.2 h = 432 min). SISQUAL writes "7,2" with a
+#                        decimal comma; the adapter converts it to a dot.
+#   EQUALS:a-b[,c-d]     work exactly this block; comma-separate ranges for a split shift
+#   INCLUDE:a-b[,c-d]    one block COVERING all listed windows (shift >= window)
+#   WITHIN:a-b[,c-d]     one block fitting INSIDE one listed window (shift <= window)
+#   EXCEPT:a-b[,c-d]     unavailable during ALL listed windows
+#   <your code>          must be declared in scheduleInput.dayOffCodes
+#   (blank)              NO assignments -- not "unconstrained"
+#
+# HOURS, NOT MINUTES. This is the one column in the whole bundle that is not in
+# minutes: contracts state workMinutesPerDay: 480 and the matching cell is 8.
+# A value above 24 is rejected, because it is almost certainly a v3.0 minute
+# count that was never converted. We are proposing minutes to Sisqual -- see
+# next_meeting.md item 16 ("should be minutes, not hours") -- and until
+# they agree, hours it is.
+#
+# The EQUALS/INCLUDE/WITHIN/EXCEPT operators are carried over from v3.0 and are
+# fully authorable, but SISQUAL's exporter emits none of them.
+#
+# Every code must be classified, because the two kinds behave differently and
+# both shift the week's working-day target n_wk = open days - |unavailable| - |preferable|:
+#   preferable   soft -- may be worked at a penalty  (typically DO)
+#   unavailable  hard -- no assignment permitted     (typically VAC, NOT)
+employee_id,2026-03-02,2026-03-03,2026-03-04,2026-03-05,2026-03-06,2026-03-07,2026-03-08
+EMP001,8,8,EQUALS:09:00-17:00,8,DO,DO,8
+EMP002,A,8,VAC,VAC,8,8,8
+EMP003,4,4,DO,4,4,NOT,4
+EMP004,4,WITHIN:09:00-17:00,4,DO,4,DO,4
