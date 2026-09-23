@@ -15,7 +15,10 @@ AGENDA = V4 / "next_meeting.md"
 #: `... item 7 ("Two contracts can be identical")` or `... item 7 (no quotes)`
 REF = re.compile(r"next_meeting\.md[^\n]{0,20}?item (\d+)"
                  r"(?:\s*\(\s*[\\\"']*([^\"')\\]+)[\\\"']*\s*\))?")
-SKIP = {".venv", "reference", "__pycache__", ".pytest_cache", ".git"}
+#: The vendor drop is provenance, not ours -- but `reference/README.md` IS ours,
+#: so skip the drop specifically rather than the whole folder.
+SKIP_DIRS = {".venv", "__pycache__", ".pytest_cache", ".git"}
+SKIP_TREE = "IntegracaoUA_SISQUAL"
 
 
 def flatten(text: str) -> str:
@@ -36,7 +39,9 @@ def agenda_items() -> dict[int, str]:
 
 def references():
     for path in sorted(V4.rglob("*")):
-        if not path.is_file() or any(part in SKIP for part in path.parts):
+        if not path.is_file() or SKIP_TREE in path.parts:
+            continue
+        if any(part in SKIP_DIRS for part in path.parts):
             continue
         if path.suffix not in (".py", ".md", ".csv", ".json") or path == AGENDA:
             continue
