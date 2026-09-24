@@ -1,190 +1,78 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  Card,
-  CardHeader,
-  CardContent,
-  Typography,
-  Alert,
-  AlertTitle,
-  List,
-  ListItem,
-  ListItemText,
-  Button,
-  Badge,
-  Box,
-  Chip
+  Card, CardHeader, CardContent, Alert, AlertTitle, Box, Chip, Button, Typography, Collapse, Stack
 } from '@mui/material';
-import { CheckCircle, Error as ErrorIcon, Warning, Refresh } from '@mui/icons-material';
+import { CheckCircle, Error as ErrorIcon, Warning } from '@mui/icons-material';
+import { WIZARD_STEPS, stepIndex } from '../../constants/wizardSteps';
+
+const STAT_LABELS = {
+  days: 'days', openDays: 'open days', contracts: 'contracts', employees: 'employees', dimensions: 'dimensions',
+  'demandRows.periods': 'periods rows', 'demandRows.days': 'days rows', 'demandRows.shifts': 'shifts rows',
+  schedules: 'menu codes', priorityRanks: 'priority ranks'
+};
+
+function StepGroup({ step, errors, warnings, onJump }) {
+  const [open, setOpen] = useState(errors.length > 0);
+  return (
+    <Box sx={{ mb: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Button size="small" onClick={() => setOpen(!open)} sx={{ textTransform: 'none', fontWeight: 600 }}>
+          {stepIndex(step.id) + 1}. {step.label}
+        </Button>
+        {errors.length > 0 && <Chip size="small" color="error" label={`${errors.length} error(s)`} />}
+        {warnings.length > 0 && <Chip size="small" color="warning" label={`${warnings.length} warning(s)`} />}
+        <Box sx={{ flexGrow: 1 }} />
+        <Button size="small" variant="outlined" onClick={() => onJump(stepIndex(step.id))}>Go to step</Button>
+      </Box>
+      <Collapse in={open}>
+        <Box component="ul" sx={{ mt: 0.5, mb: 0, pl: 4 }}>
+          {[...errors.map((f) => ['error', f]), ...warnings.map((f) => ['warning', f])].map(([sev, f], i) => (
+            <Typography key={i} component="li" variant="body2" color={sev === 'error' ? 'error.main' : 'warning.dark'}
+              sx={{ fontFamily: 'monospace', fontSize: 12, wordBreak: 'break-word' }}
+            >
+              {f.message}
+            </Typography>
+          ))}
+        </Box>
+      </Collapse>
+    </Box>
+  );
+}
 
 /**
- * Validation Panel Component
- *
- * Displays validation results with:
- * - Success state with stats
- * - Error list (blocks generation)
- * - Warning list (doesn't block generation)
- * - Revalidate button
+ * The validator's verdict on the generated bundle — the same checks, and the
+ * same wording, as `make validate` in json_generation/schema_v4.
  */
-const ValidationPanel = ({ results, onRevalidate }) => {
-  if (!results) {
-    return (
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography>Running validation...</Typography>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const { valid, errors, warnings, stats } = results;
+const ValidationPanel = ({ report, onJump }) => {
+  const { errors, warnings, stats } = report;
+  const icon = errors.length ? <ErrorIcon color="error" /> : warnings.length ? <Warning color="warning" /> : <CheckCircle color="success" />;
+  const byStep = WIZARD_STEPS.map((step) => ({
+    step,
+    errors: errors.filter((f) => f.step === step.id),
+    warnings: warnings.filter((f) => f.step === step.id)
+  })).filter((g) => g.errors.length || g.warnings.length);
 
   return (
-    <Card sx={{ mb: 3 }}>
-      <CardHeader
-        title={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="h6">Validation Results</Typography>
-            {valid && errors.length === 0 && <CheckCircle color="success" />}
-            {errors.length > 0 && <ErrorIcon color="error" />}
-          </Box>
-        }
-        action={
-          <Button
-            size="small"
-            startIcon={<Refresh />}
-            onClick={onRevalidate}
-            variant="outlined"
-          >
-            Revalidate
-          </Button>
-        }
-      />
-      <CardContent>
-        {/* Success State */}
-        {valid && errors.length === 0 && (
-          <Alert severity="success" icon={<CheckCircle />}>
-            <AlertTitle>All Validations Passed!</AlertTitle>
-            <Typography variant="body2">
-              Your configuration is valid and ready to download.
-            </Typography>
-            {stats && (
-              <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                <Chip
-                  label={`${stats.totalEmployees} Employees`}
-                  size="small"
-                  color="success"
-                  variant="outlined"
-                />
-                <Chip
-                  label={`${stats.totalContracts} Contracts`}
-                  size="small"
-                  color="success"
-                  variant="outlined"
-                />
-                <Chip
-                  label={`${stats.totalWorkPeriods} Work Periods`}
-                  size="small"
-                  color="success"
-                  variant="outlined"
-                />
-                <Chip
-                  label={`${stats.dateRange} Days`}
-                  size="small"
-                  color="success"
-                  variant="outlined"
-                />
-                {stats.totalTeams > 0 && (
-                  <Chip
-                    label={`${stats.totalTeams} Teams`}
-                    size="small"
-                    color="success"
-                    variant="outlined"
-                  />
-                )}
-                {stats.totalDemandEntries > 0 && (
-                  <Chip
-                    label={`${stats.totalDemandEntries} Demand Entries`}
-                    size="small"
-                    color="success"
-                    variant="outlined"
-                  />
-                )}
-                {stats.scheduleInputCoverage > 0 && (
-                  <Chip
-                    label={`${stats.scheduleInputCoverage}% Schedule Coverage`}
-                    size="small"
-                    color="success"
-                    variant="outlined"
-                  />
-                )}
-              </Box>
-            )}
+    <Card variant="outlined" sx={{ mb: 3 }}>
+      <CardHeader avatar={icon} title="Validation" subheader="JSON Schema + the v4.0 validator's semantic checks, run on the files below" />
+      <CardContent sx={{ pt: 0 }}>
+        {errors.length === 0 ? (
+          <Alert severity={warnings.length ? 'warning' : 'success'} sx={{ mb: 2 }}>
+            <AlertTitle>{warnings.length ? 'Valid, with warnings' : 'Valid'}</AlertTitle>
+            The bundle passes every check. {warnings.length > 0 && 'Warnings do not block the download.'}
+          </Alert>
+        ) : (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            <AlertTitle>{errors.length} error(s)</AlertTitle>
+            Fix them before downloading; a solver would reject or misread this bundle.
           </Alert>
         )}
-
-        {/* Errors */}
-        {errors && errors.length > 0 && (
-          <Alert severity="error" icon={<ErrorIcon />} sx={{ mb: 2 }}>
-            <AlertTitle>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <span>Errors Found</span>
-                <Badge badgeContent={errors.length} color="error" />
-              </Box>
-            </AlertTitle>
-            <List dense sx={{ mt: 1 }}>
-              {errors.map((err, i) => (
-                <ListItem key={i} sx={{ pl: 0 }}>
-                  <ListItemText
-                    primary={err.message}
-                    secondary={
-                      <span>
-                        <strong>Step {err.step}</strong>
-                        {err.field && ` • ${err.field}`}
-                      </span>
-                    }
-                    primaryTypographyProps={{ variant: 'body2' }}
-                    secondaryTypographyProps={{ variant: 'caption' }}
-                  />
-                </ListItem>
-              ))}
-            </List>
-            <Typography variant="caption" color="error" sx={{ display: 'block', mt: 1 }}>
-              Fix these errors to enable file download.
-            </Typography>
-          </Alert>
-        )}
-
-        {/* Warnings */}
-        {warnings && warnings.length > 0 && (
-          <Alert severity="warning" icon={<Warning />}>
-            <AlertTitle>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <span>Warnings</span>
-                <Badge badgeContent={warnings.length} color="warning" />
-              </Box>
-            </AlertTitle>
-            <List dense sx={{ mt: 1 }}>
-              {warnings.map((warn, i) => (
-                <ListItem key={i} sx={{ pl: 0 }}>
-                  <ListItemText
-                    primary={warn.message}
-                    secondary={
-                      <span>
-                        <strong>Step {warn.step}</strong>
-                        {warn.field && ` • ${warn.field}`}
-                      </span>
-                    }
-                    primaryTypographyProps={{ variant: 'body2' }}
-                    secondaryTypographyProps={{ variant: 'caption' }}
-                  />
-                </ListItem>
-              ))}
-            </List>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-              Warnings don't prevent file download, but you should review them.
-            </Typography>
-          </Alert>
-        )}
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
+          {Object.entries(STAT_LABELS).filter(([k]) => stats[k] !== undefined).map(([k, label]) => (
+            <Chip key={k} size="small" variant="outlined" label={`${stats[k]} ${label}`} />
+          ))}
+        </Stack>
+        {byStep.map((g) => <StepGroup key={g.step.id} {...g} onJump={onJump} />)}
       </CardContent>
     </Card>
   );

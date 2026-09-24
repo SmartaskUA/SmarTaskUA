@@ -1,113 +1,48 @@
-import React, { useState, useRef } from 'react';
-import {
-  Box,
-  Button,
-  ButtonGroup,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions
-} from '@mui/material';
-import {
-  FileUpload as FileUploadIcon,
-  FileDownload as FileDownloadIcon,
-  Delete as DeleteIcon
-} from '@mui/icons-material';
+import React, { useRef, useState } from 'react';
+import { Box, Button, ButtonGroup } from '@mui/material';
+import { FileUpload, FileDownload, RestartAlt, ClearAll } from '@mui/icons-material';
+import { ConfirmDialog } from '../shared/fields';
 
-/**
- * MatrixToolbar - Action buttons for schedule matrix
- */
-const MatrixToolbar = ({
-  onImportCsv,
-  onExportCsv,
-  onClearAll
-}) => {
-  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
-  const fileInputRef = useRef(null);
-
-  const handleImportClick = () => fileInputRef.current?.click();
-
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onImportCsv(file);
-      e.target.value = '';
-    }
-  };
-
-  const handleClearAll = () => {
-    setConfirmClearOpen(false);
-    if (onClearAll) {
-      onClearAll();
-    }
-  };
+/** Import / export schedule_input.csv, and bulk resets. */
+const MatrixToolbar = ({ onImportCsv, onExportCsv, onResetAuto, onClearBlank }) => {
+  const fileRef = useRef(null);
+  const [confirm, setConfirm] = useState(null); // 'auto' | 'blank'
 
   return (
     <>
-      <Box sx={{
-        display: 'flex',
-        gap: 2,
-        mb: 2,
-        flexWrap: 'wrap',
-        alignItems: 'center'
-      }}>
+      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
         <ButtonGroup variant="outlined" size="small">
-          <Button
-            startIcon={<FileUploadIcon />}
-            onClick={handleImportClick}
-          >
-            Import CSV
-          </Button>
-          <Button
-            startIcon={<FileDownloadIcon />}
-            onClick={onExportCsv}
-          >
-            Export CSV
-          </Button>
+          <Button startIcon={<FileUpload />} onClick={() => fileRef.current?.click()}>Import CSV</Button>
+          <Button startIcon={<FileDownload />} onClick={onExportCsv}>Export CSV</Button>
         </ButtonGroup>
-
-        <Button
-          variant="outlined"
-          size="small"
-          color="error"
-          startIcon={<DeleteIcon />}
-          onClick={() => setConfirmClearOpen(true)}
-        >
-          Clear All
-        </Button>
+        <ButtonGroup variant="outlined" size="small" color="warning">
+          <Button startIcon={<RestartAlt />} onClick={() => setConfirm('auto')}>Reset all to A</Button>
+          <Button startIcon={<ClearAll />} onClick={() => setConfirm('blank')}>Clear all to blank</Button>
+        </ButtonGroup>
       </Box>
-
-      {/* Hidden file input for CSV import */}
       <input
-        ref={fileInputRef}
+        ref={fileRef}
         type="file"
         accept=".csv"
         style={{ display: 'none' }}
-        onChange={handleFileChange}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onImportCsv(file);
+          e.target.value = '';
+        }}
       />
-
-      {/* Confirm Clear Dialog */}
-      <Dialog
-        open={confirmClearOpen}
-        onClose={() => setConfirmClearOpen(false)}
+      <ConfirmDialog
+        open={!!confirm}
+        title={confirm === 'auto' ? 'Reset every cell to A?' : 'Clear every cell?'}
+        confirmLabel={confirm === 'auto' ? 'Reset' : 'Clear'}
+        confirmColor="warning"
+        onCancel={() => setConfirm(null)}
+        onConfirm={() => { (confirm === 'auto' ? onResetAuto : onClearBlank)(); setConfirm(null); }}
       >
-        <DialogTitle>Clear All Data?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            This will clear all schedule input data for all employees. This action cannot be undone.
-            Are you sure you want to continue?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmClearOpen(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleClearAll} color="error" variant="contained">
-            Clear All
-          </Button>
-        </DialogActions>
-      </Dialog>
+        {confirm === 'auto'
+          ? 'Every day a contract covers becomes A (work the contract length); uncovered days become blank. Day-off codes and windows are lost.'
+          : 'Every cell becomes blank — no assignments at all. This cannot be undone.'}
+      </ConfirmDialog>
     </>
   );
 };

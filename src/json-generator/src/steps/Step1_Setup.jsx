@@ -1,646 +1,228 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  Grid,
-  TextField,
-  Box,
-  Typography,
-  Alert,
-  Paper,
-  Chip,
-  Divider,
-  Card,
-  CardContent,
-  IconButton,
-  Tooltip,
-  // Work Period Model UI (hidden; kept for re-enable):
-  // Dialog,
-  // DialogTitle,
-  // DialogContent,
-  // DialogContentText,
-  // DialogActions,
-  // Button
+  Grid, TextField, Box, Typography, Alert, Paper, Chip, Divider, MenuItem, Button, Table, TableHead,
+  TableRow, TableCell, TableBody, IconButton, Checkbox, Tooltip
 } from '@mui/material';
-import {
-  Groups as GroupsIcon,
-  Engineering as EngineeringIcon,
-  Info as InfoIcon,
-  CheckCircle as CheckCircleIcon
-  // Work Period Model UI (hidden; kept for re-enable):
-  // Schedule as ScheduleIcon,
-  // HourglassEmpty as HourglassIcon,
-  // Warning as WarningIcon
-} from '@mui/icons-material';
+import { Add, Delete, UploadFile } from '@mui/icons-material';
 import { StaticDatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { format, differenceInDays, getYear } from 'date-fns';
-import NavigationButtons from '../components/wizard/NavigationButtons';
+import { format, parseISO } from 'date-fns';
+import StepLayout from '../components/wizard/StepLayout';
+import StepCard from '../components/wizard/StepCard';
+import BundleImportDialog from '../components/import/BundleImportDialog';
+import { DateField } from '../components/shared/fields';
 import { useWizard } from '../context/WizardContext';
+import { SLOT_OPTIONS, WEEKDAYS } from '../v4/constants';
+import { rosterCodeFromProblemId } from '../v4/state';
+import { dateRange, weekdayName } from '../v4/core';
+import { outsideScope, pruneOutsideScope } from '../v4/operations';
+
+const capital = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /**
- * Step 1: Setup
- *
- * Collects:
- * - Metadata (problemId, description)
- * - Employee model selection (Team vs Competency)
- * - Temporal scope (year, numDays, date range)
- *
- * Layout: Two columns with left side for metadata+model, right side for calendar
+ * Step 1: Setup — metadata, the slot grid, the horizon and the calendar.
  */
 const Step1_Setup = () => {
-  const { state, updateState } = useWizard();
-  const [errors, setErrors] = useState({});
-  // Work Period Model (hidden; kept for re-enable):
-  // const [workPeriodModelWarningOpen, setWorkPeriodModelWarningOpen] = useState(false);
-  // const [pendingWorkPeriodModel, setPendingWorkPeriodModel] = useState(null);
+  const { state, updateState, transform } = useWizard();
+  const { metadata, timeGrid, temporalScope, calendar } = state;
+  const [importOpen, setImportOpen] = useState(false);
+  const [selectingStart, setSelectingStart] = useState(!temporalScope.start || !!temporalScope.end);
 
-  // Extract values from state
-  const { problemId, description } = state.metadata;
-  const { year, numDays, targetPeriod } = state.temporalScope;
-  const selectedModel = state.employees.model;
-  // Work Period Model (hidden; kept for re-enable):
-  // const selectedWorkPeriodModel = state.demand.workPeriodModel;
-  // const workPeriods = state.demand.workPeriods || [];
+  const days = useMemo(() => dateRange(temporalScope.start, temporalScope.end), [temporalScope]);
+  const stray = useMemo(() => outsideScope(state), [state]);
+  const derivedRoster = rosterCodeFromProblemId(metadata.problemId);
 
-  // Local state for date range picker
-  const [startDate, setStartDate] = useState(
-    targetPeriod.start ? new Date(targetPeriod.start) : null
-  );
-  const [endDate, setEndDate] = useState(
-    targetPeriod.end ? new Date(targetPeriod.end) : null
-  );
-  const [selectingStart, setSelectingStart] = useState(true);
-
-  // Auto-calculate year and numDays when dates change
-  useEffect(() => {
-    if (startDate && endDate) {
-      const calculatedYear = getYear(startDate);
-      const calculatedDays = differenceInDays(endDate, startDate) + 1;
-
-      updateState('temporalScope.year', calculatedYear);
-      updateState('temporalScope.numDays', calculatedDays);
-    }
-  }, [startDate, endDate]);
-
-  // Handlers
-  const handleProblemIdChange = (e) => {
-    updateState('metadata.problemId', e.target.value);
-    if (errors.problemId) {
-      setErrors({ ...errors, problemId: null });
-    }
+  const handleProblemId = (value) => {
+    // Keep rosterCode tracking problemId until the user sets their own.
+    const tracking = !metadata.rosterCode || metadata.rosterCode === rosterCodeFromProblemId(metadata.problemId);
+    updateState('metadata', { ...metadata, problemId: value, ...(tracking && { rosterCode: rosterCodeFromProblemId(value) }) });
   };
 
-  const handleDescriptionChange = (e) => {
-    updateState('metadata.description', e.target.value);
-  };
-
-  const handleModelSelect = (model) => {
-    updateState('employees.model', model);
-    if (errors.model) {
-      setErrors({ ...errors, model: null });
-    }
-  };
-
-  /* Work Period Model handlers (hidden; kept for re-enable):
-  const handleWorkPeriodModelSelect = (model) => {
-    // Check if there are existing work periods
-    if (workPeriods.length > 0 && model !== selectedWorkPeriodModel) {
-      // Show warning
-      setPendingWorkPeriodModel(model);
-      setWorkPeriodModelWarningOpen(true);
-    } else {
-      // Safe to change
-      updateState('demand.workPeriodModel', model);
-      if (errors.workPeriodModel) {
-        setErrors({ ...errors, workPeriodModel: null });
-      }
-    }
-  };
-
-  const handleConfirmWorkPeriodModelChange = () => {
-    updateState('demand.workPeriodModel', pendingWorkPeriodModel);
-    updateState('demand.workPeriods', []); // Clear work periods
-    setWorkPeriodModelWarningOpen(false);
-    setPendingWorkPeriodModel(null);
-  };
-
-  const handleCancelWorkPeriodModelChange = () => {
-    setWorkPeriodModelWarningOpen(false);
-    setPendingWorkPeriodModel(null);
-  };
-  */
-
-  // Handle date selection from single calendar
-  const handleDateChange = (date) => {
+  const handleDate = (date) => {
     if (!date) return;
-
-    if (selectingStart || !startDate) {
-      setStartDate(date);
-      const formatted = format(date, 'yyyy-MM-dd');
-      updateState('temporalScope.targetPeriod.start', formatted);
+    const iso = format(date, 'yyyy-MM-dd');
+    if (selectingStart || !temporalScope.start) {
+      updateState('temporalScope', { start: iso, end: temporalScope.end && temporalScope.end >= iso ? temporalScope.end : '' });
       setSelectingStart(false);
-
-      if (endDate && date > endDate) {
-        setEndDate(null);
-        updateState('temporalScope.targetPeriod.end', '');
-      }
-
-      if (errors.startDate) {
-        setErrors({ ...errors, startDate: null });
-      }
-    } else {
-      if (date >= startDate) {
-        setEndDate(date);
-        const formatted = format(date, 'yyyy-MM-dd');
-        updateState('temporalScope.targetPeriod.end', formatted);
-
-        if (errors.endDate) {
-          setErrors({ ...errors, endDate: null });
-        }
-      }
+    } else if (iso >= temporalScope.start) {
+      updateState('temporalScope', { ...temporalScope, end: iso });
+      setSelectingStart(true);
     }
   };
 
-  // Reset date range selection
-  const handleResetDateRange = () => {
-    setStartDate(null);
-    setEndDate(null);
-    setSelectingStart(true);
-    updateState('temporalScope.targetPeriod.start', '');
-    updateState('temporalScope.targetPeriod.end', '');
-    updateState('temporalScope.year', new Date().getFullYear());
-    updateState('temporalScope.numDays', 0);
-  };
+  const setHoliday = (i, patch) => updateState('calendar.holidays', (list) =>
+    list.map((h, j) => (j === i ? { ...h, ...patch } : h)));
 
-  // Employee model options
-  const modelOptions = [
-    {
-      value: 'team',
-      title: 'Team-Based',
-      description: 'Fixed teams or departments',
-      icon: GroupsIcon,
-      tooltip: 'Employees belong to fixed teams (e.g., Team A, Team B). Simpler and ideal for organizations with clear departmental structures.',
-      color: 'primary.main'
-    },
-    {
-      value: 'competency',
-      title: 'Competency-Based',
-      description: 'Skills with proficiency levels',
-      icon: EngineeringIcon,
-      tooltip: 'Employees have specific skills or competencies with proficiency levels. More flexible and ideal for skill-based scheduling.',
-      color: 'primary.main'
-    }
-  ];
+  const addHoliday = () => updateState('calendar.holidays', (list) =>
+    [...(list || []), { date: temporalScope.start || '', code: '', name: '', hasEve: false }]);
 
-  /* Work period model options (hidden; kept for re-enable):
-  const workPeriodModelOptions = [
-    {
-      value: 'fixed',
-      title: 'Fixed Time Ranges',
-      description: 'Specific start and end times',
-      icon: ScheduleIcon,
-      tooltip: 'Each work period has specific start and end times (e.g., Morning: 08:00-16:00). Best for organizations with fixed work period schedules.',
-      color: 'primary.main'
-    },
-    {
-      value: 'flexible',
-      title: 'Flexible Duration',
-      description: 'Duration + allowed start times',
-      icon: HourglassIcon,
-      tooltip: 'Each work period has a duration and multiple allowed start times (e.g., 8 hours, can start 06:00-08:00). More flexible for variable work period patterns.',
-      color: 'primary.main'
-    }
-  ];
-  */
-
-  // Validation
-  const validate = () => {
-    const newErrors = {};
-
-    if (!problemId.trim()) {
-      newErrors.problemId = 'Problem ID is required';
-    }
-
-    if (!startDate) {
-      newErrors.startDate = 'Start date is required';
-    }
-
-    if (!endDate) {
-      newErrors.endDate = 'End date is required';
-    }
-
-    if (startDate && endDate && endDate < startDate) {
-      newErrors.dateRange = 'End date must be after start date';
-    }
-
-    if (!selectedModel || selectedModel === '') {
-      newErrors.model = 'Employee model selection is required';
-    }
-
-    // Work Period Model (hidden; kept for re-enable):
-    // if (!selectedWorkPeriodModel || selectedWorkPeriodModel === '') {
-    //   newErrors.workPeriodModel = 'Work period model selection is required';
-    // }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleNext = () => {
-    return validate();
-  };
+  const handleNext = () => !!metadata.problemId.trim() && days.length > 0;
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Box sx={{
-        height: 'calc(100vh - 280px)',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        {/* HEADER - Fixed */}
-        <Box sx={{ flexShrink: 0, mb: 2 }}>
-          <Typography variant="h4" gutterBottom fontWeight={600}>
-            Setup
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Define the basics: problem details, employee model, and scheduling period.
-          </Typography>
-        </Box>
-
-        {/* CONTENT - Scrollable */}
-        <Box sx={{
-          flexGrow: 1,
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          pr: 1 // Small padding for scrollbar
-        }}>
-          {/* Two-Column Layout */}
+      <StepLayout
+        stepId="setup"
+        title="Setup"
+        subtitle="The problem's identity, the time grid every duration must fit, the horizon and its calendar."
+        actions={(
+          <Button variant="outlined" startIcon={<UploadFile />} onClick={() => setImportOpen(true)}>
+            Start from a v4 bundle…
+          </Button>
+        )}
+        onNext={handleNext}
+        nextDisabled={!metadata.problemId.trim() || !days.length}
+      >
+        <StepCard>
           <Grid container spacing={4}>
-          {/* LEFT COLUMN - Metadata + Employee Model */}
-          <Grid item xs={12} md={5}>
-            {/* Problem Metadata */}
-            <Box sx={{ mb: 3 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Typography variant="h6" fontWeight={600} gutterBottom>Problem</Typography>
               <TextField
                 fullWidth
                 label="Problem ID"
-                value={problemId}
-                onChange={handleProblemIdChange}
-                error={!!errors.problemId}
-                helperText={errors.problemId || 'Unique identifier (e.g., COMPANY_OCTOBER_2025)'}
+                value={metadata.problemId}
+                onChange={(e) => handleProblemId(e.target.value)}
                 required
-                placeholder="EXAMPLE_JAN_2026"
+                error={!metadata.problemId.trim()}
+                helperText="SISQUAL writes <RosterCode>_<Month>_<Year>, e.g. C2_January_2026"
+                placeholder="C2_January_2026"
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Roster code"
+                value={metadata.rosterCode}
+                onChange={(e) => updateState('metadata.rosterCode', e.target.value)}
+                placeholder={derivedRoster}
+                helperText="A result's RosterCode must equal this. Defaults to the Problem ID's leading segment."
                 sx={{ mb: 2 }}
               />
               <TextField
                 fullWidth
                 label="Description"
-                value={description}
-                onChange={handleDescriptionChange}
-                helperText="Brief description of this scheduling problem"
-                placeholder="Monthly schedule for retail employees..."
+                value={metadata.description}
+                onChange={(e) => updateState('metadata.description', e.target.value)}
+                sx={{ mb: 3 }}
               />
-            </Box>
 
-            <Divider sx={{ my: 3 }} />
-
-            {/* Employee Model Selection */}
-            <Box>
-              <Typography variant="h6" gutterBottom fontWeight={600}>
-                Employee Model
-              </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
-                Choose how employees are organized:
-              </Typography>
-
-              {errors.model && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                  {errors.model}
-                </Alert>
-              )}
-
+              <Divider sx={{ mb: 3 }} />
+              <Typography variant="h6" fontWeight={600} gutterBottom>Time grid & week</Typography>
               <Grid container spacing={2}>
-                {modelOptions.map((option) => {
-                  const Icon = option.icon;
-                  const isSelected = selectedModel === option.value;
-
-                  return (
-                    <Grid item xs={12} key={option.value}>
-                      <Card
-                        onClick={() => handleModelSelect(option.value)}
-                        sx={{
-                          cursor: 'pointer',
-                          position: 'relative',
-                          border: isSelected ? '2px solid' : '1px solid',
-                          borderColor: isSelected ? option.color : 'divider',
-                          boxShadow: isSelected ? 2 : 0,
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            borderColor: option.color,
-                            boxShadow: 1
-                          }
-                        }}
-                      >
-                        {/* Info Icon */}
-                        <Tooltip title={option.tooltip} arrow placement="top">
-                          <IconButton
-                            sx={{
-                              position: 'absolute',
-                              top: 8,
-                              right: 8,
-                              color: 'text.secondary',
-                              '&:hover': { color: option.color }
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                            size="small"
-                          >
-                            <InfoIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-
-                        {/* Selected Indicator */}
-                        {isSelected && (
-                          <CheckCircleIcon
-                            sx={{
-                              position: 'absolute',
-                              top: 8,
-                              left: 8,
-                              color: option.color,
-                              fontSize: 24
-                            }}
-                          />
-                        )}
-
-                        <CardContent
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            py: 2,
-                            px: 2
-                          }}
-                        >
-                          <Icon
-                            sx={{
-                              fontSize: 40,
-                              color: isSelected ? option.color : 'text.secondary',
-                              mr: 2
-                            }}
-                          />
-                          <Box sx={{ flexGrow: 1 }}>
-                            <Typography
-                              variant="subtitle1"
-                              fontWeight={600}
-                              sx={{ color: isSelected ? option.color : 'text.primary' }}
-                            >
-                              {option.title}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {option.description}
-                            </Typography>
-                          </Box>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  );
-                })}
+                <Grid size={6}>
+                  <TextField
+                    select
+                    fullWidth
+                    label="Slot minutes"
+                    value={timeGrid.slotMinutes}
+                    onChange={(e) => updateState('timeGrid.slotMinutes', Number(e.target.value))}
+                    helperText="Must divide 1440. SISQUAL uses 30."
+                  >
+                    {SLOT_OPTIONS.map((m) => <MenuItem key={m} value={m}>{m} min</MenuItem>)}
+                  </TextField>
+                </Grid>
+                <Grid size={6}>
+                  <TextField
+                    select
+                    fullWidth
+                    label="Week starts on"
+                    value={calendar.weekStart}
+                    onChange={(e) => updateState('calendar.weekStart', e.target.value)}
+                    helperText="Buckets the per-week working-day target"
+                  >
+                    {WEEKDAYS.map((d) => <MenuItem key={d} value={d}>{capital(d)}</MenuItem>)}
+                  </TextField>
+                </Grid>
               </Grid>
-            </Box>
+              <Alert severity="info" sx={{ mt: 2 }}>
+                Every duration must be a multiple of the slot — contract lengths, demand windows, cell
+                hours and menu boundaries. A 432-minute contract on a 30-minute grid can never be scheduled.
+              </Alert>
+            </Grid>
 
-            {/* Work Period Model section (hidden; kept for re-enable):
-            <Divider sx={{ my: 3 }} />
-            <Box>
-              <Typography variant="h6" gutterBottom fontWeight={600}>
-                Work Period Model
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Typography variant="h6" fontWeight={600} gutterBottom>Horizon</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                {!temporalScope.start ? 'Click the first day'
+                  : !selectingStart ? 'Now click the last day (inclusive)'
+                    : 'Range chosen — click a day to start a new one'}
               </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
-                Choose how work periods are defined:
-              </Typography>
-
-              {errors.workPeriodModel && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                  {errors.workPeriodModel}
-                </Alert>
-              )}
-
-              <Grid container spacing={2}>
-                {workPeriodModelOptions.map((option) => {
-                  const Icon = option.icon;
-                  const isSelected = selectedWorkPeriodModel === option.value;
-
-                  return (
-                    <Grid item xs={12} key={option.value}>
-                      <Card
-                        onClick={() => handleWorkPeriodModelSelect(option.value)}
-                        sx={{
-                          cursor: 'pointer',
-                          position: 'relative',
-                          border: isSelected ? '2px solid' : '1px solid',
-                          borderColor: isSelected ? option.color : 'divider',
-                          boxShadow: isSelected ? 2 : 0,
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            borderColor: option.color,
-                            boxShadow: 1
-                          }
-                        }}
-                      >
-                        Info Icon
-                        <Tooltip title={option.tooltip} arrow placement="top">
-                          <IconButton
-                            sx={{
-                              position: 'absolute',
-                              top: 8,
-                              right: 8,
-                              color: 'text.secondary',
-                              '&:hover': { color: option.color }
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                            size="small"
-                          >
-                            <InfoIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-
-                        Selected Indicator
-                        {isSelected && (
-                          <CheckCircleIcon
-                            sx={{
-                              position: 'absolute',
-                              top: 8,
-                              left: 8,
-                              color: option.color,
-                              fontSize: 24
-                            }}
-                          />
-                        )}
-
-                        <CardContent
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            py: 2,
-                            px: 2
-                          }}
-                        >
-                          <Icon
-                            sx={{
-                              fontSize: 40,
-                              color: isSelected ? option.color : 'text.secondary',
-                              mr: 2
-                            }}
-                          />
-                          <Box sx={{ flexGrow: 1 }}>
-                            <Typography
-                              variant="subtitle1"
-                              fontWeight={600}
-                              sx={{ color: isSelected ? option.color : 'text.primary' }}
-                            >
-                              {option.title}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {option.description}
-                            </Typography>
-                          </Box>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  );
-                })}
-              </Grid>
-            </Box>
-            */}
-          </Grid>
-
-          {/* VERTICAL DIVIDER */}
-          <Grid
-            item
-            xs={12}
-            md="auto"
-            sx={{
-              display: { xs: 'none', md: 'flex' },
-              justifyContent: 'center'
-            }}
-          >
-            <Divider orientation="vertical" flexItem />
-          </Grid>
-
-          {/* Horizontal divider for mobile */}
-          <Grid item xs={12} sx={{ display: { xs: 'block', md: 'none' } }}>
-            <Divider />
-          </Grid>
-
-          {/* RIGHT COLUMN - Calendar */}
-          <Grid item xs={12} md={6} sx={{ overflow: 'hidden' }}>
-            <Box sx={{ position: 'relative' }}>
-              <Typography variant="h6" gutterBottom fontWeight={600}>
-                Scheduling Period
-              </Typography>
-
-              {/* Instructions */}
-              <Box sx={{ mb: 2, textAlign: 'center', justifyContent: 'center', display: 'flex' }}>
-                <Typography variant="body2" color="text.secondary">
-                  {selectingStart || !startDate
-                    ? 'Click to select the start date'
-                    : !endDate
-                    ? 'Now select the end date'
-                    : 'Date range selected'}
-                </Typography>
+              <Paper variant="outlined">
+                <StaticDatePicker
+                  displayStaticWrapperAs="desktop"
+                  value={temporalScope.start ? parseISO(selectingStart ? temporalScope.start : temporalScope.end || temporalScope.start) : null}
+                  onChange={handleDate}
+                  minDate={!selectingStart && temporalScope.start ? parseISO(temporalScope.start) : undefined}
+                  slotProps={{ actionBar: { actions: [] } }}
+                />
+              </Paper>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
+                {temporalScope.start && <Chip color="primary" variant="outlined" label={`Start ${temporalScope.start} (${weekdayName(temporalScope.start)})`} />}
+                {temporalScope.end && <Chip color="primary" variant="outlined" label={`End ${temporalScope.end}`} />}
+                {days.length > 0 && <Chip color="success" size="small" label={`${days.length} days`} />}
               </Box>
-
-              {/* Calendar - Fixed with padding for content below */}
-              <Box sx={{ pb: '90px' }}>
-                <Paper
-                  elevation={0}
-                  sx={{
-                    border: (theme) => `1px solid ${theme.palette.divider}`,
-                    borderColor: errors.startDate || errors.endDate ? 'error.main' : 'divider'
-                  }}
+              {stray.rows + stray.holidays > 0 && (
+                <Alert
+                  severity="warning"
+                  sx={{ mt: 2 }}
+                  action={<Button color="inherit" size="small" onClick={() => transform(pruneOutsideScope)}>Remove</Button>}
                 >
-                  <StaticDatePicker
-                    displayStaticWrapperAs="desktop"
-                    value={selectingStart ? startDate : endDate}
-                    onChange={handleDateChange}
-                    minDate={selectingStart ? undefined : startDate}
-                    slotProps={{
-                      actionBar: { actions: [] }
-                    }}
-                  />
-                </Paper>
-              </Box>
-
-              {/* Date Chips - Absolutely positioned */}
-              <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'center' }}>
-                {startDate && (
-                  <Chip
-                    label={`Start: ${format(startDate, 'MMM dd, yyyy')}`}
-                    color="primary"
-                    variant="outlined"
-                  />
-                )}
-                {endDate && (
-                  <Chip
-                    label={`End: ${format(endDate, 'MMM dd, yyyy')}`}
-                    color="primary"
-                    variant="outlined"
-                  />
-                )}
-                {startDate && endDate && (
-                  <>
-                    <Chip label={`${numDays} days`} color="success" size="small" />
-                    <Chip label={`Year: ${year}`} color="info" size="small" />
-                  </>
-                )}
-                {startDate && (
-                  <Chip
-                    label="Reset"
-                    onClick={handleResetDateRange}
-                    onDelete={handleResetDateRange}
-                    size="small"
-                    variant="outlined"
-                  />
-                )}
-              </Box>
-            </Box>
+                  {stray.rows} demand row(s) and {stray.holidays} holiday(s) fall outside this horizon.
+                </Alert>
+              )}
+            </Grid>
           </Grid>
-        </Grid>
-        </Box>
+        </StepCard>
 
-        {/* NAVIGATION - Fixed at bottom */}
-        <Box sx={{ flexShrink: 0, mt: 2 }}>
-          <NavigationButtons onNext={handleNext} nextDisabled={false} />
-        </Box>
+        <StepCard>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Box>
+              <Typography variant="h6" fontWeight={600}>Holidays</Typography>
+              <Typography variant="body2" color="text.secondary">
+                A holiday may carry its own demand rows; marking one makes nobody unavailable.
+                &quot;Has eve&quot; says the preceding day is its eve.
+              </Typography>
+            </Box>
+            <Button startIcon={<Add />} onClick={addHoliday} disabled={!days.length}>Add holiday</Button>
+          </Box>
+          {(calendar.holidays || []).length > 0 && (
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Date</TableCell>
+                  <TableCell>Code</TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Description</TableCell>
+                  <TableCell align="center">Has eve</TableCell>
+                  <TableCell />
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {calendar.holidays.map((h, i) => (
+                  <TableRow key={i}>
+                    <TableCell>
+                      <DateField value={h.date} min={temporalScope.start} max={temporalScope.end} onChange={(v) => setHoliday(i, { date: v })} />
+                    </TableCell>
+                    <TableCell><TextField size="small" value={h.code || ''} onChange={(e) => setHoliday(i, { code: e.target.value })} sx={{ width: 90 }} /></TableCell>
+                    <TableCell><TextField size="small" value={h.name || ''} onChange={(e) => setHoliday(i, { name: e.target.value })} /></TableCell>
+                    <TableCell><TextField size="small" value={h.description || ''} onChange={(e) => setHoliday(i, { description: e.target.value })} /></TableCell>
+                    <TableCell align="center">
+                      <Checkbox checked={!!h.hasEve} onChange={(e) => setHoliday(i, { hasEve: e.target.checked })} />
+                    </TableCell>
+                    <TableCell>
+                      <Tooltip title="Remove">
+                        <IconButton size="small" color="error" onClick={() => updateState('calendar.holidays', (list) => list.filter((_, j) => j !== i))}>
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </StepCard>
 
-        {/* Work Period Model Change Warning Dialog (hidden; kept for re-enable):
-        <Dialog
-          open={workPeriodModelWarningOpen}
-          onClose={handleCancelWorkPeriodModelChange}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <WarningIcon color="warning" />
-            Change Work Period Model?
-          </DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Changing the work period model will <strong>clear all existing work periods</strong> in Step 6 ({workPeriods.length} work period{workPeriods.length !== 1 ? 's' : ''}).
-              This action cannot be undone.
-            </DialogContentText>
-            <DialogContentText sx={{ mt: 2 }}>
-              Are you sure you want to change from <strong>{selectedWorkPeriodModel === 'fixed' ? 'Fixed Time Ranges' : 'Flexible Duration'}</strong> to{' '}
-              <strong>{pendingWorkPeriodModel === 'fixed' ? 'Fixed Time Ranges' : 'Flexible Duration'}</strong>?
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCancelWorkPeriodModelChange} color="inherit">
-              Cancel
-            </Button>
-            <Button onClick={handleConfirmWorkPeriodModelChange} color="warning" variant="contained">
-              Clear and Change Model
-            </Button>
-          </DialogActions>
-        </Dialog>
-        */}
-
-      </Box>
+        <BundleImportDialog open={importOpen} onClose={() => setImportOpen(false)} />
+      </StepLayout>
     </LocalizationProvider>
   );
 };

@@ -70,8 +70,9 @@ infra/
 - **Tailwind CSS**: utility classes (used alongside MUI for layout/spacing)
 - **React Router 6**: client-side routing (base path `/json-gen/`)
 - **Axios**: HTTP client (reserved for future API integration)
+- **ajv**: JSON Schema validation against the vendored v4 schema
 - **PapaParse**: CSV parsing (employees import, demand, schedule input)
-- **JSZip** + **file-saver**: bundle `problem.json` + CSVs and trigger download
+- **JSZip** + **file-saver**: bundle `problem.json` + CSVs, read imported ZIPs, trigger downloads
 - **date-fns**: date arithmetic and formatting
 
 ## Development Workflow
@@ -224,27 +225,35 @@ Make sure `CHOKIDAR_USEPOLLING=1` is set in docker-compose.yml (already configur
 2. Check nginx logs: `docker logs nginx`
 3. Verify all services are healthy: `docker-compose ps`
 
-## Schema v2.6 Features
+## Schema v4.0
 
-The JSON Generator targets schema v2.6 (with backward-compatible output for v2.2 and v2.5 via the `state.schemaVersion` flag).
+The wizard targets schema v4.0 only (`json_generation/schema_v4/`). All schema logic lives in
+`src/v4/`; see the README for the module map. Things that are easy to get wrong:
 
-### Time Window Constraints (Allen Interval Algebra)
-Constraint codes in `schedule_input.csv`:
-- `EQUALS:HH:MM-HH:MM` — employee must work exactly this time range
-- `INCLUDE:HH:MM-HH:MM` — employee must cover this entire range at minimum (can extend)
-- `EXCEPT:HH:MM-HH:MM` — employee unavailable during this time window
+- **Units.** Contracts state `workMinutesPerDay` in minutes; `schedule_input.csv` cells are hours
+  (`8` = 480 min, a cell above 24 is rejected as unconverted minutes).
+- **The grid.** Every duration and boundary must be a multiple of `timeGrid.slotMinutes`.
+- **The demand triple.** No ordering is enforced between `minimum`, `ideal` and `estimated`; `0`
+  means unset and `minimum` may be fractional. Do not add an ordering check.
+- **Grains.** `days_demand.csv` and `periods_demand.csv` share a header but not a unit — always
+  pass the grain to `core.readDemand`, never sniff it.
+- **Day-off codes.** There are no implicit codes; every one must be declared with its kind.
+- **Parity.** `src/v4/validate.js` mirrors the Python validator message for message. When the
+  Python side changes, update the port and `src/v4/parity.test.js` together.
+- **The vendored schema.** `schema_v4/schema-v4-input.json` must stay byte-identical to
+  `json_generation/schema_v4/schemas/schema-v4-input.json`; copy it over, never edit it.
 
-### Standard vs Custom Constraints
-- **Standard** (always valid): `VAC` (vacation), `NOT` (unavailable)
-- **Custom** (must be defined in `scheduleInput.markingTypes`): DL, DLF, DLV, etc.
+Verify a change end to end:
 
-### Constraints Configuration
-- **Hard Constraints**: `max_consecutive_days`, `min_rest_hours`, `vacation_block`, etc.
-- **Soft Constraints**: `min_coverage`, `balance_workload`, with penalty weights
-- **Advanced**: day-off swapping, break rules (requires `useAdvancedConstraints` feature flag)
-
-See `schema_v2.6/FORMAT.md` and `schema_v2.6/README.md` for the complete schema reference.
+```bash
+npm test
+npx vite-node scripts/validate-with-python.mjs   # needs python3; runs the canonical validator
+```
 
 ## Status
 
-The wizard is **feature-complete** and currently in a user-testing pass. Output is a client-side ZIP (`problem.json` + `demand.csv` + `schedule_input.csv`); there is no backend submission yet. Next steps depend on tester feedback (bugs, UX tweaks) and a follow-up decision on whether to add a "submit to API" path.
+v4.0 migration complete: nine steps, a client-side ZIP (`problem.json` + three demand CSVs +
+`schedule_input.csv` + optional `schedules.csv`), and import of existing v4 bundles. v2.x
+projects and localStorage saves are deprecated and are discarded on load. There is no backend
+submission yet, and the solvers still read v2.2/v2.6 — they need migrating before they can
+consume this output.

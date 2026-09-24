@@ -1,203 +1,125 @@
 import React, { useMemo } from 'react';
-import {
-  Box,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Typography
-} from '@mui/material';
+import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Chip, Tooltip } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import MatrixCell from './MatrixCell';
-import { formatDateHeader, isWeekend } from '../../utils/helpers/dateHelpers';
+import { activeContract, weekday } from '../../v4/core';
+import { analyseCell } from '../../v4/operations';
 
-const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
-  maxHeight: '60vh',
-  overflow: 'auto',
-  '& .MuiTable-root': {
-    borderCollapse: 'separate',
-    borderSpacing: 0
-  }
-}));
+const DAY = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-const StickyHeaderCell = styled(TableCell)(({ theme, isweekend }) => ({
+const HeaderCell = styled(TableCell)(({ theme }) => ({
   position: 'sticky',
   top: 0,
   zIndex: 3,
   backgroundColor: theme.palette.background.paper,
   borderBottom: `2px solid ${theme.palette.divider}`,
   borderRight: `1px solid ${theme.palette.divider}`,
-  padding: '8px',
-  minWidth: '100px',
+  padding: '6px',
+  minWidth: 96,
   textAlign: 'center',
   fontWeight: 600,
-  fontSize: '12px',
-  ...(isweekend === 'true' && {
-    backgroundColor: '#fafafa'
-  })
+  fontSize: 12
 }));
 
-const StickyFirstCell = styled(TableCell)(({ theme }) => ({
+const FirstCell = styled(TableCell)(({ theme }) => ({
   position: 'sticky',
   left: 0,
-  zIndex: 4,
+  zIndex: 2,
   backgroundColor: theme.palette.background.paper,
   borderRight: `2px solid ${theme.palette.divider}`,
-  fontWeight: 600,
-  padding: '8px 16px',
-  minWidth: '120px'
-}));
-
-const StickyCornerCell = styled(TableCell)(({ theme }) => ({
-  position: 'sticky',
-  top: 0,
-  left: 0,
-  zIndex: 5,
-  backgroundColor: theme.palette.primary.main,
-  color: theme.palette.primary.contrastText,
-  borderBottom: `2px solid ${theme.palette.divider}`,
-  borderRight: `2px solid ${theme.palette.divider}`,
-  fontWeight: 700,
-  padding: '8px 16px',
-  minWidth: '120px'
-}));
-
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  '&:nth-of-type(even)': {
-    backgroundColor: theme.palette.action.hover
-  },
-  '&:hover': {
-    backgroundColor: theme.palette.action.selected
-  }
+  padding: '6px 12px',
+  minWidth: 140
 }));
 
 /**
- * ScheduleMatrix - Main matrix grid for schedule input
- *
- * Displays employees as rows and dates as columns with dropdown cells
+ * Employees × dates. Header badges mark holidays and closed days (no demand
+ * row with a window); grey cells are days no contract covers. The last column
+ * is each week's working-day count n_wk against the labour-law cap.
  */
-const ScheduleMatrix = ({
-  employees,
-  dateRange,
-  dataMatrix,
-  contracts,
-  onChange,
-  employeeModel
-}) => {
-  // Generate dates if not provided
-  const dates = useMemo(() => {
-    if (dateRange && dateRange.length > 0) {
-      return dateRange;
-    }
-    return [];
-  }, [dateRange]);
-
-  // Get cell value from dataMatrix
-  const getCellValue = (employeeId, date) => {
-    return dataMatrix?.[employeeId]?.[date] || '';
-  };
-
-  // Handle cell change
-  const handleCellChange = (employeeId, date, value) => {
-    onChange(employeeId, date, value);
-  };
-
-  // If no data, show empty state
-  if (employees.length === 0) {
-    return (
-      <Box sx={{ textAlign: 'center', py: 4 }}>
-        <Typography variant="body1" color="text.secondary">
-          No employees defined. Please go back to Step 4 and add employees.
-        </Typography>
-      </Box>
-    );
-  }
-
-  if (dates.length === 0) {
-    return (
-      <Box sx={{ textAlign: 'center', py: 4 }}>
-        <Typography variant="body1" color="text.secondary">
-          No date range defined. Please go back to Step 1 and set the temporal scope.
-        </Typography>
-      </Box>
-    );
-  }
+const ScheduleMatrix = ({ state, dates, openDays, holidays, load, onCellChange }) => {
+  const { employees, scheduleInput, contracts, timeGrid } = state;
+  const problem = useMemo(() => ({ scheduleInput: { dayOffCodes: scheduleInput.dayOffCodes } }), [scheduleInput.dayOffCodes]);
+  const minutesOf = useMemo(() => new Map(contracts.definitions.map((c) => [c.id, Number(c.workMinutesPerDay)])), [contracts]);
+  const slot = timeGrid.slotMinutes;
 
   return (
-    <StyledTableContainer component={Paper} elevation={1}>
+    <TableContainer sx={{ height: '100%', overflow: 'auto', '& .MuiTable-root': { borderCollapse: 'separate', borderSpacing: 0 } }}>
       <Table stickyHeader size="small">
         <TableHead>
           <TableRow>
-            {/* Top-left corner cell */}
-            <StickyCornerCell>
-              Employee ID
-            </StickyCornerCell>
-
-            {/* Date header cells */}
-            {dates.map((date) => (
-              <StickyHeaderCell
-                key={date}
-                isweekend={isWeekend(date) ? 'true' : 'false'}
-              >
-                <Box>
-                  {formatDateHeader(date)}
-                </Box>
-                <Box sx={{ fontSize: '10px', opacity: 0.7, mt: 0.5 }}>
-                  {date.split('-')[2]}
-                </Box>
-              </StickyHeaderCell>
-            ))}
+            <HeaderCell sx={{ left: 0, zIndex: 5, bgcolor: 'primary.main', color: 'primary.contrastText', minWidth: 140 }}>Employee</HeaderCell>
+            {dates.map((d) => {
+              const wd = weekday(d);
+              const closed = !openDays.has(d);
+              return (
+                <HeaderCell key={d} sx={{ bgcolor: wd >= 5 ? '#f5f5f5' : undefined }}>
+                  <Box>{DAY[wd]} {d.slice(8)}/{d.slice(5, 7)}</Box>
+                  <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center', minHeight: 18 }}>
+                    {holidays.has(d) && <Chip size="small" color="secondary" label="holiday" sx={{ height: 16, fontSize: 10 }} />}
+                    {closed && (
+                      <Tooltip title="No demand row with a window on this date: closed, outside every week">
+                        <Chip size="small" variant="outlined" label="closed" sx={{ height: 16, fontSize: 10 }} />
+                      </Tooltip>
+                    )}
+                  </Box>
+                </HeaderCell>
+              );
+            })}
+            <HeaderCell sx={{ minWidth: 150 }}>
+              Working days / week
+              {load.cap !== undefined && <Typography variant="caption" display="block">cap {load.cap}</Typography>}
+            </HeaderCell>
           </TableRow>
         </TableHead>
-
         <TableBody>
-          {employees.map((employee) => (
-            <StyledTableRow key={employee.id}>
-              {/* Employee ID cell (sticky first column) */}
-              <StickyFirstCell>
-                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                  <Typography variant="body2" fontWeight={600}>
-                    {employee.id}
-                  </Typography>
-                  {employee.name && (
-                    <Typography variant="caption" color="text.secondary">
-                      {employee.name}
-                    </Typography>
-                  )}
-                </Box>
-              </StickyFirstCell>
-
-              {/* Date cells */}
-              {dates.map((date) => (
-                <TableCell
-                  key={`${employee.id}-${date}`}
-                  sx={{
-                    padding: 0,
-                    height: '40px',
-                    borderRight: '1px solid #e0e0e0',
-                    ...(isWeekend(date) && {
-                      backgroundColor: '#fafafa'
-                    })
-                  }}
-                >
-                  <MatrixCell
-                    value={getCellValue(employee.id, date)}
-                    onChange={handleCellChange}
-                    employeeId={employee.id}
-                    date={date}
-                    employee={employee}
-                    contracts={contracts}
-                  />
+          {employees.list.map((emp) => {
+            const row = scheduleInput.dataMatrix?.[emp.id] || {};
+            return (
+              <TableRow key={emp.id} hover>
+                <FirstCell>
+                  <Typography variant="body2" fontWeight={600}>{emp.id}</Typography>
+                  {emp.name && emp.name !== emp.id && <Typography variant="caption" color="text.secondary">{emp.name}</Typography>}
+                </FirstCell>
+                {dates.map((d) => {
+                  const contract = activeContract(emp, d);
+                  const covered = !!contract;
+                  const value = row[d] ?? '';
+                  const analysis = analyseCell(value, {
+                    problem, covered, contractMinutes: minutesOf.get(contract) ?? null, slotMinutes: slot
+                  });
+                  return (
+                    <TableCell key={d} sx={{ p: 0, borderRight: '1px solid #eee', width: 96, minWidth: 96, maxWidth: 96 }}>
+                      <MatrixCell
+                        employeeId={emp.id}
+                        date={d}
+                        value={value}
+                        analysis={analysis}
+                        dayOffCodes={scheduleInput.dayOffCodes}
+                        covered={covered}
+                        slotMinutes={slot}
+                        onCellChange={onCellChange}
+                      />
+                    </TableCell>
+                  );
+                })}
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                  {(load.byEmployee[emp.id] || []).map((w) => (
+                    <Tooltip key={w.week} title={`Week ${w.week}: ${w.dates.length} open day(s), ${w.nWk} asked to work`}>
+                      <Chip
+                        size="small"
+                        label={`W${w.week} ${w.nWk}`}
+                        color={load.cap !== undefined && w.nWk > load.cap ? 'error' : 'default'}
+                        sx={{ mr: 0.5, mb: 0.5 }}
+                      />
+                    </Tooltip>
+                  ))}
                 </TableCell>
-              ))}
-            </StyledTableRow>
-          ))}
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
-    </StyledTableContainer>
+    </TableContainer>
   );
 };
 

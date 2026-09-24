@@ -1,125 +1,77 @@
 import React from 'react';
-import {
-  Stepper,
-  Step,
-  StepLabel,
-  StepButton,
-  Box,
-  Typography,
-  Badge,
-  Tooltip as MuiTooltip
-} from '@mui/material';
+import { Stepper, Step, StepLabel, StepButton, Box, Typography, Badge, Tooltip } from '@mui/material';
 import { Warning } from '@mui/icons-material';
 import { useWizard } from '../../context/WizardContext';
 import { themeConfig } from '../../theme.config';
-import { VISIBLE_STEPS } from '../../constants/wizardSteps';
-import { validateStep } from '../../utils/validators/stepValidators';
+import { WIZARD_STEPS } from '../../constants/wizardSteps';
 
 const WizardStepper = () => {
-  const { state, goToStep, completeStep } = useWizard();
-  const { currentStep, stepCompleted } = state;
-
-  // Jumping to another step via the stepper marks the step being left as
-  // completed — mirroring the "Next" button — so visited steps light up
-  // green (valid) or red (invalid) regardless of how the user navigated.
-  const handleStepClick = (realIndex) => {
-    if (realIndex === currentStep) return;
-    completeStep(currentStep);
-    goToStep(realIndex);
-  };
-
+  const { state, goToStep, completeStep, findings } = useWizard();
+  const { currentStep, stepCompleted = {} } = state;
   const primary = themeConfig.custom.stepperActive;
 
-  // Map real step index to visible index (-1 when on a hidden step)
-  const visibleIndex = VISIBLE_STEPS.findIndex(s => s.realIndex === currentStep);
-  const activeVisibleStep = visibleIndex >= 0 ? visibleIndex : -1;
-
-  // For completed steps, check validation errors to show indicator
-  const stepHasErrors = (realIndex) => {
-    if (!stepCompleted[realIndex]) return false;
-    const result = validateStep(realIndex, state);
-    return !result.valid;
+  // Leaving a step through the stepper marks it visited, like "Next" does, so
+  // visited steps light up green (clean) or red (has errors).
+  const handleStepClick = (index) => {
+    if (index === currentStep) return;
+    completeStep(currentStep);
+    goToStep(index);
   };
 
-  const getStepIcon = (realIndex, isCurrent) => {
-    const Icon = VISIBLE_STEPS.find(s => s.realIndex === realIndex)?.icon;
-    if (!Icon) return null;
-
-    const isCompleted = stepCompleted[realIndex];
-    const hasErrors = stepHasErrors(realIndex);
+  const icon = (step, index) => {
+    const Icon = step.icon;
+    const isCurrent = index === currentStep;
+    const visited = !!stepCompleted[index];
+    const errorCount = visited ? findings(step.id).errors.length : 0;
 
     let color = themeConfig.custom.stepperInactive;
-    if (hasErrors) color = '#d32f2f'; // error red
-    else if (isCompleted) color = themeConfig.custom.stepperCompleted;
+    if (errorCount) color = themeConfig.error.main;
+    else if (visited) color = themeConfig.custom.stepperCompleted;
     else if (isCurrent) color = primary;
 
-    const iconEl = (
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          color,
-          fontSize: isCurrent ? '2rem' : '1.5rem',
-          transition: 'font-size 0.15s ease'
-        }}
-      >
+    const el = (
+      <Box sx={{ display: 'flex', alignItems: 'center', color, fontSize: isCurrent ? '2rem' : '1.5rem', transition: 'font-size 0.15s ease' }}>
         <Icon fontSize="inherit" />
       </Box>
     );
-
-    if (hasErrors) {
-      return (
-        <MuiTooltip title="This step has validation errors" placement="top">
-          <Badge
-            badgeContent={<Warning sx={{ fontSize: 11, color: '#fff' }} />}
-            sx={{
-              '& .MuiBadge-badge': {
-                backgroundColor: '#d32f2f',
-                minWidth: 16,
-                height: 16,
-                padding: 0,
-                top: 2,
-                right: 2
-              }
-            }}
-          >
-            {iconEl}
-          </Badge>
-        </MuiTooltip>
-      );
-    }
-
-    return iconEl;
+    if (!errorCount) return el;
+    return (
+      <Tooltip title={`${errorCount} validation error${errorCount === 1 ? '' : 's'}`} placement="top">
+        <Badge
+          badgeContent={<Warning sx={{ fontSize: 11, color: '#fff' }} />}
+          sx={{ '& .MuiBadge-badge': { backgroundColor: themeConfig.error.main, minWidth: 16, height: 16, padding: 0, top: 2, right: 2 } }}
+        >
+          {el}
+        </Badge>
+      </Tooltip>
+    );
   };
 
   return (
-    <Box sx={{ width: '100%', mb: 4 }}>
-      <Stepper activeStep={activeVisibleStep} alternativeLabel nonLinear sx={{ py: 2 }}>
-        {VISIBLE_STEPS.map((step) => {
-          const { realIndex } = step;
-          const isCompleted = stepCompleted[realIndex];
-          const isCurrent  = realIndex === currentStep;
-
+    <Box sx={{ width: '100%', mb: 3 }}>
+      <Stepper activeStep={currentStep} alternativeLabel nonLinear sx={{ py: 2 }}>
+        {WIZARD_STEPS.map((step, index) => {
+          const isCurrent = index === currentStep;
           return (
-            <Step key={step.label} completed={isCompleted}>
+            <Step key={step.id} completed={!!stepCompleted[index]}>
               <StepButton
-                onClick={() => handleStepClick(realIndex)}
+                onClick={() => handleStepClick(index)}
                 sx={{
                   py: 1.5,
                   '& .MuiStepLabel-label': {
-                    fontSize: isCurrent ? '0.9rem' : '0.875rem',
+                    fontSize: isCurrent ? '0.9rem' : '0.85rem',
                     fontWeight: isCurrent ? 700 : 400,
                     color: isCurrent ? primary : 'inherit'
                   }
                 }}
               >
                 <StepLabel
-                  StepIconComponent={() => getStepIcon(realIndex, isCurrent)}
-                  optional={
+                  StepIconComponent={() => icon(step, index)}
+                  optional={(
                     <Typography variant="caption" color={isCurrent ? primary : 'text.secondary'}>
                       {step.description}
                     </Typography>
-                  }
+                  )}
                 >
                   {step.label}
                 </StepLabel>

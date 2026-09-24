@@ -67,7 +67,7 @@ jobs:
         run: npm run build
 
   json-generator-build:
-    name: Build & Lint JSON Generator
+    name: Build, Test & Lint JSON Generator
     runs-on: ubuntu-latest
 
     steps:
@@ -84,6 +84,26 @@ jobs:
       - name: Install dependencies
         working-directory: src/json-generator
         run: npm install
+
+      # Includes the parity tests against json_generation/schema_v4 and the
+      # render smoke test of every step.
+      - name: Run tests
+        working-directory: src/json-generator
+        run: npm test
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install the schema v4 validator's requirements
+        run: pip install -r json_generation/schema_v4/requirements.txt
+
+      # The cross-language check: bundles the wizard generates, through the
+      # canonical Python validator.
+      - name: Validate generated bundles with the schema v4 validator
+        working-directory: src/json-generator
+        run: npx vite-node scripts/validate-with-python.mjs
 
       - name: Run linter
         working-directory: src/json-generator

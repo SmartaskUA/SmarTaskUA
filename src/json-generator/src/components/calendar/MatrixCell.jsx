@@ -1,357 +1,138 @@
-import React, { useMemo, useState } from 'react';
-import { Select, MenuItem, TextField, Box, Typography, IconButton, Tooltip } from '@mui/material';
-import { Edit as EditIcon, Close as CloseIcon, ArrowDropDown as ArrowDropDownIcon } from '@mui/icons-material';
-import { styled } from '@mui/material/styles';
-import {
-  isTimeConstraint,
-  getConstraintType,
-  parseTimeWindowConstraint
-} from '../../utils/validators/timeConstraintValidator';
-import TimeConstraintDialog from './TimeConstraintDialog';
+import React, { memo, useState } from 'react';
+import { Select, MenuItem, TextField, Box, Typography, IconButton, Tooltip, ListSubheader } from '@mui/material';
+import { Edit as EditIcon, Close as CloseIcon, ArrowDropDown } from '@mui/icons-material';
+import TimeConstraintDialog, { OPERATOR_COLORS, parseOperatorCell } from './TimeConstraintDialog';
+import { KIND_COLORS } from '../scheduleInput/DayOffCodesPanel';
 
-/**
- * Get cell background color based on value type
- */
-function getCellColor(value) {
-  if (!value || value === '') return '#ffffff';
+export const CELL_COLORS = {
+  auto: '#e8f5e9',
+  hours: '#e3f2fd',
+  blank: '#ffffff',
+  uncovered: '#eeeeee'
+};
 
-  const val = value.toString().trim();
+const BLANK = '__blank__';
+const HOURS = '__hours__';
+const WINDOW = '__window__';
 
-  if (isTimeConstraint(val)) {
-    const type = getConstraintType(val);
-    switch (type) {
-      case 'EQUALS': return '#e1bee7';
-      case 'INCLUDE': return '#ffe0b2';
-      case 'EXCEPT':  return '#f8bbd0';
-      default:        return '#ffffff';
-    }
-  }
-
-  const valUpper = val.toUpperCase();
-  if (valUpper === 'A')   return '#e8f5e9';
-  if (valUpper === 'VAC') return '#fff9c4';
-  if (valUpper === 'NOT') return '#ffebee';
-
-  const numVal = parseFloat(val);
-  if (!isNaN(numVal) && numVal > 0) return '#e3f2fd';
-
-  return '#ffffff';
+function background(value, analysis, dayOffCodes, covered) {
+  if (parseOperatorCell(value)) return OPERATOR_COLORS[parseOperatorCell(value).type];
+  if (!value) return covered ? CELL_COLORS.blank : CELL_COLORS.uncovered;
+  if (String(value).toUpperCase() === 'A') return CELL_COLORS.auto;
+  if (dayOffCodes[value]) return KIND_COLORS[dayOffCodes[value].kind];
+  if (analysis.kind === 'exact_hours' || analysis.kind === 'pending') return CELL_COLORS.hours;
+  return CELL_COLORS.blank;
 }
 
-const TYPE_BADGE = { EQUALS: 'EQUALS', INCLUDE: 'INCLUDE', EXCEPT: 'EXCEPT' };
-const TYPE_BORDER = { EQUALS: '#ce93d8', INCLUDE: '#ffb74d', EXCEPT: '#f48fb1' };
-
-const StyledSelect = styled(Select)(({ theme, bgcolor }) => ({
-  width: '100%',
-  height: '100%',
-  minHeight: '40px',
-  backgroundColor: bgcolor,
-  borderRadius: 0,
-  '& .MuiSelect-select': {
-    padding: '10px 8px',
-    fontSize: '13px',
-    fontWeight: 600,
-    textAlign: 'center',
-    height: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  '& .MuiOutlinedInput-notchedOutline': {
-    border: '1px solid #e0e0e0',
-    borderRadius: 0
-  },
-  '&:hover .MuiOutlinedInput-notchedOutline': {
-    borderColor: theme.palette.primary.main
-  },
-  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-    borderColor: theme.palette.primary.main,
-    borderWidth: '2px'
-  }
-}));
-
-const StyledTextField = styled(TextField)(({ theme, bgcolor, error }) => ({
-  width: '100%',
-  height: '100%',
-  '& .MuiInputBase-root': {
-    height: '100%',
-    minHeight: '40px',
-    backgroundColor: bgcolor,
-    borderRadius: 0
-  },
-  '& .MuiOutlinedInput-input': {
-    padding: '10px 8px',
-    fontSize: '13px',
-    fontWeight: 600,
-    textAlign: 'center',
-    height: '100%'
-  },
-  '& .MuiOutlinedInput-notchedOutline': {
-    border: error ? `2px solid ${theme.palette.error.main}` : '1px solid #e0e0e0',
-    borderRadius: 0
-  },
-  '&:hover .MuiOutlinedInput-notchedOutline': {
-    borderColor: error ? theme.palette.error.main : theme.palette.primary.main
-  },
-  '& .Mui-focused .MuiOutlinedInput-notchedOutline': {
-    borderColor: error ? theme.palette.error.main : theme.palette.primary.main,
-    borderWidth: '2px'
-  }
-}));
-
 /**
- * MatrixCell - Editable cell in the schedule input matrix
- *
- * Supports:
- * - 'A'   auto-allocate from contract (green)
- * - 0-24  specific hours (blue)
- * - 'VAC' vacation (yellow)
- * - 'NOT' unavailable (red)
- * - 'EQUALS:HH:MM-HH:MM'  exact time window (purple)
- * - 'INCLUDE:HH:MM-HH:MM' minimum cover window (orange)
- * - 'EXCEPT:HH:MM-HH:MM'  blocked window (pink)
+ * One schedule-input cell: A, hours, a declared day-off code, a time window,
+ * or blank (no assignment). `analysis` comes from operations.analyseCell.
  */
-const MatrixCell = ({
-  value,
-  onChange,
-  employeeId,
-  date,
-  employee,
-  contracts
-}) => {
+const MatrixCell = ({ employeeId, date, value = '', analysis, dayOffCodes, covered, slotMinutes, onCellChange }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [pendingType, setPendingType] = useState('EQUALS');
+  const onChange = (v) => onCellChange(employeeId, date, v);
+  const text = String(value ?? '');
+  const bg = background(text, analysis, dayOffCodes, covered);
+  const border = analysis.error ? '2px solid #d32f2f' : analysis.warning ? '2px solid #ed6c02' : '1px solid #e0e0e0';
+  const tip = analysis.error || analysis.warning || (!covered ? 'No contract covers this day' : '');
+  const operator = parseOperatorCell(text);
+  const isHours = analysis.kind === 'exact_hours' || analysis.kind === 'pending' || /^[\d.,]+$/.test(text);
 
-  const isNumericValue = useMemo(() => {
-    if (!value) return false;
-    const val = value.toString().trim();
-    if (val === '-') return true;
-    const numVal = parseFloat(val);
-    return !isNaN(numVal) && numVal > 0;
-  }, [value]);
-
-  const isValidNumber = useMemo(() => {
-    if (!value) return false;
-    const val = value.toString().trim();
-    if (val === '-' || val === '') return false;
-    const numVal = parseFloat(val);
-    return !isNaN(numVal) && numVal > 0 && numVal <= 24;
-  }, [value]);
-
-  const isTC = useMemo(() => isTimeConstraint(value), [value]);
-
-  const options = [
-    { value: 'A',      label: 'A — Auto-allocate',    color: '#e8f5e9' },
-    { value: 'CUSTOM', label: 'Custom hours',          color: '#e3f2fd' },
-    { value: 'VAC',    label: 'VAC — Vacation',        color: '#fff9c4' },
-    { value: 'NOT',    label: 'NOT — Not available',   color: '#ffebee' },
-    { value: 'TC',     label: 'Time constraint…',      color: '#e1bee7' }
-  ];
-
-  const displayValue = useMemo(() => {
-    if (!value) return 'A';
-    const val = value.toString().toUpperCase();
-    if (['A', 'VAC', 'NOT'].includes(val)) return val;
-    if (isNumericValue) return value.toString();
-    return 'A';
-  }, [value, isNumericValue]);
-
-  const handleSelectChange = (event) => {
-    const newValue = event.target.value;
-
-    if (newValue === 'CUSTOM') {
-      onChange(employeeId, date, '-');
-      return;
-    }
-
-    if (newValue === 'TC') {
-      setPendingType('EQUALS');
-      setDialogOpen(true);
-      return;
-    }
-
-    onChange(employeeId, date, newValue);
-  };
-
-  const handleTextFieldChange = (event) => {
-    const newValue = event.target.value;
-    if (newValue === '' || /^\d*\.?\d*$/.test(newValue)) {
-      onChange(employeeId, date, newValue || '-');
-    }
-  };
-
-  const handleTextFieldKeyDown = (event) => {
-    if (event.key === 'Escape') {
-      onChange(employeeId, date, 'A');
-    }
-  };
-
-  // Return a numeric/"custom hours" cell to the category dropdown
-  const handleBackToOptions = () => {
-    onChange(employeeId, date, 'A');
-  };
-
-  const handleDialogSave = (constraintString) => {
-    onChange(employeeId, date, constraintString);
-  };
-
-  const handleEditConstraint = () => {
-    const parsed = parseTimeWindowConstraint(value);
-    if (parsed) {
-      setPendingType(parsed.type);
-    }
-    setDialogOpen(true);
-  };
-
-  const handleClearConstraint = () => {
-    onChange(employeeId, date, 'A');
-  };
-
-  // ── Branch 1: time window constraint display ────────────────────────────────
-  if (isTC) {
-    const parsed = parseTimeWindowConstraint(value);
-    const type   = parsed?.type || 'EQUALS';
-    const badge  = TYPE_BADGE[type] || type;
-    const bg     = getCellColor(value);
-    const border = TYPE_BORDER[type] || '#ccc';
-
-    return (
-      <>
-        <Box
-          sx={{
-            width: '100%',
-            height: '100%',
-            minHeight: '2.5rem',
-            backgroundColor: bg,
-            border: `1px solid ${border}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            px: 0.75,
-            overflow: 'hidden',
-            boxSizing: 'border-box'
-          }}
-        >
-          <Box sx={{ flex: 1, overflow: 'hidden', minWidth: 0 }}>
-            <Typography
-              component="div"
-              sx={{
-                fontSize: '0.6rem',
-                fontWeight: 700,
-                lineHeight: 1.2,
-                color: 'text.secondary',
-                whiteSpace: 'nowrap',
-                textTransform: 'uppercase'
-              }}
-            >
-              {badge}
-            </Typography>
-            <Typography
-              component="div"
-              sx={{
-                fontSize: '0.65rem',
-                fontFamily: 'monospace',
-                fontWeight: 600,
-                lineHeight: 1.3,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
-              }}
-            >
-              {parsed ? `${parsed.start}–${parsed.end}` : value}
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-            <Tooltip title="Edit" placement="top">
-              <IconButton size="small" onClick={handleEditConstraint}>
-                <EditIcon fontSize="inherit" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Clear" placement="top">
-              <IconButton size="small" onClick={handleClearConstraint}>
-                <CloseIcon fontSize="inherit" />
-              </IconButton>
-            </Tooltip>
-          </Box>
+  let body;
+  if (operator) {
+    body = (
+      <Box sx={{ height: '100%', minHeight: 40, px: 0.75, bgcolor: bg, border, display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxSizing: 'border-box' }}>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, color: 'text.secondary' }}>{operator.type}</Typography>
+          <Typography sx={{ fontSize: '0.65rem', fontFamily: 'monospace', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {operator.ranges.map((r) => `${r.start}–${r.end}`).join(', ')}
+          </Typography>
         </Box>
-
-        <TimeConstraintDialog
-          open={dialogOpen}
-          initialType={parsed?.type || pendingType}
-          initialStart={parsed?.start || ''}
-          initialEnd={parsed?.end || ''}
-          onSave={handleDialogSave}
-          onClose={() => setDialogOpen(false)}
-        />
-      </>
+        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+          <IconButton size="small" sx={{ p: 0.25 }} onClick={() => setDialogOpen(true)}><EditIcon sx={{ fontSize: 14 }} /></IconButton>
+          <IconButton size="small" sx={{ p: 0.25 }} onClick={() => onChange(covered ? 'A' : '')}><CloseIcon sx={{ fontSize: 14 }} /></IconButton>
+        </Box>
+      </Box>
     );
-  }
-
-  // ── Branch 2: numeric / custom hours ───────────────────────────────────────
-  if (isNumericValue) {
-    return (
-      <StyledTextField
-        value={displayValue === '-' ? '' : displayValue}
-        onChange={handleTextFieldChange}
-        onKeyDown={handleTextFieldKeyDown}
-        type="text"
+  } else if (isHours) {
+    body = (
+      <TextField
         size="small"
-        bgcolor={getCellColor(value)}
-        error={!isValidNumber}
-        placeholder="Enter hours (max 24)"
-        inputProps={{ style: { textAlign: 'center' } }}
+        value={text === '-' ? '' : text}
+        placeholder="hours"
+        onChange={(e) => {
+          const v = e.target.value;
+          if (v === '' || /^\d*[.,]?\d*$/.test(v)) onChange(v || '-');
+        }}
+        onKeyDown={(e) => { if (e.key === 'Escape') onChange(covered ? 'A' : ''); }}
+        inputProps={{ size: 3, step: slotMinutes / 60, style: { textAlign: 'center', fontSize: 13, fontWeight: 600, padding: '9px 4px', minWidth: 0 } }}
         InputProps={{
           endAdornment: (
-            <Tooltip title="Back to categories" placement="top">
-              <IconButton
-                size="small"
-                onClick={handleBackToOptions}
-                edge="end"
-                sx={{ p: 0.25 }}
-              >
-                <ArrowDropDownIcon sx={{ fontSize: 16 }} />
-              </IconButton>
-            </Tooltip>
-          ),
-          sx: {
-            '& input::placeholder': {
-              textAlign: 'center',
-              fontSize: '11px',
-              opacity: 0.6
-            }
-          }
+            <IconButton size="small" sx={{ p: 0.25 }} onClick={() => onChange(covered ? 'A' : '')}>
+              <ArrowDropDown sx={{ fontSize: 16 }} />
+            </IconButton>
+          )
+        }}
+        sx={{
+          width: '100%',
+          minWidth: 0,
+          '& .MuiInputBase-root': { bgcolor: bg, borderRadius: 0, pr: 0 },
+          '& fieldset': { border, borderRadius: 0 }
         }}
       />
     );
-  }
-
-  // ── Branch 3: standard select dropdown ─────────────────────────────────────
-  return (
-    <>
-      <StyledSelect
-        value={displayValue}
-        onChange={handleSelectChange}
+  } else {
+    const undeclared = text && text.toUpperCase() !== 'A' && !dayOffCodes[text];
+    const selectValue = !text ? BLANK : (text.toUpperCase() === 'A' ? 'A' : text);
+    body = (
+      <Select
         size="small"
-        bgcolor={getCellColor(displayValue)}
+        value={selectValue}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (v === HOURS) onChange('-');
+          else if (v === WINDOW) setDialogOpen(true);
+          else onChange(v === BLANK ? '' : v);
+        }}
+        renderValue={(v) => (v === BLANK ? '·' : v)}
+        sx={{
+          width: '100%',
+          minHeight: 40,
+          bgcolor: bg,
+          borderRadius: 0,
+          '& .MuiSelect-select': { py: 1, px: 1, fontSize: 13, fontWeight: 600, textAlign: 'center' },
+          '& fieldset': { border, borderRadius: 0 }
+        }}
       >
-        {options.map((opt) => (
-          <MenuItem key={opt.value} value={opt.value}>
-            {opt.label}
+        <MenuItem value="A">A — work the contract length</MenuItem>
+        <MenuItem value={HOURS}>Hours…</MenuItem>
+        <MenuItem value={WINDOW}>Time window…</MenuItem>
+        <MenuItem value={BLANK}>Blank — no assignment</MenuItem>
+        <ListSubheader>Day-off codes</ListSubheader>
+        {Object.entries(dayOffCodes).map(([code, entry]) => (
+          <MenuItem key={code} value={code} sx={{ bgcolor: KIND_COLORS[entry.kind] }}>
+            {code}{entry.name ? ` — ${entry.name}` : ''} ({entry.kind})
           </MenuItem>
         ))}
-      </StyledSelect>
+        {undeclared && <MenuItem value={text} sx={{ color: 'error.main' }}>{text} (not declared)</MenuItem>}
+      </Select>
+    );
+  }
 
+  return (
+    <>
+      {tip ? <Tooltip title={tip} placement="top"><Box>{body}</Box></Tooltip> : body}
       <TimeConstraintDialog
         open={dialogOpen}
-        initialType={pendingType}
-        initialStart=""
-        initialEnd=""
-        onSave={handleDialogSave}
+        value={operator ? text : ''}
+        slotMinutes={slotMinutes}
+        onSave={onChange}
         onClose={() => setDialogOpen(false)}
       />
     </>
   );
 };
 
-export default MatrixCell;
+export default memo(MatrixCell, (a, b) => a.value === b.value && a.covered === b.covered &&
+  a.analysis.error === b.analysis.error && a.analysis.warning === b.analysis.warning &&
+  a.dayOffCodes === b.dayOffCodes && a.slotMinutes === b.slotMinutes && a.onCellChange === b.onCellChange);

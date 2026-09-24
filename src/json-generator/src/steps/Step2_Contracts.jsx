@@ -1,450 +1,177 @@
 import React, { useState } from 'react';
 import {
-  Box,
-  Typography,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-  Chip,
-  Grid,
-  Alert,
-  // Optional Constraints UI (hidden; kept for re-enable):
-  // Accordion,
-  // AccordionSummary,
-  // AccordionDetails,
-  // Checkbox,
-  // FormControlLabel,
-  // FormGroup,
+  Box, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Table,
+  TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Chip, Alert, InputAdornment, Stack
 } from '@mui/material';
-import {
-  Add,
-  Edit,
-  Delete
-  // Optional Constraints UI (hidden; kept for re-enable):
-  // ExpandMore
-} from '@mui/icons-material';
+import { Add, Edit, Delete } from '@mui/icons-material';
+import StepLayout from '../components/wizard/StepLayout';
 import StepCard from '../components/wizard/StepCard';
-import NavigationButtons from '../components/wizard/NavigationButtons';
+import { ConfirmDialog } from '../components/shared/fields';
 import { useWizard } from '../context/WizardContext';
+import { onGrid, formatNumber } from '../v4/core';
+import { contractUsage, renameContract } from '../v4/operations';
+
+const hours = (minutes) => formatNumber(Math.round((minutes / 60) * 100) / 100);
+
+const EMPTY = { id: '', name: '', workMinutesPerDay: 480 };
 
 /**
- * Step 2: Contracts
- * 
- * Define reusable contract types with:
- * - ID, Name, Work Hours Per Day
- * - Optional constraints (weekends only, max hours, etc.)
+ * Step 2: Contracts — v4 carries only a contract's length, in minutes.
  */
 const Step2_Contracts = () => {
-  const { state, updateState } = useWizard();
+  const { state, updateState, transform } = useWizard();
   const contracts = state.contracts.definitions;
+  const slot = state.timeGrid.slotMinutes;
 
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editingContract, setEditingContract] = useState(null);
+  const [editing, setEditing] = useState(null); // null | 'new' | original id
+  const [form, setForm] = useState(EMPTY);
   const [errors, setErrors] = useState({});
+  const [deleting, setDeleting] = useState(null);
 
-  // Default (empty) constraint values used by the form inputs
-  const emptyConstraints = {
-    weekendsOnly: false,
-    weekdaysOnly: false,
-    availableDays: [],
-    maxHoursPerWeek: '',
-    maxConsecutiveDays: '',
-    minRestDaysPerWeek: '',
-    flexibleHours: false
-  };
-
-  // Form state
-  const [formData, setFormData] = useState({
-    id: '',
-    name: '',
-    workHoursPerDay: 8,
-    constraints: { ...emptyConstraints }
-  });
-
-  const handleAddContract = () => {
-    setEditingContract(null);
-    setFormData({
-      id: '',
-      name: '',
-      workHoursPerDay: 8,
-      constraints: { ...emptyConstraints }
-    });
+  const open = (contract) => {
+    setEditing(contract ? contract.id : 'new');
+    setForm(contract ? { ...EMPTY, ...contract } : EMPTY);
     setErrors({});
-    setOpenDialog(true);
   };
 
-  const handleEditContract = (contract) => {
-    setEditingContract(contract);
-    // Rehydrate a complete form shape: saved contracts omit `constraints`
-    // (and individual empty fields), so merge over defaults to keep every
-    // field the dialog reads defined.
-    setFormData({
-      id: contract.id,
-      name: contract.name,
-      workHoursPerDay: contract.workHoursPerDay,
-      constraints: { ...emptyConstraints, ...(contract.constraints || {}) }
+  const save = () => {
+    const id = form.id.trim();
+    const minutes = Number(form.workMinutesPerDay);
+    const e = {};
+    if (!id) e.id = 'Required';
+    else if (id !== editing && contracts.some((c) => c.id === id)) e.id = 'Already used';
+    if (!Number.isInteger(minutes) || minutes < 0 || minutes > 1440) e.minutes = 'A whole number of minutes, 0–1440';
+    setErrors(e);
+    if (Object.keys(e).length) return;
+
+    const contract = { id, name: form.name.trim(), workMinutesPerDay: minutes };
+    transform((s) => {
+      const renamed = editing !== 'new' && editing !== id ? renameContract(s, editing, id) : s;
+      const definitions = editing === 'new'
+        ? [...s.contracts.definitions, contract]
+        : s.contracts.definitions.map((c) => (c.id === editing ? contract : c));
+      return { ...renamed, contracts: { ...renamed.contracts, definitions } };
     });
-    setErrors({});
-    setOpenDialog(true);
+    setEditing(null);
   };
 
-  const handleDeleteContract = (contractId) => {
-    const newContracts = contracts.filter(c => c.id !== contractId);
-    updateState('contracts.definitions', newContracts);
-  };
-
-  const handleSaveContract = () => {
-    // Validation
-    const newErrors = {};
-    
-    if (!formData.id.trim()) {
-      newErrors.id = 'Contract ID is required';
-    } else if (
-      !editingContract && 
-      contracts.some(c => c.id === formData.id)
-    ) {
-      newErrors.id = 'Contract ID must be unique';
-    }
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Contract name is required';
-    }
-
-    if (formData.workHoursPerDay < 0 || formData.workHoursPerDay > 24) {
-      newErrors.workHoursPerDay = 'Work hours must be between 0 and 24';
-    }
-
-    if (formData.constraints.weekendsOnly && formData.constraints.weekdaysOnly) {
-      newErrors.constraints = 'Weekends Only and Weekdays Only are mutually exclusive';
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    // Clean up constraints - remove empty fields
-    const cleanedConstraints = {};
-    const { constraints } = formData;
-    
-    if (constraints.weekendsOnly) cleanedConstraints.weekendsOnly = true;
-    if (constraints.weekdaysOnly) cleanedConstraints.weekdaysOnly = true;
-    if (constraints.availableDays?.length > 0) cleanedConstraints.availableDays = constraints.availableDays;
-    if (constraints.maxHoursPerWeek) cleanedConstraints.maxHoursPerWeek = parseFloat(constraints.maxHoursPerWeek);
-    if (constraints.maxConsecutiveDays) cleanedConstraints.maxConsecutiveDays = parseInt(constraints.maxConsecutiveDays);
-    if (constraints.minRestDaysPerWeek) cleanedConstraints.minRestDaysPerWeek = parseInt(constraints.minRestDaysPerWeek);
-    if (constraints.flexibleHours) cleanedConstraints.flexibleHours = true;
-
-    const contractData = {
-      id: formData.id,
-      name: formData.name,
-      workHoursPerDay: parseFloat(formData.workHoursPerDay),
-      ...(Object.keys(cleanedConstraints).length > 0 && { constraints: cleanedConstraints })
-    };
-
-    let newContracts;
-    if (editingContract) {
-      // Update existing
-      newContracts = contracts.map(c => 
-        c.id === editingContract.id ? contractData : c
-      );
-    } else {
-      // Add new
-      newContracts = [...contracts, contractData];
-    }
-
-    updateState('contracts.definitions', newContracts);
-    setOpenDialog(false);
-  };
-
-  const handleFormChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: null }));
-    }
-  };
-
-  /* Optional Constraints handler (hidden; kept for re-enable):
-  const handleConstraintChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      constraints: {
-        ...prev.constraints,
-        [field]: value
-      }
-    }));
-    if (errors.constraints) {
-      setErrors(prev => ({ ...prev, constraints: null }));
-    }
-  };
-  */
-
-  const validate = () => {
-    if (contracts.length === 0) {
-      return 'At least one contract is required';
-    }
-    return null;
-  };
-
-  const handleNext = () => {
-    const error = validate();
-    if (error) {
-      return false;
-    }
-    return true;
-  };
-
-  const weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const minutes = Number(form.workMinutesPerDay);
+  const formOffGrid = Number.isInteger(minutes) && !onGrid(minutes, slot);
 
   return (
-    <Box sx={{
-      height: 'calc(100vh - 280px)',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
-      {/* HEADER - Fixed */}
-      <Box sx={{ flexShrink: 0, mb: 2 }}>
-        <Typography variant="h4" gutterBottom fontWeight={600}>
-          Contract Definitions
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Define reusable contract types for your employees. Each contract specifies work hours and optional constraints.
-        </Typography>
-      </Box>
-
-      {/* CONTENT - Scrollable */}
-      <Box sx={{
-        flexGrow: 1,
-        overflowY: 'auto',
-        overflowX: 'hidden',
-        pr: 1
-      }}>
-        <StepCard>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">Contracts ({contracts.length})</Typography>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={handleAddContract}
-            >
-              Add Contract
-            </Button>
-          </Box>
-
-          {contracts.length === 0 ? (
-            <Alert severity="info">
-              No contracts defined yet. Click "Add Contract" to create your first contract type.
-            </Alert>
-          ) : (
-            <TableContainer component={Paper} variant="outlined">
-            <Table stickyHeader>
+    <StepLayout
+      stepId="contracts"
+      title="Contracts"
+      subtitle="Each contract states the length of one working day, in minutes. A schedule-input cell of A works exactly this."
+      actions={<Button variant="contained" startIcon={<Add />} onClick={() => open(null)}>Add contract</Button>}
+      nextDisabled={!contracts.length}
+    >
+      <StepCard>
+        <Alert severity="info" sx={{ mb: 2 }}>
+          In v4 a contract carries only its daily length. Weekly hours, working days per week and per-weekday
+          lengths are not in the format yet (FUTURE.md §1, agenda item 7), so two contracts with the same
+          minutes are indistinguishable to a solver.
+        </Alert>
+        {!contracts.length ? (
+          <Alert severity="warning">No contracts yet. Every employee needs one to be scheduled.</Alert>
+        ) : (
+          <TableContainer component={Paper} variant="outlined">
+            <Table size="small">
               <TableHead>
                 <TableRow>
                   <TableCell>ID</TableCell>
                   <TableCell>Name</TableCell>
-                  <TableCell align="center">Work Hours/Day</TableCell>
-                  <TableCell>Constraints</TableCell>
+                  <TableCell align="right">Minutes / day</TableCell>
+                  <TableCell align="center">Employees</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {contracts.map((contract) => (
-                  <TableRow key={contract.id}>
-                    <TableCell>
-                      <Chip label={contract.id} size="small" />
-                    </TableCell>
-                    <TableCell>{contract.name}</TableCell>
-                    <TableCell align="center">
-                      <Typography fontWeight={600}>{contract.workHoursPerDay}h</Typography>
-                    </TableCell>
-                    <TableCell>
-                      {contract.constraints ? (
-                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                          {contract.constraints.weekendsOnly && <Chip label="Weekends Only" size="small" color="info" />}
-                          {contract.constraints.weekdaysOnly && <Chip label="Weekdays Only" size="small" color="info" />}
-                          {contract.constraints.maxHoursPerWeek && <Chip label={`Max ${contract.constraints.maxHoursPerWeek}h/week`} size="small" />}
-                          {contract.constraints.maxConsecutiveDays && <Chip label={`Max ${contract.constraints.maxConsecutiveDays} consec.`} size="small" />}
-                          {contract.constraints.minRestDaysPerWeek && <Chip label={`${contract.constraints.minRestDaysPerWeek} rest days/week`} size="small" />}
-                          {contract.constraints.flexibleHours && <Chip label="Flexible" size="small" color="success" />}
-                        </Box>
-                      ) : (
-                        <Typography variant="body2" color="text.secondary">None</Typography>
-                      )}
-                    </TableCell>
-                    <TableCell align="right">
-                      <IconButton size="small" onClick={() => handleEditContract(contract)}>
-                        <Edit />
-                      </IconButton>
-                      <IconButton size="small" color="error" onClick={() => handleDeleteContract(contract.id)}>
-                        <Delete />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {contracts.map((c) => {
+                  const offGrid = !onGrid(Number(c.workMinutesPerDay), slot);
+                  return (
+                    <TableRow key={c.id} hover>
+                      <TableCell><Chip size="small" label={c.id} /></TableCell>
+                      <TableCell>{c.name || <Typography variant="body2" color="text.disabled">—</Typography>}</TableCell>
+                      <TableCell align="right">
+                        <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
+                          {offGrid && <Chip size="small" color="error" label={`off the ${slot}-min grid`} />}
+                          <Typography fontWeight={600}>{c.workMinutesPerDay} min</Typography>
+                          <Typography variant="body2" color="text.secondary">({hours(c.workMinutesPerDay)} h)</Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell align="center">{contractUsage(state, c.id)}</TableCell>
+                      <TableCell align="right">
+                        <IconButton size="small" onClick={() => open(c)}><Edit fontSize="small" /></IconButton>
+                        <IconButton size="small" color="error" onClick={() => setDeleting(c)}><Delete fontSize="small" /></IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </TableContainer>
         )}
-        </StepCard>
-      </Box>
+      </StepCard>
 
-      {/* NAVIGATION - Fixed at bottom */}
-      <Box sx={{ flexShrink: 0, mt: 2 }}>
-        <NavigationButtons
-          onNext={handleNext}
-          nextDisabled={contracts.length === 0}
-        />
-      </Box>
-
-      {/* Add/Edit Contract Dialog */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {editingContract ? 'Edit Contract' : 'Add New Contract'}
-        </DialogTitle>
+      <Dialog open={editing !== null} onClose={() => setEditing(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>{editing === 'new' ? 'Add contract' : 'Edit contract'}</DialogTitle>
         <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Contract ID"
-                  value={formData.id}
-                  onChange={(e) => handleFormChange('id', e.target.value)}
-                  error={!!errors.id}
-                  helperText={errors.id || 'e.g., fullTime_8h, partTime_4h'}
-                  required
-                  disabled={!!editingContract}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Contract Name"
-                  value={formData.name}
-                  onChange={(e) => handleFormChange('name', e.target.value)}
-                  error={!!errors.name}
-                  helperText={errors.name || 'Human-readable name'}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Work Hours Per Day"
-                  value={formData.workHoursPerDay}
-                  onChange={(e) => handleFormChange('workHoursPerDay', e.target.value)}
-                  error={!!errors.workHoursPerDay}
-                  helperText={errors.workHoursPerDay || 'Default hours when "A" is used in schedule (0-24)'}
-                  required
-                  inputProps={{ min: 0, max: 24, step: 0.5 }}
-                />
-              </Grid>
-
-              {/* Optional Constraints (hidden; kept for re-enable):
-              <Grid item xs={12}>
-                <Accordion>
-                  <AccordionSummary expandIcon={<ExpandMore />}>
-                    <Typography>Optional Constraints</Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <FormGroup>
-                      {errors.constraints && (
-                        <Alert severity="error" sx={{ mb: 2 }}>{errors.constraints}</Alert>
-                      )}
-                      
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={formData.constraints.weekendsOnly}
-                            onChange={(e) => handleConstraintChange('weekendsOnly', e.target.checked)}
-                          />
-                        }
-                        label="Weekends Only (Saturday & Sunday)"
-                      />
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={formData.constraints.weekdaysOnly}
-                            onChange={(e) => handleConstraintChange('weekdaysOnly', e.target.checked)}
-                          />
-                        }
-                        label="Weekdays Only (Monday-Friday)"
-                      />
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={formData.constraints.flexibleHours}
-                            onChange={(e) => handleConstraintChange('flexibleHours', e.target.checked)}
-                          />
-                        }
-                        label="Flexible Hours"
-                      />
-
-                      <Box sx={{ mt: 2 }}>
-                        <TextField
-                          fullWidth
-                          type="number"
-                          label="Max Hours Per Week"
-                          value={formData.constraints.maxHoursPerWeek}
-                          onChange={(e) => handleConstraintChange('maxHoursPerWeek', e.target.value)}
-                          helperText="Leave empty for no limit"
-                          size="small"
-                          inputProps={{ min: 0 }}
-                          sx={{ mb: 2 }}
-                        />
-                        <TextField
-                          fullWidth
-                          type="number"
-                          label="Max Consecutive Days"
-                          value={formData.constraints.maxConsecutiveDays}
-                          onChange={(e) => handleConstraintChange('maxConsecutiveDays', e.target.value)}
-                          helperText="Maximum consecutive work days"
-                          size="small"
-                          inputProps={{ min: 1 }}
-                          sx={{ mb: 2 }}
-                        />
-                        <TextField
-                          fullWidth
-                          type="number"
-                          label="Min Rest Days Per Week"
-                          value={formData.constraints.minRestDaysPerWeek}
-                          onChange={(e) => handleConstraintChange('minRestDaysPerWeek', e.target.value)}
-                          helperText="Minimum rest days required per week"
-                          size="small"
-                          inputProps={{ min: 0, max: 7 }}
-                        />
-                      </Box>
-                    </FormGroup>
-                  </AccordionDetails>
-                </Accordion>
-              </Grid>
-              */}
-            </Grid>
+          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              label="Contract ID"
+              value={form.id}
+              onChange={(e) => setForm({ ...form, id: e.target.value })}
+              error={!!errors.id}
+              helperText={errors.id || (editing !== 'new' ? 'Renaming updates every employee assignment' : 'e.g. PT_40')}
+              required
+              autoFocus
+            />
+            <TextField
+              label="Name (optional)"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              helperText="SISQUAL's names state WEEKLY hours ('[PT] 40h Semanais'). Never derive the daily minutes from them."
+            />
+            <TextField
+              type="number"
+              label="Work minutes per day"
+              value={form.workMinutesPerDay}
+              onChange={(e) => setForm({ ...form, workMinutesPerDay: e.target.value === '' ? '' : Number(e.target.value) })}
+              error={!!errors.minutes || formOffGrid}
+              helperText={errors.minutes || (formOffGrid
+                ? `Not a multiple of the ${slot}-minute grid: no shift of this length can be placed`
+                : 'Minutes — the matching schedule-input cell states the same length in hours')}
+              inputProps={{ min: 0, max: 1440, step: slot }}
+              InputProps={{
+                endAdornment: <InputAdornment position="end">{Number.isFinite(minutes) ? `= ${hours(minutes)} h` : ''}</InputAdornment>
+              }}
+              required
+            />
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSaveContract}>
-            {editingContract ? 'Update' : 'Add'}
-          </Button>
+          <Button onClick={() => setEditing(null)}>Cancel</Button>
+          <Button variant="contained" onClick={save}>{editing === 'new' ? 'Add' : 'Save'}</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+
+      <ConfirmDialog
+        open={!!deleting}
+        title={`Delete contract ${deleting?.id}?`}
+        confirmLabel="Delete"
+        confirmColor="error"
+        onCancel={() => setDeleting(null)}
+        onConfirm={() => {
+          updateState('contracts.definitions', contracts.filter((c) => c.id !== deleting.id));
+          setDeleting(null);
+        }}
+      >
+        {deleting && contractUsage(state, deleting.id)
+          ? `${contractUsage(state, deleting.id)} employee(s) are assigned to it. Their assignments will point at a missing contract until you change them.`
+          : 'No employee uses it.'}
+      </ConfirmDialog>
+    </StepLayout>
   );
 };
 

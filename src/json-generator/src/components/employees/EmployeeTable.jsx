@@ -1,188 +1,87 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  Box,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-  Chip,
-  Typography,
-  Alert
+  Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Chip,
+  Typography, TextField, InputAdornment, Stack
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon
-} from '@mui/icons-material';
-import EmployeeForm from './EmployeeForm';
+import { Edit, Delete, Search } from '@mui/icons-material';
+import { pairLabel } from '../../v4/state';
+import { getTeamColor } from '../../utils/helpers/colorHelpers';
 
-/**
- * EmployeeTable Component
- *
- * Table displaying all employees with CRUD operations.
- * Shows teams for both employee models:
- * - Team model: teams as simple codes
- * - Competency model: teams with competency levels
- */
-const EmployeeTable = ({
-  employees = [],
-  onChange,
-  employeeModel,
-  availableTeams = [],
-  availableContracts = [],
-  error
-}) => {
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editingEmployee, setEditingEmployee] = useState(null);
+/** A range label, or '' when the assignment spans the whole horizon. */
+const range = (a, scope) => {
+  const coversStart = !scope.start || a.start <= scope.start;
+  const coversEnd = !a.end || (scope.end && a.end >= scope.end);
+  if (coversStart && coversEnd) return '';
+  return a.end ? ` ${a.start}→${a.end}` : ` from ${a.start}`;
+};
 
-  const handleAdd = () => {
-    setEditingEmployee(null);
-    setOpenDialog(true);
-  };
-
-  const handleEdit = (employee) => {
-    setEditingEmployee(employee);
-    setOpenDialog(true);
-  };
-
-  const handleDelete = (idToDelete) => {
-    onChange(employees.filter(e => e.id !== idToDelete));
-  };
-
-  const handleSave = (employeeData) => {
-    if (editingEmployee) {
-      // Update existing
-      onChange(
-        employees.map(e =>
-          e.id === editingEmployee.id ? employeeData : e
-        )
-      );
-    } else {
-      // Add new
-      onChange([...employees, employeeData]);
-    }
-  };
-
-  const existingIds = employees.map(e => e.id);
+/** The roster: contract periods and competencies as chips, filterable by any text. */
+const EmployeeTable = ({ employees, scope, onEdit, onDelete }) => {
+  const [query, setQuery] = useState('');
+  const shown = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return employees;
+    return employees.filter((e) => [e.id, e.name, ...(e.contractAssignments || []).map((a) => a.contractType),
+      ...(e.competencyAssignments || []).map((a) => pairLabel(a.tableName, a.tableValue))]
+      .some((t) => String(t || '').toLowerCase().includes(q)));
+  }, [employees, query]);
 
   return (
     <Box>
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">
-          Employees ({employees.length})
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleAdd}
-        >
-          Add Employee
-        </Button>
-      </Box>
-
-      {/* Error from parent */}
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      {/* Table */}
-      {employees.length === 0 ? (
-        <Alert severity="info">
-          No employees added yet. Click "Add Employee" to add your first employee.
-        </Alert>
-      ) : (
-        <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 500 }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>Teams</TableCell>
-                <TableCell>Contract</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {employees.map((employee) => (
-                <TableRow key={employee.id} hover>
-                  <TableCell>
-                    <Chip label={employee.id} size="small" color="primary" variant="outlined" />
-                  </TableCell>
-                  <TableCell>
-                    <Typography>{employee.name || employee.id}</Typography>
-                  </TableCell>
-
-                  {/* Teams column: Show teams with optional levels */}
-                  <TableCell>
-                    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                      {employeeModel === 'team' ? (
-                        // Team model: teams is array of strings
-                        employee.teams?.map((teamCode) => {
-                          const team = availableTeams.find(t => t.code === teamCode);
-                          const label = team ? `${team.code} - ${team.name}` : teamCode;
-                          return (
-                            <Chip key={teamCode} label={label} size="small" color="info" />
-                          );
-                        })
-                      ) : (
-                        // Competency model: teams is array of {code, name, level}
-                        employee.teams?.map((team) => (
-                          <Chip
-                            key={team.code}
-                            label={`${team.code} - ${team.name} (L${team.level})`}
-                            size="small"
-                            color="success"
-                          />
-                        ))
-                      )}
-                    </Box>
-                  </TableCell>
-
-                  <TableCell>
-                    <Typography variant="body2">{employee.contractType}</Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleEdit(employee)}
-                      sx={{ mr: 1 }}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleDelete(employee.id)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-
-      {/* Dialog */}
-      <EmployeeForm
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        onSave={handleSave}
-        editingEmployee={editingEmployee}
-        employeeModel={employeeModel}
-        existingIds={existingIds}
-        availableTeams={availableTeams}
-        availableContracts={availableContracts}
+      <TextField
+        size="small"
+        placeholder="Filter by id, name, contract or dimension"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        sx={{ mb: 1, width: 360 }}
+        InputProps={{ startAdornment: <InputAdornment position="start"><Search fontSize="small" /></InputAdornment> }}
       />
+      <TableContainer component={Paper} variant="outlined">
+        <Table size="small" stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell>ID</TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Contract</TableCell>
+              <TableCell>Competencies (level 1 = highest)</TableCell>
+              <TableCell align="right">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {shown.map((e) => (
+              <TableRow key={e.id} hover>
+                <TableCell sx={{ fontWeight: 600 }}>{e.id}</TableCell>
+                <TableCell>{e.name}</TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                    {(e.contractAssignments || []).map((a, i) => (
+                      <Chip key={i} size="small" variant="outlined" label={`${a.contractType}${range(a, scope)}`} />
+                    ))}
+                  </Stack>
+                </TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                    {(e.competencyAssignments || []).map((a, i) => (
+                      <Chip
+                        key={i}
+                        size="small"
+                        label={`${pairLabel(a.tableName, a.tableValue)} · L${a.level}${range(a, scope)}`}
+                        sx={{ bgcolor: getTeamColor(pairLabel(a.tableName, a.tableValue)), color: '#fff' }}
+                      />
+                    ))}
+                    {!(e.competencyAssignments || []).length && <Typography variant="caption" color="warning.main">none</Typography>}
+                  </Stack>
+                </TableCell>
+                <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+                  <IconButton size="small" onClick={() => onEdit(e)}><Edit fontSize="small" /></IconButton>
+                  <IconButton size="small" color="error" onClick={() => onDelete(e)}><Delete fontSize="small" /></IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      {query && <Typography variant="caption" color="text.secondary">{shown.length} of {employees.length} shown</Typography>}
     </Box>
   );
 };

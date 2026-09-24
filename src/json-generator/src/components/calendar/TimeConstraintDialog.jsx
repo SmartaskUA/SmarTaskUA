@@ -1,207 +1,107 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Box,
-  Typography,
-  ToggleButton,
-  ToggleButtonGroup,
-  Alert
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, ToggleButton,
+  ToggleButtonGroup, Alert, IconButton, Chip
 } from '@mui/material';
-import { TimePicker } from '@mui/x-date-pickers/TimePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { parse } from 'date-fns';
-import { validateTimeRange } from '../../utils/validators/timeConstraintValidator';
+import { Add, Delete } from '@mui/icons-material';
+import { TimeField } from '../shared/fields';
+import { OPERATORS, OPERATOR_HELP } from '../../v4/constants';
+import { classifyCell, coalesce, interval, intervalToString, onGrid, tryParseRange, DomainError } from '../../v4/core';
 
-const TYPE_CONFIG = {
-  EQUALS: {
-    label: 'EQUALS',
-    color: '#ce93d8',
-    bg: '#e1bee7',
-    description: 'Employee must work exactly this time window — no earlier, no later.'
-  },
-  INCLUDE: {
-    label: 'INCLUDE',
-    color: '#ffb74d',
-    bg: '#ffe0b2',
-    description: 'Employee must cover at least this entire time range (can work longer).'
-  },
-  EXCEPT: {
-    label: 'EXCEPT',
-    color: '#f48fb1',
-    bg: '#f8bbd0',
-    description: 'Employee is unavailable during this window — cannot be scheduled here.'
-  }
+export const OPERATOR_COLORS = {
+  EQUALS: '#e1bee7',
+  INCLUDE: '#ffe0b2',
+  WITHIN: '#b2dfdb',
+  EXCEPT: '#f8bbd0'
 };
 
-const parseTime = (timeString) => {
-  if (!timeString) return null;
-  return parse(timeString, 'HH:mm', new Date());
-};
-
-const formatTime = (date) => {
-  if (!date) return '';
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  return `${hours}:${minutes}`;
-};
+/** {type, ranges: [{start, end}]} from an operator cell, or null. */
+export function parseOperatorCell(value) {
+  const text = String(value || '').trim();
+  const colon = text.indexOf(':');
+  if (colon < 0) return null;
+  const type = text.slice(0, colon).toUpperCase();
+  if (!OPERATORS.includes(type)) return null;
+  const ranges = text.slice(colon + 1).split(',').map((part) => {
+    const cut = part.indexOf('-');
+    return cut < 0 ? { start: part.trim(), end: '' } : { start: part.slice(0, cut).trim(), end: part.slice(cut + 1).trim() };
+  });
+  return { type, ranges };
+}
 
 /**
- * TimeConstraintDialog - Pick EQUALS / INCLUDE / EXCEPT time window constraints
- *
- * Props:
- *   open          - boolean
- *   initialType   - 'EQUALS' | 'INCLUDE' | 'EXCEPT'
- *   initialStart  - 'HH:MM' string or ''
- *   initialEnd    - 'HH:MM' string or ''
- *   onSave        - (constraintString) => void  e.g. "EQUALS:08:00-16:00"
- *   onClose       - () => void
+ * Build an EQUALS / INCLUDE / WITHIN / EXCEPT cell. Several ranges make one
+ * split shift (EQUALS), one block covering all (INCLUDE), one block inside one
+ * of them (WITHIN), or unavailability during all (EXCEPT). A range whose end is
+ * not after its start crosses midnight.
  */
-const TimeConstraintDialog = ({
-  open,
-  initialType = 'EQUALS',
-  initialStart = '',
-  initialEnd = '',
-  onSave,
-  onClose
-}) => {
-  const [type, setType] = useState(initialType);
-  const [start, setStart] = useState(initialStart);
-  const [end, setEnd] = useState(initialEnd);
-  const [error, setError] = useState('');
+const TimeConstraintDialog = ({ open, value, slotMinutes = 30, onSave, onClose }) => {
+  const [type, setType] = useState('EQUALS');
+  const [ranges, setRanges] = useState([{ start: '', end: '' }]);
 
   useEffect(() => {
-    if (open) {
-      setType(initialType || 'EQUALS');
-      setStart(initialStart || '');
-      setEnd(initialEnd || '');
-      setError('');
-    }
-  }, [open, initialType, initialStart, initialEnd]);
+    if (!open) return;
+    const parsed = parseOperatorCell(value);
+    setType(parsed?.type || 'EQUALS');
+    setRanges(parsed?.ranges?.length ? parsed.ranges : [{ start: '09:00', end: '17:00' }]);
+  }, [open, value]);
 
-  const handleApply = () => {
-    if (!start) {
-      setError('Start time is required.');
-      return;
-    }
-    if (!end) {
-      setError('End time is required.');
-      return;
-    }
-    const validation = validateTimeRange(start, end);
-    if (!validation.valid) {
-      setError(validation.error);
-      return;
-    }
-    onSave(`${type}:${start}-${end}`);
-    onClose();
-  };
+  const cell = `${type}:${ranges.map((r) => `${r.start}-${r.end}`).join(',')}`;
+  let problem = '';
+  let merged = [];
+  try {
+    merged = classifyCell(cell, {}).windows;
+    const off = merged.find((w) => !onGrid(w.start, slotMinutes) || !onGrid(w.end, slotMinutes));
+    if (off) problem = `${intervalToString(off)} does not land on the ${slotMinutes}-minute grid`;
+  } catch (exc) {
+    problem = exc instanceof DomainError ? 'Every range needs a start and an end (HH:MM)' : exc.message;
+  }
+  const coalesced = merged.length && merged.length < ranges.length;
 
-  const cfg = TYPE_CONFIG[type] || TYPE_CONFIG.EQUALS;
+  const setRange = (i, patch) => setRanges((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)));
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ pb: 1 }}>Time Window Constraint</DialogTitle>
-
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Time window</DialogTitle>
       <DialogContent>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
-          {/* Type selector */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+          <ToggleButtonGroup value={type} exclusive fullWidth size="small" onChange={(_, v) => v && setType(v)}>
+            {OPERATORS.map((op) => (
+              <ToggleButton key={op} value={op} sx={{ fontWeight: 700, '&.Mui-selected': { bgcolor: OPERATOR_COLORS[op] } }}>{op}</ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+          <Typography variant="body2" color="text.secondary">{OPERATOR_HELP[type]}</Typography>
+
+          {ranges.map((r, i) => {
+            const w = tryParseRange(r.start, r.end);
+            return (
+              <Box key={i} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <TimeField label="From" value={r.start} slotMinutes={slotMinutes} onChange={(v) => setRange(i, { start: v })} />
+                <TimeField label="To" value={r.end} slotMinutes={slotMinutes} onChange={(v) => setRange(i, { end: v })} />
+                {w && w[1] > 1440 && <Chip size="small" label="crosses midnight" />}
+                {ranges.length > 1 && (
+                  <IconButton size="small" onClick={() => setRanges((rs) => rs.filter((_, j) => j !== i))}><Delete fontSize="small" /></IconButton>
+                )}
+              </Box>
+            );
+          })}
           <Box>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              Constraint type
-            </Typography>
-            <ToggleButtonGroup
-              value={type}
-              exclusive
-              onChange={(_, val) => { if (val) { setType(val); setError(''); } }}
-              fullWidth
-              size="small"
-            >
-              {Object.entries(TYPE_CONFIG).map(([key, c]) => (
-                <ToggleButton
-                  key={key}
-                  value={key}
-                  sx={{
-                    fontWeight: 700,
-                    fontSize: '12px',
-                    '&.Mui-selected': {
-                      backgroundColor: c.bg,
-                      color: 'text.primary',
-                      borderColor: c.color,
-                      '&:hover': { backgroundColor: c.bg }
-                    }
-                  }}
-                >
-                  {c.label}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-              {cfg.description}
-            </Typography>
+            <Button size="small" startIcon={<Add />} onClick={() => setRanges((rs) => [...rs, { start: '', end: '' }])}>Add range</Button>
           </Box>
 
-          {/* Time pickers */}
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <TimePicker
-                label="Start time"
-                value={parseTime(start)}
-                onChange={(val) => { setStart(formatTime(val)); setError(''); }}
-                ampm={false}
-                slotProps={{
-                  textField: {
-                    size: 'small',
-                    fullWidth: true,
-                    helperText: '24-hour format'
-                  }
-                }}
-              />
-              <TimePicker
-                label="End time"
-                value={parseTime(end)}
-                onChange={(val) => { setEnd(formatTime(val)); setError(''); }}
-                ampm={false}
-                slotProps={{
-                  textField: {
-                    size: 'small',
-                    fullWidth: true,
-                    helperText: 'Must be after start'
-                  }
-                }}
-              />
-            </Box>
-          </LocalizationProvider>
-
-          {/* Preview */}
-          {start && end && !error && (
-            <Box
-              sx={{
-                p: 1.5,
-                borderRadius: 1,
-                backgroundColor: cfg.bg,
-                border: `1px solid ${cfg.color}`,
-                fontFamily: 'monospace',
-                fontSize: 13,
-                fontWeight: 700,
-                textAlign: 'center'
-              }}
-            >
-              {`${type}:${start}-${end}`}
+          {coalesced ? (
+            <Alert severity="info">Overlapping or touching ranges merge into {coalesce(merged.map((w) => interval(w.start, w.end))).map(intervalToString).join(', ')}.</Alert>
+          ) : null}
+          {problem ? <Alert severity="error">{problem}</Alert> : (
+            <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: OPERATOR_COLORS[type], fontFamily: 'monospace', fontWeight: 700, textAlign: 'center' }}>
+              {cell}
             </Box>
           )}
-
-          {error && <Alert severity="error" sx={{ py: 0 }}>{error}</Alert>}
         </Box>
       </DialogContent>
-
       <DialogActions>
         <Button onClick={onClose} color="inherit">Cancel</Button>
-        <Button onClick={handleApply} variant="contained">Apply</Button>
+        <Button variant="contained" disabled={!!problem} onClick={() => { onSave(cell); onClose(); }}>Apply</Button>
       </DialogActions>
     </Dialog>
   );

@@ -1,79 +1,41 @@
 import {
   Info,
   Assignment,
-  Business,
+  Category,
   People,
   CalendarMonth,
-  AccessTime,
   EventNote,
+  AccessTime,
   Rule,
-  Settings,
   Preview
 } from '@mui/icons-material';
 
 /**
- * Single source of truth for wizard step definitions.
- * hidden: true  → not shown in the stepper or summary; still reachable via Next/Prev.
+ * Single source of truth for the wizard's steps. The `id` is what validation
+ * findings are tagged with (see src/v4/validate.js), so a finding always knows
+ * which step owns its fix.
  */
 export const WIZARD_STEPS = [
-  { label: 'Setup',          description: 'Metadata & models & dates', icon: Info },
-  { label: 'Contracts',      description: 'Contract types',             icon: Assignment },
-  { label: 'Org Units',      description: 'Teams/Competencies',         icon: Business },
-  { label: 'Employees',      description: 'Employee roster',            icon: People },
-  { label: 'Schedule Input', description: 'Availability matrix',        icon: CalendarMonth },
-  { label: 'Work Periods',   description: 'Work period definitions',    icon: AccessTime },
-  { label: 'Demand',         description: 'Coverage requirements',      icon: EventNote },
-  { label: 'Constraints',    description: 'Rules & constraints',        icon: Rule,     hidden: true },
-  { label: 'Optimization',   description: 'Solver settings',            icon: Settings, hidden: true },
-  { label: 'Review',         description: 'Generate files',             icon: Preview },
+  { id: 'setup',         label: 'Setup',          description: 'Problem, grid & dates',     icon: Info },
+  { id: 'contracts',     label: 'Contracts',      description: 'Minutes per day',           icon: Assignment },
+  { id: 'dimensions',    label: 'Dimensions',     description: 'Coverage coordinates',      icon: Category },
+  { id: 'employees',     label: 'Employees',      description: 'Contracts & competencies',  icon: People },
+  { id: 'scheduleInput', label: 'Schedule Input', description: 'Day-off codes & matrix',    icon: CalendarMonth },
+  { id: 'demand',        label: 'Demand',         description: 'Periods, days, shifts',     icon: EventNote },
+  { id: 'schedules',     label: 'Shift Menu',     description: 'schedules.csv',             icon: AccessTime },
+  { id: 'rules',         label: 'Rules',          description: 'Priority & labour law',     icon: Rule },
+  { id: 'review',        label: 'Review',         description: 'Validate & download',       icon: Preview }
 ];
 
-/** Steps that appear in the stepper UI, each annotated with its real index. */
-export const VISIBLE_STEPS = WIZARD_STEPS
-  .map((step, index) => ({ ...step, realIndex: index }))
-  .filter(step => !step.hidden);
+export const STEP_COUNT = WIZARD_STEPS.length;
+export const LAST_STEP_INDEX = STEP_COUNT - 1;
 
-/** Total number of steps shown in the UI. */
-export const TOTAL_VISIBLE = VISIBLE_STEPS.length;
-
-/** Last real step index (used by NavigationButtons to detect the final step). */
-export const LAST_STEP_INDEX = WIZARD_STEPS.length - 1;
-
-/**
- * Returns the 1-based display number for a given real step index.
- * Hidden steps resolve to the next visible step's number (so the counter
- * advances smoothly when passing through them).
- */
-export function getVisibleStepNumber(realIndex) {
-  const exact = VISIBLE_STEPS.findIndex(s => s.realIndex === realIndex);
-  if (exact >= 0) return exact + 1;
-
-  // Hidden step: find the first visible step that comes after it
-  const next = VISIBLE_STEPS.find(s => s.realIndex > realIndex);
-  if (next) return VISIBLE_STEPS.indexOf(next) + 1;
-
-  // Fallback: last visible step
-  return TOTAL_VISIBLE;
+/** The index of the step with this id, or -1. */
+export function stepIndex(id) {
+  return WIZARD_STEPS.findIndex((s) => s.id === id);
 }
 
-/**
- * Returns the real index of the next non-hidden step after `currentIndex`.
- * Skips over any hidden steps automatically.
- */
-export function getNextStepIndex(currentIndex) {
-  for (let i = currentIndex + 1; i < WIZARD_STEPS.length; i++) {
-    if (!WIZARD_STEPS[i].hidden) return i;
-  }
-  return currentIndex; // already at last visible step
-}
-
-/**
- * Returns the real index of the previous non-hidden step before `currentIndex`.
- * Skips over any hidden steps automatically.
- */
-export function getPrevStepIndex(currentIndex) {
-  for (let i = currentIndex - 1; i >= 0; i--) {
-    if (!WIZARD_STEPS[i].hidden) return i;
-  }
-  return currentIndex; // already at first visible step
+export function stepLabel(id) {
+  const i = stepIndex(id);
+  return i < 0 ? id : `${i + 1}. ${WIZARD_STEPS[i].label}`;
 }

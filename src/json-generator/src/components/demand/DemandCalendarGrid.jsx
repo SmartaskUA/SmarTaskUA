@@ -1,168 +1,135 @@
-import React, { useState, useMemo } from 'react';
-import { Box, Grid, Typography, Paper } from '@mui/material';
-import DayDemandSummary from './DayDemandSummary';
-import DayDemandDetail from './DayDemandDetail';
+import React, { useMemo, useState } from 'react';
+import {
+  Box, Paper, Typography, Chip, Dialog, DialogTitle, DialogContent, DialogActions, Button, Tooltip
+} from '@mui/material';
+import DemandRowTable from './DemandRowTable';
+import { weekIndex, weekday, tryParseRange, formatNumber } from '../../v4/core';
+import { pairLabel } from '../../v4/state';
+import { getTeamColor } from '../../utils/helpers/colorHelpers';
+
+const DAY = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 /**
- * DemandCalendarGrid Component
- *
- * Phase 2 of Demand Calendar: Full calendar view with all dates
- * - Shows each date as a summary cell
- * - Click to expand for details
- * - Heat map visualization of demand intensity
- *
- * @param {Array} dates - Array of date strings (YYYY-MM-DD)
- * @param {Array} demandData - All demand entries
- * @param {Array} workPeriods - Expected work periods
- * @param {Function} onUpdate - Called when demand is updated
- * @param {Function} onDelete - Called when demand is deleted
- * @param {string} employeeModel - 'team' or 'competency'
+ * The most workers a dimension asks for at any one moment on a date. Summing
+ * minimums across windows would be meaningless: windows follow each other.
  */
-const DemandCalendarGrid = ({
-  dates = [],
-  demandData = [],
-  workPeriods = [],
-  teams = [],
-  workPeriodModel = 'fixed',
-  onUpdate,
-  onDelete,
-  onAdd,
-  employeeModel = 'team'
-}) => {
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [detailModalOpen, setDetailModalOpen] = useState(false);
-
-  // Group demand by date for efficient lookup
-  const demandByDate = useMemo(() => {
-    const grouped = {};
-    demandData.forEach((entry) => {
-      if (!grouped[entry.date]) {
-        grouped[entry.date] = [];
-      }
-      grouped[entry.date].push(entry);
-    });
-    return grouped;
-  }, [demandData]);
-
-  // Get demand entries for a specific date
-  const getDemandForDate = (date) => {
-    return demandByDate[date] || [];
-  };
-
-  // Handle clicking on a day cell
-  const handleDayClick = (date) => {
-    setSelectedDate(date);
-    setDetailModalOpen(true);
-  };
-
-  // Handle updating demand from detail modal
-  const handleUpdate = (entry, newValues) => {
-    onUpdate({ ...entry, ...newValues });
-  };
-
-  // Handle deleting demand from detail modal
-  const handleDelete = (entry) => {
-    onDelete(entry);
-  };
-
-  // Group dates by week for better visual organization
-  const weekGroups = useMemo(() => {
-    const weeks = [];
-    let currentWeek = [];
-
-    dates.forEach((date, index) => {
-      currentWeek.push(date);
-
-      // Start new week on Monday or every 7 days
-      const dayOfWeek = new Date(date).getDay();
-      if (dayOfWeek === 0 || currentWeek.length === 7) {
-        // Sunday or 7 days
-        weeks.push(currentWeek);
-        currentWeek = [];
-      }
-    });
-
-    // Add remaining days
-    if (currentWeek.length > 0) {
-      weeks.push(currentWeek);
+function peaks(rows) {
+  const byDim = new Map();
+  for (const r of rows) {
+    const w = tryParseRange(r.start, r.end);
+    if (!w) continue;
+    const label = pairLabel(r.tableName, r.tableValue);
+    if (!byDim.has(label)) byDim.set(label, []);
+    byDim.get(label).push({ start: w[0], end: w[1], n: Number(r.minimum) || 0 });
+  }
+  return [...byDim.entries()].map(([label, spans]) => {
+    let peak = 0;
+    for (const s of spans) {
+      const concurrent = spans.filter((o) => o.start < s.start + 1 && o.end > s.start).reduce((t, o) => t + o.n, 0);
+      peak = Math.max(peak, concurrent);
     }
+    return { label, peak, count: spans.length };
+  });
+}
 
-    return weeks;
-  }, [dates]);
+/**
+ * Phase 2 of demand: the periods rows date by date. A date with no windowed
+ * row is closed — it sits outside every week.
+ */
+const DemandCalendarGrid = ({ dates, rows, dimensions, slotMinutes, weekStart, holidays, onChange }) => {
+  const [selected, setSelected] = useState(null);
+  const byDate = useMemo(() => {
+    const out = new Map();
+    for (const r of rows) {
+      if (!out.has(r.date)) out.set(r.date, []);
+      out.get(r.date).push(r);
+    }
+    return out;
+  }, [rows]);
+
+  const weeks = useMemo(() => {
+    const out = new Map();
+    for (const d of dates) {
+      const wk = weekIndex(d, dates[0], weekStart);
+      if (!out.has(wk)) out.set(wk, []);
+      out.get(wk).push(d);
+    }
+    return [...out.entries()];
+  }, [dates, weekStart]);
 
   return (
-    <Box sx={{ width: '100%' }}>
-      {/* Instructions */}
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="body2" color="text.secondary">
-          Click on any day to view and edit demand details. Colors indicate demand levels - darker means more coverage required.
-        </Typography>
-      </Box>
-
-      {/* Calendar Grid - Organized by weeks */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {weekGroups.map((week, weekIndex) => (
-          <Paper
-            key={weekIndex}
-            elevation={1}
-            sx={{
-              p: 1.5,
-              border: '1px solid',
-              borderColor: 'divider'
-            }}
-          >
-            <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-              Week {weekIndex + 1}
-            </Typography>
-            <Grid container spacing={1}>
-              {week.map((date) => {
-                const entries = getDemandForDate(date);
-                const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'short' });
-
+    <Box>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+        Click a day to edit its rows. Numbers are the peak concurrent minimum per dimension.
+      </Typography>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        {weeks.map(([wk, days]) => (
+          <Paper key={wk} variant="outlined" sx={{ p: 1 }}>
+            <Typography variant="caption" color="text.secondary">Week {wk}</Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 1 }}>
+              {days.map((d) => {
+                const dayRows = byDate.get(d) || [];
+                const closed = !dayRows.some((r) => r.start || r.end);
+                const holiday = holidays.get(d);
                 return (
-                  <Grid item xs={12} sm={6} md={4} lg={3} xl={1.714} key={date}>
-                    <Box>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ display: 'block', mb: 0.5, fontWeight: 500 }}
-                      >
-                        {dayOfWeek}
-                      </Typography>
-                      <DayDemandSummary
-                        date={date}
-                        demandEntries={entries}
-                        workPeriods={workPeriods}
-                        onClick={() => handleDayClick(date)}
-                      />
+                  <Paper
+                    key={d}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Edit ${d}`}
+                    onClick={() => setSelected(d)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(d); } }}
+                    variant="outlined"
+                    sx={{
+                      p: 1, cursor: 'pointer', minHeight: 96, bgcolor: closed ? '#fafafa' : 'background.paper',
+                      borderColor: holiday ? 'secondary.main' : 'divider', '&:hover': { boxShadow: 2 }
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="caption" fontWeight={700}>{DAY[weekday(d)]} {d.slice(8)}/{d.slice(5, 7)}</Typography>
+                      <Typography variant="caption" color="text.secondary">{dayRows.length || ''}</Typography>
                     </Box>
-                  </Grid>
+                    {holiday && (
+                      <Tooltip title={holiday.name || holiday.code || 'Holiday'}>
+                        <Chip size="small" color="secondary" label="holiday" sx={{ height: 16, fontSize: 10, mb: 0.5 }} />
+                      </Tooltip>
+                    )}
+                    {closed ? (
+                      <Typography variant="caption" color="text.disabled" display="block">closed</Typography>
+                    ) : peaks(dayRows).map((p) => (
+                      <Box key={p.label} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: getTeamColor(p.label), flexShrink: 0 }} />
+                        <Typography variant="caption" noWrap>{p.label} {formatNumber(p.peak)}</Typography>
+                      </Box>
+                    ))}
+                  </Paper>
                 );
               })}
-            </Grid>
+            </Box>
           </Paper>
         ))}
       </Box>
 
-      {/* Detail Modal */}
-      {selectedDate && (
-        <DayDemandDetail
-          open={detailModalOpen}
-          onClose={() => {
-            setDetailModalOpen(false);
-            setSelectedDate(null);
-          }}
-          date={selectedDate}
-          demandEntries={getDemandForDate(selectedDate)}
-          onUpdate={handleUpdate}
-          onDelete={handleDelete}
-          onAdd={onAdd}
-          workPeriods={workPeriods}
-          teams={teams}
-          workPeriodModel={workPeriodModel}
-          employeeModel={employeeModel}
-        />
-      )}
+      <Dialog open={!!selected} onClose={() => setSelected(null)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          {selected} {selected && `(${DAY[weekday(selected)]})`}
+          {selected && holidays.get(selected) && <Chip size="small" color="secondary" label={holidays.get(selected).name || 'holiday'} sx={{ ml: 1 }} />}
+        </DialogTitle>
+        <DialogContent dividers>
+          {selected && (
+            <DemandRowTable
+              grain="periods"
+              rows={rows}
+              dimensions={dimensions}
+              slotMinutes={slotMinutes}
+              fixedDate={selected}
+              dense
+              onChange={onChange}
+            />
+          )}
+        </DialogContent>
+        <DialogActions><Button onClick={() => setSelected(null)} variant="contained">Close</Button></DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -1,63 +1,29 @@
 import React from 'react';
 import { Box, Chip, Typography, Paper } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { KIND_COLORS } from '../scheduleInput/DayOffCodesPanel';
+import { OPERATOR_COLORS } from './TimeConstraintDialog';
+import { CELL_COLORS } from './MatrixCell';
+import { OPERATOR_HELP } from '../../v4/constants';
 
-const LegendChip = styled(Chip)(({ bgcolor }) => ({
-  margin: '4px',
-  backgroundColor: bgcolor,
-  '& .MuiChip-label': {
-    fontWeight: 600,
-    fontSize: '13px'
-  }
-}));
+const item = (label, bgcolor, key = label) => (
+  <Chip key={key} size="small" label={label} sx={{ m: 0.5, bgcolor, fontWeight: 600 }} />
+);
 
-/**
- * MatrixLegend - Color-coded legend for all schedule matrix values
- */
-const MatrixLegend = () => {
-  const standardItems = [
-    { code: 'A',   description: 'Auto-allocate from contract', color: '#e8f5e9' },
-    { code: 'Xh',  description: 'Specific hours (e.g. 8h)',    color: '#e3f2fd' },
-    { code: 'VAC', description: 'Vacation',                    color: '#fff9c4' },
-    { code: 'NOT', description: 'Not available',               color: '#ffebee' }
-  ];
-
-  const timeConstraintItems = [
-    { code: 'EQUALS',  description: 'Must work exact time window', color: '#e1bee7' },
-    { code: 'INCLUDE', description: 'Must cover time range min.',  color: '#ffe0b2' },
-    { code: 'EXCEPT',  description: 'Unavailable in window',       color: '#f8bbd0' }
-  ];
-
-  return (
-    <Paper elevation={0} sx={{ p: 2, bgcolor: '#fafafa', border: '1px solid #e0e0e0' }}>
-      <Typography variant="subtitle2" gutterBottom fontWeight={600}>
-        Legend
-      </Typography>
-
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-        {standardItems.map((item) => (
-          <LegendChip
-            key={item.code}
-            label={`${item.code}: ${item.description}`}
-            size="small"
-            bgcolor={item.color}
-          />
-        ))}
-      </Box>
-
-      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}> </Typography>
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-        {timeConstraintItems.map((item) => (
-          <LegendChip
-            key={item.code}
-            label={`${item.code}: ${item.description}`}
-            size="small"
-            bgcolor={item.color}
-          />
-        ))}
-      </Box>
-    </Paper>
-  );
-};
+/** The cell vocabulary, built from the problem's own day-off palette. */
+const MatrixLegend = ({ dayOffCodes }) => (
+  <Paper variant="outlined" sx={{ p: 1.5, bgcolor: '#fafafa' }}>
+    <Typography variant="subtitle2" fontWeight={600}>Legend</Typography>
+    <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+      {item('A: work the contract length', CELL_COLORS.auto)}
+      {item('8: exactly 8 hours (hours, not minutes)', CELL_COLORS.hours)}
+      {item('blank: no assignment', CELL_COLORS.blank)}
+      {item('grey: no contract covers the day', CELL_COLORS.uncovered)}
+      {Object.entries(dayOffCodes).map(([code, e]) => item(`${code}: ${e.name || e.kind} (${e.kind})`, KIND_COLORS[e.kind], code))}
+    </Box>
+    <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+      {Object.entries(OPERATOR_HELP).map(([op, help]) => item(`${op}: ${help}`, OPERATOR_COLORS[op], op))}
+    </Box>
+  </Paper>
+);
 
 export default MatrixLegend;

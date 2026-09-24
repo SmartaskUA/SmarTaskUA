@@ -1,264 +1,224 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Grid,
-  Alert,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  FormHelperText,
-  Autocomplete,
-  Chip,
-  Box,
-  Typography,
-  Divider
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Alert, MenuItem, Box, Typography,
+  Table, TableHead, TableRow, TableCell, TableBody, IconButton, Tooltip, Divider, Grid
 } from '@mui/material';
-import CompetencyBuilder from './CompetencyBuilder';
+import { Add, Delete } from '@mui/icons-material';
+import { DateField, NumberField } from '../shared/fields';
+import { pairKey } from '../../v4/core';
+import { pairLabel } from '../../v4/state';
 
-/**
- * EmployeeForm Component
- *
- * Dialog for adding/editing employees.
- * Both models use teams field:
- * - Team model: teams is array of strings (team codes)
- * - Competency model: teams is array of {code, name, level}
- */
-const EmployeeForm = ({
-  open,
-  onClose,
-  onSave,
-  editingEmployee = null,
-  employeeModel,  // 'team' or 'competency'
-  existingIds = [],
-  availableTeams = [],
-  availableContracts = []
-}) => {
-  const [formData, setFormData] = useState({
+const OPEN = '9999-12-31';
+
+/** Pairs of indices whose closed date ranges overlap. */
+function overlaps(rows) {
+  const out = [];
+  rows.forEach((a, i) => rows.slice(i + 1).forEach((b, k) => {
+    if (!a.start || !b.start) return;
+    if (a.start <= (b.end || OPEN) && b.start <= (a.end || OPEN)) out.push([i, i + 1 + k]);
+  }));
+  return out;
+}
+
+export function newEmployee(state) {
+  return {
     id: '',
     name: '',
-    teams: [],  // Always teams (format depends on model)
-    contractType: ''
-  });
+    contractAssignments: [{ contractType: state.contracts.definitions[0]?.id || '', start: state.temporalScope.start || '', end: null }],
+    competencyAssignments: []
+  };
+}
+
+/**
+ * Add or edit one employee: identity, date-ranged contract membership, and
+ * date-ranged, levelled competencies. Level 1 is the highest.
+ */
+const EmployeeForm = ({ open, onClose, onSave, employee, existingIds, state }) => {
+  const [form, setForm] = useState(employee);
   const [errors, setErrors] = useState({});
+  const [pick, setPick] = useState({ pair: '', level: 1 });
 
-  // Initialize form when editing
   useEffect(() => {
-    if (editingEmployee) {
-      setFormData(editingEmployee);
-    } else {
-      setFormData({
-        id: '',
-        name: '',
-        teams: [],
-        contractType: ''
-      });
+    if (open) {
+      setForm(JSON.parse(JSON.stringify(employee)));
+      setErrors({});
+      setPick({ pair: '', level: 1 });
     }
-    setErrors({});
-  }, [editingEmployee, open]);
+  }, [open, employee]);
 
-  const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: null }));
-    }
+  const contracts = state.contracts.definitions;
+  const dims = state.demand.dimensions;
+  const scope = state.temporalScope;
+
+  const contractOverlaps = useMemo(() => overlaps(form?.contractAssignments || []), [form]);
+  const competencyClashes = useMemo(() => {
+    const byPair = new Map();
+    (form?.competencyAssignments || []).forEach((a, i) => {
+      const k = pairKey(a.tableName, a.tableValue);
+      if (!byPair.has(k)) byPair.set(k, []);
+      byPair.get(k).push({ ...a, i });
+    });
+    return [...byPair.values()].flatMap((rows) => overlaps(rows).map(([x, y]) => [rows[x], rows[y]]));
+  }, [form]);
+
+  if (!form) return null;
+
+  const setContract = (i, patch) => setForm((f) => ({
+    ...f, contractAssignments: f.contractAssignments.map((a, j) => (j === i ? { ...a, ...patch } : a))
+  }));
+  const setCompetency = (i, patch) => setForm((f) => ({
+    ...f, competencyAssignments: f.competencyAssignments.map((a, j) => (j === i ? { ...a, ...patch } : a))
+  }));
+
+  const addCompetency = () => {
+    const d = dims.find((x) => pairKey(x.tableName, x.tableValue) === pick.pair);
+    if (!d) return;
+    setForm((f) => ({
+      ...f,
+      competencyAssignments: [...f.competencyAssignments, {
+        tableName: d.tableName, tableValue: d.tableValue, level: Number(pick.level) || 1, start: scope.start || '', end: null
+      }]
+    }));
+    setPick({ pair: '', level: pick.level });
   };
 
-  const validate = () => {
-    const newErrors = {};
-
-    // ID validation
-    if (!formData.id.trim()) {
-      newErrors.id = 'Employee ID is required';
-    } else if (
-      !editingEmployee &&
-      existingIds.includes(formData.id.trim())
-    ) {
-      newErrors.id = 'Employee ID already exists';
-    }
-
-    // Contract validation
-    if (!formData.contractType) {
-      newErrors.contractType = 'Contract type is required';
-    } else if (!availableContracts.includes(formData.contractType)) {
-      newErrors.contractType = 'Invalid contract type';
-    }
-
-    // Teams validation (always required for both models)
-    if (formData.teams.length === 0) {
-      newErrors.teams = 'At least one team is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const addAllCompetencies = () => {
+    const held = new Set(form.competencyAssignments.map((a) => pairKey(a.tableName, a.tableValue)));
+    setForm((f) => ({
+      ...f,
+      competencyAssignments: [...f.competencyAssignments, ...dims
+        .filter((d) => !held.has(pairKey(d.tableName, d.tableValue)))
+        .map((d) => ({ tableName: d.tableName, tableValue: d.tableValue, level: Number(pick.level) || 1, start: scope.start || '', end: null }))]
+    }));
   };
 
-  const handleSave = () => {
-    if (validate()) {
-      const employeeData = {
-        id: formData.id.trim(),
-        name: formData.name.trim() || formData.id.trim(),  // Use ID as name if no name provided
-        teams: formData.teams,  // Always include teams (format depends on model)
-        contractType: formData.contractType
-      };
-
-      onSave(employeeData);
-      onClose();
-    }
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
-      e.preventDefault();
-      handleSave();
-    }
+  const save = () => {
+    const id = form.id.trim();
+    const e = {};
+    if (!id) e.id = 'Required';
+    else if (existingIds.includes(id)) e.id = 'Another employee has this ID';
+    if (!form.contractAssignments.length) e.contracts = 'Assign at least one contract';
+    else if (form.contractAssignments.some((a) => !a.contractType || !a.start)) e.contracts = 'Every contract period needs a contract and a start date';
+    else if (contractOverlaps.length) e.contracts = 'Contract periods overlap';
+    if (form.competencyAssignments.some((a) => !a.start || !(Number(a.level) >= 1))) e.competencies = 'Every competency needs a level ≥ 1 and a start date';
+    setErrors(e);
+    if (Object.keys(e).length) return;
+    const clean = (a) => ({ ...a, end: a.end || null });
+    onSave({
+      id,
+      name: form.name.trim(),
+      contractAssignments: form.contractAssignments.map(clean),
+      competencyAssignments: form.competencyAssignments.map((a) => ({ ...clean(a), level: Number(a.level) }))
+    });
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ pb: 2 }}>
-        {editingEmployee ? 'Edit Employee' : 'Add New Employee'}
-      </DialogTitle>
-      <DialogContent sx={{ overflowX: 'hidden', pb: 3 }}>
-        <Grid container spacing={2} sx={{ mt: 0.5 }}>
-          {/* Row 1: Employee ID, Name, and Contract Type in one row */}
-          <Grid item xs={12} sm={4}>
+      <DialogTitle>{employee.id ? `Edit ${employee.id}` : 'Add employee'}</DialogTitle>
+      <DialogContent dividers>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
-              fullWidth
-              label="Employee ID"
-              value={formData.id}
-              onChange={(e) => handleChange('id', e.target.value)}
-              onKeyPress={handleKeyPress}
-              error={!!errors.id}
-              helperText={errors.id || 'Unique identifier'}
-              required
-              disabled={!!editingEmployee}
-              placeholder="e.g., EMP001"
+              fullWidth label="Employee ID" value={form.id} required autoFocus
+              onChange={(e) => setForm({ ...form, id: e.target.value })}
+              error={!!errors.id} helperText={errors.id || 'A string, even when it looks numeric'}
             />
           </Grid>
-
-          <Grid item xs={12} sm={4}>
-            <TextField
-              fullWidth
-              label="Employee Name"
-              value={formData.name}
-              onChange={(e) => handleChange('name', e.target.value)}
-              onKeyPress={handleKeyPress}
-              helperText="Optional"
-              placeholder="e.g., John Doe"
-            />
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField fullWidth label="Name (optional)" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </Grid>
-
-          <Grid item xs={12} sm={4}>
-            <FormControl fullWidth error={!!errors.contractType} required>
-              <InputLabel>Contract Type</InputLabel>
-              <Select
-                value={formData.contractType}
-                onChange={(e) => handleChange('contractType', e.target.value)}
-                label="Contract Type"
-              >
-                {availableContracts.length === 0 ? (
-                  <MenuItem value="">
-                    <em>No contracts available</em>
-                  </MenuItem>
-                ) : (
-                  availableContracts.map((contractId) => (
-                    <MenuItem key={contractId} value={contractId}>
-                      {contractId}
-                    </MenuItem>
-                  ))
-                )}
-              </Select>
-              <FormHelperText>
-                {errors.contractType || 'Select contract type'}
-              </FormHelperText>
-            </FormControl>
-          </Grid>
-
-          {/* Divider */}
-          <Grid item xs={12} sx={{ my: 2 }}>
-            <Divider sx={{ borderBottomWidth: 2, borderColor: 'divider' }} />
-          </Grid>
-
-          {/* Row 2: Teams or Competencies - Full width */}
-          {/* TEAM MODEL: Team Selection */}
-          {employeeModel === 'team' && (
-            <Grid item xs={12}>
-              <Box sx={{ width: '100%' }}>
-                <Autocomplete
-                  multiple
-                  fullWidth
-                  options={availableTeams.map(t => t.code)}
-                  value={formData.teams}
-                  onChange={(e, newValue) => handleChange('teams', newValue)}
-                  getOptionLabel={(option) => {
-                    const team = availableTeams.find(t => t.code === option);
-                    return team ? `${team.code} - ${team.name}` : option;
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Teams"
-                      error={!!errors.teams}
-                      helperText={errors.teams || 'Select one or more teams'}
-                      required
-                      fullWidth
-                    />
-                  )}
-                  renderTags={(value, getTagProps) =>
-                    value.map((option, index) => {
-                      const team = availableTeams.find(t => t.code === option);
-                      return (
-                        <Chip
-                          label={team ? `${team.code} - ${team.name}` : option}
-                          {...getTagProps({ index })}
-                          color="primary"
-                          size="small"
-                        />
-                      );
-                    })
-                  }
-                />
-              </Box>
-            </Grid>
-          )}
-
-          {/* COMPETENCY MODEL: Team Assignment with Levels */}
-          {employeeModel === 'competency' && (
-            <Grid item xs={12}>
-              <Box sx={{ width: '100%' }}>
-                <CompetencyBuilder
-                  competencies={formData.teams}
-                  availableCompetencies={availableTeams}
-                  onChange={(newTeams) => handleChange('teams', newTeams)}
-                  error={errors.teams}
-                />
-              </Box>
-            </Grid>
-          )}
-
-          {/* General Errors */}
-          {Object.keys(errors).length > 0 && !errors.teams && (
-            <Grid item xs={12}>
-              <Alert severity="error">
-                Please fix the errors above before saving.
-              </Alert>
-            </Grid>
-          )}
         </Grid>
+
+        <Divider sx={{ my: 2 }} />
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="subtitle1" fontWeight={600}>Contract periods</Typography>
+          <Button size="small" startIcon={<Add />} onClick={() => setForm((f) => ({
+            ...f, contractAssignments: [...f.contractAssignments, { contractType: contracts[0]?.id || '', start: '', end: null }]
+          }))}
+          >
+            Add period
+          </Button>
+        </Box>
+        <Typography variant="caption" color="text.secondary">
+          Leave the end empty for an open-ended contract. Asking for work on a day no period covers is an error.
+        </Typography>
+        <Table size="small">
+          <TableHead>
+            <TableRow><TableCell>Contract</TableCell><TableCell>From</TableCell><TableCell>To (empty = open)</TableCell><TableCell /></TableRow>
+          </TableHead>
+          <TableBody>
+            {form.contractAssignments.map((a, i) => (
+              <TableRow key={i}>
+                <TableCell>
+                  <TextField select size="small" value={a.contractType} onChange={(e) => setContract(i, { contractType: e.target.value })} sx={{ minWidth: 160 }}>
+                    {contracts.map((c) => <MenuItem key={c.id} value={c.id}>{c.id} · {c.workMinutesPerDay} min</MenuItem>)}
+                  </TextField>
+                </TableCell>
+                <TableCell><DateField value={a.start} onChange={(v) => setContract(i, { start: v })} /></TableCell>
+                <TableCell><DateField value={a.end || ''} min={a.start} onChange={(v) => setContract(i, { end: v || null })} /></TableCell>
+                <TableCell>
+                  <IconButton size="small" color="error" onClick={() => setForm((f) => ({ ...f, contractAssignments: f.contractAssignments.filter((_, j) => j !== i) }))}>
+                    <Delete fontSize="small" />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        {errors.contracts && <Alert severity="error" sx={{ mt: 1 }}>{errors.contracts}</Alert>}
+
+        <Divider sx={{ my: 2 }} />
+        <Typography variant="subtitle1" fontWeight={600}>Competencies</Typography>
+        <Typography variant="caption" color="text.secondary" component="div" sx={{ mb: 1 }}>
+          <strong>Level 1 is the highest</strong> — your most senior person is level 1; level 5 is more junior than level 2.
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', mb: 1 }}>
+          <TextField select size="small" label="Dimension" value={pick.pair} onChange={(e) => setPick({ ...pick, pair: e.target.value })} sx={{ minWidth: 220 }}>
+            {dims.length === 0 && <MenuItem value="" disabled>Declare dimensions first</MenuItem>}
+            {dims.map((d) => <MenuItem key={pairKey(d.tableName, d.tableValue)} value={pairKey(d.tableName, d.tableValue)}>{pairLabel(d.tableName, d.tableValue)}{d.name ? ` — ${d.name}` : ''}</MenuItem>)}
+          </TextField>
+          <NumberField label="Level" value={pick.level} min={1} step={1} onChange={(v) => setPick({ ...pick, level: v })} sx={{ width: 130 }} helperText="1 = most senior" />
+          <Button variant="outlined" onClick={addCompetency} disabled={!pick.pair}>Add</Button>
+          <Tooltip title="Add every declared dimension this employee does not hold yet, at this level">
+            <span><Button onClick={addAllCompetencies} disabled={!dims.length}>Add all</Button></span>
+          </Tooltip>
+        </Box>
+        {form.competencyAssignments.length > 0 && (
+          <Table size="small">
+            <TableHead>
+              <TableRow><TableCell>Dimension</TableCell><TableCell>Level</TableCell><TableCell>From</TableCell><TableCell>To (empty = open)</TableCell><TableCell /></TableRow>
+            </TableHead>
+            <TableBody>
+              {form.competencyAssignments.map((a, i) => (
+                <TableRow key={i}>
+                  <TableCell>{pairLabel(a.tableName, a.tableValue)}</TableCell>
+                  <TableCell><NumberField value={a.level} min={1} step={1} onChange={(v) => setCompetency(i, { level: v })} sx={{ width: 80 }} /></TableCell>
+                  <TableCell><DateField value={a.start} onChange={(v) => setCompetency(i, { start: v })} /></TableCell>
+                  <TableCell><DateField value={a.end || ''} min={a.start} onChange={(v) => setCompetency(i, { end: v || null })} /></TableCell>
+                  <TableCell>
+                    <IconButton size="small" color="error" onClick={() => setForm((f) => ({ ...f, competencyAssignments: f.competencyAssignments.filter((_, j) => j !== i) }))}>
+                      <Delete fontSize="small" />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+        {!form.competencyAssignments.length && (
+          <Alert severity="warning" sx={{ mt: 1 }}>No competencies: this employee cannot cover any demand row.</Alert>
+        )}
+        {competencyClashes.map(([a, b]) => (
+          <Alert key={`${a.i}-${b.i}`} severity="warning" sx={{ mt: 1 }}>
+            {pairLabel(a.tableName, a.tableValue)} is held twice over overlapping dates
+            {Number(a.level) !== Number(b.level) ? ` at levels ${a.level} and ${b.level}, so the level is ambiguous` : ''}.
+          </Alert>
+        ))}
+        {errors.competencies && <Alert severity="error" sx={{ mt: 1 }}>{errors.competencies}</Alert>}
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2, pt: 2 }}>
-        <Button onClick={onClose} size="large">
-          Cancel
-        </Button>
-        <Button variant="contained" onClick={handleSave} size="large">
-          {editingEmployee ? 'Update' : 'Add'}
-        </Button>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button variant="contained" onClick={save}>{employee.id ? 'Save' : 'Add'}</Button>
       </DialogActions>
     </Dialog>
   );

@@ -1,201 +1,114 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, TextField, Typography, Box, List, ListItem,
-  ListItemText, ListItemSecondaryAction, IconButton, Divider,
-  Alert, Tooltip
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Typography, Box, List, ListItem,
+  ListItemText, IconButton, Divider, Alert, Tooltip
 } from '@mui/material';
-import { Delete, FolderOpen, SaveAlt, Upload, Save } from '@mui/icons-material';
-import { saveAs } from 'file-saver';
+import { Delete, FolderOpen, SaveAlt, Upload, Save, Inventory2 } from '@mui/icons-material';
 import { useWizard } from '../../context/WizardContext';
+import { isV4State } from '../../v4/persistence';
+import BundleImportDialog from '../import/BundleImportDialog';
+import { downloadText } from '../../utils/download';
 
+/**
+ * Named snapshots of the wizard's state (kept in this browser), a state
+ * export/import, and loading a v4.0 bundle. Only v4 states are accepted;
+ * v2.x saves are deprecated and are not migrated.
+ */
 const ProjectManagerDialog = ({ open, onClose }) => {
-  const { state, saveProject, deleteProject, loadProject } = useWizard();
-  const [saveName, setSaveName] = useState('');
-  const [saveError, setSaveError] = useState('');
-  const [importError, setImportError] = useState('');
-  const [saved, setSaved] = useState(false);
-  const fileInputRef = useRef(null);
+  const { state, saveProject, deleteProject, loadProject, listProjects } = useWizard();
+  const [name, setName] = useState('');
+  const [message, setMessage] = useState(null);
+  const [projects, setProjects] = useState(() => listProjects());
+  const [bundleOpen, setBundleOpen] = useState(false);
+  const fileRef = useRef(null);
 
-  const getSavedProjects = () => {
-    try {
-      return JSON.parse(localStorage.getItem('wizardProjects') || '[]');
-    } catch {
-      return [];
-    }
+  const refresh = () => setProjects(listProjects());
+
+  const save = () => {
+    if (!name.trim()) return;
+    saveProject(name.trim());
+    refresh();
+    setName('');
+    setMessage({ severity: 'success', text: 'Saved.' });
   };
 
-  const [projects, setProjects] = useState(getSavedProjects);
-
-  const refreshProjects = () => setProjects(getSavedProjects());
-
-  const handleSave = () => {
-    const name = saveName.trim();
-    if (!name) {
-      setSaveError('Enter a project name.');
-      return;
-    }
-    saveProject(name);
-    refreshProjects();
-    setSaveName('');
-    setSaveError('');
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
-
-  const handleDelete = (name) => {
-    deleteProject(name);
-    refreshProjects();
-  };
-
-  const handleLoad = (project) => {
-    loadProject(project.state);
-    onClose();
-  };
-
-  const handleExport = () => {
-    const name = state.metadata?.problemId || 'wizard_state';
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-    saveAs(blob, `${name}_project.json`);
-  };
-
-  const handleImportClick = () => {
-    setImportError('');
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e) => {
+  const importState = async (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const parsed = JSON.parse(evt.target.result);
-        if (typeof parsed !== 'object' || !parsed.schemaVersion) {
-          setImportError('Invalid project file — missing schemaVersion.');
-          return;
-        }
-        loadProject(parsed);
-        onClose();
-      } catch {
-        setImportError('Could not parse file. Make sure it is a valid project JSON.');
-      }
-    };
-    reader.readAsText(file);
     e.target.value = '';
-  };
-
-  const formatDate = (iso) => {
+    if (!file) return;
     try {
-      return new Date(iso).toLocaleString();
+      const parsed = JSON.parse(await file.text());
+      if (!isV4State(parsed)) {
+        setMessage({
+          severity: 'error',
+          text: parsed?.schemaVersion
+            ? 'This is a v2.x wizard project. Those are deprecated and cannot be loaded; to start from a problem, import its v4.0 bundle instead.'
+            : 'Not a wizard project file. To load problem.json and its CSVs, use "Import v4 bundle".'
+        });
+        return;
+      }
+      loadProject(parsed);
+      onClose();
     } catch {
-      return iso;
+      setMessage({ severity: 'error', text: 'Could not parse the file.' });
     }
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Project Manager</DialogTitle>
+    <>
+      <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth TransitionProps={{ onEnter: () => { refresh(); setMessage(null); } }}>
+        <DialogTitle>Projects</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="subtitle2" gutterBottom>Save the current work in this browser</Typography>
+          <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+            <TextField size="small" placeholder="Project name" value={name} onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && save()} sx={{ flex: 1 }}
+            />
+            <Button variant="contained" startIcon={<Save />} onClick={save} disabled={!name.trim()}>Save</Button>
+          </Box>
 
-      <DialogContent dividers>
-        {/* Save current state */}
-        <Typography variant="subtitle2" gutterBottom>Save current state</Typography>
-        <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
-          <TextField
-            size="small"
-            placeholder="Project name"
-            value={saveName}
-            onChange={e => { setSaveName(e.target.value); setSaveError(''); }}
-            onKeyDown={e => e.key === 'Enter' && handleSave()}
-            error={!!saveError}
-            helperText={saveError}
-            sx={{ flex: 1 }}
-          />
-          <Button
-            variant="contained"
-            startIcon={<Save />}
-            onClick={handleSave}
-            disabled={!saveName.trim()}
-          >
-            Save
-          </Button>
-        </Box>
-        {saved && <Alert severity="success" sx={{ mb: 1 }}>Saved!</Alert>}
+          <Typography variant="subtitle2" gutterBottom>Saved projects</Typography>
+          {projects.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">None yet.</Typography>
+          ) : (
+            <List dense>
+              {projects.map((p) => (
+                <ListItem
+                  key={p.name}
+                  secondaryAction={(
+                    <>
+                      <Tooltip title="Load"><IconButton onClick={() => { loadProject(p.state); onClose(); }}><FolderOpen /></IconButton></Tooltip>
+                      <Tooltip title="Delete"><IconButton color="error" onClick={() => { deleteProject(p.name); refresh(); }}><Delete /></IconButton></Tooltip>
+                    </>
+                  )}
+                >
+                  <ListItemText primary={p.name} secondary={new Date(p.savedAt).toLocaleString()} />
+                </ListItem>
+              ))}
+            </List>
+          )}
 
-        <Divider sx={{ my: 2 }} />
-
-        {/* Saved projects list */}
-        <Typography variant="subtitle2" gutterBottom>
-          Saved projects {projects.length > 0 ? `(${projects.length})` : ''}
-        </Typography>
-
-        {projects.length === 0 ? (
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            No saved projects yet.
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="subtitle2" gutterBottom>Files</Typography>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Button variant="outlined" startIcon={<Inventory2 />} onClick={() => setBundleOpen(true)}>Import v4 bundle</Button>
+            <Button variant="outlined" startIcon={<SaveAlt />}
+              onClick={() => downloadText(`${state.metadata.problemId || 'wizard'}_project.json`, JSON.stringify(state, null, 2), 'application/json')}
+            >
+              Export project
+            </Button>
+            <Button variant="outlined" startIcon={<Upload />} onClick={() => fileRef.current?.click()}>Import project</Button>
+            <input ref={fileRef} type="file" accept=".json" style={{ display: 'none' }} onChange={importState} />
+          </Box>
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+            A project file is the wizard&apos;s own state (weekly template included). A bundle is the v4.0 problem.json and CSVs.
           </Typography>
-        ) : (
-          <List dense disablePadding sx={{ mb: 1 }}>
-            {projects.map((p) => (
-              <ListItem key={p.name} sx={{ pl: 0, pr: 10 }}>
-                <ListItemText
-                  primary={p.name}
-                  secondary={formatDate(p.savedAt)}
-                  primaryTypographyProps={{ fontWeight: 500 }}
-                />
-                <ListItemSecondaryAction>
-                  <Tooltip title="Load">
-                    <IconButton size="small" onClick={() => handleLoad(p)} sx={{ mr: 0.5 }}>
-                      <FolderOpen fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete">
-                    <IconButton size="small" color="error" onClick={() => handleDelete(p.name)}>
-                      <Delete fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </ListItemSecondaryAction>
-              </ListItem>
-            ))}
-          </List>
-        )}
-
-        <Divider sx={{ my: 2 }} />
-
-        {/* Export / Import */}
-        <Typography variant="subtitle2" gutterBottom>Export / Import</Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button
-            variant="outlined"
-            startIcon={<SaveAlt />}
-            onClick={handleExport}
-            size="small"
-          >
-            Export to file
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<Upload />}
-            onClick={handleImportClick}
-            size="small"
-          >
-            Import from file
-          </Button>
-        </Box>
-        {importError && <Alert severity="error" sx={{ mt: 1 }}>{importError}</Alert>}
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json"
-          style={{ display: 'none' }}
-          onChange={handleFileChange}
-        />
-      </DialogContent>
-
-      <DialogActions>
-        <Button onClick={onClose}>Close</Button>
-      </DialogActions>
-    </Dialog>
+          {message && <Alert severity={message.severity} sx={{ mt: 2 }}>{message.text}</Alert>}
+        </DialogContent>
+        <DialogActions><Button onClick={onClose}>Close</Button></DialogActions>
+      </Dialog>
+      <BundleImportDialog open={bundleOpen} onClose={() => { setBundleOpen(false); onClose(); }} />
+    </>
   );
 };
 
