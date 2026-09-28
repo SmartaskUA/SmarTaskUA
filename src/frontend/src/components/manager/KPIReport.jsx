@@ -138,7 +138,10 @@ function Tile({ label, value, sub, tone, tip }) {
         borderRadius: 1.5,
         bgcolor: pal ? pal.bg : "action.hover",
         border: pal ? `1px solid ${pal.border}` : "1px solid transparent",
-        height: "100%",
+        // Fixed floor instead of height:"100%" — Safari can misjudge the
+        // stretched height of a CSS Grid item on auto-sized rows, letting
+        // a tile's border overlap the row below it.
+        minHeight: 84,
       }}
     >
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.25 }}>
