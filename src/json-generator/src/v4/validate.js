@@ -85,7 +85,7 @@ function overlappingPairs(spans, closed = true) {
 
 const OPEN_END = '9999-12-31';
 
-function fileText(files, name) {
+export function fileText(files, name) {
   if (!name) return null;
   if (Object.prototype.hasOwnProperty.call(files, name)) return files[name];
   const base = name.split('/').pop();
@@ -685,17 +685,7 @@ class BundleValidator {
   }
 }
 
-/** The enabled hard constraints' integer parameters, flattened into one lookup. */
-export function legislationLimits(problem) {
-  const out = {};
-  for (const entry of problem?.constraints?.hard || []) {
-    if (entry?.enabled === false) continue;
-    for (const [k, v] of Object.entries(entry?.parameters || {})) {
-      if (Number.isInteger(v)) out[k] = v;
-    }
-  }
-  return out;
-}
+export const { legislationLimits } = core;
 
 /**
  * Validate a v4.0 input bundle.
@@ -709,4 +699,4 @@ export function validateBundle(problem, files = {}) {
   return { ok: report.ok, errors: report.errors, warnings: report.warnings, stats: report.stats };
 }
 
-export { reportGrouped };
+export { reportGrouped, Report };

@@ -124,3 +124,87 @@ describe('the menu generator', () => {
     expect(s.schedules.rows[3]).toEqual({ code: 9001, description: '09:00-13:00', scheduleWeightMinutes: 240, startMin: 540, endMin: 780 });
   });
 });
+
+describe('fixed days', () => {
+  const fix = (state, ...days) => days.reduce((s, [eid, date, code]) => ops.setFixedDay(s, eid, date, code), state);
+  const line = (e) => `${e.EmployeeCode} ${e.Date} ${e.ScheduleCode}`;
+
+  it('writes no result until a day is fixed, and none with the menu off', () => {
+    const s = sampleState();
+    expect(buildBundle(s).result).toBeNull();
+    const fixed = fix(s, ['EMP001', '2026-03-02', 9003]);
+    expect(buildBundle(fixed).result.OutRosterTeamDays).toHaveLength(1);
+    const off = buildBundle({ ...fixed, schedules: { ...fixed.schedules, enabled: false } });
+    expect(off.result).toBeNull();
+    expect(Object.keys(off.files)).not.toContain('result_schedules.csv');
+  });
+
+  it('writes the roster order then the date, and a sidecar of the codes used', () => {
+    const s = fix(sampleState(),
+      ['EMP002', '2026-03-03', 9003], ['EMP001', '2026-03-06', 3], ['EMP001', '2026-03-02', 9003], ['EMP003', '2026-03-03', 9001]);
+    const { result, files } = buildBundle(s);
+    expect(result.OutRosterTeamDays.map(line)).toEqual([
+      'EMP001 2026-03-02T00:00:00 9003', 'EMP001 2026-03-06T00:00:00 3',
+      'EMP002 2026-03-03T00:00:00 9003', 'EMP003 2026-03-03T00:00:00 9001'
+    ]);
+    expect(result.OutRosterTeamDays[0]).toEqual({
+      RosterCode: 'SAMPLE', TeamCode: '1', EmployeeCode: 'EMP001', Date: '2026-03-02T00:00:00', ScheduleCode: 9003,
+      OutRosterTeamDayTasks: [], OutRosterTeamDayResponsibilities: []
+    });
+    expect(files['result_schedules.csv']).toBe('code,description,scheduleWeightMinutes,startMin,endMin\n' +
+      '3,Day off,0,,\n9001,09:00-13:00,240,540,780\n9003,09:00-17:00,480,540,1020\n');
+    const { report } = ops.validateState(s);
+    expect(messages(report.errors)).toEqual([]);
+    expect(messages(report.warnings)).toEqual([]);
+    expect(report.stats).toMatchObject({ rosterDays: 4, rosterDaysExpected: 28, rosterDaysLeft: 24, sidecarCodes: 3 });
+    expect(ops.resultCounts(s)).toEqual({ entries: 4, fixed: 4, expected: 28, open: 24 });
+  });
+
+  it('changes a day, keeps one entry of a duplicated day, and opens it again', () => {
+    let s = fix(sampleState(), ['EMP001', '2026-03-02', 9003]);
+    s = ops.setFixedDay(s, 'EMP001', '2026-03-02', 9001);
+    expect(s.result.entries.map(line)).toEqual(['EMP001 2026-03-02T00:00:00 9001']);
+
+    s = { ...s, result: { ...s.result, entries: [...s.result.entries, { ...s.result.entries[0], ScheduleCode: 3 }] } };
+    expect(messages(ops.validateState(s).report.errors)).toContain(
+      'OutRosterTeamDays[1]: EMP001 already has an entry for 2026-03-02');
+    expect(ops.fixedIndex(s).EMP001['2026-03-02'].ScheduleCode).toBe(9001);
+    s = ops.setFixedDay(s, 'EMP001', '2026-03-02', 9003);
+    expect(s.result.entries.map(line)).toEqual(['EMP001 2026-03-02T00:00:00 9003']);
+
+    s = ops.setFixedDay(s, 'EMP001', '2026-03-02', null);
+    expect(s.result.entries).toEqual([]);
+  });
+
+  it('holds each fixed day to its cell, in the validator\'s words', () => {
+    const s = fix(sampleState(), ['EMP002', '2026-03-04', 9003], ['EMP002', '2026-03-02', 9001]);
+    expect(messages(ops.validateState(s).report.errors)).toEqual([
+      "OutRosterTeamDays[0]: ScheduleCode 9001 for EMP002 on 2026-03-02 contradicts the cell '8': " +
+        'the shift is 240 min but the cell asks for 480',
+      "OutRosterTeamDays[1]: ScheduleCode 9003 for EMP002 on 2026-03-04 contradicts the cell 'VAC': " +
+        "the cell is 'VAC' (unavailable), but the day is worked"
+    ]);
+    const menu = ops.menuCatalogue(s);
+    const problem = buildBundle(s).problem;
+    expect(ops.analyseFixedDay(9001, { menu, cell: '8', problem, contractMinutes: 480 }).reason)
+      .toBe('the shift is 240 min but the cell asks for 480');
+    expect(ops.analyseFixedDay(3, { menu, cell: undefined, problem, contractMinutes: 480 }))
+      .toMatchObject({ reason: '', unknown: false });
+    expect(ops.analyseFixedDay(9003, { menu, cell: undefined, problem, contractMinutes: 480 }).reason)
+      .toBe('the cell is blank (no assignments), but the day is worked');
+    expect(ops.analyseFixedDay(7777, { menu, cell: 'A', problem, contractMinutes: 480 }).unknown).toBe(true);
+  });
+
+  it('follows renames and removals, and drops days outside the scope', () => {
+    let s = fix(sampleState(), ['EMP001', '2026-03-02', 9003], ['EMP002', '2026-03-03', 9003], ['EMP003', '2026-03-03', 9001]);
+    s = ops.renameEmployee(s, 'EMP001', 'E1');
+    s = ops.removeEmployee(s, 'EMP002');
+    s = ops.renameScheduleCode(s, 9003, 9100);
+    expect(s.result.entries.map(line)).toEqual(['E1 2026-03-02T00:00:00 9100', 'EMP003 2026-03-03T00:00:00 9001']);
+    expect(ops.fixedCodeUsage(s, 9100)).toBe(1);
+
+    s = { ...s, temporalScope: { start: '2026-03-03', end: '2026-03-08' } };
+    expect(ops.outsideScope(s).fixed).toBe(1);
+    expect(ops.pruneOutsideScope(s).result.entries.map(line)).toEqual(['EMP003 2026-03-03T00:00:00 9001']);
+  });
+});

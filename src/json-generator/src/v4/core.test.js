@@ -75,7 +75,7 @@ describe('time', () => {
 
   it('checks the grid', () => {
     expect(core.onGrid(480, 30)).toBe(true);
-    expect(core.onGrid(432, 30)).toBe(false);   // Cenario 1's NL_36
+    expect(core.onGrid(432, 30)).toBe(false);   // Scenario 1's NL_36 contract
     expect(core.onGrid(432, 24)).toBe(true);
   });
 });
@@ -141,8 +141,8 @@ describe('the cell grammar', () => {
   });
 
   it('accepts a non-ASCII day-off code', () => {
-    const problem = { scheduleInput: { dayOffCodes: { 'Fér': { kind: 'unavailable' } } } };
-    expect(core.classifyCell('Fér', problem).dayOff).toBe('unavailable');
+    const problem = { scheduleInput: { dayOffCodes: { 'Café': { kind: 'unavailable' } } } };
+    expect(core.classifyCell('Café', problem).dayOff).toBe('unavailable');
   });
 
   it('reads a blank cell as empty, not unconstrained', () => {
@@ -312,5 +312,61 @@ describe('feasibility', () => {
       "E1 on 2026-03-03: cell 'A' - asks for work on a day no contract covers",
       "E2 on 2026-03-02: cell 'A' - 432 min is not a multiple of the 30-minute grid"
     ]);
+  });
+});
+
+describe('fixed days', () => {
+  const REST = { code: 3, description: 'Day off', weightMinutes: 0, interval: null, isSentinel: true };
+  const NINE_TO_FIVE = { code: 9003, description: '09:00-17:00', weightMinutes: 480, interval: iv(540, 1020), isSentinel: false };
+  const NINE_TO_ONE = { code: 9001, description: '09:00-13:00', weightMinutes: 240, interval: iv(540, 780), isSentinel: false };
+  const rule = (cell) => core.classifyCell(cell, DAY_OFF);
+
+  it.each([
+    ['', NINE_TO_FIVE, 'the cell is blank'],
+    ['VAC', NINE_TO_FIVE, '(unavailable), but the day is worked'],
+    ['A', REST, 'the cell asks for work, but the day is a rest'],
+    ['A', NINE_TO_ONE, '240 min but the cell asks for 480'],
+    ['4', NINE_TO_FIVE, '480 min but the cell asks for 240'],
+    ['EQUALS:10:00-18:00', NINE_TO_FIVE, 'is not the 10:00-18:00'],
+    ['EQUALS:09:00-12:00,13:00-17:00', NINE_TO_FIVE, 'split shift'],
+    ['INCLUDE:08:00-10:00', NINE_TO_FIVE, 'does not cover 08:00-10:00'],
+    ['WITHIN:10:00-20:00', NINE_TO_FIVE, 'fits inside none of 10:00-20:00'],
+    ['EXCEPT:16:00-18:00', NINE_TO_FIVE, 'overlaps 16:00-18:00']
+  ])('a fixed shift contradicts the cell %j', (cell, schedule, needle) => {
+    expect(core.cellConflict(rule(cell), schedule, 480)).toContain(needle);
+  });
+
+  it.each([
+    ['', REST, 480],
+    ['VAC', REST, 480],
+    ['DO', REST, 480],
+    ['DO', NINE_TO_FIVE, 480],                          // a soft day off may be worked
+    ['A', NINE_TO_FIVE, 480],
+    ['4', NINE_TO_ONE, 480],                            // the cell's hours beat the contract
+    ['EQUALS:09:00-17:00', NINE_TO_FIVE, 240],          // the window is its own length
+    ['INCLUDE:10:00-12:00,15:00-16:00', NINE_TO_FIVE, 480],
+    ['WITHIN:13:00-14:00,08:00-18:00', NINE_TO_FIVE, 480],
+    ['EXCEPT:17:00-20:00', NINE_TO_FIVE, 480]           // touching is not overlapping
+  ])('a fixed shift honours the cell %j', (cell, schedule, contract) => {
+    expect(core.cellConflict(rule(cell), schedule, contract)).toBeNull();
+  });
+
+  it('judges a worked code with no definition only as work', () => {
+    expect(core.cellConflict(rule(''), null, 480)).toContain('blank');
+    expect(core.cellConflict(rule('EQUALS:10:00-18:00'), null, 480)).toBeNull();
+  });
+
+  it.each([['A', 480, 480], ['7,5', 480, 450], ['EQUALS:09:00-13:00', 480, 240], ['WITHIN:08:00-20:00', 300, 300]])(
+    'requiredMinutes(%j, %i) is %i', (cell, contract, expected) => {
+      expect(core.requiredMinutes(rule(cell), contract)).toBe(expected);
+    }
+  );
+
+  it('skips disabled entries and non-integers in the labour law', () => {
+    const problem = { constraints: { hard: [
+      { parameters: { MaxConsecutiveWorkDays: 5, Label: 'x' } },
+      { enabled: false, parameters: { MaxConsecutiveWorkDaysInWeek: 1 } }
+    ] } };
+    expect(core.legislationLimits(problem)).toEqual({ MaxConsecutiveWorkDays: 5 });
   });
 });

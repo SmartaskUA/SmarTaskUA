@@ -52,7 +52,7 @@ function GrainToolbar({ grain, rows, fileName, onImport, onClear, extra }) {
 /**
  * Step 6: Demand — three CSVs at three grains. Periods (headcount per window)
  * carries the data in every bundle seen so far; days (workload minutes) and
- * shifts (headcount per shift type) are header-only unless you fill them.
+ * shifts (headcount at the shifts grain) are header-only unless you fill them.
  */
 const Step6_Demand = () => {
   const { state, updateState, transform } = useWizard();
@@ -106,7 +106,7 @@ const Step6_Demand = () => {
         <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
           <Tab label={`Periods — headcount (${demand.periods.length})`} />
           <Tab label={`Days — workload minutes (${demand.days.length})`} />
-          <Tab label={`Shifts — headcount by type (${demand.shifts.length})`} />
+          <Tab label={`Shifts — headcount (${demand.shifts.length})`} />
         </Tabs>
 
         {tab === 0 && (
@@ -162,8 +162,8 @@ const Step6_Demand = () => {
                 </Alert>
               ) : (
                 <Alert severity="info" sx={{ mb: 2 }}>
-                  Headcount per shift type. <code>workPeriod</code> is SISQUAL&apos;s ShiftTypeCode (M/T/N per their
-                  docs, never seen in data — agenda item 3), not a named work period. Every SISQUAL bundle ships it header-only.
+                  Headcount per window at SISQUAL&apos;s shifts grain. v4 defines no shift types, so the file&apos;s
+                  <code> workPeriod</code> column is written empty. Every SISQUAL bundle ships this file header-only.
                 </Alert>
               )}
               <GrainToolbar
@@ -229,7 +229,8 @@ const Step6_Demand = () => {
           minimum: formatNumber(r.minimum), workPeriod: r.workPeriod || ''
         }))}
         columns={[
-          { field: 'date', label: 'Date' }, ...(pending?.grain === 'shifts' ? [{ field: 'workPeriod', label: 'workPeriod' }] : []),
+          { field: 'date', label: 'Date' },
+          ...(pending?.rows.some((r) => r.workPeriod) ? [{ field: 'workPeriod', label: 'workPeriod' }] : []),
           { field: 'dim', label: 'Dimension' }, { field: 'window', label: 'Window' }, { field: 'minimum', label: 'minimum' }
         ]}
         onConfirm={() => { updateState(`demand.${pending.grain}`, pending.rows); setPending(null); }}

@@ -12,6 +12,7 @@ DEMAND_CSV = "periods_demand_template.csv"
 SCHEDULES_CSV = "schedules_template.csv"
 INPUT_CSV = "schedule_input_template.csv"
 PROBLEM = "problem_template.json"
+RESULT = "result_template.json"
 
 
 @pytest.fixture(scope="session")
@@ -33,15 +34,15 @@ def make_fixture(tmp_path):
     The templates are the control: they validate with no errors and no warnings,
     so anything a fixture reports is what the test broke.
 
-    That claim holds for `mutate_problem`, `schedule_rows` and `add_demand` --
-    each leaves the rest of the package intact. It does NOT hold for
+    That claim holds for `mutate_problem`, `mutate_result`, `schedule_rows` and
+    `add_demand` -- each leaves the rest of the package intact. It does NOT hold for
     `demand_rows` / `schedules_rows`, which replace a whole CSV: replacing the
     demand file collapses `open_days` from seven dates to one, which silently
     disables most of the structural pass. Prefer `add_demand` and reach for the
     wholesale replacement only when the header itself is under test.
     """
     def _make(mutate_problem=None, schedule_rows=None, demand_rows=None,
-              schedules_rows=None, add_demand=None):
+              schedules_rows=None, add_demand=None, mutate_result=None):
         for src in TEMPLATES.iterdir():
             if src.suffix in (".json", ".csv"):
                 shutil.copyfile(src, tmp_path / src.name)
@@ -51,6 +52,12 @@ def make_fixture(tmp_path):
             doc = load(problem_path)
             mutate_problem(doc)
             dump(problem_path, doc)
+
+        if mutate_result:
+            path = tmp_path / RESULT
+            doc = load(path)
+            mutate_result(doc)
+            dump(path, doc)
 
         if schedule_rows:
             path = tmp_path / INPUT_CSV

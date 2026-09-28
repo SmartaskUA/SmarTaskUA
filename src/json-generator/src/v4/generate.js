@@ -1,5 +1,6 @@
 /**
- * Wizard state -> a v4.0 input bundle: problem.json plus its CSVs.
+ * Wizard state -> a v4.0 bundle: problem.json plus its CSVs and, when days are
+ * fixed, result.json plus its `<stem>_schedules.csv` sidecar.
  *
  * The one producer the preview, the download and the validator all read, so
  * what is validated is exactly what is downloaded. CSVs are plain UTF-8 with LF
@@ -204,12 +205,62 @@ export function buildProblem(state) {
 }
 
 // --------------------------------------------------------------------------
+// result.json: the fixed days
+// --------------------------------------------------------------------------
+
+/** The entry fields in the order the examples write them; anything else follows. */
+const ENTRY_KEYS = ['RosterCode', 'TeamCode', 'EmployeeCode', 'Date', 'ScheduleCode',
+  'OutRosterTeamDayTasks', 'OutRosterTeamDayResponsibilities'];
+
+function byText(a, b) {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
+/**
+ * The fixed days as a result document, or null when none is written: no day is
+ * fixed, or the menu is off (a result's codes mean nothing without one).
+ *
+ * Entries follow the roster's order, then the date. Each carries the problem's
+ * rosterCode and a string EmployeeCode, dates are written at midnight, and
+ * fields the wizard does not edit (TeamCode, tasks, responsibilities, anything
+ * else an imported entry had) pass through.
+ */
+export function buildResult(state) {
+  const entries = state.result?.entries || [];
+  if (!state.schedules?.enabled || !entries.length) return null;
+  const order = new Map((state.employees?.list || []).map((e, i) => [e.id, i]));
+  const roster = state.metadata?.rosterCode;
+  const rows = entries.map((entry, i) => {
+    const eid = entry.EmployeeCode === null || entry.EmployeeCode === undefined ? entry.EmployeeCode : String(entry.EmployeeCode);
+    const day = core.iso(entry.Date ?? '');
+    const fields = { ...entry, EmployeeCode: eid, Date: day ? `${day}T00:00:00` : entry.Date };
+    if (roster) fields.RosterCode = roster;
+    const out = {};
+    for (const k of ENTRY_KEYS) if (k in fields) out[k] = fields[k];
+    for (const [k, v] of Object.entries(fields)) if (!ENTRY_KEYS.includes(k)) out[k] = v;
+    return { out, rank: order.get(eid) ?? order.size, day: day || String(entry.Date ?? ''), i };
+  });
+  rows.sort((a, b) => a.rank - b.rank || byText(a.day, b.day) || a.i - b.i);
+  return { OutRosterTeamDays: rows.map((r) => r.out), ...(state.result.extra || {}) };
+}
+
+/** The sidecar: the menu rows for the codes `result` uses, by code - the used set, not the menu. */
+export function resultSidecarCsv(state, result) {
+  const used = new Set((result?.OutRosterTeamDays || []).map((e) => e.ScheduleCode));
+  const rows = (state.schedules?.rows || [])
+    .filter((r) => used.has(Number(r.code)))
+    .sort((a, b) => Number(a.code) - Number(b.code));
+  return schedulesCsv(rows);
+}
+
+// --------------------------------------------------------------------------
 // the bundle
 // --------------------------------------------------------------------------
 
 /**
- * { problem, problemName, files } — `files` maps every CSV name the problem
- * points at to its text.
+ * { problem, problemName, files, result, resultName } — `files` maps every CSV
+ * name the problem points at to its text, plus the result's sidecar when there
+ * is a result. `result` is null when no day is fixed.
  */
 export function buildBundle(state) {
   const names = { ...FILES, ...(state.files || {}) };
@@ -222,13 +273,20 @@ export function buildBundle(state) {
     [names.scheduleInput]: scheduleInputCsv(state.employees?.list || [], state.scheduleInput?.dataMatrix, dates)
   };
   if (state.schedules?.enabled) files[names.schedules] = schedulesCsv(state.schedules.rows || []);
-  return { problem, problemName: names.problem, files };
+  const result = buildResult(state);
+  if (result) files[core.sidecarName(names.result)] = resultSidecarCsv(state, result);
+  return { problem, problemName: names.problem, files, result, resultName: names.result };
 }
 
-/** [[fileName, text]] for every file in the bundle, problem first — what the ZIP holds. */
+export function jsonText(doc) {
+  return `${JSON.stringify(doc, null, 2)}\n`;
+}
+
+/** [[fileName, text]] for every file in the bundle, problem first, then the result — what the ZIP holds. */
 export function bundleEntries(bundle) {
   return [
-    [bundle.problemName, `${JSON.stringify(bundle.problem, null, 2)}\n`],
+    [bundle.problemName, jsonText(bundle.problem)],
+    ...(bundle.result ? [[bundle.resultName, jsonText(bundle.result)]] : []),
     ...Object.entries(bundle.files)
   ];
 }

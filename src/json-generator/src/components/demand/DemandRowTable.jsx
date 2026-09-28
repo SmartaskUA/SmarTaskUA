@@ -27,6 +27,10 @@ const DemandRowTable = ({
   const [dateFilter, setDateFilter] = useState('');
   const [dimFilter, setDimFilter] = useState('');
 
+  // v4 defines no shift types, so the wizard writes workPeriod empty. The column
+  // appears, read-only, only when an imported bundle carried values in it.
+  const showWorkPeriod = grain === 'shifts' && rows.some((r) => r.workPeriod);
+
   const flagged = useMemo(() => {
     const out = new Set();
     for (const { a, b } of overlappingRows(rows)) { out.add(a.id); out.add(b.id); }
@@ -50,7 +54,7 @@ const DemandRowTable = ({
       ideal: 0,
       estimated: 0,
       ...(info.windowed && { start: last?.end || '09:00', end: '' }),
-      ...(grain === 'shifts' && { workPeriod: last?.workPeriod || 'M' })
+      ...(grain === 'shifts' && { workPeriod: '' })
     };
   };
 
@@ -79,7 +83,7 @@ const DemandRowTable = ({
           <TableHead>
             <TableRow>
               {!fixedDate && <TableCell>Date</TableCell>}
-              {grain === 'shifts' && <TableCell>workPeriod</TableCell>}
+              {showWorkPeriod && <TableCell>workPeriod (imported)</TableCell>}
               <TableCell>Dimension</TableCell>
               {info.windowed && <TableCell>Window</TableCell>}
               <TableCell align="right">minimum{grain === 'days' ? ' (min)' : ''}</TableCell>
@@ -94,7 +98,7 @@ const DemandRowTable = ({
               return (
                 <TableRow key={r.id} hover>
                   {!fixedDate && <TableCell sx={{ whiteSpace: 'nowrap' }}>{r.date}</TableCell>}
-                  {grain === 'shifts' && <TableCell>{r.workPeriod}</TableCell>}
+                  {showWorkPeriod && <TableCell>{r.workPeriod}</TableCell>}
                   <TableCell>
                     <Chip size="small" label={pairLabel(r.tableName, r.tableValue)} sx={{ bgcolor: getTeamColor(pairLabel(r.tableName, r.tableValue)), color: '#fff' }} />
                   </TableCell>

@@ -1,13 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, FormGroup, FormControlLabel, Checkbox,
-  Typography, Alert, Autocomplete, TextField
+  Typography, Alert
 } from '@mui/material';
 import { DateField, NumberField, TimeField } from '../shared/fields';
 import { GRAIN_INFO, ORDERING_NOTE } from './DemandRowDialog';
 import { dateRange, pairKey, tryParseRange, weekdayName } from '../../v4/core';
 import { newId, pairLabel } from '../../v4/state';
-import { SHIFT_TYPE_SUGGESTIONS, WEEKDAYS } from '../../v4/constants';
+import { WEEKDAYS } from '../../v4/constants';
 
 /**
  * One row per (date, dimension) across a date range and a set of weekdays —
@@ -21,7 +21,7 @@ const BulkAddRowsDialog = ({ open, grain, dimensions, slotMinutes, dateMin, date
     if (open) {
       setForm({
         from: dateMin || '', to: dateMax || '', weekdays: [...WEEKDAYS], dims: [],
-        workPeriod: 'M', start: '09:00', end: '17:00',
+        start: '09:00', end: '17:00',
         minimum: grain === 'days' ? 480 : 1, ideal: 0, estimated: 0
       });
     }
@@ -42,7 +42,7 @@ const BulkAddRowsDialog = ({ open, grain, dimensions, slotMinutes, dateMin, date
           id: newId(grain), date, tableName: d.tableName, tableValue: d.tableValue,
           minimum: Number(form.minimum) || 0, ideal: Number(form.ideal) || 0, estimated: Number(form.estimated) || 0,
           ...(info.windowed && { start: form.start, end: form.end }),
-          ...(grain === 'shifts' && { workPeriod: form.workPeriod })
+          ...(grain === 'shifts' && { workPeriod: '' })
         });
       }
     }
@@ -86,14 +86,6 @@ const BulkAddRowsDialog = ({ open, grain, dimensions, slotMinutes, dateMin, date
               })}
             </FormGroup>
           </Grid>
-          {grain === 'shifts' && (
-            <Grid size={12}>
-              <Autocomplete freeSolo options={SHIFT_TYPE_SUGGESTIONS} value={form.workPeriod} inputValue={form.workPeriod}
-                onInputChange={(_, v) => set({ workPeriod: v })}
-                renderInput={(params) => <TextField {...params} size="small" label="workPeriod (shift type)" />}
-              />
-            </Grid>
-          )}
           {info.windowed && (
             <>
               <Grid size={6}><TimeField fullWidth label="Start" value={form.start} slotMinutes={slotMinutes} onChange={(v) => set({ start: v })} /></Grid>

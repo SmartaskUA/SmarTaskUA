@@ -10,7 +10,7 @@ import { useWizard } from '../context/WizardContext';
  * optional. v4.0 is the problem definition only: solver settings are not part
  * of it (FUTURE.md §6).
  */
-const Step8_Rules = () => {
+const Step9_Rules = () => {
   const { state, updateState } = useWizard();
   return (
     <StepLayout
@@ -36,4 +36,4 @@ const Step8_Rules = () => {
   );
 };
 
-export default Step8_Rules;
+export default Step9_Rules;

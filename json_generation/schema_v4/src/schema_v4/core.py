@@ -273,6 +273,22 @@ def day_off_sets(section: dict) -> tuple[set[str], set[str]]:
     return preferable, unavailable
 
 
+def legislation_limits(problem: dict) -> dict[str, int]:
+    """Flatten the enabled hard constraints' parameters into one lookup.
+
+    Here rather than in either checker because both read it: the input form
+    against the days a cell forces, the result form against the days it fixes.
+    """
+    out: dict[str, int] = {}
+    for entry in problem.get("constraints", {}).get("hard", []):
+        if entry.get("enabled") is False:
+            continue
+        for k, v in (entry.get("parameters") or {}).items():
+            if isinstance(v, int):
+                out[k] = v
+    return out
+
+
 # --------------------------------------------------------------------------
 # CSV reading
 #
@@ -512,6 +528,71 @@ def classify_cell(raw: str, problem: dict) -> CellRule:
         f"cell {text!r} is not a number, not an {'/'.join(OPERATORS)} window, and is not "
         f"declared in scheduleInput.dayOffCodes"
     )
+
+
+# --------------------------------------------------------------------------
+# fixed days
+#
+# A result's entries are fixed: whatever it names for an employee-day stands,
+# and the solver fills only the days it leaves out. So each entry is the cell
+# read as a hard rule against a decision already taken.
+# --------------------------------------------------------------------------
+
+def required_minutes(rule: CellRule, contract_minutes: int | None) -> int | None:
+    """How long a shift the cell asks for, or None when nothing says.
+
+    A numeric cell overrides the contract and an EQUALS window is its own length;
+    every other working cell works the contract's day.
+    """
+    if rule.kind == "exact_hours":
+        return rule.minutes
+    if rule.kind == "equals" and len(rule.windows) == 1:
+        return rule.windows[0].length
+    return contract_minutes
+
+
+def cell_conflict(rule: CellRule, schedule: Schedule | None,
+                  contract_minutes: int | None) -> str | None:
+    """Why a fixed shift cannot stand on the day its cell describes, or None.
+
+    `schedule` is the shift's definition, or None for a worked code whose
+    definition is out of reach - then only work-versus-rest can be judged. A
+    preferable day off is the one soft cell: working it is allowed.
+    """
+    worked = schedule is None or not schedule.is_sentinel
+    if rule.kind == "empty":
+        return "the cell is blank (no assignments), but the day is worked" if worked else None
+    if rule.kind == "dayoff":
+        if worked and rule.day_off == "unavailable":
+            return f"the cell is {rule.code!r} (unavailable), but the day is worked"
+        return None
+    if not worked:
+        return "the cell asks for work, but the day is a rest"
+    if schedule is None:
+        return None
+
+    iv = schedule.interval
+    if rule.kind == "equals" and len(rule.windows) > 1:
+        return "the cell asks for a split shift, which no single ScheduleCode can express"
+    if iv is not None:
+        if rule.kind == "equals" and iv != rule.windows[0]:
+            return f"the shift {iv} is not the {rule.windows[0]} the cell asks for"
+        if rule.kind == "include":
+            missing = next((w for w in rule.windows if not iv.contains(w)), None)
+            if missing is not None:
+                return f"the shift {iv} does not cover {missing}"
+        if rule.kind == "within" and not any(w.contains(iv) for w in rule.windows):
+            return (f"the shift {iv} fits inside none of "
+                    f"{', '.join(str(w) for w in rule.windows)}")
+        if rule.kind == "except":
+            hit = next((w for w in rule.windows if iv.overlaps(w)), None)
+            if hit is not None:
+                return f"the shift {iv} overlaps {hit}, when the worker is unavailable"
+
+    wanted = required_minutes(rule, contract_minutes)
+    if wanted is not None and schedule.weight_minutes != wanted:
+        return f"the shift is {schedule.weight_minutes} min but the cell asks for {wanted}"
+    return None
 
 
 # --------------------------------------------------------------------------

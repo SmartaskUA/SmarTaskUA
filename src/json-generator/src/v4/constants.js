@@ -41,23 +41,27 @@ export const DEFAULT_DAY_OFF_CODES = {
 
 export const DAY_OFF_KINDS = ['preferable', 'unavailable'];
 
-/** Rest codes that keep the numbers WFM uses on import. */
+/** Rest codes that keep the numbers WFM uses on import. Descriptions are ours, in English. */
 export const REST_SENTINELS = [
-  { code: 1, description: 'Espaço' },
+  { code: 1, description: 'Space' },
   { code: 3, description: 'Day off' },
-  { code: 4, description: 'Vazio' }
+  { code: 4, description: 'Empty' }
 ];
 export const FIRST_MENU_CODE = 9001;
 
-/** File names inside a generated bundle, matching examples/cenario2_retail. */
+/** File names inside a generated bundle, matching the example package examples/cenario2_retail. */
 export const FILES = {
   problem: 'problem.json',
   days: 'days_demand.csv',
   periods: 'periods_demand.csv',
   shifts: 'shifts_demand.csv',
   scheduleInput: 'schedule_input.csv',
-  schedules: 'schedules.csv'
+  schedules: 'schedules.csv',
+  result: 'result.json'
 };
+
+/** The TeamCode a new fixed day carries — the value in every SISQUAL sample. */
+export const DEFAULT_TEAM_CODE = '1';
 
 /** The three demand grains, in the order the validator reads them. */
 export const GRAINS = [
@@ -80,11 +84,8 @@ export const GENERATION_SEQUENCE_SUGGESTIONS = ['BY_LEVEL', 'BY_ALARM_TABLE'];
 export const LEGISLATION_KEYS = [
   { key: 'MaxConsecutiveWorkDays', label: 'Max consecutive work days', enforced: true },
   { key: 'MaxConsecutiveWorkDaysInWeek', label: 'Max work days in a week', enforced: true },
-  { key: 'MinDistanceBetweenShiftsInMinutes', label: 'Min rest between shifts (minutes)', enforced: false }
+  { key: 'MinDistanceBetweenShiftsInMinutes', label: 'Min rest between shifts (minutes)', enforced: 'fixed days' }
 ];
 export const DEFAULT_CONSTRAINT_TYPE = 'RosterLegislation';
-
-/** SISQUAL's ShiftTypeCode vocabulary, per JSON-Export.docx — unconfirmed (agenda item 3). */
-export const SHIFT_TYPE_SUGGESTIONS = ['M', 'T', 'N'];
 
 export const DIMENSION_NAME_SUGGESTIONS = ['Team', 'Responsibility'];

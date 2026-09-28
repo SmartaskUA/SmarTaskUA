@@ -212,7 +212,7 @@
       "alarmLevelPercentage": 100
     }
   ],
-  "_comment_constraints": "Rules above the contract level -- SISQUAL's labour law. parameters is a deliberately open vendor bag; the validator acts on MaxConsecutiveWorkDays and MaxConsecutiveWorkDaysInWeek and carries the rest.",
+  "_comment_constraints": "Rules above the contract level -- SISQUAL's labour law. parameters is a deliberately open vendor bag; the validator acts on MaxConsecutiveWorkDays and MaxConsecutiveWorkDaysInWeek, and on MinDistanceBetweenShiftsInMinutes across a result's fixed days, and carries the rest.",
   "constraints": {
     "hard": [
       {

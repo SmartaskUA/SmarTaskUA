@@ -8,7 +8,7 @@ import { WIZARD_STEPS, stepIndex } from '../../constants/wizardSteps';
 const STAT_LABELS = {
   days: 'days', openDays: 'open days', contracts: 'contracts', employees: 'employees', dimensions: 'dimensions',
   'demandRows.periods': 'periods rows', 'demandRows.days': 'days rows', 'demandRows.shifts': 'shifts rows',
-  schedules: 'menu codes', priorityRanks: 'priority ranks'
+  schedules: 'menu codes', priorityRanks: 'priority ranks', rosterDays: 'fixed days', rosterDaysLeft: 'employee-days left open'
 };
 
 function StepGroup({ step, errors, warnings, onJump }) {

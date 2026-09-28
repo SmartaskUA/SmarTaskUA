@@ -131,7 +131,7 @@ const Step2_Contracts = () => {
               label="Name (optional)"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              helperText="SISQUAL's names state WEEKLY hours ('[PT] 40h Semanais'). Never derive the daily minutes from them."
+              helperText="SISQUAL's contract names state WEEKLY hours (e.g. '40h'). Never derive the daily minutes from them."
             />
             <TextField
               type="number"

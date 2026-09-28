@@ -15,7 +15,7 @@ import { bundleEntries } from '../v4/generate';
  * Step 9: Review — validate the generated bundle and download it. The ZIP is
  * flat, so an unzipped copy validates as a package with `make validate DIR=…`.
  */
-const Step9_Review = () => {
+const Step10_Review = () => {
   const { state, validation, findings, goToStep } = useWizard();
   const { bundle, report } = validation;
   const [zipping, setZipping] = useState(false);
@@ -57,4 +57,4 @@ const Step9_Review = () => {
   );
 };
 
-export default Step9_Review;
+export default Step10_Review;

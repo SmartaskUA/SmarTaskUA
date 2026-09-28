@@ -93,8 +93,8 @@ const Step3_Dimensions = () => {
       <StepCard>
         <Alert severity="info" sx={{ mb: 2 }}>
           Every pair used by an employee, a demand row or a priority rank must be declared here.
-          SISQUAL&apos;s export names the axes <code>Equipa</code>/<code>Piso</code> on employees but
-          <code> Team</code>/<code>Responsibility</code> elsewhere — v4 uses the English names throughout (agenda item 11).
+          SISQUAL&apos;s export names the axes differently on employees than elsewhere; v4 uses one name per axis
+          throughout, e.g. <code>Team</code> and <code>Responsibility</code> (agenda item 11).
         </Alert>
         {!dims.length ? (
           <Alert severity="warning">No dimensions declared. At least one is required.</Alert>

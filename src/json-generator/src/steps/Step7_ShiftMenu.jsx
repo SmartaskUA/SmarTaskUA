@@ -10,7 +10,7 @@ import { NumberField, TimeField } from '../components/shared/fields';
 import { useWizard } from '../context/WizardContext';
 import { REST_SENTINELS } from '../v4/constants';
 import { hhmmToMin, minToHhmm, onGrid, tryParseRange } from '../v4/core';
-import { demandEnvelope, generateMenuRows, menuRow, nextMenuCode } from '../v4/operations';
+import { demandEnvelope, generateMenuRows, menuRow, nextMenuCode, renameScheduleCode } from '../v4/operations';
 
 const SENTINEL_CODES = new Set(REST_SENTINELS.map((s) => s.code));
 const isRest = (r) => (r.startMin === null || r.startMin === undefined) && !Number(r.scheduleWeightMinutes);
@@ -22,7 +22,7 @@ const locked = (r) => SENTINEL_CODES.has(Number(r.code)) && isRest(r);
  * translation, and the codes are ours to mint.
  */
 const Step7_ShiftMenu = () => {
-  const { state, updateState } = useWizard();
+  const { state, updateState, transform } = useWizard();
   const { schedules, timeGrid, contracts } = state;
   const slot = timeGrid.slotMinutes;
   const rows = schedules.rows;
@@ -37,6 +37,8 @@ const Step7_ShiftMenu = () => {
   const missingLengths = lengths.filter((m) => !worked.some((r) => Number(r.scheduleWeightMinutes) === m));
   const codeCounts = rows.reduce((m, r) => m.set(Number(r.code), (m.get(Number(r.code)) || 0) + 1), new Map());
   const hasSentinels = REST_SENTINELS.every((s) => rows.some((r) => Number(r.code) === s.code));
+  const fixedUsage = useMemo(() => state.result.entries.reduce((m, e) => m.set(e.ScheduleCode, (m.get(e.ScheduleCode) || 0) + 1), new Map()),
+    [state.result.entries]);
 
   const setRows = (next) => updateState('schedules.rows', next);
 
@@ -64,7 +66,15 @@ const Step7_ShiftMenu = () => {
       if (!w) return setError('A start and an end are required');
       row = menuRow(code, w[0], w[1]);
     }
-    setRows(editing.index < 0 ? [...rows, row] : rows.map((r, i) => (i === editing.index ? row : r)));
+    if (editing.index < 0) {
+      setRows([...rows, row]);
+    } else {
+      // A changed code carries the fixed days that use it.
+      const from = Number(rows[editing.index].code);
+      transform((s) => renameScheduleCode({
+        ...s, schedules: { ...s.schedules, rows: s.schedules.rows.map((r, i) => (i === editing.index ? row : r)) }
+      }, from, code));
+    }
     setEditing(null);
     return null;
   };
@@ -118,7 +128,7 @@ const Step7_ShiftMenu = () => {
             )}
           </Box>
           <Alert severity="info" sx={{ mb: 2 }}>
-            Codes 1 (Espaço), 3 (Day off) and 4 (Vazio) keep WFM&apos;s rest semantics; every other number is ours and
+            Codes 1 (Space), 3 (Day off) and 4 (Empty) keep WFM&apos;s rest semantics; every other number is ours and
             arbitrary. A row with no window and zero weight is a rest code. v4 has no break model, so a shift&apos;s paid
             length is its clock length (FUTURE.md §2). Whether WFM accepts codes it does not already hold is agenda item 5.
           </Alert>
@@ -148,6 +158,11 @@ const Step7_ShiftMenu = () => {
                       <TableCell sx={{ fontWeight: 600 }}>
                         {r.code}
                         {codeCounts.get(Number(r.code)) > 1 && <Chip size="small" color="error" label="duplicate" sx={{ ml: 1 }} />}
+                        {fixedUsage.get(Number(r.code)) > 0 && (
+                          <Tooltip title="Fixed days using this code. Changing the code carries them; the row cannot be deleted while they use it.">
+                            <Chip size="small" variant="outlined" label={`${fixedUsage.get(Number(r.code))} fixed`} sx={{ ml: 1 }} />
+                          </Tooltip>
+                        )}
                       </TableCell>
                       <TableCell>{r.description}</TableCell>
                       <TableCell align="right">{r.scheduleWeightMinutes}</TableCell>
@@ -165,7 +180,18 @@ const Step7_ShiftMenu = () => {
                         ) : (
                           <>
                             <IconButton size="small" onClick={() => openEditor(r, i)}><Edit fontSize="small" /></IconButton>
-                            <IconButton size="small" color="error" onClick={() => setRows(rows.filter((_, j) => j !== i))}><Delete fontSize="small" /></IconButton>
+                            {fixedUsage.get(Number(r.code)) > 0 ? (
+                              // A code fixed days use stays defined: remove those days first.
+                              <Tooltip title={`Used by ${fixedUsage.get(Number(r.code))} fixed day(s): change or open them in Fixed days before deleting this row`}>
+                                <span>
+                                  <IconButton size="small" color="error" disabled aria-label={`delete ${r.code}`}><Delete fontSize="small" /></IconButton>
+                                </span>
+                              </Tooltip>
+                            ) : (
+                              <IconButton size="small" color="error" aria-label={`delete ${r.code}`} onClick={() => setRows(rows.filter((_, j) => j !== i))}>
+                                <Delete fontSize="small" />
+                              </IconButton>
+                            )}
                           </>
                         )}
                       </TableCell>

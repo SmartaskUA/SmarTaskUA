@@ -1,16 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Alert, Grid, Autocomplete, Typography
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Alert, Grid, Typography
 } from '@mui/material';
 import { DateField, NumberField, TimeField } from '../shared/fields';
 import { pairKey, tryParseRange, onGrid } from '../../v4/core';
 import { pairLabel } from '../../v4/state';
-import { SHIFT_TYPE_SUGGESTIONS } from '../../v4/constants';
 import { overlappingRows } from '../../v4/operations';
 
 export const GRAIN_INFO = {
   periods: { title: 'Periods', unit: 'workers', windowed: true, help: 'Headcount wanted in a window.' },
-  shifts: { title: 'Shifts', unit: 'workers', windowed: true, help: 'Headcount wanted per shift type.' },
+  shifts: { title: 'Shifts', unit: 'workers', windowed: true, help: 'Headcount wanted per window, at the shifts grain.' },
   days: { title: 'Days', unit: 'minutes of work', windowed: false, help: 'Whole-day WORKLOAD in minutes — not headcount.' }
 };
 
@@ -51,9 +50,11 @@ const DemandRowDialog = ({
     if (info.windowed) {
       if (!tryParseRange(form.start, form.end)) return setError(`A start and end (HH:MM) are mandatory on the ${grain} grain`);
     }
-    if (grain === 'shifts' && !form.workPeriod) return setError('The shift type (workPeriod) is required');
     onSave({
       ...form,
+      // v4 defines no shift types: the workPeriod column is written empty
+      // unless an imported row already carried a value.
+      ...(grain === 'shifts' && { workPeriod: form.workPeriod || '' }),
       minimum: Number(form.minimum),
       ideal: form.ideal === '' ? 0 : Number(form.ideal),
       estimated: form.estimated === '' ? 0 : Number(form.estimated)
@@ -73,19 +74,7 @@ const DemandRowDialog = ({
           <Grid size={6}>
             <DateField fullWidth label="Date" value={form.date} min={dateMin} max={dateMax} disabled={!!fixedDate} onChange={(v) => set({ date: v })} />
           </Grid>
-          {grain === 'shifts' && (
-            <Grid size={6}>
-              <Autocomplete
-                freeSolo
-                options={SHIFT_TYPE_SUGGESTIONS}
-                value={form.workPeriod || ''}
-                inputValue={form.workPeriod || ''}
-                onInputChange={(_, v) => set({ workPeriod: v })}
-                renderInput={(params) => <TextField {...params} size="small" label="workPeriod (shift type)" helperText="SISQUAL's ShiftTypeCode M/T/N — unconfirmed" />}
-              />
-            </Grid>
-          )}
-          <Grid size={grain === 'shifts' ? 12 : 6}>
+          <Grid size={6}>
             <TextField
               select size="small" fullWidth label="Dimension" value={dimKey}
               onChange={(e) => {

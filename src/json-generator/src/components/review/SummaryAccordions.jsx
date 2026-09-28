@@ -33,6 +33,14 @@ function summary(id, s) {
       return <Typography variant="body2">{s.demand.periods.length} periods, {s.demand.days.length} days, {s.demand.shifts.length} shifts row(s)</Typography>;
     case 'schedules':
       return <Typography variant="body2">{s.schedules.enabled ? `${s.schedules.rows.length} menu row(s)` : 'No menu (schedules omitted)'}</Typography>;
+    case 'fixedDays': {
+      const n = s.result.entries.length;
+      return (
+        <Typography variant="body2">
+          {n ? `${n} fixed day(s), written to ${s.files.result}${s.schedules.enabled ? '' : ' once the menu is on'}` : 'No fixed days: no result is written, and the solver decides every day'}
+        </Typography>
+      );
+    }
     case 'rules':
       return <Typography variant="body2">{s.priorityHierarchy.length} priority rank(s), {s.constraints.hard.length} labour-law rule set(s)</Typography>;
     default:

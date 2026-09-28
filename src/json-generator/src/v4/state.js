@@ -2,12 +2,13 @@
  * The wizard's state, shaped like the v4.0 document it produces so the
  * generator is a near-projection. UI-only fields: `id` on demand rows and
  * template blocks, `demand.weeklyTemplate`, `scheduleInput.dataMatrix` (becomes
- * schedule_input.csv), `schedules.enabled/rows` (become schedules.csv) and
- * `files` (the bundle's file names, kept so an imported bundle round-trips).
+ * schedule_input.csv), `schedules.enabled/rows` (become schedules.csv),
+ * `result` (the fixed days; becomes result.json and its sidecar) and `files`
+ * (the bundle's file names, kept so an imported bundle round-trips).
  */
 
 import {
-  DEFAULT_DAY_OFF_CODES, DEFAULT_SLOT_MINUTES, FILES, REST_SENTINELS, WEEKDAYS
+  DEFAULT_DAY_OFF_CODES, DEFAULT_SLOT_MINUTES, DEFAULT_TEAM_CODE, FILES, REST_SENTINELS, WEEKDAYS
 } from './constants';
 
 export const STATE_VERSION = 4;
@@ -74,6 +75,10 @@ export function createInitialState() {
     priorityHierarchy: [],
     constraints: { hard: [], soft: [] },
 
+    // Fixed days: OutRosterTeamDays entries, as imported or authored. A day with
+    // no entry is open for the solver.
+    result: { teamCode: DEFAULT_TEAM_CODE, entries: [] },
+
     files: { ...FILES }
   };
 }
@@ -83,7 +88,7 @@ export function withDefaults(partial) {
   const base = createInitialState();
   const out = { ...base, ...partial };
   for (const key of ['metadata', 'timeGrid', 'temporalScope', 'calendar', 'contracts', 'employees',
-    'demand', 'scheduleInput', 'schedules', 'constraints', 'files']) {
+    'demand', 'scheduleInput', 'schedules', 'constraints', 'result', 'files']) {
     out[key] = { ...base[key], ...(partial?.[key] || {}) };
   }
   out.demand.weeklyTemplate = { ...emptyWeeklyTemplate(), ...(partial?.demand?.weeklyTemplate || {}) };

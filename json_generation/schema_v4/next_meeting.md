@@ -203,3 +203,7 @@ code,description,scheduleWeightMinutes,startMin,endMin
 This is **our convention, not part of your format**. We added it because a result names numeric codes and carries no definition of them, so it cannot be read or checked on its own. We kept it *beside* the file rather than inside it precisely so that `OutRosterTeamDays` stays exactly as `JSON-Import.docx` specifies.
 
 Does WFM want it, or would you rather we populate `OutScheduleUseds` in the JSON?
+
+**28. A result may be partial, and the days it carries are fixed.** A package may carry a result that decides only some employee-days — the first week, say, or the days a manager has already settled. The entries present are **fixed**, and a day with no entry is **open** for the solver. Nothing marks the result as partial: it stays `OutRosterTeamDays` exactly as `JSON-Import.docx` specifies, and a complete result is simply one with nothing left. Each fixed day is validated as a hard rule against its `schedule_input.csv` cell and against `constraints.hard[]` — see [FORMAT.md](docs/FORMAT.md), *Partial results*, and `examples/cenario2_partial/`.
+
+Three questions. **Does WFM ever need to hand us a roster with some days already decided** — manual assignments, or a previous run to complete? If so, **would it arrive as `OutRosterTeamDays`**, the shape we send back, or as something else? And **on import, what does WFM do with an employee-day our result leaves out** — keep what it already holds, or clear it?

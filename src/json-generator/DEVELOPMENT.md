@@ -238,10 +238,11 @@ The wizard targets schema v4.0 only (`json_generation/schema_v4/`). All schema l
 - **Grains.** `days_demand.csv` and `periods_demand.csv` share a header but not a unit — always
   pass the grain to `core.readDemand`, never sniff it.
 - **Day-off codes.** There are no implicit codes; every one must be declared with its kind.
-- **Parity.** `src/v4/validate.js` mirrors the Python validator message for message. When the
-  Python side changes, update the port and `src/v4/parity.test.js` together.
-- **The vendored schema.** `schema_v4/schema-v4-input.json` must stay byte-identical to
-  `json_generation/schema_v4/schemas/schema-v4-input.json`; copy it over, never edit it.
+- **Parity.** `src/v4/validate.js` and `src/v4/validateResult.js` mirror the Python validator
+  message for message. When the Python side changes, update the port and `src/v4/parity.test.js`
+  together.
+- **The vendored schemas.** `schema_v4/schema-v4-input.json` and `schema-v4-result.json` must stay
+  byte-identical to `json_generation/schema_v4/schemas/`; copy them over, never edit them.
 
 Verify a change end to end:
 
@@ -252,8 +253,9 @@ npx vite-node scripts/validate-with-python.mjs   # needs python3; runs the canon
 
 ## Status
 
-v4.0 migration complete: nine steps, a client-side ZIP (`problem.json` + three demand CSVs +
-`schedule_input.csv` + optional `schedules.csv`), and import of existing v4 bundles. v2.x
+v4.0 migration complete: ten steps, a client-side ZIP (`problem.json` + three demand CSVs +
+`schedule_input.csv` + optional `schedules.csv`, plus `result.json` and its sidecar when days are
+fixed), and import of existing v4 packages, a partial or complete result included. v2.x
 projects and localStorage saves are deprecated and are discarded on load. There is no backend
 submission yet, and the solvers still read v2.2/v2.6 — they need migrating before they can
 consume this output.

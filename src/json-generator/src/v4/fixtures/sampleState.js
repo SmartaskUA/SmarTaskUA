@@ -5,7 +5,7 @@
  */
 
 import { createInitialState } from '../state';
-import { applyTemplate, fillMatrix, generateMenuRows } from '../operations';
+import { applyTemplate, fillMatrix, generateMenuRows, setFixedDay } from '../operations';
 
 const block = (id, tableName, tableValue, start, end, minimum) =>
   ({ id, tableName, tableValue, start, end, minimum, ideal: 0, estimated: 0 });
@@ -76,4 +76,14 @@ export function sampleState() {
     soft: []
   };
   return s;
+}
+
+/** The sample with its first two days fixed, the way the Fixed days grid fixes them: a partial result. */
+export function sampleStateWithFixedDays() {
+  return [
+    ['EMP001', '2026-03-02', 9003], ['EMP001', '2026-03-03', 9003],
+    ['EMP002', '2026-03-02', 9003], ['EMP002', '2026-03-03', 9003],
+    ['EMP003', '2026-03-02', 9001], ['EMP003', '2026-03-03', 9002],
+    ['EMP004', '2026-03-02', 9002], ['EMP004', '2026-03-03', 9001]
+  ].reduce((s, [eid, date, code]) => setFixedDay(s, eid, date, code), sampleState());
 }

@@ -1,24 +1,33 @@
 /**
  * Pure state transforms the wizard steps share: cascading renames and
- * deletions, applying the weekly template, generating the shift menu, and the
- * derived views (open days, weekly load) the UI shows. Each takes a state and
+ * deletions, applying the weekly template, generating the shift menu, fixing
+ * days, and the derived views (open days, weekly load) the UI shows. Each takes a state and
  * returns a new one; nothing here touches React.
  */
 
 import * as core from './core';
-import { FIRST_MENU_CODE, WEEKDAYS } from './constants';
-import { buildBundle } from './generate';
+import { DEFAULT_TEAM_CODE, FIRST_MENU_CODE, WEEKDAYS } from './constants';
+import { buildBundle, canonicalCell, schedulesCsv } from './generate';
 import { validateBundle, legislationLimits } from './validate';
+import { mergeReports, validateResult } from './validateResult';
 import { newId } from './state';
 
 // --------------------------------------------------------------------------
 // validation of the whole state, the one source every step reads
 // --------------------------------------------------------------------------
 
+/**
+ * The generated bundle and its verdict: the problem's findings, then the
+ * result's when days are fixed. `stats` is the problem's, with the result's
+ * counts added.
+ */
 export function validateState(state) {
   const bundle = buildBundle(state);
   const report = validateBundle(bundle.problem, bundle.files);
-  return { bundle, report };
+  const result = bundle.result && validateResult(bundle.result, {
+    problem: bundle.problem, files: bundle.files, resultName: bundle.resultName, problemName: bundle.problemName
+  });
+  return { bundle, report: mergeReports(report, result) };
 }
 
 export function findingsFor(report, stepId) {
@@ -120,13 +129,14 @@ export function renameContract(state, from, to) {
   };
 }
 
-/** Rename an employee, carrying their schedule_input row with them. */
+/** Rename an employee, carrying their schedule_input row and fixed days with them. */
 export function renameEmployee(state, from, to) {
   if (from === to) return state;
   const { [from]: row, ...rest } = state.scheduleInput.dataMatrix || {};
   return {
     ...state,
-    scheduleInput: { ...state.scheduleInput, dataMatrix: row ? { ...rest, [to]: row } : rest }
+    scheduleInput: { ...state.scheduleInput, dataMatrix: row ? { ...rest, [to]: row } : rest },
+    ...withEntries(state, (entries) => entries.map((e) => (entryEmployee(e) === from ? { ...e, EmployeeCode: to } : e)))
   };
 }
 
@@ -136,7 +146,8 @@ export function removeEmployee(state, id) {
   return {
     ...state,
     employees: { ...state.employees, list: state.employees.list.filter((e) => e.id !== id) },
-    scheduleInput: { ...state.scheduleInput, dataMatrix: rest }
+    scheduleInput: { ...state.scheduleInput, dataMatrix: rest },
+    ...withEntries(state, (entries) => entries.filter((e) => entryEmployee(e) !== id))
   };
 }
 
@@ -189,19 +200,20 @@ export function horizonOf(state) {
   return core.dateRange(state.temporalScope.start, state.temporalScope.end);
 }
 
-/** Demand rows and template-free records dated outside the scope, by kind. */
+/** Demand rows, holidays and fixed days dated outside the scope, by kind. */
 export function outsideScope(state) {
   const span = new Set(horizonOf(state));
-  if (!span.size) return { rows: 0, holidays: 0 };
+  if (!span.size) return { rows: 0, holidays: 0, fixed: 0 };
   const out = (r) => !span.has(r.date);
   return {
     rows: state.demand.periods.filter(out).length + state.demand.days.filter(out).length +
       state.demand.shifts.filter(out).length,
-    holidays: (state.calendar.holidays || []).filter(out).length
+    holidays: (state.calendar.holidays || []).filter(out).length,
+    fixed: (state.result?.entries || []).filter((e) => !span.has(entryDay(e))).length
   };
 }
 
-/** Drop demand rows, holidays and matrix cells that fall outside the scope. */
+/** Drop demand rows, holidays, matrix cells and fixed days that fall outside the scope. */
 export function pruneOutsideScope(state) {
   const span = new Set(horizonOf(state));
   if (!span.size) return state;
@@ -217,7 +229,8 @@ export function pruneOutsideScope(state) {
       days: state.demand.days.filter(inside),
       shifts: state.demand.shifts.filter(inside)
     },
-    scheduleInput: { ...state.scheduleInput, dataMatrix: matrix }
+    scheduleInput: { ...state.scheduleInput, dataMatrix: matrix },
+    ...withEntries(state, (entries) => entries.filter((e) => span.has(entryDay(e))))
   };
 }
 
@@ -414,6 +427,158 @@ export function generateMenuRows(state, { stride = 60, envelope } = {}) {
     }
   }
   return out;
+}
+
+// --------------------------------------------------------------------------
+// fixed days: the result's OutRosterTeamDays entries
+// --------------------------------------------------------------------------
+
+/** An entry's EmployeeCode as the problem spells ids: a string. */
+export function entryEmployee(entry) {
+  const code = entry?.EmployeeCode;
+  return code === null || code === undefined ? '' : String(code);
+}
+
+/** An entry's day as YYYY-MM-DD, or null when its Date is not a date. */
+export function entryDay(entry) {
+  return core.iso(entry?.Date ?? '') || null;
+}
+
+/** `{result}` with its entries passed through `fn`, or nothing when there are none to change. */
+function withEntries(state, fn) {
+  const entries = state.result?.entries;
+  if (!entries?.length) return {};
+  return { result: { ...state.result, entries: fn(entries) } };
+}
+
+/**
+ * {employeeId: {date: entry}} over the fixed days. Of two entries for one day
+ * the first is kept, as it is the one the validator judges; the second is
+ * reported as a duplicate.
+ */
+export function fixedIndex(state) {
+  const out = {};
+  for (const entry of state.result?.entries || []) {
+    const day = entryDay(entry);
+    if (!day) continue;
+    const eid = entryEmployee(entry);
+    out[eid] = out[eid] || {};
+    if (!(day in out[eid])) out[eid][day] = entry;
+  }
+  return out;
+}
+
+/**
+ * Fix a day to `code`, or open it again with null. Setting a day that has
+ * duplicate entries keeps only the first, so the grid's edit resolves them.
+ */
+export function setFixedDay(state, eid, date, code) {
+  const entries = state.result?.entries || [];
+  const match = (e) => entryEmployee(e) === eid && entryDay(e) === date;
+  let next;
+  if (code === null || code === undefined || code === '') {
+    next = entries.filter((e) => !match(e));
+  } else {
+    const at = entries.findIndex(match);
+    if (at < 0) {
+      const teamCode = state.result?.teamCode ?? DEFAULT_TEAM_CODE;
+      next = [...entries, {
+        RosterCode: state.metadata.rosterCode,
+        ...(teamCode ? { TeamCode: teamCode } : {}),
+        EmployeeCode: eid,
+        Date: `${date}T00:00:00`,
+        ScheduleCode: Number(code),
+        OutRosterTeamDayTasks: [],
+        OutRosterTeamDayResponsibilities: []
+      }];
+    } else {
+      next = entries.filter((e, i) => i === at || !match(e))
+        .map((e) => (e === entries[at] ? { ...e, ScheduleCode: Number(code) } : e));
+    }
+  }
+  return { ...state, result: { ...state.result, entries: next } };
+}
+
+/** Open every fixed day. */
+export function clearFixedDays(state) {
+  return { ...state, result: { ...state.result, entries: [] } };
+}
+
+/**
+ * {entries, fixed, expected, open}: fixed counts the distinct employee-days in
+ * the roster and the scope, the way the validator's rosterDaysLeft does.
+ */
+export function resultCounts(state) {
+  const days = horizonOf(state);
+  const span = new Set(days);
+  const ids = new Set(state.employees.list.map((e) => e.id));
+  const seen = new Set();
+  const entries = state.result?.entries || [];
+  for (const e of entries) {
+    const eid = entryEmployee(e);
+    const day = entryDay(e);
+    if (ids.has(eid) && span.has(day)) seen.add(`${eid}\u001f${day}`);
+  }
+  const expected = ids.size * days.length;
+  return { entries: entries.length, fixed: seen.size, expected, open: Math.max(0, expected - seen.size) };
+}
+
+/** The menu as the validator reads it: code -> {code, description, weightMinutes, interval, isSentinel}. */
+export function menuCatalogue(state) {
+  return core.readSchedules(schedulesCsv(state.schedules?.rows || [])).catalogue;
+}
+
+/** How many fixed days use a ScheduleCode. */
+export function fixedCodeUsage(state, code) {
+  return (state.result?.entries || []).filter((e) => e.ScheduleCode === Number(code)).length;
+}
+
+/** Point the fixed days that use `from` at `to`, when a menu row's code changes. */
+export function renameScheduleCode(state, from, to) {
+  if (Number(from) === Number(to)) return state;
+  return {
+    ...state,
+    ...withEntries(state, (entries) => entries.map((e) => (e.ScheduleCode === Number(from) ? { ...e, ScheduleCode: Number(to) } : e)))
+  };
+}
+
+export const MENU_CHOICES = ['menu', 'result', 'both'];
+
+/**
+ * Settle the codes an imported menu and result sidecar define differently
+ * (importBundle's `conflicts`). `choices` maps each code to 'menu' (keep the
+ * menu's definition), 'result' (take the sidecar's) or 'both' (keep the menu's,
+ * and add the sidecar's under a new code, moving the fixed days that use the
+ * code to it, since they were fixed with the sidecar's meaning). Every conflict
+ * needs a choice: dropping a definition is the user's call, never a default.
+ */
+export function applyMenuChoices(state, conflicts, choices) {
+  let s = state;
+  for (const c of conflicts) {
+    const choice = choices?.[c.code];
+    if (!MENU_CHOICES.includes(choice)) throw new Error(`no choice for ScheduleCode ${c.code}`);
+    if (choice === 'result') {
+      s = { ...s, schedules: { ...s.schedules, rows: s.schedules.rows.map((r) => (Number(r.code) === c.code ? { ...c.result } : r)) } };
+    } else if (choice === 'both') {
+      const code = nextMenuCode(s.schedules.rows);
+      s = renameScheduleCode({ ...s, schedules: { ...s.schedules, rows: [...s.schedules.rows, { ...c.result, code }] } }, c.code, code);
+    }
+  }
+  return s;
+}
+
+/**
+ * What a fixed day means against its schedule_input cell, for the grid:
+ * {schedule, reason, unknown}. The cell is read as it will be written (a
+ * missing one is blank), `reason` is core.cellConflict's - the validator's
+ * wording - and `unknown` means the code is not in the menu.
+ */
+export function analyseFixedDay(code, { menu, cell, problem, contractMinutes }) {
+  const schedule = menu.get(code) || null;
+  const unknown = !schedule;
+  const { rule } = core.tryClassifyCell(canonicalCell(cell), problem);
+  if (!rule) return { schedule, reason: '', unknown };
+  return { schedule, reason: core.cellConflict(rule, schedule, contractMinutes) || '', unknown };
 }
 
 // --------------------------------------------------------------------------

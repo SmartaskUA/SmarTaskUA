@@ -33,7 +33,7 @@ describe('employee roster CSV', () => {
     const rows = [
       { employee_id: 'EMP001', contract_type: 'FT_8h' },
       { employee_id: 'NEW1', contract_type: 'NOPE' },
-      { employee_id: 'NEW2', contract_type: 'FT_8h', competencies: 'Piso/T1:1' },
+      { employee_id: 'NEW2', contract_type: 'FT_8h', competencies: 'Floor/T1:1' },
       { employee_id: 'NEW3', contract_type: 'PT_4h', competencies: 'Team/T1' }
     ];
     const { employees, warnings } = employeesFromRows(rows, MAPPING, sampleState());
@@ -41,7 +41,7 @@ describe('employee roster CSV', () => {
     expect(warnings).toEqual([
       'Row 1: EMP001 already exists — skipped',
       'Row 2: unknown contract "NOPE" — skipped',
-      'Row 3: Piso/T1 not declared in Dimensions — skipped'
+      'Row 3: Floor/T1 not declared in Dimensions — skipped'
     ]);
   });
 });

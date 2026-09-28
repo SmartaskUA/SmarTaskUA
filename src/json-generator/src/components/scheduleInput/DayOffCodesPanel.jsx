@@ -67,8 +67,8 @@ const DayOffCodesPanel = () => {
     <Box>
       <Typography variant="h6" fontWeight={600}>Day-off codes</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-        Any cell that is not <code>A</code>, a number of hours or a time window must be one of these. Codes may be
-        non-ASCII (SISQUAL uses <code>Fér</code>). Classifying a code wrongly still validates — and moves every
+        Any cell that is not <code>A</code>, a number of hours or a time window must be one of these. Codes may
+        contain accented or other non-ASCII characters. Classifying a code wrongly still validates — and moves every
         week&apos;s working-day target.
       </Typography>
       {!Object.keys(codes).length && <Alert severity="error" sx={{ mb: 1 }}>At least one day-off code is required.</Alert>}

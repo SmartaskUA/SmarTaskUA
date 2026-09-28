@@ -159,13 +159,13 @@ const Step1_Setup = () => {
                 {temporalScope.end && <Chip color="primary" variant="outlined" label={`End ${temporalScope.end}`} />}
                 {days.length > 0 && <Chip color="success" size="small" label={`${days.length} days`} />}
               </Box>
-              {stray.rows + stray.holidays > 0 && (
+              {stray.rows + stray.holidays + stray.fixed > 0 && (
                 <Alert
                   severity="warning"
                   sx={{ mt: 2 }}
                   action={<Button color="inherit" size="small" onClick={() => transform(pruneOutsideScope)}>Remove</Button>}
                 >
-                  {stray.rows} demand row(s) and {stray.holidays} holiday(s) fall outside this horizon.
+                  {stray.rows} demand row(s), {stray.holidays} holiday(s) and {stray.fixed} fixed day(s) fall outside this horizon.
                 </Alert>
               )}
             </Grid>

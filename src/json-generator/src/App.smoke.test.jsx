@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 /**
  * Render every wizard step, with a problem authored in the wizard and with the
- * real Cenário 2 bundle imported, and fail on any render error or React
- * warning. The logic has its own tests; this one guards the screens.
+ * real Scenario 2 packages (cenario2_retail, and cenario2_partial with its first
+ * week fixed) imported, and fail on any render error or React warning. The
+ * logic has its own tests; this one guards the screens.
  */
 import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
 import { act } from 'react';
@@ -16,14 +17,18 @@ import { STATE_KEY } from './v4/persistence';
 import { sampleState } from './v4/fixtures/sampleState';
 import { importBundle } from './v4/importBundle';
 
-const C2 = path.resolve(process.cwd(), '../../json_generation/schema_v4/examples/cenario2_retail');
+const EXAMPLES = path.resolve(process.cwd(), '../../json_generation/schema_v4/examples');
 
-function cenario2State() {
-  const files = Object.fromEntries(fs.readdirSync(C2)
+function imported(name) {
+  const dir = path.join(EXAMPLES, name);
+  const files = Object.fromEntries(fs.readdirSync(dir)
     .filter((n) => /\.(json|csv)$/.test(n))
-    .map((n) => [n, fs.readFileSync(path.join(C2, n), 'utf-8')]));
+    .map((n) => [n, fs.readFileSync(path.join(dir, n), 'utf-8')]));
   return importBundle(files).state;
 }
+
+const cenario2State = () => imported('cenario2_retail');
+const partialState = () => imported('cenario2_partial');
 
 const TITLES = {
   setup: 'Setup',
@@ -33,6 +38,7 @@ const TITLES = {
   scheduleInput: 'Schedule input',
   demand: 'Demand',
   schedules: 'Shift menu',
+  fixedDays: 'Fixed days',
   rules: 'Rules',
   review: 'Review & download'
 };
@@ -80,7 +86,8 @@ function renderAt(state, index) {
 
 describe.each([
   ['a problem authored in the wizard', sampleState],
-  ['cenario2_retail, imported', cenario2State]
+  ['cenario2_retail, imported', cenario2State],
+  ['cenario2_partial, imported', partialState]
 ])('%s', (_, makeState) => {
   const state = makeState();
   it.each(WIZARD_STEPS.map((s, i) => [s.id, i]))('renders the %s step cleanly', (id, index) => {
@@ -93,7 +100,7 @@ describe.each([
 
 /** Click the first button-like element whose text contains `text` (dialogs render in portals, so search the whole body). */
 function click(text, index = 0) {
-  const matches = [...document.body.querySelectorAll('button, [role="button"], [role="tab"], [role="option"]')]
+  const matches = [...document.body.querySelectorAll('button, [role="button"], [role="tab"], [role="option"], [role="menuitem"]')]
     .filter((el) => el.textContent.includes(text));
   if (!matches[index]) throw new Error(`no button "${text}" among: ${[...document.body.querySelectorAll('button')].map((b) => b.textContent).filter(Boolean).join(' | ')}`);
   act(() => matches[index].click());
@@ -154,8 +161,12 @@ describe('dialogs and views, on cenario2_retail', () => {
     click('Bulk add');
     expect(document.body.textContent).toContain('Add days rows in bulk');
     click('Cancel');
-    click('Shifts — headcount by type');
-    expect(document.body.textContent).toContain('ShiftTypeCode');
+    click('Shifts — headcount');
+    expect(document.body.textContent).toContain('v4 defines no shift types');
+    click('Add row');
+    const dialog = document.body.querySelector('[role="dialog"]');
+    expect(dialog.textContent).toContain('Add shifts row');
+    expect(dialog.textContent).not.toMatch(/workPeriod|work period|shift type/i);
     expect(problems).toEqual([]);
   });
 
@@ -182,6 +193,13 @@ describe('dialogs and views, on cenario2_retail', () => {
     expect(problems).toEqual([]);
   });
 
+  it('keeps a menu row that fixed days use', () => {
+    renderAt(state, at('schedules'));
+    expect(document.body.querySelector('[aria-label="delete 9016"]').disabled).toBe(true);
+    expect([...document.body.querySelectorAll('[aria-label^="delete "]')].some((b) => !b.disabled)).toBe(true);
+    expect(problems).toEqual([]);
+  });
+
   it('opens the bundle importer and the project manager', () => {
     renderAt(state, at('setup'));
     click('Start from a v4 bundle');
@@ -199,6 +217,60 @@ describe('dialogs and views, on cenario2_retail', () => {
     expect(body).toContain('Valid, with warnings');
     expect(body).toContain('313 periods rows');
     expect([...document.body.querySelectorAll('button')].find((b) => b.textContent.includes('Download ZIP')).disabled).toBe(false);
+    expect(problems).toEqual([]);
+  });
+});
+
+describe('fixed days, on cenario2_partial', () => {
+  const state = partialState();
+  const at = WIZARD_STEPS.findIndex((s) => s.id === 'fixedDays');
+  const cell = (label) => document.body.querySelector(`[role="button"][aria-label^="${label}"]`);
+  const open = (label) => act(() => cell(label).click());
+
+  it('shows the imported days, and fixes, contradicts and opens one in the grid', () => {
+    renderAt(state, at);
+    expect(container.textContent).toContain('105 fixed');
+    expect(container.textContent).toContain('360 open');
+    click('Open grid');
+    expect(document.body.textContent).toContain('105 fixed · 360 open of 465 employee-days');
+    expect(cell('20072412 2026-01-07').getAttribute('aria-label')).toBe('20072412 2026-01-07: ScheduleCode 9016');
+    expect(cell('20072412 2026-01-08').getAttribute('aria-label')).toBe('20072412 2026-01-08: open');
+
+    // The cell asks for exactly 8 hours: the menu says which codes contradict it, and why.
+    open('20072412 2026-01-08');
+    const menu = document.body.querySelector('[role="menu"]');
+    expect(menu.textContent).toContain('20072412 · 2026-01-08 · cell 8');
+    expect(menu.textContent).toContain('3 · Day offcontradicts the cell: the cell asks for work, but the day is a rest');
+    expect(menu.textContent).toContain('9001 · 09:00-13:00 · 240 mincontradicts the cell: the shift is 240 min but the cell asks for 480');
+    expect(menu.textContent).toMatch(/9016 · 09:00-17:00 · 480 min(?!contradicts)/);
+    click('9016 · 09:00-17:00');
+    expect(document.body.textContent).toContain('106 fixed · 359 open of 465 employee-days');
+    expect(cell('20072412 2026-01-08').getAttribute('aria-label')).toBe('20072412 2026-01-08: ScheduleCode 9016');
+
+    open('20072412 2026-01-08');
+    click('3 · Day off');
+    // The contradiction is counted on the employee's row.
+    expect([...document.body.querySelectorAll('td')].some((td) => td.textContent === '8 / 311 ✗')).toBe(true);
+
+    open('20072412 2026-01-08');
+    click('· Open');
+    expect(document.body.textContent).toContain('105 fixed · 360 open of 465 employee-days');
+    expect(problems).toEqual([]);
+  });
+
+  it('writes the result and its sidecar into the preview', () => {
+    renderAt(state, WIZARD_STEPS.length - 1);
+    const tabs = [...document.body.querySelectorAll('[role="tab"]')].map((t) => t.textContent);
+    expect(tabs).toEqual(expect.arrayContaining(['result.json', 'result_schedules.csv']));
+    expect(document.body.textContent).toContain('105 fixed days');
+    expect(document.body.textContent).toContain('360 employee-days left open');
+    expect(problems).toEqual([]);
+  });
+
+  it('asks for the menu when it is off', () => {
+    renderAt({ ...state, schedules: { ...state.schedules, enabled: false } }, at);
+    expect(container.textContent).toContain('The 105 fixed day(s) are kept, but result.json is not written until the menu is back on.');
+    expect([...document.body.querySelectorAll('button')].find((b) => b.textContent.includes('Open grid')).disabled).toBe(true);
     expect(problems).toEqual([]);
   });
 });

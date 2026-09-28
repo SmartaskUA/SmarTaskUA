@@ -84,7 +84,7 @@ const LabourLawEditor = ({ entries, scopeStart, onChange }) => {
                   <NumberField
                     fullWidth label={label} value={e.parameters?.[key] ?? ''} min={0} step={1}
                     onChange={(v) => setParam(i, key, v)}
-                    helperText={<>{key} {enforced ? <Chip component="span" size="small" label="checked" sx={{ height: 16, fontSize: 10 }} /> : '(carried)'}</>}
+                    helperText={<>{key} {enforced ? <Chip component="span" size="small" label={enforced === true ? 'checked' : `checked on ${enforced}`} sx={{ height: 16, fontSize: 10 }} /> : '(carried)'}</>}
                   />
                 </Grid>
               ))}

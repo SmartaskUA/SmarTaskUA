@@ -143,7 +143,7 @@ const Step4_Employees = () => {
         onCancel={() => setDeleting(null)}
         onConfirm={() => { transform((s) => removeEmployee(s, deleting.id)); setDeleting(null); }}
       >
-        Their schedule-input row is removed too.
+        Their schedule-input row and fixed days are removed too.
       </ConfirmDialog>
 
       <ImportPreviewModal

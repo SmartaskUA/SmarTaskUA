@@ -8,11 +8,13 @@
 
 import Ajv2020 from 'ajv/dist/2020';
 import schema from '../../schema_v4/schema-v4-input.json';
+import resultSchema from '../../schema_v4/schema-v4-result.json';
 
 const ajv = new Ajv2020({ allErrors: true, strict: false, validateFormats: false });
 const validate = ajv.compile(schema);
+const validateResultDoc = ajv.compile(resultSchema);
 
-export { schema };
+export { schema, resultSchema };
 
 /** The wizard step that owns each top-level key. */
 const STEP_OF_KEY = {
@@ -53,16 +55,26 @@ function describe(err) {
   }
 }
 
-/** [{message, step}] for every schema violation, sorted by path like the Python validator. */
-export function schemaFindings(problem) {
-  if (validate(problem)) return [];
-  return validate.errors
+function findings(errors, stepFor) {
+  return errors
     // oneOf failures repeat what their branches already said.
     .filter((err) => err.keyword !== 'oneOf')
     .map((err) => {
       const segments = err.instancePath.split('/').filter(Boolean);
-      return { segments, message: `schema: ${segments.join('/') || '(root)'}: ${describe(err)}`, step: stepOf(segments) };
+      return { segments, message: `schema: ${segments.join('/') || '(root)'}: ${describe(err)}`, step: stepFor(segments) };
     })
     .sort((a, b) => a.segments.join('/').localeCompare(b.segments.join('/')))
     .map(({ message, step }) => ({ message, step }));
+}
+
+/** [{message, step}] for every violation of the result schema; all belong to the Fixed days step. */
+export function resultSchemaFindings(result) {
+  if (validateResultDoc(result)) return [];
+  return findings(validateResultDoc.errors, () => 'fixedDays');
+}
+
+/** [{message, step}] for every schema violation, sorted by path like the Python validator. */
+export function schemaFindings(problem) {
+  if (validate(problem)) return [];
+  return findings(validate.errors, stepOf);
 }

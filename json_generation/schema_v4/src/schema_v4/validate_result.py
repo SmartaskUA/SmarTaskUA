@@ -9,12 +9,18 @@ A result also carries a **sidecar catalogue**, `<stem>_schedules.csv`, defining 
 codes it used - see `SIDECAR_SUFFIX`. That file is our convention, not Sisqual's:
 the result document itself is their WFM import API and stays verbatim, so the
 definition of what its codes mean lives beside it rather than inside it.
+
+A result may be **partial**. The entries it carries are fixed days - each is held
+to its schedule_input cell and to the labour law as a hard rule - and a day it
+leaves out is open for the solver. Nothing marks a result as partial and nothing
+complains about a missing day; the stats say how much is left.
 """
 
 from __future__ import annotations
 
 import json
-from collections import defaultdict
+from collections import Counter, defaultdict
+from datetime import date, timedelta
 from pathlib import Path
 
 from . import core
@@ -79,11 +85,11 @@ class ResultChecksMixin:
         r.stats["crossCheckedAgainst"] = path.name
 
         roster = problem.get("metadata", {}).get("rosterCode")
-        span = set(core.horizon(problem))
+        days = core.horizon(problem)
+        span = set(days)
         employees = {str(e.get("id")): e for e in problem.get("employees", {}).get("list", [])}
         contracts = core.contracts_by_id(problem)
         menu = self._load_menu(problem, path.parent)
-        preferable, unavailable = core.day_off_sets(problem.get("scheduleInput", {}))
         cells = self._load_cells(problem, path.parent)
 
         # A code's definition comes from the sidecar when there is one - it is what
@@ -91,9 +97,9 @@ class ResultChecksMixin:
         defined = sidecar if sidecar is not None else menu
 
         seen: dict[tuple[str, str], int] = defaultdict(int)
+        fixed: dict[str, dict[date, core.Schedule | None]] = defaultdict(dict)
         int_codes = 0
         self._grouped: list[tuple[str, str]] = []
-        self._grouped_warn: list[tuple[str, str]] = []
 
         for n, e in enumerate(entries, start=1):
             where = f"OutRosterTeamDays[{n - 1}]"
@@ -119,12 +125,31 @@ class ResultChecksMixin:
             seen[key] += 1
             if seen[key] == 2:
                 r.error(f"{where}: {eid} already has an entry for {day}")
+                continue
 
-            self._check_code(where, e.get("ScheduleCode"), eid, day, menu, defined,
-                             contracts, employees, cells, preferable, unavailable)
+            code = e.get("ScheduleCode")
+            if not isinstance(code, int):
+                continue
+            if menu and code not in menu:
+                self._grouped.append((f"missing:{code}",
+                                      f"{where}: ScheduleCode {code} is not in the "
+                                      f"schedules catalogue"))
+                continue
+            schedule = self._resolve(code, defined)
+            if eid in employees and (not span or day in span):
+                fixed[eid][day] = schedule
+            self._check_cell(where, code, schedule, employees.get(eid), eid, day,
+                             contracts, cells, problem)
 
         report_grouped(r.error, self._grouped)
-        report_grouped(r.warn, self._grouped_warn)
+        self._check_fixed_law(fixed, days, problem)
+
+        filled = {(eid, d) for eid, d in seen
+                  if eid in employees and (not span or iso(d) in span)}
+        expected = len(employees) * len(days)
+        r.stats["rosterDaysExpected"] = expected
+        r.stats["rosterDaysLeft"] = max(0, expected - len(filled))
+
         if int_codes:
             r.warn(f"EmployeeCode is an integer in {int_codes} of {len(entries)} entries, but a "
                    f"string in the problem. JSON-Import.docx says string - see "
@@ -172,43 +197,89 @@ class ResultChecksMixin:
                         f"{other.description!r}/{other.weight_minutes}min in the "
                         f"problem's catalogue")
 
-    # -- per entry ---------------------------------------------------------
+    # -- per entry: the fixed day against its cell --------------------------
 
-    def _check_code(self, where, code, eid, day, menu, defined, contracts, employees,
-                    cells, preferable, unavailable) -> None:
-        r = self.report
-        if not isinstance(code, int):
-            return
-        if menu and code not in menu:
-            self._grouped.append((f"missing:{code}",
-                                  f"{where}: ScheduleCode {code} is not in the "
-                                  f"schedules catalogue"))
-            return
-
-        cell = (cells.get(eid) or {}).get(day.isoformat(), "")
+    @staticmethod
+    def _resolve(code: int, defined: dict) -> core.Schedule | None:
+        """What a code stands for, or None for a worked code nobody defines."""
         known = (defined or {}).get(code)
-        is_rest = known.is_sentinel if known is not None else code in FALLBACK_SENTINELS
-        if cell in unavailable and not is_rest:
-            r.error(f"{where}: {eid} is {cell!r} (unavailable) on {day}, but the result "
-                    f"assigns ScheduleCode {code}")
-        if is_rest and cell and cell not in preferable and cell not in unavailable:
-            label = known.description if known is not None else FALLBACK_SENTINELS[code]
-            r.warn(f"{where}: {eid} rests on {day} ({label}) although the problem's cell "
-                   f"asks for work ({cell!r})")
+        if known is not None:
+            return known
+        if code in FALLBACK_SENTINELS:
+            return core.Schedule(code, FALLBACK_SENTINELS[code], 0, None)
+        return None
 
-        entry = defined.get(code) if defined else None
-        if entry is None or entry.interval is None:
+    def _check_cell(self, where, code, schedule, emp, eid, day, contracts, cells,
+                    problem) -> None:
+        raw = (cells.get(eid) or {}).get(day.isoformat())
+        if emp is None or raw is None:
             return
-        emp = employees.get(eid)
-        if emp is None:
-            return
+        try:
+            rule = core.classify_cell(raw, problem)
+        except core.DomainError:
+            return      # a malformed cell is the problem's finding, not this result's
         cid = core.active_contract(emp, day)
         wanted = (contracts.get(cid) or {}).get("workMinutesPerDay")
-        if wanted is not None and entry.weight_minutes != wanted:
-            self._grouped_warn.append((
-                f"weight:{code}:{cid}",
-                f"{where}: ScheduleCode {code} is {entry.weight_minutes} min but "
-                f"{eid}'s contract {cid} states {wanted}"))
+        reason = core.cell_conflict(rule, schedule, wanted)
+        if reason:
+            self._grouped.append((
+                f"cell:{reason}",
+                f"{where}: ScheduleCode {code} for {eid} on {day} contradicts the cell "
+                f"{raw!r}: {reason}"))
+
+    # -- the fixed days against the labour law -----------------------------
+
+    def _check_fixed_law(self, fixed: dict, days: list[date], problem: dict) -> None:
+        """The roster-wide caps, over the days the result fixes.
+
+        A day left open breaks a run, because the solver may yet rest it: only what
+        is already decided can be judged, so a finding here is a real violation.
+        """
+        limits = core.legislation_limits(problem)
+        if not limits or not days:
+            return
+        week_start = str(problem.get("calendar", {}).get("weekStart", "monday")).lower()
+        if week_start not in core.WEEKDAY_NAMES:
+            week_start = "monday"
+        run_cap = limits.get("MaxConsecutiveWorkDays")
+        week_cap = limits.get("MaxConsecutiveWorkDaysInWeek")
+        min_rest = limits.get("MinDistanceBetweenShiftsInMinutes")
+        found: list[tuple[str, str]] = []
+
+        for eid, by_day in sorted(fixed.items()):
+            worked = {d: s for d, s in by_day.items() if s is None or not s.is_sentinel}
+
+            if run_cap is not None:
+                run = 0
+                for d in days:
+                    run = run + 1 if d in worked else 0
+                    if run > run_cap:
+                        found.append(("MaxConsecutiveWorkDays",
+                                      f"{eid}: fixed to work {run} days in a row ending {d}, "
+                                      f"above MaxConsecutiveWorkDays of {run_cap}"))
+                        break
+
+            if week_cap is not None:
+                per_week = Counter(core.week_index(d, days[0], week_start) for d in worked)
+                for wk, n in sorted(per_week.items()):
+                    if n > week_cap:
+                        found.append(("MaxConsecutiveWorkDaysInWeek",
+                                      f"{eid}, week {wk}: {n} fixed working days exceeds "
+                                      f"MaxConsecutiveWorkDaysInWeek of {week_cap}"))
+
+            if min_rest is not None:
+                for d, before in sorted(worked.items()):
+                    after = worked.get(d + timedelta(days=1))
+                    if before is None or after is None or \
+                            before.interval is None or after.interval is None:
+                        continue
+                    rest = after.interval.start + core.MINUTES_PER_DAY - before.interval.end
+                    if rest < min_rest:
+                        found.append(("MinDistanceBetweenShiftsInMinutes",
+                                      f"{eid}: {rest} min of rest between {before.interval} "
+                                      f"on {d} and {after.interval} the next day, below "
+                                      f"MinDistanceBetweenShiftsInMinutes of {min_rest}"))
+        report_grouped(self.report.error, found)
 
     # -- loading the problem's own files -----------------------------------
 

@@ -15,7 +15,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildBundle, bundleEntries } from '../src/v4/generate';
 import { importBundle } from '../src/v4/importBundle';
-import { sampleState } from '../src/v4/fixtures/sampleState';
+import { sampleState, sampleStateWithFixedDays } from '../src/v4/fixtures/sampleState';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const schemaV4 = path.resolve(here, '../../../json_generation/schema_v4');
@@ -34,9 +34,13 @@ function write(name, state) {
   return dir;
 }
 
+const regenerate = (example) => importBundle(readDir(path.join(schemaV4, 'examples', example))).state;
+
 const bundles = [
   write('sample', sampleState()),
-  write('cenario2_regenerated', importBundle(readDir(path.join(schemaV4, 'examples/cenario2_retail'))).state)
+  write('sample_fixed_days', sampleStateWithFixedDays()),
+  write('cenario2_regenerated', regenerate('cenario2_retail')),
+  write('cenario2_partial_regenerated', regenerate('cenario2_partial'))
 ];
 
 let failed = false;

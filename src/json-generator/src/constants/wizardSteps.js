@@ -6,6 +6,7 @@ import {
   CalendarMonth,
   EventNote,
   AccessTime,
+  EventAvailable,
   Rule,
   Preview
 } from '@mui/icons-material';
@@ -23,6 +24,7 @@ export const WIZARD_STEPS = [
   { id: 'scheduleInput', label: 'Schedule Input', description: 'Day-off codes & matrix',    icon: CalendarMonth },
   { id: 'demand',        label: 'Demand',         description: 'Periods, days, shifts',     icon: EventNote },
   { id: 'schedules',     label: 'Shift Menu',     description: 'schedules.csv',             icon: AccessTime },
+  { id: 'fixedDays',     label: 'Fixed days',     description: 'result.json',               icon: EventAvailable },
   { id: 'rules',         label: 'Rules',          description: 'Priority & labour law',     icon: Rule },
   { id: 'review',        label: 'Review',         description: 'Validate & download',       icon: Preview }
 ];

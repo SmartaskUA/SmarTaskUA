@@ -288,6 +288,22 @@ export function daySets(section) {
   return { preferable, unavailable };
 }
 
+/**
+ * The enabled hard constraints' integer parameters, flattened into one lookup.
+ * Here rather than in either checker because both read it: the input form
+ * against the days a cell forces, the result form against the days it fixes.
+ */
+export function legislationLimits(problem) {
+  const out = {};
+  for (const entry of problem?.constraints?.hard || []) {
+    if (entry?.enabled === false) continue;
+    for (const [k, v] of Object.entries(entry?.parameters || {})) {
+      if (Number.isInteger(v)) out[k] = v;
+    }
+  }
+  return out;
+}
+
 // --------------------------------------------------------------------------
 // CSV reading
 //
@@ -315,6 +331,13 @@ export function readRows(text) {
       return row;
     });
   return { header, rows };
+}
+
+/** A result at `foo.json` pairs with its sidecar `foo_schedules.csv`: the codes it used. */
+export const SIDECAR_SUFFIX = '_schedules.csv';
+
+export function sidecarName(resultName = 'result.json') {
+  return `${String(resultName).split('/').pop().replace(/\.[^.]*$/, '')}${SIDECAR_SUFFIX}`;
 }
 
 export const DEMAND_COLUMNS = ['date', 'tableName', 'tableValue', 'minimum', 'ideal', 'estimated', 'start', 'end'];
@@ -510,6 +533,72 @@ export function tryClassifyCell(raw, problem) {
     if (exc instanceof DomainError) return { rule: null, error: exc.message };
     throw exc;
   }
+}
+
+// --------------------------------------------------------------------------
+// fixed days
+//
+// A result's entries are fixed: whatever it names for an employee-day stands,
+// and the solver fills only the days it leaves out. So each entry is the cell
+// read as a hard rule against a decision already taken.
+// --------------------------------------------------------------------------
+
+/**
+ * How long a shift the cell asks for, or null when nothing says. A numeric
+ * cell overrides the contract and an EQUALS window is its own length; every
+ * other working cell works the contract's day.
+ */
+export function requiredMinutes(rule, contractMinutes) {
+  if (rule.kind === 'exact_hours') return rule.minutes;
+  if (rule.kind === 'equals' && rule.windows.length === 1) return rule.windows[0].end - rule.windows[0].start;
+  return contractMinutes ?? null;
+}
+
+/**
+ * Why a fixed shift cannot stand on the day its cell describes, or null.
+ *
+ * `schedule` is the shift's definition ({code, description, weightMinutes,
+ * interval, isSentinel}, as readSchedules gives it), or null for a worked code
+ * whose definition is out of reach - then only work-versus-rest can be judged.
+ * A preferable day off is the one soft cell: working it is allowed.
+ */
+export function cellConflict(rule, schedule, contractMinutes) {
+  const worked = schedule === null || schedule === undefined || !schedule.isSentinel;
+  if (rule.kind === 'empty') return worked ? 'the cell is blank (no assignments), but the day is worked' : null;
+  if (rule.kind === 'dayoff') {
+    if (worked && rule.dayOff === 'unavailable') return `the cell is ${pyRepr(rule.code)} (unavailable), but the day is worked`;
+    return null;
+  }
+  if (!worked) return 'the cell asks for work, but the day is a rest';
+  if (!schedule) return null;
+
+  const iv = schedule.interval;
+  if (rule.kind === 'equals' && rule.windows.length > 1) {
+    return 'the cell asks for a split shift, which no single ScheduleCode can express';
+  }
+  if (iv) {
+    const show = intervalToString;
+    if (rule.kind === 'equals' && (iv.start !== rule.windows[0].start || iv.end !== rule.windows[0].end)) {
+      return `the shift ${show(iv)} is not the ${show(rule.windows[0])} the cell asks for`;
+    }
+    if (rule.kind === 'include') {
+      const missing = rule.windows.find((w) => !contains(iv, w));
+      if (missing) return `the shift ${show(iv)} does not cover ${show(missing)}`;
+    }
+    if (rule.kind === 'within' && !rule.windows.some((w) => contains(w, iv))) {
+      return `the shift ${show(iv)} fits inside none of ${rule.windows.map(show).join(', ')}`;
+    }
+    if (rule.kind === 'except') {
+      const hit = rule.windows.find((w) => overlaps(iv, w));
+      if (hit) return `the shift ${show(iv)} overlaps ${show(hit)}, when the worker is unavailable`;
+    }
+  }
+
+  const wanted = requiredMinutes(rule, contractMinutes);
+  if (wanted !== null && schedule.weightMinutes !== wanted) {
+    return `the shift is ${schedule.weightMinutes} min but the cell asks for ${wanted}`;
+  }
+  return null;
 }
 
 // --------------------------------------------------------------------------

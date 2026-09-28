@@ -18,8 +18,9 @@ import Step4_Employees from './steps/Step4_Employees';
 import Step5_ScheduleInput from './steps/Step5_ScheduleInput';
 import Step6_Demand from './steps/Step6_Demand';
 import Step7_ShiftMenu from './steps/Step7_ShiftMenu';
-import Step8_Rules from './steps/Step8_Rules';
-import Step9_Review from './steps/Step9_Review';
+import Step8_FixedDays from './steps/Step8_FixedDays';
+import Step9_Rules from './steps/Step9_Rules';
+import Step10_Review from './steps/Step10_Review';
 
 const STEP_COMPONENTS = {
   setup: Step1_Setup,
@@ -29,8 +30,9 @@ const STEP_COMPONENTS = {
   scheduleInput: Step5_ScheduleInput,
   demand: Step6_Demand,
   schedules: Step7_ShiftMenu,
-  rules: Step8_Rules,
-  review: Step9_Review
+  fixedDays: Step8_FixedDays,
+  rules: Step9_Rules,
+  review: Step10_Review
 };
 
 const WizardContent = () => {
@@ -44,7 +46,7 @@ const WizardContent = () => {
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       <AppBar position="static" elevation={0} sx={{ borderBottom: '2px solid', borderColor: 'divider' }}>
         <Toolbar sx={{ minHeight: 64 }}>
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>JSON Generator — Schema v4.0</Typography>
+          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>JSON Generator - Schema v4.0</Typography>
           <Typography variant="body2" sx={{ opacity: 0.8, mr: 2 }}>Step {state.currentStep + 1} of {STEP_COUNT}</Typography>
           <Tooltip title="Projects — save, load, import a v4 bundle">
             <IconButton color="inherit" size="small" onClick={() => setProjectsOpen(true)} sx={{ mr: 0.5 }}><FolderSpecial /></IconButton>
