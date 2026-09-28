@@ -5,6 +5,7 @@ import Sidebar_Manager from "../components/Sidebar_Manager";
 import CalendarTable from "../components/manager/CalendarTable";
 import CalendarHeader from "../components/manager/CalendarHeader";
 import KPIReport from "../components/manager/KPIReport";
+import MonthlyKpiReport from "../components/manager/MonthlyKpiReport";
 import SisqualKPIReport from "./SisqualKPIReport";
 import BaseUrl from "../components/BaseUrl";
 import MetadataInfo from "../components/manager/MetadataInfo";
@@ -444,7 +445,14 @@ const Calendar = () => {
         ) : (
           <KPIReport metrics={kpiSummary || {}} scheduleType={scheduleType} />
         )}
-        
+
+        {!isHourly && (
+          <MonthlyKpiReport
+            breakdown={kpiSummary?.monthlyBreakdown}
+            selectedMonth={selectedMonth}
+          />
+        )}
+
       </div>
     </div>
   );
