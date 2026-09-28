@@ -754,7 +754,7 @@ function renderSisqualBundleReport(metrics) {
 
 // ─── Legacy shift / hourly KPI renderer ──────────────────────────────────────
 const metricInfo = {
-  tmFails:                    { label: "Afternoon-Morning Sequences",    description: "Times an employee works an afternoon shift followed by a morning shift the next day." },
+  tmFails:                    { label: "Backward Shift Sequences",       description: "Times an employee works an earlier shift than the day before." },
   consecutiveDays:            { label: "Consecutive Work-Day Violations",description: "Times employees exceeded the maximum allowed run of five consecutive working days." },
   workHolidays:               { label: "Holidays & Sunday Work Days",    description: "Work days on holidays and Sundays exceeding the predefined threshold." },
   missedVacationDays:         { label: "Missed Vacation Days",           description: "Total variance between actual and target vacation days across all employees." },
