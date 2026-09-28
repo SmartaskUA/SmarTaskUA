@@ -319,25 +319,45 @@ def _compute_fixed_days_off_violations(df, year, rules):
     return violations
 
 
-def analyze(file, holidays, mins, employees, year=2025, rules=None):
-    print(f"Analyzing file: {file}")
-    df = pd.read_csv(file, encoding='ISO-8859-1')
+# Company-defined annual quotas used by the shift KPIs. They only apply to the
+# full-year analysis; the monthly breakdown reports raw counts instead.
+ANNUAL_WORK_DAYS_TARGET = 223
+ANNUAL_VACATION_DAYS_TARGET = 30
+ANNUAL_SPECIAL_DAYS_LIMIT = 22
 
-    # --- helpers -------------------------------------------------------------
-    def parse_shift(val):
-        """Return (prefix, team) if val matches 'M_X'/'T_X'/'N_X', else (None, None)."""
-        if not isinstance(val, str):
-            return (None, None)
-        m = re.match(r'^\s*([MTN])\s*[_-]\s*([A-Za-z])\s*$', val)
-        if m:
-            return (m.group(1), m.group(2).upper())
+
+def _parse_shift(val):
+    """Return (prefix, team) if val matches 'M_X'/'T_X'/'N_X', else (None, None)."""
+    if not isinstance(val, str):
         return (None, None)
+    m = re.match(r'^\s*([MTN])\s*[_-]\s*([A-Za-z])\s*$', val)
+    if m:
+        return (m.group(1), m.group(2).upper())
+    return (None, None)
 
-    def is_work_shift(val):
-        p, _ = parse_shift(val)
-        return p in {'M', 'T', 'N'}
 
-    # ------------------------------------------------------------------------
+def _is_work_shift(val):
+    p, _ = _parse_shift(val)
+    return p in {'M', 'T', 'N'}
+
+
+def _compute_period_kpis(df, dia_cols, period, mins, ideals, teams, sunday, holidays,
+                         work_target=None, vacation_target=None, special_limit=None):
+    """
+    Compute the shift KPIs for the columns dia_cols[period[0]:period[1]].
+
+    work_target, vacation_target and special_limit are the annual quotas. When
+    they are None (monthly breakdown) the quota-based KPIs missedWorkDays,
+    missedVacationDays and workHolidays are omitted.
+
+    dia_cols is the full, ordered list of day columns. Streak-based KPIs
+    (consecutive days, TM fails) are computed over the whole list so runs that
+    cross a period boundary are not reset, and are attributed to the period
+    where the offending day falls.
+    """
+    p_start, p_end = period
+    period_cols = dia_cols[p_start:p_end]
+    period_day_nums = {int(c.split()[1]) for c in period_cols}
 
     missed_work_days = 0
     missed_vacation_days = 0
@@ -349,47 +369,34 @@ def analyze(file, holidays, mins, employees, year=2025, rules=None):
     team_satisfaction_values = []    # % of total shifts worked in the preferred (first) team
     per_employee_shift_balance = []  # min(M%, T%) per employee
 
-    print(f"Year: {year}")
-    print(f"Holidays: {holidays}")
-    print(f"Minimuns: {mins}")
-    print(f"Employees: {employees}")
-
-    mins, ideals = parse_requirements(mins)
-    teams = parse_employees(employees)
-
-    # Sundays of the given year (day-of-year numbers)
-    sunday = []
-    for day in pd.date_range(start=f'{year}-01-01', end=f'{year}-12-31'):
-        if day.weekday() == 6:
-            sunday.append(day.dayofyear)
-
-    dia_cols = [col for col in df.columns if col.startswith("Dia ")]
-    all_special_cols = [f'Dia {d}' for d in set(holidays).union(sunday) if f'Dia {d}' in df.columns]
+    special_cols = [f'Dia {d}' for d in set(holidays).union(sunday)
+                    if d in period_day_nums and f'Dia {d}' in df.columns]
 
     # order of shifts during a day for TM fail detection
     shift_order = {'M': 1, 'T': 2, 'N': 3}
 
     for _, row in df.iterrows():
-        # Work/vacation counting (generic)
-        worked_days  = sum(is_work_shift(row[col]) for col in dia_cols)
-        vacation_days = sum(str(row[col]).strip() == 'F' for col in dia_cols)
+        worked_days  = sum(_is_work_shift(row[col]) for col in period_cols)
+        vacation_days = sum(str(row[col]).strip() == 'F' for col in period_cols)
 
-        missed_work_days += abs(223 - worked_days)
-        missed_vacation_days += abs(30 - vacation_days)
+        if work_target is not None:
+            missed_work_days += abs(work_target - worked_days)
+        if vacation_target is not None:
+            missed_vacation_days += abs(vacation_target - vacation_days)
 
-        # Worked holidays/sundays (generic)
-        total_worked_holidays = sum(is_work_shift(row[col]) for col in all_special_cols)
-        if total_worked_holidays > 22:
-            workHolidays += total_worked_holidays - 22
+        # Worked holidays/sundays above the annual limit
+        if special_limit is not None:
+            total_worked_holidays = sum(_is_work_shift(row[col]) for col in special_cols)
+            if total_worked_holidays > special_limit:
+                workHolidays += total_worked_holidays - special_limit
 
-        # 6+ consecutive days worked
-        work_sequence = [1 if is_work_shift(row[col]) else 0 for col in dia_cols]
+        # 6+ consecutive days worked (streak carried across the full year)
         streak = 0
         fails = 0
-        for day in work_sequence:
-            if day == 1:
+        for i, col in enumerate(dia_cols):
+            if _is_work_shift(row[col]):
                 streak += 1
-                if streak >= 6:
+                if streak >= 6 and p_start <= i < p_end:
                     fails += 1
             else:
                 streak = 0
@@ -397,9 +404,9 @@ def analyze(file, holidays, mins, employees, year=2025, rules=None):
 
         # Tomorrow earlier than today (TM fails) — compare by M<T<N
         tm_fails = 0
-        for i in range(len(dia_cols) - 1):
-            p_today, _ = parse_shift(row[dia_cols[i]])
-            p_tomorrow, _ = parse_shift(row[dia_cols[i + 1]])
+        for i in range(max(p_start - 1, 0), min(p_end - 1, len(dia_cols) - 1)):
+            p_today, _ = _parse_shift(row[dia_cols[i]])
+            p_tomorrow, _ = _parse_shift(row[dia_cols[i + 1]])
             if p_today in shift_order and p_tomorrow in shift_order:
                 if shift_order[p_tomorrow] < shift_order[p_today]:
                     tm_fails += 1
@@ -411,107 +418,81 @@ def analyze(file, holidays, mins, employees, year=2025, rules=None):
 
         # Count assignments per team actually present in the row
         team_counts = {}
-        for col in dia_cols:
-            pfx, code = parse_shift(row[col])
+        for col in period_cols:
+            pfx, code = _parse_shift(row[col])
             if pfx and code:
                 team_counts[code] = team_counts.get(code, 0) + 1
 
         # Single-team violation: employee allowed only 1 code but worked others
         if len(allowed_codes) == 1:
-            allowed = set(allowed_codes)
-            worked_codes = set(team_counts.keys())
-            other_work = worked_codes - allowed
+            other_work = set(team_counts.keys()) - set(allowed_codes)
             if other_work:
                 single_team_violations += 1
 
-        # Legacy metric: when exactly 2 allowed teams, compute % on the first team
+        # Legacy metric: % of shifts worked in the first (preferred) allowed team
         if len(allowed_codes) >= 1:
             total_worked = sum(team_counts.get(code, 0) for code in allowed_codes)
             if total_worked > 0:
                 preferred = allowed_codes[0]
-                preferred_count = team_counts.get(preferred, 0)
-                satisfaction_pct = round((preferred_count / total_worked) * 100.0, 2)
+                satisfaction_pct = round((team_counts.get(preferred, 0) / total_worked) * 100.0, 2)
                 team_satisfaction_values.append(satisfaction_pct)
 
-        # ✅ FIX: Per-employee shift balance calculation moved INSIDE the loop
-        # Previously this block was outside the for loop and only ran for the
-        # last employee, making the result incorrect.
-        emp_morning   = sum(1 for col in dia_cols if parse_shift(row[col])[0] == 'M')
-        emp_afternoon = sum(1 for col in dia_cols if parse_shift(row[col])[0] == 'T')
-        emp_night     = sum(1 for col in dia_cols if parse_shift(row[col])[0] == 'N')
+        # Per-employee shift balance
+        emp_morning   = sum(1 for col in period_cols if _parse_shift(row[col])[0] == 'M')
+        emp_afternoon = sum(1 for col in period_cols if _parse_shift(row[col])[0] == 'T')
+        emp_night     = sum(1 for col in period_cols if _parse_shift(row[col])[0] == 'N')
 
         total_emp_shifts_all = emp_morning + emp_afternoon + emp_night
         if total_emp_shifts_all > 0:
-            morning_pct_all   = (emp_morning  / total_emp_shifts_all) * 100.0
-            afternoon_pct_all = (emp_afternoon / total_emp_shifts_all) * 100.0
-            night_pct_all     = (emp_night    / total_emp_shifts_all) * 100.0
-
-            # Only consider shifts the employee actually worked (non-zero).
-            pcts = [p for p in [morning_pct_all, afternoon_pct_all, night_pct_all] if p > 0]
+            pcts = [p for p in (
+                (emp_morning / total_emp_shifts_all) * 100.0,
+                (emp_afternoon / total_emp_shifts_all) * 100.0,
+                (emp_night / total_emp_shifts_all) * 100.0,
+            ) if p > 0]
             active_shifts = len(pcts)
 
             if active_shifts >= 2:
-                min_pct = min(pcts)
                 ideal_min = 100.0 / active_shifts
                 scale = 50.0 / ideal_min
-                balanced_score = min(50.0, min_pct * scale)
+                balanced_score = min(50.0, min(pcts) * scale)
             else:
                 balanced_score = 0.0
 
             per_employee_shift_balance.append(balanced_score)
-
-    # end of employee loop
 
     if team_satisfaction_values:
         team_satisfaction = round(sum(team_satisfaction_values) / len(team_satisfaction_values), 2)
     else:
         team_satisfaction = 0
 
-    print(per_employee_shift_balance)
     shift_balance = round(min(per_employee_shift_balance), 2) if per_employee_shift_balance else 0
 
-    def givenShift(team_label, shift):
-        if shift == 1:
-            prefix = "M"
-        elif shift == 2:
-            prefix = "T"
-        elif shift == 3:
-            prefix = "N"
-        else:
-            return None  # unknown shift; skip
-        return f"{prefix}_{team_label}"
+    prefix_by_shift = {1: "M", 2: "T", 3: "N"}
 
-    # Minimums compliance (generic for any team code)
-    for (day, team_label, shift), required in mins.items():
-        col = f"Dia {day}"
-        if col not in df.columns:
-            continue
-        code = givenShift(team_label, shift)
-        if not code:
-            continue
-        assigned = sum(str(v).strip().upper() == code for v in df[col])
-        missing = max(0, required - assigned)
-        missed_team_min += int(missing)
+    def missing_for(requirements):
+        total = 0
+        for (day, team_label, shift), required in requirements.items():
+            if day not in period_day_nums:
+                continue
+            col = f"Dia {day}"
+            if col not in df.columns or shift not in prefix_by_shift:
+                continue
+            code = f"{prefix_by_shift[shift]}_{team_label}"
+            assigned = sum(str(v).strip().upper() == code for v in df[col])
+            total += int(max(0, required - assigned))
+        return total
 
+    missed_team_min = missing_for(mins)
+    missed_team_ideal = missing_for(ideals)
 
-    # Ideals compliance (generic for any team code)
-    missed_team_ideal = 0
-    for (day, team_label, shift), target in ideals.items():
-        col = f"Dia {day}"
-        if col not in df.columns:
-            continue
-        code = givenShift(team_label, shift)
-        if not code:
-            continue
-        assigned = sum(str(v).strip().upper() == code for v in df[col])
-        missing = max(0, target - assigned)
-        missed_team_ideal += int(missing)
-
-
-    result = {
-        "missedWorkDays": missed_work_days,
-        "missedVacationDays": missed_vacation_days,
-        "workHolidays": workHolidays,
+    kpis = {}
+    if work_target is not None:
+        kpis["missedWorkDays"] = round(missed_work_days, 2)
+    if vacation_target is not None:
+        kpis["missedVacationDays"] = round(missed_vacation_days, 2)
+    if special_limit is not None:
+        kpis["workHolidays"] = round(workHolidays, 2)
+    kpis.update({
         "tmFails": total_tm_fails,
         "consecutiveDays": consecutiveDays,
         "singleTeamViolations": single_team_violations,
@@ -519,7 +500,111 @@ def analyze(file, holidays, mins, employees, year=2025, rules=None):
         "missedTeamIdeal": missed_team_ideal,
         "shiftBalance": shift_balance,
         "teamSatisfactionLevel": team_satisfaction
+    })
+    return kpis
+
+
+def _monthly_workload_counts(df, dia_cols, period, special_days):
+    """
+    Raw workload counts for one period, summed over all employees, with no
+    quota attached:
+      - workedDays / vacationDays: work shifts and 'F' days in the period
+      - specialDaysWorked: holiday/Sunday work shifts in the period
+      - specialDaysWorkedCumulativeMax: the highest number of holiday/Sunday
+        days any single employee has worked from day 1 up to the end of the
+        period (compare with the annual limit of 22)
+    """
+    p_start, p_end = period
+    period_cols = dia_cols[p_start:p_end]
+    period_set = set(period_cols)
+    special_cols = [c for c in dia_cols if int(c.split()[1]) in special_days]
+    special_in_period = [c for c in special_cols if c in period_set]
+    special_until_end = [c for c in special_cols if dia_cols.index(c) < p_end]
+
+    worked = vacation = special = 0
+    cumulative_max = 0
+    for _, row in df.iterrows():
+        worked += sum(_is_work_shift(row[c]) for c in period_cols)
+        vacation += sum(str(row[c]).strip() == 'F' for c in period_cols)
+        special += sum(_is_work_shift(row[c]) for c in special_in_period)
+        cumulative_max = max(cumulative_max, sum(_is_work_shift(row[c]) for c in special_until_end))
+    return {
+        "workedDays": worked,
+        "vacationDays": vacation,
+        "specialDaysWorked": special,
+        "specialDaysWorkedCumulativeMax": cumulative_max,
     }
+
+
+def _day_columns(df):
+    """Day columns ordered by day number ("Dia 1" ... "Dia N")."""
+    cols = []
+    for col in df.columns:
+        m = re.match(r"^Dia\s+(\d+)$", str(col))
+        if m:
+            cols.append((int(m.group(1)), col))
+    cols.sort()
+    return [c for _, c in cols]
+
+
+def _month_periods(dia_cols, year):
+    """Yield (month_number, (start_idx, end_idx), days_in_month) over dia_cols."""
+    buckets = {}
+    for idx, col in enumerate(dia_cols):
+        day_num = int(col.split()[1])
+        date = pd.Timestamp(f"{int(year)}-01-01") + pd.Timedelta(days=day_num - 1)
+        if date.year != int(year):
+            continue
+        lo, hi = buckets.get(date.month, (idx, idx + 1))
+        buckets[date.month] = (min(lo, idx), max(hi, idx + 1))
+    for month in sorted(buckets):
+        yield month, buckets[month], pd.Timestamp(year=int(year), month=month, day=1).days_in_month
+
+
+def _holiday_day_numbers(holidays):
+    """
+    Day-of-year numbers of the holidays. Accepts day numbers (ints) or
+    date-like keys, e.g. the result of holidays.country_holidays().
+    """
+    days = set()
+    for h in holidays or []:
+        if isinstance(h, int):
+            days.add(h)
+        elif hasattr(h, "timetuple"):
+            days.add(h.timetuple().tm_yday)
+    return days
+
+
+def analyze(file, holidays, mins, employees, year=2025, rules=None, monthly=False):
+    """
+    Full-year shift KPIs against the annual quotas (223 worked days, 30 vacation
+    days, at most 22 holiday/Sunday days). With monthly=True the result also
+    carries "monthlyBreakdown": the quota-free KPIs per month (coverage, rule
+    violations, balance) plus raw workload counts, to see how quality evolves
+    over the year. The annual quotas are not prorated per month.
+    """
+    print(f"Analyzing file: {file}")
+    df = pd.read_csv(file, encoding='ISO-8859-1')
+
+    print(f"Year: {year}")
+    print(f"Holidays: {holidays}")
+    print(f"Minimuns: {mins}")
+    print(f"Employees: {employees}")
+
+    mins, ideals = parse_requirements(mins)
+    teams = parse_employees(employees)
+    holidays = _holiday_day_numbers(holidays)
+
+    # Sundays of the given year (day-of-year numbers)
+    sunday = [d.dayofyear for d in pd.date_range(start=f'{year}-01-01', end=f'{year}-12-31')
+              if d.weekday() == 6]
+
+    dia_cols = _day_columns(df)
+
+    result = _compute_period_kpis(
+        df, dia_cols, (0, len(dia_cols)), mins, ideals, teams, sunday, holidays,
+        ANNUAL_WORK_DAYS_TARGET, ANNUAL_VACATION_DAYS_TARGET, ANNUAL_SPECIAL_DAYS_LIMIT,
+    )
 
     # Optional KPI for fixed folga rules.
     # Uses the same vacation-aware target semantics as the solvers:
@@ -527,6 +612,23 @@ def analyze(file, holidays, mins, employees, year=2025, rules=None):
     fixed_days_off_violations = _compute_fixed_days_off_violations(df, year, rules)
     if fixed_days_off_violations is not None:
         result["fixedDaysOffViolations"] = fixed_days_off_violations
+
+    if monthly:
+        special_days = holidays.union(sunday)
+        breakdown = []
+        for month, period, _ in _month_periods(dia_cols, year):
+            month_kpis = _compute_period_kpis(
+                df, dia_cols, period, mins, ideals, teams, sunday, holidays,
+            )
+            month_kpis.update(_monthly_workload_counts(df, dia_cols, period, special_days))
+            month_kpis["specialDaysLimit"] = ANNUAL_SPECIAL_DAYS_LIMIT
+            month_cols = dia_cols[period[0]:period[1]]
+            month_df = df[["funcionario"] + month_cols]
+            month_fixed = _compute_fixed_days_off_violations(month_df, year, rules)
+            if month_fixed is not None:
+                month_kpis["fixedDaysOffViolations"] = month_fixed
+            breakdown.append({"month": month, "days": len(month_cols), **month_kpis})
+        result["monthlyBreakdown"] = breakdown
 
     return result
 

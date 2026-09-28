@@ -360,7 +360,8 @@ def callback(ch, method, properties, body):
                 print(f"[DEBUG] Using Sisqual bundle-native KPI verifier for {problem_path}")
             elif problem_type == "shifts":
                 # ✅ FIX: pass mins_content (CSV text) instead of mins_template_name (string name)
-                result = verifier(files[0], holidays, mins_content, employees, year, rules=rules)
+                # Full-year KPIs plus a per-month breakdown for the degradation chart.
+                result = verifier(files[0], holidays, mins_content, employees, year, rules=rules, monthly=True)
             else:
                 result = verifier(files[0], holidays, mins_content, employees, year)
 
