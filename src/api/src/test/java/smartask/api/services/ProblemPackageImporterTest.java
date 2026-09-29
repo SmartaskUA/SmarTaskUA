@@ -159,6 +159,8 @@ class ProblemPackageImporterTest {
         assertEquals(Map.of("problemId", "C2"), importer.importZip(upload, false));
         Path stored = repo.resolve("data/problems/uploads/C2/problem.json");
         assertTrue(Files.isRegularFile(stored));
+        assertTrue(Files.getPosixFilePermissions(stored.getParent())
+                .contains(java.nio.file.attribute.PosixFilePermission.OTHERS_READ), "upload folder must be readable");
         verify(problems).save(argThat((ProblemDefinition d) ->
                 "C2".equals(d.getProblemId()) && "data/problems/uploads/C2/problem.json".equals(d.getProblemPath())));
 

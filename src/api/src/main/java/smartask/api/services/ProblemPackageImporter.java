@@ -21,6 +21,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -123,7 +124,9 @@ public class ProblemPackageImporter {
     /** Write into a temporary folder first, then move it into place, so a failed upload leaves nothing half-written. */
     private static void write(Path uploads, Path target, Map<String, byte[]> files) throws IOException {
         Files.createDirectories(uploads);
-        Path staging = Files.createTempDirectory(uploads, ".tmp-");
+        // Not createTempDirectory: that is always mode 700, and the stored package must stay
+        // readable to whoever inspects data/problems (the API container writes it as root).
+        Path staging = Files.createDirectory(uploads.resolve(".tmp-" + UUID.randomUUID()));
         try {
             for (Map.Entry<String, byte[]> entry : files.entrySet()) {
                 Files.write(staging.resolve(entry.getKey()), entry.getValue());
