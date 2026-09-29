@@ -1,5 +1,7 @@
 # Sisqual Infeasibility Report Rules
 
+> **Legacy (v2.2):** applies to `ILP_Sisqual_Hours`, `CSP_Sisqual_Hours` and `Puzzle_Sisqual`. Schema v4 solvers report `INVALID_V4_PACKAGE` / `SOLVER_INFEASIBLE` / `SOLVER_NO_SOLUTION` instead; see [how-to-solve.md](how-to-solve.md#when-it-fails).
+
 This document lists the validation/report rules currently covered by the Sisqual infeasibility report flow.
 
 The implementation is in `src/scheduler/validators/sisqual_feasibility.py`.

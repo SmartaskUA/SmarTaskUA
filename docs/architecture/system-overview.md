@@ -64,7 +64,7 @@
 1. User configures schedule via Web UI
 2. Frontend sends request to API
 3. API publishes task to RabbitMQ (`task-queue`)
-4. Scheduler consumes task, runs algorithm
+4. Scheduler consumes task, runs algorithm (v4 packages via `problem_v4`, see `docs/architecture/solve-flow.md`)
 5. Scheduler saves result to MongoDB
 6. Scheduler publishes status to RabbitMQ (`status-queue`)
 7. API receives status, notifies Frontend via WebSocket
@@ -90,4 +90,5 @@ All services are served behind the nginx reverse proxy:
 - Service specifics: See READMEs in `src/api/`, `src/frontend/`, `src/json-generator/`, `src/scheduler/`, `src/analyzer/`
 - Infrastructure: See `infra/README.md`
 - Configuration: See `config/README.md`
-- problem.json flow to solvers: See `docs/architecture/problem-json-flow.md`
+- How a solve request flows: See `docs/architecture/solve-flow.md`
+- The v4 parser: See `docs/architecture/v4-parser.md`

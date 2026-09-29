@@ -126,7 +126,7 @@ Define employee vacation days and other absences for the year.
 ### Scheduler Service
 - Loads `rules.json` from service root directory
 - Applies rules during schedule generation
-- All algorithms receive rules as parameter
+- Legacy algorithms receive rules as a parameter; schema v4 solvers read labour law from the package (`constraints.hard`)
 
 ### Frontend Service
 - Downloads CSV templates from API
