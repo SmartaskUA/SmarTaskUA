@@ -106,5 +106,8 @@ src/scheduler/algorithms/GA/Results_GA_3Shifts.tex
 # Solver output artifacts (keep generated CSVs out of source dirs)
 infra/*.csv
 schedule_cpsat*.csv
+# `make solve` / `python -m scheduler solve` results, and packages uploaded through the UI
+exports/
+data/problems/uploads/
 
 *.ppk

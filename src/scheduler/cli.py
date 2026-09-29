@@ -18,6 +18,7 @@ from .export_utils import (
 )
 
 from .layout_generator import build_team_layout_employees, write_json_file
+from .solve_command import add_solve_parser, run_solve
 
 
 def _bootstrap_import_paths() -> None:
@@ -121,6 +122,9 @@ def _parse_value(raw_value: str) -> Any:
     return candidate
 
 
+_PATH_PARAM_SUFFIXES = ("_dir", "_file", "_path")
+
+
 def _parse_key_value_pairs(items: Iterable[str]) -> Dict[str, Any]:
     parsed: Dict[str, Any] = {}
     for item in items:
@@ -130,7 +134,12 @@ def _parse_key_value_pairs(items: Iterable[str]) -> Dict[str, Any]:
         key = key.strip()
         if not key:
             raise ValueError(f"Empty key in: {item!r}")
-        parsed[key] = _parse_value(raw_value)
+        # A path-valued parameter (result_dir, results_log_file, ...) stays a path:
+        # _parse_value would replace an existing file with its contents.
+        if key.endswith(_PATH_PARAM_SUFFIXES):
+            parsed[key] = raw_value.strip()
+        else:
+            parsed[key] = _parse_value(raw_value)
     return parsed
 
 
@@ -321,6 +330,8 @@ def _make_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--json", action="store_true", help="Print machine-readable JSON output")
     run_parser.add_argument("--output", help="Write the aggregated result JSON to this file")
 
+    add_solve_parser(subparsers)
+
     param_parser = subparsers.add_parser(
         "param",
         help="List the parameters accepted by one or all registered algorithms",
@@ -427,7 +438,7 @@ def run_selected_algorithms(args: argparse.Namespace) -> List[Dict[str, Any]]:
         selected_algorithms.extend(part.strip() for part in item.split(",") if part.strip())
 
     if not selected_algorithms:
-        raise ValueError("Select at least one algorithm with --algorithm or use --all.")
+        raise ValueError("Select at least one algorithm with --algorithm.")
 
     defaults, config_overrides = _load_config_file(None)
     shared_kwargs = _build_shared_kwargs(args, defaults)
@@ -495,6 +506,9 @@ def _json_safe_results(results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 def main(argv: List[str] | None = None) -> int:
     parser = _make_parser()
     args = parser.parse_args(argv)
+
+    if args.command == "solve":
+        return run_solve(args, _parse_key_value_pairs)
 
     if args.command == "list":
         # Chama o task manager via import para obter a lista de algoritmos registrados
