@@ -33,15 +33,19 @@ const Problems = () => {
   const [jsonError, setJsonError] = useState("");
   const [jsonLoading, setJsonLoading] = useState(false);
   const [showJson, setShowJson] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [upload, setUpload] = useState(null); // { severity, text, file? } - file kept to offer "Replace"
   const navigate = useNavigate();
 
-  const fetchProblems = async () => {
+  const fetchProblems = async (selectId) => {
     try {
       setLoading(true);
       const res = await axios.get(`${baseurl}/problems`);
       const list = Array.isArray(res.data) ? res.data : [];
       setProblems(list);
-      if (!selectedProblemId && list.length) {
+      if (selectId) {
+        setSelectedProblemId(selectId);
+      } else if (!selectedProblemId && list.length) {
         setSelectedProblemId(list[0].problemId);
       }
       setError("");
@@ -51,6 +55,32 @@ const Problems = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Upload a schema v4 package: the ZIP the JSON wizard downloads (POST /problems/upload).
+  const uploadPackage = async (file, replace = false) => {
+    if (!file) return;
+    const form = new FormData();
+    form.append("file", file);
+    try {
+      setUploading(true);
+      const res = await axios.post(`${baseurl}/problems/upload${replace ? "?replace=true" : ""}`, form);
+      const problemId = res.data?.problemId;
+      setUpload({ severity: "success", text: `Uploaded ${problemId}. It is ready to solve.` });
+      await fetchProblems(problemId);
+    } catch (err) {
+      const text = err.response?.data?.message || "Upload failed.";
+      const canReplace = err.response?.status === 409 && text.includes("replace=true");
+      setUpload({ severity: "error", text, file: canReplace ? file : null });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFileChosen = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = ""; // choosing the same file again still fires onChange
+    uploadPackage(file);
   };
 
   const fetchProblemJson = async (problemId) => {
@@ -130,7 +160,8 @@ const Problems = () => {
       }
       if (node && typeof node === "object") {
         Object.entries(node).forEach(([key, value]) => {
-          if (key === "dataFile" && typeof value === "string" && value.trim()) {
+          // dataFile (v2.x) and dataFileDays / dataFilePeriods / dataFileShifts (v4)
+          if (key.startsWith("dataFile") && typeof value === "string" && value.trim()) {
             dataFiles.add(value);
           } else {
             collectFiles(value);
@@ -187,18 +218,47 @@ const Problems = () => {
               Browse the problem library and launch a schedule in one click.
             </Typography>
           </Box>
-          <Button
-            variant="outlined"
-            onClick={fetchProblems}
-            disabled={loading}
-            className="problems-action ghost"
-          >
-            Refresh
-          </Button>
+          <Stack direction="row" gap={1}>
+            <Button
+              variant="contained"
+              component="label"
+              disabled={uploading}
+              className="problems-action primary"
+            >
+              {uploading ? "Uploading..." : "Upload v4 package (.zip)"}
+              <input hidden type="file" accept=".zip,application/zip" onChange={handleFileChosen} />
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => fetchProblems()}
+              disabled={loading}
+              className="problems-action ghost"
+            >
+              Refresh
+            </Button>
+          </Stack>
         </Stack>
 
         <Collapse in={!!error}>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        </Collapse>
+        <Collapse in={!!upload}>
+          {upload && (
+            <Alert
+              severity={upload.severity}
+              sx={{ mb: 2 }}
+              onClose={() => setUpload(null)}
+              action={
+                upload.file ? (
+                  <Button color="inherit" size="small" onClick={() => uploadPackage(upload.file, true)}>
+                    Replace
+                  </Button>
+                ) : null
+              }
+            >
+              {upload.text}
+            </Alert>
+          )}
         </Collapse>
 
         <Box
@@ -286,6 +346,18 @@ const Problems = () => {
                   )}
                   <Divider />
                   <Stack direction="row" flexWrap="wrap" gap={1}>
+                    {selectedProblem.schemaVersion && (
+                      <Chip label={`Schema v${selectedProblem.schemaVersion}`} className="problems-chip" />
+                    )}
+                    {selectedProblem.start && (
+                      <Chip
+                        label={`Period: ${selectedProblem.start} to ${selectedProblem.end}`}
+                        className="problems-chip"
+                      />
+                    )}
+                    {selectedProblem.employeeCount > 0 && (
+                      <Chip label={`Employees: ${selectedProblem.employeeCount}`} className="problems-chip" />
+                    )}
                     {problemMeta?.shifts != null && (
                       <Chip label={`Shifts: ${problemMeta.shifts}`} className="problems-chip" />
                     )}

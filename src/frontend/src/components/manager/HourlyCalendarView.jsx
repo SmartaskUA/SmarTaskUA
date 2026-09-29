@@ -2,10 +2,12 @@ import React, { useMemo } from "react";
 import { Box, Chip, Paper, Typography } from "@mui/material";
 import LegendBox from "./LegendBox";
 import {
+  IDLE_TAG,
   buildTeamPalette,
   classifyScheduleCell,
   getTeamColor,
   resolveEmployeeDisplay,
+  skillTagLabel,
 } from "../../utils/scheduleCalendar";
 
 const statusPalette = {
@@ -15,6 +17,9 @@ const statusPalette = {
   warning: { bg: "#ffe4e6", border: "#fb7185", text: "#9f1239" },
   text: { bg: "#f1f5f9", border: "#cbd5e1", text: "#0f172a" },
 };
+
+// A v4 segment covering no demanded skill: on shift, but neutral.
+const IDLE_PALETTE = { bg: "#f8fafc", border: "#e2e8f0", text: "#94a3b8" };
 
 const dayCellWidth = 170;
 const employeeColumnWidth = 250;
@@ -29,7 +34,7 @@ const HourlyCalendarView = ({ data = [], monthColumns = [], employees = [] }) =>
         const cell = classifyScheduleCell(row?.[column.index + 1]);
         if (cell.kind === "hourly") {
           cell.segments.forEach((segment) => {
-            if (segment.team) teams.push(segment.team);
+            if (segment.team && segment.team !== IDLE_TAG) teams.push(segment.team);
           });
         }
       });
@@ -38,7 +43,7 @@ const HourlyCalendarView = ({ data = [], monthColumns = [], employees = [] }) =>
   }, [rows, monthColumns]);
 
   const teamLegends = Object.entries(teamPalette).map(([team, palette]) => ({
-    label: team,
+    label: skillTagLabel(team),
     color: palette.bg,
   }));
 
@@ -246,7 +251,8 @@ const HourlyCalendarView = ({ data = [], monthColumns = [], employees = [] }) =>
                     {cell.kind === "hourly" ? (
                       <Box display="flex" flexDirection="column" gap={0.6}>
                         {cell.segments.map((segment, index) => {
-                          const palette = getTeamColor(segment.team, teamPalette);
+                          const palette =
+                            segment.team === IDLE_TAG ? IDLE_PALETTE : getTeamColor(segment.team, teamPalette);
                           return (
                             <Box
                               key={`${column.key}-${index}`}
@@ -262,7 +268,7 @@ const HourlyCalendarView = ({ data = [], monthColumns = [], employees = [] }) =>
                                 {segment.time}
                               </Typography>
                               <Typography fontSize={10} color={palette.text} fontWeight={700}>
-                                {segment.team}
+                                {segment.label || segment.team}
                               </Typography>
                             </Box>
                           );
