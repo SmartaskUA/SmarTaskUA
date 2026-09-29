@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -17,7 +18,9 @@ public class SchedulingAlgorithmRegistry {
 
     public enum Granularity {
         SHIFT,
-        HOURS
+        HOURS,
+        /** A schema v4 package (problem.json with "schemaVersion": "4.0"), read by src/scheduler/problem_v4. */
+        V4
     }
 
     public enum InputKind {
@@ -66,13 +69,16 @@ public class SchedulingAlgorithmRegistry {
         register(specs, "Genetic Algorithm 3-Shift", UiMode.PROBLEM, Granularity.SHIFT, InputKind.PROBLEM_BUNDLE);
         register(specs, "ILP_Sisqual_Hours", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
         register(specs, "CSP_Sisqual_Hours", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
-        register(specs, "ILP_Sisqual_Hours_MathematicalDefinition7", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
-        register(specs, "CSP_Sisqual_Hours_MathematicalDefinition7", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
-        register(specs, "ILP_Sisqual_Hours_MathematicalDefinition5", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
-        register(specs, "CSP_Sisqual_Hours_MathematicalDefinition5", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
-        register(specs, "Hybrid_Heuristic_Sisqual_Levels_Included", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
-        register(specs, "Hybrid_Heuristic_Sisqual_3", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
         register(specs, "Puzzle_Sisqual", UiMode.PROBLEM, Granularity.HOURS, InputKind.PROBLEM_BUNDLE);
+
+        // Schema v4 solvers (see docs/how-to-solve.md). The MathematicalDefinition5 names are aliases.
+        register(specs, "ILP_Sisqual_Hours_MathematicalDefinition7", UiMode.PROBLEM, Granularity.V4, InputKind.PROBLEM_BUNDLE);
+        register(specs, "CSP_Sisqual_Hours_MathematicalDefinition7", UiMode.PROBLEM, Granularity.V4, InputKind.PROBLEM_BUNDLE);
+        register(specs, "Hybrid_Heuristic_Sisqual_Levels_Included", UiMode.PROBLEM, Granularity.V4, InputKind.PROBLEM_BUNDLE);
+        register(specs, "Hybrid_Heuristic_Sisqual_3", UiMode.PROBLEM, Granularity.V4, InputKind.PROBLEM_BUNDLE);
+        register(specs, "Genetic Algorithm v4", UiMode.PROBLEM, Granularity.V4, InputKind.PROBLEM_BUNDLE);
+        register(specs, "ILP_Sisqual_Hours_MathematicalDefinition5", UiMode.PROBLEM, Granularity.V4, InputKind.PROBLEM_BUNDLE);
+        register(specs, "CSP_Sisqual_Hours_MathematicalDefinition5", UiMode.PROBLEM, Granularity.V4, InputKind.PROBLEM_BUNDLE);
 
         register(specs, "hill climbing", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
         register(specs, "linear programming", UiMode.MANUAL, Granularity.SHIFT, InputKind.CONVERTED_TEMPLATE);
@@ -122,6 +128,15 @@ public class SchedulingAlgorithmRegistry {
         return find(algorithmName)
                 .map(spec -> spec.getUiMode() == UiMode.PROBLEM)
                 .orElse(false);
+    }
+
+    /** The problem-mode algorithms that can solve a problem of this granularity, in registry order. */
+    public List<String> problemAlgorithms(Granularity granularity) {
+        return algorithmsByKey.values().stream()
+                .filter(spec -> spec.getUiMode() == UiMode.PROBLEM && spec.getGranularity() == granularity)
+                .filter(spec -> !spec.getName().endsWith("MathematicalDefinition5"))
+                .map(AlgorithmSpec::getName)
+                .toList();
     }
 
     public boolean isManualAlgorithm(String algorithmName) {
