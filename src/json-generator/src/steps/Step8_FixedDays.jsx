@@ -1,30 +1,29 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  Alert, Box, Button, Chip, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography
+  Alert, Box, Button, Chip, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography
 } from '@mui/material';
-import { EventAvailable, LockOpen } from '@mui/icons-material';
+import { EventAvailable } from '@mui/icons-material';
 import StepLayout from '../components/wizard/StepLayout';
 import StepCard from '../components/wizard/StepCard';
 import FixedDaysMatrix from '../components/fixedDays/FixedDaysMatrix';
 import { FIXED_COLORS } from '../components/fixedDays/FixedDayCell';
-import { ConfirmDialog } from '../components/shared/fields';
 import { useWizard } from '../context/WizardContext';
 import { stepIndex } from '../constants/wizardSteps';
-import { activeContract, sidecarName } from '../v4/core';
+import { activeContract } from '../v4/core';
 import {
-  analyseFixedDay, clearFixedDays, entryDay, entryEmployee, holidayDates, horizonOf, menuCatalogue,
+  analyseFixedDay, entryDay, entryEmployee, holidayDates, horizonOf, menuCatalogue,
   openDays as openDaysOf, resultCounts, setFixedDay
 } from '../v4/operations';
 
 /**
  * Step 8: Fixed days — result.json. The days already decided: each is an
  * OutRosterTeamDays entry the solver must keep, and every day without one is
- * left open. An imported result, partial or complete, lands here.
+ * left open. An imported result, partial or complete, lands here. Days are
+ * fixed, changed and opened again in the grid, one cell at a time.
  */
 const Step8_FixedDays = () => {
-  const { state, updateState, transform, goToStep } = useWizard();
+  const { state, transform, goToStep } = useWizard();
   const [open, setOpen] = useState(false);
-  const [clearing, setClearing] = useState(false);
 
   const employees = state.employees.list;
   const entries = state.result.entries;
@@ -108,30 +107,13 @@ const Step8_FixedDays = () => {
           <Chip size="small" label={`${totals.rest} rest`} sx={{ bgcolor: FIXED_COLORS.rest }} />
           {totals.conflicts > 0 && <Chip size="small" color="error" label={`${totals.conflicts} contradict their cell`} />}
         </Box>
-        <Alert severity="info" sx={{ mb: 2 }}>
+        <Alert severity="info">
           A result may be partial. Every entry is a fixed day, held as a hard rule to its schedule_input cell: a blank
           or unavailable cell must be a rest, <code>A</code> the contract&apos;s length, <code>8</code> exactly
           8 hours, and a window the shift&apos;s interval. The labour law (max consecutive work days, max work days in a
           week, min rest between shifts) is checked over the fixed days, where an open day breaks a run. A day with no
           entry is open.
         </Alert>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-          <TextField
-            size="small"
-            label="TeamCode for new days"
-            value={state.result.teamCode ?? ''}
-            onChange={(e) => updateState('result.teamCode', e.target.value)}
-            helperText="WFM's Nr column. Days already fixed keep their own."
-            sx={{ width: 260 }}
-          />
-          <Typography variant="body2" color="text.secondary" sx={{ flex: 1, minWidth: 240, pt: 1 }}>
-            Written as <code>{resultFile}</code> with <code>{sidecarName(resultFile)}</code> (the codes it uses), only
-            when at least one day is fixed. Every entry carries RosterCode <code>{state.metadata.rosterCode || '—'}</code>.
-          </Typography>
-          <Button color="error" startIcon={<LockOpen />} disabled={!entries.length} onClick={() => setClearing(true)}>
-            Open every day
-          </Button>
-        </Box>
       </StepCard>
 
       {entries.length > 0 && (
@@ -179,17 +161,6 @@ const Step8_FixedDays = () => {
           onSet={onSet}
         />
       )}
-
-      <ConfirmDialog
-        open={clearing}
-        title="Open every day?"
-        confirmLabel="Open every day"
-        confirmColor="error"
-        onCancel={() => setClearing(false)}
-        onConfirm={() => { transform(clearFixedDays); setClearing(false); }}
-      >
-        {`All ${entries.length} fixed day(s) are removed, and ${resultFile} is no longer written.`}
-      </ConfirmDialog>
     </StepLayout>
   );
 };

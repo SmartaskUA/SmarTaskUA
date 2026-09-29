@@ -499,11 +499,6 @@ export function setFixedDay(state, eid, date, code) {
   return { ...state, result: { ...state.result, entries: next } };
 }
 
-/** Open every fixed day. */
-export function clearFixedDays(state) {
-  return { ...state, result: { ...state.result, entries: [] } };
-}
-
 /**
  * {entries, fixed, expected, open}: fixed counts the distinct employee-days in
  * the roster and the scope, the way the validator's rosterDaysLeft does.
