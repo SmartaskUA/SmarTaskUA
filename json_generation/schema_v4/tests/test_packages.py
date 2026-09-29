@@ -1,7 +1,9 @@
 """Folder-level orchestration and the command line."""
 
 
-from helpers import C2, EXAMPLES, TEMPLATES, run_cli
+import shutil
+
+from helpers import C2, EXAMPLES, TEMPLATES, assert_isolated, run_cli
 
 from schema_v4 import validator
 
@@ -28,7 +30,7 @@ def test_a_file_that_is_neither_form_is_skipped(tmp_path, make_result_fixture):
 
 def test_tree_walks_every_package():
     tree = validator.validate_tree(EXAMPLES)
-    assert set(tree) == {"cenario2_retail"}
+    assert set(tree) == {"cenario2_retail", "cenario2_input_only", "cenario2_partial"}
 
 
 def test_tree_reports_a_top_level_package_under_its_own_key(tmp_path, make_fixture):
@@ -41,6 +43,54 @@ def test_templates_are_a_full_package():
     reports = validator.validate_package(TEMPLATES)
     assert all(r.ok for r in reports.values()), \
         {k: v.errors for k, v in reports.items() if not v.ok}
+    assert reports["(package)"].stats["menu"] is True
+    assert reports["(package)"].stats["result"] == "result_template.json"
+
+
+# -- package shapes ----------------------------------------------------------
+
+def test_the_smallest_package_is_the_problem_and_its_four_csvs(make_fixture):
+    """No menu, no result: still a complete package, with nothing to say about it."""
+    path = make_fixture(mutate_problem=lambda d: d.pop("schedules"))
+    for name in ("result_template.json", "result_template_schedules.csv",
+                 "schedules_template.csv"):
+        (path.parent / name).unlink()
+    reports = validator.validate_package(path.parent)
+    assert set(reports) == {"problem_template.json", "(package)"}
+    for name, r in reports.items():
+        assert r.ok and not r.warnings, (name, r.errors, r.warnings)
+    stats = reports["(package)"].stats
+    assert stats["forms"] == ["input"]
+    assert stats["menu"] is False and stats["result"] is None
+
+
+def test_two_problems_in_one_package(make_fixture):
+    path = make_fixture()
+    shutil.copyfile(path, path.parent / "problem_copy.json")
+    assert_isolated(validator.validate_package(path.parent)["(package)"],
+                    "a package carries one input problem, but this one has 2")
+
+
+def test_two_results_in_one_package(make_fixture):
+    path = make_fixture()
+    shutil.copyfile(path.parent / "result_template.json", path.parent / "result_copy.json")
+    assert_isolated(validator.validate_package(path.parent)["(package)"],
+                    "a package carries at most one result, but this one has 2")
+
+
+def test_a_csv_nothing_refers_to_warns(make_fixture):
+    path = make_fixture()
+    (path.parent / "notes.csv").write_text("a,b\n1,2\n", encoding="utf-8")
+    assert_isolated(validator.validate_package(path.parent)["(package)"],
+                    "notes.csv sits in the package but nothing refers to it",
+                    want_error=False)
+
+
+def test_a_menu_the_problem_forgot_to_name_warns(make_fixture):
+    """The case the check exists for: without it the menu is silently ignored."""
+    path = make_fixture(mutate_problem=lambda d: d.pop("schedules"))
+    assert_isolated(validator.validate_package(path.parent)["(package)"],
+                    "schedules_template.csv sits in the package", want_error=False)
 
 
 # -- the CLI -----------------------------------------------------------------

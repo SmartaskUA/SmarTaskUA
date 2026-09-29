@@ -4,6 +4,29 @@ JSON carries structure; four CSVs carry the matrices that would bloat it, and a 
 
 ---
 
+## The package
+
+A package is one folder. The validator finds its documents by content, not by name — a problem carries `"form": "input"`, a result carries `OutRosterTeamDays` — and the problem names its CSVs.
+
+| | file | named by |
+|---|---|---|
+| **always** | the problem (`problem.json`) | — |
+| **always** | `days_demand.csv`, `periods_demand.csv`, `shifts_demand.csv` | `demand.dataFileDays` / `dataFilePeriods` / `dataFileShifts` |
+| **always** | `schedule_input.csv` | `scheduleInput.dataFile` |
+| optional | `schedules.csv`, the shift menu | `schedules.dataFile` |
+| optional | the result (`result.json`), which may be **partial** | — |
+| with a result | `result_schedules.csv`, the codes it used | convention: `<result stem>_schedules.csv` |
+
+So a package is the problem and its four CSVs, plus the menu if it has one, plus a result and its sidecar if it has one. [examples/](../examples/) ships all three shapes: `cenario2_input_only`, `cenario2_retail` (complete result), `cenario2_partial` (partial result).
+
+At the folder level:
+
+- **One problem.** Two is an error, because a result beside them could not tell which to be checked against.
+- **At most one result.** Two is an error: each fixes days, so two would disagree about which stand.
+- **Every CSV is accounted for.** A CSV that neither the problem nor the result's sidecar convention names is a warning — most often a `schedules.csv` the problem forgot to point at, which would otherwise be silently ignored.
+
+---
+
 ## Time, and the one place it is not minutes
 
 Durations are **integer minutes** — `workMinutesPerDay`, `ScheduleWeightMinutes`, `startMin`/`endMin`, every `parameters` value ending in `Minutes`. `timeGrid.slotMinutes` (SISQUAL emits 30, must divide 1440) cuts the day into the timeslots `T` the model reasons over.
@@ -132,7 +155,7 @@ Rules above the contract level. v3.0 removed this block outright and treated a l
   "startDate": "2026-01-01T00:00:00", "enabled": true }
 ```
 
-`parameters` is a deliberately open bag. The validator acts on `MaxConsecutiveWorkDays` and `MaxConsecutiveWorkDaysInWeek` and carries the rest unread — which is the stored-but-ignored trap v3.0 cleaned out, accepted here only because the block is genuinely populated and a consumer is coming.
+`parameters` is a deliberately open bag. The validator acts on `MaxConsecutiveWorkDays` and `MaxConsecutiveWorkDaysInWeek` in both forms, and on `MinDistanceBetweenShiftsInMinutes` over a result's fixed days — only a fixed shift has clock times to measure rest between. It carries the rest unread — which is the stored-but-ignored trap v3.0 cleaned out, accepted here only because the block is genuinely populated and a consumer is coming.
 
 `constraints.soft[]` is present and empty in every bundle, so its element shape is unknown and the schema leaves it unconstrained.
 
@@ -157,13 +180,34 @@ A row with **no window and zero weight is a rest sentinel**, and that is how a s
 
 ## Result form
 
-The output half: what a solver chose, in the shape WFM ingests. It does not restate the problem, it references it:
+What a solver chose, or has so far, in the shape WFM ingests. It does not restate the problem, it references it:
 
 - `RosterCode` must equal the problem's `metadata.rosterCode`.
 - `EmployeeCode` must be an employee, `Date` must be in `temporalScope`, and there must be at most one entry per employee-day.
 - `ScheduleCode` must resolve in the menu, when one is supplied — a result may only use shifts the problem offers.
 - A sentinel code means rest rather than a worked block.
-- A day the problem marked `unavailable` may not carry a working ScheduleCode.
+
+### Partial results: the entries are fixed
+
+A result may leave employee-days out. **The entries it carries are fixed, and a day with no entry is open** for the solver to fill. Nothing marks a result as partial — `OutRosterTeamDays` stays in Sisqual's exact shape — and a complete result is simply one with nothing left. The validator never complains about a missing day; it reports `rosterDaysExpected` (employees × days) and `rosterDaysLeft`. Whether WFM ever sends us one, and what it does with a day we leave out, is [next_meeting.md](../next_meeting.md) item 28 ("A result may be partial").
+
+Because a fixed day stands, it is held to the problem as a **hard rule**, and every contradiction is an **error**:
+
+| the day's `schedule_input.csv` cell | the fixed entry must be |
+|---|---|
+| *(blank)* — no assignments | a rest |
+| an `unavailable` day-off code | a rest |
+| a `preferable` day-off code | anything — working a soft day off is allowed |
+| `A` | a shift of the contract's `workMinutesPerDay` |
+| `8` | a shift of exactly those hours |
+| `EQUALS:a-b` | exactly that block. A split `EQUALS` (several ranges) cannot be fixed at all: a ScheduleCode is one interval |
+| `INCLUDE:a-b[,…]` | a shift covering every listed window, of the contract's length |
+| `WITHIN:a-b[,…]` | a shift inside one listed window, of the contract's length |
+| `EXCEPT:a-b[,…]` | a shift touching none of the windows, of the contract's length |
+
+"Length" is `scheduleWeightMinutes`, from the sidecar when there is one and the menu otherwise. A code whose definition is out of reach can still be judged work-or-rest, and nothing more.
+
+The labour law in `constraints.hard[]` is checked over the fixed days too — `MaxConsecutiveWorkDays` (a run of fixed worked days), `MaxConsecutiveWorkDaysInWeek` (fixed worked days per week), and `MinDistanceBetweenShiftsInMinutes` (the rest between fixed shifts on consecutive days). **An open day breaks a run**, because the solver may yet rest it: only what is already decided can be judged, so a finding here is a real violation.
 
 ### The sidecar catalogue
 

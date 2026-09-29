@@ -70,7 +70,7 @@ const VacationsTemplate = ({ name, data, year }) => {
       label: index + 1,
       days: days
         .map(Number)
-        .map((val, i, arr) => (i === 0 ? undefined : val))
+        .map((val, i) => (i === 0 ? undefined : val))
         .slice(1, maxDay + 1),
     }));
 

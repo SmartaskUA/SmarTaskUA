@@ -286,7 +286,7 @@ class InputChecksMixin:
             week_start = "monday"
         origin = days[0]
         preferable, unavailable = core.day_off_sets(p.get("scheduleInput", {}))
-        limits = self._legislation_limits()
+        limits = core.legislation_limits(p)
 
         weeks: dict[int, list[date]] = defaultdict(list)
         for d in days:
@@ -322,17 +322,6 @@ class InputChecksMixin:
                                 f"{d}, above MaxConsecutiveWorkDays of {cap}")
                         break
         r.stats["negative_n_wk"] = negative
-
-    def _legislation_limits(self) -> dict[str, int]:
-        """Flatten the enabled hard constraints' parameters into one lookup."""
-        out: dict[str, int] = {}
-        for entry in self.problem.get("constraints", {}).get("hard", []):
-            if entry.get("enabled") is False:
-                continue
-            for k, v in (entry.get("parameters") or {}).items():
-                if isinstance(v, int):
-                    out[k] = v
-        return out
 
     # -- Tier 4: reachability ---------------------------------------------
 

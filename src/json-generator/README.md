@@ -1,206 +1,112 @@
-# JSON Generator - Schema v2.6
+# JSON Generator — Schema v4.0
 
-User-friendly frontend wizard for generating schema v2.6 JSON + CSV pairs for employee scheduling problems.
-
-## Features
-
-- ✅ **10-Step Wizard**: Guides users through the entire JSON/CSV generation process
-- ✅ **Editable Theme**: All colors can be customized in `src/theme.config.js`
-- ✅ **MUI Components**: Built with Material-UI for consistency with main app
-- ✅ **Auto-Save**: Progress is automatically saved to localStorage
-- ✅ **Validation**: Real-time validation with error feedback
-- ✅ **Responsive**: Works on tablets and desktops
-
-The application is served at **http://localhost/json-gen** (via the nginx proxy); the standalone Vite dev server runs on port 5174.
-
-## Project Structure
+A wizard for authoring employee-scheduling problems in **schema v4.0**, the format
+defined in [`json_generation/schema_v4/`](../../json_generation/schema_v4/). It produces a
+package that validates clean with that folder's validator:
 
 ```
-src/
-├── components/
-│   ├── wizard/          # Stepper, NavigationButtons, StepCard
-│   ├── calendar/        # ScheduleMatrix, TimeConstraintDialog, MatrixCell
-│   ├── constraints/     # ConstraintCard, ConstraintsList, ParamEditor
-│   ├── demand/          # DemandCalendarGrid, WeeklyTemplateBuilder, DayDemandDetail
-│   ├── employees/       # EmployeeTable, EmployeeForm, CompetencyBuilder
-│   ├── import/          # CSVImporter, CSVPreview, ColumnMapper
-│   ├── organizational/  # OrganizationalUnitTable, OrganizationalUnitForm
-│   ├── optimization/    # AlgorithmSelector, ObjectiveDialog
-│   ├── preview/         # JsonPreview, CsvPreview
-│   ├── review/          # ValidationPanel, PreviewTabs, SummaryAccordions, DownloadPanel
-│   ├── shared/          # ImportPreviewModal
-│   ├── shifts/          # WorkPeriodForm, WorkPeriodTable, BreakBuilder
-│   └── project/         # ProjectManagerDialog (save/load/export projects)
-├── context/
-│   └── WizardContext.jsx    # Central state management
-├── steps/
-│   ├── Step1_QuickSetup.jsx         # ✅ Implemented
-│   ├── Step2_Contracts.jsx          # ✅ Implemented
-│   ├── Step3_OrganizationalUnits.jsx # ✅ Implemented
-│   ├── Step4_Employees.jsx          # ✅ Implemented
-│   ├── Step5_ScheduleInput.jsx      # ✅ Implemented
-│   ├── Step6_WorkPeriods.jsx        # ✅ Implemented
-│   ├── Step7_Demand.jsx             # ✅ Implemented
-│   ├── Step8_Constraints.jsx        # ✅ Implemented (hidden from stepper)
-│   ├── Step9_Optimization.jsx       # ✅ Implemented (hidden from stepper)
-│   └── Step10_ReviewGenerate.jsx    # ✅ Implemented
-├── utils/
-│   ├── generators/      # JSON/CSV generation logic
-│   ├── validators/      # Validation logic (master + per-step + cross-step)
-│   ├── parsers/         # CSV/JSON parsing
-│   └── helpers/         # Date, time, template, color helpers
-├── App.jsx              # Main application
-├── main.jsx             # Entry point
-├── theme.config.js      # 🎨 EDITABLE THEME CONFIGURATION
-├── theme.js             # MUI theme
-└── index.css            # Global styles
+problem.json            schemaVersion 4.0, form "input"
+days_demand.csv         workload minutes, per date and dimension
+periods_demand.csv      headcount, per date, dimension and window
+shifts_demand.csv       headcount, per date, dimension and window (workPeriod written empty)
+schedule_input.csv      one row per employee, one column per date — numeric cells are HOURS
+schedules.csv           the shift menu (optional)
+result.json             the fixed days, when any are fixed: a partial (or complete) result
+result_schedules.csv    its sidecar — the menu rows for the codes the result uses
 ```
 
-## Customizing Colors
+A result may be **partial**: its entries are fixed employee-days, each held as a hard rule to its
+`schedule_input.csv` cell and to the labour law, and every day without an entry is open for the
+solver (FORMAT.md, *Partial results*).
 
-Edit `src/theme.config.js` to customize the entire application's color palette:
+The canonical rules — units, the cell grammar, the grid, the traps — are in
+[`json_generation/schema_v4/docs/FORMAT.md`](../../json_generation/schema_v4/docs/FORMAT.md).
+The wizard is v4-only: v2.x output, projects and saved state are deprecated and are not migrated.
 
-```javascript
-export const themeConfig = {
-  primary: {
-    main: '#007bff',      // Change this to your primary color
-    light: '#4da3ff',
-    dark: '#0056b3'
-  },
-  success: {
-    main: '#28a745',      // Success/completed states
-  },
-  // ... more colors
-};
+The app is served at **http://localhost/json-gen** through nginx; the Vite dev server alone runs on
+port 5174 (`npm run dev`, then http://localhost:5174/json-gen/).
+
+## The steps
+
+| # | Step | Produces |
+|---|---|---|
+| 1 | **Setup** — problem id, roster code, slot grid, horizon, week start, holidays; or *start from a v4 bundle* | `metadata`, `timeGrid`, `temporalScope`, `calendar` |
+| 2 | **Contracts** — length of one working day, in minutes, checked against the grid | `contracts.definitions` |
+| 3 | **Dimensions** — the `(tableName, tableValue)` coordinates demand is keyed on | `demand.dimensions` |
+| 4 | **Employees** — date-ranged contracts, date-ranged competencies with levels (1 = highest); CSV import/export | `employees.list` |
+| 5 | **Schedule input** — the day-off palette (`preferable` / `unavailable`) and the matrix: `A`, hours, declared codes, `EQUALS`/`INCLUDE`/`WITHIN`/`EXCEPT` windows, blank | `scheduleInput`, `schedule_input.csv` |
+| 6 | **Demand** — periods via a weekly template (one lane per dimension) applied to a calendar; days and shifts as row tables (v4 defines no shift types, so `workPeriod` is written empty); per-grain CSV import/export | the three demand CSVs |
+| 7 | **Shift menu** — on by default; rest codes 1/3/4 plus worked shifts; can generate from contract lengths | `schedules.csv` |
+| 8 | **Fixed days** — a grid of employee × date: fix a day to a menu code, change it, or open it again; each cell shows the `schedule_input` value it must agree with, and a contradiction is flagged with the validator's reason | `result.json`, `result_schedules.csv` |
+| 9 | **Rules** — `priorityHierarchy` and labour law (`constraints.hard`) | `priorityHierarchy`, `constraints` |
+| 10 | **Review** — validation, a preview of every file, per-file download and a flat ZIP | — |
+
+Every step shows the validator's findings for that step. The Review step shows all of them,
+and download unlocks when there are no errors.
+
+Starting from a bundle takes the problem, its CSVs and, if present, one result with its
+`<stem>_schedules.csv` sidecar: the result's entries become the fixed days, partial or complete.
+Two results are refused, as the package rule says.
+
+**How the files are identified.** JSON by content: `"form": "input"` is the problem, an
+`OutRosterTeamDays` array is a result, whatever the files are called. A CSV's role comes first from
+the name the problem gives it (`demand.dataFile*`, `scheduleInput.dataFile`, `schedules.dataFile`;
+the sidecar by its `<stem>_schedules.csv` convention), and its columns must agree. When the named
+file is missing or has another file's columns, the one selected CSV whose columns fit the role is
+used and written back under the problem's name — days and periods, which share a header, are told
+apart by their windows. Two candidates for one role bind nothing. Files are matched by base name, so
+two *different* files with the same name (two package folders in one ZIP, say) are refused rather
+than one silently replacing the other. The import preview lists what happened to every file.
+
+**The menu and the result's sidecar.** The wizard keeps one list of codes, the shift menu:
+`schedules.csv` is written from it whole, and the sidecar is rebuilt from it with just the codes the
+fixed days use. On import nothing either file defines is dropped. A code only the sidecar has joins
+the menu; a problem with no menu starts one from the sidecar. Where the two define a code differently,
+the import asks which to keep, code by code: the menu's, the result's, or both (the result's under a
+new code, which the fixed days that use it move to). A menu row that fixed days use cannot be deleted
+in Shift Menu until those days change. Days are written back with the problem's
+`rosterCode`, string `EmployeeCode`s and midnight `Date`s; `TeamCode`, tasks and responsibilities pass
+through. No result is written while no day is fixed or the shift menu is off.
+
+## How it is built
+
+All schema knowledge lives in `src/v4/`, plain JavaScript with no React:
+
+| module | role |
+|---|---|
+| `core.js` | port of `schema_v4/src/schema_v4/core.py` — numbers (comma decimals), times, dates (UTC, DST-safe), the cell grammar, CSV reading (BOM, CRLF, `#` comments) |
+| `generate.js` | state → bundle; the only producer used by preview, download and validation |
+| `validate.js` | port of `common.py` + `validate_input.py`, run on the generated files; same checks, same wording, each finding tagged with its step |
+| `validateResult.js` | port of `validate_result.py`: each fixed day against its cell (`core.cellConflict`), the labour law over the fixed days, the sidecar, `rosterDaysLeft` |
+| `schema.js` | JSON Schema layer (ajv) over the vendored `schema_v4/schema-v4-input.json` and `schema-v4-result.json` |
+| `importBundle.js` | a v4 package (ZIP or files) → state, a result included; SISQUAL's current export is refused, not adapted |
+| `operations.js` | pure state transforms: cascading renames/deletes (fixed days follow employees, scope and menu codes), template application, menu generation, fixing days, the weekly load |
+| `state.js`, `persistence.js` | the state shape (mirrors the v4 document) and localStorage |
+
+The React side is `src/steps/` (one file per step) and `src/components/`, all reading
+`useWizard()` (`src/context/useWizard.js`), which `WizardProvider` in `src/context/WizardContext.jsx`
+supplies. A `.jsx` file exports only components; shared constants and helpers sit in plain `.js`
+modules beside them (`calendar/cellStyles.js`, `fixedDays/fixedDayLabels.js`, `demand/grains.js`), so
+React Fast Refresh can hot-reload every component and lint stays at zero warnings.
+
+`schema_v4/schema-v4-input.json` and `schema-v4-result.json` are vendored copies of the canonical
+schemas: the dev container mounts only this folder. A test fails if either copy drifts.
+
+## Tests
+
+```bash
+npm test                                           # vitest: domain, parity, round trip, render
+npx vite-node scripts/validate-with-python.mjs     # generated bundles through the Python validator
 ```
 
-## Wizard Steps
+- `src/v4/parity.test.js` checks the JS validators report exactly what the Python ones do on the
+  templates (clean), `cenario2_retail` (13 known warnings), the results of both and of
+  `cenario2_partial` (105 fixed, 360 left), and one broken fixed day at a time; and that importing
+  then regenerating each package reproduces every CSV byte for byte and every result entry.
+- `src/App.smoke.test.jsx` renders every step and the main dialogs, with an authored problem and
+  with Scenario 2 imported complete (`cenario2_retail`) and partial (`cenario2_partial`), drives the
+  Fixed days grid, and fails on any React warning.
 
-### ✅ Step 1: Quick Setup (Implemented)
-- Problem metadata (ID, description)
-- Temporal scope (year, dates, number of days)
-- Employee model selection (Team vs Competency)
-- Feature flags
+## Customizing colors
 
-### ✅ Step 2: Contracts (Implemented)
-- Define reusable contract types
-- Set work hours per day
-- Optional constraints (weekends only, max hours, etc.)
-- Add/Edit/Delete contracts
-
-### ✅ Step 3: Organizational Units (Implemented)
-- Define teams (team model) or competencies (competency model)
-
-### ✅ Step 4: Employees (Implemented)
-- Manual entry or CSV import (with preview & column mapping)
-- Assign teams/competencies and contracts
-
-### ✅ Step 5: Schedule Input Matrix (Implemented)
-- Visual matrix for employee availability and work requirements
-- **Work Requirements**: A (auto-allocate), 1-16 (specific hours)
-- **Time Window Constraints (v2.6)**: EQUALS:HH:MM-HH:MM, INCLUDE:HH:MM-HH:MM, EXCEPT:HH:MM-HH:MM
-- **Standard Constraints**: VAC (vacation), NOT (unavailable)
-- **Custom Constraints**: Define project-specific codes (DL, DLF, etc.)
-
-### ✅ Step 6: Work Periods (Implemented)
-- Define work period codes, names, time ranges
-- Fixed or flexible work periods
-- Break rules (meal, rest, other)
-- Timing modes: fixed, window, afterWork
-
-### ✅ Step 7: Demand Calendar (Implemented)
-- Coverage requirements per date/shift/team
-- Minimum, Ideal, Estimated values
-
-### ✅ Step 8: Constraints (Implemented — hidden from stepper UI)
-- **Hard Constraints**: Must be satisfied (max_consecutive_days, min_rest_hours, vacation_block, etc.)
-- **Soft Constraints**: With penalty weights (min_coverage, balance_workload, etc.)
-- **Advanced**: Day-off swapping, break rules, priority hierarchy (requires useAdvancedConstraints feature flag)
-
-### ✅ Step 9: Optimization (Implemented — hidden from stepper UI)
-- Algorithm selection
-- Objectives and weights
-
-### ✅ Step 10: Review & Generate (Implemented)
-- Master validation (per-step + cross-step) with errors/warnings
-- Preview JSON/CSV
-- Download `problem.json` + `demand.csv` + `schedule_input.csv` as a ZIP
-
-> **Note on hidden steps:** Steps 8 (Constraints) and 9 (Optimization) are intentionally hidden from the visible stepper to keep the main flow simple, but they are fully functional and editable. Sensible defaults are applied; advanced users can reach them programmatically or via the review step.
-
-## Development Roadmap
-
-### Phase 1: Foundation ✅ COMPLETE
-- [x] Project structure
-- [x] Theme configuration (editable)
-- [x] WizardContext state management
-- [x] Stepper navigation
-- [x] Step 1: Quick Setup
-- [x] Step 2: Contracts
-
-### Phase 2: Core Data ✅ COMPLETE
-- [x] Step 3: Organizational Units
-- [x] Step 4: Employees (with CSV import)
-- [x] Reusable table components
-
-### Phase 3: Scheduling ✅ COMPLETE
-- [x] Step 5: Schedule Input Matrix
-- [x] Step 6: Work Periods
-- [x] Step 7: Demand Calendar
-
-### Phase 4: Configuration ✅ COMPLETE
-- [x] Step 8: Constraints
-- [x] Step 9: Optimization
-
-### Phase 5: Generation & Polish ✅ COMPLETE
-- [x] Step 10: Review & Generate
-- [x] JSON/CSV generation logic
-- [x] File downloads (ZIP)
-- [ ] Python validator integration (deferred)
-- [ ] User-testing pass (in progress)
-
-## State Management
-
-The wizard uses React Context API for state management. All state is automatically saved to localStorage and restored on page reload.
-
-State structure matches schema v2.6:
-```javascript
-{
-  currentStep: 0,
-  stepCompleted: { 0: false, 1: false, ... },
-  metadata: { ... },
-  features: { ... },
-  temporalScope: { ... },
-  contracts: { definitions: [...] },
-  employees: { model, simple/competency: [...] },
-  organizationalUnits: { teams/competencies: [...] },
-  scheduleInput: { ... },
-  demand: { ... },
-  constraints: { ... },
-  optimization: { ... }
-}
-```
-
-## Technologies
-
-- **React 18**: UI framework
-- **Vite**: Build tool
-- **Material-UI v7**: Component library
-- **React Router v6**: Navigation
-- **date-fns**: Date operations
-- **PapaParse**: CSV parsing
-- **JSZip**: File bundling
-- **file-saver**: File downloads
-
-## Contributing
-
-1. Each step should be self-contained in `src/steps/`
-2. Use the `useWizard()` hook to access/update state
-3. Use `StepCard` for consistent styling
-4. Use `NavigationButtons` for step navigation
-5. Validate before allowing "Next"
-6. Mark step as completed on successful validation
-
-## License
-
-Part of SmarTask UA project.
+Edit `src/theme.config.js`.

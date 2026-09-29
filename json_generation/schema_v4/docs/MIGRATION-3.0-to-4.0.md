@@ -35,12 +35,12 @@ So v4.0 is not a redesign. It is v3.0 reconciled with what the other side actual
 | `demand.workPeriods[]` (`{code, name, timeRange}`) | there are no named, reusable periods any more; every demand row carries its own literal window. The name survives only as `shifts_demand.csv`'s `workPeriod`, which is Sisqual's `ShiftTypeCode` (M/T/N) — a different thing |
 | `contracts.definitions[].constraints{…}` | Sisqual never emits per-contract limits; the nearest equivalent is the roster-wide `constraints.hard[].parameters`, under different names |
 | the **expanded** form and `transform.py` | v4.0 has no synthesis step. Sisqual picks shifts from a catalogue rather than having them synthesised, so the expanded form has nothing to compile *into* until a v4 solver exists |
-| the **solution** form and `merge.py` | replaced by the result form, which is Sisqual's own `OutRosterTeamDays` payload. Warm-start seeding has no consumer in v4.0 |
+| the **solution** form and `merge.py` | replaced by the result form, which is Sisqual's own `OutRosterTeamDays` payload. Pinned days travel as a *partial* result: the entries it carries are fixed and the days it leaves out are open — see FORMAT.md, *Partial results* |
 | `contractAssignments[].end: null` as the *only* open-ended spelling | still the canonical one; Sisqual's `"9999-12-31"` is not accepted |
 
 ## Re-admitted
 
-v3.0 **removed** `constraints` and made a leftover block a validation *error*, on the principle that nothing enters the schema until a consumer reads it. v4.0 brings it back, because Sisqual now populates it with real labour law (`InpLabourLawCollection`) and the validator acts on two of its parameters.
+v3.0 **removed** `constraints` and made a leftover block a validation *error*, on the principle that nothing enters the schema until a consumer reads it. v4.0 brings it back, because Sisqual now populates it with real labour law (`InpLabourLawCollection`) and the validator acts on three of its parameters.
 
 This is a genuine reversal of a v3.0 decision, and worth naming as one. The discipline behind it is intact: the block returned only once it carried data a consumer reads. `constraints.soft[]` is still empty in every bundle, so its shape is left unconstrained rather than invented.
 
