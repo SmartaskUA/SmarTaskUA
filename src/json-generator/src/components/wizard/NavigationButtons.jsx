@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Button } from '@mui/material';
 import { ArrowBack, ArrowForward, Download } from '@mui/icons-material';
-import { useWizard } from '../../context/WizardContext';
+import { useWizard } from '../../context/useWizard';
 import { LAST_STEP_INDEX } from '../../constants/wizardSteps';
 
 /**

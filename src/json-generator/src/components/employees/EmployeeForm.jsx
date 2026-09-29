@@ -20,15 +20,6 @@ function overlaps(rows) {
   return out;
 }
 
-export function newEmployee(state) {
-  return {
-    id: '',
-    name: '',
-    contractAssignments: [{ contractType: state.contracts.definitions[0]?.id || '', start: state.temporalScope.start || '', end: null }],
-    competencyAssignments: []
-  };
-}
-
 /**
  * Add or edit one employee: identity, date-ranged contract membership, and
  * date-ranged, levelled competencies. Level 1 is the highest.

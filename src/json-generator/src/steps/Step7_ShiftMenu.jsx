@@ -7,7 +7,7 @@ import { Add, Edit, Delete, AutoFixHigh, Lock } from '@mui/icons-material';
 import StepLayout from '../components/wizard/StepLayout';
 import StepCard from '../components/wizard/StepCard';
 import { NumberField, TimeField } from '../components/shared/fields';
-import { useWizard } from '../context/WizardContext';
+import { useWizard } from '../context/useWizard';
 import { REST_SENTINELS } from '../v4/constants';
 import { hhmmToMin, minToHhmm, onGrid, tryParseRange } from '../v4/core';
 import { demandEnvelope, generateMenuRows, menuRow, nextMenuCode, renameScheduleCode } from '../v4/operations';

@@ -1,8 +1,6 @@
 import React from 'react';
 import { Box, Chip, Typography, Paper } from '@mui/material';
-import { KIND_COLORS } from '../scheduleInput/DayOffCodesPanel';
-import { OPERATOR_COLORS } from './TimeConstraintDialog';
-import { CELL_COLORS } from './MatrixCell';
+import { CELL_COLORS, KIND_COLORS, OPERATOR_COLORS } from './cellStyles';
 import { OPERATOR_HELP } from '../../v4/constants';
 
 const item = (label, bgcolor, key = label) => (

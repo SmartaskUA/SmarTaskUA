@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Grid, Alert } from '@mui/material';
 import { NumberField, TimeField } from '../shared/fields';
-import { ORDERING_NOTE } from './DemandRowDialog';
+import { ORDERING_NOTE } from './grains';
 import { pairKey, tryParseRange } from '../../v4/core';
 import { newId, pairLabel } from '../../v4/state';
 import { overlappingRows } from '../../v4/operations';

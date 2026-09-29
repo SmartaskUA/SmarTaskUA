@@ -4,13 +4,14 @@ import { Add, Download } from '@mui/icons-material';
 import StepLayout from '../components/wizard/StepLayout';
 import StepCard from '../components/wizard/StepCard';
 import EmployeeTable from '../components/employees/EmployeeTable';
-import EmployeeForm, { newEmployee } from '../components/employees/EmployeeForm';
+import EmployeeForm from '../components/employees/EmployeeForm';
+import { newEmployee } from '../components/employees/newEmployee';
 import CSVImporter from '../components/import/CSVImporter';
 import CSVPreview from '../components/import/CSVPreview';
 import ColumnMapper from '../components/import/ColumnMapper';
 import ImportPreviewModal from '../components/shared/ImportPreviewModal';
 import { ConfirmDialog } from '../components/shared/fields';
-import { useWizard } from '../context/WizardContext';
+import { useWizard } from '../context/useWizard';
 import { removeEmployee, renameEmployee } from '../v4/operations';
 import {
   EMPLOYEE_CSV_FIELDS, EMPLOYEE_CSV_REQUIRED, employeesFromRows, employeesTemplateCsv, employeesToCsv, formatCompetencies

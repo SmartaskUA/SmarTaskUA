@@ -5,8 +5,9 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { Close as CloseIcon } from '@mui/icons-material';
-import FixedDayCell, { FIXED_COLORS, cellCaption } from './FixedDayCell';
-import { activeContract, intervalToString, weekday } from '../../v4/core';
+import FixedDayCell from './FixedDayCell';
+import { FIXED_COLORS, cellCaption, scheduleLabel } from './fixedDayLabels';
+import { activeContract, weekday } from '../../v4/core';
 import { analyseFixedDay, fixedIndex, menuCatalogue } from '../../v4/operations';
 
 const DAY = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -34,12 +35,6 @@ const FirstCell = styled(TableCell)(({ theme }) => ({
   padding: '6px 12px',
   minWidth: 140
 }));
-
-/** What a menu code reads as in a cell: its window for a shift, its description for a rest. */
-export function scheduleLabel(schedule) {
-  if (!schedule) return 'not in menu';
-  return schedule.interval ? intervalToString(schedule.interval) : (schedule.description || String(schedule.code));
-}
 
 function kindOf(analysis) {
   if (analysis.unknown) return 'unknown';

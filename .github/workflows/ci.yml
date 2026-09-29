@@ -105,10 +105,10 @@ jobs:
         working-directory: src/json-generator
         run: npx vite-node scripts/validate-with-python.mjs
 
+      # Blocking: the generator lints clean, so any error or warning fails CI.
       - name: Run linter
         working-directory: src/json-generator
-        run: npm run lint || echo "Linter not configured, skipping..."
-        continue-on-error: true
+        run: npm run lint -- --max-warnings 0
 
       - name: Build production bundle
         working-directory: src/json-generator

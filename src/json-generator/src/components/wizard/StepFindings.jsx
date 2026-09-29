@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Alert, Box, Button, Typography } from '@mui/material';
-import { useWizard } from '../../context/WizardContext';
+import { useWizard } from '../../context/useWizard';
 import { stepIndex } from '../../constants/wizardSteps';
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;

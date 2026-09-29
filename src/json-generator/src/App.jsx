@@ -5,7 +5,8 @@ import {
   DialogActions, DialogContentText, IconButton, Tooltip
 } from '@mui/material';
 import { RestartAlt, FolderSpecial } from '@mui/icons-material';
-import { WizardProvider, useWizard } from './context/WizardContext';
+import { WizardProvider } from './context/WizardContext';
+import { useWizard } from './context/useWizard';
 import theme from './theme';
 import WizardStepper from './components/wizard/WizardStepper';
 import { STEP_COUNT, WIZARD_STEPS } from './constants/wizardSteps';

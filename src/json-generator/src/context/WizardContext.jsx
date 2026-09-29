@@ -1,20 +1,20 @@
 import React, {
-  createContext, useCallback, useContext, useDeferredValue, useEffect, useMemo, useState
+  useCallback, useDeferredValue, useEffect, useMemo, useState
 } from 'react';
 import { createInitialState, withDefaults } from '../v4/state';
 import * as persistence from '../v4/persistence';
 import { findingsFor, validateState } from '../v4/operations';
 import { STEP_COUNT } from '../constants/wizardSteps';
+import { WizardContext } from './useWizard';
 
 /**
- * Wizard Context - the one store every step reads and writes.
+ * Wizard Context - the one store every step reads and writes, through
+ * useWizard (./useWizard.js).
  *
  * The state is shaped like the v4.0 document (see src/v4/state.js). Validation
  * runs on the bundle the state generates, so every step, the stepper and the
  * Review step read the same findings.
  */
-
-const WizardContext = createContext(null);
 
 /** Immutably set the value at a dotted path; `value` may be a function of the old value. */
 function setIn(obj, keys, value) {
@@ -92,11 +92,3 @@ export const WizardProvider = ({ children }) => {
 
   return <WizardContext.Provider value={value}>{children}</WizardContext.Provider>;
 };
-
-export const useWizard = () => {
-  const context = useContext(WizardContext);
-  if (!context) throw new Error('useWizard must be used within WizardProvider');
-  return context;
-};
-
-export default WizardContext;

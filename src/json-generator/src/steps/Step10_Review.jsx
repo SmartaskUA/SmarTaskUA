@@ -8,7 +8,7 @@ import SummaryAccordions from '../components/review/SummaryAccordions';
 import ValidationPanel from '../components/review/ValidationPanel';
 import PreviewTabs from '../components/review/PreviewTabs';
 import DownloadPanel from '../components/review/DownloadPanel';
-import { useWizard } from '../context/WizardContext';
+import { useWizard } from '../context/useWizard';
 import { bundleEntries } from '../v4/generate';
 
 /**

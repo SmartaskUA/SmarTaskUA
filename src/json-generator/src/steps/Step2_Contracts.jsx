@@ -7,7 +7,7 @@ import { Add, Edit, Delete } from '@mui/icons-material';
 import StepLayout from '../components/wizard/StepLayout';
 import StepCard from '../components/wizard/StepCard';
 import { ConfirmDialog } from '../components/shared/fields';
-import { useWizard } from '../context/WizardContext';
+import { useWizard } from '../context/useWizard';
 import { onGrid, formatNumber } from '../v4/core';
 import { contractUsage, renameContract } from '../v4/operations';
 

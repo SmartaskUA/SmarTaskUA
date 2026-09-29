@@ -3,7 +3,7 @@ import StepLayout from '../components/wizard/StepLayout';
 import StepCard from '../components/wizard/StepCard';
 import PriorityHierarchyEditor from '../components/rules/PriorityHierarchyEditor';
 import LabourLawEditor from '../components/rules/LabourLawEditor';
-import { useWizard } from '../context/WizardContext';
+import { useWizard } from '../context/useWizard';
 
 /**
  * Step 8: Rules — the priority hierarchy and roster-wide labour law, both

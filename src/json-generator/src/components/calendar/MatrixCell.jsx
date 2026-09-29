@@ -1,15 +1,8 @@
 import React, { memo, useState } from 'react';
 import { Select, MenuItem, TextField, Box, Typography, IconButton, Tooltip, ListSubheader } from '@mui/material';
 import { Edit as EditIcon, Close as CloseIcon, ArrowDropDown } from '@mui/icons-material';
-import TimeConstraintDialog, { OPERATOR_COLORS, parseOperatorCell } from './TimeConstraintDialog';
-import { KIND_COLORS } from '../scheduleInput/DayOffCodesPanel';
-
-export const CELL_COLORS = {
-  auto: '#e8f5e9',
-  hours: '#e3f2fd',
-  blank: '#ffffff',
-  uncovered: '#eeeeee'
-};
+import TimeConstraintDialog from './TimeConstraintDialog';
+import { CELL_COLORS, KIND_COLORS, OPERATOR_COLORS, parseOperatorCell } from './cellStyles';
 
 const BLANK = '__blank__';
 const HOURS = '__hours__';

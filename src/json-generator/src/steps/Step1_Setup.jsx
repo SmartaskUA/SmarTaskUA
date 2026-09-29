@@ -11,7 +11,7 @@ import StepLayout from '../components/wizard/StepLayout';
 import StepCard from '../components/wizard/StepCard';
 import BundleImportDialog from '../components/import/BundleImportDialog';
 import { DateField } from '../components/shared/fields';
-import { useWizard } from '../context/WizardContext';
+import { useWizard } from '../context/useWizard';
 import { SLOT_OPTIONS, WEEKDAYS } from '../v4/constants';
 import { rosterCodeFromProblemId } from '../v4/state';
 import { dateRange, weekdayName } from '../v4/core';

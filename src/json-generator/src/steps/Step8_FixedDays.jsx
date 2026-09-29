@@ -6,8 +6,8 @@ import { EventAvailable } from '@mui/icons-material';
 import StepLayout from '../components/wizard/StepLayout';
 import StepCard from '../components/wizard/StepCard';
 import FixedDaysMatrix from '../components/fixedDays/FixedDaysMatrix';
-import { FIXED_COLORS } from '../components/fixedDays/FixedDayCell';
-import { useWizard } from '../context/WizardContext';
+import { FIXED_COLORS } from '../components/fixedDays/fixedDayLabels';
+import { useWizard } from '../context/useWizard';
 import { stepIndex } from '../constants/wizardSteps';
 import { activeContract } from '../v4/core';
 import {

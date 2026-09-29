@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Sidebar_Manager from "../components/Sidebar_Manager";
@@ -300,24 +300,28 @@ const LastProcessedSection = ({ refreshTrigger }) => {
 /* ============================
    🧠 Calendars In Progress
    ============================ */
+const STALE_PROCESSING_MINUTES = 20;
+
+const isFreshProcessingTask = (task) => {
+  const status = task.status?.toLowerCase();
+  if (status !== "in_progress" && status !== "pending") return false;
+
+  const timestamp = task.updatedAt || task.createdAt;
+  if (!timestamp) return true;
+
+  const updatedAt = new Date(timestamp).getTime();
+  if (Number.isNaN(updatedAt)) return true;
+
+  const ageMinutes = (Date.now() - updatedAt) / (1000 * 60);
+  return ageMinutes <= STALE_PROCESSING_MINUTES;
+};
+
 const CalendarsInProcessSection = ({ setRefreshTrigger }) => {
   const [processingCalendars, setProcessingCalendars] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
-  const STALE_PROCESSING_MINUTES = 20;
-
-  const isFreshProcessingTask = (task) => {
-    const status = task.status?.toLowerCase();
-    if (status !== "in_progress" && status !== "pending") return false;
-
-    const timestamp = task.updatedAt || task.createdAt;
-    if (!timestamp) return true;
-
-    const updatedAt = new Date(timestamp).getTime();
-    if (Number.isNaN(updatedAt)) return true;
-
-    const ageMinutes = (Date.now() - updatedAt) / (1000 * 60);
-    return ageMinutes <= STALE_PROCESSING_MINUTES;
-  };
+  // The poll below runs in an interval set up once, so it reads the last list it
+  // saw from this ref; the state it would close over stays at its first value.
+  const processingRef = useRef([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -332,7 +336,8 @@ const CalendarsInProcessSection = ({ setRefreshTrigger }) => {
         if (!isMounted) return;
 
         // detect finished ones
-        const justFinished = processingCalendars.filter(
+        const previous = processingRef.current;
+        const justFinished = previous.filter(
           (old) => !stillProcessing.find((newT) => newT.taskId === old.taskId)
         );
 
@@ -343,9 +348,10 @@ const CalendarsInProcessSection = ({ setRefreshTrigger }) => {
         // only update if different
         const same =
           JSON.stringify(stillProcessing.map((t) => t.taskId).sort()) ===
-          JSON.stringify(processingCalendars.map((t) => t.taskId).sort());
+          JSON.stringify(previous.map((t) => t.taskId).sort());
 
         if (!same) {
+          processingRef.current = stillProcessing;
           setProcessingCalendars(stillProcessing);
         }
 

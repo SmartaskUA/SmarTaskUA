@@ -4,7 +4,7 @@ import {
   Typography, Alert
 } from '@mui/material';
 import { DateField, NumberField, TimeField } from '../shared/fields';
-import { GRAIN_INFO, ORDERING_NOTE } from './DemandRowDialog';
+import { GRAIN_INFO, ORDERING_NOTE } from './grains';
 import { dateRange, pairKey, tryParseRange, weekdayName } from '../../v4/core';
 import { newId, pairLabel } from '../../v4/state';
 import { WEEKDAYS } from '../../v4/constants';

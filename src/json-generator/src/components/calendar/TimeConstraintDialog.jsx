@@ -7,27 +7,7 @@ import { Add, Delete } from '@mui/icons-material';
 import { TimeField } from '../shared/fields';
 import { OPERATORS, OPERATOR_HELP } from '../../v4/constants';
 import { classifyCell, coalesce, interval, intervalToString, onGrid, tryParseRange, DomainError } from '../../v4/core';
-
-export const OPERATOR_COLORS = {
-  EQUALS: '#e1bee7',
-  INCLUDE: '#ffe0b2',
-  WITHIN: '#b2dfdb',
-  EXCEPT: '#f8bbd0'
-};
-
-/** {type, ranges: [{start, end}]} from an operator cell, or null. */
-export function parseOperatorCell(value) {
-  const text = String(value || '').trim();
-  const colon = text.indexOf(':');
-  if (colon < 0) return null;
-  const type = text.slice(0, colon).toUpperCase();
-  if (!OPERATORS.includes(type)) return null;
-  const ranges = text.slice(colon + 1).split(',').map((part) => {
-    const cut = part.indexOf('-');
-    return cut < 0 ? { start: part.trim(), end: '' } : { start: part.slice(0, cut).trim(), end: part.slice(cut + 1).trim() };
-  });
-  return { type, ranges };
-}
+import { OPERATOR_COLORS, parseOperatorCell } from './cellStyles';
 
 /**
  * Build an EQUALS / INCLUDE / WITHIN / EXCEPT cell. Several ranges make one

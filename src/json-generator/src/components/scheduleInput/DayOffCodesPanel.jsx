@@ -5,12 +5,11 @@ import {
 } from '@mui/material';
 import { Add, Delete, Edit } from '@mui/icons-material';
 import { ConfirmDialog } from '../shared/fields';
-import { useWizard } from '../../context/WizardContext';
+import { useWizard } from '../../context/useWizard';
 import { OPERATORS } from '../../v4/constants';
 import { tryNumber } from '../../v4/core';
 import { codeUsage, removeDayOffCode, renameDayOffCode } from '../../v4/operations';
-
-export const KIND_COLORS = { preferable: '#fff59d', unavailable: '#ffcdd2' };
+import { KIND_COLORS } from '../calendar/cellStyles';
 
 /** Why `code` cannot be a day-off code, or '' when it can. */
 function codeProblem(code, codes, current) {

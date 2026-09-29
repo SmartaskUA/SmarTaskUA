@@ -1,24 +1,8 @@
 import React, { memo } from 'react';
 import { Box, Typography, Tooltip } from '@mui/material';
-
-export const FIXED_COLORS = {
-  open: '#ffffff',
-  rest: '#eeeeee',
-  worked: '#e3f2fd',
-  unknown: '#fff3e0'
-};
+import { FIXED_COLORS, cellCaption } from './fixedDayLabels';
 
 const CONFLICT_BORDER = '2px solid #d32f2f';
-
-/** The schedule_input cell, short enough for a caption: EQUALS:09:00-13:00 -> EQU 09:00-13:00. */
-export function cellCaption(cell) {
-  const text = String(cell ?? '').trim();
-  if (!text) return 'blank';
-  const colon = text.indexOf(':');
-  const head = colon > 0 ? text.slice(0, colon).toUpperCase() : '';
-  if (['EQUALS', 'INCLUDE', 'WITHIN', 'EXCEPT'].includes(head)) return `${head.slice(0, 3)} ${text.slice(colon + 1)}`;
-  return text;
-}
 
 /**
  * One employee-day of the fixed-days grid: the schedule_input cell it answers,

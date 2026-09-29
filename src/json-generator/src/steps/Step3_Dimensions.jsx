@@ -7,7 +7,7 @@ import { Add, Edit, Delete } from '@mui/icons-material';
 import StepLayout from '../components/wizard/StepLayout';
 import StepCard from '../components/wizard/StepCard';
 import { ConfirmDialog } from '../components/shared/fields';
-import { useWizard } from '../context/WizardContext';
+import { useWizard } from '../context/useWizard';
 import { DIMENSION_NAME_SUGGESTIONS } from '../v4/constants';
 import { dimensionUsage, removeDimension, updateDimension } from '../v4/operations';
 import { getTeamColor } from '../utils/helpers/colorHelpers';

@@ -84,7 +84,10 @@ All schema knowledge lives in `src/v4/`, plain JavaScript with no React:
 | `state.js`, `persistence.js` | the state shape (mirrors the v4 document) and localStorage |
 
 The React side is `src/steps/` (one file per step) and `src/components/`, all reading
-`useWizard()` from `src/context/WizardContext.jsx`.
+`useWizard()` (`src/context/useWizard.js`), which `WizardProvider` in `src/context/WizardContext.jsx`
+supplies. A `.jsx` file exports only components; shared constants and helpers sit in plain `.js`
+modules beside them (`calendar/cellStyles.js`, `fixedDays/fixedDayLabels.js`, `demand/grains.js`), so
+React Fast Refresh can hot-reload every component and lint stays at zero warnings.
 
 `schema_v4/schema-v4-input.json` and `schema-v4-result.json` are vendored copies of the canonical
 schemas: the dev container mounts only this folder. A test fails if either copy drifts.

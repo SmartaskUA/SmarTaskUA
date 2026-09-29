@@ -4,7 +4,7 @@ import {
   ListItemText, IconButton, Divider, Alert, Tooltip
 } from '@mui/material';
 import { Delete, FolderOpen, SaveAlt, Upload, Save, Inventory2 } from '@mui/icons-material';
-import { useWizard } from '../../context/WizardContext';
+import { useWizard } from '../../context/useWizard';
 import { isV4State } from '../../v4/persistence';
 import BundleImportDialog from '../import/BundleImportDialog';
 import { downloadText } from '../../utils/download';

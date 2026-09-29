@@ -1,7 +1,7 @@
 import React from 'react';
 import { Stepper, Step, StepLabel, StepButton, Box, Typography, Badge, Tooltip } from '@mui/material';
 import { Warning } from '@mui/icons-material';
-import { useWizard } from '../../context/WizardContext';
+import { useWizard } from '../../context/useWizard';
 import { themeConfig } from '../../theme.config';
 import { WIZARD_STEPS } from '../../constants/wizardSteps';
 

@@ -25,6 +25,76 @@ const DEFAULT_PROBLEM_ID = "SISQUAL_OCTOBER_2025";
 const DEFAULT_ALGORITHM = "Hybrid_Heuristic_Sisqual_2";
 const SCHEDULE_TITLE_COUNTER_KEY = "schedule_title_counter";
 
+// The algorithm menus depend only on SIMPLE_MODE, so they live outside the
+// component: the hooks below can rely on them without listing them.
+// Simple mode has no shift-based Mathematical Formulation solver, so
+// shift-type problems aren't solvable in that mode at all.
+const problemShiftAlgorithms = SIMPLE_MODE
+  ? []
+  : [
+      { value: "ILP General", label: "ILP General" },
+      { value: "CSP General", label: "CSP General" },
+      { value: "Genetic Algorithm 2-Shift", label: "Genetic Algorithm 2-Shift" },
+      { value: "Genetic Algorithm 3-Shift", label: "Genetic Algorithm 3-Shift" },
+    ];
+const problemHourAlgorithmsFull = [
+  { value: "ILP_Sisqual_Hours", label: "ILP Sisqual Hours" },
+  { value: "CSP_Sisqual_Hours", label: "CSP Sisqual Hours" },
+  {
+    value: "ILP_Sisqual_Hours_MathematicalDefinition7",
+    label: "ILP Sisqual Hours Final Version",
+  },
+  {
+    value: "CSP_Sisqual_Hours_MathematicalDefinition7",
+    label: "CSP Sisqual Hours Final Version",
+  },
+  {
+    value: "Hybrid_Heuristic_Sisqual_Levels_Included",
+    label: "Hybrid Heuristic Sisqual Levels Included",
+  },
+  {
+    value: "Hybrid_Heuristic_Sisqual_3",
+    label: "Hybrid Heuristic Sisqual No Levels Included",
+  },
+  {
+    value: "Puzzle_Sisqual",
+    label: "Puzzle Heuristic Sisqual",
+  }
+
+];
+const problemHourAlgorithms = SIMPLE_MODE
+  ? problemHourAlgorithmsFull.filter((alg) => alg.value.includes("MathematicalDefinition7"))
+  : problemHourAlgorithmsFull;
+
+const manualShiftAlgorithms = [
+  { value: "hill climbing", label: "Hill Climbing" },
+  { value: "Greedy Randomized", label: "Greedy Randomized" },
+  { value: "Greedy Randomized + Hill Climbing", label: "Greedy Randomized + Hill Climbing" },
+  { value: "CSP Scheduling", label: "CSP Scheduling" },
+  { value: "linear programming", label: "Integer Linear Programming" },
+  { value: "linear programming 2", label: "Integer Linear Programming 2" },
+  { value: "Hybrid_Heuristic", label: "Hybrid Heuristic" },
+  { value: "R2_Heuristic", label: "R2 Heuristic" },
+  { value: "Heuristic Solver", label: "Heuristic Solver" },
+  { value: "Puzzle_Heuristic", label: "Puzzle Heuristic" },
+  { value: "Inverted_Puzzle_Heuristic", label: "Inverted Puzzle Heuristic" }
+];
+const manualHourAlgorithms = [
+  { value: "CSP_Afonso_Hours", label: "CSP Afonso 13 Hours" },
+  { value: "ILP_2", label: "Integer Linear Programming 2" },
+  { value: "ILP_2_Half_Intervals", label: "Integer Linear Programming 2 Half Intervals" },
+  { value: "ILP_3", label: "Integer Linear Programming 3" },
+  { value: "ILP_3_Half_Intervals", label: "Integer Linear Programming 3 Half Intervals" },
+  { value: "ILP_4", label: "Integer Linear Programming 4" },
+  { value: "ILP_4_Half_Intervals", label: "Integer Linear Programming 4 Half Intervals" },
+  { value: "COP_1", label: "Constraint Optimization Problem 1" },
+  { value: "COP_1_Half_Intervals", label: "Constraint Optimization Problem 1 Half Intervals" },
+  { value: "COP_2", label: "Constraint Optimization Problem 2" },
+  { value: "COP_2_Half_Intervals", label: "Constraint Optimization Problem 2 Half Intervals" },
+  { value: "Heuristica_1", label: "Heurística 1" },
+  { value: "Heuristica_Half_Intervals", label: "Heurística Half Intervals" },
+];
+
 const getNextAutoTitle = () => {
   if (typeof window === "undefined") {
     return "Schedule-1";
@@ -61,14 +131,6 @@ const CreateCalendar = () => {
   const [vacationTemplate, setVacationTemplate] = useState("VacationTemplate_Case1_24");
   const [minimumTemplate, setMinimumTemplate] = useState("Mins_R10-R62_30min.");
   const [selectedSolver, setSelectedSolver] = useState("CBC"); // "CBC" ou "GUROBI"
-
-  // NEW: ruleset selection
-  const [ruleSets, setRuleSets] = useState([]); // [{name, description, ...}]
-  const [ruleSetName, setRuleSetName] = useState("");
-  const selectedRuleSet = useMemo(
-    () => ruleSets.find((r) => r.name === ruleSetName),
-    [ruleSets, ruleSetName]
-  );
 
   const [templateOptions, setTemplateOptions] = useState([]);
   const [minimumOptions, setMinimumOptions] = useState([]);
@@ -157,74 +219,6 @@ const CreateCalendar = () => {
     setProblemJson(null);
   }, [mode, selectedProblemId]);
 
-  // Simple mode has no shift-based Mathematical Formulation solver, so
-  // shift-type problems aren't solvable in that mode at all.
-  const problemShiftAlgorithms = SIMPLE_MODE
-    ? []
-    : [
-        { value: "ILP General", label: "ILP General" },
-        { value: "CSP General", label: "CSP General" },
-        { value: "Genetic Algorithm 2-Shift", label: "Genetic Algorithm 2-Shift" },
-        { value: "Genetic Algorithm 3-Shift", label: "Genetic Algorithm 3-Shift" },
-      ];
-  const problemHourAlgorithmsFull = [
-    { value: "ILP_Sisqual_Hours", label: "ILP Sisqual Hours" },
-    { value: "CSP_Sisqual_Hours", label: "CSP Sisqual Hours" },
-    {
-      value: "ILP_Sisqual_Hours_MathematicalDefinition7",
-      label: "ILP Sisqual Hours Final Version",
-    },
-    {
-      value: "CSP_Sisqual_Hours_MathematicalDefinition7",
-      label: "CSP Sisqual Hours Final Version",
-    },
-    {
-      value: "Hybrid_Heuristic_Sisqual_Levels_Included",
-      label: "Hybrid Heuristic Sisqual Levels Included",
-    },
-    {
-      value: "Hybrid_Heuristic_Sisqual_3",
-      label: "Hybrid Heuristic Sisqual No Levels Included",
-    },
-    {
-      value: "Puzzle_Sisqual",
-      label: "Puzzle Heuristic Sisqual",
-    }
-
-  ];
-  const problemHourAlgorithms = SIMPLE_MODE
-    ? problemHourAlgorithmsFull.filter((alg) => alg.value.includes("MathematicalDefinition7"))
-    : problemHourAlgorithmsFull;
-
-  const manualShiftAlgorithms = [
-    { value: "hill climbing", label: "Hill Climbing" },
-    { value: "Greedy Randomized", label: "Greedy Randomized" },
-    { value: "Greedy Randomized + Hill Climbing", label: "Greedy Randomized + Hill Climbing" },
-    { value: "CSP Scheduling", label: "CSP Scheduling" },
-    { value: "linear programming", label: "Integer Linear Programming" },
-    { value: "linear programming 2", label: "Integer Linear Programming 2" },
-    { value: "Hybrid_Heuristic", label: "Hybrid Heuristic" },
-    { value: "R2_Heuristic", label: "R2 Heuristic" },
-    { value: "Heuristic Solver", label: "Heuristic Solver" },
-    { value: "Puzzle_Heuristic", label: "Puzzle Heuristic" },
-    { value: "Inverted_Puzzle_Heuristic", label: "Inverted Puzzle Heuristic" }
-  ];
-  const manualHourAlgorithms = [
-    { value: "CSP_Afonso_Hours", label: "CSP Afonso 13 Hours" },
-    { value: "ILP_2", label: "Integer Linear Programming 2" },
-    { value: "ILP_2_Half_Intervals", label: "Integer Linear Programming 2 Half Intervals" },
-    { value: "ILP_3", label: "Integer Linear Programming 3" },
-    { value: "ILP_3_Half_Intervals", label: "Integer Linear Programming 3 Half Intervals" },
-    { value: "ILP_4", label: "Integer Linear Programming 4" },
-    { value: "ILP_4_Half_Intervals", label: "Integer Linear Programming 4 Half Intervals" },
-    { value: "COP_1", label: "Constraint Optimization Problem 1" },
-    { value: "COP_1_Half_Intervals", label: "Constraint Optimization Problem 1 Half Intervals" },
-    { value: "COP_2", label: "Constraint Optimization Problem 2" },
-    { value: "COP_2_Half_Intervals", label: "Constraint Optimization Problem 2 Half Intervals" },
-    { value: "Heuristica_1", label: "Heurística 1" },
-    { value: "Heuristica_Half_Intervals", label: "Heurística Half Intervals" },
-  ];
-
   useEffect(() => {
     if (mode !== "problem") {
       return;
@@ -269,7 +263,7 @@ const CreateCalendar = () => {
     }
 
     setYear(temporal.year != null ? String(temporal.year) : "");
-  }, [mode, problemJson, selectedAlgorithm, problemHourAlgorithms]);
+  }, [mode, problemJson, selectedAlgorithm]);
 
   const handleSave = async () => {
     const shiftsValue = scheduleType === "Turno" ? parseInt(shifts, 10) : null;

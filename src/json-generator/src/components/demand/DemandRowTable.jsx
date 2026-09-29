@@ -4,7 +4,8 @@ import {
   TablePagination, TextField, MenuItem, Button, Typography
 } from '@mui/material';
 import { Edit, Delete, Add, Warning } from '@mui/icons-material';
-import DemandRowDialog, { GRAIN_INFO } from './DemandRowDialog';
+import DemandRowDialog from './DemandRowDialog';
+import { GRAIN_INFO } from './grains';
 import { DateField } from '../shared/fields';
 import { formatNumber, pairKey, tryParseRange } from '../../v4/core';
 import { newId, pairLabel } from '../../v4/state';

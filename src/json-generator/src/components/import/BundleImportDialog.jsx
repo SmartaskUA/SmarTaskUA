@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { UploadFile } from '@mui/icons-material';
 import MenuConflictChooser from './MenuConflictChooser';
-import { useWizard } from '../../context/WizardContext';
+import { useWizard } from '../../context/useWizard';
 import { sidecarName } from '../../v4/core';
 import { importBundle, ImportError, readFileList } from '../../v4/importBundle';
 import { applyMenuChoices } from '../../v4/operations';
