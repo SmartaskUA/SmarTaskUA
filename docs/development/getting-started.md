@@ -2,64 +2,53 @@
 
 ## Prerequisites
 
-- **Docker** & **Docker Compose** installed
-- **Git** for cloning the repository
-- (Optional) **Maven** for local Java development
-- (Optional) **Node.js 18** for local frontend development
+- **Docker** and **Docker Compose**, **Git**
+- Optional: **Maven** (Java), **Node.js 20** (frontend), **Python 3.11** (scheduler) for local development
 
-**Note:** Developed on Linux (Ubuntu/Arch). May need adjustments for Windows/MacOS.
+Developed on Linux; Windows/macOS may need adjustments.
 
-## Quick Start
+## Quick start
 
 ```bash
-# 1. Clone the repository
-git clone <repository-url>
-cd SmarTaskUA
-
-# 2. Build and start all services
-make build
-
-# 3. Access the application (all behind the nginx proxy)
-# Main App:       http://localhost/ (manager/manager)
-# JSON Generator: http://localhost/json-gen
-# API:            http://localhost/api
+git clone <repository-url> && cd SmarTaskUA
+make build          # build the API and every image, then start the stack
 ```
 
-That's it! The system is running.
+- Main app: http://localhost/ (manager/manager)
+- JSON wizard: http://localhost/json-gen
+- API: http://localhost/api
 
-## Common Commands
+Solve something straight away. From the app: **Problems** → `C2_January_2026` → *Use In Schedule* →
+*Generate*. Or from the command line:
 
 ```bash
-# Show all available commands
-make help
-
-# Start services (without rebuilding)
-make up
-
-# Stop all services
-make down
+make solve PKG=json_generation/schema_v4/examples/cenario2_partial ALG=all
 ```
 
-## Common Development Tasks
+Details: [how-to-solve.md](../how-to-solve.md).
 
-### Adding a New Algorithm
+## Everyday commands
 
-1. Create `src/scheduler/algorithms/my_algorithm.py`
-2. Implement `solve(vacations, minimuns, employees, maxTime, year, shifts, rules)` function
-3. Add to `src/scheduler/TaskManager.py` algorithms dictionary
-4. Test via Web UI by selecting your algorithm
+```bash
+make help              # every target
+make up / make down    # start / stop the stack
+make test-scheduler    # scheduler tests, inside the scheduler image
+```
 
-### Modifying Business Rules
+## Adding an algorithm
 
-1. Edit `config/rules.json` (master copy)
-2. Rebuild services: `make build`
-3. Restart to apply changes
+- **For schema v4 problems:** follow [Adding a v4 solver](../architecture/v4-parser.md#adding-a-v4-solver).
+  The solver reads the parsed `V4Instance` and returns rows. The shared scorer and writer do the rest.
+- **For legacy v2.x inputs:** implement `solve(vacations, minimuns, employees, maxTime, year, shifts, rules)` in
+  `src/scheduler/algorithms/`, register it in `TaskManager.py` and in the API's `SchedulingAlgorithmRegistry`.
 
-**⚠️ Never edit:** `src/api/src/main/resources/rules.json` or `src/scheduler/rules.json` (generated files)
+## Business rules (legacy solvers)
 
-## Next Steps
+Edit `config/rules.json` (the master copy), then `make build`. Never edit the generated copies
+`src/api/src/main/resources/rules.json` or `src/scheduler/rules.json`. v4 solvers read their labour law from
+the package's `constraints.hard` instead.
 
-- **System architecture:** See `docs/architecture/system-overview.md`
-- **Service details:** See READMEs in `src/api/`, `src/frontend/`, `src/json-generator/`, `src/scheduler/`, `src/analyzer/`, `infra/`
-- **Algorithms:** See `docs/algorithms/overview.md`
-- **Configuration:** See `config/README.md`
+## Next
+
+[System overview](../architecture/system-overview.md) · [Solve flow](../architecture/solve-flow.md) ·
+[Algorithms](../algorithms/overview.md) · [Docs index](../README.md)

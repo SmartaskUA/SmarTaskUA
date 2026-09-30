@@ -8,6 +8,7 @@ const CalendarTable = ({
   holidayMap,
   scheduleType,
   employees,
+  fixedDays,
 }) => {
   const normalizedType = String(scheduleType || "").toLowerCase();
   const isHourly = normalizedType === "horas" || normalizedType === "hours";
@@ -18,6 +19,7 @@ const CalendarTable = ({
         data={data}
         monthColumns={monthColumns}
         employees={employees}
+        fixedDays={fixedDays}
       />
     );
   }

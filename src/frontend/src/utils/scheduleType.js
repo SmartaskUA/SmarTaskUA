@@ -1,5 +1,7 @@
 export const inferScheduleType = (metadata) => {
   if (!metadata) return "";
+  // Schema v4 solvers always produce hourly segments ("09:00-13:00@Team/T1").
+  if (String(metadata.schemaVersion) === "4.0") return "Horas";
   const rawShifts = metadata.shifts;
   const hasExplicitShifts =
     rawShifts !== null &&
@@ -22,6 +24,7 @@ export const inferScheduleType = (metadata) => {
 
 export const inferHourGranularity = (metadata) => {
   if (!metadata) return "";
+  if (Number(metadata.slotMinutes) === 30) return "30min";
   const algorithm = String(metadata.algorithmType || "").toLowerCase();
   if (algorithm.includes("half") || algorithm.includes("30")) return "30min";
   const minsData = metadata.minimunsTemplateData;

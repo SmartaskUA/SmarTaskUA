@@ -1,80 +1,40 @@
-# Algorithms Overview
+# Algorithms
 
-## Available Algorithms
+Every algorithm is registered in `src/scheduler/TaskManager.py`. For each problem, the API reports which
+algorithms can solve it, and the UI offers only those. How to run them: [how-to-solve.md](../how-to-solve.md).
 
-SmarTask ships a range of scheduling algorithms with different approaches and performance characteristics. All are registered in `src/scheduler/TaskManager.py` (the `algorithms` dictionary); the primary ones are grouped by family below.
+## Schema v4 solvers (current)
 
-### General family (constraint-driven, read `problem.json`)
+They read v4 packages through the [v4 parser](../architecture/v4-parser.md), honour partial results, and are
+scored by the same `problem_v4.evaluate`.
 
-These consume the structured `constraints` from a `problem.json` (parsed into a `ConstraintPlan`) instead of the global `rules.json`, and are the focus of the flow docs (`docs/algorithms/general-algorithms-flow.md`).
+| name | CLI alias | method |
+|---|---|---|
+| `ILP_Sisqual_Hours_MathematicalDefinition7` | `ilp` | MathematicalDefinition7 as an ILP (PuLP + CBC); optimal on the examples in seconds |
+| `CSP_Sisqual_Hours_MathematicalDefinition7` | `csp` | the same model in OR-Tools CP-SAT |
+| `Hybrid_Heuristic_Sisqual_3` | `hybrid` | greedy block assignment, restarts over three day orders |
+| `Hybrid_Heuristic_Sisqual_Levels_Included` | `hybrid-levels` | the same greedy, preferring higher-priority skills and levels |
+| `Genetic Algorithm v4` | `ga` | one gene per employee-day; fixed days are frozen genes |
 
-| Algorithm Name | Type | Description |
-|----------------|------|-------------|
-| **ILP General** | Integer Linear Programming | General ILP solver driven by the `problem.json` constraint plan |
-| **CSP General** | Constraint Satisfaction | General CP-SAT solver driven by the `problem.json` constraint plan |
-| **Heuristic General** | Heuristic | General heuristic solver driven by the `problem.json` constraint plan |
+The `…MathematicalDefinition5` names are aliases of the MD7 pair. Benchmark: [ADR 0001](../adr/0001-schema-v4-solver-input.md).
 
-### Classic families
+## Legacy families (v2.x inputs)
 
-| Algorithm Name | Type | Description |
-|----------------|------|-------------|
-| **CSP** (alias *CSP Scheduling*) | Constraint Satisfaction | Google OR-Tools CP-SAT solver to find feasible schedules |
-| **CSPv2** | Constraint Satisfaction | Enhanced version of CSP with additional optimizations |
-| **CSP_ENGINE** | Constraint Satisfaction | CSP with integrated rules engine for complex constraints |
-| **linear programming** | Integer Linear Programming | ILP solver using PuLP library for optimization |
-| **linear programming 2** | Integer Linear Programming | Alternative ILP implementation |
-| **ILP Engine** | Integer Linear Programming | ILP with integrated rules engine |
-| **Greedy Randomized** | Heuristic | Fast randomized greedy assignment approach |
-| **Greedy Randomized Engine** | Heuristic | Greedy with rules engine integration |
-| **Greedy Randomized + Hill Climbing** | Hybrid | Combines greedy initial solution with local search refinement |
-| **GRHC_ENGINE** | Hybrid | Greedy + Hill Climbing with rules engine |
-| **hill climbing** | Local Search | Iterative improvement through neighbor exploration |
+These read v2.x bundles or the vacation/minimum templates, over a full year with M/T/N shifts. None reads v4.
+The last column says what each would need to.
 
-### Experimental / hourly / legacy variants
+| family | members | what reading v4 would take |
+|---|---|---|
+| General | `ILP General`, `CSP General`, `Heuristic General` ([flow](general-algorithms-flow.md)) | calendar from `temporalScope`; `x[e][d][h]` over menu candidates; per-axis slot coverage; labour law as windows + weekly count + minute rest. The result is MD7, so retire for v4 |
+| Rules engines | `CSP_ENGINE`, `ILP Engine`, `Greedy Randomized Engine`, `GRHC_ENGINE` | currently broken (stale `..rules.handlers` imports). The rule → per-backend handler pattern suits v4 labour law: contexts gain candidates, fixed days and slot demand |
+| Shift ILP / CSP | `linear programming`, `linear programming 2`, `CSP`, `CSPv2`, `ilp_greedy` | as General |
+| Hour blocks | `ILP_2`–`ILP_4`, `COP_1`/`COP_2` (and `_Half_Intervals`), `CSP_Afonso_Hours` | blocks from the menu, demand on the slot grid, the horizon calendar. They are MD7's predecessors: do not port |
+| Shift heuristics | `hill climbing`, `Greedy Randomized` (+ `Hill Climbing`), `Heuristic Solver`, `Hybrid_Heuristic`, `R2_Heuristic`, `Puzzle_Heuristic`, `Heuristica_1` | state per employee-day = a candidate shift; fixed days seeded first. `Puzzle_Heuristic` is the most promising port: its weekly patterns match v4's weekly caps |
+| GA 2/3-shift | `Genetic Algorithm 2-Shift`, `Genetic Algorithm 3-Shift` | superseded by `Genetic Algorithm v4` |
+| Sisqual v2.2 | `ILP_Sisqual_Hours`, `CSP_Sisqual_Hours`, `Puzzle_Sisqual` | retire; the v4 solvers replace them |
 
-`TaskManager.py` also registers interval- and hour-based experiments and dataset-specific solvers that are **not** part of the main flow: `ILP_2`, `ILP_3`, `ILP_4` (each with a `_Half_Intervals` variant), `ILP_Sisqual_Hours`, `CSP_Sisqual_Hours`, `CSP_Afonso_Hours`, and `ilp_greedy`. Treat these as experimental.
+## Adding an algorithm
 
-## Algorithm Types
-
-**Constraint Satisfaction (CSP):** Finds schedules that satisfy all hard constraints. Best for complex constraint problems.
-
-**Integer Linear Programming (ILP):** Optimizes an objective function while satisfying constraints. Good for optimization problems.
-
-**Heuristic (Greedy):** Fast assignment using greedy rules. Quick but may not find optimal solutions.
-
-**Local Search (Hill Climbing):** Improves solutions iteratively. Good for refinement.
-
-**Hybrid:** Combines multiple approaches for better results.
-
-**General (constraint-driven):** The `* General` solvers read the structured `constraints` block from `problem.json` (parsed into a `ConstraintPlan`) rather than the global `rules.json`. See `docs/algorithms/general-algorithms-flow.md`.
-
-**Engine Variants:** Algorithms with "_ENGINE" or "Engine" suffix integrate the rules engine for better constraint handling.
-
-## When to Use
-
-- **Need fast results:** Greedy Randomized
-- **Need optimal solutions:** CSP, ILP variants
-- **Complex constraints:** CSP_ENGINE, ILP Engine
-- **Balance speed/quality:** Hybrid algorithms (GRHC_ENGINE)
-- **Refinement:** Hill Climbing on existing schedules
-
-## Performance Considerations
-
-- **CSP/ILP:** Slower but more thorough (may take minutes for large problems)
-- **Greedy:** Fast (seconds) but less optimal
-- **Hybrid:** Medium speed, good balance
-- **maxTime parameter:** Limits algorithm execution time
-
-## Implementation Details
-
-- All algorithms defined in `src/scheduler/TaskManager.py`
-- Algorithm implementations in `src/scheduler/algorithms/`
-- Each algorithm receives: vacations, minimums, employees, maxTime, year, shifts, rules
-- Results saved to MongoDB `schedules` collection
-- General algorithms JSON flow: See `docs/algorithms/general-algorithms-flow.md`
-
-## Adding New Algorithms
-
-See `docs/development/getting-started.md` for instructions on adding new algorithms.
-
-**Note:** Algorithm developers can expand this documentation with detailed implementation notes, pseudocode, or performance benchmarks.
+A v4 solver: [v4-parser.md](../architecture/v4-parser.md#adding-a-v4-solver). A legacy solver receives
+`vacations, minimuns, employees, maxTime, year, shifts, rules` and is registered in `TaskManager.py` and the
+API's `SchedulingAlgorithmRegistry`.

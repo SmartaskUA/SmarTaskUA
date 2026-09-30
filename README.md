@@ -21,9 +21,10 @@ SmarTaskUA/
 ├── src/                              # All source code (6 microservices)
 │   ├── api/                          # Java Spring Boot REST API
 │   ├── frontend/                     # React + Vite frontend (main app)
-│   ├── json-generator/              # React wizard — builds problem.json (live schema v2.6)
+│   ├── json-generator/              # React wizard — builds schema v4 packages (problem.json + CSVs)
 │   ├── scheduler/                    # Python worker — schedule generation
-│   │   └── algorithms/               # CSP, ILP, Greedy, Hill Climbing, etc.
+│   │   ├── problem_v4/               # the schema v4 parser, scorer and result writer
+│   │   └── algorithms/               # ILP, CP-SAT, heuristics, GA, ...
 │   └── analyzer/                     # Python worker — KPI analysis
 │
 ├── config/                           # Centralized configuration
@@ -49,8 +50,8 @@ SmarTaskUA/
 │   ├── results/                      # Experimental results (PDF)
 │   └── reports/                      # Technical reports / deliverables (PDF)
 │
-├── json_generation/                  # Historical schema archive (v2 → v2.6) — reference
-│                                     #   only, not built; live schema is in src/json-generator
+├── json_generation/                  # Schema history (v2 → v4); schema_v4/ holds the canonical
+│                                     #   v4 schema, validator and example packages
 ├── scripts/                          # Helper scripts (e.g. validate_general_rules.py)
 ├── .github/workflows/                # CI/CD pipelines
 ├── Makefile                          # Build and deployment commands
@@ -83,6 +84,16 @@ make down
 make logs
 ```
 
+### Solve a problem
+
+In the app: **Problems** → pick or upload a v4 package → *Use In Schedule* → *Generate*. Or from a shell:
+
+```bash
+make solve PKG=json_generation/schema_v4/examples/cenario2_partial ALG=all
+```
+
+Everything about it: **[docs/how-to-solve.md](docs/how-to-solve.md)**.
+
 ### Access Points
 
 All services are served behind the nginx reverse proxy:
@@ -107,7 +118,7 @@ All services are served behind the nginx reverse proxy:
 
 ## Documentation
 
-For detailed documentation, see:
+Start at the **[docs index](docs/README.md)**. The main folders:
 - **[docs/architecture/](docs/architecture/)** — system design & diagrams
 - **[docs/development/](docs/development/)** — developer getting-started guides
 - **[docs/algorithms/](docs/algorithms/)** — algorithm documentation

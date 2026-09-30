@@ -1,726 +1,244 @@
 """
-Hour-based ILP for the Sisqual bundle following `MathematicalDefinition7.pdf`.
+Hour-based ILP for a schema v4 package, following `MathematicalDefinition7.pdf`.
 
-This solver extends `ILP_Sisqual_Hours.py` with the optional weighted objective
-functions described in the PDF:
+The package is read by `problem_v4.load_package` - the one v4 parser - and the
+model is declared over the index sets of `algorithms.md7_index`, shared with
+the CP-SAT twin `CSP_Sisqual_Hours_MathematicalDefinition7.py`:
   - ObjectiveFunction1 (1): minimize total shortage against alpha_dts
-  - ObjectiveFunction2 (1'): minimize priority-weighted skill/level assignment p_sl * y'_wdtsl
-  - ObjectiveFunction3 (1''): minimize work assigned on preferred day-offs x'_wd
+  - ObjectiveFunction2 (1'): minimize priority-weighted skill assignment p_sl * y_wdts
+  - ObjectiveFunction3 (1''): minimize worked preferred day-offs (day-off swap only)
 
-Objective terms are activated from `problem.json -> constraints.soft`.
-Each objective stays inactive unless a positive weight exists in a matching soft
-constraint.
-If no objective receives a weight, the model runs as a feasibility model.
-
+Weights and the day-off swap are solve directives (`problem_v4.SolveDirectives`),
+passed as keyword arguments; v4's `constraints.soft` carries none. A partial
+result in the package fixes its days: their candidate set is the one shift the
+result names, so every constraint below honours them unchanged.
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import List, Optional
 
 import pulp
 
-from algorithms.sisqual_hours_utils import (
-    Assignment,
-    build_half_hour_slots,
-    build_period_slot_map,
-    build_sisqual_bundle_assignments,
-    build_sisqual_day_modes,
-    fixed_context_assignment,
-    fixed_context_workday,
-    group_open_days_by_week,
-    load_problem_json,
-    minutes_to_hhmm,
-    parse_before_context_days,
-    parse_contract_hours,
-    parse_coverage_priority_tiers,
-    parse_days,
-    parse_demand_minimums,
-    parse_employees_with_levels,
-    parse_max_time_seconds,
-    parse_min_rest_hours,
-    parse_open_days,
-    parse_schedule_input,
-    parse_skill_codes,
-    parse_soft_constraint_weight,
-    parse_work_periods,
-    priority_weight_for_skill_level,
-)
+from algorithms.md7_index import MD7Index
+from algorithms.sisqual_hours_utils import parse_max_time_seconds
+from problem_v4 import Shift, SolveDirectives, V4Instance
+from problem_v4.runtime import finish, load_for_solver, solver_failure
 
-
-OBJECTIVE1_TYPES = {
-    "coverage_shortage",
-    "min_coverage",
-    "objective1",
-    "minimize_shortages",
-    "minimize_total_shortage",
-    "minimize_coverage_shortage",
-}
-OBJECTIVE2_TYPES = {
-    "objective2",
-    "skill_priority_assignment",
-    "priority_skill_assignment",
-    "assign_higher_priority_skills",
-    "minimize_lower_priority_skill_assignment",
-    "objective5",
-    "skill_priority",
-}
-OBJECTIVE3_TYPES = {
-    "objective3",
-    "day_off_swap_penalty",
-    "preferred_day_off",
-    "preferred_day_off_work",
-    "minimize_preferred_day_off_work",
-    "objective4",
-    "minimize_day_off_changes",
-}
-
-
-def parse_definition7_soft_objectives(problem: Dict) -> Tuple[float, float, float]:
-    objective1_weight = 0.0
-    objective2_weight = 0.0
-    objective3_weight = 0.0
-
-    for constraint in problem.get("constraints", {}).get("soft", []):
-        if not constraint.get("enabled", True):
-            continue
-        type_name = str(
-            constraint.get("type")
-            or constraint.get("id")
-            or ""
-        ).strip().lower()
-        weight = parse_soft_constraint_weight(constraint)
-        if weight <= 0:
-            continue
-
-        if type_name in OBJECTIVE1_TYPES:
-            objective1_weight = weight
-        elif type_name in OBJECTIVE2_TYPES:
-            objective2_weight = weight
-        elif type_name in OBJECTIVE3_TYPES:
-            objective3_weight = weight
-
-    return objective1_weight, objective2_weight, objective3_weight
+ALGORITHM = "ILP_Sisqual_Hours_MathematicalDefinition7"
 
 
 class SisqualProblem5ILP:
-    """Hour-based ILP for the Sisqual bundle using the weighted MathematicalDefinition7 model."""
+    """MathematicalDefinition7 as a PuLP/CBC model over one v4 instance."""
 
-    def __init__(
-        self,
-        problem_json_path: str,
-        max_time_minutes=None,
-    ):
-        self.staff_team_code = "Employees"  
-        self.problem_json_path = Path(problem_json_path).resolve()  
-        self.base_dir = self.problem_json_path.parent  
-        self.problem = load_problem_json(self.problem_json_path)  # problem.json dict 
-        self.max_time_seconds = parse_max_time_seconds(max_time_minutes)  # "10" -> 600; None -> no CBC time limit
-        self.min_rest_hours = parse_min_rest_hours(self.problem)  # 11.0
-
-        self.contract_hours = parse_contract_hours(self.problem)  # {"fullTime_8h": 8, "partTime_4h": 4, "partTime_5h": 5, "partTime_7h": 7}
-        self.work_periods = parse_work_periods(self.problem)  # {"STORAGE_0830_1530": (510, 930), "CHECKOUT_1100_2100": (660, 1260), ...}
-        self.employees = parse_employees_with_levels(
-            self.problem,
-            self.contract_hours,
-            self.staff_team_code,
-        )  # [{"id": "20072412", "assignable_skills": ("Management", "Employees"), "skill_levels": {"Management": 2, "Employees": 6}, ...}, ...]
-        # `self.days` is still the optimization/output horizon: these are the
-        # dates that get decision variables, coverage terms, and exported cells.
-        self.days = parse_days(self.problem)  # target/output days, e.g. ["2025-10-01", ..., "2025-10-31"]
-
-        # The PDF specification allows days before the target month as context.
-        # We only use columns that already exist in schedule_input.csv. They are
-        # immutable history and never appear in the generated schedule output.
-        self.before_context_days = parse_before_context_days(self.base_dir, self.problem)
-
-        # `constraint_days` lets boundary-sensitive hard rules scan history and
-        # target days together. Any day in `context_day_set` is a constant, not a
-        # decision variable.
-        self.constraint_days = [*self.before_context_days, *self.days]
-        self.context_day_set = set(self.before_context_days)
-        self.date_by_day = {day: datetime.strptime(day, "%Y-%m-%d").date() for day in self.constraint_days}
-        self.schedule_markers = parse_schedule_input(self.base_dir, self.problem, self.constraint_days)  # target markers plus optional before-context markers
-        self.skills = parse_skill_codes(self.problem)  # ["Storage", "Checkout", "Management", "Employees"]
-        self.time_slots = build_half_hour_slots(self.work_periods)  # 08:30-09:00, 09:00-09:30, ..., 20:30-21:00
-        self.coverage_by_period = build_period_slot_map(self.work_periods, self.time_slots)  # {"STORAGE_0830_1530": (0, 1, ..., 13), "CHECKOUT_1100_2100": (5, 6, ..., 24), ...}
-        self.alpha = parse_demand_minimums(self.base_dir, self.problem, self.coverage_by_period)  # minimum demand by (day, slot, skill), e.g. ("2025-10-01", 0, "Storage") -> 1
-        demand_days = {day for (day, _, _) in self.alpha.keys()}  # {"2025-10-01", "2025-10-02", ..., "2025-10-31"}
-        invalid_demand_days = sorted(demand_days - set(self.days))  # [] when demand.csv matches targetPeriod
-        if invalid_demand_days:
-            preview = ", ".join(invalid_demand_days[:5])
-            if len(invalid_demand_days) > 5:
-                preview += ", ..."
-            raise ValueError(
-                "Demand data contains dates outside targetPeriod: "
-                f"{preview}. Update problem.json targetPeriod or demand.csv."
-            )
-        self.open_days = parse_open_days(self.days, self.alpha)  # ["2025-10-01", ..., "2025-10-31"] or only the days that appear in demand.csv
-        self.closed_days = set(self.days) - set(self.open_days)  # set() for the current October bundle; otherwise {"2025-10-05", ...}
-        self.coverage_priority_tiers = parse_coverage_priority_tiers(self.problem,self.skills,self.staff_team_code)  # [{"priority": 1, "skill": "Storage", "min_n": 1, ...}, {"priority": 2, "skill": "Management", "min_n": 1, "max_n": 1, ...}, ...]
-        (
-            self.objective1_weight,
-            self.objective2_weight,
-            self.objective3_weight,
-        ) = parse_definition7_soft_objectives(self.problem)  # e.g. (1000.0, 100.0, 10.0)
-        self.variable_days_off_active = self.objective3_weight > 0  # True when preferred day-offs may be swapped; False keeps template DO days fixed off
-        self.day_modes = build_sisqual_day_modes(self.employees, self.days, self.schedule_markers, self.closed_days)  # {("20072412", "2025-10-01"): "work_template", ("20072412", "2025-10-05"): "preferred_day_off", ...}
-        self.assignments = build_sisqual_bundle_assignments(
-            self.employees,
-            self.days,
-            self.schedule_markers,
-            self.time_slots,
-            self.day_modes,
-            self.variable_days_off_active,
-        )  # feasible daily blocks per (employee, day), e.g. ("20072412", "2025-10-01") -> [08:30-16:30, 09:00-17:00, ...]
-        self.levels = sorted(
-            {
-                level
-                for employee in self.employees
-                for level in employee["skill_levels"].values()
-            }
-        )  # [1, 2, 3, 4, 5, 6]
-        self.weeks = group_open_days_by_week(
-            self.problem,
-            self.open_days,
-            self.date_by_day,
-        )  # [["2025-10-01", ..., "2025-10-05"], ["2025-10-06", ..., "2025-10-12"], ...]
+    def __init__(self, inst: V4Instance, directives: Optional[SolveDirectives] = None, max_time_minutes=None):
+        self.inst = inst
+        self.directives = directives or SolveDirectives()
+        self.index = MD7Index(inst, self.directives)
+        self.max_time_seconds = parse_max_time_seconds(max_time_minutes)  # "10" -> 600; None -> no limit
+        self.days = inst.days
 
         self.model = None
         self.x = {}
         self.workday = {}
         self.y = {}
-        self.y_level = {}
         self.shortage = {}
-        self.preferred_day_work = {}
-        self.coverage_terms_cache = {}
         self.primary_objective = None
-        self.primary_objective_active = False
         self.status = None
         self.objective_value = None
 
-    def _priority_weight(self, skill: str, level: int) -> int:
-        return priority_weight_for_skill_level(
-            self.coverage_priority_tiers,
-            skill,
-            level,
-        )
-
-    def _coverage_terms(self, day: str, slot_idx: int, skill: str) -> List[pulp.LpVariable]:
-        cache_key = (day, slot_idx, skill)
-        cached = self.coverage_terms_cache.get(cache_key)
-        if cached is not None:
-            return cached
-
-        coverage_terms = []
-        for employee in self.employees:
-            employee_id = employee["id"]
-            y_key = (employee_id, day, slot_idx, skill)
-            if y_key in self.y:
-                coverage_terms.append(self.y[y_key])
-
-        self.coverage_terms_cache[cache_key] = coverage_terms
-        return coverage_terms
-
     def build_model(self):
-        model = pulp.LpProblem("SisqualProblem5HourlyILP", pulp.LpMinimize)
-        level_objectives_active = self.objective2_weight > 0
-        self.coverage_terms_cache = {}
+        inst, index = self.inst, self.index
+        model = pulp.LpProblem("MathematicalDefinition7_v4", pulp.LpMinimize)
 
-        # For every employee, every day, and every feasible daily block, create one binary
-        # variable x_{wdh} that says whether that whole assignment h in H_wd was chosen.
-        for employee in self.employees:
-            employee_id = employee["id"]
-            for day in self.days:
-                for assignment in self.assignments[(employee_id, day)]:
-                    self.x[(employee_id, day, assignment.key)] = pulp.LpVariable(
-                        f"x_{employee_id}_{day.replace('-', '')}_{assignment.key.split('_')[-2]}_{assignment.key.split('_')[-1]}",
-                        cat="Binary",
-                    )
-
-        # For every employee/day create workday_{wd}, the binary indicator stating whether
-        # worker w is assigned on day d. This is used in constraints (2), (4), (9), and (10).
-        for employee in self.employees:
-            employee_id = employee["id"]
-            for day in self.days:
-                self.workday[(employee_id, day)] = pulp.LpVariable(
-                    f"workday_{employee_id}_{day.replace('-', '')}",
-                    cat="Binary",
+        # For every employee, day and candidate shift h in H_wd, x_wdh says whether
+        # h was chosen. A fixed day's H_wd is the single shift the partial result
+        # names (or empty for a fixed rest).
+        for (eid, day), shifts in inst.candidates.items():
+            for shift in shifts:
+                self.x[(eid, day, shift.key)] = pulp.LpVariable(
+                    f"x_{eid}_{day.replace('-', '')}_{shift.code}_{shift.slot_indices[0]}", cat="Binary"
                 )
 
-        # For every employee/day/slot/allowed-skill combination, create the slot-level skill
-        # assignment variable y_{wdts} used in constraint (3).
-        for employee in self.employees:
-            employee_id = employee["id"]
-            skills = employee["assignable_skills"]
-            for day in self.days:
-                if not self.assignments[(employee_id, day)]:
-                    continue
-                for slot in self.time_slots:
-                    for skill in skills:
-                        if self.alpha.get((day, slot.index, skill), 0) <= 0:
-                            continue
-                        self.y[(employee_id, day, slot.index, skill)] = pulp.LpVariable(
-                            f"y_{employee_id}_{day.replace('-', '')}_{slot.index}_{skill}",
-                            cat="Binary",
-                        )
+        # workday_wd: whether worker w works on day d. Used by (2), (4) and the swap.
+        for employee in inst.employees:
+            for day in inst.days:
+                self.workday[(employee.id, day)] = pulp.LpVariable(
+                    f"workday_{employee.id}_{day.replace('-', '')}", cat="Binary"
+                )
 
-        # For every demanded (day, slot, skill) tuple, create shortage z_{dts}, the integer
-        # variable used in ObjectiveFunction1 (1) and in constraint (5).
-        for (day, slot_idx, skill), minimum in self.alpha.items():
-            self.shortage[(day, slot_idx, skill)] = pulp.LpVariable(
-                f"z_{day.replace('-', '')}_{slot_idx}_{skill}",
-                lowBound=0,
-                cat="Integer",
+        # y_wdts: worker w covers skill s in slot t, for demanded skills it holds.
+        for (eid, day, t, skill) in index.y_level:
+            self.y[(eid, day, t, skill)] = pulp.LpVariable(
+                f"y_{eid}_{day.replace('-', '')}_{t}_{skill}", cat="Binary"
             )
 
-        if level_objectives_active:
-            # y'_{wdtsl} from constraint (6): for each worker/slot/skill, only the employee's
-            # own competence level l_ws is materialized because all other levels are fixed to 0.
-            for employee in self.employees:
-                employee_id = employee["id"]
-                for day in self.days:
-                    if not self.assignments[(employee_id, day)]:
-                        continue
-                    for slot in self.time_slots:
-                        for skill in employee["assignable_skills"]:
-                            if (employee_id, day, slot.index, skill) not in self.y:
-                                continue
-                            level = employee["skill_levels"][skill]
-                            self.y_level[(employee_id, day, slot.index, skill, level)] = pulp.LpVariable(
-                                f"yprime_{employee_id}_{day.replace('-', '')}_{slot.index}_{skill}_L{level}",
-                                cat="Binary",
-                            )
-
-        if self.objective3_weight > 0:
-            # x'_{wd} from ObjectiveFunction3 (1'') and constraint (9): 1 when worker w is
-            # assigned on a preferred day-off d, 0 otherwise.
-            for employee in self.employees:
-                employee_id = employee["id"]
-                for day in self.days:
-                    if self.day_modes[(employee_id, day)] != "preferred_day_off":
-                        continue
-                    self.preferred_day_work[(employee_id, day)] = pulp.LpVariable(
-                        f"xprime_{employee_id}_{day.replace('-', '')}",
-                        cat="Binary",
-                    )
+        # z_dts: shortage against alpha_dts, for ObjectiveFunction1 and (5).
+        for (day, t, skill), minimum in inst.alpha.items():
+            self.shortage[(day, t, skill)] = pulp.LpVariable(
+                f"z_{day.replace('-', '')}_{t}_{skill}", lowBound=0, upBound=minimum, cat="Integer"
+            )
 
         # Constraint (2)
-        # "each worker w∈W can be assigned on each open day d∈D_o with at most one
-        # working daily assignment h∈H_wd."
-        # When the bundle keeps a day fixed (old template behavior), this becomes equality.
-        for employee in self.employees:
-            employee_id = employee["id"]
-            for day in self.days:
-                mode = self.day_modes[(employee_id, day)]
-                x_vars = [self.x[(employee_id, day, assignment.key)] for assignment in self.assignments[(employee_id, day)]]
-
-                if mode in {"closed", "unavailable"}:
-                    if x_vars:
-                        model += pulp.lpSum(x_vars) == 0, f"closed_or_unavailable_{employee_id}_{day}"
-                    model += self.workday[(employee_id, day)] == 0, f"workday_off_{employee_id}_{day}"
-                elif mode == "preferred_day_off":
-                    if self.variable_days_off_active:
-                        model += (
-                            pulp.lpSum(x_vars) == self.workday[(employee_id, day)],
-                            f"preferred_day_off_link_{employee_id}_{day}",
-                        )
-                    else:
-                        if x_vars:
-                            model += pulp.lpSum(x_vars) == 0, f"preferred_day_off_fixed_{employee_id}_{day}"
-                        model += self.workday[(employee_id, day)] == 0, f"preferred_day_off_workday_{employee_id}_{day}"
-                elif mode == "work_template":
-                    if self.variable_days_off_active:
-                        model += (
-                            pulp.lpSum(x_vars) == self.workday[(employee_id, day)],
-                            f"flex_work_template_{employee_id}_{day}",
-                        )
-                    else:
-                        model += pulp.lpSum(x_vars) == 1, f"mandatory_work_{employee_id}_{day}"
-                        model += self.workday[(employee_id, day)] == 1, f"mandatory_workday_{employee_id}_{day}"
+        # "each worker w can be assigned on each day d with at most one daily
+        # assignment h in H_wd." A fixed day, a work cell and an unavailable cell
+        # fix workday_wd; only the day-off swap leaves it to the solver.
+        for employee in inst.employees:
+            for day in inst.days:
+                x_vars = [self.x[(employee.id, day, s.key)] for s in inst.candidates[(employee.id, day)]]
+                workday = self.workday[(employee.id, day)]
+                value = index.day_rule(employee.id, day)
+                tag = f"{employee.id}_{day.replace('-', '')}"
+                if value is None:
+                    model += pulp.lpSum(x_vars) == workday, f"day_link_{tag}"
                 else:
-                    model += pulp.lpSum(x_vars) == 1, f"fixed_time_work_{employee_id}_{day}"
-                    model += self.workday[(employee_id, day)] == 1, f"fixed_time_workday_{employee_id}_{day}"
+                    model += pulp.lpSum(x_vars) == value, f"day_fixed_{tag}"
+                    model += workday == value, f"workday_fixed_{tag}"
 
-        # Constraint (3)
-        # "each worker w∈W assigned on day d∈D_o with a working daily assignment
-        # h∈H_wd that covers timeslot t∈T_d must be assigned in timeslot t with
-        # one of its skills S_w."
-        for employee in self.employees:
-            employee_id = employee["id"]
-            skills = employee["assignable_skills"]
-            assignment_list = {
-                day: self.assignments[(employee_id, day)]
-                for day in self.days
-            }
-            for day in self.days:
-                if not assignment_list[day]:
-                    continue
-                for slot in self.time_slots:
-                    rhs_terms = []
-                    for assignment in assignment_list[day]:
-                        if slot.index in assignment.slot_indices:
-                            rhs_terms.append(self.x[(employee_id, day, assignment.key)])
-                    lhs_terms = [
-                        self.y[(employee_id, day, slot.index, skill)]
-                        for skill in skills
-                        if (employee_id, day, slot.index, skill) in self.y
-                    ]
-                    model += (
-                        pulp.lpSum(lhs_terms) == pulp.lpSum(rhs_terms),
-                        f"skill_cover_{employee_id}_{day}_{slot.index}",
-                    )
+        # Constraint (3), one link per axis
+        # "a worker covering slot t with its chosen shift is assigned in t with one
+        # of its skills" - once on every axis where it holds a demanded skill, so a
+        # worker counts for Team/T1 and Responsibility/A in the same slot. Slots
+        # where an axis has no demanded skill for the worker carry no link.
+        for eid, day, t, axis, skills, shift_keys in index.links:
+            model += (
+                pulp.lpSum(self.y[(eid, day, t, s)] for s in skills)
+                == pulp.lpSum(self.x[(eid, day, k)] for k in shift_keys),
+                f"skill_cover_{eid}_{day.replace('-', '')}_{t}_{axis}",
+            )
 
         # Constraint (4)
-        # "each worker w∈W cannot be assigned with more than 5 working days in
-        # any set of 6 consecutive days." Optional before-context days are fixed
-        # history, so they only contribute constants to windows crossing the
-        # target-period boundary.
-        for employee in self.employees:
-            employee_id = employee["id"]
-            for start in range(0, len(self.constraint_days) - 5):
-                window = self.constraint_days[start:start + 6]
+        # At most MaxConsecutiveWorkDays in any window one day longer, and at most
+        # MaxConsecutiveWorkDaysInWeek days in any week.
+        for eid, start, window, n in index.run_windows:
+            model += (
+                pulp.lpSum(self.workday[(eid, day)] for day in window) <= n,
+                f"max_consecutive_{eid}_{start}",
+            )
+        for eid, week_index, week, cap in index.week_caps:
+            model += (
+                pulp.lpSum(self.workday[(eid, day)] for day in week) <= cap,
+                f"max_week_days_{eid}_{week_index}",
+            )
 
-                # Pure-history windows need no constraint because they contain no
-                # target decision variables. We only constrain windows that touch
-                # the target period.
-                if not any(day not in self.context_day_set for day in window):
-                    continue
-
-                # Previous days are fixed input history: add them as constants.
-                # Target days remain normal binary workday variables.
-                fixed_workdays = sum(
-                    fixed_context_workday(self.schedule_markers, employee_id, day)
-                    for day in window
-                    if day in self.context_day_set
-                )
-                target_terms = [
-                    self.workday[(employee_id, day)]
-                    for day in window
-                    if day not in self.context_day_set
-                ]
-                model += (
-                    fixed_workdays + pulp.lpSum(target_terms) <= 5,
-                    f"max5in6_{employee_id}_{start}",
-                )
-
-        # Extra hard constraint from problem.json, kept from the original hourly model:
-        # forbid consecutive-day assignment pairs whose overnight rest is below the
-        # configured minimum rest hours.
-        for employee in self.employees:
-            employee_id = employee["id"]
-
-            # First handle the single boundary from the last available context
-            # day into the first target day. Context days only restrict the
-            # target assignment when they have exact EQUALS times; numeric
-            # markers do not provide a safe previous-day end time.
-            for day, next_day in zip(self.constraint_days, self.constraint_days[1:]):
-                if day not in self.context_day_set or next_day in self.context_day_set:
-                    continue
-                context_assignment = fixed_context_assignment(self.schedule_markers, employee_id, day)
-                if context_assignment is None:
-                    continue
-                for next_assignment in self.assignments[(employee_id, next_day)]:
-                    rest_hours = ((24 * 60 - context_assignment.end_min) + next_assignment.start_min) / 60.0
-                    if rest_hours < self.min_rest_hours:
-                        model += (
-                            self.x[(employee_id, next_day, next_assignment.key)] == 0,
-                            f"min_rest_context_{employee_id}_{day.replace('-', '')}_{next_day.replace('-', '')}_{next_assignment.key}",
-                        )
-
-            # Then keep the original target-period rest constraints between
-            # pairs of target days, where both assignments are solver decisions.
-            for day, next_day in zip(self.days, self.days[1:]):
-                today_assignments = self.assignments[(employee_id, day)]
-                next_day_assignments = self.assignments[(employee_id, next_day)]
-                if not today_assignments or not next_day_assignments:
-                    continue
-                for today_assignment in today_assignments:
-                    for next_assignment in next_day_assignments:
-                        rest_hours = ((24 * 60 - today_assignment.end_min) + next_assignment.start_min) / 60.0
-                        if rest_hours < self.min_rest_hours:
-                            model += (
-                                self.x[(employee_id, day, today_assignment.key)]
-                                + self.x[(employee_id, next_day, next_assignment.key)]
-                                <= 1,
-                                f"min_rest_{employee_id}_{day.replace('-', '')}_{today_assignment.key}_{next_day.replace('-', '')}_{next_assignment.key}",
-                            )
+        # Minimum rest (MinDistanceBetweenShiftsInMinutes): no pair of shifts on
+        # consecutive days closer than the minimum. Pairs against a fixed day were
+        # already pruned from the open day's candidates by the parser.
+        for n, (eid, day, a_key, next_day, b_key) in enumerate(index.rest_pairs):
+            model += (
+                self.x[(eid, day, a_key)] + self.x[(eid, next_day, b_key)] <= 1,
+                f"min_rest_{eid}_{n}",
+            )
 
         # Constraint (5)
-        # "the value of variable z_dts is at least the number of workers below
-        # the required value alpha_dts for each open day d∈D_o, each timeslot t∈T_d
-        # and each skill s∈S."
-        for (day, slot_idx, skill), minimum in self.alpha.items():
-            coverage_terms = self._coverage_terms(day, slot_idx, skill)
+        # "z_dts is at least the number of workers below alpha_dts."
+        for (day, t, skill), minimum in inst.alpha.items():
             model += (
-                self.shortage[(day, slot_idx, skill)] + pulp.lpSum(coverage_terms) >= minimum,
-                f"shortage_{day}_{slot_idx}_{skill}",
+                self.shortage[(day, t, skill)]
+                + pulp.lpSum(self.y[(eid, day, t, skill)] for eid in index.coverage.get((day, t, skill), ()))
+                >= minimum,
+                f"shortage_{day.replace('-', '')}_{t}_{skill}",
             )
 
-        if level_objectives_active:
-            # Constraint (6)
-            # "each worker w∈W that works in day d∈D_o in timeslot t∈T with skill s∈S_w
-            # is assigned with its competence level l_ws and all other levels are set to 0."
-            for employee in self.employees:
-                employee_id = employee["id"]
-                for day in self.days:
-                    if not self.assignments[(employee_id, day)]:
-                        continue
-                    for slot in self.time_slots:
-                        for skill in employee["assignable_skills"]:
-                            level = employee["skill_levels"][skill]
-                            if (employee_id, day, slot.index, skill, level) not in self.y_level:
-                                continue
-                            model += (
-                                self.y_level[(employee_id, day, slot.index, skill, level)]
-                                == self.y[(employee_id, day, slot.index, skill)],
-                                f"level_link_{employee_id}_{day}_{slot.index}_{skill}_L{level}",
-                            )
-
-        if self.variable_days_off_active:
-            # Constraint (5)
-            # "each worker w∈W cannot be assigned with any working daily assignment
-            # in the days that he is unavailable on each week."
-            # This is already enforced day-by-day above through mode == "unavailable" -> x = 0.
-
-            # Constraint (6)
-            # "each worker w∈W must be assigned on each week k∈K with n_wk working days."
-            for employee in self.employees:
-                employee_id = employee["id"]
-                for week_index, week_days in enumerate(self.weeks):
-                    unavailable_days = sum(
-                        1
-                        for day in week_days
-                        if self.day_modes[(employee_id, day)] == "unavailable"
-                    )
-                    preferred_days_off = sum(
-                        1
-                        for day in week_days
-                        if self.day_modes[(employee_id, day)] == "preferred_day_off"
-                    )
-                    required_workdays = len(week_days) - unavailable_days - preferred_days_off
-                    model += (
-                        pulp.lpSum(self.workday[(employee_id, day)] for day in week_days) == required_workdays,
-                        f"weekly_workdays_{employee_id}_{week_index}",
-                    )
-
-            # Constraint (9)
-            # "x'_{wd} is set to 1 when worker w works on a preferable day-off d,
-            # and is set to 0 otherwise."
-            for employee in self.employees:
-                employee_id = employee["id"]
-                for day in self.days:
-                    if self.day_modes[(employee_id, day)] == "preferred_day_off":
-                        model += (
-                            self.preferred_day_work[(employee_id, day)] == self.workday[(employee_id, day)],
-                            f"preferred_day_indicator_{employee_id}_{day}",
-                        )
-
-        objective_terms = []
-
-        # ObjectiveFunction1
-        # Try to fulfil as much as possible the minimum number alpha_dts of workers
-        # in all open days, timeslots, and skills.
-        if self.objective1_weight > 0 and self.shortage:
-            objective_terms.append(self.objective1_weight * pulp.lpSum(self.shortage.values()))
-
-        # ObjectiveFunction2
-        # Prefer higher-priority skill/level combinations by minimizing
-        # sum(p_sl * y'_wdtsl).
-        if self.objective2_weight > 0 and self.y_level:
-            objective_terms.append(
-                self.objective2_weight
-                * pulp.lpSum(
-                    self._priority_weight(skill, level) * variable
-                    for (_, _, _, skill, level), variable in self.y_level.items()
+        # Day-off swap only: each week keeps its template count n_wk, so working a
+        # preferred day-off rests a work day elsewhere in the same week.
+        if self.directives.allow_day_off_swap:
+            for eid, week_index, week, required in index.swap_weeks():
+                model += (
+                    pulp.lpSum(self.workday[(eid, day)] for day in week) == required,
+                    f"weekly_workdays_{eid}_{week_index}",
                 )
-            )
 
-        # ObjectiveFunction3 (1'')
-        # trying to assign as much as possible the preferable days-off by minimizing
-        # the number of preferred day-offs that become worked days.
-        if self.objective3_weight > 0 and self.preferred_day_work:
-            objective_terms.append(
-                self.objective3_weight * pulp.lpSum(self.preferred_day_work.values())
-            )
-
-        self.primary_objective = pulp.lpSum(objective_terms) if objective_terms else 0
-        self.primary_objective_active = bool(objective_terms)
-
-        if self.primary_objective_active:
-            model += self.primary_objective, "weighted_mathematical_definition_7_objective"
-        else:
-            model += 0, "feasibility_only"
-
+        terms = []
+        if self.directives.w1 > 0 and self.shortage:
+            terms.append(self.directives.w1 * pulp.lpSum(self.shortage.values()))
+        if self.directives.w2 > 0 and self.y:
+            terms.append(self.directives.w2 * pulp.lpSum(
+                index.priority_weight(eid, day, skill) * var for (eid, day, t, skill), var in self.y.items()
+            ))
+        worked_day_offs = index.day_off_days()
+        if self.directives.w3 > 0 and worked_day_offs:
+            terms.append(self.directives.w3 * pulp.lpSum(self.workday[key] for key in worked_day_offs))
+        self.primary_objective = pulp.lpSum(terms) if terms else 0
+        model += (self.primary_objective, "mathematical_definition_7") if terms else (0, "feasibility_only")
         self.model = model
 
-    def solve(self, gap_rel: float = 0.01):
+    def solve(self, gap_rel: float = 0.01, verbose: bool = True):
         if self.model is None:
             self.build_model()
-
-        solver = pulp.PULP_CBC_CMD(
-            msg=1,
-            timeLimit=self.max_time_seconds,
-            gapRel=gap_rel,
-        )
+        solver = pulp.PULP_CBC_CMD(msg=1 if verbose else 0, timeLimit=self.max_time_seconds, gapRel=gap_rel)
         self.status = self.model.solve(solver)
-        if pulp.LpStatus.get(self.status) not in {"Optimal", "Feasible"}:
-            self.objective_value = pulp.value(self.model.objective)
-            return self.status
-
-        primary_value = pulp.value(self.primary_objective) or 0.0
-        self.objective_value = primary_value
-
+        if self.has_solution():
+            self.objective_value = pulp.value(self.primary_objective) or 0.0
         return self.status
+
+    def has_solution(self) -> bool:
+        # sol_status separates "optimal" (1) from "stopped with an incumbent" (2);
+        # a time limit without one reports 0.
+        return getattr(self.model, "sol_status", None) in (pulp.LpSolutionOptimal, pulp.LpSolutionIntegerFeasible)
 
     def solution_status(self) -> str:
         return pulp.LpStatus.get(self.status, "Unknown")
 
+    def chosen_shift(self, eid: str, day: str) -> Optional[Shift]:
+        for shift in self.inst.candidates[(eid, day)]:
+            value = pulp.value(self.x[(eid, day, shift.key)])
+            if value is not None and value > 0.5:
+                return shift
+        return None
+
     def build_output_rows(self) -> List[List[str]]:
-        rows = [["employee_id", *self.days]]  # [["employee_id", "2025-10-01", "2025-10-02", ..., "2025-10-31"], ...]
+        def covers(eid, day, t, skill):
+            value = pulp.value(self.y[(eid, day, t, skill)])
+            return value is not None and value > 0.5
 
-        for employee in self.employees:
-            employee_id = employee["id"]  # "20072412"
-            row = [employee_id]  # ["20072412"]
-            for day in self.days:
-                marker = self.schedule_markers[employee_id][day]  # original template cell like "DO", "VAC", "8", "EQUALS:11:00-16:00"
-                mode = self.day_modes[(employee_id, day)]  # "closed", "unavailable", "preferred_day_off", "fixed_time_work", or "work_template"
-
-                if mode == "closed":
-                    row.append("CLOSED")  # export explicit store-closed day marker
-                    continue
-                if mode == "unavailable":
-                    row.append(marker or "OFF")  # preserve original off marker such as "VAC" / "MED";
-                    continue
-
-                chosen = None  # the one daily Assignment selected by x_{wdh}, e.g. 14:00-22:00 block
-                for assignment in self.assignments[(employee_id, day)]:
-                    value = pulp.value(self.x.get((employee_id, day, assignment.key)))
-                    if value is not None and value > 0.5:
-                        chosen = assignment
-                        break
-
-                if chosen is None:
-                    if mode == "preferred_day_off":
-                        row.append(marker or "DO")  # untouched preferred day-off remains DO
-                    elif self.variable_days_off_active and mode == "work_template":
-                        row.append("OFF")  # swappable template work day that the solver decided to leave off
-                    else:
-                        row.append("UNASSIGNED")  # defensive fallback: expected work day but no assignment selected
-                    continue
-
-                segments = []  # merged export pieces like ["10:00-11:00@Checkout", "11:00-14:00@Management"]
-                current_skill = None  # currently open segment skill while scanning the chosen half-hour slots
-                current_start = None  # segment start minute, e.g. 600 for 10:00
-                current_end = None  # segment end minute, updated as adjacent equal-skill slots are merged
-                # Walk the chosen half-hour slots in order and merge adjacent slots with the
-                # same skill into one exported segment.
-                for slot_idx in chosen.slot_indices:
-                    slot = self.time_slots[slot_idx]  # one 30-minute slot, e.g. TimeSlot(index=5, start_min=660, end_min=690)
-                    assigned_skill = None  # actual team chosen by y_{wdts} for this slot
-                    for skill in employee["assignable_skills"]:
-                        y_var = self.y.get((employee_id, day, slot_idx, skill))
-                        if y_var is None:
-                            continue
-                        value = pulp.value(y_var)
-                        if value is not None and value > 0.5:
-                            assigned_skill = skill
-                            break
-                    if assigned_skill is None:
-                        if employee["assignable_skills"]:
-                            assigned_skill = employee["assignable_skills"][0]  # defensive fallback to the first declared competency if y was not materialized
-                        else:
-                            assigned_skill = self.staff_team_code  # final fallback; should not be needed for valid Sisqual employees
-                    if current_skill == assigned_skill:
-                        current_end = slot.end_min  # keep extending the current contiguous segment
-                    else:
-                        if current_skill is not None:
-                            segments.append(
-                                f"{minutes_to_hhmm(current_start)}-{minutes_to_hhmm(current_end)}@{current_skill}"
-                            )  # close previous segment, e.g. "10:00-11:00@Checkout"
-                        current_skill = assigned_skill  # start a new segment for the new skill
-                        current_start = slot.start_min
-                        current_end = slot.end_min
-                if current_skill is not None:
-                    segments.append(f"{minutes_to_hhmm(current_start)}-{minutes_to_hhmm(current_end)}@{current_skill}")  # append the final open segment
-                row.append(" | ".join(segments) if segments else chosen.label)  # "10:00-11:00@Checkout | 11:00-14:00@Management"
-            rows.append(row)  # ["20072412", "14:00-22:00@Management", "DO", "CLOSED", ...]
-        return rows
+        return self.index.output_rows(self.chosen_shift, covers)
 
     def export_csv(self, output_path: str):
-        rows = self.build_output_rows()
         with open(output_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerows(rows)
+            csv.writer(f).writerows(self.build_output_rows())
 
 
-def solve(
-    problem_path=None,
-    maxTime=None,
-    **kwargs,
-):
-    if not problem_path:
-        raise ValueError("This solver requires 'problem_path' pointing to problem.json")
-
-    scheduler = SisqualProblem5ILP(
-        problem_path,
-        max_time_minutes=maxTime,
-    )
+def solve(problem_path=None, maxTime=None, **kwargs):
+    """TaskManager / CLI entry. kwargs: w1, w2, w3, allow_day_off_swap, gap_rel, result_dir, task_id."""
+    directives = SolveDirectives.from_kwargs(kwargs)
+    task_id = str(kwargs.get("task_id", "manual"))
+    inst = load_for_solver(problem_path, directives, task_id, ALGORITHM)
+    scheduler = SisqualProblem5ILP(inst, directives, max_time_minutes=maxTime)
     scheduler.build_model()
-    status = scheduler.solve(gap_rel=float(kwargs.get("gap_rel", kwargs.get("gapRel", 0.01))))
-    status_name = pulp.LpStatus.get(status, "Unknown")
-    if status_name == "Infeasible":
-        from validators.sisqual_feasibility import build_solver_infeasible_report
-
-        raise build_solver_infeasible_report(
-            problem_path,
-            str(kwargs.get("task_id", "manual")),
-            "ILP_Sisqual_Hours_MathematicalDefinition7",
-            status_name,
-            model_stats={
-                "variables": len(scheduler.model.variables()) if scheduler.model is not None else None,
-                "constraints": len(scheduler.model.constraints) if scheduler.model is not None else None,
-            },
-        )
-    return scheduler.build_output_rows()
+    scheduler.solve(gap_rel=float(kwargs.get("gap_rel", kwargs.get("gapRel", 0.01))),
+                    verbose=str(kwargs.get("verbose", True)).lower() not in {"0", "false", "no"})
+    if not scheduler.has_solution():
+        raise solver_failure(problem_path, task_id, ALGORITHM, scheduler.solution_status())
+    return finish(inst, scheduler.build_output_rows(), kwargs)
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Solve the sisqual bundle with the weighted MathematicalDefinition7 hour-based ILP model."
-    )
-    parser.add_argument("problem_json", help="Path to problem.json")
+    parser = argparse.ArgumentParser(description="Solve a schema v4 package with the MathematicalDefinition7 ILP.")
+    parser.add_argument("problem", help="Path to a v4 package folder or its problem.json")
     parser.add_argument("--max-time", dest="max_time", default="10", help="Solver time limit in minutes")
-    parser.add_argument("--output", dest="output", default=None, help="Optional output CSV path")
-    parser.add_argument(
-        "--gap-rel",
-        dest="gap_rel",
-        default="0.01",
-        help="Relative MIP gap for CBC",
-    )
+    parser.add_argument("--gap-rel", dest="gap_rel", default="0.01", help="Relative MIP gap for CBC")
+    parser.add_argument("--output", default=None, help="Optional output CSV of the schedule rows")
+    parser.add_argument("--result-dir", default=None, help="Write the package plus result.json here")
     args = parser.parse_args()
 
-    scheduler = SisqualProblem5ILP(
-        args.problem_json,
-        max_time_minutes=args.max_time,
-    )
+    directives = SolveDirectives()
+    inst = load_for_solver(args.problem, directives, "cli", ALGORITHM)
+    scheduler = SisqualProblem5ILP(inst, directives, max_time_minutes=args.max_time)
     scheduler.build_model()
-    status = scheduler.solve(gap_rel=float(args.gap_rel))
-    rows = scheduler.build_output_rows()
-
-    print(f"Status: {pulp.LpStatus.get(status, 'Unknown')}")
-    print(f"Objective: {scheduler.objective_value}")
-
+    scheduler.solve(gap_rel=float(args.gap_rel))
+    print(f"Status: {scheduler.solution_status()}  Objective: {scheduler.objective_value}")
+    if not scheduler.has_solution():
+        raise SystemExit(1)
+    rows = finish(inst, scheduler.build_output_rows(), {"result_dir": args.result_dir})
     if args.output:
         scheduler.export_csv(args.output)
         print(f"Wrote schedule to {args.output}")
     else:
         for row in rows[:5]:
-            print(row[:6])
+            print(row[:4])
 
 
 if __name__ == "__main__":

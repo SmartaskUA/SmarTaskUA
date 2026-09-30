@@ -16,6 +16,8 @@ input problem  -->  solver  -->  result  +  result_schedules.csv
 
 The one place v4.0 conforms rather than asserts is the **result**: `OutRosterTeamDays` is Sisqual's existing WFM import API, so `schema-v4-result.json` matches it verbatim, PascalCase and all.
 
+The scheduler's v4 solvers read these packages directly: see [docs/how-to-solve.md](../../docs/how-to-solve.md).
+
 ## Quick start
 
 ```bash

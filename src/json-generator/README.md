@@ -44,6 +44,11 @@ port 5174 (`npm run dev`, then http://localhost:5174/json-gen/).
 Every step shows the validator's findings for that step. The Review step shows all of them,
 and download unlocks when there are no errors.
 
+Two more warnings come from the SmarTask app, not the v4 validator, so a package the app would refuse is
+flagged while it is written: `app:` a `problemId` the upload rejects (letters, digits, `_ - .` only), and
+`solver:` work days no menu shift fits, which the solvers reject before running (with the menu off they
+build their own shifts instead). They stay warnings: such a package is still valid v4.
+
 Starting from a bundle takes the problem, its CSVs and, if present, one result with its
 `<stem>_schedules.csv` sidecar: the result's entries become the fixed days, partial or complete.
 Two results are refused, as the package rule says.
@@ -81,6 +86,7 @@ All schema knowledge lives in `src/v4/`, plain JavaScript with no React:
 | `schema.js` | JSON Schema layer (ajv) over the vendored `schema_v4/schema-v4-input.json` and `schema-v4-result.json` |
 | `importBundle.js` | a v4 package (ZIP or files) → state, a result included; SISQUAL's current export is refused, not adapted |
 | `operations.js` | pure state transforms: cascading renames/deletes (fixed days follow employees, scope and menu codes), template application, menu generation, fixing days, the weekly load |
+| `appChecks.js` | what the SmarTask app would refuse: a `problemId` its upload rejects, work days no menu shift fits (the solver's own rule, `problem_v4/loader.py`) |
 | `state.js`, `persistence.js` | the state shape (mirrors the v4 document) and localStorage |
 
 The React side is `src/steps/` (one file per step) and `src/components/`, all reading

@@ -6,6 +6,7 @@ import CalendarTable from "../components/manager/CalendarTable";
 import CalendarHeader from "../components/manager/CalendarHeader";
 import KPIReport from "../components/manager/KPIReport";
 import SisqualKPIReport from "./SisqualKPIReport";
+import V4KPIReport from "./V4KPIReport";
 import BaseUrl from "../components/BaseUrl";
 import MetadataInfo from "../components/manager/MetadataInfo";
 import MinimumsTemplate from "../components/manager/MinimumsTemplate";
@@ -99,6 +100,7 @@ const Calendar = () => {
                 console.log("KPI recebido via WebSocket:", item.result);
                 setKpiSummary((prev) => {
                   const prevIsSisqualHourly =
+                    prev?.total_shortage !== undefined ||
                     prev?.weightedMinimumCoverageRate !== undefined ||
                     Array.isArray(prev?.teamCoverageBreakdown) ||
                     prev?.["Total_Shortage"] !== undefined;
@@ -353,6 +355,7 @@ const Calendar = () => {
             holidayMap={holidayMap}
             scheduleType={scheduleType}
             employees={metadata?.employeesTeamInfo || []}
+            fixedDays={metadata?.fixedDays || []}
           />
         ) : hasProblemDemandData ? (
           <ProblemDemandTable
@@ -431,7 +434,9 @@ const Calendar = () => {
 
         <MetadataInfo metadata={metadata} />
 
-        {kpiSummary?.weightedMinimumCoverageRate !== undefined || Array.isArray(kpiSummary?.teamCoverageBreakdown) ? (
+        {kpiSummary?.total_shortage !== undefined ? (
+          <V4KPIReport kpis={kpiSummary} />
+        ) : kpiSummary?.weightedMinimumCoverageRate !== undefined || Array.isArray(kpiSummary?.teamCoverageBreakdown) ? (
           <KPIReport metrics={kpiSummary || {}} scheduleType={scheduleType} />
         ) : kpiSummary?.["Total_Shortage"] !== undefined ? (
           <SisqualKPIReport kpis={kpiSummary} />
