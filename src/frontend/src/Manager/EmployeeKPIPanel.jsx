@@ -227,8 +227,6 @@ export default function EmployeeKPIPanel({ kpis }) {
   const [filterDay, setFilterDay]         = useState("");
 
   const employees = kpis?.Employee_KPIs?.employees ?? [];
-  if (employees.length === 0) return null;
-
   const emp = employees.find((e) => e.emp_id === selectedEmpId) || null;
 
   // Day options for the second filter — only working days of selected employee
@@ -237,11 +235,8 @@ export default function EmployeeKPIPanel({ kpis }) {
     return Object.keys(emp.daily_segments || {}).sort();
   }, [emp]);
 
-  const consecutiveColor =
-    !emp ? "text.primary"
-    : emp.max_consecutive_days > 5 ? "error.main"
-    : emp.max_consecutive_days === 5 ? "warning.main"
-    : "success.main";
+  // After every hook: returning earlier would change the hook count between renders.
+  if (employees.length === 0) return null;
 
   return (
     <Box mt={3}>

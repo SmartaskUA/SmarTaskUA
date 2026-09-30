@@ -2,7 +2,7 @@
 
 The bundle SISQUAL generated on 2026-09-17 (`reference/IntegracaoUA_SISQUAL/JSON/20260917_JSON_Cenarios_GeradoSisqual/Cenário_2/`), corrected to v4.0, with a worked result beside it. The raw drop is untouched.
 
-It is the **only** shipped example. Sisqual's other September scenario, Cenário 1, fails three independent ways and is kept as raw provenance only — see [next_meeting.md](../../next_meeting.md) item 21 ("the scenario we had to drop").
+Two more packages are cut from it to show the other package shapes: [cenario2_input_only](../cenario2_input_only/) (no menu, no result) and [cenario2_partial](../cenario2_partial/) (a result that fixes the first week and leaves the rest open). Sisqual's other September scenario, Cenário 1, fails three independent ways and is kept as raw provenance only — see [next_meeting.md](../../next_meeting.md) item 21 ("the scenario we had to drop").
 
 | | |
 |---|---|

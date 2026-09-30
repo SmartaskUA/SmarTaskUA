@@ -16,7 +16,7 @@ from pathlib import Path
 
 from .common import CommonChecksMixin, Report
 from .validate_input import InputChecksMixin
-from .validate_result import ResultChecksMixin
+from .validate_result import SIDECAR_SUFFIX, ResultChecksMixin
 
 SCHEMA_DIR = Path(__file__).resolve().parents[2] / "schemas"
 
@@ -117,25 +117,61 @@ def validate(path, against=None) -> Report:
     return SchemaValidator(Path(path), against).run()
 
 
+def _data_files(problem: dict) -> list[str]:
+    """Every CSV a problem names: its three demand grains, its schedule input, its menu."""
+    demand = problem.get("demand", {})
+    names = [demand.get(k) for k in ("dataFileDays", "dataFilePeriods", "dataFileShifts")]
+    names += [problem.get("scheduleInput", {}).get("dataFile"),
+              problem.get("schedules", {}).get("dataFile")]
+    return [n for n in names if n]
+
+
 def validate_package(directory) -> dict[str, Report]:
-    """Validate a directory as one package: its problem, its result, and their agreement."""
+    """Validate a directory as one package: its problem, its result, and their agreement.
+
+    A package is one input problem with its four CSVs, optionally the shift menu it
+    names, and optionally one result with its `<stem>_schedules.csv` sidecar. The
+    result may be partial; the entries it carries are fixed days.
+    """
     directory = Path(directory)
     reports: dict[str, Report] = {}
-    forms: dict[str, Path] = {}
+    found: dict[str, list[Path]] = {}
     for path in sorted(directory.glob("*.json")):
         form = _form_of(path)
         if form is None:
             continue
-        forms.setdefault(form, path)
+        found.setdefault(form, []).append(path)
         reports[path.name] = validate(path)
 
+    problems, results = found.get("input", []), found.get("result", [])
     package = Report()
-    package.stats["forms"] = sorted(forms)
-    if "input" in forms:
-        with forms["input"].open(encoding="utf-8") as fh:
-            package.stats["problemId"] = json.load(fh).get("metadata", {}).get("problemId")
-    if "result" in forms and "input" not in forms:
+    package.stats["forms"] = sorted(found)
+    if len(problems) > 1:
+        package.error(f"a package carries one input problem, but this one has {len(problems)} "
+                      f"({', '.join(p.name for p in problems)}), so a result beside them "
+                      f"cannot tell which to be checked against")
+    if len(results) > 1:
+        package.error(f"a package carries at most one result, but this one has {len(results)} "
+                      f"({', '.join(p.name for p in results)}); each fixes days, so two "
+                      f"would disagree about which stand")
+
+    referenced = {(directory / (r.stem + SIDECAR_SUFFIX)).resolve() for r in results}
+    for path in problems:
+        with path.open(encoding="utf-8") as fh:
+            problem = json.load(fh)
+        package.stats.setdefault("problemId", problem.get("metadata", {}).get("problemId"))
+        package.stats.setdefault("menu", bool(problem.get("schedules", {}).get("dataFile")))
+        referenced |= {(directory / name).resolve() for name in _data_files(problem)}
+    package.stats["result"] = results[0].name if len(results) == 1 else None
+
+    if results and not problems:
         package.warn("a result sits here with no input problem to check it against")
+    elif problems:
+        for path in sorted(directory.glob("*.csv")):
+            if path.resolve() not in referenced:
+                package.warn(f"{path.name} sits in the package but nothing refers to it: the "
+                             f"problem names its CSVs, and a result's sidecar is "
+                             f"<stem>{SIDECAR_SUFFIX}")
     reports["(package)"] = package
     return reports
 

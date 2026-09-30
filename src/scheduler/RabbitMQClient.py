@@ -90,6 +90,9 @@ class RabbitMQClient:
 
             return {
                 "problemId": problem.get("metadata", {}).get("problemId"),
+                # schema v4 packages are recognised by these two (the UI picks its hourly view from them)
+                "schemaVersion": problem.get("schemaVersion"),
+                "slotMinutes": problem.get("timeGrid", {}).get("slotMinutes"),
                 "problemDemandData": demand_rows,
                 "problemWorkPeriods": demand_config.get("workPeriods", []),
                 "problemTeams": demand_config.get("organizationalUnits", {}).get("teams", []),

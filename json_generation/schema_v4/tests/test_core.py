@@ -260,3 +260,71 @@ def test_week_index_is_case_insensitive_and_honours_week_start():
 def test_horizon_is_empty_when_the_scope_is_reversed():
     assert core.horizon({"temporalScope": {"start": "2026-03-08", "end": "2026-03-02"}}) == []
     assert len(core.horizon({"temporalScope": {"start": "2026-03-02", "end": "2026-03-08"}})) == 7
+
+
+# -- fixed days --------------------------------------------------------------
+
+REST = core.Schedule(3, "Day off", 0, None)
+NINE_TO_FIVE = core.Schedule(9003, "09:00-17:00", 480, Interval(540, 1020))
+NINE_TO_ONE = core.Schedule(9001, "09:00-13:00", 240, Interval(540, 780))
+
+
+def rule(cell):
+    return core.classify_cell(cell, DAY_OFF)
+
+
+@pytest.mark.parametrize("cell, schedule, needle", [
+    ("", NINE_TO_FIVE, "the cell is blank"),
+    ("VAC", NINE_TO_FIVE, "(unavailable), but the day is worked"),
+    ("A", REST, "the cell asks for work, but the day is a rest"),
+    ("A", NINE_TO_ONE, "240 min but the cell asks for 480"),
+    ("4", NINE_TO_FIVE, "480 min but the cell asks for 240"),
+    ("EQUALS:10:00-18:00", NINE_TO_FIVE, "is not the 10:00-18:00"),
+    ("EQUALS:09:00-12:00,13:00-17:00", NINE_TO_FIVE, "split shift"),
+    ("INCLUDE:08:00-10:00", NINE_TO_FIVE, "does not cover 08:00-10:00"),
+    ("WITHIN:10:00-20:00", NINE_TO_FIVE, "fits inside none of 10:00-20:00"),
+    ("EXCEPT:16:00-18:00", NINE_TO_FIVE, "overlaps 16:00-18:00"),
+])
+def test_a_fixed_shift_that_contradicts_its_cell(cell, schedule, needle):
+    reason = core.cell_conflict(rule(cell), schedule, 480)
+    assert reason and needle in reason, reason
+
+
+@pytest.mark.parametrize("cell, schedule, contract", [
+    ("", REST, 480),
+    ("VAC", REST, 480),
+    ("DO", REST, 480),
+    ("DO", NINE_TO_FIVE, 480),                          # a soft day off may be worked
+    ("A", NINE_TO_FIVE, 480),
+    ("4", NINE_TO_ONE, 480),                            # the cell's hours beat the contract
+    ("EQUALS:09:00-17:00", NINE_TO_FIVE, 240),          # the window is its own length
+    ("INCLUDE:10:00-12:00,15:00-16:00", NINE_TO_FIVE, 480),
+    ("WITHIN:13:00-14:00,08:00-18:00", NINE_TO_FIVE, 480),
+    ("EXCEPT:17:00-20:00", NINE_TO_FIVE, 480),          # touching is not overlapping
+])
+def test_a_fixed_shift_that_honours_its_cell(cell, schedule, contract):
+    assert core.cell_conflict(rule(cell), schedule, contract) is None
+
+
+def test_a_worked_code_with_no_definition_is_judged_only_as_work():
+    """Without its window and weight, only work-versus-rest can be decided."""
+    assert "blank" in core.cell_conflict(rule(""), None, 480)
+    assert core.cell_conflict(rule("EQUALS:10:00-18:00"), None, 480) is None
+
+
+@pytest.mark.parametrize("cell, contract, expected", [
+    ("A", 480, 480),
+    ("7,5", 480, 450),
+    ("EQUALS:09:00-13:00", 480, 240),
+    ("WITHIN:08:00-20:00", 300, 300),
+])
+def test_required_minutes(cell, contract, expected):
+    assert core.required_minutes(rule(cell), contract) == expected
+
+
+def test_legislation_limits_skips_disabled_entries_and_non_integers():
+    problem = {"constraints": {"hard": [
+        {"parameters": {"MaxConsecutiveWorkDays": 5, "Label": "x"}},
+        {"enabled": False, "parameters": {"MaxConsecutiveWorkDaysInWeek": 1}},
+    ]}}
+    assert core.legislation_limits(problem) == {"MaxConsecutiveWorkDays": 5}

@@ -17,7 +17,7 @@ Worth saying first, because it is most of the picture. We checked v4.0 against e
 - **Our worked example's CSVs are byte-identical to yours** — 314 demand rows and 16 schedule-input rows, zero differences, once the decimal comma is normalised.
 - **The result schema covers every field** in `import_1.Json` and every field `JSON-Import.docx` specifies. Nothing missing, nothing invented.
 
-So the format is settled. What follows is the residue: 27 points, of which 9 need an answer from you, 6 are corrections we have already applied, 2 are changes we are proposing, 4 are defects in the data you sent, and 6 are scope questions.
+So the format is settled. What follows is the residue: 31 points, of which 9 need an answer from you, 6 are corrections we have already applied, 2 are changes we are proposing, 4 are defects in the data you sent, 6 are scope questions, and 4 (items 29–32) come from our solvers now reading v4.0.
 
 ### The differences in one table
 
@@ -203,3 +203,21 @@ code,description,scheduleWeightMinutes,startMin,endMin
 This is **our convention, not part of your format**. We added it because a result names numeric codes and carries no definition of them, so it cannot be read or checked on its own. We kept it *beside* the file rather than inside it precisely so that `OutRosterTeamDays` stays exactly as `JSON-Import.docx` specifies.
 
 Does WFM want it, or would you rather we populate `OutScheduleUseds` in the JSON?
+
+**28. A result may be partial, and the days it carries are fixed.** A package may carry a result that decides only some employee-days — the first week, say, or the days a manager has already settled. The entries present are **fixed**, and a day with no entry is **open** for the solver. Nothing marks the result as partial: it stays `OutRosterTeamDays` exactly as `JSON-Import.docx` specifies, and a complete result is simply one with nothing left. Each fixed day is validated as a hard rule against its `schedule_input.csv` cell and against `constraints.hard[]` — see [FORMAT.md](docs/FORMAT.md), *Partial results*, and `examples/cenario2_partial/`.
+
+Three questions. **Does WFM ever need to hand us a roster with some days already decided** — manual assignments, or a previous run to complete? If so, **would it arrive as `OutRosterTeamDays`**, the shape we send back, or as something else? And **on import, what does WFM do with an employee-day our result leaves out** — keep what it already holds, or clear it?
+
+---
+
+## Raised by solving v4.0 — our solvers now read it
+
+Our ILP, CP-SAT, heuristic and genetic solvers now read v4.0 packages, partial results included, and every result they write passes the validator. Doing it surfaced four questions the format leaves open.
+
+**29. Labour law crosses the period boundary, and v4.0 carries nothing before it.** `MaxConsecutiveWorkDays` and `MinDistanceBetweenShiftsInMinutes` apply across the start of `temporalScope`, but a package holds nothing earlier: `schedule_input.csv` columns must be exactly the horizon, and a result's dates must fall inside it. So a solver can give someone a sixth day in a row on the 1st, or less than eleven hours after the previous month's last shift, without knowing. The v2.2 bundles carried up to five days of history as extra `schedule_input.csv` columns. **Will you send the previous period's last days, and in what shape?** A partial result dated before `temporalScope.start` is one option; read-only extra columns are another.
+
+**30. What is half a worker?** `minimum` is a float and `4.5` occurs in real data. A solver assigns whole people, so ours round up: 4.5 becomes 5. Is that the intent, or is a fractional value an average to be met over the window?
+
+**31. Swapping a day off contradicts the result check.** `DO` is *preferable* — "may be swapped, at a penalty" — and a week keeps its template count of working days, so working a `DO` means resting a numeric cell elsewhere in the same week. But every result day is checked against its cell, and a rest on a numeric cell is rejected. Our solvers therefore never swap by default. **Does WFM accept a result that works a `DO` and rests a work day in the same week?** If it does, our result check should allow the trade within a week; if not, a `DO` is simply a rest.
+
+**32. A work cell on a day with no demand.** A date with no windowed demand row is a closed day (FORMAT.md). The input check leaves closed days out of the weekly working-day count, but the result check still requires every numeric cell to be worked, so on a closed day the worker comes in to cover nothing. Which is right: work the cell anyway, or rest a closed day whatever its cell says?

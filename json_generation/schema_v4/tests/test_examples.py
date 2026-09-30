@@ -90,3 +90,50 @@ def test_every_menu_shift_lands_on_the_problems_grid():
            if s.interval and not (core.on_grid(s.interval.start, slot)
                                   and core.on_grid(s.interval.end, slot))]
     assert not off, f"codes a solver on this grid could not emit: {off}"
+
+
+# -- the derived examples ----------------------------------------------------
+
+INPUT_ONLY = EXAMPLES / "cenario2_input_only"
+PARTIAL = EXAMPLES / "cenario2_partial"
+INPUT_CSVS = ("days_demand.csv", "periods_demand.csv", "shifts_demand.csv",
+              "schedule_input.csv")
+
+
+def test_every_example_package_validates():
+    from schema_v4 import validator
+    for name, reports in validator.validate_tree(EXAMPLES).items():
+        for doc, r in reports.items():
+            assert r.ok, (name, doc, r.errors)
+
+
+def test_the_derived_examples_have_not_drifted_from_cenario2():
+    for package, extra in ((INPUT_ONLY, ()), (PARTIAL, ("problem.json", "schedules.csv"))):
+        for name in INPUT_CSVS + extra:
+            assert (package / name).read_bytes() == (C2 / name).read_bytes(), package / name
+    trimmed = load(C2 / "problem.json")
+    trimmed.pop("schedules")
+    assert load(INPUT_ONLY / "problem.json") == trimmed
+
+
+def test_the_input_only_example_has_nothing_optional():
+    names = {p.name for p in INPUT_ONLY.iterdir()}
+    assert names == {"problem.json", "README.md", *INPUT_CSVS}
+
+
+def test_the_partial_result_is_the_full_one_cut_short():
+    """Each fixed day is exactly cenario2_retail's entry for that employee-day."""
+    full = {(e["EmployeeCode"], e["Date"]): e
+            for e in load(C2 / "result.json")["OutRosterTeamDays"]}
+    partial = load(PARTIAL / "result.json")["OutRosterTeamDays"]
+    problem = load(PARTIAL / "problem.json")
+    assert len(partial) == len(problem["employees"]["list"]) * 7
+    for e in partial:
+        assert e["Date"][:10] <= "2026-01-07", e
+        assert e == full[(e["EmployeeCode"], e["Date"])], e
+
+
+def test_the_partial_result_leaves_days_open_without_complaint():
+    r = validate(PARTIAL / "result.json")
+    assert r.ok and not r.warnings, (r.errors, r.warnings)
+    assert r.stats["rosterDaysLeft"] == r.stats["rosterDaysExpected"] - 15 * 7

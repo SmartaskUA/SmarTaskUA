@@ -12,6 +12,8 @@ import smartask.api.repositories.ReferenceTemplateRepository;
 import smartask.api.repositories.VacationTemplateRepository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -36,6 +38,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ProblemService {
+    private static final Logger log = LoggerFactory.getLogger(ProblemService.class);
     private static final List<String> VACATION_KEYWORDS = List.of(
             "vacation",
             "vacations",
@@ -125,7 +128,7 @@ public class ProblemService {
         Map<String, Object> temporal = getMap(root, "temporalScope");
         Map<String, Object> demand = getMap(root, "demand");
         Map<String, Object> constraints = getMap(root, "constraints");
-        SchedulingAlgorithmRegistry.Granularity problemGranularity = resolveProblemGranularity(demand);
+        SchedulingAlgorithmRegistry.Granularity problemGranularity = resolveProblemGranularity(root);
 
         if (algorithmSpec.getGranularity() != problemGranularity) {
             throw new IllegalStateException(
@@ -138,11 +141,7 @@ public class ProblemService {
             throw new IllegalStateException("Problem is missing metadata.problemId.");
         }
 
-        String year = null;
-        Object yearObj = temporal.get("year");
-        if (yearObj != null) {
-            year = String.valueOf(yearObj);
-        }
+        String year = resolveYear(temporal);
 
         Integer shifts = null;
         Object shiftsObj = demand.get("shifts");
@@ -223,6 +222,14 @@ public class ProblemService {
         if (problemId != null && !problemId.isBlank()) {
             result.put("problemId", problemId);
         }
+        Object schemaVersion = root.get("schemaVersion");
+        if (schemaVersion != null) {
+            result.put("schemaVersion", String.valueOf(schemaVersion));
+        }
+        Object slotMinutes = getMap(root, "timeGrid").get("slotMinutes");
+        if (slotMinutes != null) {
+            result.put("slotMinutes", slotMinutes);
+        }
         result.put("problemDemandData", readCsvObjects(demandPath));
         result.put("problemWorkPeriods", coerceObjectList(demand.get("workPeriods")));
         result.put("problemTeams", coerceObjectList(organizationalUnits.get("teams")));
@@ -272,7 +279,15 @@ public class ProblemService {
         return algorithmSpec.getInputKind() == SchedulingAlgorithmRegistry.InputKind.CONVERTED_TEMPLATE;
     }
 
-    private SchedulingAlgorithmRegistry.Granularity resolveProblemGranularity(Map<String, Object> demand) {
+    static boolean isSchemaV4(Map<String, Object> root) {
+        return root != null && "4.0".equals(String.valueOf(root.get("schemaVersion")));
+    }
+
+    private SchedulingAlgorithmRegistry.Granularity resolveProblemGranularity(Map<String, Object> root) {
+        if (isSchemaV4(root)) {
+            return SchedulingAlgorithmRegistry.Granularity.V4;
+        }
+        Map<String, Object> demand = getMap(root, "demand");
         Object shiftsNode = demand.get("shifts");
         Object workPeriodsNode = demand.get("workPeriods");
 
@@ -286,6 +301,16 @@ public class ProblemService {
         return hasShifts
                 ? SchedulingAlgorithmRegistry.Granularity.SHIFT
                 : SchedulingAlgorithmRegistry.Granularity.HOURS;
+    }
+
+    /** temporalScope.year (v2.x), else the year of temporalScope.start (v4). */
+    private String resolveYear(Map<String, Object> temporal) {
+        Object yearObj = temporal.get("year");
+        if (yearObj != null) {
+            return String.valueOf(yearObj);
+        }
+        String start = getString(temporal, "start");
+        return start != null && start.length() >= 4 ? start.substring(0, 4) : null;
     }
 
     private String resolveTitle(ProblemDefinition problem, String requestedTitle, String algorithm) {
@@ -323,6 +348,13 @@ public class ProblemService {
             return problems;
         }
 
+        // Built-in problems first, then uploads; each group in path order. The first
+        // file claiming a problemId wins, so a duplicate can never shadow a built-in.
+        Path uploadsRoot = repoRoot.resolve(ProblemPackageImporter.UPLOADS_DIR);
+        problemFiles.sort(java.util.Comparator
+                .comparing((Path p) -> p.startsWith(uploadsRoot))
+                .thenComparing(Path::toString));
+        Set<String> seen = new java.util.HashSet<>();
         for (Path problemFile : problemFiles) {
             Map<String, Object> root = readProblemJson(problemFile);
             if (root == null) {
@@ -331,6 +363,10 @@ public class ProblemService {
             Map<String, Object> metadata = getMap(root, "metadata");
             String problemId = getString(metadata, "problemId");
             if (problemId == null || problemId.isBlank()) {
+                continue;
+            }
+            if (!seen.add(problemId)) {
+                log.warn("Skipping {}: problemId {} is already used by another problem", problemFile, problemId);
                 continue;
             }
             String relativePath = repoRoot.relativize(problemFile).toString();
@@ -419,6 +455,31 @@ public class ProblemService {
         if (description != null && !description.isBlank()) {
             item.put("description", description);
         }
+        Object schemaVersion = root.get("schemaVersion");
+        if (schemaVersion != null) {
+            item.put("schemaVersion", String.valueOf(schemaVersion));
+        }
+        Map<String, Object> temporal = getMap(root, "temporalScope");
+        if (getString(temporal, "start") != null) {
+            item.put("start", getString(temporal, "start"));
+            item.put("end", getString(temporal, "end"));
+        }
+        item.put("employeeCount", extractProblemEmployees(root).size());
+        List<String> algorithms;
+        try {
+            algorithms = schedulingAlgorithmRegistry.problemAlgorithms(resolveProblemGranularity(root));
+        } catch (IllegalStateException e) {
+            algorithms = List.of();    // a malformed problem must not break the whole list
+        }
+        item.put("algorithms", algorithms);
+        if ("4.0".equals(String.valueOf(schemaVersion))) {
+            // A v4 package may carry a partial result: the days it fixes stay fixed when solved.
+            try {
+                PartialResultSummary.of(problemPath, root, objectMapper).ifPresent(summary -> item.put("result", summary));
+            } catch (IOException | RuntimeException e) {
+                log.warn("Could not read the result beside {}: {}", problemPath, e.getMessage());
+            }
+        }
         return item;
     }
 
@@ -451,7 +512,27 @@ public class ProblemService {
         if (!simpleEmployees.isEmpty()) {
             return simpleEmployees;
         }
+        List<Map<String, Object>> v4Employees = coerceEmployeeList(employeesNode.get("list"));
+        if (!v4Employees.isEmpty()) {
+            return v4Employees.stream().map(this::summarizeV4Employee).toList();
+        }
         return coerceEmployeeList(employeesNode.get("competency"));
+    }
+
+    /** {id, name, teams} for a v4 employee; teams are the tableValues it holds (for display only). */
+    private Map<String, Object> summarizeV4Employee(Map<String, Object> employee) {
+        Set<String> teams = new LinkedHashSet<>();
+        for (Map<String, Object> competency : coerceEmployeeList(employee.get("competencyAssignments"))) {
+            String value = getString(competency, "tableValue");
+            if (value != null && !value.isBlank()) {
+                teams.add(value);
+            }
+        }
+        Map<String, Object> summary = new LinkedHashMap<>();
+        summary.put("id", String.valueOf(employee.get("id")));
+        summary.put("name", employee.getOrDefault("name", employee.get("id")));
+        summary.put("teams", new ArrayList<>(teams));
+        return summary;
     }
 
     @SuppressWarnings("unchecked")
@@ -468,7 +549,7 @@ public class ProblemService {
         return employees;
     }
 
-    private Path resolveRepoRoot() {
+    Path resolveRepoRoot() {
         Path current = Paths.get("").toAbsolutePath();
         for (int i = 0; i < 6; i++) {
             if (Files.isDirectory(current.resolve("data/problems"))) {

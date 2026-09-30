@@ -21,9 +21,87 @@ import {
 // Problem-mode algorithm picker to only the Mathematical Formulation (MD7)
 // solvers. Controlled by VITE_SIMPLE_MODE — see docs/development/simple-mode.md.
 const SIMPLE_MODE = import.meta.env.VITE_SIMPLE_MODE === "true";
-const DEFAULT_PROBLEM_ID = "SISQUAL_OCTOBER_2025";
-const DEFAULT_ALGORITHM = "Hybrid_Heuristic_Sisqual_2";
+const DEFAULT_PROBLEM_ID = "C2_January_2026";
+const DEFAULT_ALGORITHM = "ILP_Sisqual_Hours_MathematicalDefinition7";
 const SCHEDULE_TITLE_COUNTER_KEY = "schedule_title_counter";
+
+// The algorithm menus depend only on SIMPLE_MODE, so they live outside the
+// component: the hooks below can rely on them without listing them.
+// Simple mode has no shift-based Mathematical Formulation solver, so
+// shift-type problems aren't solvable in that mode at all.
+const problemShiftAlgorithms = SIMPLE_MODE
+  ? []
+  : [
+      { value: "ILP General", label: "ILP General" },
+      { value: "CSP General", label: "CSP General" },
+      { value: "Genetic Algorithm 2-Shift", label: "Genetic Algorithm 2-Shift" },
+      { value: "Genetic Algorithm 3-Shift", label: "Genetic Algorithm 3-Shift" },
+    ];
+// Legacy v2.x hourly bundles (demand.workPeriods). The MathematicalDefinition7
+// and Hybrid solvers read schema v4 packages only, so they are listed below.
+const problemHourAlgorithms = SIMPLE_MODE
+  ? []
+  : [
+      { value: "ILP_Sisqual_Hours", label: "ILP Sisqual Hours" },
+      { value: "CSP_Sisqual_Hours", label: "CSP Sisqual Hours" },
+      { value: "Puzzle_Sisqual", label: "Puzzle Heuristic Sisqual" },
+    ];
+
+// Schema v4 packages: which solvers apply comes from the API (GET /problems ->
+// algorithms); this map only names them. See docs/how-to-solve.md.
+const V4_ALGORITHM_LABELS = {
+  ILP_Sisqual_Hours_MathematicalDefinition7: "ILP - Mathematical Formulation",
+  CSP_Sisqual_Hours_MathematicalDefinition7: "CP-SAT - Mathematical Formulation",
+  Hybrid_Heuristic_Sisqual_Levels_Included: "Hybrid Heuristic (with levels)",
+  Hybrid_Heuristic_Sisqual_3: "Hybrid Heuristic",
+  "Genetic Algorithm v4": "Genetic Algorithm",
+};
+
+const isV4Problem = (problemJson) => problemJson?.schemaVersion === "4.0";
+
+// The problem-mode algorithms that can solve this problem, as {value, label}.
+const problemAlgorithmsFor = (problemJson, problem) => {
+  if (!problemJson) return [];
+  if (isV4Problem(problemJson)) {
+    const names = Array.isArray(problem?.algorithms) ? problem.algorithms : [];
+    return names
+      .filter((name) => !SIMPLE_MODE || name.includes("MathematicalDefinition7"))
+      .map((name) => ({ value: name, label: V4_ALGORITHM_LABELS[name] || name }));
+  }
+  const demand = problemJson.demand || {};
+  if (Array.isArray(demand.shifts) && demand.shifts.length > 0) return problemShiftAlgorithms;
+  if (Array.isArray(demand.workPeriods) && demand.workPeriods.length > 0) return problemHourAlgorithms;
+  return [];
+};
+
+const manualShiftAlgorithms = [
+  { value: "hill climbing", label: "Hill Climbing" },
+  { value: "Greedy Randomized", label: "Greedy Randomized" },
+  { value: "Greedy Randomized + Hill Climbing", label: "Greedy Randomized + Hill Climbing" },
+  { value: "CSP Scheduling", label: "CSP Scheduling" },
+  { value: "linear programming", label: "Integer Linear Programming" },
+  { value: "linear programming 2", label: "Integer Linear Programming 2" },
+  { value: "Hybrid_Heuristic", label: "Hybrid Heuristic" },
+  { value: "R2_Heuristic", label: "R2 Heuristic" },
+  { value: "Heuristic Solver", label: "Heuristic Solver" },
+  { value: "Puzzle_Heuristic", label: "Puzzle Heuristic" },
+  { value: "Inverted_Puzzle_Heuristic", label: "Inverted Puzzle Heuristic" }
+];
+const manualHourAlgorithms = [
+  { value: "CSP_Afonso_Hours", label: "CSP Afonso 13 Hours" },
+  { value: "ILP_2", label: "Integer Linear Programming 2" },
+  { value: "ILP_2_Half_Intervals", label: "Integer Linear Programming 2 Half Intervals" },
+  { value: "ILP_3", label: "Integer Linear Programming 3" },
+  { value: "ILP_3_Half_Intervals", label: "Integer Linear Programming 3 Half Intervals" },
+  { value: "ILP_4", label: "Integer Linear Programming 4" },
+  { value: "ILP_4_Half_Intervals", label: "Integer Linear Programming 4 Half Intervals" },
+  { value: "COP_1", label: "Constraint Optimization Problem 1" },
+  { value: "COP_1_Half_Intervals", label: "Constraint Optimization Problem 1 Half Intervals" },
+  { value: "COP_2", label: "Constraint Optimization Problem 2" },
+  { value: "COP_2_Half_Intervals", label: "Constraint Optimization Problem 2 Half Intervals" },
+  { value: "Heuristica_1", label: "Heurística 1" },
+  { value: "Heuristica_Half_Intervals", label: "Heurística Half Intervals" },
+];
 
 const getNextAutoTitle = () => {
   if (typeof window === "undefined") {
@@ -62,14 +140,6 @@ const CreateCalendar = () => {
   const [minimumTemplate, setMinimumTemplate] = useState("Mins_R10-R62_30min.");
   const [selectedSolver, setSelectedSolver] = useState("CBC"); // "CBC" ou "GUROBI"
 
-  // NEW: ruleset selection
-  const [ruleSets, setRuleSets] = useState([]); // [{name, description, ...}]
-  const [ruleSetName, setRuleSetName] = useState("");
-  const selectedRuleSet = useMemo(
-    () => ruleSets.find((r) => r.name === ruleSetName),
-    [ruleSets, ruleSetName]
-  );
-
   const [templateOptions, setTemplateOptions] = useState([]);
   const [minimumOptions, setMinimumOptions] = useState([]);
 
@@ -86,8 +156,10 @@ const CreateCalendar = () => {
     fetchProblems();
   }, []);
 
+  // The initial selection is the URL's problemId (Problems -> "Use In Schedule") or the default;
+  // fall back to the first problem when that one isn't in the list.
   useEffect(() => {
-    if (mode === "problem" && !selectedProblemId && problems.length) {
+    if (mode === "problem" && problems.length && !problems.some((p) => p.problemId === selectedProblemId)) {
       setSelectedProblemId(problems[0].problemId);
     }
   }, [mode, selectedProblemId, problems]);
@@ -126,9 +198,6 @@ const CreateCalendar = () => {
       const response = await axios.get(`${baseurl}/problems`);
       const list = Array.isArray(response.data) ? response.data : [];
       setProblems(list);
-      if (list.some((problem) => problem.problemId === DEFAULT_PROBLEM_ID)) {
-        setSelectedProblemId(DEFAULT_PROBLEM_ID);
-      }
     } catch (error) {
       console.error("Erro ao buscar problemas:", error);
       setProblems([]);
@@ -157,74 +226,6 @@ const CreateCalendar = () => {
     setProblemJson(null);
   }, [mode, selectedProblemId]);
 
-  // Simple mode has no shift-based Mathematical Formulation solver, so
-  // shift-type problems aren't solvable in that mode at all.
-  const problemShiftAlgorithms = SIMPLE_MODE
-    ? []
-    : [
-        { value: "ILP General", label: "ILP General" },
-        { value: "CSP General", label: "CSP General" },
-        { value: "Genetic Algorithm 2-Shift", label: "Genetic Algorithm 2-Shift" },
-        { value: "Genetic Algorithm 3-Shift", label: "Genetic Algorithm 3-Shift" },
-      ];
-  const problemHourAlgorithmsFull = [
-    { value: "ILP_Sisqual_Hours", label: "ILP Sisqual Hours" },
-    { value: "CSP_Sisqual_Hours", label: "CSP Sisqual Hours" },
-    {
-      value: "ILP_Sisqual_Hours_MathematicalDefinition7",
-      label: "ILP Sisqual Hours Final Version",
-    },
-    {
-      value: "CSP_Sisqual_Hours_MathematicalDefinition7",
-      label: "CSP Sisqual Hours Final Version",
-    },
-    {
-      value: "Hybrid_Heuristic_Sisqual_Levels_Included",
-      label: "Hybrid Heuristic Sisqual Levels Included",
-    },
-    {
-      value: "Hybrid_Heuristic_Sisqual_3",
-      label: "Hybrid Heuristic Sisqual No Levels Included",
-    },
-    {
-      value: "Puzzle_Sisqual",
-      label: "Puzzle Heuristic Sisqual",
-    }
-
-  ];
-  const problemHourAlgorithms = SIMPLE_MODE
-    ? problemHourAlgorithmsFull.filter((alg) => alg.value.includes("MathematicalDefinition7"))
-    : problemHourAlgorithmsFull;
-
-  const manualShiftAlgorithms = [
-    { value: "hill climbing", label: "Hill Climbing" },
-    { value: "Greedy Randomized", label: "Greedy Randomized" },
-    { value: "Greedy Randomized + Hill Climbing", label: "Greedy Randomized + Hill Climbing" },
-    { value: "CSP Scheduling", label: "CSP Scheduling" },
-    { value: "linear programming", label: "Integer Linear Programming" },
-    { value: "linear programming 2", label: "Integer Linear Programming 2" },
-    { value: "Hybrid_Heuristic", label: "Hybrid Heuristic" },
-    { value: "R2_Heuristic", label: "R2 Heuristic" },
-    { value: "Heuristic Solver", label: "Heuristic Solver" },
-    { value: "Puzzle_Heuristic", label: "Puzzle Heuristic" },
-    { value: "Inverted_Puzzle_Heuristic", label: "Inverted Puzzle Heuristic" }
-  ];
-  const manualHourAlgorithms = [
-    { value: "CSP_Afonso_Hours", label: "CSP Afonso 13 Hours" },
-    { value: "ILP_2", label: "Integer Linear Programming 2" },
-    { value: "ILP_2_Half_Intervals", label: "Integer Linear Programming 2 Half Intervals" },
-    { value: "ILP_3", label: "Integer Linear Programming 3" },
-    { value: "ILP_3_Half_Intervals", label: "Integer Linear Programming 3 Half Intervals" },
-    { value: "ILP_4", label: "Integer Linear Programming 4" },
-    { value: "ILP_4_Half_Intervals", label: "Integer Linear Programming 4 Half Intervals" },
-    { value: "COP_1", label: "Constraint Optimization Problem 1" },
-    { value: "COP_1_Half_Intervals", label: "Constraint Optimization Problem 1 Half Intervals" },
-    { value: "COP_2", label: "Constraint Optimization Problem 2" },
-    { value: "COP_2_Half_Intervals", label: "Constraint Optimization Problem 2 Half Intervals" },
-    { value: "Heuristica_1", label: "Heurística 1" },
-    { value: "Heuristica_Half_Intervals", label: "Heurística Half Intervals" },
-  ];
-
   useEffect(() => {
     if (mode !== "problem") {
       return;
@@ -240,7 +241,10 @@ const CreateCalendar = () => {
     const shiftCount = Array.isArray(demand.shifts) && demand.shifts.length ? demand.shifts.length : null;
     const hasWorkPeriods = Array.isArray(demand.workPeriods) && demand.workPeriods.length > 0;
 
-    if (shiftCount != null) {
+    if (isV4Problem(problemJson)) {
+      setScheduleType("Horas");
+      setShifts("");
+    } else if (shiftCount != null) {
       setScheduleType("Turno");
       setShifts(shiftCount);
     } else if (hasWorkPeriods) {
@@ -251,11 +255,7 @@ const CreateCalendar = () => {
       setShifts("");
     }
 
-    const available = Array.isArray(demand.workPeriods) && demand.workPeriods.length > 0
-      ? problemHourAlgorithms
-      : Array.isArray(demand.shifts) && demand.shifts.length > 0
-        ? problemShiftAlgorithms
-        : [];
+    const available = problemAlgorithmsFor(problemJson, selectedProblem);
 
     if (available.length) {
       const nextAlgorithm = available.some((alg) => alg.value === selectedAlgorithm)
@@ -268,8 +268,10 @@ const CreateCalendar = () => {
       setSelectedAlgorithm(DEFAULT_ALGORITHM);
     }
 
-    setYear(temporal.year != null ? String(temporal.year) : "");
-  }, [mode, problemJson, selectedAlgorithm, problemHourAlgorithms]);
+    // v2.x carries temporalScope.year; v4 carries start/end dates.
+    const startYear = typeof temporal.start === "string" ? temporal.start.slice(0, 4) : "";
+    setYear(temporal.year != null ? String(temporal.year) : startYear);
+  }, [mode, problemJson, selectedAlgorithm, selectedProblem]);
 
   const handleSave = async () => {
     const shiftsValue = scheduleType === "Turno" ? parseInt(shifts, 10) : null;
@@ -375,17 +377,7 @@ const CreateCalendar = () => {
 
   const availableAlgorithms = useMemo(() => {
     if (mode === "problem") {
-      if (!problemJson) {
-        return [];
-      }
-      const demand = problemJson.demand || {};
-      if (Array.isArray(demand.shifts) && demand.shifts.length > 0) {
-        return problemShiftAlgorithms;
-      }
-      if (Array.isArray(demand.workPeriods) && demand.workPeriods.length > 0) {
-        return problemHourAlgorithms;
-      }
-      return [];
+      return problemAlgorithmsFor(problemJson, selectedProblem);
     }
     if (scheduleType === "Turno") {
       return manualShiftAlgorithms;
@@ -394,7 +386,7 @@ const CreateCalendar = () => {
       return manualHourAlgorithms;
     }
     return [];
-  }, [mode, problemJson, scheduleType]);
+  }, [mode, problemJson, selectedProblem, scheduleType]);
 
   return (
     <div className="admin-container">

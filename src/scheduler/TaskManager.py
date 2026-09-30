@@ -52,6 +52,22 @@ from algorithms.sisqual_hours_utils import load_problem_json
 from algorithms.Hybrid_Heuristic_Sisqual_Levels_Included import solve as hybrid_heuristic_sisqual_solver
 from algorithms.Hybrid_Heuristic_Sisqual_No_Levels_Included import solve as hybrid_heuristic_sisqual_3_solver
 from algorithms.Puzzle_Sisqual import solve as puzzle_sisqual_solver
+from algorithms.GA.ga_v4 import solve as ga_v4_solver
+from problem_v4 import ResultError, SolveDirectives, evaluate as evaluate_v4, fixed_days as fixed_days_v4, result_from_rows
+from problem_v4.runtime import load_for_solver
+
+# Solvers that read schema v4 packages through problem_v4 (the one v4 parser).
+# They are scored by problem_v4.evaluate and exported by result_from_rows, so
+# none of the v2.2 validator, monthly runner, KPI evaluator or export applies.
+V4_ALGORITHMS = {
+    "ILP_Sisqual_Hours_MathematicalDefinition7",
+    "CSP_Sisqual_Hours_MathematicalDefinition7",
+    "ILP_Sisqual_Hours_MathematicalDefinition5",
+    "CSP_Sisqual_Hours_MathematicalDefinition5",
+    "Hybrid_Heuristic_Sisqual_Levels_Included",
+    "Hybrid_Heuristic_Sisqual_3",
+    "Genetic Algorithm v4",
+}
 
 
 class TaskManager:
@@ -103,7 +119,8 @@ class TaskManager:
             "Puzzle_Heuristic": puzzle_heuristic_solver,
             "Hybrid_Heuristic_Sisqual_Levels_Included": hybrid_heuristic_sisqual_solver,
             "Hybrid_Heuristic_Sisqual_3": hybrid_heuristic_sisqual_3_solver,
-            "Puzzle_Sisqual": puzzle_sisqual_solver
+            "Puzzle_Sisqual": puzzle_sisqual_solver,
+            "Genetic Algorithm v4": ga_v4_solver,
         }
 
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13, solver="CBC", problem_path=None):
@@ -142,6 +159,7 @@ class TaskManager:
             "CSP_Sisqual_Hours_MathematicalDefinition5",
             "Hybrid_Heuristic_Sisqual_Levels_Included",
             "Hybrid_Heuristic_Sisqual_3",
+            "Genetic Algorithm v4",
         }
         uses_rules = algorithm_name not in no_rules_algorithms
         rules_json = None
@@ -192,15 +210,26 @@ class TaskManager:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, hours=hours, constraints=rules)
         elif algorithm_name in ("Genetic Algorithm", "Genetic Algorithm 2-Shift", "Genetic Algorithm 3-Shift"):
             schedule_data = algorithm(problem_path=problem_path, maxTime=maxTime)
+        elif algorithm_name in V4_ALGORITHMS:
+            # Parsed here too, for the KPIs and the export; a rejected package
+            # raises SisqualValidationError before any solver runs.
+            inst = load_for_solver(problem_path, SolveDirectives(), str(task_id), algorithm_name)
+            schedule_data = algorithm(problem_path=problem_path, maxTime=maxTime, task_id=task_id)
+            kpis = evaluate_v4(inst, schedule_data)
+            # The days a partial result fixed: counted in the KPIs, listed in the
+            # schedule's metadata so the calendar can mark them.
+            decided = fixed_days_v4(inst)
+            kpis["fixed_days"] = len(decided["fixed"])
+            kpis["open_days"] = decided["open_days"]
+            extra_metadata = {"fixedDays": decided["fixed"]}
+            try:
+                sisqual_export = result_from_rows(inst, schedule_data)[0]
+            except ResultError as e:
+                print(f"[TaskManager] v4 result export failed: {e}")
+                sisqual_export = None
         elif algorithm_name in [
             "ILP_Sisqual_Hours",
             "CSP_Sisqual_Hours",
-            "ILP_Sisqual_Hours_MathematicalDefinition7",
-            "CSP_Sisqual_Hours_MathematicalDefinition7",
-            "ILP_Sisqual_Hours_MathematicalDefinition5",
-            "CSP_Sisqual_Hours_MathematicalDefinition5",
-            "Hybrid_Heuristic_Sisqual_Levels_Included",
-            "Hybrid_Heuristic_Sisqual_3",
             "Puzzle_Sisqual"
         ]:
             # Request the solver to print the returned rows as JSON so the

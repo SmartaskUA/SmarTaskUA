@@ -31,7 +31,7 @@ help:
 	@echo '  make validate                validate examples/ and templates/'
 	@echo '  make validate DIR=path/      validate any folder or file'
 	@echo '  make validate DIR=p ARGS=-v  pass flags through (-v, -j, --against X)'
-	@echo '  make result                  rebuild the worked example result'
+	@echo '  make result                  rebuild the worked example results'
 	@echo '  make check                   test + validate'
 	@echo '  make lint                    pyflakes over src/ and tests/'
 	@echo '  make clean                   remove caches'

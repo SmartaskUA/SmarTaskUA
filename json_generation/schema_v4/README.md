@@ -16,6 +16,8 @@ input problem  -->  solver  -->  result  +  result_schedules.csv
 
 The one place v4.0 conforms rather than asserts is the **result**: `OutRosterTeamDays` is Sisqual's existing WFM import API, so `schema-v4-result.json` matches it verbatim, PascalCase and all.
 
+The scheduler's v4 solvers read these packages directly: see [docs/how-to-solve.md](../../docs/how-to-solve.md).
+
 ## Quick start
 
 ```bash
@@ -24,10 +26,12 @@ make install                           # .venv + requirements
 make test                              # the conformance suite
 make validate                          # examples/ and templates/
 make validate DIR=path/ ARGS=-v        # anything else, with flags
-make result                            # rebuild the worked example result
+make result                            # rebuild the worked example results
 ```
 
 The validator takes a single file (form-aware — a result is cross-checked against a sibling input problem, or one named with `--against`) or a **folder**, which it validates package by package. Runtime needs `jsonschema>=4.18`; without it the validator still runs its cross-reference and feasibility passes. Start a new problem from `templates/`.
+
+A **package** is one problem and its four CSVs, optionally the shift menu, and optionally one result with its sidecar. That result may be **partial**: the days it carries are fixed, the days it leaves out are open for the solver, and nothing complains about the gap. See [docs/FORMAT.md](docs/FORMAT.md) — *The package* and *Partial results*.
 
 > Everything runs inside `.venv`, because this machine's Python is externally-managed (PEP 668) and installing pytest against it fails. `make` builds the venv on first use.
 
@@ -37,12 +41,14 @@ The validator takes a single file (form-aware — a result is cross-checked agai
 schemas/          the spec -- two standalone JSON Schemas (input, result)
 src/schema_v4/    core (domain + CSV I/O) -- validator (orchestrator + CLI) with the
                   layers common, validate_input, validate_result --
-                  build_example_result (builds the worked example)
+                  build_example_result (builds the worked results)
 tests/            pytest suite, one file per module
 docs/             FORMAT (formats + semantics), MIGRATION (3.0 -> 4.0),
                   FUTURE (what is deferred and why), next_meeting (the agenda)
 examples/         cenario2_retail -- a real SISQUAL bundle corrected to v4.0, with a
-                  worked result and the sidecar naming the shifts it used
+                  worked result and the sidecar naming the shifts it used;
+                  cenario2_input_only -- the same with no menu and no result;
+                  cenario2_partial -- the same with a result fixing only the first week
 templates/        commented starting points -- both forms, validating clean as a package
 reference/        the untouched vendor drop -- documents, bundles, screenshots
 ```

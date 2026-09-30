@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the worked result for examples/cenario2_retail.
+"""Build the worked results for examples/cenario2_retail and examples/cenario2_partial.
 
 **This produces a constructed artifact, not solver output.** No solver has run on
 v4.0 yet; this script assigns each worker-day a shift from the ScheduleCode
@@ -21,6 +21,10 @@ The rule, in full:
   4. Rank by |duration - target|, then by how much the window overlaps that date's
      demand for the dimensions the employee holds, then by earliest start. The
      first three keys are enough to make the choice unique and reproducible.
+
+The partial example runs the same rule and stops at `PARTIAL_UNTIL`: the days it
+writes are the fixed ones, and every later day is left for the solver. Because the
+rule is per day, each fixed day is exactly the full example's entry for that day.
 """
 
 from __future__ import annotations
@@ -29,6 +33,7 @@ import csv
 import json
 import sys
 from collections import Counter, defaultdict
+from datetime import date
 from pathlib import Path
 
 from . import core
@@ -36,6 +41,8 @@ from . import core
 V4 = Path(__file__).resolve().parents[2]
 
 PACKAGE = V4 / "examples" / "cenario2_retail"
+PARTIAL = V4 / "examples" / "cenario2_partial"
+PARTIAL_UNTIL = date(2026, 1, 7)    # the first week is fixed, the rest is open
 REST_CODE = 3                       # "Day off" in the catalogue
 
 
@@ -60,12 +67,13 @@ def overlap(a: core.Interval, windows: list) -> int:
                for w in core.coalesce(windows))
 
 
-def main(argv=None) -> int:
-    problem = json.loads((PACKAGE / "problem.json").read_text(encoding="utf-8"))
+def build(package: Path, until: date | None = None) -> int:
+    """Write `package`/result.json and its sidecar. With `until`, only days up to it."""
+    problem = json.loads((package / "problem.json").read_text(encoding="utf-8"))
     slot = problem["timeGrid"]["slotMinutes"]
     roster = problem["metadata"]["rosterCode"]
     contracts = core.contracts_by_id(problem)
-    catalogue, problems = core.read_schedules(PACKAGE / problem["schedules"]["dataFile"])
+    catalogue, problems = core.read_schedules(package / problem["schedules"]["dataFile"])
     if problems:
         print("\n".join(problems), file=sys.stderr)
         return 1
@@ -73,8 +81,8 @@ def main(argv=None) -> int:
     candidates = [s for s in catalogue.values()
                   if s.interval and core.on_grid(s.interval.start, slot)
                   and core.on_grid(s.interval.end, slot)]
-    demand = demand_by_date_and_pair(PACKAGE / problem["demand"]["dataFilePeriods"])
-    cells, dates, _ = core.read_schedule_input(PACKAGE / problem["scheduleInput"]["dataFile"])
+    demand = demand_by_date_and_pair(package / problem["demand"]["dataFilePeriods"])
+    cells, dates, _ = core.read_schedule_input(package / problem["scheduleInput"]["dataFile"])
     off_codes = set(problem["scheduleInput"]["dayOffCodes"])
 
     entries = []
@@ -87,6 +95,8 @@ def main(argv=None) -> int:
         row = cells.get(eid, {})
         for col in dates:
             day = core.iso(col)
+            if until is not None and day > until:
+                continue
             cell = row.get(col, "")
             if cell in off_codes:
                 code = REST_CODE
@@ -133,6 +143,10 @@ def main(argv=None) -> int:
             f"{len(entries)} employee-days: {work_days} worked, {rest_days} rest "
             f"(ScheduleCode {REST_CODE}). {len(used)} distinct codes, defined in "
             f"result_schedules.csv."
+            + ("" if until is None else
+               f" PARTIAL: these are the days fixed through {until}; the other "
+               f"{len(problem['employees']['list']) * len(dates) - len(entries)} "
+               f"employee-days are left for the solver.")
         ),
         "_comment_substitutions": (
             [f"{n}x {text}" for text, n in substitutions.most_common()]
@@ -140,13 +154,13 @@ def main(argv=None) -> int:
         ),
         "OutRosterTeamDays": entries,
     }
-    with (PACKAGE / "result.json").open("w", encoding="utf-8") as fh:
+    with (package / "result.json").open("w", encoding="utf-8") as fh:
         json.dump(result, fh, indent=2, ensure_ascii=False)
         fh.write("\n")
 
     # The sidecar: the codes this result used, in catalogue shape. A solver emits
     # this alongside its result so the result is readable without the full menu.
-    with (PACKAGE / "result_schedules.csv").open("w", newline="", encoding="utf-8") as fh:
+    with (package / "result_schedules.csv").open("w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh, lineterminator="\n")
         w.writerow(core.SCHEDULE_COLUMNS)
         for code in sorted(used):
@@ -155,14 +169,18 @@ def main(argv=None) -> int:
                         s.interval.start if s.interval else "",
                         s.interval.end if s.interval else ""])
 
-    print(f"result.json           {len(entries)} employee-days "
+    print(f"{package.name}/result.json  {len(entries)} employee-days "
           f"({work_days} worked, {rest_days} rest)")
-    print(f"result_schedules.csv  {len(used)} distinct codes")
+    print(f"{package.name}/result_schedules.csv  {len(used)} distinct codes")
     if substitutions:
         print("substitutions:")
         for text, n in substitutions.most_common():
             print(f"  {n:4}x {text}")
     return 0
+
+
+def main(argv=None) -> int:
+    return build(PACKAGE) or build(PARTIAL, until=PARTIAL_UNTIL)
 
 
 if __name__ == "__main__":

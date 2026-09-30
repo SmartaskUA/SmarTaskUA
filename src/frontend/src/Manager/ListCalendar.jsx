@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import baseurl from "../components/BaseUrl";
@@ -22,13 +22,35 @@ import {
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
 
+const normalizeFailedTask = (task) => ({
+  id: task.taskId,
+  taskId: task.taskId,
+  itemType: "failed-task",
+  title: task.scheduleRequest?.title || "Failed schedule",
+  algorithm: task.scheduleRequest?.algorithm || "No algorithm specified",
+  status: task.status,
+  updatedAt: task.updatedAt,
+  failureSummary: task.failureSummary,
+  hasReport: Boolean(task.reportArtifacts?.pdf),
+});
+
+const normalizeInProgressTask = (task) => ({
+  id: task.taskId,
+  taskId: task.taskId,
+  itemType: "in-progress-task",
+  title: task.scheduleRequest?.title || "Untitled schedule",
+  algorithm: task.scheduleRequest?.algorithm || "No algorithm specified",
+  status: task.status,
+  updatedAt: task.updatedAt,
+});
+
 const ListCalendar = () => {
   const [calendars, setCalendars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [title, setTitle] = useState("");
   const [suggestions, setSuggestions] = useState([]);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [isLoadingSuggestions] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
   const [errorOpen, setErrorOpen] = useState(false);
   const [calendarToDelete, setCalendarToDelete] = useState(null);
@@ -41,33 +63,12 @@ const ListCalendar = () => {
   const isFailedCalendar = (calendar) => calendar.itemType === "failed-task";
   const isInProgressCalendar = (calendar) => calendar.itemType === "in-progress-task";
 
-  const normalizeFailedTask = (task) => ({
-    id: task.taskId,
-    taskId: task.taskId,
-    itemType: "failed-task",
-    title: task.scheduleRequest?.title || "Failed schedule",
-    algorithm: task.scheduleRequest?.algorithm || "No algorithm specified",
-    status: task.status,
-    updatedAt: task.updatedAt,
-    failureSummary: task.failureSummary,
-    hasReport: Boolean(task.reportArtifacts?.pdf),
-  });
-
-  const normalizeInProgressTask = (task) => ({
-    id: task.taskId,
-    taskId: task.taskId,
-    itemType: "in-progress-task",
-    title: task.scheduleRequest?.title || "Untitled schedule",
-    algorithm: task.scheduleRequest?.algorithm || "No algorithm specified",
-    status: task.status,
-    updatedAt: task.updatedAt,
-  });
-
   const handleDownloadReport = (taskId) => {
     window.open(`${baseurl}/tasks/${taskId}/report/pdf`, "_blank", "noopener,noreferrer");
   };
 
-  const fetchCalendars = async () => {
+  // Uses only state setters and module helpers, so it keeps one identity and the poll starts once.
+  const fetchCalendars = useCallback(async () => {
     try {
       const [schedulesResponse, tasksResponse] = await Promise.all([
         axios.get(`${baseurl}/schedules/fetch`),
@@ -101,13 +102,13 @@ const ListCalendar = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchCalendars();
     const interval = setInterval(fetchCalendars, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchCalendars]);
 
   const handleSearchInputChange = (event, newValue) => {
     setTitle(newValue);
