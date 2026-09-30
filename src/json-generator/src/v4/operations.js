@@ -10,6 +10,7 @@ import { DEFAULT_TEAM_CODE, FIRST_MENU_CODE, WEEKDAYS } from './constants';
 import { buildBundle, canonicalCell, schedulesCsv } from './generate';
 import { validateBundle, legislationLimits } from './validate';
 import { mergeReports, validateResult } from './validateResult';
+import { appFindings } from './appChecks';
 import { newId } from './state';
 
 // --------------------------------------------------------------------------
@@ -18,7 +19,8 @@ import { newId } from './state';
 
 /**
  * The generated bundle and its verdict: the problem's findings, then the
- * result's when days are fixed. `stats` is the problem's, with the result's
+ * result's when days are fixed, then warnings about what the SmarTask app
+ * would refuse (appChecks.js). `stats` is the problem's, with the result's
  * counts added.
  */
 export function validateState(state) {
@@ -27,7 +29,9 @@ export function validateState(state) {
   const result = bundle.result && validateResult(bundle.result, {
     problem: bundle.problem, files: bundle.files, resultName: bundle.resultName, problemName: bundle.problemName
   });
-  return { bundle, report: mergeReports(report, result) };
+  const merged = mergeReports(report, result);
+  const app = appFindings(state);
+  return { bundle, report: app.length ? { ...merged, warnings: [...merged.warnings, ...app] } : merged };
 }
 
 export function findingsFor(report, stepId) {

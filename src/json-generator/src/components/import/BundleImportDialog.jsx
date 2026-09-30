@@ -17,6 +17,8 @@ import { applyMenuChoices } from '../../v4/operations';
  * which definition to keep wherever the menu and the result's sidecar define a
  * code differently.
  */
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
 const BundleImportDialog = ({ open, onClose }) => {
   const { replaceState, goToStep } = useWizard();
   const inputRef = useRef(null);
@@ -118,7 +120,7 @@ const BundleImportDialog = ({ open, onClose }) => {
             )}
             <Alert severity={result.report.errors.length ? 'error' : result.report.warnings.length ? 'warning' : 'success'}>
               <AlertTitle>
-                Validator: {result.report.errors.length} errors, {result.report.warnings.length} warnings
+                Validator: {plural(result.report.errors.length, 'error')}, {plural(result.report.warnings.length, 'warning')}
               </AlertTitle>
               {conflicts.length > 0 && (
                 <Typography variant="body2" sx={{ mb: 1 }}>

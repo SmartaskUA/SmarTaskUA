@@ -54,7 +54,7 @@ const ValidationPanel = ({ report, onJump }) => {
 
   return (
     <Card variant="outlined" sx={{ mb: 3 }}>
-      <CardHeader avatar={icon} title="Validation" subheader="JSON Schema + the v4.0 validator's semantic checks, run on the files below" />
+      <CardHeader avatar={icon} title="Validation" subheader="JSON Schema + the v4.0 validator's semantic checks, run on the files below; app: and solver: warnings are what the SmarTask app would refuse" />
       <CardContent sx={{ pt: 0 }}>
         {errors.length === 0 ? (
           <Alert severity={warnings.length ? 'warning' : 'success'} sx={{ mb: 2 }}>

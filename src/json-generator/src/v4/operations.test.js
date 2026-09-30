@@ -208,3 +208,44 @@ describe('fixed days', () => {
     expect(ops.pruneOutsideScope(s).result.entries.map(line)).toEqual(['EMP003 2026-03-03T00:00:00 9001']);
   });
 });
+
+describe('what the SmarTask app would refuse', () => {
+  const warningsOf = (state) => ops.validateState(state).report.warnings.filter((f) => /^(app|solver): /.test(f.message));
+
+  it('says nothing about a problem the app takes and its solvers can cover', () => {
+    expect(warningsOf(sampleState())).toEqual([]);
+  });
+
+  it('warns when the problemId cannot be uploaded', () => {
+    const s = sampleState();
+    s.metadata.problemId = 'E2E WIZARD';
+    expect(warningsOf(s)).toEqual([{
+      message: "app: metadata.problemId 'E2E WIZARD' cannot be uploaded to the SmarTask app, which takes letters, digits, "
+        + "'_', '-' and '.', starting with a letter or digit, at most 64 characters",
+      step: 'setup'
+    }]);
+    s.metadata.problemId = 'C2_January_2026';
+    expect(warningsOf(s)).toEqual([]);
+  });
+
+  it('warns, with the solver\'s rule, when the menu leaves work days without a shift', () => {
+    const s = sampleState();
+    s.schedules = { ...s.schedules, rows: s.schedules.rows.filter((r) => r.startMin === null) };
+    expect(warningsOf(s)).toEqual([{
+      message: "solver: 20 work day(s) have no menu shift that fits their cell (e.g. EMP001 on 2026-03-02, cell 'A', "
+        + "contract 480 min), so SmarTask's solvers would reject the package: add shifts in Shift Menu (Generate from "
+        + 'contracts) or switch the menu off to let the solver build them',
+      step: 'schedules'
+    }]);
+    // Without a menu the solver builds its own shifts.
+    expect(warningsOf({ ...s, schedules: { ...s.schedules, enabled: false } })).toEqual([]);
+  });
+
+  it('counts only the days the missing length leaves uncovered', () => {
+    const s = sampleState();
+    s.schedules = { ...s.schedules, rows: s.schedules.rows.filter((r) => r.scheduleWeightMinutes !== 480) };
+    const [warning] = warningsOf(s);
+    expect(warning.message).toMatch(/^solver: \d+ work day\(s\) have no menu shift that fits their cell \(e\.g\. EMP001 on 2026-03-02/);
+    expect(Number(warning.message.match(/\d+/)[0])).toBeLessThan(20);
+  });
+});
