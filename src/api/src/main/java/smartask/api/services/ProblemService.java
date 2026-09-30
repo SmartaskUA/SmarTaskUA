@@ -472,6 +472,14 @@ public class ProblemService {
             algorithms = List.of();    // a malformed problem must not break the whole list
         }
         item.put("algorithms", algorithms);
+        if ("4.0".equals(String.valueOf(schemaVersion))) {
+            // A v4 package may carry a partial result: the days it fixes stay fixed when solved.
+            try {
+                PartialResultSummary.of(problemPath, root, objectMapper).ifPresent(summary -> item.put("result", summary));
+            } catch (IOException | RuntimeException e) {
+                log.warn("Could not read the result beside {}: {}", problemPath, e.getMessage());
+            }
+        }
         return item;
     }
 

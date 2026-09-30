@@ -23,6 +23,11 @@ import baseurl from "../components/BaseUrl";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import "./Problems.css";
 
+// A v4 package may carry a partial result.json: the days it fixes stay fixed when solved,
+// and the solver decides the rest. The API summarises it under `result` (PartialResultSummary).
+const missingSidecarNote = (result) =>
+  `${result.file} has no ${result.file.replace(/\.[^.]*$/, "")}_schedules.csv, so its codes are read from the menu.`;
+
 const Problems = () => {
   const [problems, setProblems] = useState([]);
   const [selectedProblemId, setSelectedProblemId] = useState("");
@@ -66,7 +71,13 @@ const Problems = () => {
       setUploading(true);
       const res = await axios.post(`${baseurl}/problems/upload${replace ? "?replace=true" : ""}`, form);
       const problemId = res.data?.problemId;
-      setUpload({ severity: "success", text: `Uploaded ${problemId}. It is ready to solve.` });
+      const result = res.data?.result;
+      const text = result
+        ? `Uploaded ${problemId}, with a partial result: ${result.fixedDays} fixed days, ${result.openDays} open. It is ready to solve.`
+        : `Uploaded ${problemId}. No result: the solver decides every day. It is ready to solve.`;
+      setUpload(result && !result.sidecar
+        ? { severity: "warning", text: `${text} ${missingSidecarNote(result)}` }
+        : { severity: "success", text });
       await fetchProblems(problemId);
     } catch (err) {
       const text = err.response?.data?.message || "Upload failed.";
@@ -311,6 +322,9 @@ const Problems = () => {
                         secondary={problem.description || (problem.name ? problem.problemId : "")}
                         primaryTypographyProps={{ fontWeight: 600 }}
                       />
+                      {problem.result && (
+                        <Chip label="partial result" size="small" variant="outlined" color="primary" sx={{ ml: 1 }} />
+                      )}
                     </ListItemButton>
                   ))}
                   {!filteredProblems.length && (
@@ -400,6 +414,44 @@ const Problems = () => {
                       <Typography variant="body2" color="text.secondary">
                         {jsonLoading ? "Loading data files..." : "No data files referenced in problem.json."}
                       </Typography>
+                    )}
+                    {selectedProblem.schemaVersion === "4.0" && (
+                      <>
+                        <Divider />
+                        <Typography variant="subtitle2">Result</Typography>
+                        {selectedProblem.result ? (
+                          <Stack spacing={1}>
+                            <Box display="flex" flexWrap="wrap" gap={1}>
+                              <Chip
+                                label={`${selectedProblem.result.fixedDays} fixed · ${selectedProblem.result.openDays} open of ${selectedProblem.result.employeeDays} employee-days`}
+                                color="primary"
+                                size="small"
+                                className="problems-chip"
+                              />
+                              <Chip
+                                label={`${selectedProblem.result.workedDays} worked · ${selectedProblem.result.restDays} rest`}
+                                size="small"
+                                className="problems-chip"
+                              />
+                            </Box>
+                            <Box display="flex" flexWrap="wrap" gap={1}>
+                              {[selectedProblem.result.file, selectedProblem.result.sidecar].filter(Boolean).map((file) => (
+                                <Chip key={file} label={file} size="small" variant="outlined" className="problems-chip" />
+                              ))}
+                            </Box>
+                            {!selectedProblem.result.sidecar && (
+                              <Alert severity="warning">{missingSidecarNote(selectedProblem.result)}</Alert>
+                            )}
+                            <Typography variant="body2" color="text.secondary">
+                              A partial result: solving keeps its fixed days, and the solver decides only the open ones.
+                            </Typography>
+                          </Stack>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            No result: the solver decides every day.
+                          </Typography>
+                        )}
+                      </>
                     )}
                     <Divider />
                     <Typography variant="body2">

@@ -72,6 +72,18 @@ def evaluate(inst: V4Instance, rows: List[List[str]]) -> Dict:
     }
 
 
+def fixed_days(inst: V4Instance) -> Dict:
+    """What a partial result decided: its fixed employee-days, sorted, and how many it left open.
+
+    Stored with a solved schedule, so the calendar can mark the days the solver did not choose.
+    Without a result, `fixed` is empty and every day is open.
+    """
+    return {
+        "fixed": sorted([eid, day] for eid, day in inst.fixed),
+        "open_days": len(inst.open_cells),
+    }
+
+
 def objective(kpis: Dict, directives: SolveDirectives) -> int:
     """MathematicalDefinition7's weighted objective from `evaluate`'s KPIs."""
     return (directives.w1 * kpis["total_shortage"]

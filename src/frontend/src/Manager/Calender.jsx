@@ -355,6 +355,7 @@ const Calendar = () => {
             holidayMap={holidayMap}
             scheduleType={scheduleType}
             employees={metadata?.employeesTeamInfo || []}
+            fixedDays={metadata?.fixedDays || []}
           />
         ) : hasProblemDemandData ? (
           <ProblemDemandTable

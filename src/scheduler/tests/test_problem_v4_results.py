@@ -9,6 +9,7 @@ from problem_v4 import (
     ResultError,
     Shift,
     evaluate,
+    fixed_days,
     format_worked_cell,
     load_package,
     parse_worked_cell,
@@ -94,3 +95,15 @@ def test_evaluate_counts_shortage_and_priority_per_skill():
     assert t1["shortage_by_skill"].get("Team/T1", 0) == expected
     # Team/T1 is tier 1, so p_sl = 1 for every worker on every demanded T1 slot
     assert t1["priority_cost"] == sum(on_shift[(d, t)] for (d, t, s) in inst.alpha if s == "Team/T1")
+
+
+def test_fixed_days_lists_what_a_partial_result_decided():
+    decided = fixed_days(load_package(EXAMPLES / "cenario2_partial"))
+    assert len(decided["fixed"]) == 105             # the first week, 15 employees x 7 days
+    assert decided["open_days"] == 360
+    assert decided["fixed"] == sorted(decided["fixed"])
+    assert {day for _, day in decided["fixed"]} == {f"2026-01-0{d}" for d in range(1, 8)}
+
+
+def test_without_a_result_nothing_is_fixed():
+    assert fixed_days(load_package(EXAMPLES / "cenario2_input_only")) == {"fixed": [], "open_days": 465}

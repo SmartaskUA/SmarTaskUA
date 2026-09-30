@@ -39,6 +39,8 @@ const V4KPIReport = ({ kpis }) => {
   const coverage = demand ? (100 * (demand - shortage)) / demand : 100;
   const unassigned = Number(kpis.unassigned) || 0;
   const bySkill = Object.entries(kpis.shortage_by_skill || {});
+  // Days a partial result.json fixed (absent on schedules solved before this was recorded).
+  const fixedDays = Number(kpis.fixed_days) || 0;
 
   return (
     <Paper elevation={0} sx={{ p: 3, mt: 3, border: "1px solid #e2e8f0", borderRadius: 3 }}>
@@ -60,6 +62,13 @@ const V4KPIReport = ({ kpis }) => {
           hint={unassigned ? "the result is not valid" : "every work day has a shift"}
           tone={unassigned ? T.fail : T.pass}
         />
+        {fixedDays > 0 && (
+          <Tile
+            label="Fixed days"
+            value={fixedDays}
+            hint={`kept from result.json · ${kpis.open_days ?? "?"} decided by the solver`}
+          />
+        )}
       </Stack>
       {bySkill.length > 0 && (
         <>

@@ -10,7 +10,7 @@ without one, nothing is fixed and every path is the same.
 """
 
 from .directives import SolveDirectives
-from .evaluate import evaluate, objective
+from .evaluate import evaluate, fixed_days, objective
 from .instance import (
     REST_CODE,
     WORK_MODES,
@@ -30,6 +30,6 @@ __all__ = [
     "REST_CODE", "WORK_MODES", "IDLE", "UNASSIGNED",
     "Employee", "FixedDay", "Legislation", "ParseError", "ResultError", "Shift", "SolveDirectives",
     "TimeSlot", "V4Instance",
-    "evaluate", "format_worked_cell", "load_package", "objective", "parse_worked_cell",
+    "evaluate", "fixed_days", "format_worked_cell", "load_package", "objective", "parse_worked_cell",
     "rest_cell", "result_from_rows", "write_package",
 ]
