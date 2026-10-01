@@ -5,6 +5,7 @@ import Sidebar_Manager from "../components/Sidebar_Manager";
 import CalendarTable from "../components/manager/CalendarTable";
 import CalendarHeader from "../components/manager/CalendarHeader";
 import KPIReport from "../components/manager/KPIReport";
+import MonthlyKpiReport from "../components/manager/MonthlyKpiReport";
 import SisqualKPIReport from "./SisqualKPIReport";
 import V4KPIReport from "./V4KPIReport";
 import BaseUrl from "../components/BaseUrl";
@@ -164,7 +165,13 @@ const Calendar = () => {
         return;
       }
 
-      const scopedScheduleData = buildMonthScopedScheduleData(scheduleData, columns);
+      // Shift KPIs use annual targets (223 worked days, 30 vacation days, 22
+      // holiday/Sunday days), so shifts are analysed on the full year and the
+      // selected month is view-only. Hourly schedules keep the month scope.
+      const scopedScheduleData =
+        inferScheduleType(metadata) === "Turno"
+          ? scheduleData
+          : buildMonthScopedScheduleData(scheduleData, columns);
       setKpiSummary(null);
 
       const toCsvString = (rows) => rows.map((row) => row.join(",")).join("\n");
@@ -443,7 +450,14 @@ const Calendar = () => {
         ) : (
           <KPIReport metrics={kpiSummary || {}} scheduleType={scheduleType} />
         )}
-        
+
+        {!isHourly && (
+          <MonthlyKpiReport
+            breakdown={kpiSummary?.monthlyBreakdown}
+            selectedMonth={selectedMonth}
+          />
+        )}
+
       </div>
     </div>
   );

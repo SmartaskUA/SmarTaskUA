@@ -138,7 +138,10 @@ function Tile({ label, value, sub, tone, tip }) {
         borderRadius: 1.5,
         bgcolor: pal ? pal.bg : "action.hover",
         border: pal ? `1px solid ${pal.border}` : "1px solid transparent",
-        height: "100%",
+        // Fixed floor instead of height:"100%" — Safari can misjudge the
+        // stretched height of a CSS Grid item on auto-sized rows, letting
+        // a tile's border overlap the row below it.
+        minHeight: 84,
       }}
     >
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.25 }}>
@@ -751,7 +754,7 @@ function renderSisqualBundleReport(metrics) {
 
 // ─── Legacy shift / hourly KPI renderer ──────────────────────────────────────
 const metricInfo = {
-  tmFails:                    { label: "Afternoon-Morning Sequences",    description: "Times an employee works an afternoon shift followed by a morning shift the next day." },
+  tmFails:                    { label: "Backward Shift Sequences",       description: "Times an employee works an earlier shift than the day before." },
   consecutiveDays:            { label: "Consecutive Work-Day Violations",description: "Times employees exceeded the maximum allowed run of five consecutive working days." },
   workHolidays:               { label: "Holidays & Sunday Work Days",    description: "Work days on holidays and Sundays exceeding the predefined threshold." },
   missedVacationDays:         { label: "Missed Vacation Days",           description: "Total variance between actual and target vacation days across all employees." },
