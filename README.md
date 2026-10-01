@@ -107,12 +107,11 @@ All services are served behind the nginx reverse proxy:
 
 ## Team Members
 
-|     Name    |   GitHub  |  NMEC  |
-|-------------|-----------|--------|
-| João Roldão | @roldao04 | 113920 |
-|             |           |        |
-|             |           |        |
-|             |           |        |
+|      Name      |      GitHub      |     NMEC     |
+|----------------|------------------|--------------|
+| Beatriz Farias | @beatrizfariasss |    108807    |
+|                |                  |              |
+|                |                  |              |
 
 ---
 
