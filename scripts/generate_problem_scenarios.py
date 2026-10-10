@@ -13,7 +13,7 @@ OUT_DIR = REPO_ROOT / "data/problems"
 
 # (numTeams, numEmployees) — 2-shift scaling axis
 SCENARIOS = [(2, 12), (4, 24), (8, 48), (16, 96)]
-NUM_CASES = 1
+NUM_CASES = 4
 CROSS_RATIO = 0.20
 YEAR = 2025
 
@@ -61,7 +61,7 @@ def build_problem_json(num_teams, num_employees, case_num, emp_teams):
         for i in range(num_employees)
     ]
 
-    problem_id = f"SMARTASK_{num_teams}TEAMS_{num_employees}EMP"
+    problem_id = f"SMARTASK_{num_teams}TEAMS_{num_employees}EMP_CASE{case_num}"
     return {
         "schemaVersion": "2.2",
         "problemType": "employee_scheduling",
@@ -186,7 +186,8 @@ def generate_all():
                 print(f"[skip] missing vacation template: {vac_path}")
                 continue
 
-            scenario_dir = OUT_DIR / f"SMARTASK_{num_teams}TEAMS_{num_employees}EMP"
+            scenario_dir = (OUT_DIR /
+                            f"SMARTASK_{num_teams}TEAMS_{num_employees}EMP_CASE{case_num}")
             scenario_dir.mkdir(parents=True, exist_ok=True)
 
             problem = build_problem_json(num_teams, num_employees, case_num, emp_teams)
