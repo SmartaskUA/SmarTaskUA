@@ -111,3 +111,4 @@ exports/
 data/problems/uploads/
 
 *.ppk
+*.pth
