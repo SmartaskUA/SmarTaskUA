@@ -4,6 +4,7 @@ import baseurl from "../components/BaseUrl";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import VacationsTemplate from "../components/manager/VacationsTemplate";
 import NotificationSnackbar from "../components/manager/NotificationSnackbar";
+import BreakableName from "../components/manager/BreakableName";
 import EmptySVG from "../assets/images/Empty-pana.svg";
 
 import {
@@ -252,8 +253,14 @@ const GenerateVacations = () => {
                     <Close fontSize="10px" />
                   </IconButton>
 
-                  <Typography variant="h6" gutterBottom>
-                    {template.name}
+                  {/* Long names wrap at underscores; padding keeps them clear of the delete button. */}
+                  <Typography
+                    variant="h6"
+                    gutterBottom
+                    title={template.name}
+                    sx={{ fontSize: "1.05rem", lineHeight: 1.3, overflowWrap: "break-word", pr: 3 }}
+                  >
+                    <BreakableName name={template.name} />
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
                     {Object.keys(template.vacations).length} employees with vacations
