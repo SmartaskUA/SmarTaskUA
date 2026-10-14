@@ -108,10 +108,23 @@ const getNextAutoTitle = () => {
     return "Schedule-1";
   }
 
+  // Read-only: React StrictMode calls state initializers twice in dev, so writing here skipped numbers.
   const storedValue = Number(window.localStorage.getItem(SCHEDULE_TITLE_COUNTER_KEY) || "0");
-  const nextValue = storedValue + 1;
-  window.localStorage.setItem(SCHEDULE_TITLE_COUNTER_KEY, String(nextValue));
-  return `Schedule-${nextValue}`;
+  return `Schedule-${storedValue + 1}`;
+};
+
+// Called only after a schedule request succeeds, so opening the page never uses up a number.
+const commitAutoTitle = (title) => {
+  const match = /^Schedule-(\d+)$/.exec(title);
+  if (!match || typeof window === "undefined") {
+    return;
+  }
+
+  const storedValue = Number(window.localStorage.getItem(SCHEDULE_TITLE_COUNTER_KEY) || "0");
+  const usedValue = Number(match[1]);
+  if (usedValue > storedValue) {
+    window.localStorage.setItem(SCHEDULE_TITLE_COUNTER_KEY, String(usedValue));
+  }
 };
 
 const CreateCalendar = () => {
@@ -320,6 +333,7 @@ const CreateCalendar = () => {
         console.log("API Response:", response.data);
       }
 
+      commitAutoTitle(title.trim());
       setSuccessOpen(true);
       setTimeout(() => {
         navigate("/manager");
