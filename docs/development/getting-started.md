@@ -18,7 +18,7 @@ make build          # build the API and every image, then start the stack
 - JSON wizard: http://localhost/json-gen
 - API: http://localhost/api
 
-Solve something straight away. From the app: **Problems** → `C2_January_2026` → *Use In Schedule* →
+Solve something straight away. From the app: **Problems** → `V4_C2_January_2026` → *Use In Schedule* →
 *Generate*. Or from the command line:
 
 ```bash

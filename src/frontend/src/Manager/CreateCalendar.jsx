@@ -21,7 +21,7 @@ import {
 // Problem-mode algorithm picker to only the Mathematical Formulation (MD7)
 // solvers. Controlled by VITE_SIMPLE_MODE — see docs/development/simple-mode.md.
 const SIMPLE_MODE = import.meta.env.VITE_SIMPLE_MODE === "true";
-const DEFAULT_PROBLEM_ID = "C2_January_2026";
+const DEFAULT_PROBLEM_ID = "V4_C2_January_2026";
 const DEFAULT_ALGORITHM = "ILP_Sisqual_Hours_MathematicalDefinition7";
 const SCHEDULE_TITLE_COUNTER_KEY = "schedule_title_counter";
 
