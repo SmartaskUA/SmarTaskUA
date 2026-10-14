@@ -113,6 +113,10 @@ public class ProblemService {
         return problemRepository.save(problem);
     }
 
+    public void delete(ProblemDefinition problem) {
+        problemRepository.delete(problem);
+    }
+
     public ScheduleRequest buildScheduleRequest(ProblemDefinition problem, ProblemSolveRequest request) {
         SchedulingAlgorithmRegistry.AlgorithmSpec algorithmSpec = schedulingAlgorithmRegistry.find(request.getAlgorithm())
                 .orElseThrow(() -> new IllegalStateException("Unsupported algorithm for problem solve."));
@@ -433,6 +437,7 @@ public class ProblemService {
         if (defPath != null && !defPath.isBlank()) {
             item.put("problemPath", defPath);
         }
+        item.put("uploaded", ProblemPackageImporter.isUploaded(defPath));
         return item;
     }
 

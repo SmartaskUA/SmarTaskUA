@@ -43,6 +43,17 @@ public class ProblemsController {
         }
     }
 
+    /** Delete a problem uploaded through the UI. Built-in problems (tracked in git) are refused with 403. */
+    @DeleteMapping("/{problemId}")
+    public ResponseEntity<Map<String, Object>> deleteProblem(@PathVariable String problemId) {
+        try {
+            packageImporter.deleteUploaded(problemId);
+            return ResponseEntity.noContent().build();
+        } catch (ProblemPackageImporter.PackageRejected e) {
+            return ResponseEntity.status(e.getStatus()).body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @GetMapping
     public ResponseEntity<List<Map<String, Object>>> getAllProblems() {
         return ResponseEntity.ok(problemService.getAllProblemListItems());
