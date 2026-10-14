@@ -23,7 +23,7 @@ import {
 import { Close } from "@mui/icons-material";
 
 const normalizeFailedTask = (task) => ({
-  id: task.taskId,
+  id: task.id || task.taskId,
   taskId: task.taskId,
   itemType: "failed-task",
   title: task.scheduleRequest?.title || "Failed schedule",
@@ -34,8 +34,15 @@ const normalizeFailedTask = (task) => ({
   hasReport: Boolean(task.reportArtifacts?.pdf),
 });
 
+const FAILED_STATUSES = ["FAILED", "FAILED_VALIDATION", "STALE"];
+
+const FAILED_TAG_LABELS = {
+  FAILED_VALIDATION: "VALIDATION",
+  STALE: "STUCK",
+};
+
 const normalizeInProgressTask = (task) => ({
-  id: task.taskId,
+  id: task.id || task.taskId,
   taskId: task.taskId,
   itemType: "in-progress-task",
   title: task.scheduleRequest?.title || "Untitled schedule",
@@ -83,7 +90,9 @@ const ListCalendar = () => {
         const completedTitles = new Set(schedules.map((schedule) => schedule.title));
 
         const failedTasks = (tasksResponse.data || [])
-          .filter((task) => task.status === "FAILED" || task.status === "FAILED_VALIDATION")
+          .filter((task) => FAILED_STATUSES.includes(task.status))
+          // A stale task that finished after all shows up as a normal schedule instead.
+          .filter((task) => task.status !== "STALE" || !completedTitles.has(task.scheduleRequest?.title))
           .map(normalizeFailedTask);
 
         const inProgressTasks = (tasksResponse.data || [])
@@ -172,7 +181,12 @@ const ListCalendar = () => {
 
   const handleConfirmDelete = async () => {
     try {
-      await axios.delete(`${baseurl}/schedules/delete/id/${calendarToDelete.id}`);
+      const isTask = isFailedCalendar(calendarToDelete) || isInProgressCalendar(calendarToDelete);
+      await axios.delete(
+        isTask
+          ? `${baseurl}/tasks/${calendarToDelete.id}`
+          : `${baseurl}/schedules/delete/id/${calendarToDelete.id}`
+      );
       setSuccessOpen(true);
       setConfirmDialogOpen(false);
       setCalendarToDelete(null);
@@ -306,28 +320,26 @@ const ListCalendar = () => {
                 boxSizing: "border-box",
               }}
             >
-              {!isFailedCalendar(calendar) && !isInProgressCalendar(calendar) && (
-                <IconButton
-                  size="small"
-                  onClick={() => confirmDeleteCalendar(calendar)}
-                  sx={{
-                    position: "absolute",
-                    top: 6,
-                    right: 6,
-                    backgroundColor:
-                      hoveredCardId === calendar.id ? "#ff5252" : "#e0e0e0",
-                    color: hoveredCardId === calendar.id ? "#fff" : "#555",
-                    "&:hover": {
-                      backgroundColor: "#ff1744",
-                    },
-                    width: "20px",
-                    height: "20px",
-                    padding: "2px",
-                  }}
-                >
-                  <Close fontSize="10px" />
-                </IconButton>
-              )}
+              <IconButton
+                size="small"
+                onClick={() => confirmDeleteCalendar(calendar)}
+                sx={{
+                  position: "absolute",
+                  top: 6,
+                  right: 6,
+                  backgroundColor:
+                    hoveredCardId === calendar.id ? "#ff5252" : "#e0e0e0",
+                  color: hoveredCardId === calendar.id ? "#fff" : "#555",
+                  "&:hover": {
+                    backgroundColor: "#ff1744",
+                  },
+                  width: "20px",
+                  height: "20px",
+                  padding: "2px",
+                }}
+              >
+                <Close fontSize="10px" />
+              </IconButton>
 
               <div className="calendar-card-header manager-result-card-header">
                 <span
@@ -356,8 +368,8 @@ const ListCalendar = () => {
                   </div>
                 </div>
                 {isFailedCalendar(calendar) && (
-                  <div className="calendar-card-tag calendar-card-tag-failed">
-                    {calendar.status === "FAILED_VALIDATION" ? "VALIDATION" : "FAILED"}
+                  <div className="calendar-card-tag calendar-card-tag-failed" style={{ marginRight: "14px" }}>
+                    {FAILED_TAG_LABELS[calendar.status] || "FAILED"}
                   </div>
                 )}
               </div>
@@ -446,7 +458,11 @@ const ListCalendar = () => {
           <DialogTitle>Confirm Deletion</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              Are you sure you want to delete the calendar "{calendarToDelete?.title}"?
+              {calendarToDelete && isInProgressCalendar(calendarToDelete)
+                ? `"${calendarToDelete.title}" is still marked as ${
+                    calendarToDelete.status === "IN_PROGRESS" ? "calculating" : "queued"
+                  }. Removing it only deletes it from this list; it does not stop a job that is really running. Remove it?`
+                : `Are you sure you want to delete "${calendarToDelete?.title}"?`}
             </DialogContentText>
           </DialogContent>
           <DialogActions>
@@ -479,14 +495,14 @@ const ListCalendar = () => {
         <NotificationSnackbar
           open={successOpen}
           severity="success"
-          message="Task Requested Successfully!"
+          message="Deleted successfully."
           onClose={() => setSuccessOpen(false)}
         />
 
         <NotificationSnackbar
           open={errorOpen}
           severity="error"
-          message="Failed to create calendar. Try again."
+          message="Failed to delete. Try again."
           onClose={() => setErrorOpen(false)}
         />
       </div>
