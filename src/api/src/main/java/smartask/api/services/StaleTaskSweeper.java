@@ -21,7 +21,7 @@ import java.util.List;
 public class StaleTaskSweeper {
 
     // Grace period on top of the requested maxTime before an IN_PROGRESS task counts as stuck.
-    private static final long IN_PROGRESS_MARGIN_MINUTES = 30;
+    private static final long IN_PROGRESS_MARGIN_MINUTES = 60;
     // Used when the request has no usable maxTime.
     private static final long DEFAULT_MAX_TIME_MINUTES = 60;
     // Queued tasks can legitimately wait behind others, so they get a much longer window.
