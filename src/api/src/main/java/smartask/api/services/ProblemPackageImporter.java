@@ -99,8 +99,7 @@ public class ProblemPackageImporter {
         Optional<ProblemDefinition> existing = problemService.getDefinitionByProblemId(pkg.problemId());
         if (existing.isPresent()) {
             String path = existing.get().getProblemPath();
-            boolean uploaded = path != null && path.startsWith(UPLOADS_DIR + "/");
-            if (!uploaded) {
+            if (!isUploaded(path)) {
                 throw rejected(409, "problem " + pkg.problemId() + " is built in and cannot be replaced; "
                         + "give the package another metadata.problemId");
             }
@@ -119,6 +118,40 @@ public class ProblemPackageImporter {
         definition.setProblemPath(repoRoot.relativize(target.resolve("problem.json")).toString());
         problemService.save(definition);
         return problemService.getProblemListItem(pkg.problemId()).orElseGet(Map::of);
+    }
+
+    /** True for problems stored under UPLOADS_DIR; everything else under data/problems is built in (tracked in git). */
+    public static boolean isUploaded(String problemPath) {
+        return problemPath != null && problemPath.startsWith(UPLOADS_DIR + "/");
+    }
+
+    /**
+     * Delete an uploaded problem: its folder under UPLOADS_DIR and its record. Built-in problems are
+     * refused, since their folders are shared through git and startup seeding would bring them back.
+     */
+    public void deleteUploaded(String problemId) {
+        ProblemDefinition definition = problemService.getDefinitionByProblemId(problemId)
+                .orElseThrow(() -> rejected(404, "problem " + problemId + " not found"));
+        if (!isUploaded(definition.getProblemPath())) {
+            throw rejected(403, "problem " + problemId + " is built in and cannot be deleted from the UI");
+        }
+
+        Path repoRoot = problemService.resolveRepoRoot();
+        if (repoRoot == null) {
+            throw rejected(500, "data/problems is not reachable from the API");
+        }
+        Path uploads = repoRoot.resolve(UPLOADS_DIR).normalize();
+        Path folder = repoRoot.resolve(definition.getProblemPath()).normalize().getParent();
+        if (folder == null || !uploads.equals(folder.getParent())) {
+            throw rejected(400, "problem " + problemId + " is not stored in its own folder under " + UPLOADS_DIR);
+        }
+
+        try {
+            deleteRecursively(folder);
+        } catch (IOException e) {
+            throw rejected(500, "could not delete the package: " + e.getMessage());
+        }
+        problemService.delete(definition);
     }
 
     /** Write into a temporary folder first, then move it into place, so a failed upload leaves nothing half-written. */

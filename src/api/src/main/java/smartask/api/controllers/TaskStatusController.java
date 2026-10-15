@@ -42,6 +42,15 @@ public class TaskStatusController {
         return ResponseEntity.ok(tasks);
     }
 
+    @DeleteMapping("/{taskId}")
+    public ResponseEntity<String> deleteTask(@PathVariable String taskId) {
+        if (!taskStatusRepository.existsById(taskId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found");
+        }
+        taskStatusRepository.deleteById(taskId);
+        return ResponseEntity.ok("Task " + taskId + " deleted.");
+    }
+
     @GetMapping("/{taskId}/report/json")
     public ResponseEntity<?> downloadJsonReport(@PathVariable String taskId) {
         return downloadReport(taskId, "json", MediaType.APPLICATION_JSON, taskId + "-validation-report.json");

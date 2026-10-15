@@ -21,7 +21,7 @@ import {
 // Problem-mode algorithm picker to only the Mathematical Formulation (MD7)
 // solvers. Controlled by VITE_SIMPLE_MODE — see docs/development/simple-mode.md.
 const SIMPLE_MODE = import.meta.env.VITE_SIMPLE_MODE === "true";
-const DEFAULT_PROBLEM_ID = "C2_January_2026";
+const DEFAULT_PROBLEM_ID = "V4_C2_January_2026";
 const DEFAULT_ALGORITHM = "ILP_Sisqual_Hours_MathematicalDefinition7";
 const SCHEDULE_TITLE_COUNTER_KEY = "schedule_title_counter";
 
@@ -108,10 +108,23 @@ const getNextAutoTitle = () => {
     return "Schedule-1";
   }
 
+  // Read-only: React StrictMode calls state initializers twice in dev, so writing here skipped numbers.
   const storedValue = Number(window.localStorage.getItem(SCHEDULE_TITLE_COUNTER_KEY) || "0");
-  const nextValue = storedValue + 1;
-  window.localStorage.setItem(SCHEDULE_TITLE_COUNTER_KEY, String(nextValue));
-  return `Schedule-${nextValue}`;
+  return `Schedule-${storedValue + 1}`;
+};
+
+// Called only after a schedule request succeeds, so opening the page never uses up a number.
+const commitAutoTitle = (title) => {
+  const match = /^Schedule-(\d+)$/.exec(title);
+  if (!match || typeof window === "undefined") {
+    return;
+  }
+
+  const storedValue = Number(window.localStorage.getItem(SCHEDULE_TITLE_COUNTER_KEY) || "0");
+  const usedValue = Number(match[1]);
+  if (usedValue > storedValue) {
+    window.localStorage.setItem(SCHEDULE_TITLE_COUNTER_KEY, String(usedValue));
+  }
 };
 
 const CreateCalendar = () => {
@@ -320,6 +333,7 @@ const CreateCalendar = () => {
         console.log("API Response:", response.data);
       }
 
+      commitAutoTitle(title.trim());
       setSuccessOpen(true);
       setTimeout(() => {
         navigate("/manager");
