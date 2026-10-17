@@ -27,6 +27,13 @@ V4_SOLVERS: Dict[str, Tuple[str, str]] = {
     "ga": ("Genetic Algorithm v4", "algorithms.GA.ga_v4"),
 }
 
+#: Solvers for one kind of v4 package only, so `all` leaves them out: ga-legacy
+#: solves the converted SMARTASK_* shift problems (data/problems/V4_SMARTASK_*)
+#: and refuses anything else.
+LEGACY_V4_SOLVERS: Dict[str, Tuple[str, str]] = {
+    "ga-legacy": ("Genetic Algorithm Legacy v4", "algorithms.GA.legacy_v4"),
+}
+
 
 def add_solve_parser(subparsers) -> None:
     parser = subparsers.add_parser(
@@ -36,7 +43,8 @@ def add_solve_parser(subparsers) -> None:
     )
     parser.add_argument("package", help="v4 package folder (or its problem.json)")
     parser.add_argument("-a", "--algorithm", default="ilp",
-                        help=f"{'|'.join(V4_SOLVERS)}|all, or a full v4 algorithm name (default: ilp)")
+                        help=f"{'|'.join([*V4_SOLVERS, *LEGACY_V4_SOLVERS])}|all, or a full v4 algorithm "
+                             "name (default: ilp; all excludes ga-legacy)")
     parser.add_argument("-t", "--time", type=float, default=1.0, help="time limit per solver, minutes (default: 1)")
     parser.add_argument("-o", "--out", help="output folder (default: <repo>/exports/<package folder name>)")
     parser.add_argument("--param", action="append", default=[],
@@ -48,13 +56,14 @@ def resolve_algorithms(choice: str) -> List[Tuple[str, str, str]]:
     choice = choice.strip()
     if choice.lower() == "all":
         return [(alias, name, module) for alias, (name, module) in V4_SOLVERS.items()]
-    if choice.lower() in V4_SOLVERS:
-        name, module = V4_SOLVERS[choice.lower()]
+    every = {**V4_SOLVERS, **LEGACY_V4_SOLVERS}
+    if choice.lower() in every:
+        name, module = every[choice.lower()]
         return [(choice.lower(), name, module)]
-    for alias, (name, module) in V4_SOLVERS.items():
+    for alias, (name, module) in every.items():
         if choice == name:
             return [(alias, name, module)]
-    raise SystemExit(f"unknown v4 algorithm {choice!r}; use one of: {', '.join(V4_SOLVERS)}, all")
+    raise SystemExit(f"unknown v4 algorithm {choice!r}; use one of: {', '.join(every)}, all")
 
 
 def _validator() -> Optional[Callable]:
