@@ -266,6 +266,18 @@
                 "minimum": 0,
                 "maximum": 1440,
                 "description": "Length of one working day in minutes [H_w]. SISQUAL's TotalDailyMinutes. Note the unit clash: schedule_input.csv states the same quantity in HOURS."
+              },
+              "constraints": {
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Limits the contract itself carries, named after SISQUAL's InpContractCollection. Only what a solver reads is admitted (proposed: next_meeting.md item 33 ('solver chooses the days')).",
+                "properties": {
+                  "totalYearMinutes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Minutes worked over the year - SISQUAL's TotalYearMinutes. Read as an exact target, not only a cap."
+                  }
+                }
               }
             }
           }
@@ -455,9 +467,10 @@
                 "type": "string",
                 "enum": [
                   "preferable",
-                  "unavailable"
+                  "unavailable",
+                  "optional"
                 ],
-                "description": "preferable [D_wk] is soft - the solver may schedule over it at a penalty. unavailable [U_wk] is hard - no assignment permitted."
+                "description": "preferable [D_wk] is soft - the solver may schedule over it at a penalty. unavailable [U_wk] is hard - no assignment permitted. optional is open - the solver decides whether the day is worked, at no cost either way (proposed: next_meeting.md item 33 ('solver chooses the days'))."
               },
               "name": {
                 "type": "string"
@@ -576,7 +589,7 @@
         },
         "parameters": {
           "type": "object",
-          "description": "A vendor bag, deliberately open. Observed PascalCase keys: MaxConsecutiveWorkDays, MaxConsecutiveWorkDaysInWeek, MinDistanceBetweenShiftsInMinutes (all integer minutes or day counts).",
+          "description": "A vendor bag, deliberately open. Observed PascalCase keys: MaxConsecutiveWorkDays, MaxConsecutiveWorkDaysInWeek, MinDistanceBetweenShiftsInMinutes (all integer minutes or day counts). Proposed: MaxSpecialDays, the most Sundays and calendar.holidays one employee may work (next_meeting.md item 33 ('solver chooses the days')).",
           "additionalProperties": true
         },
         "startDate": {

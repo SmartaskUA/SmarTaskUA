@@ -136,7 +136,26 @@ def test_an_unclassified_day_off_code(make_fixture):
     def mutate(d):
         d["scheduleInput"]["dayOffCodes"]["DO"]["kind"] = "maybe"
     r = validate(make_fixture(mutate_problem=mutate))
-    assert any("must be 'preferable' or 'unavailable'" in e for e in r.errors), r.errors
+    assert any("must be 'preferable', 'unavailable' or 'optional'" in e for e in r.errors), r.errors
+
+
+def test_an_optional_day_is_not_forced_work(make_fixture):
+    """EMP001 works 03-02..03-05; with 03-06 and 03-07 open, a cap of 4 holds."""
+    def mutate(d):
+        d["scheduleInput"]["dayOffCodes"]["AVL"] = {"kind": "optional"}
+        d["constraints"]["hard"][0]["parameters"]["MaxConsecutiveWorkDays"] = 4
+    r = validate(make_fixture(mutate_problem=mutate,
+                              schedule_rows={("EMP001", "2026-03-06"): "AVL",
+                                             ("EMP001", "2026-03-07"): "AVL"}))
+    assert r.ok and not r.warnings, (r.errors, r.warnings)
+
+
+def test_year_minutes_that_the_open_days_cannot_hold(make_fixture):
+    """EMP002 is on vacation twice, so five 8-hour days are the most it can work."""
+    def mutate(d):
+        d["contracts"]["definitions"][0]["constraints"] = {"totalYearMinutes": 2880}
+    assert_isolated(validate(make_fixture(mutate_problem=mutate)),
+                    "employee EMP002: contract FT_8h asks for totalYearMinutes 2880")
 
 
 def test_a_blank_day_off_code(make_fixture):

@@ -197,9 +197,9 @@ class InputChecksMixin:
         for code, entry in codes.items():
             if not code.strip():
                 r.error("scheduleInput.dayOffCodes: a code is blank")
-            if entry.get("kind") not in ("preferable", "unavailable"):
-                r.error(f"dayOffCodes[{code!r}]: kind must be 'preferable' or 'unavailable', "
-                        f"found {entry.get('kind')!r}")
+            if entry.get("kind") not in ("preferable", "unavailable", "optional"):
+                r.error(f"dayOffCodes[{code!r}]: kind must be 'preferable', 'unavailable' or "
+                        f"'optional', found {entry.get('kind')!r}")
 
     def _check_priority_hierarchy(self, rows_by_grain: dict[str, list]) -> None:
         p, r = self.problem, self.report
@@ -286,7 +286,11 @@ class InputChecksMixin:
             week_start = "monday"
         origin = days[0]
         preferable, unavailable = core.day_off_sets(p.get("scheduleInput", {}))
+        # An optional day is not forced work, so for every count below it rests
+        # exactly as a preferable one does: the solver may leave it off.
+        preferable = preferable | core.optional_codes(p.get("scheduleInput", {}))
         limits = core.legislation_limits(p)
+        contracts = core.contracts_by_id(p)
 
         weeks: dict[int, list[date]] = defaultdict(list)
         for d in days:
@@ -321,7 +325,36 @@ class InputChecksMixin:
                         r.error(f"employee {eid}: forced to work {run} days in a row ending "
                                 f"{d}, above MaxConsecutiveWorkDays of {cap}")
                         break
+
+            self._check_year_minutes_reachable(emp, row, days, open_days, unavailable, contracts)
         r.stats["negative_n_wk"] = negative
+
+    def _check_year_minutes_reachable(self, emp: dict, row: dict, days: list[date], open_days: set[date],
+                            unavailable: set[str], contracts: dict) -> None:
+        """A contract's totalYearMinutes must fit in the days its holder may work.
+
+        Every day not blank and not unavailable can carry one contract-length day,
+        so their sum is the most the year can hold. Below the target, no solver
+        can honour the contract, whatever it decides on the open days.
+        """
+        targets: dict[str, int] = {}
+        reachable: dict[str, int] = defaultdict(int)
+        for d in days:
+            cid = core.active_contract(emp, d)
+            contract = contracts.get(cid) or {}
+            target = (contract.get("constraints") or {}).get("totalYearMinutes")
+            if target is None:
+                continue
+            targets[cid] = target
+            cell = row.get(d.isoformat(), "")
+            if d in open_days and cell and cell not in unavailable:
+                reachable[cid] += contract.get("workMinutesPerDay") or 0
+        for cid, target in sorted(targets.items()):
+            if reachable[cid] < target:
+                self.report.error(
+                    f"employee {emp.get('id')}: contract {cid} asks for totalYearMinutes "
+                    f"{target}, but the days this employee may work hold at most "
+                    f"{reachable[cid]}")
 
     # -- Tier 4: reachability ---------------------------------------------
 

@@ -122,8 +122,9 @@ Any cell that is not a number and not an operator window is a day-off code, and 
 
 - **`preferable`** [`D_wk`] — soft. The solver may schedule over it at a penalty. Typically `DO`.
 - **`unavailable`** [`U_wk`] — hard. No assignment permitted. Typically `HOL`, `NOT`, `Fér`.
+- **`optional`** — open. The solver decides whether the day is worked, at no cost either way. Typically `AVL`. *Proposed, not agreed:* [next_meeting.md](../next_meeting.md) item 33 ("solver chooses the days off").
 
-Both feed the per-week equality `n_wk = |D_k| − |U_wk| − |D_wk|`, so a misclassification moves that week's working-day target. Because each code is a key with exactly one `kind`, classifying one two ways is unrepresentable.
+`preferable` and `unavailable` feed the per-week equality `n_wk = |D_k| − |U_wk| − |D_wk|`, so a misclassification moves that week's working-day target. An `optional` day counts like a `preferable` one there: it is not forced work. What it is for is a problem with no weekly template at all, where the solver chooses every working day under year-long limits (`totalYearMinutes`, `MaxSpecialDays`) — the case `preferable` cannot carry, because working a `DO` is penalised. Because each code is a key with exactly one `kind`, classifying one two ways is unrepresentable.
 
 ## Competence levels
 
@@ -156,6 +157,11 @@ Rules above the contract level. v3.0 removed this block outright and treated a l
 ```
 
 `parameters` is a deliberately open bag. The validator acts on `MaxConsecutiveWorkDays` and `MaxConsecutiveWorkDaysInWeek` in both forms, and on `MinDistanceBetweenShiftsInMinutes` over a result's fixed days — only a fixed shift has clock times to measure rest between. It carries the rest unread — which is the stored-but-ignored trap v3.0 cleaned out, accepted here only because the block is genuinely populated and a consumer is coming.
+
+Proposed alongside the `optional` kind — [next_meeting.md](../next_meeting.md) item 33 ("solver chooses the days off"), both read by the validator:
+
+- **`MaxSpecialDays`** in `parameters` — the most Sundays and `calendar.holidays` one employee may work, checked over a result's fixed days.
+- **`contracts.definitions[].constraints.totalYearMinutes`** — SISQUAL's `TotalYearMinutes`, read as an **exact** target. The input check fails when the days an employee may work (not blank, not `unavailable`) cannot hold it; the result check fails when fixed work goes over it, or falls short with no day left open. It is the only contract-level field admitted: the rest of [FUTURE.md](FUTURE.md) §1 waits for a consumer.
 
 `constraints.soft[]` is present and empty in every bundle, so its element shape is unknown and the schema leaves it unconstrained.
 
@@ -198,6 +204,7 @@ Because a fixed day stands, it is held to the problem as a **hard rule**, and ev
 | *(blank)* — no assignments | a rest |
 | an `unavailable` day-off code | a rest |
 | a `preferable` day-off code | anything — working a soft day off is allowed |
+| an `optional` day-off code | anything — a shift of any length, or a rest |
 | `A` | a shift of the contract's `workMinutesPerDay` |
 | `8` | a shift of exactly those hours |
 | `EQUALS:a-b` | exactly that block. A split `EQUALS` (several ranges) cannot be fixed at all: a ScheduleCode is one interval |
@@ -207,7 +214,7 @@ Because a fixed day stands, it is held to the problem as a **hard rule**, and ev
 
 "Length" is `scheduleWeightMinutes`, from the sidecar when there is one and the menu otherwise. A code whose definition is out of reach can still be judged work-or-rest, and nothing more.
 
-The labour law in `constraints.hard[]` is checked over the fixed days too — `MaxConsecutiveWorkDays` (a run of fixed worked days), `MaxConsecutiveWorkDaysInWeek` (fixed worked days per week), and `MinDistanceBetweenShiftsInMinutes` (the rest between fixed shifts on consecutive days). **An open day breaks a run**, because the solver may yet rest it: only what is already decided can be judged, so a finding here is a real violation.
+The labour law in `constraints.hard[]` is checked over the fixed days too — `MaxConsecutiveWorkDays` (a run of fixed worked days), `MaxConsecutiveWorkDaysInWeek` (fixed worked days per week), `MinDistanceBetweenShiftsInMinutes` (the rest between fixed shifts on consecutive days), and `MaxSpecialDays` (fixed worked Sundays and holidays). **An open day breaks a run**, because the solver may yet rest it: only what is already decided can be judged, so a finding here is a real violation.
 
 ### The sidecar catalogue
 

@@ -3,7 +3,7 @@
 import csv
 
 import pytest
-from helpers import C2, assert_isolated, load, validate
+from helpers import C2, assert_isolated, assert_reports, load, validate
 
 SIDECAR = "result_schedules.csv"
 RESULT = "result_template.json"
@@ -286,3 +286,43 @@ def test_too_little_rest_between_fixed_shifts(make_fixture):
         fh.write("9004,22:00-06:00,480,1320,1800\n")
     assert_isolated(validate(path / RESULT),
                     "180 min of rest between 22:00-06:00 on 2026-03-02")
+
+
+def year_minutes(value):
+    def mutate(d):
+        d["contracts"]["definitions"][0]["constraints"] = {"totalYearMinutes": value}
+    return mutate
+
+
+def test_fixed_days_above_max_special_days(make_fixture):
+    """03-05 is the template holiday and 03-08 a Sunday: EMP001 and EMP003 work both."""
+    r = fixed(make_fixture, mutate_problem=cap("MaxSpecialDays", 1))
+    assert_reports(r, "Sundays and holidays, above MaxSpecialDays of 1", count=2)
+    assert len(r.errors) == 2 and not r.warnings, (r.errors, r.warnings)
+
+
+def test_year_minutes_met_exactly_are_clean(make_fixture):
+    """Both FT_8h employees work five 8-hour days in the template result."""
+    r = fixed(make_fixture, mutate_problem=year_minutes(2400))
+    assert r.ok and not r.warnings, (r.errors, r.warnings)
+
+
+@pytest.mark.parametrize("target", [1920, 2880])
+def test_year_minutes_missed_either_way(make_fixture, target):
+    r = fixed(make_fixture, mutate_problem=year_minutes(target))
+    assert_reports(r, f"whose totalYearMinutes is {target}", count=2)
+
+
+def test_an_open_day_may_still_make_up_the_year(make_fixture):
+    """EMP001 is short, but one of its days is open; EMP002 has none left."""
+    r = fixed(make_fixture, drop={("EMP001", "2026-03-07")}, mutate_problem=year_minutes(2880))
+    assert_isolated(r, "EMP002: works 2400 min under contract FT_8h")
+
+
+def test_an_optional_day_may_be_worked_or_rested(make_fixture):
+    def mutate(d):
+        d["scheduleInput"]["dayOffCodes"]["AVL"] = {"kind": "optional"}
+    rows = {("EMP001", "2026-03-06"): "AVL", ("EMP001", "2026-03-07"): "AVL"}
+    r = fixed(make_fixture, codes={("EMP001", "2026-03-06"): 9003},
+              mutate_problem=mutate, schedule_rows=rows)
+    assert r.ok and not r.warnings, (r.errors, r.warnings)
