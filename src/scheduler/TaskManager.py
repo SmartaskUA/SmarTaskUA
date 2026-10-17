@@ -53,6 +53,7 @@ from algorithms.Hybrid_Heuristic_Sisqual_Levels_Included import solve as hybrid_
 from algorithms.Hybrid_Heuristic_Sisqual_No_Levels_Included import solve as hybrid_heuristic_sisqual_3_solver
 from algorithms.Puzzle_Sisqual import solve as puzzle_sisqual_solver
 from algorithms.GA.ga_v4 import solve as ga_v4_solver
+from algorithms.GA.legacy_v4 import solve as ga_legacy_v4_solver
 from problem_v4 import ResultError, SolveDirectives, evaluate as evaluate_v4, fixed_days as fixed_days_v4, result_from_rows
 from problem_v4.runtime import load_for_solver
 
@@ -67,6 +68,7 @@ V4_ALGORITHMS = {
     "Hybrid_Heuristic_Sisqual_Levels_Included",
     "Hybrid_Heuristic_Sisqual_3",
     "Genetic Algorithm v4",
+    "Genetic Algorithm Legacy v4",
 }
 
 
@@ -121,6 +123,7 @@ class TaskManager:
             "Hybrid_Heuristic_Sisqual_3": hybrid_heuristic_sisqual_3_solver,
             "Puzzle_Sisqual": puzzle_sisqual_solver,
             "Genetic Algorithm v4": ga_v4_solver,
+            "Genetic Algorithm Legacy v4": ga_legacy_v4_solver,
         }
 
     def run_task(self, task_id, title, algorithm_name="CSP Scheduling", vacations=None, minimuns=None, employees=None, maxTime=10, year=None, shifts=2, rules=None, hours=13, solver="CBC", problem_path=None):
@@ -160,6 +163,7 @@ class TaskManager:
             "Hybrid_Heuristic_Sisqual_Levels_Included",
             "Hybrid_Heuristic_Sisqual_3",
             "Genetic Algorithm v4",
+            "Genetic Algorithm Legacy v4",
         }
         uses_rules = algorithm_name not in no_rules_algorithms
         rules_json = None

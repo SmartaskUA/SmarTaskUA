@@ -14,6 +14,18 @@ Five solvers read v4. They all solve the same model and are scored the same way:
 | `hybrid-levels` | `Hybrid_Heuristic_Sisqual_Levels_Included` | greedy, prefers higher-priority skills |
 | `ga` | `Genetic Algorithm v4` | genetic algorithm |
 
+A sixth, `ga-legacy` (`Genetic Algorithm Legacy v4`), solves one kind of package only: the old shift problems
+(`data/problems/SMARTASK_*`) rewritten in v4 as `data/problems/V4_SMARTASK_*` by
+`data/problems/convert_legacy_to_v4.py`. There the solver chooses every working day (exactly 223 a year, at most
+22 Sundays and holidays). The unchanged `ga.py`/`ga3.py` does this, and the five solvers above do not. `all` leaves
+it out, and it refuses any other package:
+
+```bash
+cd src
+python -m scheduler solve ../data/problems/V4_SMARTASK_SIMPLE_2025 -a ga-legacy
+python -m scheduler solve ../data/problems/V4_SMARTASK_SIMPLE_2025 -a ga-legacy --param num_generations=50   # quick run
+```
+
 ## From the web app
 
 1. **Problems** → *Upload v4 package (.zip)* with the wizard's ZIP (or pick a listed v4 problem).
