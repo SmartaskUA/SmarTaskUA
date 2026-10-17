@@ -113,6 +113,10 @@ def load_package(path, directives: Optional[SolveDirectives] = None) -> V4Instan
     if errors:
         raise ParseError(errors)
 
+    if any(rule.kind == "dayoff" and rule.day_off == "optional" for rule in cells.values()):
+        warnings.append("optional cells (the solver chooses the days): the v4 solvers read them as "
+                        "swappable days off and do not model totalYearMinutes or MaxSpecialDays; "
+                        "only ga-legacy solves these problems as stated")
     menu, synthesised = _read_menu(problem, base, days, employees, cells, alpha, slot, directives, errors)
     candidates, day_modes = _build_candidates(
         days, employees, cells, menu, slot, directives, synthesised, errors
@@ -354,7 +358,9 @@ def _read_menu(problem, base, days, employees, cells, alpha, slot, directives, e
                 wanted = core.required_minutes(rule, minutes)
                 if wanted:
                     lengths.add(wanted)
-            elif rule.kind == "dayoff" and rule.day_off == "preferable" and directives.allow_day_off_swap and minutes:
+            elif rule.kind == "dayoff" and minutes and (
+                    rule.day_off == "optional"
+                    or (rule.day_off == "preferable" and directives.allow_day_off_swap)):
                 lengths.add(minutes)
     lo, hi = (min(bounds), max(bounds)) if bounds else (0, core.MINUTES_PER_DAY)
     lo -= lo % slot
@@ -391,8 +397,10 @@ def _build_candidates(days, employees, cells, menu, slot, directives, synthesise
             if rule.kind == "empty" or (rule.kind == "dayoff" and rule.day_off == "unavailable"):
                 mode = "unavailable"
             elif rule.kind == "dayoff":
+                # An optional day is read as a day off that may always be worked:
+                # the nearest thing these solvers model (see load_package's warning).
                 mode = "preferred_day_off"
-                if directives.allow_day_off_swap and minutes:
+                if minutes and (rule.day_off == "optional" or directives.allow_day_off_swap):
                     auto = core.CellRule("auto")
                     legal = [s for s in shifts if core.cell_conflict(auto, s, minutes) is None]
             else:
