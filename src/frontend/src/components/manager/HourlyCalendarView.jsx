@@ -1,12 +1,20 @@
 import React, { useMemo } from "react";
-import { Box, Chip, Paper, Typography } from "@mui/material";
+import { Box, Chip, Paper, Tooltip, Typography } from "@mui/material";
+import { Lock } from "@mui/icons-material";
 import LegendBox from "./LegendBox";
 import {
+  IDLE_TAG,
   buildTeamPalette,
   classifyScheduleCell,
+  formatLocalDateKey,
   getTeamColor,
   resolveEmployeeDisplay,
+  skillTagLabel,
 } from "../../utils/scheduleCalendar";
+
+// A day a v4 partial result fixed: the solver kept it rather than chose it.
+const FIXED_OUTLINE = "2px dashed #334155";
+const FIXED_TIP = "Fixed by the partial result: the solver kept this day";
 
 const statusPalette = {
   off: { bg: "#f8fafc", border: "#cbd5e1", text: "#475569" },
@@ -16,11 +24,19 @@ const statusPalette = {
   text: { bg: "#f1f5f9", border: "#cbd5e1", text: "#0f172a" },
 };
 
+// A v4 segment covering no demanded skill: on shift, but neutral.
+const IDLE_PALETTE = { bg: "#f8fafc", border: "#e2e8f0", text: "#94a3b8" };
+
 const dayCellWidth = 170;
 const employeeColumnWidth = 250;
 
-const HourlyCalendarView = ({ data = [], monthColumns = [], employees = [] }) => {
+const HourlyCalendarView = ({ data = [], monthColumns = [], employees = [], fixedDays = [] }) => {
   const rows = data.slice(1);
+  // [[employeeId, "YYYY-MM-DD"], ...] as the scheduler stores them (metadata.fixedDays).
+  const fixedSet = useMemo(
+    () => new Set(fixedDays.map(([employeeId, day]) => `${employeeId}|${day}`)),
+    [fixedDays]
+  );
 
   const teamPalette = useMemo(() => {
     const teams = [];
@@ -29,7 +45,7 @@ const HourlyCalendarView = ({ data = [], monthColumns = [], employees = [] }) =>
         const cell = classifyScheduleCell(row?.[column.index + 1]);
         if (cell.kind === "hourly") {
           cell.segments.forEach((segment) => {
-            if (segment.team) teams.push(segment.team);
+            if (segment.team && segment.team !== IDLE_TAG) teams.push(segment.team);
           });
         }
       });
@@ -38,7 +54,7 @@ const HourlyCalendarView = ({ data = [], monthColumns = [], employees = [] }) =>
   }, [rows, monthColumns]);
 
   const teamLegends = Object.entries(teamPalette).map(([team, palette]) => ({
-    label: team,
+    label: skillTagLabel(team),
     color: palette.bg,
   }));
 
@@ -46,14 +62,17 @@ const HourlyCalendarView = ({ data = [], monthColumns = [], employees = [] }) =>
     () =>
       rows.map((row, rowIndex) => {
         const employee = resolveEmployeeDisplay(row?.[0], rowIndex, employees);
+        const employeeId = String(row?.[0] ?? "").trim();
         const dayCards = monthColumns.map((column) => {
           const cell = classifyScheduleCell(row?.[column.index + 1]);
-          return { column, cell };
+          const fixed = fixedSet.has(`${employeeId}|${formatLocalDateKey(column.date)}`);
+          return { column, cell, fixed };
         });
         const workDays = dayCards.filter(({ cell }) => cell.kind === "hourly").length;
         const offDays = dayCards.filter(({ cell }) => cell.kind === "off").length;
         const vacationDays = dayCards.filter(({ cell }) => cell.kind === "vacation").length;
         const unavailableDays = dayCards.filter(({ cell }) => cell.kind === "unavailable").length;
+        const fixedCount = dayCards.filter(({ fixed }) => fixed).length;
         return {
           employee,
           dayCards,
@@ -61,10 +80,12 @@ const HourlyCalendarView = ({ data = [], monthColumns = [], employees = [] }) =>
           offDays,
           vacationDays,
           unavailableDays,
+          fixedCount,
         };
       }),
-    [rows, monthColumns, employees]
+    [rows, monthColumns, employees, fixedSet]
   );
+  const anyFixed = scheduleRows.some(({ fixedCount }) => fixedCount > 0);
 
   const renderStatusCell = (cell) => {
     const palette = statusPalette[cell.kind] || statusPalette.text;
@@ -165,7 +186,7 @@ const HourlyCalendarView = ({ data = [], monthColumns = [], employees = [] }) =>
               ))}
             </Box>
 
-            {scheduleRows.map(({ employee, dayCards, workDays, offDays, vacationDays, unavailableDays }, rowIndex) => (
+            {scheduleRows.map(({ employee, dayCards, workDays, offDays, vacationDays, unavailableDays, fixedCount }, rowIndex) => (
               <Box
                 key={`${employee.id}-${rowIndex}`}
                 display="flex"
@@ -229,50 +250,71 @@ const HourlyCalendarView = ({ data = [], monthColumns = [], employees = [] }) =>
                     {unavailableDays > 0 && (
                       <Chip label={`${unavailableDays} unavailable`} size="small" color="warning" variant="outlined" />
                     )}
+                    {fixedCount > 0 && (
+                      <Chip icon={<Lock />} label={`${fixedCount} fixed`} size="small" variant="outlined" />
+                    )}
                   </Box>
                 </Box>
 
-                {dayCards.map(({ column, cell }) => (
-                  <Box
-                    key={`${employee.id}-${column.key}`}
-                    sx={{
-                      width: dayCellWidth,
-                      flex: `0 0 ${dayCellWidth}px`,
-                      p: 1,
-                      backgroundColor: column.weekday === "Sun" ? "#eff6ff" : "transparent",
-                      borderLeft: "1px solid #eef2f7",
-                    }}
-                  >
-                    {cell.kind === "hourly" ? (
-                      <Box display="flex" flexDirection="column" gap={0.6}>
-                        {cell.segments.map((segment, index) => {
-                          const palette = getTeamColor(segment.team, teamPalette);
-                          return (
-                            <Box
-                              key={`${column.key}-${index}`}
-                              sx={{
-                                px: 0.9,
-                                py: 0.75,
-                                borderRadius: 2,
-                                backgroundColor: palette.bg,
-                                border: `1px solid ${palette.border}`,
-                              }}
-                            >
-                              <Typography fontSize={11} fontWeight={700} color="#0f172a">
-                                {segment.time}
-                              </Typography>
-                              <Typography fontSize={10} color={palette.text} fontWeight={700}>
-                                {segment.team}
-                              </Typography>
-                            </Box>
-                          );
-                        })}
-                      </Box>
-                    ) : (
-                      renderStatusCell(cell)
-                    )}
-                  </Box>
-                ))}
+                {dayCards.map(({ column, cell, fixed }) => {
+                  const body = (
+                    <Box
+                      sx={fixed
+                        ? { position: "relative", outline: FIXED_OUTLINE, outlineOffset: 2, borderRadius: 2 }
+                        : undefined}
+                    >
+                      {fixed && (
+                        <Lock
+                          aria-label="fixed"
+                          sx={{ position: "absolute", top: -8, right: -8, zIndex: 1, fontSize: 14, color: "#334155", backgroundColor: "#fff", borderRadius: "50%" }}
+                        />
+                      )}
+                      {cell.kind === "hourly" ? (
+                        <Box display="flex" flexDirection="column" gap={0.6}>
+                          {cell.segments.map((segment, index) => {
+                            const palette =
+                              segment.team === IDLE_TAG ? IDLE_PALETTE : getTeamColor(segment.team, teamPalette);
+                            return (
+                              <Box
+                                key={`${column.key}-${index}`}
+                                sx={{
+                                  px: 0.9,
+                                  py: 0.75,
+                                  borderRadius: 2,
+                                  backgroundColor: palette.bg,
+                                  border: `1px solid ${palette.border}`,
+                                }}
+                              >
+                                <Typography fontSize={11} fontWeight={700} color="#0f172a">
+                                  {segment.time}
+                                </Typography>
+                                <Typography fontSize={10} color={palette.text} fontWeight={700}>
+                                  {segment.label || segment.team}
+                                </Typography>
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      ) : (
+                        renderStatusCell(cell)
+                      )}
+                    </Box>
+                  );
+                  return (
+                    <Box
+                      key={`${employee.id}-${column.key}`}
+                      sx={{
+                        width: dayCellWidth,
+                        flex: `0 0 ${dayCellWidth}px`,
+                        p: 1,
+                        backgroundColor: column.weekday === "Sun" ? "#eff6ff" : "transparent",
+                        borderLeft: "1px solid #eef2f7",
+                      }}
+                    >
+                      {fixed ? <Tooltip title={FIXED_TIP}>{body}</Tooltip> : body}
+                    </Box>
+                  );
+                })}
               </Box>
             ))}
           </Box>
@@ -280,6 +322,14 @@ const HourlyCalendarView = ({ data = [], monthColumns = [], employees = [] }) =>
       </Paper>
 
       <LegendBox scheduleType="Horas" teamLegends={teamLegends} />
+      {anyFixed && (
+        <Box display="flex" alignItems="center" gap={1} mt={1}>
+          <Box sx={{ width: 28, height: 16, outline: FIXED_OUTLINE, outlineOffset: -2, borderRadius: 1 }} />
+          <Typography fontSize={12} color="#334155">
+            Fixed by the partial result (result.json): kept as given, not chosen by the solver.
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 };

@@ -1,0 +1,149 @@
+{
+  "schemaVersion": "2.2",
+  "problemType": "employee_scheduling",
+
+  "metadata": {
+    "problemId": "SMARTASK_SIMPLE_2025",
+    "createdAt": "2026-01-24T14:56:23Z",
+    "description": "Simple team-based scheduling problem derived from the initial Sisqual problem",
+    "source": "Created by reading the report of Final Informatics Project"
+  },
+
+  "features": {
+    "useShiftBasedScheduling": true,
+    "useAdvancedConstraints": false,
+    "usePriorityHierarchy": false
+  },
+
+  "temporalScope": {
+    "year": 2025,
+    "numDays": 365,
+    "targetPeriod": {
+      "start": "2025-01-01",
+      "end": "2025-12-31",
+      "includeBufferWeeks": false
+    }
+  },
+
+  "contracts": {
+    "definitions": [
+      {
+        "id": "fullTime_8h",
+        "name": "Full-time 8h",
+        "workHoursPerDay": 8
+      }
+    ]
+  },
+
+  "employees": {
+    "model": "team",
+    "simple": [
+      {"id": "Employee 1", "name": "Employee 1", "teams": ["A"], "contractType": "fullTime_8h"},
+      {"id": "Employee 2", "name": "Employee 2", "teams": ["A"], "contractType": "fullTime_8h"},
+      {"id": "Employee 3", "name": "Employee 3", "teams": ["A"], "contractType": "fullTime_8h"},
+      {"id": "Employee 4", "name": "Employee 4", "teams": ["A"], "contractType": "fullTime_8h"},
+      {"id": "Employee 5", "name": "Employee 5", "teams": ["A"], "contractType": "fullTime_8h"},
+      {"id": "Employee 6", "name": "Employee 6", "teams": ["A"], "contractType": "fullTime_8h"},
+      {"id": "Employee 7", "name": "Employee 7", "teams": ["A"], "contractType": "fullTime_8h"},
+      {"id": "Employee 8", "name": "Employee 8", "teams": ["A", "B"], "contractType": "fullTime_8h"},
+      {"id": "Employee 9", "name": "Employee 9", "teams": ["A", "B"], "contractType": "fullTime_8h"},
+      {"id": "Employee 10", "name": "Employee 10", "teams": ["A", "B"], "contractType": "fullTime_8h"},
+      {"id": "Employee 11", "name": "Employee 11", "teams": ["B"], "contractType": "fullTime_8h"},
+      {"id": "Employee 12", "name": "Employee 12", "teams": ["B"], "contractType": "fullTime_8h"}
+    ]
+  },
+
+  "demand": {
+    "shiftModel": "fixed",
+    "dataFile": "demand.csv",
+    "organizationalUnits": {
+      "teams": ["A", "B"]
+    },
+    "shifts": [
+      {
+        "code": "M",
+        "name": "Morning",
+        "order": 1,
+        "timeRange": {
+          "start": "08:00",
+          "end": "16:00"
+        }
+      },
+      {
+        "code": "T",
+        "name": "Afternoon",
+        "order": 2,
+        "timeRange": {
+          "start": "14:00",
+          "end": "22:00"
+        }
+      }
+    ]
+  },
+
+  "constraints": {
+    "hard": [
+      {
+        "id": "max-consecutive-days",
+        "type": "max_consecutive_days",
+        "params": {
+          "window": 6,
+          "max_worked": 5
+        },
+        "enabled": true
+      },
+      {
+        "id": "total-workdays",
+        "type": "total_workdays",
+        "params": {
+          "min": 223,
+          "max": 223
+        },
+        "enabled": true
+      },
+      {
+        "id": "max-special-days",
+        "type": "max_special_days",
+        "params": {
+          "cap": 22
+        },
+        "enabled": true
+      },
+      {
+        "id": "no-backward-shift-transitions",
+        "type": "no_earlier_shift_next_day",
+        "params": {},
+        "enabled": true
+      },
+      {
+        "id": "vacation-days",
+        "type": "vacation_block",
+        "params": {},
+        "enabled": true
+      }
+    ],
+    "soft": [
+      {
+        "id": "min-coverage",
+        "type": "min_coverage",
+        "params": {
+          "penalty_per_missing": 100
+        },
+        "weight": 100,
+        "enabled": true
+      },
+      {
+        "id": "ideal-coverage",
+        "type": "ideal_coverage",
+        "params": {
+          "penalty_per_missing": 1
+        },
+        "weight": 1,
+        "enabled": true
+      }
+    ]
+  },
+  "vacations": {
+    "dataFile": "vacations.csv"
+  }
+}

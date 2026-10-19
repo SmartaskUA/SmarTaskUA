@@ -1,0 +1,9 @@
+# v3.0 validator + transformer.
+# Only the JSON Schema layer needs third-party code; the cross-reference and
+# conformance layers run on the standard library alone, and the validator degrades
+# to those if this is missing. Each schema is standalone, so no $ref registry
+# (and no `referencing`) is involved.
+jsonschema>=4.18.0
+
+# --- tests only (not needed to run the validator or transformer) ---
+pytest>=7

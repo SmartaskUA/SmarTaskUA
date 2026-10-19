@@ -12,8 +12,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import BaseUrl from "../components/BaseUrl";
 import { ArrowUpward, ArrowDownward } from "@mui/icons-material";
 
-const teamOptions = ["A", "B"];
-
 const Employer = () => {
   const [employees, setEmployees] = useState([]);
   const [teamsDict, setTeamsDict] = useState({});
@@ -77,29 +75,6 @@ const Employer = () => {
     setOpenEditDialog(true);
   };
 
-  const handleEditEmployee = () => {
-    axios.put(`${BaseUrl}/api/v1/employees/${selectedEmployee.id}`, {
-      name: selectedEmployee.name,
-      teamIds: selectedEmployee.teamIds,
-    })
-      .then(() => {
-        setOpenEditDialog(false);
-        setSelectedEmployee(null);
-        fetchAll();
-      })
-      .catch((error) => console.error("Erro ao editar employee:", error));
-  };
-
-  const handleAddEmployee = () => {
-    axios.post(`${BaseUrl}/api/v1/employees/`, newEmployee)
-      .then(() => {
-        setOpenAddDialog(false);
-        setNewEmployee({ id: "", name: "", teamIds: [] });
-        fetchAll();
-      })
-      .catch((error) => console.error("Erro ao adicionar employee:", error));
-  };
-
   const handleOpenConfirmDialog = (employee) => {
     setEmployeeToDelete(employee);
     setOpenConfirmDialog(true);
@@ -120,13 +95,6 @@ const Employer = () => {
 
   const toggleRemovalMode = () => {
     setRemovalMode(!removalMode);
-  };
-
-  const getTeamNames = (teamIds) => {
-    if (!Array.isArray(teamIds) || teamIds.length === 0) return "N/A";
-    return teamIds
-      .map(id => (teamsDict[id] || id).replace(/^Equipa\s+/i, ''))
-      .join(", ");
   };
 
   const [openResetDialog, setOpenResetDialog] = useState(false);
@@ -425,7 +393,7 @@ const Employer = () => {
                   const employeeId = selectedEmployee.id;
                   const newPrefs = selectedEmployee.teamIds;
 
-                  for (const [teamId, name] of Object.entries(teamsDict)) {
+                  for (const name of Object.values(teamsDict)) {
                     await axios.delete(`${BaseUrl}/api/v1/teams/${name}/remove-employee/${employeeId}`);
                   }
 

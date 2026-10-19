@@ -29,10 +29,19 @@ export default [
       ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
       'react/jsx-no-target-blank': 'off',
+      // Plain JavaScript: the components carry no PropTypes.
+      'react/prop-types': 'off',
+      // The automatic JSX runtime needs no React import, but every file keeps one.
+      'no-unused-vars': ['error', { varsIgnorePattern: '^React$' }],
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },
       ],
     },
+  },
+  {
+    // Build tooling config, read by Node as CommonJS.
+    files: ['tailwind.config.js'],
+    languageOptions: { sourceType: 'commonjs', globals: globals.node },
   },
 ]

@@ -71,7 +71,7 @@ const ColumnMapper = ({ csvColumns, fieldMappings, onMappingChange, requiredFiel
         <Typography variant="caption" color="text.secondary">
           Required fields:{' '}
         </Typography>
-        {requiredFields.map((field, idx) => (
+        {requiredFields.map((field) => (
           <Chip
             key={field}
             label={formatFieldName(field)}

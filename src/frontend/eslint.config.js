@@ -30,4 +30,9 @@ export default [
       ],
     },
   },
+  {
+    // Build tooling config, read by Node as CommonJS.
+    files: ['tailwind.config.js'],
+    languageOptions: { sourceType: 'commonjs', globals: globals.node },
+  },
 ]

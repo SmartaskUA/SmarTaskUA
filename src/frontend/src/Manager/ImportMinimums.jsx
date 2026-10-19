@@ -4,6 +4,7 @@ import baseurl from "../components/BaseUrl";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import MinimumsTemplate from "../components/manager/MinimumsTemplate";
 import NotificationSnackbar from "../components/manager/NotificationSnackbar";
+import BreakableName from "../components/manager/BreakableName";
 import EmptySVG from "../assets/images/Empty-pana.svg";
 import {
   Box,
@@ -138,12 +139,12 @@ const ImportMinimums = () => {
           Import Daily Minimums
         </Typography>
 
-        <Paper style={{ padding: 20, marginBottom: 20, width: "60%", marginTop: 30 }}>
+        <Paper style={{ padding: 20, marginBottom: 20, width: "90%", marginTop: 30 }}>
           <Typography variant="h6" gutterBottom>
-            Reference Template Name
+            Create New Template
           </Typography>
 
-          <Box display="flex" alignItems="center" gap={2} mt={2} flexWrap="wrap">
+          <Box display="flex" flexWrap="wrap" alignItems="center" gap={2}>
             <TextField
               label="Template Name"
               value={templateName}
@@ -151,9 +152,9 @@ const ImportMinimums = () => {
               error={nameError && !templateName.trim()}
               helperText={nameError && !templateName.trim() ? "Please enter a template name" : ""}
               size="small"
-              sx={{ flex: 1, minWidth: "220px", maxWidth: "250px" }}
+              sx={{ width: "250px" }}
             />
-            <label htmlFor="csv-upload">
+            <label htmlFor="csv-upload" style={{ height: 40 }}>
               <Input
                 id="csv-upload"
                 type="file"
@@ -161,7 +162,13 @@ const ImportMinimums = () => {
                 onChange={handleFileSelection}
                 style={{ display: "none" }}
               />
-              <Button variant="contained" component="span" color="success">
+              <Button
+                variant="contained"
+                component="span"
+                color="success"
+                size="small"
+                sx={{ height: 40, minWidth: 100 }}
+              >
                 Choose CSV
               </Button>
             </label>
@@ -169,9 +176,14 @@ const ImportMinimums = () => {
               variant="outlined"
               onClick={handleCsvUpload}
               disabled={!csvFile}
+              size="small"
+              sx={{ height: 40, minWidth: 100 }}
             >
               Upload CSV
             </Button>
+
+            <Box flexGrow={1} />
+
             <Button
               variant="contained"
               color="error"
@@ -179,7 +191,8 @@ const ImportMinimums = () => {
                 setTemplateToDelete(null); 
                 setConfirmDialogOpen(true);
               }}
-              sx={{ ml: 21 }}
+              size="small"
+              sx={{ height: 40, minWidth: 140 }}
             >
               Delete All Templates
             </Button>
@@ -233,8 +246,14 @@ const ImportMinimums = () => {
                     <Close fontSize="10px" />
                   </IconButton>
 
-                  <Typography variant="h6" gutterBottom>
-                    {template.name}
+                  {/* Long names wrap at underscores; padding keeps them clear of the delete button. */}
+                  <Typography
+                    variant="h6"
+                    gutterBottom
+                    title={template.name}
+                    sx={{ fontSize: "1.05rem", lineHeight: 1.3, overflowWrap: "break-word", pr: 3 }}
+                  >
+                    <BreakableName name={template.name} />
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
                     {template.minimuns?.length || 0} rows of data

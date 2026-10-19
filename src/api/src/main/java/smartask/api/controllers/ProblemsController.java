@@ -1,10 +1,13 @@
 package smartask.api.controllers;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import smartask.api.models.ProblemDefinition;
 import smartask.api.models.requests.ProblemSolveRequest;
 import smartask.api.models.requests.ScheduleRequest;
+import smartask.api.services.ProblemPackageImporter;
 import smartask.api.services.ProblemService;
 import smartask.api.services.SchedulesService;
 
@@ -18,10 +21,37 @@ public class ProblemsController {
 
     private final ProblemService problemService;
     private final SchedulesService schedulesService;
+    private final ProblemPackageImporter packageImporter;
 
-    public ProblemsController(ProblemService problemService, SchedulesService schedulesService) {
+    public ProblemsController(ProblemService problemService, SchedulesService schedulesService,
+                              ProblemPackageImporter packageImporter) {
         this.problemService = problemService;
         this.schedulesService = schedulesService;
+        this.packageImporter = packageImporter;
+    }
+
+    /** Upload a schema v4 package (the ZIP the JSON wizard downloads) as a new problem. */
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, Object>> uploadProblem(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "replace", defaultValue = "false") boolean replace) {
+        try {
+            return ResponseEntity.status(201).body(packageImporter.importZip(file, replace));
+        } catch (ProblemPackageImporter.PackageRejected e) {
+            return ResponseEntity.status(e.getStatus())
+                    .body(Map.of("message", e.getMessage(), "problems", e.getProblems()));
+        }
+    }
+
+    /** Delete a problem uploaded through the UI. Built-in problems (tracked in git) are refused with 403. */
+    @DeleteMapping("/{problemId}")
+    public ResponseEntity<Map<String, Object>> deleteProblem(@PathVariable String problemId) {
+        try {
+            packageImporter.deleteUploaded(problemId);
+            return ResponseEntity.noContent().build();
+        } catch (ProblemPackageImporter.PackageRejected e) {
+            return ResponseEntity.status(e.getStatus()).body(Map.of("message", e.getMessage()));
+        }
     }
 
     @GetMapping

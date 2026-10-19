@@ -1,69 +1,30 @@
 # Frontend simple mode (`VITE_SIMPLE_MODE`)
 
-## What it is
+A Vite environment variable that trims the **Generate Schedule** page
+(`src/frontend/src/Manager/CreateCalendar.jsx`) for production users.
 
-`VITE_SIMPLE_MODE` is a Vite build/dev-server environment variable that
-simplifies the "Generate Schedule" page (`src/frontend/src/Manager/CreateCalendar.jsx`)
-for production use. It is read once at startup:
+## What `VITE_SIMPLE_MODE=true` changes
 
-```js
-const SIMPLE_MODE = import.meta.env.VITE_SIMPLE_MODE === "true";
-```
+- **Manual mode is hidden.** The page always works in Problem mode, so templates, shift/hour counts and the
+  legacy algorithm lists are unreachable.
+- **Only the two Mathematical Formulation solvers are offered:** `ILP_Sisqual_Hours_MathematicalDefinition7`
+  and `CSP_Sisqual_Hours_MathematicalDefinition7`, for schema v4 problems.
+- **Legacy v2.x problems (shift or hourly) get no algorithm** in simple mode.
 
-## What changes when it's `"true"`
+When unset or `false` (the default), both modes are available. A v4 problem then offers every v4 solver the
+API lists for it; a v2.x problem offers its legacy solvers.
 
-- **Manual scheduling mode is hidden entirely.** The Mode selector
-  (Problem / Manual) doesn't render, and the page always behaves as if
-  Problem mode were selected — every algorithm, template, and field that
-  only applies to Manual mode (vacation templates, minimum templates,
-  shift/hour counts, group selection, the legacy ILP/CSP/COP/Heuristic
-  algorithm lists) becomes unreachable.
-- **The Problem-mode algorithm picker is restricted to the two Mathematical
-  Formulation (MD7) solvers**: `ILP_Sisqual_Hours_MathematicalDefinition7`
-  and `CSP_Sisqual_Hours_MathematicalDefinition7`. The older
-  `ILP_Sisqual_Hours` / `CSP_Sisqual_Hours` (non-MD7) options are hidden.
-- **Shift-type problems are not solvable in this mode.** There is no
-  shift-based Mathematical Formulation solver — `ILP General` / `CSP General`
-  only exist as non-MD7 algorithms — so the shift-algorithm dropdown returns
-  empty. Simple mode is scoped to hour-type Sisqual problems only.
+## Setting it
 
-When unset or `"false"` (the default), the page behaves exactly as before:
-both Manual and Problem modes are available, and Problem mode's hour
-algorithm picker offers all four Sisqual algorithms.
+In `src/frontend/`, copy `.env.example` to `.env` (or `.env.production`) and set `VITE_SIMPLE_MODE=true`.
+Vite reads it only at start-up or build time, so restart `npm run dev` or rebuild after changing it.
+Leave it unset for local development.
 
-## Why
+## Where it lives
 
-Production users should only be choosing between the two well-tested
-Mathematical Formulation (MD7) solvers, driven entirely by `problem.json`
-bundles — not the older experimental algorithms or the legacy
-manually-configured scheduling flow, which stay available for development
-and comparison work.
+In `CreateCalendar.jsx`:
+- the `SIMPLE_MODE` constant;
+- the filter in `problemAlgorithmsFor` and the empty legacy lists;
+- the Mode `<Select>`, wrapped in `{!SIMPLE_MODE && …}`.
 
-## How to set it
-
-Copy `src/frontend/.env.example` to `.env` (or `.env.production`) inside
-`src/frontend/`, and set:
-
-```
-VITE_SIMPLE_MODE=true
-```
-
-Vite only reads this at server start (`npm run dev`) or at build time
-(`npm run build`) — restart the dev server / rebuild after changing it.
-
-Local development should leave this unset (or `false`) to keep the full
-algorithm list and Manual mode available.
-
-## Where the logic lives
-
-All of the branching is in `src/frontend/src/Manager/CreateCalendar.jsx`:
-- `SIMPLE_MODE` constant, defined at module scope (top of the file).
-- `initialMode` forces `"problem"` when `SIMPLE_MODE` is true.
-- `problemShiftAlgorithms` / `problemHourAlgorithms` are filtered when
-  `SIMPLE_MODE` is true.
-- The Mode `<Select>` is wrapped in `{!SIMPLE_MODE && (...)}`.
-
-No backend changes are involved — this only hides options in the UI. All
-algorithms remain fully implemented and reachable via the API directly
-(e.g. `POST /schedules/generate` with any algorithm name), so this is a UI
-convenience, not an access-control mechanism.
+It only hides options in the UI. Every algorithm stays reachable through the API, so it is not access control.

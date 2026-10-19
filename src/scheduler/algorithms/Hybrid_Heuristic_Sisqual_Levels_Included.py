@@ -1,11 +1,16 @@
+"""Hybrid greedy heuristic for a schema v4 package, with competence levels.
+
+The greedy pass, the rest check, fixed days and output are shared with the
+no-levels variant in `algorithms.hybrid_sisqual_v4`. What this variant adds is
+level-awareness from MathematicalDefinition7's ObjectiveFunction2: among skills
+with the same remaining need, the one with the lower p_sl (higher-priority tier
+for the worker's level) wins, and among blocks with the same coverage the one
+paying less p_sl does. Restarts are ranked by (unassigned, shortage, p_sl cost).
+"""
+
 from __future__ import annotations
 
-import copy
-import csv
 import random
-import time
-from collections import defaultdict
-from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 import pulp
@@ -332,280 +337,26 @@ class Hybrid_Heuristic_Sisqual:
         return True
 
 
-    def _apply_block(
-        self,
-        employee: Dict,
-        day: str,
-        block: Assignment,
-        skill_by_slot: Optional[Dict[int, Optional[str]]] = None,
-    ) -> None:
-        
-        employee_id = employee["id"]
-        for slot_idx in block.slot_indices:
-            if skill_by_slot is not None:
-                skill = skill_by_slot.get(slot_idx)
-            else:
-                skill, _ = self._best_skill_for_slot(employee, day, slot_idx)
+from algorithms.hybrid_sisqual_v4 import HybridSisqualV4, write_results_log
+from problem_v4 import Employee, SolveDirectives, evaluate
+from problem_v4.runtime import finish, load_for_solver
 
-            if skill is None:
-                continue
-
-            self.slot_skill[(employee_id, day, slot_idx)] = skill
-            key = (day, slot_idx, skill)
-
-            if key in self.need:
-                self.need[key] = max(0, self.need[key] - 1)
-
-        self.employee_day_block[(employee_id, day)] = block
+ALGORITHM = "Hybrid_Heuristic_Sisqual_Levels_Included"
 
 
-    def assign_employee_day(self, employee: Dict, day: str) -> bool:
-        
-        employee_id = employee["id"]
-        candidates = self.assignments.get((employee_id, day), [])
-    
-        if not candidates:
-            self.employee_day_block[(employee_id, day)] = None
-            self.unassigned.append((employee_id, day))   # <-- adicionar esta linha
-            return False
-    
-        scored = []
-        for block in candidates:
-            coverage, priority_cost, skill_by_slot = self._score_block(employee, day, block)
-            scored.append((coverage, priority_cost, random.random(), block, skill_by_slot))
-    
-        scored.sort(key=lambda item: (-item[0], item[1], item[2]))
-    
-        for _, _, _, block, skill_by_slot in scored:
-            if self._rest_ok(employee_id, day, block):
-                self._apply_block(employee, day, block, skill_by_slot)
-                return True
-    
-        self.employee_day_block[(employee_id, day)] = None
-        self.unassigned.append((employee_id, day))
-        return False
+class Hybrid_Heuristic_Sisqual(HybridSisqualV4):
+    """Greedy block assignment that breaks ties by competence-level priority."""
 
+    def choose_skill(self, employee: Employee, day: str, slot_idx: int, skills: List[str]) -> str:
+        # most remaining need, then the lowest p_sl for this worker's level, then the scarcest skill
+        return min(skills, key=lambda s: (
+            -self.remaining(day, slot_idx, s),
+            self.inst.priority_weight(s, self.inst.level(employee.id, day, s)),
+            self.skill_employee_count.get(s, 1),
+        ))
 
-    def _day_bottleneck_score(self, day: str) -> float:
-        
-        demand_by_skill: Dict[str, int] = defaultdict(int)
-        for (d, _slot_idx, skill), minimum in self.alpha.items():
-            if d == day:
-                demand_by_skill[skill] += minimum
-
-        score = 0.0
-        for skill, total_need in demand_by_skill.items():
-            available = sum(
-                1
-                for employee in self.employees
-                if skill in employee["assignable_skills"]
-                and self.day_modes.get((employee["id"], day))
-                not in {"closed", "unavailable", "preferred_day_off"}
-            )
-            score += total_need / max(available, 1)
-        return score
-
-
-    def _compute_day_order(self, day_order_mode: int = 1) -> List[str]:
-        
-        if day_order_mode == 1:
-            ordered = list(self.days)
-            random.shuffle(ordered)
-            return ordered
-
-        if day_order_mode == 2:
-            demand_by_day: Dict[str, int] = defaultdict(int)
-            for (day, _slot_idx, _skill), minimum in self.alpha.items():
-                demand_by_day[day] += minimum
-
-            tiebreak = {day: random.random() for day in self.days}
-            return sorted(
-                self.days,
-                key=lambda d: (-demand_by_day.get(d, 0), tiebreak[d]),
-            )
-
-        if day_order_mode == 3:
-            bottleneck_by_day = {day: self._day_bottleneck_score(day) for day in self.days}
-            tiebreak = {day: random.random() for day in self.days}
-            return sorted(
-                self.days,
-                key=lambda d: (-bottleneck_by_day[d], tiebreak[d]),
-            )
-
-        raise ValueError(f"day_order_mode invalido: {day_order_mode!r} (usa 1, 2 ou 3)")
-
-
-    def total_priority_cost(self) -> float:
-        
-        total = 0.0
-        for (employee_id, _day, _slot_idx), skill in self.slot_skill.items():
-            employee = self.employees_by_id.get(employee_id)
-            if employee is None:
-                continue
-            level = employee["skill_levels"].get(skill)
-            if level is None:
-                continue
-            total += priority_weight_for_skill_level(self.coverage_priority_tiers, skill, level)
-        return total
-
-
-    def Minimuns(self, day_order_mode):
-
-        random_days = self._compute_day_order(day_order_mode)
-
-        Daily_Needs = {}
-        for skill in self.skills:
-            Daily_Needs[skill] = {}
-
-        ordered_employee_ids = self.Order()
-        employees_by_id = self.employees_by_id
-
-        self.unassigned = []
-
-        for d in random_days:
-
-            skill_employee_count = {
-                skill: sum(1 for employee in self.employees if skill in employee["assignable_skills"])
-                for skill in self.skills
-            }
-            groups = {}
-            key_order = []
-            
-            for emp_id in ordered_employee_ids:
-                emp = employees_by_id[emp_id]
-                key = (
-                    len(emp["assignable_skills"]),
-                    tuple(sorted(skill_employee_count.get(skill, 0) for skill in emp["assignable_skills"]))
-                )
-                if key not in groups:
-                    groups[key] = []
-                    key_order.append(key)
-                groups[key].append(emp_id)
-
-            day_order = []
-            for key in key_order:
-                bucket = groups[key]
-                random.shuffle(bucket)
-                day_order.extend(bucket)
-
-            for emp_id in day_order:
-                employee = employees_by_id[emp_id]
-                mode = self.day_modes.get((emp_id, d))
-                if mode in {"closed", "unavailable", "preferred_day_off"}:
-                    self.employee_day_block[(emp_id, d)] = None
-                    continue
-
-                ok = self.assign_employee_day(employee, d)
-                if ok:
-                    block = self.employee_day_block[(emp_id, d)]
-                    # print(f" - {emp_id}: {block.label}")
-                else:
-                    # print(f" - {emp_id}: SEM atribuicao viavel hoje")
-                    pass
-
-        self._print_summary()
-        return
-
-    def _print_summary(self) -> None:
-
-        total_shortage = sum(v for v in self.need.values() if v > 0)
-        print(f"\n{'='*80}")
-        print(f"[Heuristica] Resumo")
-        print(f"{'='*80}")
-        print(f"Falhas de atribuicao (empregado sem bloco viavel): {len(self.unassigned)}")
-        for emp_id, day in self.unassigned:
-            print(f" - {emp_id} em {day}")
-        print(f"Minimos ainda em falta (slots*skill somados): {total_shortage}")
-        print(f"Custo total de prioridade (objetivo 2, p_sl somado): {self.total_priority_cost()}")
-
-
-    def build_output_rows(self) -> List[List[str]]:
-        
-        rows = [["employee_id", *self.days]]
-    
-        # Lookup O(1) em vez de percorrer a lista `self.unassigned` por célula.
-        unassigned_set = set(self.unassigned)
-    
-        for employee in self.employees:
-            employee_id = employee["id"]
-            row = [employee_id]
-    
-            for day in self.days:
-                marker = self.schedule_markers[employee_id][day]
-                mode = self.day_modes[(employee_id, day)]
-    
-                if mode == "closed":
-                    row.append("CLOSED")
-                    continue
-                if mode == "unavailable":
-                    row.append(marker or "OFF")  # preserva VAC/NOT/MED originais
-                    continue
-                
-                chosen = self.employee_day_block.get((employee_id, day))
-    
-                if chosen is None:
-                    if mode == "preferred_day_off":
-                        row.append(marker or "DO")  # DO não tocado (sem swap por agora)
-                    elif (employee_id, day) in unassigned_set:
-                        row.append("UNASSIGNED")  # sem bloco viável (choque de descanso, etc.)
-                    else:
-                        row.append("UNASSIGNED")
-                    continue
-                
-                # Junta slots meia-hora adjacentes com a mesma competência num
-                # único segmento exportado, tal como a versão ILP fazia.
-                segments = []
-                current_skill = None
-                current_start = None
-                current_end = None
-    
-                for slot_idx in chosen.slot_indices:
-                    slot = self.time_slots[slot_idx]
-                    assigned_skill = self.slot_skill.get((employee_id, day, slot_idx))
-    
-                    if assigned_skill is None:
-                        # Fallback defensivo: não deveria faltar skill para um
-                        # slot dentro de um bloco já fixado por _apply_block.
-                        assigned_skill = (
-                            employee["assignable_skills"][0]
-                            if employee["assignable_skills"]
-                            else self.staff_team_code
-                        )
-    
-                    if current_skill == assigned_skill:
-                        current_end = slot.end_min  # estende o segmento atual
-                    else:
-                        if current_skill is not None:
-                            segments.append(
-                                f"{minutes_to_hhmm(current_start)}-{minutes_to_hhmm(current_end)}@{current_skill}"
-                            )
-                        current_skill = assigned_skill
-                        current_start = slot.start_min
-                        current_end = slot.end_min
-    
-                if current_skill is not None:
-                    segments.append(
-                        f"{minutes_to_hhmm(current_start)}-{minutes_to_hhmm(current_end)}@{current_skill}"
-                    )
-    
-                row.append(" | ".join(segments) if segments else chosen.label)
-            rows.append(row)
-    
-        return rows
-
-    def compute_true_shortage(self) -> int:
-        
-        rows = self.build_output_rows()
-        demand_file = self.problem.get("demand", {}).get("dataFile", "demand.csv")
-        demand_path = str(self.base_dir / demand_file)
-        kpi = KpiEvaluator_Sisqual(rows, demand_csv_path=demand_path, problem_json=self.problem)
-        res = kpi.compute_Total_Shortage()
-        if isinstance(res, dict):
-            val = int(res.get("value", 0))
-        else:
-            val = int(res)
-        self.total_shortage = val
-        return val
+    def rank_block(self, coverage: int, priority_cost: int) -> tuple:
+        return (-coverage, priority_cost, random.random())
 
 
 def solve(problem_path=None, maxTime=None, restarts=5400, day_order_mode=None, **kwargs):

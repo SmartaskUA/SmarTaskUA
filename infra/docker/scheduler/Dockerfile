@@ -12,6 +12,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY src/scheduler/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Test/validation tools, so `make test-scheduler` and `make solve` run in this image
+COPY src/scheduler/requirements-dev.txt .
+RUN pip install --no-cache-dir -r requirements-dev.txt
+
 # Copy master rules.json from config/
 COPY config/rules.json ./rules.json
 

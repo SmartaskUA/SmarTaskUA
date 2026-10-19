@@ -33,7 +33,6 @@ const Teams = () => {
 
   const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
   const [teamDetails, setTeamDetails] = useState(null);
-  const [newEmployeeIds, setNewEmployeeIds] = useState("");
 
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState(null);
@@ -176,7 +175,7 @@ const Teams = () => {
             } else {
               return { id, name: "Error loading", restrictions: {} };
             }
-          } catch (err) {
+          } catch {
             return { id, name: "Request error", restrictions: {} };
           }
         })
@@ -196,54 +195,8 @@ const Teams = () => {
   const handleCloseDetailsDialog = () => {
     setOpenDetailsDialog(false);
     setTeamDetails(null);
-    setNewEmployeeIds("");
   };
 
-  const handleAddEmployeesToTeam = async () => {
-    if (!newEmployeeIds) {
-      console.error("No employee IDs provided.");
-      return;
-    }
-
-    const employeeIds = newEmployeeIds
-      .split(",")
-      .map((id) => id.trim())
-      .filter((id) => id);
-
-    try {
-      const response = await fetch(
-        `${BaseUrl}/api/v1/teams/${teamDetails.id}/add-employees`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({ employeeIds }),
-        }
-      );
-
-      const data = await response.json();
-      if (response.ok) {
-        setTeamDetails((prevDetails) => ({
-          ...prevDetails,
-          employees: [
-            ...prevDetails.employees,
-            ...employeeIds.map((id) => ({
-              id,
-              name: "Loading...",
-              restrictions: {},
-            })),
-          ],
-        }));
-        setNewEmployeeIds("");
-      } else {
-        console.error("Error adding employees:", data);
-      }
-    } catch (error) {
-      console.error("Error adding employees:", error);
-    }
-  };
   const searchTeamsByName = async (name) => {
     if (!name.trim()) {
       fetchTeams(); // limpa busca

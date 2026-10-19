@@ -1,9 +1,14 @@
-.PHONY: help build up down restart rebuild logs clean validate-general-rules
+.PHONY: help build up down restart rebuild logs clean validate-general-rules solve test-scheduler
 .PHONY: build-api build-scheduler build-analyzer build-frontend build-json-generator build-nginx
 .PHONY: logs-api logs-scheduler logs-analyzer logs-frontend logs-json-generator logs-nginx
 
 # Docker Compose file location
 COMPOSE_FILE := infra/docker-compose.yml
+
+# Solve / test inside the scheduler image (no local pulp/ortools needed), as the current user
+SCHED_RUN = docker compose -f $(COMPOSE_FILE) run --rm --no-deps -u $$(id -u):$$(id -g) -e HOME=/tmp -v $(CURDIR):/repo
+ALG ?= ilp
+TIME ?= 1
 
 # Colors for output
 BLUE := \033[0;34m
@@ -36,15 +41,15 @@ help: ## Show this help message
 	@echo "  make logs-scheduler  - View scheduler logs"
 	@echo "  make logs-analyzer   - View analyzer logs"
 	@echo "  make logs-frontend   - View frontend logs"
+	@echo "  make logs-json-generator - View JSON generator logs"
+	@echo "  make logs-nginx          - View nginx logs"
+	@echo ""
+	@echo "$(GREEN)Solving (schema v4, see docs/how-to-solve.md):$(NC)"
+	@echo "  make solve PKG=<package dir> [ALG=ilp|csp|hybrid|hybrid-levels|ga|all] [TIME=1]"
+	@echo "  make test-scheduler     - Run the scheduler test suite"
 	@echo ""
 	@echo "$(GREEN)Validation:$(NC)"
 	@echo "  make validate-general-rules - Ensure general algorithms cover all rules in rules.json"
-	@echo "  make logs-api            - View API logs"
-	@echo "  make logs-scheduler      - View scheduler logs"
-	@echo "  make logs-analyzer       - View analyzer logs"
-	@echo "  make logs-frontend       - View frontend logs"
-	@echo "  make logs-json-generator - View JSON generator logs"
-	@echo "  make logs-nginx          - View nginx logs"
 	@echo ""
 	@echo "$(YELLOW)Access Points:$(NC)"
 	@echo "  Main App:        http://localhost/"
@@ -159,6 +164,13 @@ logs-analyzer: ## View analyzer logs
 
 logs-frontend: ## View frontend logs
 	@docker compose -f $(COMPOSE_FILE) logs -f frontend
+
+solve: ## Solve a schema v4 package: make solve PKG=<dir> [ALG=ilp] [TIME=1]
+	@test -n "$(PKG)" || { echo "usage: make solve PKG=<package dir> [ALG=ilp|csp|hybrid|hybrid-levels|ga|all] [TIME=1]"; exit 2; }
+	@$(SCHED_RUN) -w /repo/src scheduler python -m scheduler solve /repo/$(PKG) -a $(ALG) -t $(TIME)
+
+test-scheduler: ## Run the scheduler test suite in the scheduler image
+	@$(SCHED_RUN) -w /repo/src/scheduler scheduler python -m pytest -q -p no:cacheprovider
 
 validate-general-rules: ## Validate rules coverage for general algorithms
 	@python3 scripts/validate_general_rules.py data/problems/SMARTASK_SIMPLE_2025/problem.json

@@ -1,2 +1,9 @@
 # Generated visualisations — can be recreated by running GA_analysis.ipynb
 **/*.png
+
+# Binary numpy arrays (schedules and convergence curves) — large, reproducible
+**/*.npy
+
+# Discarded experiment folders
+results_3shifts - cópia/
+results_memetic_best/

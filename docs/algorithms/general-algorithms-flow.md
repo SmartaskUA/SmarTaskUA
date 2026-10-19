@@ -1,10 +1,12 @@
 # General Algorithms Flow (problem.json → ILP/CSP General)
 
+> **Legacy (v2.x):** the General solvers and their `ConstraintPlan`, still live for v2.x bundles. Schema v4 packages take the path in [solve-flow.md](../architecture/solve-flow.md).
+
 This document explains how the general algorithms (`ILP General` and `CSP General`) receive data from `problem.json`, and how that data becomes solver inputs.
 
 Important: the Python solvers do not read `problem.json` directly. The Java API reads it, builds templates, and sends a RabbitMQ payload that the scheduler consumes.
 
-> **See also:** `docs/architecture/problem-json-flow.md` — the end-to-end API→solver overview. This document focuses on the scheduler side: how the General solvers normalize inputs and apply the `ConstraintPlan`.
+> **See also:** `docs/architecture/solve-flow.md` — the end-to-end API→solver overview. This document focuses on the scheduler side: how the General solvers normalize inputs and apply the `ConstraintPlan`.
 >
 > Code references use `file → symbol()` (method/function names) rather than line numbers, which drift as the code changes.
 

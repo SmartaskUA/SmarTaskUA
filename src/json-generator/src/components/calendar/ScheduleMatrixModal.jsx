@@ -1,120 +1,30 @@
 import React from 'react';
-import {
-  Dialog,
-  AppBar,
-  Toolbar,
-  IconButton,
-  Typography,
-  Box,
-  Container
-} from '@mui/material';
+import { Dialog, AppBar, Toolbar, IconButton, Typography, Box } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import ScheduleMatrix from './ScheduleMatrix';
 import MatrixToolbar from './MatrixToolbar';
 import MatrixLegend from './MatrixLegend';
 
-/**
- * ScheduleMatrixModal - Fullscreen modal for schedule input matrix
- *
- * Provides a larger view for easier data entry and visibility
- */
-const ScheduleMatrixModal = ({
-  open,
-  onClose,
-  employees,
-  dateRange,
-  dataMatrix,
-  contracts,
-  employeeModel,
-  onChange,
-  onImportCsv,
-  onExportCsv,
-  onClearAll
-}) => {
-  return (
-    <Dialog
-      fullScreen
-      open={open}
-      onClose={onClose}
-      sx={{
-        '& .MuiDialog-paper': {
-          backgroundColor: '#f5f5f5'
-        }
-      }}
-    >
-      {/* Header AppBar */}
-      <AppBar
-        position="relative"
-        elevation={1}
-        sx={{ bgcolor: 'primary.main' }}
-      >
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
-            Schedule Input Calendar
-          </Typography>
-          <Typography variant="body2" sx={{ mr: 2, opacity: 0.9 }}>
-            {employees.length} employees × {dateRange.length} days
-          </Typography>
-          <IconButton
-            edge="end"
-            color="inherit"
-            onClick={onClose}
-            aria-label="close"
-          >
-            <CloseIcon />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-
-      {/* Content */}
-      <Container
-        maxWidth={false}
-        sx={{
-          py: 3,
-          px: 4,
-          height: 'calc(100vh - 64px)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden'
-        }}
-      >
-        {/* Toolbar */}
-        <Box sx={{ flexShrink: 0, mb: 2 }}>
-          <MatrixToolbar
-            onImportCsv={onImportCsv}
-            onExportCsv={onExportCsv}
-            onClearAll={onClearAll}
-          />
-        </Box>
-
-        {/* Matrix - Scrollable */}
-        <Box
-          sx={{
-            flexGrow: 1,
-            overflow: 'auto',
-            mb: 2,
-            bgcolor: 'white',
-            borderRadius: 1,
-            boxShadow: 1
-          }}
-        >
-          <ScheduleMatrix
-            employees={employees}
-            dateRange={dateRange}
-            dataMatrix={dataMatrix}
-            contracts={contracts}
-            onChange={onChange}
-            employeeModel={employeeModel}
-          />
-        </Box>
-
-        {/* Legend - Fixed at bottom */}
-        <Box sx={{ flexShrink: 0 }}>
-          <MatrixLegend />
-        </Box>
-      </Container>
-    </Dialog>
-  );
-};
+/** The schedule-input matrix, full screen. */
+const ScheduleMatrixModal = ({ open, onClose, state, dates, openDays, holidays, load, onCellChange, toolbar }) => (
+  <Dialog fullScreen open={open} onClose={onClose} sx={{ '& .MuiDialog-paper': { bgcolor: '#f5f5f5' } }}>
+    <AppBar position="relative" elevation={1}>
+      <Toolbar>
+        <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>schedule_input.csv</Typography>
+        <Typography variant="body2" sx={{ mr: 2, opacity: 0.9 }}>
+          {state.employees.list.length} employees × {dates.length} days · numeric cells are HOURS
+        </Typography>
+        <IconButton edge="end" color="inherit" onClick={onClose}><CloseIcon /></IconButton>
+      </Toolbar>
+    </AppBar>
+    <Box sx={{ p: 2, height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column', gap: 1.5, overflow: 'hidden' }}>
+      <MatrixToolbar {...toolbar} />
+      <Box sx={{ flexGrow: 1, overflow: 'hidden', bgcolor: 'white', borderRadius: 1, boxShadow: 1 }}>
+        <ScheduleMatrix state={state} dates={dates} openDays={openDays} holidays={holidays} load={load} onCellChange={onCellChange} />
+      </Box>
+      <MatrixLegend dayOffCodes={state.scheduleInput.dayOffCodes} />
+    </Box>
+  </Dialog>
+);
 
 export default ScheduleMatrixModal;

@@ -1,0 +1,70 @@
+{
+  "_comment": "v3.0 solution template -- a solver's output for problem_template. Delete every _comment key.",
+  "schemaVersion": "3.0",
+  "form": "solution",
+  "problemId": "MY_PROBLEM_2025",
+  "producedBy": {
+    "algorithm": "your-algorithm-name",
+    "solvedAt": "2025-10-01T10:00:00Z",
+    "solveTimeSeconds": 3.2,
+    "status": "feasible"
+  },
+  "_comment_objectiveValues": "reported components, for comparing runs; goals are free strings.",
+  "objectiveValues": [
+    {
+      "goal": "minimize_shortages",
+      "value": 1
+    },
+    {
+      "goal": "preferable_days_off_worked",
+      "value": 0
+    }
+  ],
+  "_comment_assignments": "One entry per employee. Works as a full solution (state every worker-day) OR a partial warm-start seed (state a subset; omit the rest). A non-null assignmentId is the SEED for that day and must be one of that worker-day's H_wd in the expanded problem; null = not working; an OMITTED day is open (solver decides). A seeded day is a soft starting point unless 'locked': true pins it hard (must equal the expanded day's 'forced' if it has one). Below: EMP001 10-01 is a HARD pin (locked); EMP002 10-01 is a SOFT seed; EMP003 states no days -- entirely open.",
+  "assignments": [
+    {
+      "employeeId": "EMP001",
+      "days": [
+        {
+          "date": "2025-10-01",
+          "assignmentId": "A0001",
+          "locked": true,
+          "competencyPerSlot": [
+            {
+              "startMin": 510,
+              "endMin": 990,
+              "competency": "TeamA"
+            }
+          ]
+        },
+        {
+          "date": "2025-10-04",
+          "assignmentId": null
+        }
+      ]
+    },
+    {
+      "employeeId": "EMP002",
+      "days": [
+        {
+          "date": "2025-10-01",
+          "assignmentId": "A0001"
+        }
+      ]
+    },
+    {
+      "employeeId": "EMP003",
+      "days": []
+    }
+  ],
+  "_comment_shortfalls": "where coverage fell below alpha_dts [z_dts > 0]; a feasible solution may still under-cover.",
+  "shortfalls": [
+    {
+      "date": "2025-10-01",
+      "competency": "TeamA",
+      "startMin": 510,
+      "endMin": 990,
+      "shortfall": 1
+    }
+  ]
+}

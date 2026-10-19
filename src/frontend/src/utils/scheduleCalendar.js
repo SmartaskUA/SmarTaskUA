@@ -17,7 +17,7 @@ const WEEKDAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const OFF_MARKERS = new Set(["", "0", "OFF", "DO", "FDO"]);
 const VACATION_MARKERS = new Set(["F", "VAC", "VACATION"]);
-const UNAVAILABLE_MARKERS = new Set(["NOT", "MED"]);
+const UNAVAILABLE_MARKERS = new Set(["NOT", "MED", "HOL"]);
 const WARNING_MARKERS = new Set(["UNASSIGNED"]);
 
 const SHIFT_PATTERN = /^([MTN])[_-]([A-Z])$/i;
@@ -260,6 +260,17 @@ const parseScheduleDate = (label, year, fallbackDay) => {
   return date;
 };
 
+// A schema v4 cell tags each segment with one skill per axis, "tableName/tableValue"
+// joined by "+" (e.g. "Responsibility/A+Team/T1"); "idle" marks slots covering no
+// demand. The label shows only the values ("A+T1"); `team` stays the full tag,
+// because it keys the palette and coverage.
+export const IDLE_TAG = "idle";
+export const skillTagLabel = (tag) =>
+  String(tag || "")
+    .split("+")
+    .map((part) => part.split("/").pop())
+    .join("+");
+
 const parseTaggedHourlySegments = (text) => {
   if (!text.includes("@")) return [];
   const segments = text
@@ -269,9 +280,11 @@ const parseTaggedHourlySegments = (text) => {
     .map((segment) => {
       const match = segment.match(/^([^@]+)@(.+)$/);
       if (!match) return null;
+      const team = match[2].trim();
       return {
         time: match[1].trim(),
-        team: match[2].trim(),
+        team,
+        label: skillTagLabel(team),
       };
     })
     .filter(Boolean);

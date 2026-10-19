@@ -1,0 +1,499 @@
+{
+  "schemaVersion": "3.0",
+  "form": "declarative",
+  "problemType": "employee_scheduling",
+  "metadata": {
+    "problemId": "SISQUAL_OCTOBER_2025",
+    "createdAt": "2026-07-16T10:00:00Z",
+    "description": "Retail store, October 2025. Competency model: 15 employees across 3 teams (Storage, Checkout, Management) with proficiency levels 1-5, level 1 highest. Migrated from the v2.6 example of the same name.",
+    "source": "sisqual_example"
+  },
+  "timeGrid": {
+    "slotMinutes": 15
+  },
+  "temporalScope": {
+    "start": "2025-10-01",
+    "end": "2025-10-31"
+  },
+  "calendar": {
+    "weekStart": "monday",
+    "holidays": [
+      {
+        "date": "2025-10-05",
+        "code": "REP",
+        "name": "Implantacao da Republica",
+        "description": "National holiday, 5 October",
+        "hasEve": true
+      }
+    ]
+  },
+  "contracts": {
+    "definitions": [
+      {
+        "id": "fullTime_8h",
+        "name": "Full Time - 8 hours/day",
+        "workMinutesPerDay": 480
+      },
+      {
+        "id": "partTime_7h",
+        "name": "Part Time - 7 hours/day",
+        "workMinutesPerDay": 420
+      },
+      {
+        "id": "partTime_5h",
+        "name": "Part Time - 5 hours/day",
+        "workMinutesPerDay": 300
+      },
+      {
+        "id": "partTime_4h",
+        "name": "Part Time - 4 hours/day",
+        "workMinutesPerDay": 240
+      }
+    ]
+  },
+  "employees": {
+    "list": [
+      {
+        "id": "20072412",
+        "name": "Emp_20072412",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "competency": "Management",
+            "level": 1,
+            "start": "2024-01-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "20066543",
+        "name": "Emp_20066543",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "competency": "Management",
+            "level": 2,
+            "start": "2024-01-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "20067009",
+        "name": "Emp_20067009",
+        "contractAssignments": [
+          {
+            "contractType": "partTime_5h",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "competency": "Checkout",
+            "level": 1,
+            "start": "2024-01-01",
+            "end": null
+          },
+          {
+            "competency": "Management",
+            "level": 3,
+            "start": "2024-01-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "20054956",
+        "name": "Emp_20054956",
+        "contractAssignments": [
+          {
+            "contractType": "partTime_4h",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "competency": "Checkout",
+            "level": 2,
+            "start": "2024-01-01",
+            "end": null
+          },
+          {
+            "competency": "Management",
+            "level": 4,
+            "start": "2024-01-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "20056459",
+        "name": "Emp_20056459",
+        "contractAssignments": [
+          {
+            "contractType": "partTime_4h",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "competency": "Checkout",
+            "level": 1,
+            "start": "2024-01-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "20062688",
+        "name": "Emp_20062688",
+        "contractAssignments": [
+          {
+            "contractType": "partTime_4h",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "competency": "Checkout",
+            "level": 3,
+            "start": "2024-01-01",
+            "end": null
+          },
+          {
+            "competency": "Management",
+            "level": 4,
+            "start": "2024-01-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "20067696",
+        "name": "Emp_20067696",
+        "contractAssignments": [
+          {
+            "contractType": "partTime_4h",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "competency": "Checkout",
+            "level": 2,
+            "start": "2024-01-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "20058959",
+        "name": "Emp_20058959",
+        "contractAssignments": [
+          {
+            "contractType": "partTime_4h",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "competency": "Checkout",
+            "level": 2,
+            "start": "2024-01-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "20068397",
+        "name": "Emp_20068397",
+        "contractAssignments": [
+          {
+            "contractType": "partTime_4h",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "competency": "Checkout",
+            "level": 2,
+            "start": "2024-01-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "20038706",
+        "name": "Emp_20038706",
+        "contractAssignments": [
+          {
+            "contractType": "partTime_5h",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "competency": "Checkout",
+            "level": 2,
+            "start": "2024-01-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "20066338",
+        "name": "Emp_20066338",
+        "contractAssignments": [
+          {
+            "contractType": "partTime_5h",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "competency": "Checkout",
+            "level": 3,
+            "start": "2024-01-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "900027719",
+        "name": "Emp_900027719",
+        "contractAssignments": [
+          {
+            "contractType": "partTime_5h",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "competency": "Checkout",
+            "level": 4,
+            "start": "2024-01-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "20051291",
+        "name": "Emp_20051291",
+        "contractAssignments": [
+          {
+            "contractType": "partTime_7h",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "competency": "Storage",
+            "level": 1,
+            "start": "2024-01-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "20055066",
+        "name": "Emp_20055066",
+        "contractAssignments": [
+          {
+            "contractType": "partTime_4h",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "competency": "Checkout",
+            "level": 4,
+            "start": "2024-01-01",
+            "end": null
+          }
+        ]
+      },
+      {
+        "id": "900027718",
+        "name": "Emp_900027718",
+        "contractAssignments": [
+          {
+            "contractType": "partTime_4h",
+            "start": "2024-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "competency": "Checkout",
+            "level": 5,
+            "start": "2024-01-01",
+            "end": null
+          }
+        ]
+      }
+    ]
+  },
+  "demand": {
+    "dataFile": "demand.csv",
+    "organizationalUnits": {
+      "competencies": [
+        {
+          "code": "Storage",
+          "name": "Storage Team",
+          "description": "Stockroom and replenishment"
+        },
+        {
+          "code": "Checkout",
+          "name": "Checkout Team",
+          "description": "Tills and customer checkout"
+        },
+        {
+          "code": "Management",
+          "name": "Management Team",
+          "description": "Shift supervision and store management"
+        }
+      ]
+    },
+    "workPeriods": [
+      {
+        "code": "STORAGE_0830_1530",
+        "name": "Storage 08:30-15:30",
+        "timeRange": {
+          "start": "08:30",
+          "end": "15:30"
+        }
+      },
+      {
+        "code": "CHECKOUT_1000_1100",
+        "name": "Checkout 10:00-11:00",
+        "timeRange": {
+          "start": "10:00",
+          "end": "11:00"
+        }
+      },
+      {
+        "code": "CHECKOUT_1100_2100",
+        "name": "Checkout 11:00-21:00",
+        "timeRange": {
+          "start": "11:00",
+          "end": "21:00"
+        }
+      },
+      {
+        "code": "CHECKOUT_2100_2200",
+        "name": "Checkout 21:00-22:00",
+        "timeRange": {
+          "start": "21:00",
+          "end": "22:00"
+        }
+      },
+      {
+        "code": "MANAGEMENT_1000_1100",
+        "name": "Management 10:00-11:00",
+        "timeRange": {
+          "start": "10:00",
+          "end": "11:00"
+        }
+      },
+      {
+        "code": "MANAGEMENT_1100_1400",
+        "name": "Management 11:00-14:00",
+        "timeRange": {
+          "start": "11:00",
+          "end": "14:00"
+        }
+      },
+      {
+        "code": "MANAGEMENT_1400_1900",
+        "name": "Management 14:00-19:00",
+        "timeRange": {
+          "start": "14:00",
+          "end": "19:00"
+        }
+      },
+      {
+        "code": "MANAGEMENT_1900_2100",
+        "name": "Management 19:00-21:00",
+        "timeRange": {
+          "start": "19:00",
+          "end": "21:00"
+        }
+      },
+      {
+        "code": "MANAGEMENT_2100_2200",
+        "name": "Management 21:00-22:00",
+        "timeRange": {
+          "start": "21:00",
+          "end": "22:00"
+        }
+      }
+    ],
+    "priorityOrder": [
+      {
+        "order": 1,
+        "competency": "Management",
+        "description": "Management Team - Highest priority"
+      },
+      {
+        "order": 2,
+        "competency": "Checkout",
+        "description": "Checkout Team - Medium priority"
+      },
+      {
+        "order": 3,
+        "competency": "Storage",
+        "description": "Storage Team - Standard priority"
+      }
+    ]
+  },
+  "scheduleInput": {
+    "dataFile": "schedule_input.csv",
+    "dayOffCodes": {
+      "DO": {
+        "kind": "preferable",
+        "description": "Day off - may be swapped, at a penalty"
+      },
+      "FDO": {
+        "kind": "unavailable",
+        "description": "Forced day off - cannot be changed"
+      },
+      "VAC": {
+        "kind": "unavailable",
+        "description": "Vacation - cannot work"
+      },
+      "NOT": {
+        "kind": "unavailable",
+        "description": "Unavailable - cannot work"
+      },
+      "Med": {
+        "kind": "unavailable",
+        "description": "Medical - cannot work"
+      }
+    }
+  }
+}

@@ -59,6 +59,22 @@ const detectSlotPrecision = (label) => {
   return "hour";
 };
 
+const shiftCodePattern = /^[MTN]$/i;
+const hourSlotPattern = /^\s*\d{1,2}(?::\d{2})?(?:\.\d+)?\s*-\s*\d{1,2}(?::\d{2})?(?:\.\d+)?\s*$/;
+
+/** A slot label from minutes: "HH:MM-HH:MM" at 30-minute precision, "HH-HH" otherwise. */
+const formatSlot = (startMin, endMin, slotPrecision) => {
+  const pad = (value) => String(value).padStart(2, "0");
+  const h1 = Math.floor(startMin / 60);
+  const m1 = startMin % 60;
+  const h2 = Math.floor(endMin / 60);
+  const m2 = endMin % 60;
+  if (slotPrecision === "30min") {
+    return `${pad(h1)}:${pad(m1)}-${pad(h2)}:${pad(m2)}`;
+  }
+  return `${pad(h1)}-${pad(h2)}`;
+};
+
 const MinimumsTemplate = ({
   name,
   data,
@@ -69,11 +85,6 @@ const MinimumsTemplate = ({
   selectedMonth,
   year = new Date().getFullYear(),
 }) => {
-  if (!data || data.length === 0) return null;
-
-  const shiftCodePattern = /^[MTN]$/i;
-  const hourSlotPattern = /^\s*\d{1,2}(?::\d{2})?(?:\.\d+)?\s*-\s*\d{1,2}(?::\d{2})?(?:\.\d+)?\s*$/;
-
   const parsedTemplate = useMemo(() => {
     let currentTeam = null;
     const rows = [];
@@ -81,7 +92,7 @@ const MinimumsTemplate = ({
     let hasHourlySlots = false;
     let slotPrecision = "hour";
 
-    data.forEach((row) => {
+    (data || []).forEach((row) => {
       const teamLabel = String(row?.[0] || "").trim();
       if (teamLabel) {
         currentTeam = teamLabel;
@@ -173,18 +184,6 @@ const MinimumsTemplate = ({
     [calendarMonths]
   );
 
-  const formatSlot = (startMin, endMin) => {
-    const pad = (value) => String(value).padStart(2, "0");
-    const h1 = Math.floor(startMin / 60);
-    const m1 = startMin % 60;
-    const h2 = Math.floor(endMin / 60);
-    const m2 = endMin % 60;
-    if (slotPrecision === "30min") {
-      return `${pad(h1)}:${pad(m1)}-${pad(h2)}:${pad(m2)}`;
-    }
-    return `${pad(h1)}-${pad(h2)}`;
-  };
-
   const parseSlotLabel = (label) => {
     const cleaned = String(label || "").trim();
     if (!cleaned) return null;
@@ -207,7 +206,7 @@ const MinimumsTemplate = ({
     const startMin = toMinutes(parts[0]);
     const endMin = toMinutes(parts[1]);
     if (!Number.isFinite(startMin) || !Number.isFinite(endMin)) return null;
-    return formatSlot(startMin, endMin);
+    return formatSlot(startMin, endMin, slotPrecision);
   };
 
   const actualCounts = useMemo(() => {
@@ -275,7 +274,7 @@ const MinimumsTemplate = ({
 
           segments.forEach(([segStart, segEnd]) => {
             for (let t = segStart; t < segEnd; t += slotStep) {
-              const slotKey = formatSlot(t, t + slotStep);
+              const slotKey = formatSlot(t, t + slotStep, slotPrecision);
               const key = `${day}|${slotKey}|${team}`;
               hourMap.set(key, (hourMap.get(key) || 0) + 1);
             }
@@ -332,7 +331,7 @@ const MinimumsTemplate = ({
       <TableCell key={`empty-${index}`} />
     ));
   
-    activeMonths.forEach((month, monthIndex) => {
+    activeMonths.forEach((month) => {
       for (let i = 1; i <= month.days; i++) {
         const originalIndex = monthLabels.findIndex((m) => m === month.name);
         const date = new Date(year, originalIndex, i);
@@ -378,6 +377,9 @@ const MinimumsTemplate = ({
       : normalizedMode === "min"
         ? "Minimums"
         : "Minimums & Ideals";
+
+  // After every hook: returning earlier would change the hook count between renders.
+  if (!data || data.length === 0) return null;
 
   return (
     <Box mt={4}>

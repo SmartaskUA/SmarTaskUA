@@ -1,0 +1,260 @@
+{
+  "schemaVersion": "3.0",
+  "form": "declarative",
+  "problemType": "employee_scheduling",
+  "metadata": {
+    "problemId": "C1_January_2026",
+    "createdAt": "2026-09-17T10:25:09Z",
+    "description": "C1_2026-01-01_2026-01-31",
+    "source": "SISQUAL"
+  },
+  "timeGrid": {
+    "slotMinutes": 30
+  },
+  "temporalScope": {
+    "start": "2026-01-01",
+    "end": "2026-01-31"
+  },
+  "calendar": {
+    "weekStart": "Monday",
+    "inpUAHolidaysCollection": [
+      {
+        "date": "2026-01-01",
+        "code": "H1",
+        "name": "New Year's Day / Nieuwjaarsdag",
+        "description": "New Year's Day / Nieuwjaarsdag",
+        "hasEve": false
+      }
+    ]
+  },
+  "contracts": {
+    "definitions": [
+      {
+        "id": "NL_36",
+        "name": "[NL] 36h Semanais - Full-Time",
+        "workMinutesPerDay": 432
+      }
+    ]
+  },
+  "employees": {
+    "list": [
+      {
+        "id": "160049",
+        "name": "Emp_160049",
+        "contractAssigments": [
+          {
+            "contractType": "NL_36",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": []
+      },
+      {
+        "id": "160050",
+        "name": "Emp_160050",
+        "contractAssigments": [
+          {
+            "contractType": "NL_36",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": []
+      },
+      {
+        "id": "160057",
+        "name": "Emp_160057",
+        "contractAssigments": [
+          {
+            "contractType": "NL_36",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": []
+      },
+      {
+        "id": "160058",
+        "name": "Emp_160058",
+        "contractAssigments": [
+          {
+            "contractType": "NL_36",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": []
+      },
+      {
+        "id": "160065",
+        "name": "Emp_160065",
+        "contractAssigments": [
+          {
+            "contractType": "NL_36",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": []
+      },
+      {
+        "id": "160066",
+        "name": "Emp_160066",
+        "contractAssigments": [
+          {
+            "contractType": "NL_36",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": []
+      },
+      {
+        "id": "160067",
+        "name": "Emp_160067",
+        "contractAssigments": [
+          {
+            "contractType": "NL_36",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": []
+      },
+      {
+        "id": "160068",
+        "name": "Emp_160068",
+        "contractAssigments": [
+          {
+            "contractType": "NL_36",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": []
+      },
+      {
+        "id": "160073",
+        "name": "Emp_160073",
+        "contractAssigments": [
+          {
+            "contractType": "NL_36",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": []
+      },
+      {
+        "id": "160077",
+        "name": "Emp_160077",
+        "contractAssigments": [
+          {
+            "contractType": "NL_36",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": []
+      },
+      {
+        "id": "160078",
+        "name": "Emp_160078",
+        "contractAssigments": [
+          {
+            "contractType": "NL_36",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": []
+      },
+      {
+        "id": "160079",
+        "name": "Emp_160079",
+        "contractAssigments": [
+          {
+            "contractType": "NL_36",
+            "start": "2024-01-01",
+            "end": "9999-12-31"
+          }
+        ],
+        "competencyAssignments": []
+      }
+    ]
+  },
+  "demand": {
+    "dataFileShifts": "NLM_2026-01-01_20260917_110909_shifts_demand.csv",
+    "dataFilePeriods": "NLM_2026-01-01_20260917_110909_periods_demand.csv",
+    "dataFileDays": "NLM_2026-01-01_20260917_110909_days_demand.csv"
+  },
+  "scheduleInput": {
+    "dataFile": "NLM_2026-01-01_20260917_110909_schedule_input.csv",
+    "dayOffCodes": {
+      "NOT": {
+        "kind": "Unavailable",
+        "description": "Unavailable - cannot work"
+      },
+      "HOL": {
+        "kind": "Unavailable",
+        "description": "Holiday - cannot work"
+      },
+      "Fér": {
+        "kind": "Unavailable",
+        "description": "Férias-cannot work"
+      }
+    }
+  },
+  "priorityHierachy": [
+    {
+      "rank": 1,
+      "label": "RESPONSABILIDADES",
+      "tableName": "Responsibility",
+      "tableValue": "A",
+      "maxAlarmTableType": "MaxAlarmLevel_Estimate_Ideal_Minimum",
+      "generationSequenceType": "BY_ALARM_TABLE",
+      "minAbilityLevel": 1,
+      "maxAbilityLevel": 9,
+      "alarmLevelPercentage": 100
+    },
+    {
+      "rank": 2,
+      "label": "RESPONSABILIDADES",
+      "tableName": "Responsibility",
+      "tableValue": "C",
+      "maxAlarmTableType": "MaxAlarmLevel_Estimate_Ideal_Minimum",
+      "generationSequenceType": "BY_ALARM_TABLE",
+      "minAbilityLevel": 1,
+      "maxAbilityLevel": 9,
+      "alarmLevelPercentage": 100
+    },
+    {
+      "rank": 3,
+      "label": "RESPONSABILIDADES",
+      "tableName": "Responsibility",
+      "tableValue": "G",
+      "maxAlarmTableType": "MaxAlarmLevel_Estimate_Ideal_Minimum",
+      "generationSequenceType": "BY_ALARM_TABLE",
+      "minAbilityLevel": 1,
+      "maxAbilityLevel": 9,
+      "alarmLevelPercentage": 100
+    }
+  ],
+  "constraints": {
+    "hard": [
+      {
+        "id": "0101010101",
+        "type": "RosterLegislation",
+        "parameters": {
+          "MaxConsecutiveWorkDaysInWeek": 5,
+          "MinDistanceBetweenShiftsInMinutes": 660,
+          "MaxConsecutiveWorkDays": 5
+        },
+        "startDate": "2026-01-01T00:00:00",
+        "enabled": true
+      }
+    ],
+    "soft": []
+  }
+}

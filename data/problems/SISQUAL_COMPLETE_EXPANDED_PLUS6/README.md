@@ -1,5 +1,7 @@
 # SISQUAL_COMPLETE_EXPANDED_PLUS6
 
+> **Legacy (v2.2 bundle):** the MathematicalDefinition7 and Hybrid solvers now read schema v4 only, so they no longer run this bundle. See `docs/how-to-solve.md`.
+
 ## Purpose
 
 `SISQUAL_COMPLETE_EXPANDED_PLUS6` is a larger October Sisqual benchmark derived from

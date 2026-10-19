@@ -1,11 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import Sidebar_Manager from "../components/Sidebar_Manager";
 import CalendarTable from "../components/manager/CalendarTable";
 import CalendarHeader from "../components/manager/CalendarHeader";
 import KPIReport from "../components/manager/KPIReport";
+import MonthlyKpiReport from "../components/manager/MonthlyKpiReport";
 import SisqualKPIReport from "./SisqualKPIReport";
+import V4KPIReport from "./V4KPIReport";
 import BaseUrl from "../components/BaseUrl";
 import MetadataInfo from "../components/manager/MetadataInfo";
 import MinimumsTemplate from "../components/manager/MinimumsTemplate";
@@ -73,13 +75,6 @@ const Calendar = () => {
   }, [calendarId]);
 
   useEffect(() => {
-    if (!data?.length || !metadata || !monthColumns.length) {
-      return;
-    }
-    analyzeScheduleViaWebSocket(data, metadata, monthColumns);
-  }, [data, metadata, monthColumns, calendarId]);
-
-  useEffect(() => {
     if (!monthOptions.length) {
       return;
     }
@@ -106,6 +101,7 @@ const Calendar = () => {
                 console.log("KPI recebido via WebSocket:", item.result);
                 setKpiSummary((prev) => {
                   const prevIsSisqualHourly =
+                    prev?.total_shortage !== undefined ||
                     prev?.weightedMinimumCoverageRate !== undefined ||
                     Array.isArray(prev?.teamCoverageBreakdown) ||
                     prev?.["Total_Shortage"] !== undefined;
@@ -138,14 +134,14 @@ const Calendar = () => {
       return scheduleData;
     }
     const selectedIndexes = columns.map((column) => column.index + 1);
-    return scheduleData.map((row, rowIndex) => {
+    return scheduleData.map((row) => {
       if (!Array.isArray(row)) return row;
-      const firstCell = rowIndex === 0 ? "employee_id" : row[0];
+      const firstCell = row[0];
       return [firstCell, ...selectedIndexes.map((index) => row[index] ?? "")];
     });
   };
 
-  const analyzeScheduleViaWebSocket = async (scheduleData, metadata, columns) => {
+  const analyzeScheduleViaWebSocket = useCallback(async (scheduleData, metadata, columns) => {
     try {
       const hasVacationTemplate =
         Array.isArray(metadata?.vacationTemplateData) &&
@@ -169,7 +165,13 @@ const Calendar = () => {
         return;
       }
 
-      const scopedScheduleData = buildMonthScopedScheduleData(scheduleData, columns);
+      // Shift KPIs use annual targets (223 worked days, 30 vacation days, 22
+      // holiday/Sunday days), so shifts are analysed on the full year and the
+      // selected month is view-only. Hourly schedules keep the month scope.
+      const scopedScheduleData =
+        inferScheduleType(metadata) === "Turno"
+          ? scheduleData
+          : buildMonthScopedScheduleData(scheduleData, columns);
       setKpiSummary(null);
 
       const toCsvString = (rows) => rows.map((row) => row.join(",")).join("\n");
@@ -203,7 +205,14 @@ const Calendar = () => {
     } catch (e) {
       console.error("Erro ao enviar CSV para análise:", e);
     }
-  };
+  }, [calendarId]);
+
+  useEffect(() => {
+    if (!data?.length || !metadata || !monthColumns.length) {
+      return;
+    }
+    analyzeScheduleViaWebSocket(data, metadata, monthColumns);
+  }, [data, metadata, monthColumns, analyzeScheduleViaWebSocket]);
 
   const fetchNationalHolidays = async (year) => {
     try {
@@ -353,6 +362,7 @@ const Calendar = () => {
             holidayMap={holidayMap}
             scheduleType={scheduleType}
             employees={metadata?.employeesTeamInfo || []}
+            fixedDays={metadata?.fixedDays || []}
           />
         ) : hasProblemDemandData ? (
           <ProblemDemandTable
@@ -431,14 +441,23 @@ const Calendar = () => {
 
         <MetadataInfo metadata={metadata} />
 
-        {kpiSummary?.weightedMinimumCoverageRate !== undefined || Array.isArray(kpiSummary?.teamCoverageBreakdown) ? (
+        {kpiSummary?.total_shortage !== undefined ? (
+          <V4KPIReport kpis={kpiSummary} />
+        ) : kpiSummary?.weightedMinimumCoverageRate !== undefined || Array.isArray(kpiSummary?.teamCoverageBreakdown) ? (
           <KPIReport metrics={kpiSummary || {}} scheduleType={scheduleType} />
         ) : kpiSummary?.["Total_Shortage"] !== undefined ? (
           <SisqualKPIReport kpis={kpiSummary} />
         ) : (
           <KPIReport metrics={kpiSummary || {}} scheduleType={scheduleType} />
         )}
-        
+
+        {!isHourly && (
+          <MonthlyKpiReport
+            breakdown={kpiSummary?.monthlyBreakdown}
+            selectedMonth={selectedMonth}
+          />
+        )}
+
       </div>
     </div>
   );
