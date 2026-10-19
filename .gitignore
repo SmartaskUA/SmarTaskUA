@@ -87,3 +87,4 @@ src/scheduler/rules.json
 
 # Model Checkpoint files
 *.pth
+exports/

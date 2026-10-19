@@ -203,5 +203,44 @@ def generate_all():
     print(f"\nGenerated {len(written)} scenario folder(s) under {OUT_DIR}")
 
 
+SIMPLE_NAME = "SMARTASK_SIMPLE_2025"
+SIMPLE_NUM_EMPLOYEES = 12
+
+
+def generate_simple_cases():
+    """SMARTASK_SIMPLE_2025 x vacation cases, keeping SIMPLE's own teams and demand.
+
+    CASE1 reuses SIMPLE's original vacations.csv (the map the RL model trains on),
+    so it matches the unsuffixed folder. CASE2-4 take the 12-employee templates.
+    """
+    src = OUT_DIR / SIMPLE_NAME
+    with open(src / "problem.json") as f:
+        problem = json.load(f)
+    base_desc = problem["metadata"]["description"].rstrip(".")
+    vac_template_dir = VACATION_DIR / f"{SIMPLE_NUM_EMPLOYEES}_employees/templates"
+
+    for case_num in range(1, NUM_CASES + 1):
+        if case_num == 1:
+            vac_path = src / "vacations.csv"
+            vac_note = "Vacation Case 1: original SMARTASK_SIMPLE_2025 vacations (not the Case 1 template)."
+        else:
+            vac_path = vac_template_dir / f"VacationTemplate_Case{case_num}_{SIMPLE_NUM_EMPLOYEES}.csv"
+            vac_note = f"Vacation Case {case_num} (VacationTemplate_Case{case_num}_{SIMPLE_NUM_EMPLOYEES})."
+
+        scenario_dir = OUT_DIR / f"{SIMPLE_NAME}_CASE{case_num}"
+        scenario_dir.mkdir(parents=True, exist_ok=True)
+
+        problem["metadata"]["problemId"] = scenario_dir.name
+        problem["metadata"]["description"] = f"{base_desc}. {vac_note}"
+        problem["metadata"]["source"] = "scripts/generate_problem_scenarios.py"
+        with open(scenario_dir / "problem.json", "w") as f:
+            json.dump(problem, f, indent=2)
+
+        shutil.copy(vac_path, scenario_dir / "vacations.csv")
+        shutil.copy(src / "demand.csv", scenario_dir / "demand.csv")
+        print(f"[ok] {scenario_dir.name}")
+
+
 if __name__ == "__main__":
     generate_all()
+    generate_simple_cases()

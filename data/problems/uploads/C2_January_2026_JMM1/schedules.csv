@@ -1,0 +1,41 @@
+# schedules.csv -- the shift menu this roster may pick from.
+# Lines starting with '#' and blank lines are ignored, so these notes can stay.
+#
+# A code stands for a grouping of hours and nothing else: this file IS the
+# translation. The numbering is ours and is deliberately arbitrary -- 9001 means
+# 09:00-13:00 only because the row below says so. Need a grouping that is not here?
+# Add a row with a new code. Nothing is derived from any vendor catalogue.
+#
+# code                   what a result names in OutRosterTeamDays
+# description            "HH:MM-HH:MM", or a label for a code with no window
+# scheduleWeightMinutes  paid length in minutes
+# startMin,endMin        the window in minutes from 00:00; endMin passes 1440 when
+#                        the shift crosses midnight, so no reader has to infer it
+#
+# Codes 1, 3 and 4 are the exception to "the numbering is ours": they carry WFM's
+# own rest semantics on import, so they keep their numbers. A row with no window
+# and zero weight is a rest sentinel, and that is how the validator recognises one
+# -- the set is read from this file, not hardcoded.
+code,description,scheduleWeightMinutes,startMin,endMin
+1,Espaço,0,,
+3,Day off,0,,
+4,Vazio,0,,
+9001,09:00-13:00,240,540,780
+9002,10:00-14:00,240,600,840
+9003,11:00-15:00,240,660,900
+9004,13:00-17:00,240,780,1020
+9005,14:00-18:00,240,840,1080
+9006,17:00-21:00,240,1020,1260
+9007,09:00-14:00,300,540,840
+9008,10:00-15:00,300,600,900
+9009,11:00-16:00,300,660,960
+9010,13:00-18:00,300,780,1080
+9011,16:00-21:00,300,960,1260
+9012,09:00-16:00,420,540,960
+9013,10:00-17:00,420,600,1020
+9014,11:00-18:00,420,660,1080
+9015,14:30-21:30,420,870,1290
+9016,09:00-17:00,480,540,1020
+9017,10:00-18:00,480,600,1080
+9018,11:00-19:00,480,660,1140
+9019,13:30-21:30,480,810,1290
