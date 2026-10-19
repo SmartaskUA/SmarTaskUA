@@ -293,7 +293,7 @@ class Hybrid_Heuristic_Sisqual:
             return fixed.end_min if fixed else None
 
         block = self.employee_day_block.get((employee_id, prev_day))
-        # print(f"[Heuristica_Neighbor_End_Min] Employee {employee_id} on {day}: No fixed assignment on {prev_day}, end time = {block.end_min if block else None}")
+        # print(f"[Heuristica_Neighbor_end_min] Employee {employee_id} on {day}: No fixed assignment on {prev_day}, end time = {block.end_min if block else None}")
         return block.end_min if block else None
 
 
@@ -309,7 +309,7 @@ class Hybrid_Heuristic_Sisqual:
         # Days after the target period are never context (context is only
         # ever *before* targetPeriod.start), so just look at what's fixed.
         block = self.employee_day_block.get((employee_id, next_day))
-        # print(f"[Heuristica_Neighbor_Start_Min] Employee {employee_id} on {day}: Found block on {next_day}, start time = {block.start_min if block else None}") 
+        # print(f"[Heuristica_Neighbor_start_min] Employee {employee_id} on {day}: Found block on {next_day}, start time = {block.start_min if block else None}") 
         return block.start_min if block else None
 
 
@@ -608,34 +608,51 @@ class Hybrid_Heuristic_Sisqual:
         return val
 
 
-def solve(problem_path=None, maxTime=None, restarts=5, day_order_mode=None, **kwargs):
+def solve(problem_path=None, maxTime=None, restarts=5400, day_order_mode=None, **kwargs):
 
     best_rows = None
     best_key = None
 
     all_results = []
 
-    day_order_mode_list = [1, 2, 3] if day_order_mode is None else day_order_mode
+    day_order_mode_list = [1,2,3] if day_order_mode is None else day_order_mode
 
     for i in range(restarts):
 
         for current_mode in day_order_mode_list:
 
+            start_time = time.perf_counter()
             scheduler = Hybrid_Heuristic_Sisqual(problem_path, max_time_minutes=maxTime)
             scheduler.Minimuns(day_order_mode=current_mode)
 
+            rows = scheduler.build_output_rows()
+
             # Compute the true shortage using KPI evaluator to match reporting
             try:
-                kpi_shortage = scheduler.compute_true_shortage()
+                demand_file = scheduler.problem.get("demand", {}).get("dataFile", "demand.csv")
+                demand_path = str(scheduler.base_dir / demand_file)
+                kpi = KpiEvaluator_Sisqual(rows, demand_csv_path=demand_path, problem_json=scheduler.problem)
+                kpis = kpi.evaluate_kpis()
+                kpi_shortage = kpis.get("Total_Shortage", {}).get("value", scheduler.total_shortage if hasattr(scheduler, "total_shortage") else 0)
+                staffing_ideal_shortage = kpis.get("Staffing_Ideals", {}).get("shortage", 0)
+                staffing_ideal_coverage_rate = kpis.get("Staffing_Ideals", {}).get("coverage_rate", 0.0)
+                staffing_estimated_shortage = kpis.get("Staffing_Estimated", {}).get("shortage", 0)
+                staffing_estimated_coverage_rate = kpis.get("Staffing_Estimated", {}).get("coverage_rate", 0.0)
+                slots_with_failure = kpis.get("Slots_With_Failure", {}).get("failing_slots", 0)
             except Exception as ex:
                 # Fallback: use internal remaining need if KPI evaluation fails
                 print(f"[Heuristica] Warning: KPI evaluation failed: {ex}")
                 kpi_shortage = sum(v for v in scheduler.need.values() if v > 0)
+                staffing_ideal_shortage = 0
+                staffing_ideal_coverage_rate = 0.0
+                staffing_estimated_shortage = 0
+                staffing_estimated_coverage_rate = 0.0
+                slots_with_failure = 0
 
             priority_cost = scheduler.total_priority_cost()
 
             unassigned_count = len(scheduler.unassigned)
-
+            elapsed_seconds = time.perf_counter() - start_time
 
             # Record this result
             all_results.append({
@@ -643,13 +660,20 @@ def solve(problem_path=None, maxTime=None, restarts=5, day_order_mode=None, **kw
                 'day_order_mode': current_mode,
                 'unassigned_count': unassigned_count,
                 'kpi_shortage': kpi_shortage,
+                'total_shortage': kpi_shortage,
+                'slots_with_failure': slots_with_failure,
+                'staffing_ideal_shortage': staffing_ideal_shortage,
+                'staffing_ideal_coverage_rate': staffing_ideal_coverage_rate,
+                'staffing_estimated_shortage': staffing_estimated_shortage,
+                'staffing_estimated_coverage_rate': staffing_estimated_coverage_rate,
                 'priority_cost': priority_cost,
+                'elapsed_seconds': round(elapsed_seconds, 3),
             })
 
             key = (unassigned_count, kpi_shortage, priority_cost)
             if best_key is None or key < best_key:
                 best_key = key
-                best_rows = scheduler.build_output_rows()
+                best_rows = rows
 
     # Write results to CSV file
     _write_results_log(problem_path, all_results, best_key)
@@ -665,10 +689,25 @@ def _write_results_log(problem_path: str, all_results: list, best_key):
         base_dir = problem_path.parent
         log_file = base_dir / "heuristic_results_levels.csv"
 
+        fieldnames = [
+            'restart_num',
+            'day_order_mode',
+            'unassigned_count',
+            'kpi_shortage',
+            'total_shortage',
+            'slots_with_failure',
+            'staffing_ideal_shortage',
+            'staffing_ideal_coverage_rate',
+            'staffing_estimated_shortage',
+            'staffing_estimated_coverage_rate',
+            'priority_cost',
+            'elapsed_seconds',
+        ]
+
         with log_file.open('w', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(
                 f,
-                fieldnames=['restart_num', 'day_order_mode', 'unassigned_count', 'kpi_shortage', 'priority_cost'],
+                fieldnames=fieldnames,
             )
             writer.writeheader()
             for row in all_results:
