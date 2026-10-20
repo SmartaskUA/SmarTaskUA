@@ -7,6 +7,11 @@ import {
   CardContent,
   Chip,
   Collapse,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
   InputAdornment,
   List,
@@ -40,6 +45,8 @@ const Problems = () => {
   const [showJson, setShowJson] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [upload, setUpload] = useState(null); // { severity, text, file? } - file kept to offer "Replace"
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const navigate = useNavigate();
 
   const fetchProblems = async (selectId) => {
@@ -201,6 +208,24 @@ const Problems = () => {
     navigate(`/manager/createCalendar?problemId=${encodeURIComponent(selectedProblem.problemId)}`);
   };
 
+  // Only uploaded problems can be deleted; built-in ones live in data/problems under git.
+  const handleDeleteProblem = async () => {
+    const problemId = selectedProblem?.problemId;
+    if (!problemId) return;
+    try {
+      setDeleting(true);
+      await axios.delete(`${baseurl}/problems/${encodeURIComponent(problemId)}`);
+      setUpload({ severity: "success", text: `Deleted ${problemId}.` });
+      setSelectedProblemId("");
+      await fetchProblems();
+    } catch (err) {
+      setUpload({ severity: "error", text: err.response?.data?.message || `Could not delete ${problemId}.` });
+    } finally {
+      setDeleting(false);
+      setConfirmDeleteOpen(false);
+    }
+  };
+
   const handleToggleJson = () => {
     if (!selectedProblem?.problemId) return;
     const next = !showJson;
@@ -345,13 +370,25 @@ const Problems = () => {
                     <Typography variant="h5" className="problems-title">
                       {problemMeta?.name || selectedProblem.problemId}
                     </Typography>
-                    <Button
-                      variant="contained"
-                      onClick={handleUseProblem}
-                      className="problems-action primary"
-                    >
-                      Use In Schedule
-                    </Button>
+                    <Stack direction="row" gap={1}>
+                      {selectedProblem.uploaded && (
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          onClick={() => setConfirmDeleteOpen(true)}
+                          disabled={deleting}
+                        >
+                          Delete
+                        </Button>
+                      )}
+                      <Button
+                        variant="contained"
+                        onClick={handleUseProblem}
+                        className="problems-action primary"
+                      >
+                        Use In Schedule
+                      </Button>
+                    </Stack>
                   </Stack>
                   {(problemMeta?.description || selectedProblem.description) && (
                     <Typography variant="body2" color="text.secondary">
@@ -527,6 +564,24 @@ const Problems = () => {
             </CardContent>
           </Card>
         </Box>
+
+        <Dialog open={confirmDeleteOpen} onClose={() => !deleting && setConfirmDeleteOpen(false)}>
+          <DialogTitle>Delete problem</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Delete the uploaded problem "{selectedProblem?.problemId}"? Its files are removed from
+              data/problems/uploads. Schedules already generated from it are kept.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setConfirmDeleteOpen(false)} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button onClick={handleDeleteProblem} color="error" disabled={deleting}>
+              {deleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </div>
   );

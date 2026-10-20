@@ -94,7 +94,7 @@ class Heuristica:
 
 
     def __init__(self, vacations_rows, minimums_rows, employees,
-                 maxTime, year=2025, w_min=100, w_ideal=1, spacing=None, full=None, **kwargs):
+                 maxTime, year=2025, w_min=100, w_ideal=1, spacing=None, full=None, solver=None, **kwargs):
         """
         Weighted ILP scheduler.
 
@@ -112,6 +112,8 @@ class Heuristica:
         self.full = full
         if self.full is None:
             print("Warning: 'full' parameter not provided. Defaulting to False.")
+
+        self.preferred_solver = solver
 
         self.year = year
         self.shifts = 3
@@ -550,6 +552,8 @@ class Heuristica:
 
             else:
                 admissible[emp_id] = filtered
+
+            #print(f"Number of admissible patterns for employee {emp_id}: {len(admissible[emp_id])}")
             
             
             # No Pontuate, substituir o cap fixo por:
@@ -689,34 +693,38 @@ class Heuristica:
         
         # print(f"ILP model built in {medium_time:.2f} seconds. Starting solver...")
 
-        preferred_solver = os.environ.get("SCHEDULER_SOLVER", "CBC").upper()
+        preferred_solver = (self.preferred_solver or os.environ.get("SCHEDULER_SOLVER", "CBC")).upper()
 
         # timeLimit faz o CBC parar ao fim de N segundos e retornar
         # a melhor solução inteira encontrada até esse momento.
         solver = None
         if preferred_solver == "GUROBI":
-            try:
-                solver = pulp.GUROBI(
-                    msg=0,
-                    timeLimit=self.ILP_TIME_LIMIT_SECONDS,
-                    gapRel=0.02,
-                    Threads=8,
-                    Method=2,      # Barrier method
-                    Presolve=2     # Aggressive presolve
-                )
-                # print("Using GUROBI solver")
-            except Exception as exc:
-                print(f"GUROBI not available ({exc}), falling back to CBC")
+            license_file = os.environ.get("GRB_LICENSE_FILE")
+            if license_file and not os.path.exists(license_file):
+                print(f"GUROBI not available (license file not found at {license_file}), falling back to CBC")
+            else:
+                try:
+                    solver = pulp.GUROBI(
+                        msg=0,
+                        timeLimit=self.ILP_TIME_LIMIT_SECONDS,
+                        gapRel=0.02,
+                        Threads=8,
+                        Method=2,      # Barrier method
+                        Presolve=2     # Aggressive presolve
+                    )
+                    # print("Using GUROBI solver")
+                except Exception as exc:
+                    print(f"GUROBI not available ({exc}), falling back to CBC")
 
         if solver is None:
             solver = pulp.PULP_CBC_CMD(
-                msg=0,
+                msg=True,
                 timeLimit=self.ILP_TIME_LIMIT_SECONDS,
                 gapRel=0.02,   # para de procurar quando a melhoria possível for < 2% do objective
                 gapAbs=1.0,    # para de procurar quando a melhoria possível for < 1 unidade do objective
                 threads=4,      # força 1 thread para evitar problemas de concorrência
             )
-            print("Using CBC solver")
+            # print("Using CBC solver")
 
         # print(f"Number of variables: {len(model.variables())}, Number of constraints: {len(model.constraints)}")
         
@@ -726,7 +734,7 @@ class Heuristica:
             if not isinstance(solver, pulp.PULP_CBC_CMD):
                 print(f"Solver execution failed with {type(solver).__name__} ({exc}), retrying with CBC")
                 solver = pulp.PULP_CBC_CMD(
-                    msg=0,
+                    msg=True,
                     timeLimit=self.ILP_TIME_LIMIT_SECONDS,
                     gapRel=0.02,
                     gapAbs=1.0,
@@ -780,13 +788,13 @@ class Heuristica:
         Previous_weekrank = {f: None for f in employees}
 
         for week_index in range(weeks):
-            print(f"Week {week_index + 1}")
+            # print(f"Week {week_index + 1}")
 
             week_number    = week_index + 1
             week_start_day = week_index * self.spacing + 1 
             week_end_day   = min(week_start_day + self.spacing - 1, self.num_days)
 
-            print (f"Week {week_number}: days {week_start_day} to {week_end_day}")
+            # print (f"Week {week_number}: days {week_start_day} to {week_end_day}")
 
             sun_hol_offsets_week = set()
             
@@ -1293,7 +1301,7 @@ class Heuristica:
 
     def solve(
         self,
-        n_grasp_runs=1,
+        n_grasp_runs,
         record_history=True,
         history_file=None,
         note_file=None,
@@ -1310,15 +1318,25 @@ class Heuristica:
         self.best_solution_state = None
         self.best_solution_kpis = None
 
+        preprocess_start = time.time()
         self.build_ideals()
         self.exact_solution_state = self._capture_ideal_state()
+        preprocessing_time = time.time() - preprocess_start
+
+        self.preprocessing_time = preprocessing_time
 
         runs = max(1, int(n_grasp_runs or 1))
         best_score = None
 
         for run_index in range(1, runs + 1):
+            run_start_wall = time.time()
+
             self._restore_ideal_state(self.exact_solution_state)
+            postprocess_start = time.time()
             self.Pos_Weeks()
+            postprocessing_time = time.time() - postprocess_start
+
+            run_total_time = time.time() - run_start_wall
 
             kpis = self.evaluate_kpis()
             solution_state = self._capture_ideal_state()
@@ -1334,7 +1352,13 @@ class Heuristica:
             # NOVO: escrever esta run para ficheiro imediatamente
             if history_file:
                 with open(history_file, "a", encoding="utf-8") as fh:
-                    fh.write(f"Run {run_index}: missed_mins={kpis['missed_mins']}, missed_ideals={kpis['missed_ideals']}\n")
+                    fh.write(
+                        f"Run {run_index}: "
+                        f"postprocessing_seconds={postprocessing_time:.3f}, "
+                        f"total_run_seconds={run_total_time:.3f}, "
+                        f"missed_mins={kpis['missed_mins']}, "
+                        f"missed_ideals={kpis['missed_ideals']}\n"
+                    )
 
             
             score = (kpis["missed_mins"], kpis["missed_ideals"])
@@ -1453,16 +1477,16 @@ class Heuristica:
 # =============================================================================
 
 def solve(vacations=None, minimuns=None, employees=None, maxTime=None,
-          year=2021, hours=13, work_blocks=None, rules=None, runs_grasp=None, **kwargs):
+          year=2021, hours=13, work_blocks=None, rules=None, runs_grasp=3000, solver=None, **kwargs):
 
     max_seconds = int(maxTime * 60) if maxTime else 3600
     grasp_runs = runs_grasp or 1
     solution_history_path = kwargs.get("solution_history_path")
     history_file = kwargs.get("history_file") or kwargs.get("solution_history_path")
-    spacing_list = [3]
+    spacing_list = [2,3,4,5,6,7,8,9]
     if not history_file:
         history_file = str(Path.cwd() / "grasp_history.txt")
-    Full = False
+    Full = True
 
     # Limpar o ficheiro antes de começar
     Path(history_file).parent.mkdir(parents=True, exist_ok=True)
@@ -1497,7 +1521,8 @@ def solve(vacations=None, minimuns=None, employees=None, maxTime=None,
                 year=year,
                 shifts=hours,
                 spacing=spacing,
-                full=Full
+                full=Full,
+                solver=solver,
             )
 
             check_timeout()
@@ -1517,6 +1542,12 @@ def solve(vacations=None, minimuns=None, employees=None, maxTime=None,
                 ilp_time_summary_file=ilp_time_summary_file,
             )
             check_timeout()
+
+            with open(history_file, "a", encoding="utf-8") as fh:
+                fh.write(
+                    f"Spacing timings: preprocessing_seconds={scheduler.preprocessing_time:.3f}, "
+                    f"ilp_seconds={scheduler.total_ilp_time:.3f}\n"
+                )
 
             scheduler.export_ilp_time_summary(ilp_time_summary_file)
             n_weeks = len(scheduler.ilp_times_log)

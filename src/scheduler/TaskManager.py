@@ -199,7 +199,30 @@ class TaskManager:
             "Puzzle_Heuristic",
         ]
         if algorithm_name in algs_with_shifts:
-            if uses_rules:
+            if algorithm_name == "Puzzle_Heuristic":
+                if uses_rules:
+                    schedule_data = algorithm(
+                        vacations=vacations,
+                        minimuns=minimuns,
+                        employees=employees,
+                        maxTime=maxTime,
+                        year=year,
+                        hours=shifts,
+                        rules=rules_json,
+                        solver=solver,
+                    )
+                else:
+                    schedule_data = algorithm(
+                        vacations=vacations,
+                        minimuns=minimuns,
+                        employees=employees,
+                        maxTime=maxTime,
+                        year=year,
+                        hours=shifts,
+                        constraints=rules,
+                        solver=solver,
+                    )
+            elif uses_rules:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, rules=rules_json)
             else:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, constraints=rules)
