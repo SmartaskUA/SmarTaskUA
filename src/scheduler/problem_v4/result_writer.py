@@ -14,6 +14,7 @@ import json
 import shutil
 from pathlib import Path
 from typing import Dict, List, Tuple
+from datetime import date, datetime, time, timedelta
 
 from . import schema_core as core
 from .instance import REST_CODE, V4Instance
@@ -21,6 +22,8 @@ from .rows import parse_worked_cell
 
 RESULT_NAME = "result.json"
 SIDECAR_NAME = "result_schedules.csv"
+REST_DAY_TYPE = 3
+WORK_DAY_TYPE = 0
 
 
 class ResultError(ValueError):
@@ -80,7 +83,7 @@ def result_from_rows(inst: V4Instance, rows: List[List[str]]) -> Tuple[dict, Lis
                 "RosterCode": inst.roster_code,
                 "TeamCode": "1",
                 "EmployeeCode": employee.id,
-                "Date": f"{day}T00:00:00",
+                "Date": day,
                 "ScheduleCode": code,
                 "OutRosterTeamDayTasks": [],
                 "OutRosterTeamDayResponsibilities": [],
@@ -89,6 +92,30 @@ def result_from_rows(inst: V4Instance, rows: List[List[str]]) -> Tuple[dict, Lis
         raise ResultError(problems)
     return {"OutRosterTeamDays": entries}, [used[c] for c in sorted(used)]
 
+def sisqual_import(inst: V4Instance, rows: List[List[str]]) -> dict:
+    doc, used = result_from_rows(inst, rows)
+    first_day: Dict[int, str] = {}
+    for entry in doc["OutRosterTeamDays"]:
+        code = entry["ScheduleCode"]
+        first_day[code] = min(entry["Date"], first_day.get(code, entry["Date"]))
+
+    useds = []
+    for schedule in used:
+        if schedule.is_sentinel:
+            useds.append({"ScheduleCode": schedule.code, "DayType": REST_DAY_TYPE, "ScheduleWeight": 0})
+            continue
+        item = {"ScheduleCode": schedule.code, "DayType": WORK_DAY_TYPE,
+                "ScheduleWeight": schedule.weight_minutes}
+        if schedule.interval is not None:
+            day = date.fromisoformat(first_day[schedule.code])
+            item["StartDate1"] = _stamp(day, schedule.interval.start)
+            item["EndDate1"] = _stamp(day, schedule.interval.end)
+        useds.append(item)
+    return {**doc, "OutScheduleUseds": useds}
+
+
+def _stamp(day: date, minutes: int) -> str:
+    return (datetime.combine(day, time()) + timedelta(minutes=minutes)).isoformat()
 
 def _package_files(inst: V4Instance) -> List[str]:
     """problem.json and every CSV it names, relative to the package folder."""
