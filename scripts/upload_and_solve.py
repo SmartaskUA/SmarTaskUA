@@ -122,10 +122,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Upload a schema v4 package and solve it with one algorithm.")
     parser.add_argument("algorithm", nargs="?", default=None,
                         help="scheduler to run (default: the first one the API lists for the problem, ILP MD7)")
+    parser.add_argument("--zip", default="json_generation/schema_v4/examples/cenario2_partial.zip",
+                        help="path to the zipped schema v4 package (default: %(default)s)")
     args = parser.parse_args()
-    
+
     API_BASE = "http://localhost/api"  # Routes through Nginx to your Spring service
-    ZIP_PACKAGE = "json_generation/schema_v4/examples/cenario2_partial.zip" # Path to your zipped package
+    ZIP_PACKAGE = args.zip # Path to your zipped package
 
     # solve
     result = upload_and_solve(API_BASE, ZIP_PACKAGE, algorithm_name=args.algorithm)
