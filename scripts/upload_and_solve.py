@@ -3,14 +3,11 @@ import time
 from urllib.parse import quote
 import os
 import json
+import argparse
 
 # Endpoint to list all problems: http://localhost/api/problems
 
-def upload_and_solve(api_url, zip_file_path, algorithm_name="ILP General"):
-    """
-    1. Uploads the schema v4 ZIP package to register the problem.
-    2. Triggers the ILP scheduling algorithm on the registered problem ID.
-    """
+def upload_and_solve(api_url, zip_file_path, algorithm_name=None):
     # ---- STEP 1: UPLOAD ----
     upload_url = f"{api_url}/problems/upload"
     
@@ -38,7 +35,17 @@ def upload_and_solve(api_url, zip_file_path, algorithm_name="ILP General"):
             return None
             
         print(f"Problem successfully registered! ID: {problem_id}")
-        
+
+        algorithms = upload_data.get('algorithms') or []
+        if not algorithms:
+            print("The API lists no algorithm for this problem.")
+            return None
+        if algorithm_name is None:
+            algorithm_name = algorithms[0]
+        elif algorithm_name not in algorithms:
+            print(f"'{algorithm_name}' cannot solve this problem. Choose one of: {', '.join(algorithms)}")
+            return None
+
         # ---- STEP 2: SOLVE ----
         solve_url = f"{api_url}/problems/{problem_id}/solve"
         
@@ -112,11 +119,16 @@ def wait_for_schedule_and_download(api_url, task_id, check_interval_seconds=5, m
 
 # --- Example Usage ---
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Upload a schema v4 package and solve it with one algorithm.")
+    parser.add_argument("algorithm", nargs="?", default=None,
+                        help="scheduler to run (default: the first one the API lists for the problem, ILP MD7)")
+    args = parser.parse_args()
+    
     API_BASE = "http://localhost/api"  # Routes through Nginx to your Spring service
     ZIP_PACKAGE = "json_generation/schema_v4/examples/cenario2_partial.zip" # Path to your zipped package
 
     # solve
-    result = upload_and_solve(API_BASE, ZIP_PACKAGE, algorithm_name="ILP_Sisqual_Hours_MathematicalDefinition7")
+    result = upload_and_solve(API_BASE, ZIP_PACKAGE, algorithm_name=args.algorithm)
 
     # Run the polling loop right after your successful trigger
     if result:
