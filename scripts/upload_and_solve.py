@@ -4,8 +4,49 @@ from urllib.parse import quote
 import os
 import json
 import argparse
+import zipfile
 
 # Endpoint to list all problems: http://localhost/api/problems
+
+def read_zip_problem(zip_file_path):
+    """The input problem.json inside a v4 package ZIP (the .json whose form is "input")."""
+    with zipfile.ZipFile(zip_file_path) as z:
+        for name in z.namelist():
+            if name.endswith(".json"):
+                doc = json.loads(z.read(name))
+                if isinstance(doc, dict) and doc.get("form") == "input":
+                    return doc
+    return None
+
+
+def built_in_problem(api_url, zip_file_path):
+    """
+    The API's entry for the built-in problem this package's problemId names,
+    provided the package's problem.json is the same as the built-in one.
+    Only problem.json is compared, not the CSVs.
+    """
+    zip_problem = read_zip_problem(zip_file_path)
+    if zip_problem is None:
+        print("Could not find the input problem.json inside the ZIP.")
+        return None
+    problem_id = zip_problem.get("metadata", {}).get("problemId")
+
+    built_in = requests.get(f"{api_url}/problems/{quote(problem_id)}/json")
+    if built_in.status_code != 200:
+        print(f"Could not read the built-in problem {problem_id} ({built_in.status_code})")
+        return None
+    if built_in.json() != zip_problem:
+        print(f"Your ZIP's problem.json differs from the built-in problem {problem_id}; "
+              "give the package another metadata.problemId to upload it.")
+        return None
+
+    print(f"{problem_id} is already built into the API, so the upload is skipped and that copy is solved.")
+    entry = requests.get(f"{api_url}/problems/{quote(problem_id)}")
+    if entry.status_code != 200:
+        print(f"Could not read problem {problem_id} ({entry.status_code})")
+        return None
+    return entry.json()
+
 
 def upload_and_solve(api_url, zip_file_path, algorithm_name=None):
     # ---- STEP 1: UPLOAD ----
@@ -20,12 +61,17 @@ def upload_and_solve(api_url, zip_file_path, algorithm_name=None):
             print(f"Uploading package to {upload_url}...")
             upload_response = requests.post(upload_url, files=files, params=params)
             
-        if upload_response.status_code != 201:
+        if upload_response.status_code == 409 and "is built in" in upload_response.text:
+            # A built-in problem already holds this problemId; solve that copy instead
+            upload_data = built_in_problem(api_url, zip_file_path)
+            if upload_data is None:
+                return None
+        elif upload_response.status_code != 201:
             print(f"Upload failed ({upload_response.status_code}): {upload_response.text}")
             return None
-            
-        # Extract the problem ID from the successful upload response
-        upload_data = upload_response.json()
+        else:
+            # Extract the problem ID from the successful upload response
+            upload_data = upload_response.json()
         
         # NOTE: Verify the exact key name ('problemId' or 'id') returned by your packageImporter response 
         problem_id = upload_data.get('problemId') or upload_data.get('id')
