@@ -8,11 +8,15 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 VACATION_DIR = REPO_ROOT / "api/src/main/resources/vacationData"
+# 24/48/96 match the api/ templates byte for byte; 192 only exists here.
+VACATION_DIR_3SHIFTS = REPO_ROOT / "src/scheduler/algorithms/generators/data/vacationData_3shifts"
 MINIMUNS_DIR = REPO_ROOT / "api/src/main/resources/minimuns"
 OUT_DIR = REPO_ROOT / "data/problems"
 
 # (numTeams, numEmployees) — 2-shift scaling axis
 SCENARIOS = [(2, 12), (4, 24), (8, 48), (16, 96)]
+# (numTeams, numEmployees) — 3-shift scaling axis (12 primary + 2 cross per team)
+SCENARIOS_3SHIFTS = [(2, 24), (4, 48), (8, 96), (16, 192)]
 NUM_CASES = 4
 CROSS_RATIO = 0.20
 YEAR = 2025
@@ -22,6 +26,17 @@ MONTH_ABBR_PT = {
     "jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12,
 }
 SHIFT_ORDER = {"M": 0, "T": 1, "N": 2}
+
+SHIFTS_2 = [
+    {"code": "M", "name": "Morning", "order": 1,
+     "timeRange": {"start": "08:00", "end": "16:00"}},
+    {"code": "T", "name": "Afternoon", "order": 2,
+     "timeRange": {"start": "14:00", "end": "22:00"}},
+]
+SHIFTS_3 = SHIFTS_2 + [
+    {"code": "N", "name": "Night", "order": 3,
+     "timeRange": {"start": "22:00", "end": "06:00"}},
+]
 
 
 def team_letter(idx):
@@ -49,7 +64,8 @@ def build_employee_teams(num_teams, num_employees, cross_ratio=CROSS_RATIO):
     return emp_teams
 
 
-def build_problem_json(num_teams, num_employees, case_num, emp_teams):
+def build_problem_json(num_teams, num_employees, case_num, emp_teams,
+                       shifts=SHIFTS_2, name_prefix="SMARTASK"):
     teams_list = [team_letter(t) for t in range(num_teams)]
     employees = [
         {
@@ -61,7 +77,8 @@ def build_problem_json(num_teams, num_employees, case_num, emp_teams):
         for i in range(num_employees)
     ]
 
-    problem_id = f"SMARTASK_{num_teams}TEAMS_{num_employees}EMP_CASE{case_num}"
+    problem_id = f"{name_prefix}_{num_teams}TEAMS_{num_employees}EMP_CASE{case_num}"
+    shift_codes = "/".join(s["code"] for s in shifts)
     return {
         "schemaVersion": "2.2",
         "problemType": "employee_scheduling",
@@ -70,7 +87,7 @@ def build_problem_json(num_teams, num_employees, case_num, emp_teams):
             "createdAt": "2026-05-25T00:00:00Z",
             "description": (
                 f"{num_teams}-team / {num_employees}-employee scheduling scenario "
-                f"(2 shifts: M/T), vacation Case {case_num}. Round-robin primary "
+                f"({len(shifts)} shifts: {shift_codes}), vacation Case {case_num}. Round-robin primary "
                 f"assignment with 20% cross-membership from the next team (wrap). "
                 f"Generated from ScenarioSeeder.createScenarioWithCrossing."
             ),
@@ -100,12 +117,7 @@ def build_problem_json(num_teams, num_employees, case_num, emp_teams):
             "shiftModel": "fixed",
             "dataFile": "demand.csv",
             "organizationalUnits": {"teams": teams_list},
-            "shifts": [
-                {"code": "M", "name": "Morning", "order": 1,
-                 "timeRange": {"start": "08:00", "end": "16:00"}},
-                {"code": "T", "name": "Afternoon", "order": 2,
-                 "timeRange": {"start": "14:00", "end": "22:00"}},
-            ],
+            "shifts": shifts,
         },
         "constraints": {
             "hard": [
@@ -169,16 +181,17 @@ def convert_minimums_to_demand(minimums_path, out_path, year=YEAR):
                 writer.writerow([date.isoformat(), shift, team, m_val, i_val])
 
 
-def generate_all():
+def generate_all(scenarios=SCENARIOS, vacation_dir=VACATION_DIR,
+                 minimums_prefix="minimuns", shifts=SHIFTS_2, name_prefix="SMARTASK"):
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     written = []
-    for num_teams, num_employees in SCENARIOS:
+    for num_teams, num_employees in scenarios:
         emp_teams = build_employee_teams(num_teams, num_employees)
-        minimums_path = MINIMUNS_DIR / f"minimuns_{num_teams}teams_{num_employees}emp.csv"
+        minimums_path = MINIMUNS_DIR / f"{minimums_prefix}_{num_teams}teams_{num_employees}emp.csv"
         if not minimums_path.exists():
             print(f"[skip] missing minimums: {minimums_path}")
             continue
-        vac_template_dir = VACATION_DIR / f"{num_employees}_employees/templates"
+        vac_template_dir = vacation_dir / f"{num_employees}_employees/templates"
 
         for case_num in range(1, NUM_CASES + 1):
             vac_path = vac_template_dir / f"VacationTemplate_Case{case_num}_{num_employees}.csv"
@@ -187,10 +200,11 @@ def generate_all():
                 continue
 
             scenario_dir = (OUT_DIR /
-                            f"SMARTASK_{num_teams}TEAMS_{num_employees}EMP_CASE{case_num}")
+                            f"{name_prefix}_{num_teams}TEAMS_{num_employees}EMP_CASE{case_num}")
             scenario_dir.mkdir(parents=True, exist_ok=True)
 
-            problem = build_problem_json(num_teams, num_employees, case_num, emp_teams)
+            problem = build_problem_json(num_teams, num_employees, case_num, emp_teams,
+                                         shifts, name_prefix)
             with open(scenario_dir / "problem.json", "w") as f:
                 json.dump(problem, f, indent=2)
 
@@ -201,6 +215,17 @@ def generate_all():
             print(f"[ok] {scenario_dir.name}")
 
     print(f"\nGenerated {len(written)} scenario folder(s) under {OUT_DIR}")
+
+
+def generate_3shifts():
+    """3-shift (M/T/N) scenarios. Same round-robin + 20% cross layout, with
+    employees doubled vs the 2-shift axis (12 primary + 2 cross per team).
+
+    The minimums give a minimum-shortfall floor > 0 everywhere: special-day
+    minimum demand exceeds 22 * employees (e.g. 631 vs 528 for 2 teams).
+    """
+    generate_all(SCENARIOS_3SHIFTS, VACATION_DIR_3SHIFTS, "minimuns_3shifts",
+                 SHIFTS_3, "SMARTASK_3SHIFTS")
 
 
 SIMPLE_NAME = "SMARTASK_SIMPLE_2025"
@@ -243,4 +268,5 @@ def generate_simple_cases():
 
 if __name__ == "__main__":
     generate_all()
+    generate_3shifts()
     generate_simple_cases()
