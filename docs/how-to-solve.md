@@ -18,7 +18,8 @@ A sixth, `ga-legacy` (`Genetic Algorithm Legacy v4`), solves one kind of package
 (`data/problems/SMARTASK_*`) rewritten in v4 as `data/problems/V4_SMARTASK_*` by
 `data/problems/convert_legacy_to_v4.py`. There the solver chooses every working day (exactly 223 a year, at most
 22 Sundays and holidays). The unchanged `ga.py`/`ga3.py` does this, and the five solvers above do not. `all` leaves
-it out, and it refuses any other package:
+it out, and it refuses any other package. The web app offers it, as *Genetic Algorithm (legacy shifts)*, on
+`V4_SMARTASK_*` problems only (the API recognises them by their `AVL` day-off code):
 
 ```bash
 cd src
