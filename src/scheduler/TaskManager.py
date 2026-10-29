@@ -51,7 +51,6 @@ from algorithms.sisqual_export import build_sisqual_import_json
 from algorithms.sisqual_hours_utils import load_problem_json
 from algorithms.Hybrid_Heuristic_Sisqual_Levels_Included import solve as hybrid_heuristic_sisqual_solver
 from algorithms.Hybrid_Heuristic_Sisqual_No_Levels_Included import solve as hybrid_heuristic_sisqual_3_solver
-from algorithms.Puzzle_Sisqual import solve as puzzle_sisqual_solver
 from algorithms.GA.ga_v4 import solve as ga_v4_solver
 from problem_v4 import ResultError, SolveDirectives, evaluate as evaluate_v4, fixed_days as fixed_days_v4, sisqual_import as sisqual_import_v4
 from problem_v4.runtime import load_for_solver
@@ -119,7 +118,6 @@ class TaskManager:
             "Puzzle_Heuristic": puzzle_heuristic_solver,
             "Hybrid_Heuristic_Sisqual_Levels_Included": hybrid_heuristic_sisqual_solver,
             "Hybrid_Heuristic_Sisqual_3": hybrid_heuristic_sisqual_3_solver,
-            "Puzzle_Sisqual": puzzle_sisqual_solver,
             "Genetic Algorithm v4": ga_v4_solver,
         }
 
@@ -253,7 +251,6 @@ class TaskManager:
         elif algorithm_name in [
             "ILP_Sisqual_Hours",
             "CSP_Sisqual_Hours",
-            "Puzzle_Sisqual"
         ]:
             # Request the solver to print the returned rows as JSON so the
             # container logs contain the schedule payload sent to the frontend.
