@@ -14,6 +14,7 @@ import json
 import shutil
 from pathlib import Path
 from typing import Dict, List, Tuple
+from datetime import date, datetime, time, timedelta
 
 from . import schema_core as core
 from .instance import REST_CODE, V4Instance
@@ -21,6 +22,11 @@ from .rows import parse_worked_cell
 
 RESULT_NAME = "result.json"
 SIDECAR_NAME = "result_schedules.csv"
+REST_DAY_TYPE = 3
+WORK_DAY_TYPE = 0
+TEAM_AXIS = "Team"
+RESPONSIBILITY_AXIS = "Responsibility"
+DEFAULT_TEAM_CODE = "T1"
 
 
 class ResultError(ValueError):
@@ -57,11 +63,16 @@ def result_from_rows(inst: V4Instance, rows: List[List[str]]) -> Tuple[dict, Lis
             continue
         for day, cell in zip(inst.days, row[1:]):
             key = (employee.id, day)
+            teams = _axis_values(employee.skills.get(day, {}), TEAM_AXIS)
+            if len(teams) > 1:
+                problems.append(f"{employee.id} on {day}: holds teams {', '.join(teams)}, "
+                                "so its TeamCode is ambiguous")
+                continue
+            segments = parse_worked_cell(cell)
             if key in inst.fixed:
                 code = inst.fixed[key].code
                 schedule = inst.menu[code]
             else:
-                segments = parse_worked_cell(cell)
                 if segments:
                     start, end = segments[0][0], segments[-1][1]
                     code = by_interval.get((start, end))
@@ -76,19 +87,56 @@ def result_from_rows(inst: V4Instance, rows: List[List[str]]) -> Tuple[dict, Lis
                 else:
                     code, schedule = rest.code, rest
             used[code] = schedule
+            # The responsibilities the worker covers in any slot of the day, once each
+            covered = [] if schedule.is_sentinel or not segments else \
+                _axis_values((s for _, _, skills in segments for s in skills), RESPONSIBILITY_AXIS)
             entries.append({
                 "RosterCode": inst.roster_code,
-                "TeamCode": "1",
+                "TeamCode": teams[0] if teams else DEFAULT_TEAM_CODE,
                 "EmployeeCode": employee.id,
-                "Date": f"{day}T00:00:00",
+                "Date": day,
                 "ScheduleCode": code,
                 "OutRosterTeamDayTasks": [],
-                "OutRosterTeamDayResponsibilities": [],
+                "OutRosterTeamDayResponsibilities": [{"ResponsibilityCode": r} for r in covered],
             })
     if problems:
         raise ResultError(problems)
     return {"OutRosterTeamDays": entries}, [used[c] for c in sorted(used)]
 
+
+def _axis_values(skills, axis: str) -> List[str]:
+    """The tableValues of one axis among skills like "Team/T1", in first-seen order, each once."""
+    prefix = axis + "/"
+    values: List[str] = []
+    for skill in skills:
+        if skill.startswith(prefix) and skill[len(prefix):] not in values:
+            values.append(skill[len(prefix):])
+    return values
+
+def sisqual_import(inst: V4Instance, rows: List[List[str]]) -> dict:
+    doc, used = result_from_rows(inst, rows)
+    first_day: Dict[int, str] = {}
+    for entry in doc["OutRosterTeamDays"]:
+        code = entry["ScheduleCode"]
+        first_day[code] = min(entry["Date"], first_day.get(code, entry["Date"]))
+
+    useds = []
+    for schedule in used:
+        if schedule.is_sentinel:
+            useds.append({"ScheduleCode": schedule.code, "DayType": REST_DAY_TYPE, "ScheduleWeight": 0})
+            continue
+        item = {"ScheduleCode": schedule.code, "DayType": WORK_DAY_TYPE,
+                "ScheduleWeight": schedule.weight_minutes}
+        if schedule.interval is not None:
+            day = date.fromisoformat(first_day[schedule.code])
+            item["StartDate1"] = _stamp(day, schedule.interval.start)
+            item["EndDate1"] = _stamp(day, schedule.interval.end)
+        useds.append(item)
+    return {**doc, "OutScheduleUseds": useds}
+
+
+def _stamp(day: date, minutes: int) -> str:
+    return (datetime.combine(day, time()) + timedelta(minutes=minutes)).isoformat()
 
 def _package_files(inst: V4Instance) -> List[str]:
     """problem.json and every CSV it names, relative to the package folder."""

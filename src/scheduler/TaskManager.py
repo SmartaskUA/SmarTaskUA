@@ -51,14 +51,13 @@ from algorithms.sisqual_export import build_sisqual_import_json
 from algorithms.sisqual_hours_utils import load_problem_json
 from algorithms.Hybrid_Heuristic_Sisqual_Levels_Included import solve as hybrid_heuristic_sisqual_solver
 from algorithms.Hybrid_Heuristic_Sisqual_No_Levels_Included import solve as hybrid_heuristic_sisqual_3_solver
-from algorithms.Puzzle_Sisqual import solve as puzzle_sisqual_solver
 from algorithms.GA.ga_v4 import solve as ga_v4_solver
 from algorithms.GA.legacy_v4 import solve as ga_legacy_v4_solver
-from problem_v4 import ResultError, SolveDirectives, evaluate as evaluate_v4, fixed_days as fixed_days_v4, result_from_rows
+from problem_v4 import ResultError, SolveDirectives, evaluate as evaluate_v4, fixed_days as fixed_days_v4, sisqual_import as sisqual_import_v4
 from problem_v4.runtime import load_for_solver
 
 # Solvers that read schema v4 packages through problem_v4 (the one v4 parser).
-# They are scored by problem_v4.evaluate and exported by result_from_rows, so
+# They are scored by problem_v4.evaluate and exported by sisqual_import_v4, so
 # none of the v2.2 validator, monthly runner, KPI evaluator or export applies.
 V4_ALGORITHMS = {
     "ILP_Sisqual_Hours_MathematicalDefinition7",
@@ -121,7 +120,6 @@ class TaskManager:
             "Puzzle_Heuristic": puzzle_heuristic_solver,
             "Hybrid_Heuristic_Sisqual_Levels_Included": hybrid_heuristic_sisqual_solver,
             "Hybrid_Heuristic_Sisqual_3": hybrid_heuristic_sisqual_3_solver,
-            "Puzzle_Sisqual": puzzle_sisqual_solver,
             "Genetic Algorithm v4": ga_v4_solver,
             "Genetic Algorithm Legacy v4": ga_legacy_v4_solver,
         }
@@ -203,7 +201,30 @@ class TaskManager:
             "Puzzle_Heuristic",
         ]
         if algorithm_name in algs_with_shifts:
-            if uses_rules:
+            if algorithm_name == "Puzzle_Heuristic":
+                if uses_rules:
+                    schedule_data = algorithm(
+                        vacations=vacations,
+                        minimuns=minimuns,
+                        employees=employees,
+                        maxTime=maxTime,
+                        year=year,
+                        hours=shifts,
+                        rules=rules_json,
+                        solver=solver,
+                    )
+                else:
+                    schedule_data = algorithm(
+                        vacations=vacations,
+                        minimuns=minimuns,
+                        employees=employees,
+                        maxTime=maxTime,
+                        year=year,
+                        hours=shifts,
+                        constraints=rules,
+                        solver=solver,
+                    )
+            elif uses_rules:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, rules=rules_json)
             else:
                 schedule_data = algorithm(vacations=vacations, minimuns=minimuns, employees=employees, maxTime=maxTime, year=year, shifts=shifts, constraints=rules)
@@ -227,14 +248,13 @@ class TaskManager:
             kpis["open_days"] = decided["open_days"]
             extra_metadata = {"fixedDays": decided["fixed"]}
             try:
-                sisqual_export = result_from_rows(inst, schedule_data)[0]
+                sisqual_export = sisqual_import_v4(inst, schedule_data)
             except ResultError as e:
                 print(f"[TaskManager] v4 result export failed: {e}")
                 sisqual_export = None
         elif algorithm_name in [
             "ILP_Sisqual_Hours",
             "CSP_Sisqual_Hours",
-            "Puzzle_Sisqual"
         ]:
             # Request the solver to print the returned rows as JSON so the
             # container logs contain the schedule payload sent to the frontend.
