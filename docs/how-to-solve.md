@@ -33,7 +33,8 @@ python -m scheduler solve ../data/problems/V4_SMARTASK_SIMPLE_2025 -a ga-legacy 
    A package whose `problemId` already exists as an upload is offered *Replace*.
 2. *Use In Schedule* → **Generate Schedule**: pick an algorithm and a time limit → *Generate*.
 3. **Schedule** lists the run. Open it for the hourly calendar, the KPIs and *Download Sisqual JSON*
-   (the v4 `result.json`).
+   (what WFM imports: worked days as start/end times, rests as a code; see
+   [What goes to WFM](../json_generation/schema_v4/docs/FORMAT.md#what-goes-to-wfm)).
 
 Uploads land in `data/problems/uploads/<problemId>/`. The same flow over HTTP:
 `POST /api/problems/upload` (multipart `file`), then `POST /api/problems/{problemId}/solve`

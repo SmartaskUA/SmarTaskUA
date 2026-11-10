@@ -22,8 +22,6 @@ from .rows import parse_worked_cell
 
 RESULT_NAME = "result.json"
 SIDECAR_NAME = "result_schedules.csv"
-REST_DAY_TYPE = 3
-WORK_DAY_TYPE = 0
 TEAM_AXIS = "Team"
 RESPONSIBILITY_AXIS = "Responsibility"
 DEFAULT_TEAM_CODE = "T1"
@@ -61,13 +59,9 @@ def result_from_rows(inst: V4Instance, rows: List[List[str]]) -> Tuple[dict, Lis
         if row is None:
             problems.append(f"no row for employee {employee.id}")
             continue
+        team_of_day = _team_codes(inst, employee, row[1:])
         for day, cell in zip(inst.days, row[1:]):
             key = (employee.id, day)
-            teams = _axis_values(employee.skills.get(day, {}), TEAM_AXIS)
-            if len(teams) > 1:
-                problems.append(f"{employee.id} on {day}: holds teams {', '.join(teams)}, "
-                                "so its TeamCode is ambiguous")
-                continue
             segments = parse_worked_cell(cell)
             if key in inst.fixed:
                 code = inst.fixed[key].code
@@ -92,7 +86,7 @@ def result_from_rows(inst: V4Instance, rows: List[List[str]]) -> Tuple[dict, Lis
                 _axis_values((s for _, _, skills in segments for s in skills), RESPONSIBILITY_AXIS)
             entries.append({
                 "RosterCode": inst.roster_code,
-                "TeamCode": teams[0] if teams else DEFAULT_TEAM_CODE,
+                "TeamCode": team_of_day[day],
                 "EmployeeCode": employee.id,
                 "Date": day,
                 "ScheduleCode": code,
@@ -113,30 +107,65 @@ def _axis_values(skills, axis: str) -> List[str]:
             values.append(skill[len(prefix):])
     return values
 
-def sisqual_import(inst: V4Instance, rows: List[List[str]]) -> dict:
-    doc, used = result_from_rows(inst, rows)
-    first_day: Dict[int, str] = {}
-    for entry in doc["OutRosterTeamDays"]:
-        code = entry["ScheduleCode"]
-        first_day[code] = min(entry["Date"], first_day.get(code, entry["Date"]))
 
-    useds = []
-    for schedule in used:
-        if schedule.is_sentinel:
-            useds.append({"ScheduleCode": schedule.code, "DayType": REST_DAY_TYPE, "ScheduleWeight": 0})
+def _team_codes(inst: V4Instance, employee, cells: List[str]) -> Dict[str, str]:
+    """day -> TeamCode for one employee. WFM wants one on every day, rests included,
+    because it is the roster line the day sits on. A worked day takes the team of
+    the shift; any other day the team the employee holds, or, holding several, the
+    team of the nearest worked day."""
+    worked: Dict[int, str] = {}
+    for i, cell in enumerate(cells):
+        segments = parse_worked_cell(cell) or []
+        teams = _axis_values((s for _, _, skills in segments for s in skills), TEAM_AXIS)
+        if teams:
+            worked[i] = teams[0]
+    out: Dict[str, str] = {}
+    for i, day in enumerate(inst.days):
+        held = _axis_values(employee.skills.get(day, {}), TEAM_AXIS)
+        if i in worked:
+            out[day] = worked[i]
+        elif len(held) > 1 and worked:
+            out[day] = worked[min(worked, key=lambda j: (abs(j - i), j))]
+        else:
+            out[day] = held[0] if held else DEFAULT_TEAM_CODE
+    return out
+
+
+def sisqual_import(inst: V4Instance, rows: List[List[str]]) -> dict:
+    """The payload WFM imports: `result_from_rows` with each worked day given as
+    ScheduleStartDate/ScheduleEndDate instead of our ScheduleCode, since our codes
+    are not WFM's and WFM creates a schedule it does not know. A rest keeps its
+    ScheduleCode. No OutScheduleUseds, which WFM dropped in November 2026."""
+    doc, _ = result_from_rows(inst, rows)
+    cells = {str(row[0]): dict(zip(inst.days, row[1:])) for row in rows[1:]}
+    days = []
+    for entry in doc["OutRosterTeamDays"]:
+        schedule = inst.menu.get(entry["ScheduleCode"])
+        if schedule is None or schedule.is_sentinel:
+            days.append(entry)
             continue
-        item = {"ScheduleCode": schedule.code, "DayType": WORK_DAY_TYPE,
-                "ScheduleWeight": schedule.weight_minutes}
-        if schedule.interval is not None:
-            day = date.fromisoformat(first_day[schedule.code])
-            item["StartDate1"] = _stamp(day, schedule.interval.start)
-            item["EndDate1"] = _stamp(day, schedule.interval.end)
-        useds.append(item)
-    return {**doc, "OutScheduleUseds": useds}
+        # The hours the solver wrote; a fixed day without them takes its code's interval
+        segments = parse_worked_cell(cells[entry["EmployeeCode"]][entry["Date"]])
+        start, end = (segments[0][0], segments[-1][1]) if segments else \
+            (schedule.interval.start, schedule.interval.end)
+        day = date.fromisoformat(entry["Date"])
+        days.append({
+            "RosterCode": entry["RosterCode"],
+            "TeamCode": entry["TeamCode"],
+            "EmployeeCode": entry["EmployeeCode"],
+            "Date": entry["Date"],
+            "ScheduleStartDate": _stamp(day, start),
+            "ScheduleEndDate": _stamp(day, end),
+            "OutRosterTeamDayTasks": entry["OutRosterTeamDayTasks"],
+            "OutRosterTeamDayResponsibilities": entry["OutRosterTeamDayResponsibilities"],
+        })
+    return {"OutRosterTeamDays": days}
 
 
 def _stamp(day: date, minutes: int) -> str:
+    """Midnight of `day` plus `minutes`; past 1440 lands on the next day."""
     return (datetime.combine(day, time()) + timedelta(minutes=minutes)).isoformat()
+
 
 def _package_files(inst: V4Instance) -> List[str]:
     """problem.json and every CSV it names, relative to the package folder."""

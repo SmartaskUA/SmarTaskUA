@@ -241,3 +241,13 @@ make validate DIR=result.json
 ```
 
 Without a problem to resolve against, the validator runs the schema layer only and **warns** that the cross-checks were skipped.
+
+### What goes to WFM
+
+`result.json` names every day by `ScheduleCode`, because it is also an input (a partial result's fixed days) and the validator resolves codes against the menu. WFM does not get it as is: since SISQUAL's import change of 2026-11-07, the payload the scheduler sends (`sisqual_import` in `src/scheduler/problem_v4/result_writer.py`, the web app's *Download Sisqual JSON*) differs in three ways:
+
+- a **worked day** carries `ScheduleStartDate`/`ScheduleEndDate` (`YYYY-MM-DDTHH:MM:SS`, the hours the solver wrote) instead of a code. Our menu codes are not WFM's, and WFM creates a schedule it does not know. A night shift ends on the next date;
+- a **rest** keeps its `ScheduleCode` (1, 3 or 4);
+- there is **no `OutScheduleUseds`**: WFM dropped it.
+
+`TeamCode` is on every day, rests included: WFM requires it, because it is the roster line the day sits on. A worked day takes the shift's team; an employee who holds several teams takes, on a rest, the team of the nearest worked day. `ScheduleBreakStartDate`/`ScheduleBreakEndDate` are not written yet: no solver places meal breaks.
