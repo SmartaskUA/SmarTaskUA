@@ -55,6 +55,7 @@ const V4_ALGORITHM_LABELS = {
   Hybrid_Heuristic_Sisqual_Levels_Included: "Hybrid Heuristic (with levels)",
   Hybrid_Heuristic_Sisqual_3: "Hybrid Heuristic",
   "Genetic Algorithm v4": "Genetic Algorithm",
+  "Genetic Algorithm Legacy v4": "Genetic Algorithm (legacy shifts)",
 };
 
 const isV4Problem = (problemJson) => problemJson?.schemaVersion === "4.0";

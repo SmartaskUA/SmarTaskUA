@@ -1,0 +1,1214 @@
+{
+  "schemaVersion": "4.0",
+  "form": "input",
+  "problemType": "employee_scheduling",
+  "metadata": {
+    "problemId": "V4_SMARTASK_3SHIFTS_4TEAMS_2025",
+    "createdAt": "2026-10-15T16:37:13Z",
+    "description": "4-team 3-shift scheduling problem. 48 unique employees: 11 primary per team (round-robin), 4 dual-team members (1 per adjacent team pair A-B, B-C, C-D, D-A).",
+    "source": "SMARTASK_3SHIFTS_4TEAMS_2025 (schema 2.2), by data/problems/convert_legacy_to_v4.py",
+    "rosterCode": "SMARTASK_3SHIFTS_4TEAMS_2025"
+  },
+  "timeGrid": {
+    "slotMinutes": 120
+  },
+  "temporalScope": {
+    "start": "2025-01-01",
+    "end": "2025-12-31"
+  },
+  "calendar": {
+    "weekStart": "monday",
+    "holidays": [
+      {
+        "date": "2025-01-01",
+        "code": "PT1",
+        "name": "Ano Novo",
+        "hasEve": false
+      },
+      {
+        "date": "2025-04-18",
+        "code": "PT2",
+        "name": "Sexta-feira Santa",
+        "hasEve": false
+      },
+      {
+        "date": "2025-04-20",
+        "code": "PT3",
+        "name": "Páscoa",
+        "hasEve": false
+      },
+      {
+        "date": "2025-04-25",
+        "code": "PT4",
+        "name": "Dia da Liberdade",
+        "hasEve": false
+      },
+      {
+        "date": "2025-05-01",
+        "code": "PT5",
+        "name": "Dia do Trabalhador",
+        "hasEve": false
+      },
+      {
+        "date": "2025-06-10",
+        "code": "PT6",
+        "name": "Dia de Portugal, de Camões e das Comunidades Portuguesas",
+        "hasEve": false
+      },
+      {
+        "date": "2025-06-19",
+        "code": "PT7",
+        "name": "Corpo de Deus",
+        "hasEve": false
+      },
+      {
+        "date": "2025-08-15",
+        "code": "PT8",
+        "name": "Assunção de Nossa Senhora",
+        "hasEve": false
+      },
+      {
+        "date": "2025-10-05",
+        "code": "PT9",
+        "name": "Implantação da República",
+        "hasEve": false
+      },
+      {
+        "date": "2025-11-01",
+        "code": "PT10",
+        "name": "Dia de Todos os Santos",
+        "hasEve": false
+      },
+      {
+        "date": "2025-12-01",
+        "code": "PT11",
+        "name": "Restauração da Independência",
+        "hasEve": false
+      },
+      {
+        "date": "2025-12-08",
+        "code": "PT12",
+        "name": "Imaculada Conceição",
+        "hasEve": false
+      },
+      {
+        "date": "2025-12-25",
+        "code": "PT13",
+        "name": "Dia de Natal",
+        "hasEve": false
+      }
+    ]
+  },
+  "contracts": {
+    "definitions": [
+      {
+        "id": "fullTime_8h",
+        "name": "Full-time 8h",
+        "workMinutesPerDay": 480,
+        "constraints": {
+          "totalYearMinutes": 107040
+        }
+      }
+    ]
+  },
+  "employees": {
+    "list": [
+      {
+        "id": "Employee 1",
+        "name": "Employee 1",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "A",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          },
+          {
+            "tableName": "Team",
+            "tableValue": "D",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 2",
+        "name": "Employee 2",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "B",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          },
+          {
+            "tableName": "Team",
+            "tableValue": "A",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 3",
+        "name": "Employee 3",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "C",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          },
+          {
+            "tableName": "Team",
+            "tableValue": "B",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 4",
+        "name": "Employee 4",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "D",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          },
+          {
+            "tableName": "Team",
+            "tableValue": "C",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 5",
+        "name": "Employee 5",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "A",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          },
+          {
+            "tableName": "Team",
+            "tableValue": "D",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 6",
+        "name": "Employee 6",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "B",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          },
+          {
+            "tableName": "Team",
+            "tableValue": "A",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 7",
+        "name": "Employee 7",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "C",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          },
+          {
+            "tableName": "Team",
+            "tableValue": "B",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 8",
+        "name": "Employee 8",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "D",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          },
+          {
+            "tableName": "Team",
+            "tableValue": "C",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 9",
+        "name": "Employee 9",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "A",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 10",
+        "name": "Employee 10",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "B",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 11",
+        "name": "Employee 11",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "C",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 12",
+        "name": "Employee 12",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "D",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 13",
+        "name": "Employee 13",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "A",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 14",
+        "name": "Employee 14",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "B",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 15",
+        "name": "Employee 15",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "C",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 16",
+        "name": "Employee 16",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "D",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 17",
+        "name": "Employee 17",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "A",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 18",
+        "name": "Employee 18",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "B",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 19",
+        "name": "Employee 19",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "C",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 20",
+        "name": "Employee 20",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "D",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 21",
+        "name": "Employee 21",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "A",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 22",
+        "name": "Employee 22",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "B",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 23",
+        "name": "Employee 23",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "C",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 24",
+        "name": "Employee 24",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "D",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 25",
+        "name": "Employee 25",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "A",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 26",
+        "name": "Employee 26",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "B",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 27",
+        "name": "Employee 27",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "C",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 28",
+        "name": "Employee 28",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "D",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 29",
+        "name": "Employee 29",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "A",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 30",
+        "name": "Employee 30",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "B",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 31",
+        "name": "Employee 31",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "C",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 32",
+        "name": "Employee 32",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "D",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 33",
+        "name": "Employee 33",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "A",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 34",
+        "name": "Employee 34",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "B",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 35",
+        "name": "Employee 35",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "C",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 36",
+        "name": "Employee 36",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "D",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 37",
+        "name": "Employee 37",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "A",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 38",
+        "name": "Employee 38",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "B",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 39",
+        "name": "Employee 39",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "C",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 40",
+        "name": "Employee 40",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "D",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 41",
+        "name": "Employee 41",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "A",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 42",
+        "name": "Employee 42",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "B",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 43",
+        "name": "Employee 43",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "C",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 44",
+        "name": "Employee 44",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "D",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 45",
+        "name": "Employee 45",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "A",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 46",
+        "name": "Employee 46",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "B",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 47",
+        "name": "Employee 47",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "C",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      },
+      {
+        "id": "Employee 48",
+        "name": "Employee 48",
+        "contractAssignments": [
+          {
+            "contractType": "fullTime_8h",
+            "start": "2025-01-01",
+            "end": null
+          }
+        ],
+        "competencyAssignments": [
+          {
+            "tableName": "Team",
+            "tableValue": "D",
+            "level": 1,
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          }
+        ]
+      }
+    ]
+  },
+  "demand": {
+    "dimensions": [
+      {
+        "tableName": "Team",
+        "tableValue": "A",
+        "name": "Team A"
+      },
+      {
+        "tableName": "Team",
+        "tableValue": "B",
+        "name": "Team B"
+      },
+      {
+        "tableName": "Team",
+        "tableValue": "C",
+        "name": "Team C"
+      },
+      {
+        "tableName": "Team",
+        "tableValue": "D",
+        "name": "Team D"
+      }
+    ],
+    "dataFileDays": "days_demand.csv",
+    "dataFilePeriods": "periods_demand.csv",
+    "dataFileShifts": "shifts_demand.csv"
+  },
+  "scheduleInput": {
+    "dataFile": "schedule_input.csv",
+    "dayOffCodes": {
+      "VAC": {
+        "kind": "unavailable",
+        "name": "Vacation",
+        "description": "Vacation - cannot work"
+      },
+      "AVL": {
+        "kind": "optional",
+        "name": "Available",
+        "description": "The solver decides whether this day is worked"
+      }
+    }
+  },
+  "schedules": {
+    "dataFile": "schedules.csv"
+  },
+  "constraints": {
+    "hard": [
+      {
+        "id": "legacy-rules",
+        "type": "RosterLegislation",
+        "parameters": {
+          "MaxConsecutiveWorkDays": 5,
+          "MaxSpecialDays": 22,
+          "MinDistanceBetweenShiftsInMinutes": 660
+        },
+        "startDate": "2025-01-01T00:00:00",
+        "enabled": true
+      }
+    ],
+    "soft": [
+      {
+        "id": "min-coverage",
+        "type": "min_coverage",
+        "weight": 100,
+        "parameters": {
+          "penalty_per_missing": 100
+        },
+        "enabled": true
+      },
+      {
+        "id": "ideal-coverage",
+        "type": "ideal_coverage",
+        "weight": 1,
+        "parameters": {
+          "penalty_per_missing": 1
+        },
+        "enabled": true
+      }
+    ]
+  }
+}

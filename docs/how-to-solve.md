@@ -14,13 +14,27 @@ Five solvers read v4. They all solve the same model and are scored the same way:
 | `hybrid-levels` | `Hybrid_Heuristic_Sisqual_Levels_Included` | greedy, prefers higher-priority skills |
 | `ga` | `Genetic Algorithm v4` | genetic algorithm |
 
+A sixth, `ga-legacy` (`Genetic Algorithm Legacy v4`), solves one kind of package only: the old shift problems
+(`data/problems/SMARTASK_*`) rewritten in v4 as `data/problems/V4_SMARTASK_*` by
+`data/problems/convert_legacy_to_v4.py`. There the solver chooses every working day (exactly 223 a year, at most
+22 Sundays and holidays). The unchanged `ga.py`/`ga3.py` does this, and the five solvers above do not. `all` leaves
+it out, and it refuses any other package. The web app offers it, as *Genetic Algorithm (legacy shifts)*, on
+`V4_SMARTASK_*` problems only (the API recognises them by their `AVL` day-off code):
+
+```bash
+cd src
+python -m scheduler solve ../data/problems/V4_SMARTASK_SIMPLE_2025 -a ga-legacy
+python -m scheduler solve ../data/problems/V4_SMARTASK_SIMPLE_2025 -a ga-legacy --param num_generations=50   # quick run
+```
+
 ## From the web app
 
 1. **Problems** → *Upload v4 package (.zip)* with the wizard's ZIP (or pick a listed v4 problem).
    A package whose `problemId` already exists as an upload is offered *Replace*.
 2. *Use In Schedule* → **Generate Schedule**: pick an algorithm and a time limit → *Generate*.
 3. **Schedule** lists the run. Open it for the hourly calendar, the KPIs and *Download Sisqual JSON*
-   (the v4 `result.json`).
+   (what WFM imports: worked days as start/end times, rests as a code; see
+   [What goes to WFM](../json_generation/schema_v4/docs/FORMAT.md#what-goes-to-wfm)).
 
 Uploads land in `data/problems/uploads/<problemId>/`. The same flow over HTTP:
 `POST /api/problems/upload` (multipart `file`), then `POST /api/problems/{problemId}/solve`

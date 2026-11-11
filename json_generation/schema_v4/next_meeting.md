@@ -139,6 +139,20 @@ This is the same defect that forced v2.6 → v3.0 on our side. **Until you agree
 
 **17. And the decimal comma should go with it.** Even if cells stay hours, writing `7.2` rather than `"7,2"` removes a locale dependency and a quoting rule.
 
+**33. Problems where the solver chooses the days off.** *(Added after 32, out of order, so no reference to an earlier item has to be renumbered.)*
+
+Our earlier problems (`SMARTASK_*`) state the opposite of Cenário 2: nobody is told which days to work. The solver chooses them, under rules that count over the whole year — exactly 223 days, at most 22 of them Sundays or holidays, at most 5 in any 6, no earlier shift the day after a later one. Vacations are the only days fixed in advance. This is the case item 7 says the schema cannot express ("a solver asked to *choose* the days off could not honour the contract"). We want to run these problems, and the genetic algorithm built for them, through WFM unchanged, so we propose three additions. Each has a consumer: that algorithm reads all three.
+
+| addition | where | what it says |
+|---|---|---|
+| `dayOffCodes` kind **`optional`** (we write the cell `AVL`, "available") | `scheduleInput` | the solver decides whether the day is worked, at no cost either way. `preferable` does not fit: working it is penalised, and a `DO` keeps its week's working-day count (item 31) |
+| `constraints.totalYearMinutes` | `contracts.definitions[]` | your `TotalYearMinutes` (item 22). 223 days × 480 = `107040`. **We read it as an exact target, not a cap** — is that your meaning? |
+| `MaxSpecialDays` | `constraints.hard[].parameters` | the most Sundays and `calendar.holidays` one employee may work. None of the 17 `InpContractCollection` fields counts these (`WeightHoliday*` are lengths), so it sits beside `MaxConsecutiveWorkDays`. Do you have a native name for it? |
+
+The other two rules need nothing new: "5 in any 6" is `MaxConsecutiveWorkDays: 5`, and "no earlier shift next day" on the M/T/N menu is exactly `MinDistanceBetweenShiftsInMinutes: 660`.
+
+**Does your validator accept the `optional` kind?** If it does not, our converter can also write the problems in plain v4.0: `AVL` becomes `preferable` and the contract limit is dropped. That loses the meaning — a solver would then avoid working a day the problem leaves open — so we would rather agree the kind.
+
 ---
 
 ## Data defects in the bundles you sent

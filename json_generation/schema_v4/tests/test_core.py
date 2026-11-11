@@ -142,6 +142,22 @@ def test_declared_codes_classify_and_undeclared_ones_do_not():
         core.classify_cell("FDO", DAY_OFF)
 
 
+def test_an_optional_code_classifies_as_an_open_day():
+    problem = {"scheduleInput": {"dayOffCodes": {"AVL": {"kind": "optional"}}}}
+    rule = core.classify_cell("AVL", problem)
+    assert (rule.kind, rule.day_off) == ("dayoff", "optional")
+    worked = core.Schedule(9003, "09:00-17:00", 480, core.Interval(540, 1020))
+    rest = core.Schedule(3, "Day off", 0, None)
+    assert core.cell_conflict(rule, worked, 480) is None
+    assert core.cell_conflict(rule, rest, 480) is None
+
+
+def test_special_days_are_sundays_and_holidays():
+    problem = {"temporalScope": {"start": "2026-03-02", "end": "2026-03-08"},
+               "calendar": {"holidays": [{"date": "2026-03-05"}]}}
+    assert {d.isoformat() for d in core.special_days(problem)} == {"2026-03-05", "2026-03-08"}
+
+
 def test_non_ascii_day_off_code_works():
     problem = {"scheduleInput": {"dayOffCodes": {"Fér": {"kind": "unavailable"}}}}
     assert core.classify_cell("Fér", problem).day_off == "unavailable"
