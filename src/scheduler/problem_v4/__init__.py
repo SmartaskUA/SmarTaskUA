@@ -23,7 +23,7 @@ from .instance import (
     V4Instance,
 )
 from .loader import load_package
-from .result_writer import ResultError, result_from_rows, write_package
+from .result_writer import ResultError, result_from_rows, write_package, sisqual_import
 from .rows import IDLE, UNASSIGNED, format_worked_cell, parse_worked_cell, rest_cell
 
 __all__ = [
@@ -31,5 +31,5 @@ __all__ = [
     "Employee", "FixedDay", "Legislation", "ParseError", "ResultError", "Shift", "SolveDirectives",
     "TimeSlot", "V4Instance",
     "evaluate", "fixed_days", "format_worked_cell", "load_package", "objective", "parse_worked_cell",
-    "rest_cell", "result_from_rows", "write_package",
+    "rest_cell", "result_from_rows", "write_package", "sisqual_import",
 ]

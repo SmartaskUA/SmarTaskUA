@@ -28,7 +28,7 @@ A reader given only the JSON cannot tell a 10-hour contract from a 25-hour one. 
 - `totalMonthlyMinutes`, `totalYearMinutes` — Sisqual carries both
 - per-weekday and per-holiday-type lengths (`WeightMonday`…`WeightSunday`, `WeightHolidayBusinessDay/Saturday/Sunday`) — our one `workMinutesPerDay` assumes every working day is the same length, which their model does not
 
-**Where it stands.** v3.0 had exactly this block and v4.0 dropped it, because Sisqual's exporter emits none of it — `InpContractCollection` defines all sixteen fields and the export carries only `TotalDailyMinutes`. So this is blocked on *them* first (agenda item 22, "InpContractCollection") and on a v4 solver second. Today the validator reads `MaxConsecutiveWorkDays` and `MaxConsecutiveWorkDaysInWeek` from the roster-wide `constraints.hard[]`, which is the closest thing that exists and is not per-contract.
+**Where it stands.** v3.0 had exactly this block and v4.0 dropped it, because Sisqual's exporter emits none of it — `InpContractCollection` defines all sixteen fields and the export carries only `TotalDailyMinutes`. So this is blocked on *them* first (agenda item 22, "InpContractCollection") and on a v4 solver second. Today the validator reads `MaxConsecutiveWorkDays` and `MaxConsecutiveWorkDaysInWeek` from the roster-wide `constraints.hard[]`, which is the closest thing that exists and is not per-contract. One field has since been admitted, because a consumer reads it: `totalYearMinutes`, for problems where the solver chooses every working day — [next_meeting.md](../next_meeting.md) item 33 ("solver chooses the days off").
 
 ## 2. Breaks, meals, and paid time
 

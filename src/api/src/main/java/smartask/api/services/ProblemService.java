@@ -134,7 +134,7 @@ public class ProblemService {
         Map<String, Object> constraints = getMap(root, "constraints");
         SchedulingAlgorithmRegistry.Granularity problemGranularity = resolveProblemGranularity(root);
 
-        if (algorithmSpec.getGranularity() != problemGranularity) {
+        if (!schedulingAlgorithmRegistry.accepts(problemGranularity, algorithmSpec)) {
             throw new IllegalStateException(
                     "Algorithm '" + request.getAlgorithm() + "' is not compatible with this problem demand."
             );
@@ -287,9 +287,22 @@ public class ProblemService {
         return root != null && "4.0".equals(String.valueOf(root.get("schemaVersion")));
     }
 
+    /**
+     * A v4 package of an old shift problem: convert_legacy_to_v4.py declares the AVL day-off
+     * code ("the solver decides") for every day that is not a vacation, and nothing else does.
+     */
+    static boolean isLegacyShiftPackage(Map<String, Object> root) {
+        return isSchemaV4(root)
+                && root.get("scheduleInput") instanceof Map<?, ?> input
+                && input.get("dayOffCodes") instanceof Map<?, ?> codes
+                && codes.containsKey("AVL");
+    }
+
     private SchedulingAlgorithmRegistry.Granularity resolveProblemGranularity(Map<String, Object> root) {
         if (isSchemaV4(root)) {
-            return SchedulingAlgorithmRegistry.Granularity.V4;
+            return isLegacyShiftPackage(root)
+                    ? SchedulingAlgorithmRegistry.Granularity.V4_LEGACY
+                    : SchedulingAlgorithmRegistry.Granularity.V4;
         }
         Map<String, Object> demand = getMap(root, "demand");
         Object shiftsNode = demand.get("shifts");

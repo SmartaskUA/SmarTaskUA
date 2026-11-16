@@ -143,6 +143,7 @@ class ResultChecksMixin:
 
         report_grouped(r.error, self._grouped)
         self._check_fixed_law(fixed, days, problem)
+        self._check_fixed_year_minutes(fixed, days, employees, contracts)
 
         filled = {(eid, d) for eid, d in seen
                   if eid in employees and (not span or iso(d) in span)}
@@ -244,6 +245,8 @@ class ResultChecksMixin:
         run_cap = limits.get("MaxConsecutiveWorkDays")
         week_cap = limits.get("MaxConsecutiveWorkDaysInWeek")
         min_rest = limits.get("MinDistanceBetweenShiftsInMinutes")
+        special_cap = limits.get("MaxSpecialDays")
+        special = core.special_days(problem) if special_cap is not None else set()
         found: list[tuple[str, str]] = []
 
         for eid, by_day in sorted(fixed.items()):
@@ -258,6 +261,13 @@ class ResultChecksMixin:
                                       f"{eid}: fixed to work {run} days in a row ending {d}, "
                                       f"above MaxConsecutiveWorkDays of {run_cap}"))
                         break
+
+            if special_cap is not None:
+                n = sum(1 for d in worked if d in special)
+                if n > special_cap:
+                    found.append(("MaxSpecialDays",
+                                  f"{eid}: fixed to work {n} Sundays and holidays, above "
+                                  f"MaxSpecialDays of {special_cap}"))
 
             if week_cap is not None:
                 per_week = Counter(core.week_index(d, days[0], week_start) for d in worked)
@@ -279,6 +289,37 @@ class ResultChecksMixin:
                                       f"{eid}: {rest} min of rest between {before.interval} "
                                       f"on {d} and {after.interval} the next day, below "
                                       f"MinDistanceBetweenShiftsInMinutes of {min_rest}"))
+        report_grouped(self.report.error, found)
+
+    def _check_fixed_year_minutes(self, fixed: dict, days: list[date], employees: dict,
+                            contracts: dict) -> None:
+        """Each contract's totalYearMinutes, over the days the result fixes.
+
+        Read as an exact target - next_meeting.md item 33 ("solver chooses the
+        days"). Going over is wrong as soon as it happens; falling short only once
+        no day is left open, because an open day may yet be worked.
+        """
+        found: list[tuple[str, str]] = []
+        for eid, emp in sorted(employees.items()):
+            by_day = fixed.get(eid, {})
+            worked: dict[str, int] = defaultdict(int)
+            open_left: dict[str, int] = defaultdict(int)
+            targets: dict[str, int] = {}
+            for d in days:
+                cid = core.active_contract(emp, d)
+                target = ((contracts.get(cid) or {}).get("constraints") or {}).get("totalYearMinutes")
+                if target is None:
+                    continue
+                targets[cid] = target
+                if d not in by_day:
+                    open_left[cid] += 1
+                elif by_day[d] is not None and not by_day[d].is_sentinel:
+                    worked[cid] += by_day[d].weight_minutes
+            for cid, target in sorted(targets.items()):
+                if worked[cid] > target or (worked[cid] < target and not open_left[cid]):
+                    found.append(("totalYearMinutes",
+                                  f"{eid}: works {worked[cid]} min under contract {cid}, whose "
+                                  f"totalYearMinutes is {target}"))
         report_grouped(self.report.error, found)
 
     # -- loading the problem's own files -----------------------------------

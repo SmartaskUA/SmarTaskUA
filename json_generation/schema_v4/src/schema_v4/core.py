@@ -273,6 +273,22 @@ def day_off_sets(section: dict) -> tuple[set[str], set[str]]:
     return preferable, unavailable
 
 
+def optional_codes(section: dict) -> set[str]:
+    """Codes of kind `optional`: the solver decides whether the day is worked.
+
+    Kept apart from day_off_sets, whose pair every caller already unpacks. An
+    optional day is neither a day off nor a working day until a result says so.
+    """
+    codes = section.get("dayOffCodes", {})
+    return {c for c, v in codes.items() if v.get("kind") == "optional"}
+
+
+def special_days(problem: dict) -> set[date]:
+    """Sundays and declared holidays inside temporalScope - what MaxSpecialDays counts."""
+    holidays = {iso(h.get("date", "")) for h in problem.get("calendar", {}).get("holidays", [])}
+    return {d for d in horizon(problem) if d.weekday() == 6 or d in holidays}
+
+
 def legislation_limits(problem: dict) -> dict[str, int]:
     """Flatten the enabled hard constraints' parameters into one lookup.
 
@@ -465,7 +481,7 @@ class CellRule:
     kind: str
     minutes: int | None = None
     windows: tuple[Interval, ...] = ()
-    day_off: str | None = None          # "preferable" | "unavailable"
+    day_off: str | None = None          # "preferable" | "unavailable" | "optional"
     code: str | None = None
     raw: str = ""
 
@@ -524,6 +540,8 @@ def classify_cell(raw: str, problem: dict) -> CellRule:
         return CellRule("dayoff", day_off="preferable", code=text, raw=raw)
     if text in unavailable:
         return CellRule("dayoff", day_off="unavailable", code=text, raw=raw)
+    if text in optional_codes(problem.get("scheduleInput", {})):
+        return CellRule("dayoff", day_off="optional", code=text, raw=raw)
     raise DomainError(
         f"cell {text!r} is not a number, not an {'/'.join(OPERATORS)} window, and is not "
         f"declared in scheduleInput.dayOffCodes"
@@ -557,7 +575,8 @@ def cell_conflict(rule: CellRule, schedule: Schedule | None,
 
     `schedule` is the shift's definition, or None for a worked code whose
     definition is out of reach - then only work-versus-rest can be judged. A
-    preferable day off is the one soft cell: working it is allowed.
+    preferable day off is soft and an optional day is open: working either is
+    allowed.
     """
     worked = schedule is None or not schedule.is_sentinel
     if rule.kind == "empty":

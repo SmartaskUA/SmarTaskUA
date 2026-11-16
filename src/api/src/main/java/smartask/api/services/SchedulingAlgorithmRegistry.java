@@ -20,7 +20,13 @@ public class SchedulingAlgorithmRegistry {
         SHIFT,
         HOURS,
         /** A schema v4 package (problem.json with "schemaVersion": "4.0"), read by src/scheduler/problem_v4. */
-        V4
+        V4,
+        /**
+         * A v4 package of an old shift problem (data/problems/V4_SMARTASK_*, written by
+         * convert_legacy_to_v4.py): the solver chooses every working day. Only the
+         * V4_LEGACY solver honours its rules; the V4 solvers still run on it.
+         */
+        V4_LEGACY
     }
 
     public enum InputKind {
@@ -77,6 +83,7 @@ public class SchedulingAlgorithmRegistry {
         register(specs, "Hybrid_Heuristic_Sisqual_Levels_Included", UiMode.PROBLEM, Granularity.V4, InputKind.PROBLEM_BUNDLE);
         register(specs, "Hybrid_Heuristic_Sisqual_3", UiMode.PROBLEM, Granularity.V4, InputKind.PROBLEM_BUNDLE);
         register(specs, "Genetic Algorithm v4", UiMode.PROBLEM, Granularity.V4, InputKind.PROBLEM_BUNDLE);
+        register(specs, "Genetic Algorithm Legacy v4", UiMode.PROBLEM, Granularity.V4_LEGACY, InputKind.PROBLEM_BUNDLE);
         register(specs, "ILP_Sisqual_Hours_MathematicalDefinition5", UiMode.PROBLEM, Granularity.V4, InputKind.PROBLEM_BUNDLE);
         register(specs, "CSP_Sisqual_Hours_MathematicalDefinition5", UiMode.PROBLEM, Granularity.V4, InputKind.PROBLEM_BUNDLE);
 
@@ -130,13 +137,23 @@ public class SchedulingAlgorithmRegistry {
                 .orElse(false);
     }
 
-    /** The problem-mode algorithms that can solve a problem of this granularity, in registry order. */
+    /**
+     * The problem-mode algorithms that can solve a problem of this granularity, in registry
+     * order. For V4_LEGACY, its own solver comes first, then the V4 ones.
+     */
     public List<String> problemAlgorithms(Granularity granularity) {
         return algorithmsByKey.values().stream()
-                .filter(spec -> spec.getUiMode() == UiMode.PROBLEM && spec.getGranularity() == granularity)
+                .filter(spec -> spec.getUiMode() == UiMode.PROBLEM && accepts(granularity, spec))
                 .filter(spec -> !spec.getName().endsWith("MathematicalDefinition5"))
+                .sorted((a, b) -> Boolean.compare(a.getGranularity() != granularity, b.getGranularity() != granularity))
                 .map(AlgorithmSpec::getName)
                 .toList();
+    }
+
+    /** Whether the algorithm can solve a problem of this granularity. A legacy v4 package is still v4. */
+    public boolean accepts(Granularity problemGranularity, AlgorithmSpec spec) {
+        return spec.getGranularity() == problemGranularity
+                || (problemGranularity == Granularity.V4_LEGACY && spec.getGranularity() == Granularity.V4);
     }
 
     public boolean isManualAlgorithm(String algorithmName) {

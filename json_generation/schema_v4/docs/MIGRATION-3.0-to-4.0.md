@@ -59,6 +59,12 @@ If you are migrating a v3.0 `demand.csv` by hand, **do not simply rename `empiri
 
 v4.0 inherits v3.0's rule that every duration must be a multiple of `timeGrid.slotMinutes`, and it now bites in practice. Sisqual emits `slotMinutes: 30`, and one of their two September scenarios has a contract of 432 minutes a day — not a multiple of 30, so nothing can be scheduled for anyone. Check this first on any new bundle; it is a one-line check and it invalidates everything downstream.
 
+## Since 4.0: problems where the solver chooses the days
+
+Not a v3.0 → v4.0 change, but the place to look before writing such a problem. Three additions, proposed to SISQUAL in [next_meeting.md](../next_meeting.md) item 33 ("solver chooses the days off") and read by our validator already: the `optional` day-off kind, `contracts.definitions[].constraints.totalYearMinutes`, and the `MaxSpecialDays` parameter. A v4.0 file that uses none of them is unaffected.
+
+They exist for our earlier v2.2 problems (`data/problems/SMARTASK_*`), which name no working days at all. `data/problems/convert_legacy_to_v4.py` writes those as v4 packages; with `--strict-v4` it leaves the three additions out, at the cost described in that agenda item.
+
 ## Checklist
 
 1. Split `demand.csv` into the three grains, and be clear which of yours is headcount and which is workload minutes.
