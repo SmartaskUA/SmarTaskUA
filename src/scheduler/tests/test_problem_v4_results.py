@@ -121,6 +121,10 @@ def test_evaluate_counts_surplus_and_the_default_objective():
                    for (day, t, skill), need in inst.alpha.items() if skill == "Team/T1")
     assert kpis["surplus_by_skill"].get("Team/T1", 0) == expected
     assert kpis["total_surplus"] == sum(kpis["surplus_by_skill"].values())
+    assert kpis["total_demand"] == sum(kpis["demand_by_skill"].values())
+    assert kpis["priority_cost"] == sum(kpis["priority_cost_by_skill"].values())
+    for skill, need in kpis["demand_by_skill"].items():
+        assert need == sum(v for (_, _, s), v in inst.alpha.items() if s == skill)
     assert kpis["objective"] == objective(kpis, SolveDirectives())
 
 

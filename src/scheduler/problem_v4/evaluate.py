@@ -27,6 +27,8 @@ def evaluate(inst: V4Instance, rows: List[List[str]],
 
     Context and quality:
     - total_demand:   sum of alpha (headcount rounded up by the loader)
+    - *_by_skill:     demand, shortage, surplus, ideal shortage and priority cost split per
+      skill; each adds up to its total
     - total_surplus:  sum over alpha of max(0, covered - alpha_dts) - workers beyond the need
     - day_off_worked_fixed: preferred day-offs worked because a partial result fixed them;
       not the solver's choice, so outside ObjectiveFunction3
@@ -45,6 +47,7 @@ def evaluate(inst: V4Instance, rows: List[List[str]],
     slot = inst.slot_minutes
     cover: Dict[tuple, int] = defaultdict(int)
     priority_cost = 0
+    priority_by_skill: Dict[str, int] = defaultdict(int)
     day_off_worked = 0
     day_off_worked_fixed = 0
     work_on_unavailable = 0
@@ -86,11 +89,15 @@ def evaluate(inst: V4Instance, rows: List[List[str]],
                             continue
                         cover[(day, t, skill)] += 1
                         if inst.alpha.get((day, t, skill), 0) > 0:
-                            priority_cost += inst.priority_weight(skill, level)
+                            weight = inst.priority_weight(skill, level)
+                            priority_cost += weight
+                            priority_by_skill[skill] += weight
 
+    demand_by_skill: Dict[str, int] = defaultdict(int)
     shortage_by_skill: Dict[str, int] = defaultdict(int)
     surplus_by_skill: Dict[str, int] = defaultdict(int)
     for key, need in inst.alpha.items():
+        demand_by_skill[key[2]] += need
         gap = need - cover.get(key, 0)
         if gap > 0:
             shortage_by_skill[key[2]] += gap
@@ -105,12 +112,14 @@ def evaluate(inst: V4Instance, rows: List[List[str]],
         "total_shortage": sum(shortage_by_skill.values()),
         "shortage_by_skill": dict(sorted(shortage_by_skill.items())),
         "total_demand": sum(inst.alpha.values()),
+        "demand_by_skill": dict(sorted(demand_by_skill.items())),
         "total_surplus": sum(surplus_by_skill.values()),
         "surplus_by_skill": dict(sorted(surplus_by_skill.items())),
         "total_ideal": sum(inst.ideal.values()),
         "ideal_shortage": sum(ideal_shortage_by_skill.values()),
         "ideal_shortage_by_skill": dict(sorted(ideal_shortage_by_skill.items())),
         "priority_cost": priority_cost,
+        "priority_cost_by_skill": dict(sorted(priority_by_skill.items())),
         "day_off_worked": day_off_worked,
         "day_off_worked_fixed": day_off_worked_fixed,
         "unassigned": len(unassigned),
