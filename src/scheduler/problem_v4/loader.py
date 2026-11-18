@@ -107,7 +107,7 @@ def load_package(path, directives: Optional[SolveDirectives] = None) -> V4Instan
     errors.extend(str(diag) for diag in core.scan_feasibility(problem, base))
 
     skills, skill_axis, axes = _read_axes(problem)
-    alpha, open_days = _read_demand(problem, base, days, slot, skill_axis, errors, warnings)
+    alpha, ideal, open_days = _read_demand(problem, base, days, slot, skill_axis, errors, warnings)
     employees = _read_employees(problem, days, dates, skills, skill_axis, errors, warnings)
     cells = _read_cells(problem, base, days, employees, errors, warnings)
     if errors:
@@ -143,6 +143,7 @@ def load_package(path, directives: Optional[SolveDirectives] = None) -> V4Instan
         skill_axis=skill_axis,
         time_slots=[],
         alpha=alpha,
+        ideal=ideal,
         open_days=[d for d in days if d in open_days],
         closed_days={d for d in days if d not in open_days},
         employees=employees,
@@ -186,8 +187,11 @@ def _read_axes(problem: dict) -> Tuple[List[str], Dict[str, str], Dict[str, Tupl
 
 
 def _read_demand(problem, base, days, slot, skill_axis, errors, warnings):
-    """alpha_dts from the periods grain (the shifts grain where periods is silent).
+    """alpha_dts from the periods grain (the shifts grain where periods is silent),
+    and the ideal headcount per slot on the same grid.
 
+    No solver reads `ideal`; it is kept for the KPIs only. Where a row sets it, the
+    target is max(ideal, minimum), so it never asks for fewer than the minimum.
     Overlapping windows of one pair take the max: each row states the headcount
     wanted during its window, not an increment. Headcount is rounded up, since
     CP-SAT needs integers and 4.5 workers can only be met by 5.
@@ -217,13 +221,13 @@ def _read_demand(problem, base, days, slot, skill_axis, errors, warnings):
                               "is not declared in demand.dimensions")
                 continue
             if grain == "days":
-                per[(day, skill)].append((None, row.minimum))
+                per[(day, skill)].append((None, row.minimum, row.ideal))
                 continue
             if row.window is None:
                 errors.append(f"{name} line {row.line}: the {grain} grain needs a start-end window")
                 continue
             open_days.add(day)
-            per[(day, skill)].append((row.window, row.minimum))
+            per[(day, skill)].append((row.window, row.minimum, row.ideal))
         by_grain[grain] = per
 
     if by_grain.get("days"):
@@ -237,16 +241,23 @@ def _read_demand(problem, base, days, slot, skill_axis, errors, warnings):
                         "the shifts grain; the periods rows are used")
 
     alpha: Dict[Tuple[str, int, str], int] = {}
+    ideal: Dict[Tuple[str, int, str], int] = {}
     chosen = list(periods.items()) + [(k, v) for k, v in shifts.items() if k not in periods]
     for (day, skill), entries in chosen:
-        for window, minimum in entries:
+        for window, minimum, wish in entries:
             need = math.ceil(round(minimum, 6)) if minimum > 0 else 0
-            if need <= 0:
+            want = math.ceil(round(wish, 6)) if wish > 0 else 0
+            if want > 0:
+                want = max(want, need)
+            if need <= 0 and want <= 0:
                 continue    # 0 means "unset" (FORMAT.md), not "zero workers"
             for t in range(window.start // slot, -(-window.end // slot)):
                 key = (day, t, skill)
-                alpha[key] = max(alpha.get(key, 0), need)
-    return alpha, open_days
+                if need > 0:
+                    alpha[key] = max(alpha.get(key, 0), need)
+                if want > 0:
+                    ideal[key] = max(ideal.get(key, 0), want)
+    return alpha, ideal, open_days
 
 
 def _read_employees(problem, days, dates, skills, skill_axis, errors, warnings) -> List[Employee]:
