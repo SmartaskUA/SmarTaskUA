@@ -6,7 +6,7 @@
 COMPOSE_FILE := infra/docker-compose.yml
 
 # Solve / test inside the scheduler image (no local pulp/ortools needed), as the current user
-SCHED_RUN = docker compose -f $(COMPOSE_FILE) run --rm --no-deps -u $$(id -u):$$(id -g) -e HOME=/tmp -v $(CURDIR):/repo
+SCHED_RUN = docker compose -f $(COMPOSE_FILE) run --rm --no-deps -u $$(id -u):$$(id -g) -e HOME=/tmp -v "$(CURDIR)":/repo
 ALG ?= ilp
 TIME ?= 1
 
