@@ -212,14 +212,21 @@ public class ProblemService {
         Map<String, Object> demand = getMap(root, "demand");
         Map<String, Object> organizationalUnits = getMap(demand, "organizationalUnits");
 
-        String demandFile = getString(demand, "dataFile");
-        if (demandFile == null || demandFile.isBlank()) {
-            demandFile = "demand.csv";
+        List<Map<String, String>> demandRows;
+        if ("4.0".equals(String.valueOf(root.get("schemaVersion")))) {
+            // v4 splits demand by grain; the solvers read periods, and shifts where periods is
+            // silent. A package fills one of the two, so take the periods file unless it is empty.
+            demandRows = readCsvObjects(siblingPath(problemPath, getString(demand, "dataFilePeriods")));
+            if (demandRows.isEmpty()) {
+                demandRows = readCsvObjects(siblingPath(problemPath, getString(demand, "dataFileShifts")));
+            }
+        } else {
+            String demandFile = getString(demand, "dataFile");
+            if (demandFile == null || demandFile.isBlank()) {
+                demandFile = "demand.csv";
+            }
+            demandRows = readCsvObjects(siblingPath(problemPath, demandFile));
         }
-
-        Path demandPath = problemPath.getParent() == null
-                ? resolveAbsolutePath(demandFile)
-                : problemPath.getParent().resolve(demandFile).normalize();
 
         Map<String, Object> result = new LinkedHashMap<>();
         String problemId = getString(metadata, "problemId");
@@ -234,10 +241,20 @@ public class ProblemService {
         if (slotMinutes != null) {
             result.put("slotMinutes", slotMinutes);
         }
-        result.put("problemDemandData", readCsvObjects(demandPath));
+        result.put("problemDemandData", demandRows);
         result.put("problemWorkPeriods", coerceObjectList(demand.get("workPeriods")));
         result.put("problemTeams", coerceObjectList(organizationalUnits.get("teams")));
         return result;
+    }
+
+    /** A file named in problem.json, resolved next to it; null when no name is given. */
+    private Path siblingPath(Path problemPath, String name) {
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+        return problemPath.getParent() == null
+                ? resolveAbsolutePath(name)
+                : problemPath.getParent().resolve(name).normalize();
     }
 
     public void seedDefaultProblems() {

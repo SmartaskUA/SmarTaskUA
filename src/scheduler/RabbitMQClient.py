@@ -84,7 +84,11 @@ class RabbitMQClient:
             demand_path = (resolved_path.parent / demand_file).resolve()
 
             demand_rows = []
-            if demand_path.is_file():
+            # v4 demand (dataFilePeriods/dataFileShifts) is not embedded here: it runs to
+            # tens of thousands of rows. The API fills problemDemandData on fetch whenever
+            # it is empty (SchedulesService.enrichProblemBundleMetadata).
+            is_v4 = str(problem.get("schemaVersion")) == "4.0"
+            if not is_v4 and demand_path.is_file():
                 with demand_path.open(newline="", encoding="utf-8") as fh:
                     demand_rows = list(csv.DictReader(fh))
 
