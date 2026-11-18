@@ -63,13 +63,23 @@ const Calendar = () => {
   const minimumsName = hasShiftDemand
     ? `${metadata?.problemId || "Problem"} demand`
     : metadata?.minimunsTemplateName || "Minimums Template";
-  const metadataForInfo = useMemo(
-    () =>
-      hasShiftDemand
-        ? { ...metadata, minimunsTemplateData: minimumsData, minimunsTemplateName: minimumsName }
-        : metadata,
-    [metadata, hasShiftDemand, minimumsData, minimumsName]
-  );
+  // Problem bundles store their vacations.csv as problemVacationData (same
+  // row format as a vacation template); show it under "Show Vacation".
+  const metadataForInfo = useMemo(() => {
+    if (!metadata) return metadata;
+    const info = { ...metadata };
+    if (hasShiftDemand) {
+      info.minimunsTemplateData = minimumsData;
+      info.minimunsTemplateName = minimumsName;
+    }
+    const hasTemplateVacations =
+      Array.isArray(metadata.vacationTemplateData) && metadata.vacationTemplateData.length > 0;
+    if (!hasTemplateVacations && Array.isArray(metadata.problemVacationData) && metadata.problemVacationData.length > 0) {
+      info.vacationTemplateData = metadata.problemVacationData;
+      info.vacationTemplateName = `${metadata.problemId || "Problem"} vacations`;
+    }
+    return info;
+  }, [metadata, hasShiftDemand, minimumsData, minimumsName]);
   const monthColumns = useMemo(
     () => scheduleColumns.filter((column) => column.month === selectedMonth),
     [scheduleColumns, selectedMonth]
