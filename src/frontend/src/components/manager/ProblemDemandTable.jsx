@@ -93,6 +93,32 @@ const buildHalfHourSlots = (start, end) => {
   return slots;
 };
 
+// A schema v4 demand row names its skill as tableName/tableValue and carries its own
+// window (start/end); a legacy row names a team and a workPeriod. Both become
+// { team, window } here, and v4 cells credit every skill of their tag ("A+Team/T1").
+const isV4DemandRow = (row) => !row?.team && Boolean(row?.tableName);
+
+const normalizeDemandRow = (row) =>
+  isV4DemandRow(row)
+    ? { ...row, v4: true, team: `${String(row.tableName).trim()}/${String(row.tableValue ?? "").trim()}` }
+    : row;
+
+const rowWindow = (row, workPeriodMap) => {
+  const config = workPeriodMap.get(String(row?.workPeriod || "").trim());
+  const start = parseMinutes(config?.timeRange?.start ?? row?.start);
+  const end = parseMinutes(config?.timeRange?.end ?? row?.end);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+    return null;
+  }
+  return { start, end };
+};
+
+const segmentSkills = (tag) =>
+  String(tag || "")
+    .split("+")
+    .map((skill) => skill.trim())
+    .filter((skill) => skill && skill !== "idle");
+
 const diffPalette = (delta) => {
   if (delta === null || delta === undefined) {
     return {
@@ -127,7 +153,7 @@ const diffPalette = (delta) => {
 };
 
 const ProblemDemandTable = ({
-  demandData = [],
+  demandData: rawDemandData = [],
   workPeriods = [],
   teams = [],
   monthColumns = [],
@@ -136,6 +162,7 @@ const ProblemDemandTable = ({
 }) => {
   const [selectedTeam, setSelectedTeam] = useState("");
   const [selectedMetric, setSelectedMetric] = useState("minimum");
+  const demandData = useMemo(() => rawDemandData.map(normalizeDemandRow), [rawDemandData]);
 
   const teamOptions = useMemo(() => {
     const byCode = new Map();
@@ -210,10 +237,13 @@ const ProblemDemandTable = ({
           if (!range) {
             return;
           }
+          const skills = segmentSkills(segment.team);
           buildHalfHourSlots(range.start, range.end).forEach((slotStart) => {
-            const key = `${dateKey}|${segment.team}|${slotStart}`;
-            mapped.set(key, (mapped.get(key) || 0) + 1);
-            if (segment.team !== STAFF_TEAM_CODE) {
+            skills.forEach((skill) => {
+              const key = `${dateKey}|${skill}|${slotStart}`;
+              mapped.set(key, (mapped.get(key) || 0) + 1);
+            });
+            if (skills.length && !skills.includes(STAFF_TEAM_CODE)) {
               const staffKey = `${dateKey}|${STAFF_TEAM_CODE}|${slotStart}`;
               mapped.set(staffKey, (mapped.get(staffKey) || 0) + 1);
             }
@@ -228,17 +258,19 @@ const ProblemDemandTable = ({
   const slotDemandIndex = useMemo(() => {
     const mapped = new Map();
     filteredRows.forEach((row) => {
-      const config = workPeriodMap.get(String(row?.workPeriod || "").trim());
+      const window = rowWindow(row, workPeriodMap);
       const date = String(row?.date || "").trim();
-      const start = parseMinutes(config?.timeRange?.start);
-      const end = parseMinutes(config?.timeRange?.end);
       const required = Number(row?.[selectedMetric]);
-      if (!date || !Number.isFinite(start) || !Number.isFinite(end) || end <= start || !Number.isFinite(required)) {
+      if (!date || !window || !Number.isFinite(required)) {
         return;
       }
-      buildHalfHourSlots(start, end).forEach((slotStart) => {
+      // v4 rows state the headcount for their window (overlaps take the max, as the
+      // solvers' loader does); legacy work periods add up.
+      const v4 = Boolean(row?.v4);
+      buildHalfHourSlots(window.start, window.end).forEach((slotStart) => {
         const key = `${date}|${slotStart}`;
-        mapped.set(key, (mapped.get(key) || 0) + required);
+        const current = mapped.get(key) || 0;
+        mapped.set(key, v4 ? Math.max(current, required) : current + required);
       });
     });
     return mapped;
@@ -247,13 +279,11 @@ const ProblemDemandTable = ({
   const visibleSlotRows = useMemo(() => {
     const slotStarts = new Set();
     filteredRows.forEach((row) => {
-      const config = workPeriodMap.get(String(row?.workPeriod || "").trim());
-      const start = parseMinutes(config?.timeRange?.start);
-      const end = parseMinutes(config?.timeRange?.end);
-      if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+      const window = rowWindow(row, workPeriodMap);
+      if (!window) {
         return;
       }
-      buildHalfHourSlots(start, end).forEach((slotStart) => slotStarts.add(slotStart));
+      buildHalfHourSlots(window.start, window.end).forEach((slotStart) => slotStarts.add(slotStart));
     });
     return Array.from(slotStarts)
       .sort((left, right) => left - right)

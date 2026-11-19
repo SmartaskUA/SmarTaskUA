@@ -11,6 +11,7 @@ paying less p_sl does. Restarts are ranked by (unassigned, shortage, p_sl cost).
 from __future__ import annotations
 
 import random
+import time
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 import pulp
@@ -360,111 +361,45 @@ class Hybrid_Heuristic_Sisqual(HybridSisqualV4):
 
 
 def solve(problem_path=None, maxTime=None, restarts=5400, day_order_mode=None, **kwargs):
+    """TaskManager / CLI entry. `day_order_mode` is 1, 2, 3 or a list; default all three.
 
-    best_rows = None
-    best_key = None
+    Each restart runs every mode and the best schedule wins on (unassigned days,
+    shortage, priority cost), all scored by the shared v4 evaluator.
+    """
+    directives = SolveDirectives.from_kwargs(kwargs)
+    task_id = str(kwargs.get("task_id", "manual"))
+    inst = load_for_solver(problem_path, directives, task_id, ALGORITHM)
+    scheduler = Hybrid_Heuristic_Sisqual(inst, directives, max_time_minutes=maxTime)
 
-    all_results = []
+    if day_order_mode is None:
+        modes = [1, 2, 3]
+    elif isinstance(day_order_mode, (list, tuple)):
+        modes = [int(m) for m in day_order_mode]
+    else:
+        modes = [int(day_order_mode)]
 
-    day_order_mode_list = [1,2,3] if day_order_mode is None else day_order_mode
-
-    for i in range(restarts):
-
-        for current_mode in day_order_mode_list:
-
-            start_time = time.perf_counter()
-            scheduler = Hybrid_Heuristic_Sisqual(problem_path, max_time_minutes=maxTime)
-            scheduler.Minimuns(day_order_mode=current_mode)
-
+    best_rows, best_key, results = None, None, []
+    for restart in range(int(restarts)):
+        for mode in modes:
+            started = time.perf_counter()
+            scheduler.Minimuns(day_order_mode=mode)
             rows = scheduler.build_output_rows()
-
-            # Compute the true shortage using KPI evaluator to match reporting
-            try:
-                demand_file = scheduler.problem.get("demand", {}).get("dataFile", "demand.csv")
-                demand_path = str(scheduler.base_dir / demand_file)
-                kpi = KpiEvaluator_Sisqual(rows, demand_csv_path=demand_path, problem_json=scheduler.problem)
-                kpis = kpi.evaluate_kpis()
-                kpi_shortage = kpis.get("Total_Shortage", {}).get("value", scheduler.total_shortage if hasattr(scheduler, "total_shortage") else 0)
-                staffing_ideal_shortage = kpis.get("Staffing_Ideals", {}).get("shortage", 0)
-                staffing_ideal_coverage_rate = kpis.get("Staffing_Ideals", {}).get("coverage_rate", 0.0)
-                staffing_estimated_shortage = kpis.get("Staffing_Estimated", {}).get("shortage", 0)
-                staffing_estimated_coverage_rate = kpis.get("Staffing_Estimated", {}).get("coverage_rate", 0.0)
-                slots_with_failure = kpis.get("Slots_With_Failure", {}).get("failing_slots", 0)
-            except Exception as ex:
-                # Fallback: use internal remaining need if KPI evaluation fails
-                print(f"[Heuristica] Warning: KPI evaluation failed: {ex}")
-                kpi_shortage = sum(v for v in scheduler.need.values() if v > 0)
-                staffing_ideal_shortage = 0
-                staffing_ideal_coverage_rate = 0.0
-                staffing_estimated_shortage = 0
-                staffing_estimated_coverage_rate = 0.0
-                slots_with_failure = 0
-
-            priority_cost = scheduler.total_priority_cost()
-
-            unassigned_count = len(scheduler.unassigned)
-            elapsed_seconds = time.perf_counter() - start_time
-
-            # Record this result
-            all_results.append({
-                'restart_num': i + 1,
-                'day_order_mode': current_mode,
-                'unassigned_count': unassigned_count,
-                'kpi_shortage': kpi_shortage,
-                'total_shortage': kpi_shortage,
-                'slots_with_failure': slots_with_failure,
-                'staffing_ideal_shortage': staffing_ideal_shortage,
-                'staffing_ideal_coverage_rate': staffing_ideal_coverage_rate,
-                'staffing_estimated_shortage': staffing_estimated_shortage,
-                'staffing_estimated_coverage_rate': staffing_estimated_coverage_rate,
-                'priority_cost': priority_cost,
-                'elapsed_seconds': round(elapsed_seconds, 3),
+            kpis = evaluate(inst, rows, directives)
+            key = (kpis["unassigned"], kpis["total_shortage"], kpis["priority_cost"])
+            results.append({
+                "restart_num": restart + 1,
+                "day_order_mode": mode,
+                "unassigned_count": key[0],
+                "kpi_shortage": key[1],
+                "priority_cost": key[2],
+                "elapsed_seconds": round(time.perf_counter() - started, 3),
             })
-
-            key = (unassigned_count, kpi_shortage, priority_cost)
             if best_key is None or key < best_key:
-                best_key = key
-                best_rows = rows
+                best_key, best_rows = key, rows
 
-    # Write results to CSV file
-    _write_results_log(problem_path, all_results, best_key)
-
+    write_results_log(kwargs.get("results_log_file") or kwargs.get("log_file")
+                      or Path.cwd() / "heuristic_results_levels.csv",
+                      ["restart_num", "day_order_mode", "unassigned_count", "kpi_shortage",
+                       "priority_cost", "elapsed_seconds"], results)
     print(f"[Heuristica] Best (unassigned_count, kpi_shortage, priority_cost) after {restarts} restarts: {best_key}")
-    return best_rows
-
-
-def _write_results_log(problem_path: str, all_results: list, best_key):
-    """Write all restart results to a CSV log file next to problem.json."""
-    try:
-        problem_path = Path(problem_path)
-        base_dir = problem_path.parent
-        log_file = base_dir / "heuristic_results_levels.csv"
-
-        fieldnames = [
-            'restart_num',
-            'day_order_mode',
-            'unassigned_count',
-            'kpi_shortage',
-            'total_shortage',
-            'slots_with_failure',
-            'staffing_ideal_shortage',
-            'staffing_ideal_coverage_rate',
-            'staffing_estimated_shortage',
-            'staffing_estimated_coverage_rate',
-            'priority_cost',
-            'elapsed_seconds',
-        ]
-
-        with log_file.open('w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(
-                f,
-                fieldnames=fieldnames,
-            )
-            writer.writeheader()
-            for row in all_results:
-                writer.writerow(row)
-
-        print(f"[Heuristica] Results saved to: {log_file}")
-        print(f"[Heuristica] Best (unassigned_count, kpi_shortage, priority_cost): {best_key}")
-    except Exception as ex:
-        print(f"[Heuristica] Warning: Could not write results log: {ex}")
+    return finish(inst, best_rows, kwargs)

@@ -127,6 +127,8 @@ class V4Instance:
     fixed: Dict[Tuple[str, str], FixedDay] = field(default_factory=dict)
     fixed_workday: Dict[Tuple[str, str], int] = field(default_factory=dict)
     warnings: List[str] = field(default_factory=list)
+    # Ideal headcount per (day, slot, skill), max(ideal, minimum); KPIs only, no solver reads it
+    ideal: Dict[Tuple[str, int, str], int] = field(default_factory=dict)
 
     def __post_init__(self):
         self._by_id = {e.id: e for e in self.employees}
