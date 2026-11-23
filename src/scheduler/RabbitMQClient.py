@@ -88,8 +88,19 @@ class RabbitMQClient:
                 with demand_path.open(newline="", encoding="utf-8") as fh:
                     demand_rows = list(csv.DictReader(fh))
 
+            # Kept apart from vacationTemplateData, which the UI reads as "legacy
+            # template inputs" when deciding how to run the KPI analysis.
+            vacation_rows = []
+            vacations_file = (problem.get("vacations") or {}).get("dataFile")
+            if vacations_file:
+                vacations_path = (resolved_path.parent / vacations_file).resolve()
+                if vacations_path.is_file():
+                    with vacations_path.open(newline="", encoding="utf-8") as fh:
+                        vacation_rows = [row for row in csv.reader(fh) if row]
+
             return {
                 "problemId": problem.get("metadata", {}).get("problemId"),
+                "problemVacationData": vacation_rows,
                 # schema v4 packages are recognised by these two (the UI picks its hourly view from them)
                 "schemaVersion": problem.get("schemaVersion"),
                 "slotMinutes": problem.get("timeGrid", {}).get("slotMinutes"),

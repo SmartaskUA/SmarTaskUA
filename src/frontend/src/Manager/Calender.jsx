@@ -20,6 +20,10 @@ import {
   buildScheduleColumns,
   inferPreferredMonth,
 } from "../utils/scheduleCalendar";
+import {
+  countMissingFromTemplate,
+  shiftDemandToTemplate,
+} from "../utils/shiftDemand";
 import { Box, Button, Paper, Typography } from "@mui/material";
 
 const Calendar = () => {
@@ -45,6 +49,37 @@ const Calendar = () => {
     () => buildMonthOptions(scheduleColumns, resolvedYear),
     [scheduleColumns, resolvedYear]
   );
+  // Shift-based problem bundles (schema 2.x) carry their minimums/ideals in
+  // demand.csv; show them as a minimums template, like template-based runs.
+  const shiftDemandTemplate = useMemo(
+    () => shiftDemandToTemplate(metadata?.problemDemandData, resolvedYear),
+    [metadata, resolvedYear]
+  );
+  const hasShiftDemand = shiftDemandTemplate.length > 0;
+  const minimumsData = useMemo(() => {
+    if (hasShiftDemand) return shiftDemandTemplate;
+    return Array.isArray(metadata?.minimunsTemplateData) ? metadata.minimunsTemplateData : [];
+  }, [hasShiftDemand, shiftDemandTemplate, metadata]);
+  const minimumsName = hasShiftDemand
+    ? `${metadata?.problemId || "Problem"} demand`
+    : metadata?.minimunsTemplateName || "Minimums Template";
+  // Problem bundles store their vacations.csv as problemVacationData (same
+  // row format as a vacation template); show it under "Show Vacation".
+  const metadataForInfo = useMemo(() => {
+    if (!metadata) return metadata;
+    const info = { ...metadata };
+    if (hasShiftDemand) {
+      info.minimunsTemplateData = minimumsData;
+      info.minimunsTemplateName = minimumsName;
+    }
+    const hasTemplateVacations =
+      Array.isArray(metadata.vacationTemplateData) && metadata.vacationTemplateData.length > 0;
+    if (!hasTemplateVacations && Array.isArray(metadata.problemVacationData) && metadata.problemVacationData.length > 0) {
+      info.vacationTemplateData = metadata.problemVacationData;
+      info.vacationTemplateName = `${metadata.problemId || "Problem"} vacations`;
+    }
+    return info;
+  }, [metadata, hasShiftDemand, minimumsData, minimumsName]);
   const monthColumns = useMemo(
     () => scheduleColumns.filter((column) => column.month === selectedMonth),
     [scheduleColumns, selectedMonth]
@@ -270,16 +305,16 @@ const Calendar = () => {
     ? kpiSummary?.hourlyCoverageGaps ?? kpiSummary?.missedTeamMin ?? null
     : kpiSummary?.missedTeamMin ?? kpiSummary?.hourlyCoverageGaps ?? null;
   const missingIdeals = kpiSummary?.missedTeamIdeal ?? null;
-  const hasIdeals =
-    Array.isArray(metadata?.minimunsTemplateData) &&
-    metadata.minimunsTemplateData.some((row) =>
-      row?.some((cell) => String(cell || "").toLowerCase().includes("ideal"))
-    );
+  const hasIdeals = minimumsData.some((row) =>
+    row?.some((cell) => String(cell || "").toLowerCase().includes("ideal"))
+  );
   const coverageView = hasIdeals ? coverageMode : "min";
   const missingLabel =
     coverageView === "ideal" ? "Missing ideals" : "Missing minimums";
+  // Bundle runs don't report missedTeamMin/Ideal, so count them from demand.csv.
   const missingValue =
-    coverageView === "ideal" ? missingIdeals : missingMinimums;
+    (coverageView === "ideal" ? missingIdeals : missingMinimums) ??
+    (hasShiftDemand ? countMissingFromTemplate(minimumsData, data, coverageView) : null);
   const hasLegacyAnalysisInputs =
     Array.isArray(metadata?.vacationTemplateData) &&
     metadata.vacationTemplateData.length > 0 &&
@@ -287,13 +322,12 @@ const Calendar = () => {
     metadata.minimunsTemplateData.length > 0;
   const hasProblemAnalysisInputs = Boolean(metadata?.problemPath);
   const hasAnalysisInputs = hasLegacyAnalysisInputs || hasProblemAnalysisInputs;
+  // The demand view is for workPeriod (hourly) demand; shift demand uses the minimums view.
   const hasProblemDemandData =
+    !hasShiftDemand &&
     Array.isArray(metadata?.problemDemandData) &&
     metadata.problemDemandData.length > 0;
-  const hasViewToggle =
-    (Array.isArray(metadata?.minimunsTemplateData) &&
-      metadata.minimunsTemplateData.length > 0) ||
-    hasProblemDemandData;
+  const hasViewToggle = minimumsData.length > 0 || hasProblemDemandData;
   const toggleViewLabel = hasProblemDemandData ? "View Demand" : "View Minimums";
 
   return (
@@ -427,8 +461,8 @@ const Calendar = () => {
                 )}
             </Paper>
             <MinimumsTemplate
-              name={metadata?.minimunsTemplateName || "Minimums Template"}
-              data={metadata?.minimunsTemplateData || []}
+              name={minimumsName}
+              data={minimumsData}
               scheduleData={data}
               scheduleType={scheduleType}
               year={resolvedYear}
@@ -439,7 +473,7 @@ const Calendar = () => {
           </Box>
         )}
 
-        <MetadataInfo metadata={metadata} />
+        <MetadataInfo metadata={metadataForInfo} />
 
         {kpiSummary?.total_shortage !== undefined ? (
           <V4KPIReport kpis={kpiSummary} />

@@ -216,7 +216,7 @@ const MinimumsTemplate = ({
 
     const shiftMap = new Map();
     const hourMap = new Map();
-    const shiftPattern = /^\s*([MTN])\s*[_-]\s*([A-Za-z])\s*$/i;
+    const shiftPattern = /^\s*([MTN])\s*[_-]\s*([A-Za-z]+)\s*$/i;
     const hourBlockPattern =
       /^\s*(\d{1,2}(?:\.\d+)?)\s*-\s*(\d{1,2}(?:\.\d+)?)(?:\s*-\s*(\d{1,2}(?:\.\d+)?))?\s*[_-]\s*([A-Za-z])\s*$/;
 
@@ -398,7 +398,7 @@ const MinimumsTemplate = ({
               rows.map((row, rowIndex) => {
                 const bgColor = getRowColor(teamIndex * 4 + rowIndex, row.type);
                 const dayValues = row.values;
-                const teamCodeMatch = String(row.teamName || "").match(/([A-Za-z])\s*$/);
+                const teamCodeMatch = String(row.teamName || "").match(/([A-Za-z]+)\s*$/);
                 const teamCode = teamCodeMatch ? teamCodeMatch[1].toUpperCase() : row.teamName;
                 const slotKey = isHourlyFormat
                   ? parseSlotLabel(row.slot)
