@@ -5,7 +5,7 @@ numpy
 pandas
 deap
 pika
-pulp
+pulp<4  # 4.x dropped LpVariable(cat=...), which the MD7/hybrid solvers use
 gurobipy
 holidays
 tabulate

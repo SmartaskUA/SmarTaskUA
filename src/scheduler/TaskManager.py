@@ -240,12 +240,18 @@ class TaskManager:
             # raises SisqualValidationError before any solver runs.
             inst = load_for_solver(problem_path, SolveDirectives(), str(task_id), algorithm_name)
             schedule_data = algorithm(problem_path=problem_path, maxTime=maxTime, task_id=task_id)
-            kpis = evaluate_v4(inst, schedule_data)
+            # A scoring failure must not discard a solved schedule: store it without KPIs.
+            try:
+                kpis = evaluate_v4(inst, schedule_data)
+            except Exception as e:
+                print(f"[TaskManager] v4 KPI evaluation failed: {e}")
+                kpis = None
             # The days a partial result fixed: counted in the KPIs, listed in the
             # schedule's metadata so the calendar can mark them.
             decided = fixed_days_v4(inst)
-            kpis["fixed_days"] = len(decided["fixed"])
-            kpis["open_days"] = decided["open_days"]
+            if kpis is not None:
+                kpis["fixed_days"] = len(decided["fixed"])
+                kpis["open_days"] = decided["open_days"]
             extra_metadata = {"fixedDays": decided["fixed"]}
             try:
                 sisqual_export = sisqual_import_v4(inst, schedule_data)

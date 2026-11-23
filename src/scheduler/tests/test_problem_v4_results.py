@@ -1,5 +1,7 @@
 """The row format, the shared evaluator and the result writer."""
 
+import csv
+import shutil
 from collections import Counter
 
 import pytest
@@ -8,11 +10,13 @@ from conftest import EXAMPLES, assert_valid_complete, read_result
 from problem_v4 import (
     ResultError,
     Shift,
+    SolveDirectives,
     evaluate,
     fixed_days,
     format_worked_cell,
     load_package,
     parse_worked_cell,
+    objective,
     rest_cell,
     result_from_rows,
     write_package,
@@ -107,3 +111,94 @@ def test_fixed_days_lists_what_a_partial_result_decided():
 
 def test_without_a_result_nothing_is_fixed():
     assert fixed_days(load_package(EXAMPLES / "cenario2_input_only")) == {"fixed": [], "open_days": 465}
+
+
+def test_evaluate_counts_surplus_and_the_default_objective():
+    inst = load_package(EXAMPLES / "cenario2_retail")
+    kpis = evaluate(inst, rows_from_fixed(inst, lambda eid, day, t: ("Team/T1",)))
+    on_shift = Counter((day, t) for (eid, day), f in inst.fixed.items() if f.shift for t in f.shift.slot_indices)
+    expected = sum(max(0, on_shift[(day, t)] - need)
+                   for (day, t, skill), need in inst.alpha.items() if skill == "Team/T1")
+    assert kpis["surplus_by_skill"].get("Team/T1", 0) == expected
+    assert kpis["total_surplus"] == sum(kpis["surplus_by_skill"].values())
+    assert kpis["total_demand"] == sum(kpis["demand_by_skill"].values())
+    assert kpis["priority_cost"] == sum(kpis["priority_cost_by_skill"].values())
+    for skill, need in kpis["demand_by_skill"].items():
+        assert need == sum(v for (_, _, s), v in inst.alpha.items() if s == skill)
+    assert kpis["objective"] == objective(kpis, SolveDirectives())
+
+
+def test_a_worked_day_off_fixed_by_the_result_is_not_the_solvers_choice():
+    inst = load_package(EXAMPLES / "cenario2_retail")
+    kpis = evaluate(inst, rows_from_fixed(inst))
+    fixed_worked_dos = sum(1 for key, f in inst.fixed.items()
+                           if f.shift and inst.day_modes[key] == "preferred_day_off")
+    assert kpis["day_off_worked"] == 0
+    assert kpis["day_off_worked_fixed"] == fixed_worked_dos
+
+
+def test_an_employee_missing_from_the_rows_leaves_its_work_days_unassigned():
+    inst = load_package(EXAMPLES / "cenario2_retail")
+    rows = rows_from_fixed(inst)
+    dropped = rows.pop(1)[0]
+    kpis = evaluate(inst, rows)
+    work_days = sum(inst.is_work_day(dropped, d) for d in inst.days)
+    assert kpis["missing_rows"] == 1
+    assert kpis["unassigned"] == work_days
+    assert {eid for eid, _ in kpis["unassigned_days"]} == {dropped}
+
+
+def test_open_shifts_on_unavailable_days_and_days_off_are_counted():
+    inst = load_package(EXAMPLES / "cenario2_input_only")
+    shift = next(s for shifts in inst.candidates.values() for s in shifts)
+    worked = format_worked_cell(shift, {}, inst.slot_minutes)
+    unavailable = next(k for k, m in inst.day_modes.items() if m == "unavailable")
+    day_off = next(k for k, m in inst.day_modes.items() if m == "preferred_day_off")
+    rows = [["employee_id", *inst.days]]
+    for e in inst.employees:
+        rows.append([e.id, *(worked if (e.id, d) in (unavailable, day_off) else rest_cell(inst, e.id, d)
+                             for d in inst.days)])
+    kpis = evaluate(inst, rows)
+    assert kpis["work_on_unavailable"] == 1
+    assert kpis["day_off_worked"] == 1 and kpis["day_off_worked_fixed"] == 0
+
+
+def test_without_ideal_columns_there_is_no_ideal_target():
+    inst = load_package(EXAMPLES / "cenario2_retail")
+    kpis = evaluate(inst, rows_from_fixed(inst, lambda eid, day, t: ("Team/T1",)))
+    assert inst.ideal == {}
+    assert kpis["total_ideal"] == 0 and kpis["ideal_shortage"] == 0
+
+
+def test_ideal_shortage_measures_the_gap_to_the_ideal_not_the_minimum(tmp_path):
+    package = tmp_path / "pkg"
+    shutil.copytree(EXAMPLES / "cenario2_retail", package)
+    demand = package / "periods_demand.csv"
+    with demand.open(newline="") as fh:
+        rows = list(csv.DictReader(fh))
+    for i, row in enumerate(rows):
+        # one row asks for an ideal below its minimum: the target is still the minimum
+        row["ideal"] = "1" if i == 0 else str(float(row["minimum"]) + 1)
+    with demand.open("w", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+
+    plain = load_package(EXAMPLES / "cenario2_retail")
+    inst = load_package(package)
+    assert inst.alpha == plain.alpha                      # the minimum, and so every solver, is untouched
+    assert set(inst.ideal) == set(inst.alpha)
+    assert all(inst.ideal[k] >= inst.alpha[k] for k in inst.alpha)
+    assert sum(inst.ideal[k] - inst.alpha[k] for k in inst.alpha) > 0
+
+    empty = evaluate(inst, rows_from_fixed(inst))         # shifts that cover no skill
+    assert empty["total_shortage"] == empty["total_demand"]
+    assert empty["ideal_shortage"] == empty["total_ideal"] == sum(inst.ideal.values())
+
+    kpis = evaluate(inst, rows_from_fixed(inst, lambda eid, day, t: ("Team/T1",)))
+    on_shift = Counter((day, t) for (eid, day), f in inst.fixed.items() if f.shift for t in f.shift.slot_indices)
+    expected = sum(max(0, want - on_shift[(day, t)])
+                   for (day, t, skill), want in inst.ideal.items() if skill == "Team/T1")
+    assert kpis["ideal_shortage_by_skill"].get("Team/T1", 0) == expected
+    assert kpis["ideal_shortage"] >= kpis["total_shortage"]
+    assert kpis["objective"] == objective(kpis, SolveDirectives())   # ideal stays out of the objective
